@@ -50,13 +50,18 @@ export async function getSubscription() {
   return res.data;
 }
 
-export async function upgradeSubscription(planCode: string) {
-  const res = await api.post("/subscription/upgrade", { planCode });
+export async function upgradeSubscription(planCode: string, billingCycle?: string) {
+  const res = await api.post("/subscription/upgrade", { planCode, billingCycle });
   return res.data;
 }
 
 export async function downgradeSubscription(planCode: string) {
   const res = await api.post("/subscription/downgrade", { planCode });
+  return res.data;
+}
+
+export async function getStripeConfig() {
+  const res = await api.get("/stripe/config");
   return res.data;
 }
 

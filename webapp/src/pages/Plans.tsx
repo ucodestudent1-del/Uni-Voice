@@ -15,6 +15,7 @@ export default function Plans() {
   const { plan, upgrade, downgrade, loading } = useSubscription();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [upgrading, setUpgrading] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
     apiGetPlans().then((data) => setPlans(data.plans ?? [])).catch(() => {});
@@ -23,10 +24,9 @@ export default function Plans() {
   async function handleUpgrade(planCode: string) {
     setUpgrading(true);
     try {
-      await upgrade(planCode);
-      alert("Plan upgraded successfully!");
+      await upgrade(planCode, billingCycle);
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to upgrade");
+      alert(err.response?.data?.error || "Failed to start checkout");
     } finally {
       setUpgrading(false);
     }
@@ -57,6 +57,18 @@ export default function Plans() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Choose Your Plan</h2>
 
+      <div className="flex items-center space-x-4">
+        <label className="text-sm font-medium text-gray-700">Billing cycle:</label>
+        <select
+          value={billingCycle}
+          onChange={(e) => setBillingCycle(e.target.value as "monthly" | "yearly")}
+          className="border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm"
+        >
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+
       {loading && <div className="text-center py-10">Loading...</div>}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -65,6 +77,8 @@ export default function Plans() {
           const planTier = tierOrder[p.code as keyof typeof tierOrder] ?? 0;
           const isUpgrade = planTier > currentTier;
           const isDowngrade = planTier < currentTier;
+          const price = billingCycle === "yearly" ? p.price_yearly : p.price_monthly;
+          const period = billingCycle === "yearly" ? "/year" : "/month";
 
           return (
             <div key={p.id} className={`bg-white rounded-lg shadow-lg border-2 ${isCurrent ? "border-blue-500" : "border-gray-200"}`}>
@@ -72,10 +86,12 @@ export default function Plans() {
                 <h3 className="text-xl font-bold text-gray-900">{p.name}</h3>
                 <p className="mt-2 text-sm text-gray-500">{p.description}</p>
                 <div className="mt-4">
-                  <span className="text-4xl font-bold text-gray-900">${p.price_monthly}</span>
-                  <span className="text-gray-500">/month</span>
+                  <span className="text-4xl font-bold text-gray-900">${price}</span>
+                  <span className="text-gray-500">{period}</span>
                 </div>
-                <p className="mt-1 text-sm text-gray-500">${p.price_yearly}/year</p>
+                {billingCycle === "yearly" && p.price_yearly > 0 && (
+                  <p className="mt-1 text-xs text-gray-500">Billed annually (${p.price_yearly}/year)</p>
+                )}
                 <ul className="mt-6 space-y-3">
                   {(features[p.code as keyof typeof features] ?? []).map((feat) => (
                     <li key={feat} className="flex items-start">

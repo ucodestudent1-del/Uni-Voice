@@ -50,13 +50,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     refresh();
   }, []);
 
-  const upgrade = async (planCode: string) => {
-    await upgradeSubscription(planCode);
-    await refresh();
+  const upgrade = async (planCode: string, billingCycle?: string) => {
+    const data = await upgradeSubscription(planCode, billingCycle);
+    if (data.checkoutUrl) {
+      window.location.href = data.checkoutUrl;
+    }
   };
 
   const downgrade = async (planCode: string) => {
-    await downgradeSubscription(planCode);
+    const data = await downgradeSubscription(planCode);
     await refresh();
   };
 

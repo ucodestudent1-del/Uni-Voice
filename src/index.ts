@@ -15,7 +15,7 @@ import { productRepository } from "./repositories/product.repo.js";
 import { invoiceRepository } from "./repositories/invoice.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
 import { logger } from "./utils/logger.js";
-import { BusinessLogicError } from "./domain/errors.js";
+import { stripeService, type CreateCheckoutSessionInput } from "./services/payments/stripe-service.js";
 
 const app = express();
 
@@ -107,12 +107,31 @@ app.get("/api/subscription/current", requireAuth, async (req: AuthRequest, res) 
 
 app.post("/api/subscription/upgrade", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { planCode } = req.body;
+  const { planCode, billingCycle } = req.body;
   if (!planCode) return res.status(400).json({ error: "planCode required" });
 
-  const sub = await subscriptionService.upgradeBusiness(req.user!.businessId, planCode);
-  const plan = await subscriptionService.getPlanById(sub.planId);
-  res.json({ subscription: sub, plan });
+  const plans = await subscriptionRepository.listPlans();
+  const plan = plans.find((p: any) => p.code === planCode);
+  if (!plan) return res.status(404).json({ error: "Plan not found" });
+
+  const business = await businessRepository.findById(req.user!.businessId, req.user!.id);
+  const cycle = billingCycle ?? "monthly";
+
+  const session = await stripeService.createCheckoutSession({
+    planId: plan.id,
+    planCode: plan.code,
+    planName: plan.name,
+    priceMonthly: plan.priceMonthly,
+    priceYearly: plan.priceYearly,
+    currency: plan.currency,
+    billingCycle: cycle,
+    businessId: req.user!.businessId,
+    customerEmail: business.email ?? undefined,
+    successUrl: `${env.APP_PUBLIC_BASE_URL}/plans?success=true`,
+    cancelUrl: `${env.APP_PUBLIC_BASE_URL}/plans?canceled=true`,
+  });
+
+  res.json({ checkoutUrl: session.url, sessionId: session.sessionId });
 });
 
 app.post("/api/subscription/downgrade", requireAuth, async (req: AuthRequest, res) => {
@@ -123,6 +142,26 @@ app.post("/api/subscription/downgrade", requireAuth, async (req: AuthRequest, re
   const sub = await subscriptionService.downgradeBusiness(req.user!.businessId, planCode);
   const plan = await subscriptionService.getPlanById(sub.planId);
   res.json({ subscription: sub, plan });
+});
+
+app.get("/api/stripe/config", async (_req, res) => {
+  res.json({ publishableKey: env.STRIPE_PUBLISHABLE_KEY });
+});
+
+app.post("/api/webhooks/stripe", express.raw({ type: "application/json" }), async (req: express.Request, res) => {
+  const signature = req.headers["stripe-signature"];
+  if (!signature || typeof signature !== "string") {
+    return res.status(400).send("Missing stripe-signature");
+  }
+
+  try {
+    const event = await stripeService.constructWebhookEvent(req.body as Buffer, signature);
+    await handleStripeEvent(event);
+    res.json({ received: true });
+  } catch (err: any) {
+    logger.error({ err }, "Stripe webhook failed");
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 });
 
 app.get("/api/subscription/events", requireAuth, async (req: AuthRequest, res) => {
@@ -430,6 +469,107 @@ app.get("/api/features", requireAuth, async (req: AuthRequest, res) => {
   const allFlags = await subscriptionRepository.listFeatureFlags();
   res.json({ plan: ctx.plan.code, features: allFlags, premium: flags });
 });
+
+// ============================================================================
+// STRIPE WEBHOOK HANDLER
+// ============================================================================
+async function handleStripeEvent(event: any): Promise<void> {
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const businessId = session.metadata?.businessId;
+      const planId = session.metadata?.planId;
+      const planCode = session.metadata?.planCode;
+      const billingCycle = session.metadata?.billingCycle;
+
+      if (!businessId || !planId) {
+        logger.warn("Missing metadata in checkout.session.completed");
+        return;
+      }
+
+      const sub = await subscriptionRepository.findSubscriptionByBusinessId(businessId);
+      if (sub) {
+        const stripeSubscriptionId = session.subscription;
+        await subscriptionRepository.updateSubscriptionByBusinessId(businessId, {
+          planId,
+          status: "active",
+          billingCycle: billingCycle ?? "monthly",
+          stripeSubscriptionId: stripeSubscriptionId ?? null,
+        });
+        await subscriptionRepository.recordSubscriptionEvent(
+          businessId,
+          sub.id,
+          "checkout_completed",
+          undefined,
+          planCode,
+          { stripeSessionId: session.id }
+        );
+      }
+      break;
+    }
+    case "customer.subscription.updated": {
+      const stripeSub = event.data.object;
+      const businessId = await findBusinessByStripeSubscriptionId(stripeSub.id);
+      if (!businessId) {
+        logger.warn({ subscription: stripeSub.id }, "Business not found for Stripe subscription");
+        return;
+      }
+
+      const sub = await subscriptionRepository.findSubscriptionByBusinessId(businessId);
+      if (!sub) return;
+
+      const status = stripeSub.status === "active" ? "active" :
+                     stripeSub.status === "past_due" ? "past_due" :
+                     stripeSub.status === "canceled" ? "cancelled" : "active";
+
+      await subscriptionRepository.updateSubscriptionByBusinessId(businessId, { status: status as any });
+      await subscriptionRepository.recordSubscriptionEvent(
+        businessId,
+        sub.id,
+        "subscription_updated",
+        undefined,
+        undefined,
+        { stripeStatus: stripeSub.status }
+      );
+      break;
+    }
+    case "customer.subscription.deleted": {
+      const stripeSub = event.data.object;
+      const businessId = await findBusinessByStripeSubscriptionId(stripeSub.id);
+      if (!businessId) return;
+
+      const sub = await subscriptionRepository.findSubscriptionByBusinessId(businessId);
+      if (!sub) return;
+
+      await subscriptionRepository.updateSubscriptionByBusinessId(businessId, { status: "cancelled" });
+      await subscriptionRepository.recordSubscriptionEvent(
+        businessId,
+        sub.id,
+        "subscription_cancelled",
+        undefined,
+        "free",
+        { stripeSubscriptionId: stripeSub.id }
+      );
+
+      const freePlan = await subscriptionRepository.findPlanByCode("free");
+      if (freePlan) {
+        await subscriptionRepository.updateSubscriptionByBusinessId(businessId, { planId: freePlan.id });
+      }
+      break;
+    }
+    default:
+      logger.info(`Unhandled Stripe event type: ${event.type}`);
+  }
+}
+
+async function findBusinessByStripeSubscriptionId(stripeSubscriptionId: string): Promise<string | null> {
+  const res = await query(
+    `SELECT business_id FROM business_subscriptions WHERE stripe_subscription_id = $1 LIMIT 1`,
+    [stripeSubscriptionId]
+  );
+  if (!res.rows.length) return null;
+  return res.rows[0].business_id as string;
+}
 
 // ============================================================================
 // ERROR HANDLING
