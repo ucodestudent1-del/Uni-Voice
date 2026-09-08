@@ -583,9 +583,15 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 const PORT = env.PORT;
-app.listen(PORT, () => {
-  logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
-  subscriptionService.ensureDefaults().catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
-});
+
+async function start() {
+  await runMigrations();
+  app.listen(PORT, () => {
+    logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
+    subscriptionService.ensureDefaults().catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
+  });
+}
+
+start();
 
 export default app;

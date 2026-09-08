@@ -9,12 +9,8 @@ COPY . .
 RUN npm run build
 
 ENV NODE_ENV=production
-ENV APP_ENV=development
+ENV APP_ENV=production
 ENV PORT=4000
-ENV DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/invoice_dev
-ENV AUTH_MODE=dev
-ENV AUTH_JWT_SECRET=dev-secret-change-me
-ENV APP_PUBLIC_BASE_URL=http://localhost:3000
 ENV EMAIL_FROM=noreply@example.com
 ENV EMAIL_PROVIDER=stub
 ENV PDF_PROVIDER=html
