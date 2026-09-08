@@ -2,11 +2,17 @@ FROM node:22-bookworm-slim
 
 WORKDIR /app
 
+# Install backend dependencies
 COPY package*.json ./
 RUN npm install
 
+# Install frontend dependencies
+COPY webapp/package*.json webapp/
+RUN cd webapp && npm install
+
+# Copy source and build both backend and frontend
 COPY . .
-RUN npm run build
+RUN npm run build && cd webapp && npm run build
 
 ENV NODE_ENV=production
 ENV APP_ENV=production

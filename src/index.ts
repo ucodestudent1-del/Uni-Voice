@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "node:path";
 import { env, isDev } from "./config/index.js";
 import { query } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
@@ -584,6 +585,18 @@ async function findBusinessByStripeSubscriptionId(stripeSubscriptionId: string):
   );
   if (!res.rows.length) return null;
   return res.rows[0].business_id as string;
+}
+
+// ============================================================================
+// FRONTEND FALLBACK (production SPA)
+// ============================================================================
+const FRONTEND_DIST = path.join(process.cwd(), "webapp", "dist");
+
+if (!isDev) {
+  app.use(express.static(FRONTEND_DIST));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(FRONTEND_DIST, "index.html"));
+  });
 }
 
 // ============================================================================

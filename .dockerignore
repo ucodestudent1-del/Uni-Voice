@@ -11,5 +11,4 @@ Dockerfile
 README.md
 *.md
 tests
-webapp
 migrate_out.txt
