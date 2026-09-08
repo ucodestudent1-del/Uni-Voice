@@ -32,15 +32,17 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", env: env.APP_ENV, timestamp: new Date().toISOString() });
 });
 
-app.get("/", (_req, res) => {
-  res.json({
-    name: "universal-invoice-generator",
-    version: "1.0.0",
-    status: "ok",
-    docs: "/api/health",
-    endpoints: ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/plans", "/api/invoices", "/api/customers", "/api/products"],
+if (isDev) {
+  app.get("/", (_req, res) => {
+    res.json({
+      name: "universal-invoice-generator",
+      version: "1.0.0",
+      status: "ok",
+      docs: "/api/health",
+      endpoints: ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/plans", "/api/invoices", "/api/customers", "/api/products"],
+    });
   });
-});
+}
 
 // ============================================================================
 // AUTH
