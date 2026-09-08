@@ -31,8 +31,8 @@ export class PuppeteerPdfService implements PdfProvider {
     return { args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"] };
   }
 
-  async generatePdf(html: string, _data: InvoiceTemplateData): Promise<Buffer> {
-    const puppeteer = await this.loadPuppeteer();
+  async generatePdf(html: string, data: InvoiceTemplateData): Promise<Buffer> {
+    await this.loadPuppeteer();
     let page: Page | null = null;
     try {
       const browser = await this.getBrowser();

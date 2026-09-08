@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { InvoiceWithDetails } from "../../repositories/invoice.repo.js";
-import type { Business, Customer } from "../../domain/models/index.js";
+import type { Customer } from "../../domain/models/index.js";
 import { businessRepository } from "../../repositories/business.repo.js";
 import { customerRepository } from "../../repositories/customer.repo.js";
 

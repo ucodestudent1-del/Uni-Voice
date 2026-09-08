@@ -170,7 +170,6 @@ export class CalculationEngine {
       const effectiveTaxable = round(li.lineSubtotal.minus(li.discountAmount).minus(lineShares[i]));
 
       let taxAmount: Decimal;
-      let lineTotal: Decimal;
 
       if (li.isTaxInclusive) {
         // unit price already includes tax; extract the tax component

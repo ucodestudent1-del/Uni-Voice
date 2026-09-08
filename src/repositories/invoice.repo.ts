@@ -2,7 +2,7 @@ import { Decimal } from "decimal.js";
 import { getClient, query } from "../db/pool.js";
 import type { Invoice, InvoiceLineItem, InvoiceFee, InvoiceSnapshot, InvoiceEvent } from "../domain/models/index.js";
 import { NotFoundError } from "../domain/errors.js";
-import { toDecimal, rowToDate } from "./helpers.js";
+import { rowToDate } from "./helpers.js";
 
 export interface InvoiceItemInput {
   id?: string;
@@ -143,12 +143,24 @@ export class InvoiceRepository {
   }
 
   async update(businessId: string, id: string, input: Partial<Record<string, unknown>>): Promise<Invoice> {
+    const ALLOWED_COLUMNS = new Set([
+      "customer_id", "invoice_number", "status", "issue_date", "due_date", "currency",
+      "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
+      "amount_paid", "amount_due", "notes", "terms", "template_id", "public_token",
+      "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
+      "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
+    ]);
     const set: string[] = [];
     const vals: unknown[] = [businessId, id];
     let i = 3;
     for (const [key, val] of Object.entries(input)) {
+      if (!ALLOWED_COLUMNS.has(key)) continue;
       set.push(`${key} = $${i++}`);
       vals.push(val ?? null);
+    }
+    if (set.length === 0) {
+      const current = await this.findById(businessId, id);
+      return current;
     }
     set.push(`updated_at = NOW()`);
     const res = await query(
@@ -192,10 +204,17 @@ export class InvoiceRepository {
     return res.rows.map((r) => this.rowToModel(r));
   }
 
-  async findByPublicToken(token: string): Promise<InvoiceWithDetails> {
-    const invRes = await query(`SELECT * FROM invoices WHERE public_token = $1`, [token]);
-    if (!invRes.rows.length) throw new NotFoundError("Invoice not found");
-    const invoice = this.rowToModel(invRes.rows[0]);
+  async findByPublicToken(businessId?: string, token?: string): Promise<InvoiceWithDetails> {
+    let res;
+    if (businessId && token) {
+      res = await query(`SELECT * FROM invoices WHERE public_token = $1 AND business_id = $2`, [token, businessId]);
+    } else if (token) {
+      res = await query(`SELECT * FROM invoices WHERE public_token = $1`, [token]);
+    } else {
+      throw new NotFoundError("Invoice not found");
+    }
+    if (!res.rows.length) throw new NotFoundError("Invoice not found");
+    const invoice = this.rowToModel(res.rows[0]);
     const itemRes = await query(`SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]);
     const feeRes = await query(`SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]);
     return { ...invoice, items: itemRes.rows.map((r) => this.itemRowToModel(r)), fees: feeRes.rows.map((r) => this.feeRowToModel(r)) };
@@ -219,15 +238,17 @@ export class InvoiceRepository {
   }
 
   async setStatus(invoiceId: string, status: string, fields?: Record<string, unknown>): Promise<void> {
+    const ALLOWED_COLUMNS: Record<string, string> = {
+      sentAt: "sent_at", viewedAt: "viewed_at", paidAt: "paid_at", cancelledAt: "cancelled_at",
+    };
     const set: string[] = [`status = $2`];
     const vals: unknown[] = [invoiceId, status];
     let i = 3;
-    const colMap: Record<string, string> = {
-      sentAt: "sent_at", viewedAt: "viewed_at", paidAt: "paid_at", cancelledAt: "cancelled_at",
-    };
     if (fields) {
       for (const [k, v] of Object.entries(fields)) {
-        set.push(`${colMap[k] ?? k} = $${i++}`);
+        const col = ALLOWED_COLUMNS[k];
+        if (!col) continue;
+        set.push(`${col} = $${i++}`);
         vals.push(v);
       }
     }

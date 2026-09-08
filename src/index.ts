@@ -3,11 +3,11 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { env, isDev } from "./config/index.js";
-import { query, closePool } from "./db/pool.js";
+import { query } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import { requireAuth, AuthRequest, generateToken } from "./middleware/auth.js";
-import { requireEntitlement, requireUsageLimit, withBusinessId } from "./middleware/entitlement.js";
+import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.js";
 import { invoiceService } from "./services/invoice-service.js";
 import { businessRepository } from "./repositories/business.repo.js";
 import { customerRepository } from "./repositories/customer.repo.js";
@@ -15,7 +15,8 @@ import { productRepository } from "./repositories/product.repo.js";
 import { invoiceRepository } from "./repositories/invoice.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
 import { logger } from "./utils/logger.js";
-import { stripeService, type CreateCheckoutSessionInput } from "./services/payments/stripe-service.js";
+import { stripeService } from "./services/payments/stripe-service.js";
+import bcrypt from "bcrypt";
 
 const app = express();
 
@@ -28,6 +29,16 @@ if (isDev) app.use(morgan("dev"));
 // Health
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", env: env.APP_ENV, timestamp: new Date().toISOString() });
+});
+
+app.get("/", (_req, res) => {
+  res.json({
+    name: "universal-invoice-generator",
+    version: "1.0.0",
+    status: "ok",
+    docs: "/api/health",
+    endpoints: ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/plans", "/api/invoices", "/api/customers", "/api/products"],
+  });
 });
 
 // ============================================================================
@@ -43,12 +54,13 @@ app.post("/api/auth/register", async (req, res) => {
   const userId = crypto.randomUUID();
   const businessId = crypto.randomUUID();
   const now = new Date().toISOString();
+  const passwordHash = await bcrypt.hash(password, 10);
 
   await query("BEGIN");
   try {
     await query(
       `INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES ($1,$2,$3,$4,$4)`,
-      [userId, email, password, now]
+      [userId, email, passwordHash, now]
     );
     await query(
       `INSERT INTO businesses (id, owner_id, name, country_code, default_currency, created_at, updated_at) VALUES ($1,$2,$3,'US','USD',$4,$4)`,
@@ -72,10 +84,13 @@ app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "email and password required" });
 
-  const result = await query("SELECT id, email FROM users WHERE email = $1 AND password_hash = $2", [email, password]);
+  const result = await query("SELECT id, email, password_hash FROM users WHERE email = $1", [email]);
   if (!result.rows.length) return res.status(401).json({ error: "Invalid credentials" });
 
   const user = result.rows[0];
+  const valid = await bcrypt.compare(password, user.password_hash);
+  if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+
   const subResult = await query("SELECT business_id FROM businesses WHERE owner_id = $1 LIMIT 1", [user.id]);
   const businessId = subResult.rows[0]?.business_id;
 

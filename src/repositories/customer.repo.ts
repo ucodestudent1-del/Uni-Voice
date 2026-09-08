@@ -1,5 +1,5 @@
 import { query } from "../db/pool.js";
-import type { Customer, Business } from "../domain/models/index.js";
+import type { Customer } from "../domain/models/index.js";
 
 export interface CustomerInput {
   name: string;
@@ -21,10 +21,10 @@ export class CustomerRepository {
   async create(businessId: string, input: CustomerInput): Promise<Customer> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
-    const fields = ["business_id", "name", "company_name", "email", "phone", "tax_id",
+    const fields = ["id", "business_id", "name", "company_name", "email", "phone", "tax_id",
       "address_line_1", "address_line_2", "city", "state_or_region", "postal_code",
       "country_code", "default_currency", "notes", "created_at", "updated_at"];
-    const vals = [businessId, input.name, input.companyName, input.email, input.phone, input.taxId,
+    const vals = [id, businessId, input.name, input.companyName, input.email, input.phone, input.taxId,
       input.addressLine1, input.addressLine2, input.city, input.stateOrRegion, input.postalCode,
       input.countryCode, input.defaultCurrency, input.notes, now, now];
     const placeholders = vals.map((_, i) => `$${i + 1}`).join(", ");
@@ -50,10 +50,16 @@ export class CustomerRepository {
   }
 
   async update(businessId: string, id: string, input: CustomerInput): Promise<Customer> {
+    const ALLOWED_COLUMNS = new Set([
+      "name", "company_name", "email", "phone", "tax_id",
+      "address_line_1", "address_line_2", "city", "state_or_region", "postal_code",
+      "country_code", "default_currency", "notes",
+    ]);
     const set: string[] = [];
     const vals: unknown[] = [businessId, id];
     let i = 3;
     for (const [key, val] of Object.entries(input)) {
+      if (!ALLOWED_COLUMNS.has(key)) continue;
       set.push(`${key} = $${i++}`);
       vals.push(val ?? null);
     }

@@ -42,10 +42,15 @@ export class ProductRepository {
   }
 
   async update(businessId: string, id: string, input: ProductInput): Promise<Product> {
+    const ALLOWED_COLUMNS = new Set([
+      "name", "description", "sku", "default_unit_price", "default_tax_rate",
+      "unit", "default_currency",
+    ]);
     const set: string[] = [];
     const vals: unknown[] = [businessId, id];
     let i = 3;
     for (const [key, val] of Object.entries(input)) {
+      if (!ALLOWED_COLUMNS.has(key)) continue;
       set.push(`${key} = $${i++}`);
       vals.push(val ?? null);
     }

@@ -1,6 +1,6 @@
-import { query, getClient } from "../db/pool.js";
+import { query } from "../db/pool.js";
 import type { Business } from "../domain/models/index.js";
-import { toDecimal, rowToDate } from "./helpers.js";
+import { rowToDate } from "./helpers.js";
 import { ValidationError } from "../domain/errors.js";
 
 export interface BusinessInput {

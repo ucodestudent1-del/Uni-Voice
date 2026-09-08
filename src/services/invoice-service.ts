@@ -360,7 +360,7 @@ export class InvoiceService {
   }
 
   async recordView(token: string): Promise<string> {
-    const invoice = await invoiceRepository.findByPublicToken(token);
+    const invoice = await invoiceRepository.findByPublicToken(undefined, token);
     if (invoice.status === "sent" || invoice.status === "overdue") {
       const target = invoice.status === "sent" ? "viewed" : "overdue";
       if (target !== invoice.status) {
@@ -443,7 +443,7 @@ export class InvoiceService {
   }
 
   async getPublicInvoice(token: string): Promise<{ invoice: RepoInvoice; html: string; pdfUrl: string }> {
-    const invoice = await invoiceRepository.findByPublicToken(token);
+    const invoice = await invoiceRepository.findByPublicToken(undefined, token);
     const snapshot = await invoiceRepository.getSnapshot(invoice.id);
     const templateData = this.buildSnapshotTemplateData(invoice, snapshot);
     const html = templateRenderer.render(templateData);

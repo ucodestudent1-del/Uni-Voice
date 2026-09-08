@@ -17,7 +17,7 @@ interface SubscriptionContextType {
   features: any[];
   loading: boolean;
   refresh: () => Promise<void>;
-  upgrade: (planCode: string) => Promise<void>;
+  upgrade: (planCode: string, billingCycle?: string) => Promise<void>;
   downgrade: (planCode: string) => Promise<void>;
 }
 

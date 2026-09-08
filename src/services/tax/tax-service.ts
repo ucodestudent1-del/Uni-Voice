@@ -1,5 +1,5 @@
 import { ManualTaxProvider } from "./manual-provider.js";
-import type { TaxProvider, TaxContext, TaxCalculation, TaxProviderConfig } from "./types.js";
+import type { TaxProvider, TaxContext, TaxCalculation } from "./types.js";
 import { env } from "../../config/index.js";
 
 export class TaxService {
@@ -52,9 +52,9 @@ export class StubTaxProvider implements TaxProvider {
   constructor(name: string) {
     this.name = name;
   }
-  calculateTax(_context: TaxContext): Promise<TaxCalculation> {
+  calculateTax(context: TaxContext): Promise<TaxCalculation> {
     return Promise.reject(
-      new Error(`Tax provider '${this.name}' is not configured. Add API credentials to enable it.`)
+      new Error(`Tax provider '${this.name}' is not configured for currency ${context.currency}. Add API credentials to enable it.`)
     );
   }
 }

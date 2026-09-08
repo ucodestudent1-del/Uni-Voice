@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import { env } from "../../config/index.js";
-import { logger } from "../../utils/logger.js";
 import { BusinessLogicError } from "../../domain/errors.js";
 
 let stripeClient: Stripe | null = null;

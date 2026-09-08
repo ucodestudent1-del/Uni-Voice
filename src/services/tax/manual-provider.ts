@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import type { TaxProvider, TaxContext, TaxCalculation, TaxLineItem, TaxFeeItem } from "./types.js";
+import type { TaxProvider, TaxContext, TaxCalculation } from "./types.js";
 import { getCurrencyMetadata } from "../../domain/value-objects/currency.js";
 
 const ROUND = Decimal.ROUND_HALF_UP;
