@@ -1,0 +1,74 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { getSubscription, getPlans, upgradeSubscription, downgradeSubscription, getFeatures } from "../api/client";
+
+interface Plan {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  priceMonthly: number;
+  priceYearly: number;
+  features?: any[];
+}
+
+interface SubscriptionContextType {
+  plan: Plan | null;
+  subscription: any;
+  features: any[];
+  loading: boolean;
+  refresh: () => Promise<void>;
+  upgrade: (planCode: string) => Promise<void>;
+  downgrade: (planCode: string) => Promise<void>;
+}
+
+const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
+
+export function SubscriptionProvider({ children }: { children: ReactNode }) {
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [features, setFeatures] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function refresh() {
+    try {
+      const [subData, plansData, featuresData] = await Promise.all([
+        getSubscription().catch(() => null),
+        getPlans().catch(() => ({ plans: [] })),
+        getFeatures().catch(() => ({ features: [], premium: [] })),
+      ]);
+      setSubscription(subData?.subscription ?? null);
+      setPlan(subData?.plan ?? null);
+      setFeatures(featuresData?.features ?? []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  const upgrade = async (planCode: string) => {
+    await upgradeSubscription(planCode);
+    await refresh();
+  };
+
+  const downgrade = async (planCode: string) => {
+    await downgradeSubscription(planCode);
+    await refresh();
+  };
+
+  return (
+    <SubscriptionContext.Provider value={{ plan, subscription, features, loading, refresh, upgrade, downgrade }}>
+      {children}
+    </SubscriptionContext.Provider>
+  );
+}
+
+export function useSubscription() {
+  const context = useContext(SubscriptionContext);
+  if (!context) throw new Error("useSubscription must be used within SubscriptionProvider");
+  return context;
+}
