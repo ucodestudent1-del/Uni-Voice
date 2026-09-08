@@ -3,6 +3,10 @@ import { z } from "zod";
 
 dotenvConfig();
 
+const cleanEnv = Object.fromEntries(
+  Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v])
+);
+
 const envSchema = z.object({
   APP_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(4000),
@@ -30,7 +34,7 @@ type Env = z.infer<typeof envSchema>;
 
 let parsed: Env;
 try {
-  parsed = envSchema.parse(process.env);
+  parsed = envSchema.parse(cleanEnv);
 } catch (e) {
   console.error("Invalid environment configuration:", e);
   process.exit(1);
