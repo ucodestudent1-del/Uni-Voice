@@ -27,8 +27,7 @@ export interface ApiPlan {
   code: string;
   name: string;
   description?: string | null;
-  price_monthly: number;
-  price_yearly: number;
+  price: number;
   currency: string;
   is_active: boolean;
   sort_order?: number;

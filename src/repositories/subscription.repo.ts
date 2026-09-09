@@ -6,8 +6,7 @@ export interface PlanInput {
   code: PlanCode;
   name: string;
   description?: string | null;
-  priceMonthly: number;
-  priceYearly: number;
+  price: number;
   currency?: string;
   isActive?: boolean;
   sortOrder?: number;
@@ -38,9 +37,9 @@ export class SubscriptionRepository {
   // Plans
   async createPlan(input: PlanInput): Promise<Plan> {
     const res = await query(
-      `INSERT INTO plans (code, name, description, price_monthly, price_yearly, currency, is_active, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-      [input.code, input.name, input.description, input.priceMonthly, input.priceYearly, input.currency ?? "USD", input.isActive ?? true, input.sortOrder ?? 0]
+      `INSERT INTO plans (code, name, description, price_monthly, currency, is_active, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [input.code, input.name, input.description, input.price, input.currency ?? "USD", input.isActive ?? true, input.sortOrder ?? 0]
     );
     return this.rowToPlan(res.rows[0]);
   }
@@ -61,8 +60,7 @@ export class SubscriptionRepository {
     const vals: unknown[] = [planId];
     let i = 2;
     for (const [key, val] of Object.entries(input)) {
-      if (key === "priceMonthly") fields.push(`price_monthly = $${i++}`);
-      else if (key === "priceYearly") fields.push(`price_yearly = $${i++}`);
+       if (key === "price") fields.push(`price_monthly = $${i++}`);
       else if (key === "sortOrder") fields.push(`sort_order = $${i++}`);
       else fields.push(`${key} = $${i++}`);
       vals.push(val ?? null);
@@ -79,8 +77,7 @@ export class SubscriptionRepository {
       code: r.code as Plan["code"],
       name: r.name as string,
       description: r.description as string | null,
-      priceMonthly: Number(r.price_monthly),
-      priceYearly: Number(r.price_yearly),
+       price: Number(r.price_monthly),
       currency: r.currency as string,
       isActive: Boolean(r.is_active),
       sortOrder: Number(r.sort_order),

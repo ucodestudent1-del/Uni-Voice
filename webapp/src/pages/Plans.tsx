@@ -9,8 +9,7 @@ interface Plan {
   code: string;
   name: string;
   description?: string | null;
-  price_monthly: number;
-  price_yearly: number;
+  price: number;
   currency: string;
 }
 
@@ -72,7 +71,6 @@ const PLAN_FEATURES: Record<string, string[]> = {
 export default function Plans() {
   const { plan, upgrade, downgrade, loading } = useSubscription();
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   useEffect(() => {
     apiGetPlans()
@@ -82,10 +80,10 @@ export default function Plans() {
 
   function toTier(p: Plan): PricingTier {
     return {
-      id: p.code,
+      code: p.code,
       name: p.name,
       description: p.description ?? "",
-      price: { monthly: p.price_monthly, yearly: p.price_yearly },
+      price: p.price,
       currency: p.currency ?? "USD",
       features: PLAN_FEATURES[p.code] ?? [],
       highlighted: p.code === "pro",
@@ -101,9 +99,9 @@ export default function Plans() {
 
   function handleSelect(tier: PricingTier) {
     const current = plan ? TIER_ORDER[plan.code] ?? 0 : -1;
-    const target = TIER_ORDER[tier.id] ?? 0;
-    if (target > current) upgrade(tier.id, billingCycle);
-    else if (target < current) downgrade(tier.id);
+    const target = TIER_ORDER[tier.code] ?? 0;
+    if (target > current) upgrade(tier.code);
+    else if (target < current) downgrade(tier.code);
   }
 
   if (loading && !plans.length) {
@@ -124,11 +122,8 @@ export default function Plans() {
       ) : (
         <PricingTable
           tiers={plans.map(toTier)}
-          billingCycle={billingCycle}
-          onBillingCycleChange={setBillingCycle}
           onSelect={handleSelect}
           currentPlanCode={plan?.code}
-          showBillingToggle
           subtitle="No per-invoice fees. No hidden costs. Cancel anytime."
         />
       )}
@@ -136,7 +131,7 @@ export default function Plans() {
       <div className="max-w-4xl mx-auto mt-12 bg-slate-50 rounded-xl p-6">
         <h3 className="text-center text-lg font-semibold text-slate-900 mb-2">No per-invoice fees</h3>
         <p className="text-center text-sm text-slate-600">
-          Pay one flat monthly or annual subscription fee. Send as many invoices as you want.
+          Pay one flat monthly subscription fee. Send as many invoices as you want.
           Upgrade or downgrade at any time. Cancel anytime.
         </p>
       </div>

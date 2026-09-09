@@ -19,10 +19,8 @@ export interface CreateCheckoutSessionInput {
   planId: string;
   planCode: string;
   planName: string;
-  priceMonthly: number;
-  priceYearly: number;
+  price: number;
   currency: string;
-  billingCycle: "monthly" | "yearly";
   businessId: string;
   customerEmail?: string;
   successUrl: string;
@@ -37,7 +35,6 @@ export interface CreateCheckoutSessionResult {
 export class StripeService {
   async createCheckoutSession(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionResult> {
     const stripe = getStripe();
-    const price = input.billingCycle === "yearly" ? input.priceYearly : input.priceMonthly;
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -50,9 +47,9 @@ export class StripeService {
               name: `${input.planName} Plan`,
               description: `Universal Invoice Generator ${input.planName}`,
             },
-            unit_amount: Math.round(price * 100),
+            unit_amount: Math.round(input.price * 100),
             recurring: {
-              interval: input.billingCycle === "yearly" ? "year" : "month",
+              interval: "month",
             },
           },
           quantity: 1,
@@ -65,7 +62,6 @@ export class StripeService {
         businessId: input.businessId,
         planId: input.planId,
         planCode: input.planCode,
-        billingCycle: input.billingCycle,
       },
     });
 

@@ -6,8 +6,7 @@ export interface Plan {
   code: PlanCode;
   name: string;
   description?: string | null;
-  priceMonthly: number;
-  priceYearly: number;
+  price: number;
   currency: string;
   isActive: boolean;
   sortOrder: number;

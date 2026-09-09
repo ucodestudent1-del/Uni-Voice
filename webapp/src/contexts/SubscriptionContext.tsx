@@ -7,8 +7,7 @@ interface Plan {
   code: string;
   name: string;
   description?: string;
-  priceMonthly: number;
-  priceYearly: number;
+  price: number;
   features?: any[];
 }
 
@@ -18,7 +17,7 @@ interface SubscriptionContextType {
   features: any[];
   loading: boolean;
   refresh: () => Promise<void>;
-  upgrade: (planCode: string, billingCycle?: string) => Promise<void>;
+  upgrade: (planCode: string) => Promise<void>;
   downgrade: (planCode: string) => Promise<void>;
 }
 
@@ -58,8 +57,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [isAuthenticated, authLoading]);
 
-  const upgrade = async (planCode: string, billingCycle?: string) => {
-    const data = await upgradeSubscription(planCode, billingCycle);
+  const upgrade = async (planCode: string) => {
+    const data = await upgradeSubscription(planCode);
     if (data.checkoutUrl) {
       window.location.href = data.checkoutUrl;
     }

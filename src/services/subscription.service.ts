@@ -15,9 +15,9 @@ export class SubscriptionService {
 
   async ensureDefaults(): Promise<void> {
     const plans = [
-      { code: "free" as PlanCode, name: "Free", description: "Make professional invoices", priceMonthly: 0, priceYearly: 0, sortOrder: 0 },
-      { code: "pro" as PlanCode, name: "Pro", description: "Automate your invoicing", priceMonthly: 19, priceYearly: 190, sortOrder: 1 },
-      { code: "business" as PlanCode, name: "Business", description: "Manage your billing and financial workflow", priceMonthly: 49, priceYearly: 490, sortOrder: 2 },
+      { code: "free" as PlanCode, name: "Free", description: "Make professional invoices", price: 0, sortOrder: 0 },
+      { code: "pro" as PlanCode, name: "Pro", description: "Automate your invoicing", price: 19, sortOrder: 1 },
+      { code: "business" as PlanCode, name: "Business", description: "Manage your billing and financial workflow", price: 49, sortOrder: 2 },
     ];
 
     for (const p of plans) {
@@ -225,8 +225,7 @@ export class SubscriptionService {
       code: r.code as Plan["code"],
       name: r.name as string,
       description: r.description as string | null,
-      priceMonthly: Number(r.price_monthly),
-      priceYearly: Number(r.price_yearly),
+      price: Number(r.price_monthly),
       currency: r.currency as string,
       isActive: Boolean(r.is_active),
       sortOrder: Number(r.sort_order),

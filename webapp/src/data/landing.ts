@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 export interface PricingTier {
-  id: string;
+  code: string;
   name: string;
   description: string;
-  price: { monthly: number; yearly: number };
+  price: number;
   currency: string;
   features: string[];
   cta?: string;
@@ -13,7 +13,6 @@ export interface PricingTier {
   badge?: string;
   beta?: boolean;
   betaLink?: string;
-  saveText?: string;
 }
 
 export interface FeatureItem {
@@ -37,78 +36,77 @@ export interface TemplateModule {
 
 export type FeatureIcon =
   | "calculator"
-  | "shield"
-  | "globe"
-  | "lightning"
-  | "template"
-  | "bell"
-  | "qr"
-  | "lock";
+  | "document-lock"
+  | "shield-lock"
+  | "globe-currency"
+  | "clock-arrow"
+  | "document-sparkle";
 
 const USD = "USD" as const;
 
-export const pricingTiers: PricingTier[] = [
-  {
-    id: "free",
-    name: "Free",
-    description: "Make professional invoices",
-    price: { monthly: 0, yearly: 0 },
-    currency: USD,
-    features: [
-      "Up to 5 invoices per month",
-      "5 customers",
-      "Basic templates",
-      "PDF generation & download",
-      "Multiple currencies",
-      "Basic customization",
-    ],
-    cta: "Get Started",
-    ctaLink: "/register",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    description: "Automate your invoicing",
-    price: { monthly: 19, yearly: 190 },
-    currency: USD,
-    features: [
-      "Unlimited invoices",
-      "Unlimited customers",
-      "Custom branding (logo, colors, fonts)",
-      "Premium templates",
-      "Recurring invoices",
-      "Scheduled invoices",
-      "Automated payment reminders",
-      "Payment links",
-      "CSV/Excel exports",
-    ],
-    cta: "Start free trial",
-    ctaLink: "/register",
-    highlighted: true,
-    badge: "Most Popular",
-    saveText: "Save 29% with annual billing",
-  },
-  {
-    id: "business",
-    name: "Business",
-    description: "Manage your billing and financial workflow",
-    price: { monthly: 49, yearly: 490 },
-    currency: USD,
-    features: [
-      "Everything in Pro",
-      "Quotes & estimates",
-      "Purchase orders & receipts",
-      "Credit notes & refunds",
-      "Revenue dashboards",
-      "Advanced reports",
-      "API access",
-      "Multiple businesses/brands",
-    ],
-    cta: "Contact sales",
-    ctaLink: "/register",
-    beta: true,
-  },
-];
+export const freeTier: PricingTier = {
+  code: "free",
+  name: "Free",
+  description: "Make professional invoices",
+  price: 0,
+  currency: USD,
+  features: [
+    "Up to 5 invoices per month",
+    "5 customers",
+    "Basic templates",
+    "PDF generation & download",
+    "Multiple currencies",
+    "Basic customization",
+  ],
+  cta: "Get Started",
+  ctaLink: "/register",
+};
+
+export const proTier: PricingTier = {
+  code: "pro",
+  name: "Pro",
+  description: "Automate your invoicing",
+  price: 19,
+  currency: USD,
+  features: [
+    "Unlimited invoices",
+    "Unlimited customers",
+    "Custom branding (logo, colors, fonts)",
+    "Premium templates",
+    "Recurring invoices",
+    "Scheduled invoices",
+    "Automated payment reminders",
+    "Payment links",
+    "CSV/Excel exports",
+  ],
+  cta: "Start free trial",
+  ctaLink: "/register",
+  highlighted: true,
+  badge: "Most Popular",
+};
+
+export const businessTier: PricingTier = {
+  code: "business",
+  name: "Business",
+  description: "Manage your billing and financial workflow",
+  price: 49,
+  currency: USD,
+  features: [
+    "Everything in Pro",
+    "Quotes & estimates",
+    "Purchase orders & receipts",
+    "Credit notes & refunds",
+    "Revenue dashboards",
+    "Advanced reports",
+    "API access",
+    "Multiple businesses/brands",
+  ],
+  cta: "Contact sales",
+  ctaLink: "/register",
+  beta: true,
+};
+
+export const pricingTiers: PricingTier[] = [freeTier, proTier, businessTier];
 
 export const pricingFeatures: FeatureItem[] = [
   {
@@ -119,34 +117,34 @@ export const pricingFeatures: FeatureItem[] = [
   {
     title: "Secure public invoice pages",
     description: "Share invoices with customers via secure tokenized links. Track views and enable online payments.",
-    icon: "shield",
+    icon: "document-lock",
   },
   {
     title: "Two-factor authentication",
     description: "Protect your account with TOTP authenticator apps and single-use recovery codes.",
-    icon: "shield",
+    icon: "shield-lock",
   },
   {
     title: "Global & multi-currency",
     description: "Bill customers in 170+ currencies with automatic exchange-rate lookup.",
-    icon: "globe",
+    icon: "globe-currency",
   },
   {
     title: "Smart automations",
     description: "Recurring invoices, scheduled sends, and automatic payment reminders save you hours each month.",
-    icon: "bell",
+    icon: "clock-arrow",
   },
   {
     title: "Brandable templates",
     description: "Customizable, print-ready templates that match your brand — for invoices, quotes, and receipts.",
-    icon: "template",
+    icon: "document-sparkle",
   },
 ];
 
 export const faqs: FaqItem[] = [
   {
     question: "Do you charge per invoice?",
-    answer: "No. There are no per-invoice fees on any plan. You pay one flat monthly or annual subscription and send as many invoices as you want.",
+    answer: "No. There are no per-invoice fees on any plan. You pay one flat monthly subscription and send as many invoices as you want.",
   },
   {
     question: "Can I cancel my subscription?",
@@ -155,10 +153,6 @@ export const faqs: FaqItem[] = [
   {
     question: "Is there a free trial?",
     answer: "The Free plan is available forever with no time limits. If you upgrade to Pro, you can try it free for 14 days, then pay only if you love it.",
-  },
-  {
-    question: "Do you offer discounts for annual billing?",
-    answer: "Yes — save up to 29% on Pro and Business when you pay annually.",
   },
   {
     question: "How secure is my data?",
@@ -177,7 +171,3 @@ export const templateModules: TemplateModule[] = [
   { id: "elegant", name: "Elegant", description: "Sophisticated serif typography for premium brands", color: "teal" },
   { id: "compact", name: "Compact", description: "Space-efficient layout for detailed line items", color: "amber" },
 ];
-
-export interface PricingTierDisplay extends PricingTier {
-  saveText?: string;
-}

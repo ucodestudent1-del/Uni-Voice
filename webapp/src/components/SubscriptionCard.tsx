@@ -69,18 +69,13 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
         <div className={`rounded-full ${isFree ? "bg-slate-100" : isPro ? "bg-primary-100" : "bg-accent-100"} p-3`}>
           {planIcon(plan.code)}
         </div>
-        <div>
-          <p className={`font-bold ${compact ? "text-center" : ""}`}>
-            <span className="text-2xl text-slate-900">${compact ? (plan.priceMonthly || 0) : (plan.priceMonthly || 0)}</span>
-            {!isFree && <span className="text-slate-500">/month</span>}
-          </p>
-          <p className={`text-sm text-slate-600 ${compact ? "text-center" : ""}`}>{plan.name}</p>
-          {!isFree && plan.priceYearly > 0 && (
-            <p className="text-xs text-slate-400">
-              ${plan.priceYearly}/year ({Math.round((1 - plan.priceYearly / (plan.priceMonthly * 12)) * 100)}% savings)
+          <div>
+            <p className={`font-bold ${compact ? "text-center" : ""}`}>
+              <span className="text-2xl text-slate-900">${plan.price || 0}</span>
+              {!isFree && <span className="text-slate-500">/month</span>}
             </p>
-          )}
-        </div>
+            <p className={`text-sm text-slate-600 ${compact ? "text-center" : ""}`}>{plan.name}</p>
+          </div>
       </div>
 
       {!compact && (

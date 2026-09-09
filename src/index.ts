@@ -267,7 +267,7 @@ app.get("/api/subscription/current", requireAuth, async (req: AuthRequest, res) 
 
 app.post("/api/subscription/upgrade", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { planCode, billingCycle } = req.body;
+  const { planCode } = req.body;
   if (!planCode) return res.status(400).json({ error: "planCode required" });
 
   const plans = await subscriptionRepository.listPlans();
@@ -275,16 +275,13 @@ app.post("/api/subscription/upgrade", requireAuth, async (req: AuthRequest, res)
   if (!plan) return res.status(404).json({ error: "Plan not found" });
 
   const business = await businessRepository.findById(req.user!.businessId, req.user!.id);
-  const cycle = billingCycle ?? "monthly";
 
   const session = await stripeService.createCheckoutSession({
     planId: plan.id,
     planCode: plan.code,
     planName: plan.name,
-    priceMonthly: plan.priceMonthly,
-    priceYearly: plan.priceYearly,
+    price: plan.price,
     currency: plan.currency,
-    billingCycle: cycle,
     businessId: req.user!.businessId,
     customerEmail: business.email ?? undefined,
     successUrl: `${env.APP_PUBLIC_BASE_URL}/plans?success=true`,

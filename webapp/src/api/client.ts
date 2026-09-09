@@ -102,8 +102,8 @@ export async function getSubscription() {
   return res.data;
 }
 
-export async function upgradeSubscription(planCode: string, billingCycle?: string) {
-  const res = await api.post("/subscription/upgrade", { planCode, billingCycle });
+export async function upgradeSubscription(planCode: string) {
+  const res = await api.post("/subscription/upgrade", { planCode });
   return res.data;
 }
 

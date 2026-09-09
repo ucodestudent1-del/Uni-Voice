@@ -115,8 +115,6 @@ export default function Landing() {
         />
         <PricingTable
           tiers={pricingTiers}
-          billingCycle="monthly"
-          showBillingToggle
           subtitle="No per-invoice fees. No hidden costs."
           className="mx-auto max-w-7xl"
         />
