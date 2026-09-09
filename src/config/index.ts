@@ -15,6 +15,7 @@ const envSchema = z.object({
   AUTH_MODE: z.enum(["dev", "jwt", "stub"]).default("dev"),
   AUTH_JWT_SECRET: z.string().default("dev-secret-change-me"),
   APP_PUBLIC_BASE_URL: z.string().default("http://localhost:4000"),
+  APP_FRONTEND_URL: z.string().optional(),
   EMAIL_FROM: z.string().default("noreply@example.com"),
   EMAIL_PROVIDER: z.enum(["stub", "smtp", "sendgrid", "ses"]).default("stub"),
   PDF_PROVIDER: z.enum(["html", "stub"]).default("html"),
@@ -28,6 +29,9 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CALLBACK_URL: z.string().optional(),
 });
 
 type Env = z.infer<typeof envSchema>;

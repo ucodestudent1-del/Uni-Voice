@@ -10,6 +10,7 @@ import { subscriptionService } from "./services/subscription.service.js";
 import { requireAuth, optionalAuth, AuthRequest, generateToken } from "./middleware/auth.js";
 import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.js";
 import { twoFactorService } from "./services/auth/two-factor.service.js";
+import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
 import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
@@ -207,6 +208,45 @@ app.post("/api/auth/2fa/recovery-codes/regenerate", requireAuth, async (req: Aut
     res.json({ recoveryCodes: codes });
   } catch (err) {
     handleAuthError(err, res);
+  }
+});
+
+// ============================================================================
+// OAUTH 2.0 (Google Sign-In)
+// ============================================================================
+app.get("/api/auth/oauth/google", (req, res) => {
+  if (!oauthService.isEnabled()) {
+    return res.status(503).json({ error: "Google OAuth is not configured" });
+  }
+  const state = crypto.randomUUID();
+  const url = oauthService.generateAuthUrl(state);
+  res.redirect(url);
+});
+
+app.get("/api/auth/oauth/google/callback", async (req, res) => {
+  const { code, error, error_description } = req.query as Record<string, string>;
+
+  if (error) {
+    return res.redirect(
+      `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent(error_description || error)}`
+    );
+  }
+
+  if (!code) {
+    return res.redirect(`${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=no_code`);
+  }
+
+  try {
+    const result = await oauthService.handleCallback(code);
+    const redirectUrl = new URL(`${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/auth/callback`);
+    redirectUrl.hash = `token=${encodeURIComponent(result.token)}`;
+    redirectUrl.searchParams.set("userId", result.user.id);
+    redirectUrl.searchParams.set("email", result.user.email);
+    res.redirect(redirectUrl.toString());
+  } catch (err: any) {
+    const message = err instanceof Error ? err.message : "OAuth authentication failed";
+    logger.error({ err, code }, "Google OAuth callback failed");
+    res.redirect(`${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent(message)}`);
   }
 });
 

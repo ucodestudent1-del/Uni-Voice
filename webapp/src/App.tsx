@@ -4,6 +4,7 @@ import Layout from "./components/Layout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import Invoices from "./pages/Invoices";
 import InvoiceEditorPage from "./pages/InvoiceEditorPage";
@@ -37,6 +38,7 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
       <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
+      <Route path="/auth/callback" element={<PublicOnly><AuthCallback /></PublicOnly>} />
       <Route path="/pricing" element={<Plans />} />
       <Route path="/invoice/:token" element={<PublicInvoice />} />
 
