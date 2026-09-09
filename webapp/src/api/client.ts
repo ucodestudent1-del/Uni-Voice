@@ -30,8 +30,8 @@ export async function login(email: string, password: string) {
   return res.data;
 }
 
-export async function register(email: string, password: string, name: string) {
-  const res = await api.post("/auth/register", { email, password, name });
+export async function register(email: string, password: string, name: string, countryCode?: string, defaultCurrency?: string) {
+  const res = await api.post("/auth/register", { email, password, name, countryCode, defaultCurrency });
   return res.data;
 }
 
@@ -82,6 +82,16 @@ export async function createInvoice(data: any) {
 
 export async function updateInvoice(id: string, data: any) {
   const res = await api.patch(`/invoices/${id}`, data);
+  return res.data;
+}
+
+export async function setInvoiceItems(id: string, items: any[]) {
+  const res = await api.put(`/invoices/${id}/items`, items);
+  return res.data;
+}
+
+export async function setInvoiceFees(id: string, fees: any[]) {
+  const res = await api.put(`/invoices/${id}/fees`, fees);
   return res.data;
 }
 
@@ -197,5 +207,70 @@ export async function exportInvoicesCsv() {
 
 export async function getFeatures() {
   const res = await api.get("/features");
+  return res.data;
+}
+
+export async function getTemplates(params?: { limit?: number; offset?: number }) {
+  const res = await api.get("/templates", { params });
+  return res.data;
+}
+
+export async function getTemplate(id: string) {
+  const res = await api.get(`/templates/${id}`);
+  return res.data;
+}
+
+export async function createTemplate(data: any) {
+  const res = await api.post("/templates", data);
+  return res.data;
+}
+
+export async function updateTemplate(id: string, data: any) {
+  const res = await api.patch(`/templates/${id}`, data);
+  return res.data;
+}
+
+export async function deleteTemplate(id: string) {
+  const res = await api.delete(`/templates/${id}`);
+  return res.data;
+}
+
+export async function getNumberingConfig() {
+  const res = await api.get("/businesses/current/numbering");
+  return res.data;
+}
+
+export async function updateNumberingConfig(data: any) {
+  const res = await api.patch("/businesses/current/numbering", data);
+  return res.data;
+}
+
+export async function getPayments(invoiceId: string) {
+  const res = await api.get(`/invoices/${invoiceId}/payments`);
+  return res.data;
+}
+
+export async function recordPayment(invoiceId: string, data: { amount: number; provider?: string; providerPaymentId?: string; idempotencyKey?: string }) {
+  const res = await api.post(`/invoices/${invoiceId}/payments`, data);
+  return res.data;
+}
+
+export async function getPublicInvoice(token: string) {
+  const res = await api.get(`/public/invoices/${token}`);
+  return res.data;
+}
+
+export async function recordPublicView(token: string) {
+  const res = await api.post(`/public/invoices/${token}/view`);
+  return res.data;
+}
+
+export async function getPublicInvoicePdf(token: string) {
+  const res = await api.get(`/public/invoices/${token}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getTaxRates() {
+  const res = await api.get("/tax-rates");
   return res.data;
 }

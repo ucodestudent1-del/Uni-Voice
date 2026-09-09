@@ -7,13 +7,15 @@ import { env, isDev } from "./config/index.js";
 import { query } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
-import { requireAuth, AuthRequest, generateToken } from "./middleware/auth.js";
+import { requireAuth, optionalAuth, AuthRequest, generateToken } from "./middleware/auth.js";
 import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
 import { customerRepository } from "./repositories/customer.repo.js";
 import { productRepository } from "./repositories/product.repo.js";
 import { invoiceRepository } from "./repositories/invoice.repo.js";
+import { templateRepository } from "./repositories/template.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
 import { logger } from "./utils/logger.js";
 import { stripeService } from "./services/payments/stripe-service.js";
@@ -48,7 +50,7 @@ if (isDev) {
 // AUTH
 // ============================================================================
 app.post("/api/auth/register", async (req, res) => {
-  const { email, password, name } = req.body;
+  const { email, password, name, countryCode, defaultCurrency } = req.body;
   if (!email || !password) return res.status(400).json({ error: "email and password required" });
 
   const existing = await query("SELECT id FROM users WHERE email = $1", [email]);
@@ -65,10 +67,10 @@ app.post("/api/auth/register", async (req, res) => {
       `INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES ($1,$2,$3,$4,$4)`,
       [userId, email, passwordHash, now]
     );
-    await query(
-      `INSERT INTO businesses (id, owner_id, name, country_code, default_currency, created_at, updated_at) VALUES ($1,$2,$3,'US','USD',$4,$4)`,
-      [businessId, userId, name || "My Business", now]
-    );
+   await query(
+    `INSERT INTO businesses (id, owner_id, name, country_code, default_currency, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$6)`,
+    [businessId, userId, name || "My Business", countryCode || "US", defaultCurrency || "USD", now]
+  );
     await query(
       `INSERT INTO business_settings (business_id, default_currency, time_zone, locale, created_at, updated_at) VALUES ($1,'USD','UTC','en-US',$2,$2)`,
       [businessId, now]
@@ -80,7 +82,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
 
   const token = generateToken(userId, businessId, email);
-  res.status(201).json({ token, user: { id: userId, businessId, email } });
+  res.status(201).json({ token, user: { id: userId, businessId, email, countryCode: countryCode || "US", defaultCurrency: defaultCurrency || "USD" } });
 });
 
 app.post("/api/auth/login", async (req, res) => {
@@ -486,6 +488,133 @@ app.get("/api/features", requireAuth, async (req: AuthRequest, res) => {
   const flags = await subscriptionRepository.listPremiumFeatureFlags(ctx.plan.code);
   const allFlags = await subscriptionRepository.listFeatureFlags();
   res.json({ plan: ctx.plan.code, features: allFlags, premium: flags });
+});
+
+// ============================================================================
+// TEMPLATES (CRUD for invoice templates)
+// ============================================================================
+app.get("/api/templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Number(req.query.limit ?? 50), 200);
+  const offset = Number(req.query.offset ?? 0);
+  const templates = await templateRepository.findMany(req.user!.businessId, limit, offset);
+  res.json({ templates, limit, offset });
+});
+
+app.post("/api/templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await templateRepository.create(req.user!.businessId, {
+    name: req.body.name ?? "Untitled Template",
+    htmlTemplate: req.body.htmlTemplate ?? "",
+    config: req.body.config ?? {},
+    isDefault: req.body.isDefault ?? false,
+  });
+  res.status(201).json({ template });
+});
+
+app.get("/api/templates/default", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await templateRepository.findDefault(req.user!.businessId);
+  res.json({ template });
+});
+
+app.get("/api/templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await templateRepository.findById(req.user!.businessId, req.params.id);
+  res.json({ template });
+});
+
+app.patch("/api/templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await templateRepository.update(req.user!.businessId, req.params.id, req.body);
+  res.json({ template });
+});
+
+app.delete("/api/templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await templateRepository.delete(req.user!.businessId, req.params.id);
+  res.status(204).send();
+});
+
+// ============================================================================
+// NUMBER SEQUENCES (invoice numbering config)
+// ============================================================================
+app.get("/api/businesses/current/numbering", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    "SELECT * FROM invoice_number_sequences WHERE business_id = $1",
+    [req.user!.businessId]
+  );
+  if (!result.rows.length) {
+    return res.json({ sequence: null });
+  }
+  res.json({ sequence: result.rows[0] });
+});
+
+app.patch("/api/businesses/current/numbering", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await invoiceNumberService.updateSequenceConfig(req.user!.businessId, req.body);
+  res.json({ ok: true });
+});
+
+// ============================================================================
+// PAYMENTS
+// ============================================================================
+app.get("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    "SELECT * FROM payments WHERE invoice_id = $1 AND business_id = $2 ORDER BY created_at DESC",
+    [req.params.id, req.user!.businessId]
+  );
+  res.json({ payments: result.rows });
+});
+
+app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { amount, provider = "stub", providerPaymentId, idempotencyKey } = req.body;
+  if (!amount) return res.status(400).json({ error: "amount required" });
+  await invoiceService.recordPayment(
+    req.user!.businessId,
+    req.params.id,
+    amount,
+    provider,
+    providerPaymentId,
+    idempotencyKey
+  );
+  res.status(201).json({ ok: true });
+});
+
+// ============================================================================
+// TAX RATES
+// ============================================================================
+app.get("/api/tax-rates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    "SELECT * FROM business_tax_rates WHERE business_id = $1 AND enabled = TRUE ORDER BY name",
+    [req.user!.businessId]
+  );
+  res.json({ taxRates: result.rows });
+});
+
+// ============================================================================
+// PUBLIC INVOICE VIEW (customer-facing, no auth required)
+// ============================================================================
+app.get("/api/public/invoices/:token", optionalAuth, async (req: AuthRequest, res) => {
+  const { invoice, html } = await invoiceService.getPublicInvoice(req.params.token);
+  res.json({ invoice, html });
+});
+
+app.get("/api/public/invoices/:token/pdf", optionalAuth, async (req: AuthRequest, res) => {
+  const invoice = await invoiceRepository.findByPublicToken(undefined, req.params.token);
+  const pdf = await invoiceService.generatePdf(invoice.businessId, invoice.id);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=invoice-${invoice.invoiceNumber ?? invoice.id}.pdf`);
+  res.send(pdf);
+});
+
+app.post("/api/public/invoices/:token/view", optionalAuth, async (req: AuthRequest, res) => {
+  const invoiceId = await invoiceService.recordView(req.params.token);
+  res.json({ invoiceId });
 });
 
 // ============================================================================
