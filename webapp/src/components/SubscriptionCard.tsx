@@ -6,12 +6,39 @@ interface SubscriptionCardProps {
 }
 
 export default function SubscriptionCard({ onUpgrade, compact = false }: SubscriptionCardProps) {
-  const { plan, subscription } = useSubscription();
+  const { plan, subscription, loading } = useSubscription();
 
-  if (!plan) {
+  if (loading) {
     return (
       <div className={`rounded-xl border border-slate-200 bg-white p-6 ${compact ? "" : "text-center"}`}>
         <p className="text-sm text-slate-500">Loading plan...</p>
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className={`rounded-xl border border-slate-200 bg-white p-6 ${compact ? "text-center" : ""}`}>
+        <div className={`flex items-center ${compact ? "justify-center flex-col" : "gap-4"}`}>
+          <div className="rounded-full bg-slate-100 p-3">
+            <svg className="h-6 w-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
+            </svg>
+          </div>
+          <div className={compact ? "text-center" : ""}>
+            <p className="text-lg font-semibold text-slate-900">Free Plan</p>
+            <p className="text-sm text-slate-500">You are on the free plan</p>
+          </div>
+        </div>
+        {onUpgrade && (
+          <button
+            onClick={onUpgrade}
+            className="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          >
+            Upgrade to Pro
+          </button>
+        )}
       </div>
     );
   }

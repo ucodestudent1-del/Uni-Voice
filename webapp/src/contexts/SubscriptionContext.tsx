@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getSubscription, getPlans, upgradeSubscription, downgradeSubscription, getFeatures } from "../api/client";
+import { useAuth } from "./AuthContext";
 
 interface Plan {
   id: string;
@@ -29,6 +30,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [features, setFeatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
   async function refresh() {
     try {
       const [subData, plansData, featuresData] = await Promise.all([
@@ -47,8 +50,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
     refresh();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
   const upgrade = async (planCode: string, billingCycle?: string) => {
     const data = await upgradeSubscription(planCode, billingCycle);
