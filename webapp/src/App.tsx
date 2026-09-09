@@ -49,11 +49,12 @@ export default function App() {
         <Route path="invoices/:id" element={<InvoiceEditorPage />} />
         <Route path="customers" element={<Customers />} />
         <Route path="products" element={<Products />} />
-        <Route path="templates" element={<Templates />} />
-        <Route path="expenses" element={<Expenses />} />
-        <Route path="reports" element={<Reports />} />
-        <Route path="plans" element={<Plans />} />
-        <Route path="settings" element={<Settings />} />
+         <Route path="templates" element={<Templates />} />
+         <Route path="expenses" element={<Expenses />} />
+         <Route path="reports" element={<Reports />} />
+         <Route path="plans" element={<Plans />} />
+         <Route path="settings" element={<Settings />} />
+         <Route path="security" element={<Settings defaultTab="security" />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

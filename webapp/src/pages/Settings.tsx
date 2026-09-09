@@ -4,16 +4,19 @@ import { getBusiness, updateBusiness as apiUpdateBusiness, getNumberingConfig, u
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import SubscriptionCard from "../components/SubscriptionCard";
+import TwoFactorManager from "../components/TwoFactorManager";
 import type { ApiBusiness, FeatureFlag } from "../types/api";
 
-export default function Settings() {
+export type SettingsTab = "business" | "numbering" | "subscription" | "security";
+
+export default function Settings({ defaultTab = "business" }: { defaultTab?: SettingsTab }) {
   const { user } = useAuth();
   const { plan } = useSubscription();
   const navigate = useNavigate();
   const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"business" | "numbering" | "subscription">("business");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(defaultTab);
   const [numbering, setNumbering] = useState<any>(null);
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
 
@@ -143,6 +146,16 @@ export default function Settings() {
           }`}
         >
           Subscription
+        </button>
+        <button
+          onClick={() => setActiveTab("security")}
+          className={`px-4 py-2 text-sm font-medium ${
+            activeTab === "security"
+              ? "text-primary-600 border-b-2 border-primary-600"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          Security
         </button>
       </div>
 
@@ -355,6 +368,13 @@ export default function Settings() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === "security" && (
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Authentication</h3>
+          <TwoFactorManager />
         </div>
       )}
     </div>

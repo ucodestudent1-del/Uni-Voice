@@ -9,6 +9,7 @@ import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import { requireAuth, optionalAuth, AuthRequest, generateToken } from "./middleware/auth.js";
 import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.js";
+import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { invoiceService } from "./services/invoice-service.js";
 import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
@@ -89,15 +90,27 @@ app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "email and password required" });
 
-  const result = await query("SELECT id, email, password_hash FROM users WHERE email = $1", [email]);
+  const result = await query(
+    "SELECT id, email, password_hash, two_factor_enabled, two_factor_method FROM users WHERE email = $1",
+    [email]
+  );
   if (!result.rows.length) return res.status(401).json({ error: "Invalid credentials" });
 
   const user = result.rows[0];
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
-  const subResult = await query("SELECT business_id FROM businesses WHERE owner_id = $1 LIMIT 1", [user.id]);
+  const subResult = await query("SELECT id AS business_id FROM businesses WHERE owner_id = $1 LIMIT 1", [user.id]);
   const businessId = subResult.rows[0]?.business_id;
+
+  // If 2FA is enabled, do NOT issue a token yet — require a second factor.
+  if (user.two_factor_enabled) {
+    return res.json({
+      requiresTwoFactor: true,
+      twoFactorMethod: user.two_factor_method ?? "totp",
+      user: { id: user.id, businessId, email: user.email },
+    });
+  }
 
   const token = generateToken(user.id, businessId, user.email);
   res.json({ token, user: { id: user.id, businessId, email: user.email } });
@@ -107,7 +120,94 @@ app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
   const sub = await subscriptionRepository.findSubscriptionByBusinessId(req.user!.businessId!);
   const plan = sub ? await subscriptionService.getPlanById(sub.planId) : null;
-  res.json({ user: req.user, subscription: sub, plan });
+  const twoFactor = await twoFactorService.getStatus(req.user!.id);
+  res.json({ user: req.user, subscription: sub, plan, twoFactor });
+});
+
+// ============================================================================
+// TWO-FACTOR AUTHENTICATION (TOTP / authenticator app)
+// ============================================================================
+function handleAuthError(err: unknown, res: express.Response) {
+  if (err instanceof Error && "statusCode" in err) {
+    const e = err as { statusCode: number; code?: string; message: string };
+    return res.status(e.statusCode).json({ error: e.message, code: e.code });
+  }
+  return res.status(500).json({ error: "Internal server error" });
+}
+
+// Second factor verification during login (no session token yet).
+// Accepts the code from an authenticator app OR a one-time recovery code.
+app.post("/api/auth/2fa/verify", async (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) return res.status(400).json({ error: "email and code required" });
+
+  try {
+    const userRes = await query("SELECT id, email FROM users WHERE email = $1", [email]);
+    if (!userRes.rows.length) return res.status(401).json({ error: "Invalid code" });
+    const u = userRes.rows[0];
+
+    const subResult = await query("SELECT id AS business_id FROM businesses WHERE owner_id = $1 LIMIT 1", [u.id]);
+    const businessId = subResult.rows[0]?.business_id;
+
+    const result = await twoFactorService.verifyLogin(u.id, u.email, businessId, code, req.ip);
+    res.json({ token: result.token, user: result.user, usedRecoveryCode: result.usedRecoveryCode });
+  } catch (err) {
+    handleAuthError(err, res);
+  }
+});
+
+// 2FA management (protected, requires an existing authenticated session)
+app.get("/api/auth/2fa/status", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  const status = await twoFactorService.getStatus(req.user!.id);
+  const summary = await twoFactorService.getRecoverySummary(req.user!.id);
+  res.json({ status, recoveryCodes: summary });
+});
+
+// Begin setup: generates a TOTP secret (pending, not yet enabled).
+app.post("/api/auth/2fa/setup", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const result = await twoFactorService.setup(req.user!.id, req.user!.email ?? "");
+    res.json(result);
+  } catch (err) {
+    handleAuthError(err, res);
+  }
+});
+
+// Confirm setup: verifies a code against the pending secret, then enables 2FA.
+app.post("/api/auth/2fa/enable", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ error: "code required" });
+  try {
+    const result = await twoFactorService.enable(req.user!.id, code);
+    res.json(result);
+  } catch (err) {
+    handleAuthError(err, res);
+  }
+});
+
+// Disable 2FA (clears secret + recovery codes).
+app.delete("/api/auth/2fa", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const result = await twoFactorService.disable(req.user!.id);
+    res.json(result);
+  } catch (err) {
+    handleAuthError(err, res);
+  }
+});
+
+// Regenerate recovery codes (e.g. after using them all). Requires 2FA enabled.
+app.post("/api/auth/2fa/recovery-codes/regenerate", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const codes = await twoFactorService.regenerateRecoveryCodes(req.user!.id);
+    res.json({ recoveryCodes: codes });
+  } catch (err) {
+    handleAuthError(err, res);
+  }
 });
 
 // ============================================================================

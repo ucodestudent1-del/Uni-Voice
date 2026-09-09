@@ -1,4 +1,17 @@
 import axios from "axios";
+import type { AxiosRequestConfig } from "axios";
+import type {
+  TwoFactorSetupResult,
+  TwoFactorVerifyResult,
+  TwoFactorStatus,
+  RecoveryCodeSummary,
+} from "../types/api";
+
+declare module "axios" {
+  export interface InternalAxiosRequestConfig {
+    skipAuthRedirect?: boolean;
+  }
+}
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
 
@@ -17,7 +30,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const skipRedirect = error.config?.skipAuthRedirect === true;
+    if (status === 401 && !skipRedirect) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
@@ -27,6 +42,43 @@ api.interceptors.response.use(
 
 export async function login(email: string, password: string) {
   const res = await api.post("/auth/login", { email, password });
+  return res.data;
+}
+
+export async function verifyTwoFactor(email: string, code: string): Promise<TwoFactorVerifyResult> {
+  const res = await api.post<TwoFactorVerifyResult>(
+    "/auth/2fa/verify",
+    { email, code },
+    { skipAuthRedirect: true } as AxiosRequestConfig
+  );
+  return res.data;
+}
+
+export async function getTwoFactorStatus(): Promise<{
+  status: TwoFactorStatus;
+  recoveryCodes: RecoveryCodeSummary;
+}> {
+  const res = await api.get("/auth/2fa/status");
+  return res.data;
+}
+
+export async function setupTwoFactor(): Promise<TwoFactorSetupResult> {
+  const res = await api.post("/auth/2fa/setup");
+  return res.data;
+}
+
+export async function enableTwoFactor(code: string): Promise<{ enabled: boolean }> {
+  const res = await api.post("/auth/2fa/enable", { code });
+  return res.data;
+}
+
+export async function disableTwoFactor(): Promise<{ disabled: boolean }> {
+  const res = await api.delete("/auth/2fa");
+  return res.data;
+}
+
+export async function regenerateRecoveryCodes(): Promise<{ recoveryCodes: string[] }> {
+  const res = await api.post("/auth/2fa/recovery-codes/regenerate");
   return res.data;
 }
 

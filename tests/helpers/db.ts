@@ -1,5 +1,6 @@
 import { query, getClient } from "../../src/db/pool.js";
 import { runMigrations, rollbackAll } from "../../src/db/migrate.js";
+import bcrypt from "bcrypt";
 
 export async function resetTestDb(): Promise<void> {
   await rollbackAll();
@@ -37,6 +38,48 @@ export async function createTestBusiness(data?: Partial<{
     [id, defaultCurrency, now]
   );
   return { id, ownerId };
+}
+
+export interface TestUser {
+  id: string;
+  email: string;
+  password: string;
+  businessId: string;
+}
+
+export async function createTestUser(data?: Partial<{
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  businessId: string;
+  countryCode: string;
+  defaultCurrency: string;
+}>): Promise<TestUser> {
+  const id = data?.id ?? "11111111-1111-1111-1111-111111111111";
+  const email = data?.email ?? `${id}@example.com`;
+  const password = data?.password ?? "Password123!";
+  const businessId = data?.businessId ?? "00000000-0000-0000-0000-000000000001";
+  const countryCode = data?.countryCode ?? "US";
+  const defaultCurrency = data?.defaultCurrency ?? "USD";
+  const now = new Date().toISOString();
+  const passwordHash = await bcrypt.hash(password, 5);
+
+  await query(
+    `INSERT INTO users (id, email, password_hash, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $4)
+     ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, password_hash = EXCLUDED.password_hash`,
+    [id, email, passwordHash, now]
+  );
+
+  await query(
+    `INSERT INTO businesses (id, owner_id, name, country_code, default_currency, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $6)
+     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`,
+    [businessId, id, "Test Business", countryCode, defaultCurrency, now]
+  );
+
+  return { id, email, password, businessId };
 }
 
 export async function createTestCustomer(businessId: string, name = "Test Customer"): Promise<string> {

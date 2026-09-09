@@ -181,3 +181,28 @@ export interface InvoiceTotals {
   amount_paid: string;
   amount_due: string;
 }
+
+export interface TwoFactorStatus {
+  enabled: boolean;
+  method: string;
+  confirmedAt: string | null;
+}
+
+export interface TwoFactorSetupResult {
+  secret: string;
+  otpauthUri: string;
+  recoveryCodes: string[];
+}
+
+export interface TwoFactorVerifyResult {
+  token: string;
+  user: ApiUser;
+  usedRecoveryCode: boolean;
+}
+
+export interface RecoveryCodeSummary {
+  total: number;
+  used: number;
+  remaining: number;
+  usedAt: (string | null)[];
+}

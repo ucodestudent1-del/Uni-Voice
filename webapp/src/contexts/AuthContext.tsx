@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { getMe, login as apiLogin, register as apiRegister } from "../api/client";
+import { getMe, login as apiLogin, register as apiRegister, verifyTwoFactor as verifyTwoFactorApi } from "../api/client";
 
 interface User {
   id: string;
@@ -12,6 +12,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  verifyTwoFactor: (email: string, code: string) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -54,8 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const verifyTwoFactor = async (email: string, code: string) => {
+    const data = await verifyTwoFactorApi(email, code);
+    login(data.token, data.user as unknown as User);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
