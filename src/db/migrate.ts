@@ -77,7 +77,7 @@ export async function rollbackAll() {
       await client.query(`DROP TABLE IF EXISTS "${t}" CASCADE`);
     }
     await client.query(
-      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status CASCADE`
+      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status, onboarding_step_status CASCADE`
     );
     await client.query("COMMIT");
     logger.info(`Dropped ${tables.length} tables (rollback)`);

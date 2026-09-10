@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { getMe, login as apiLogin, register as apiRegister, verifyTwoFactor as verifyTwoFactorApi } from "../api/client";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { getMe, login as apiLogin, register as apiRegister, verifyTwoFactor as verifyTwoFactorApi, getOnboarding, completeOnboardingStep } from "../api/client";
+import type { OnboardingProgress } from "../types/api";
 
 interface User {
   id: string;
@@ -15,6 +16,9 @@ interface AuthContextType {
   verifyTwoFactor: (email: string, code: string) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  onboarding: OnboardingProgress | null;
+  completeStep: (step: string) => Promise<OnboardingProgress>;
+  refreshOnboarding: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +27,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
   const [isLoading, setIsLoading] = useState(true);
+  const [onboarding, setOnboarding] = useState<OnboardingProgress | null>(null);
+
+  async function loadOnboarding() {
+    try {
+      const data = await getOnboarding();
+      setOnboarding(data);
+    } catch {
+      setOnboarding(null);
+    }
+  }
+
+  const completeStep = useCallback(async (step: string) => {
+    const data = await completeOnboardingStep(step);
+    setOnboarding(data.progress);
+    return data.progress;
+  }, []);
+
+  const refreshOnboarding = useCallback(async () => {
+    await loadOnboarding();
+  }, []);
 
   useEffect(() => {
     async function validate() {
@@ -33,10 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const data = await getMe();
         setUser(data.user);
+        setOnboarding(data.onboarding ?? null);
       } catch {
         localStorage.removeItem("token");
         setToken(null);
         setUser(null);
+        setOnboarding(null);
       }
       setIsLoading(false);
     }
@@ -53,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
+    setOnboarding(null);
   };
 
   const verifyTwoFactor = async (email: string, code: string) => {
@@ -61,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, refreshOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

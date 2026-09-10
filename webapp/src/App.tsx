@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
+import OnboardingWizard from "./pages/OnboardingWizard";
 import Invoices from "./pages/Invoices";
 import InvoiceEditorPage from "./pages/InvoiceEditorPage";
 import Customers from "./pages/Customers";
@@ -21,6 +22,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-600">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function OnboardedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, onboarding } = useAuth();
+  if (isLoading || (isAuthenticated && onboarding === null)) return <div className="flex items-center justify-center h-screen text-slate-600">Loading...</div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (onboarding && !onboarding.isComplete) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }
 
@@ -42,8 +51,11 @@ export default function App() {
       <Route path="/pricing" element={<Plans />} />
       <Route path="/invoice/:token" element={<PublicInvoice />} />
 
+      {/* Onboarding */}
+      <Route path="/onboarding" element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />
+
       {/* Protected application routes */}
-      <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+      <Route path="/app" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/new" element={<InvoiceEditorPage />} />

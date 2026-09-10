@@ -326,3 +326,28 @@ export async function getTaxRates() {
   const res = await api.get("/tax-rates");
   return res.data;
 }
+
+export async function getOnboarding() {
+  const res = await api.get("/onboarding");
+  return res.data;
+}
+
+export async function completeOnboardingStep(step: string) {
+  const res = await api.post(`/onboarding/step/${step}/complete`);
+  return res.data;
+}
+
+export async function startOnboardingStep(step: string) {
+  const res = await api.post(`/onboarding/step/${step}/start`);
+  return res.data;
+}
+
+export async function skipOnboardingStep(step: string) {
+  const res = await api.post(`/onboarding/step/${step}/skip`);
+  return res.data;
+}
+
+export async function finishOnboarding() {
+  const res = await api.post("/onboarding/complete");
+  return res.data;
+}

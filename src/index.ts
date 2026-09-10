@@ -19,6 +19,8 @@ import { productRepository } from "./repositories/product.repo.js";
 import { invoiceRepository } from "./repositories/invoice.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
+import { onboardingRepository } from "./repositories/onboarding.repo.js";
+import { onboardingService } from "./services/onboarding.service.js";
 import { logger } from "./utils/logger.js";
 import { stripeService } from "./services/payments/stripe-service.js";
 import bcrypt from "bcrypt";
@@ -77,12 +79,13 @@ app.post("/api/auth/register", async (req, res) => {
       `INSERT INTO business_settings (business_id, default_currency, time_zone, locale, created_at, updated_at) VALUES ($1,'USD','UTC','en-US',$2,$2)`,
       [businessId, now]
     );
-    await query("COMMIT");
-  } catch (e) {
-    await query("ROLLBACK");
-    throw e;
-  }
+     await query("COMMIT");
+   } catch (e) {
+     await query("ROLLBACK");
+     throw e;
+   }
 
+  await onboardingService.ensureSteps(businessId);
   const token = generateToken(userId, businessId, email);
   res.status(201).json({ token, user: { id: userId, businessId, email, countryCode: countryCode || "US", defaultCurrency: defaultCurrency || "USD" } });
 });
@@ -122,7 +125,8 @@ app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
   const sub = await subscriptionRepository.findSubscriptionByBusinessId(req.user!.businessId!);
   const plan = sub ? await subscriptionService.getPlanById(sub.planId) : null;
   const twoFactor = await twoFactorService.getStatus(req.user!.id);
-  res.json({ user: req.user, subscription: sub, plan, twoFactor });
+  const onboarding = await onboardingService.getProgress(req.user!.businessId!);
+  res.json({ user: req.user, subscription: sub, plan, twoFactor, onboarding });
 });
 
 // ============================================================================
@@ -248,6 +252,63 @@ app.get("/api/auth/oauth/google/callback", async (req, res) => {
     logger.error({ err, code }, "Google OAuth callback failed");
     res.redirect(`${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent(message)}`);
   }
+});
+
+// ============================================================================
+// ONBOARDING
+// ============================================================================
+app.get("/api/onboarding", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const progress = await onboardingService.getProgress(req.user!.businessId);
+  res.json(progress);
+});
+
+app.post("/api/onboarding/step/:step/complete", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { step } = req.params;
+  try {
+    const updated = await onboardingService.completeStep(req.user!.businessId, step);
+    const progress = await onboardingService.getProgress(req.user!.businessId);
+    res.json({ step: updated, progress });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post("/api/onboarding/step/:step/start", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { step } = req.params;
+  try {
+    const updated = await onboardingService.startStep(req.user!.businessId, step);
+    res.json({ step: updated });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post("/api/onboarding/step/:step/skip", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { step } = req.params;
+  try {
+    const updated = await onboardingService.skipStep(req.user!.businessId, step);
+    const progress = await onboardingService.getProgress(req.user!.businessId);
+    res.json({ step: updated, progress });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post("/api/onboarding/complete", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const steps = await onboardingRepository.findByBusinessId(req.user!.businessId);
+  for (const s of steps) {
+    if (s.status !== "completed" && s.step !== "complete") {
+      await onboardingRepository.updateStepStatus(req.user!.businessId, s.step, "completed");
+    }
+  }
+  await onboardingRepository.markComplete(req.user!.businessId);
+  const progress = await onboardingService.getProgress(req.user!.businessId);
+  res.json(progress);
 });
 
 // ============================================================================

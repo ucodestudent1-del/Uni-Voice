@@ -205,3 +205,21 @@ export interface RecoveryCodeSummary {
   remaining: number;
   usedAt: (string | null)[];
 }
+
+export interface OnboardingStep {
+  id: string;
+  step: string;
+  title: string;
+  description: string | null;
+  status: "pending" | "in_progress" | "completed" | "skipped";
+  completedAt: string | null;
+}
+
+export interface OnboardingProgress {
+  steps: OnboardingStep[];
+  currentStep: string;
+  completedSteps: number;
+  totalSteps: number;
+  percentComplete: number;
+  isComplete: boolean;
+}
