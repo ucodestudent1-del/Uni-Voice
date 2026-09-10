@@ -81,9 +81,7 @@ const STEP_COMPONENTS: Record<string, JSX.Element> = {
         Your business is fully configured. Let's start creating invoices.
       </p>
       <button
-        onClick={() => {
-          console.log("Onboarding complete, redirecting to dashboard");
-        }}
+        onClick={() => window.location.assign("/app")}
         className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
       >
         Go to Dashboard
@@ -93,7 +91,7 @@ const STEP_COMPONENTS: Record<string, JSX.Element> = {
 };
 
 export default function OnboardingWizard() {
-  const { user, onboarding, refreshOnboarding, completeStep } = useAuth();
+  const { user, onboarding, refreshOnboarding, completeStep, skipOnboarding } = useAuth();
   const [progress, setProgress] = useState<OnboardingProgressType | null>(onboarding);
   const [isCompleting, setIsCompleting] = useState(false);
   const navigate = useNavigate();
@@ -106,7 +104,7 @@ export default function OnboardingWizard() {
 
   useEffect(() => {
     if (progress?.isComplete) {
-      navigate("/");
+      navigate("/app");
     }
   }, [progress?.isComplete, navigate]);
 
@@ -151,6 +149,19 @@ export default function OnboardingWizard() {
     }
   }, [progress, completeStep]);
 
+  const handleSkip = useCallback(async () => {
+    try {
+      setIsCompleting(true);
+      const newProgress = await skipOnboarding();
+      setProgress(newProgress);
+      navigate("/app");
+    } catch (err) {
+      console.error("Failed to skip onboarding:", err);
+    } finally {
+      setIsCompleting(false);
+    }
+  }, [skipOnboarding, navigate]);
+
   if (!progress) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -186,7 +197,8 @@ export default function OnboardingWizard() {
 
         <div className="flex justify-between mt-8">
           <button
-            onClick={() => navigate("/")}
+            onClick={handleSkip}
+            disabled={isCompleting}
             className="px-4 py-2 text-slate-600 hover:text-slate-900"
           >
             Skip Onboarding

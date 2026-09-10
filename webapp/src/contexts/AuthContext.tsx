@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { getMe, login as apiLogin, register as apiRegister, verifyTwoFactor as verifyTwoFactorApi, getOnboarding, completeOnboardingStep } from "../api/client";
+import { getMe, login as apiLogin, register as apiRegister, verifyTwoFactor as verifyTwoFactorApi, getOnboarding, completeOnboardingStep, finishOnboarding as finishOnboardingApi } from "../api/client";
 import type { OnboardingProgress } from "../types/api";
 
 interface User {
@@ -18,6 +18,7 @@ interface AuthContextType {
   isLoading: boolean;
   onboarding: OnboardingProgress | null;
   completeStep: (step: string) => Promise<OnboardingProgress>;
+  skipOnboarding: () => Promise<OnboardingProgress>;
   refreshOnboarding: () => Promise<void>;
 }
 
@@ -46,6 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshOnboarding = useCallback(async () => {
     await loadOnboarding();
+  }, []);
+
+  const skipOnboarding = useCallback(async () => {
+    const data = await finishOnboardingApi();
+    setOnboarding(data);
+    return data;
   }, []);
 
   useEffect(() => {
@@ -88,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, refreshOnboarding }}>
+    <AuthContext.Provider value={{ user, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
       {children}
     </AuthContext.Provider>
   );
