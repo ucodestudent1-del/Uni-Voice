@@ -1,7 +1,9 @@
 import { config as dotenvConfig } from "dotenv";
 import { z } from "zod";
 
-dotenvConfig();
+if (process.env.APP_ENV !== "test") {
+  dotenvConfig();
+}
 
 const cleanEnv = Object.fromEntries(
   Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v])
