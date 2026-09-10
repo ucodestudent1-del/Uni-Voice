@@ -103,7 +103,12 @@ export class SubscriptionService {
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
+      if (!sub) {
+        // A concurrent request created the subscription; fetch the existing one.
+        sub = await subscriptionRepository.findSubscriptionByBusinessId(businessId);
+      }
     }
+    if (!sub) throw new Error("Failed to create or retrieve subscription");
     const plan = await this.getPlanById(sub.planId);
     if (!plan) throw new Error(`Plan ${sub.planId} not found for subscription ${sub.id}`);
     return { businessId, plan, subscription: sub };

@@ -131,10 +131,12 @@ export class SubscriptionRepository {
   }
 
   // Business Subscriptions
-  async createSubscription(input: SubscriptionInput): Promise<BusinessSubscription> {
+  async createSubscription(input: SubscriptionInput): Promise<BusinessSubscription | null> {
     const res = await query(
       `INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, current_period_start, current_period_end, trial_ends_at, stripe_subscription_id, metadata)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       ON CONFLICT (business_id) DO NOTHING
+       RETURNING *`,
       [
         input.businessId, input.planId, input.status ?? "active", input.billingCycle ?? "monthly",
         input.currentPeriodStart?.toISOString() ?? new Date().toISOString(),
@@ -144,6 +146,7 @@ export class SubscriptionRepository {
         JSON.stringify(input.metadata ?? {}),
       ]
     );
+    if (!res.rows.length) return null;
     return this.rowToSubscription(res.rows[0]);
   }
 
