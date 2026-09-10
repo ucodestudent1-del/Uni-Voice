@@ -33,6 +33,13 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 if (isDev) app.use(morgan("dev"));
 
+function getCookie(header: string | undefined, name: string): string | null {
+  if (!header) return null;
+  const match = header.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${name}=`));
+  if (!match) return null;
+  return decodeURIComponent(match.substring(name.length + 1));
+}
+
 // Health
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", env: env.APP_ENV, timestamp: new Date().toISOString() });
@@ -223,12 +230,21 @@ app.get("/api/auth/oauth/google", (req, res) => {
     return res.status(503).json({ error: "Google OAuth is not configured" });
   }
   const state = crypto.randomUUID();
+  res.cookie("oauth_state", state, {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 5 * 60 * 1000,
+    secure: !isDev,
+  });
   const url = oauthService.generateAuthUrl(state);
   res.redirect(url);
 });
 
 app.get("/api/auth/oauth/google/callback", async (req, res) => {
-  const { code, error, error_description } = req.query as Record<string, string>;
+  const { code, error, error_description, state } = req.query as Record<string, string>;
+
+  const stateCookie = getCookie(req.headers.cookie, "oauth_state");
+  res.clearCookie("oauth_state", { httpOnly: true, sameSite: "lax", secure: !isDev });
 
   if (error) {
     return res.redirect(
@@ -238,6 +254,12 @@ app.get("/api/auth/oauth/google/callback", async (req, res) => {
 
   if (!code) {
     return res.redirect(`${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=no_code`);
+  }
+
+  if (!state || !stateCookie || state !== stateCookie) {
+    return res.redirect(
+      `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent("Invalid or missing OAuth state parameter")}`
+    );
   }
 
   try {
