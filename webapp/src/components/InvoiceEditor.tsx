@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Fragment } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
@@ -6,13 +6,64 @@ import {
   finalizeInvoice, sendInvoice, getInvoicePdf, getCustomers, getBusiness, getProducts
 } from "../api/client";
 import { calculationEngine, type LineItemInput, type FeeInput, type InvoiceCalculationInput } from "../utils/calculation";
+import { formatCurrency } from "../utils/format";
+import { SUPPORTED_CURRENCIES } from "../utils/currency";
+
+import {
+  InvoiceDocument,
+  ComponentId,
+  ComponentType,
+  ParentId,
+  StyleProps,
+  createEmptyDocument,
+} from "../document-model";
+import { EditorProvider, useEditor } from "../document-model/editor/EditorContext";
+import { DocumentEditor, PALETTE_DRAGGABLE_ID_PREFIX } from "../document-model/editor/DocumentEditor";
+import PropertyInspector from "../document-model/editor/PropertyInspector";
+
+import { invoiceToDocument, getDefaultDocument, documentToInvoice } from "../document-model/converter";
+import { DocumentPreview } from "../document-model/DocumentPreview";
+import { initializeRegistry } from "../document-model";
+import {
+  insertComponent,
+  updateComponent,
+  moveComponent,
+  removeComponent,
+  getChildren,
+  findComponent,
+  findParent,
+  findSiblings,
+} from "../document-model/document-operations";
+import {
+  getComponentDefinition,
+  getAllComponentDefinitions,
+  RenderContext,
+} from "../document-model/registry";
+
+import type { ApiInvoice, ApiCustomer, ApiBusiness, ApiProduct } from "../types/api";
+
 import CustomerSelector from "./CustomerSelector";
 import TaxSelector from "./TaxSelector";
 import TemplateSelector from "./TemplateSelector";
-import InvoicePreview, { PreviewInvoice } from "./InvoicePreview";
-import type { ApiInvoice, ApiCustomer, ApiBusiness, ApiProduct } from "../types/api";
-import { SUPPORTED_CURRENCIES } from "../utils/currency";
-import { formatCurrency } from "../utils/format";
+
+interface EditorInvoiceData {
+  customerId?: string;
+  customer?: ApiCustomer;
+  invoiceNumber?: string;
+  issueDate?: string;
+  dueDate?: string;
+  currency: string;
+  notes?: string;
+  terms?: string;
+  paymentInstructions?: string;
+  templateId?: string;
+  taxRate?: string;
+  discountType?: "fixed" | "percentage";
+  discountValue?: string;
+  items: EditorLineItem[];
+  fees: EditorFee[];
+  amountPaid?: string;
+}
 
 interface EditorLineItem {
   id?: string;
@@ -33,43 +84,35 @@ interface EditorFee {
   taxRate?: string;
 }
 
-interface EditorInvoice {
-  customerId?: string;
-  customer?: ApiCustomer;
-  invoiceNumber?: string;
-  issueDate?: string;
-  dueDate?: string;
-  currency: string;
-  notes?: string;
-  terms?: string;
-  paymentInstructions?: string;
-  templateId?: string;
-  taxRate?: string;
-  discountType?: "fixed" | "percentage";
-  discountValue?: string;
-  items: EditorLineItem[];
-  fees: EditorFee[];
-  amountPaid?: string;
-}
-
-const DEFAULT_TEMPLATE: EditorInvoice = {
-  currency: "USD",
-  issueDate: new Date().toISOString().split("T")[0],
-  dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-  items: [{ description: "", quantity: "1", unit: "each", unitPrice: "0.00", taxRate: "0", isTaxInclusive: false }],
-  fees: [],
-  notes: "",
-  terms: "Net 30",
-  paymentInstructions: "",
+const DEFAULT_DOCUMENT = (businessId: string): InvoiceDocument => {
+  initializeRegistry();
+  return getDefaultDocument(businessId);
 };
 
-export default function InvoiceEditor() {
+function InvoiceEditorContent() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isNew = !id || id === "new";
-  const isDraftRoute = id && !isNew;
 
-  const [invoice, setInvoice] = useState<EditorInvoice>({ ...DEFAULT_TEMPLATE });
+  const {
+    document: doc,
+    selectedComponentId,
+    setDocument,
+    onSelect,
+    insertComponent: doInsertComponent,
+    updateComponent: doUpdateComponent,
+    moveComponent: doMoveComponent,
+    removeComponent: doRemoveComponent,
+    setSettings,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    dirty,
+    markSaved,
+    saveDocument,
+  } = useEditor();
+
   const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -77,13 +120,12 @@ export default function InvoiceEditor() {
   const [loading, setLoading] = useState(!isNew);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [sendData, setSendData] = useState({ subject: "", message: "" });
+  const [editorData, setEditorData] = useState<EditorInvoiceData | null>(null);
+  const [previewMode, setPreviewMode] = useState<"edit" | "preview">("edit");
 
   useEffect(() => {
-    if (isNew) return;
-    loadInvoice();
-  }, [id]);
+    initializeRegistry();
 
-  useEffect(() => {
     Promise.all([
       getBusiness().then((d) => setBusiness(d.business)).catch(() => {}),
       getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {}),
@@ -91,117 +133,90 @@ export default function InvoiceEditor() {
     ]);
   }, []);
 
-  async function loadInvoice() {
-    if (!id) return;
-    setLoading(true);
-    try {
-      const data = await getInvoice(id);
-      const inv: ApiInvoice = data.invoice;
-      setInvoice({
-        customerId: inv.customer_id ?? undefined,
-        invoiceNumber: inv.invoice_number ?? undefined,
-        issueDate: inv.issue_date?.split("T")[0],
-        dueDate: inv.due_date?.split("T")[0],
-        currency: inv.currency,
-        notes: inv.notes ?? "",
-        terms: inv.terms ?? "",
-        paymentInstructions: inv.payment_instructions ?? "",
-        templateId: inv.template_id ?? undefined,
-        items: inv.items.map((it) => ({
-          id: it.id,
-          description: it.description,
-          quantity: it.quantity,
-          unit: it.unit,
-          unitPrice: it.unit_price,
-          discount: it.discount,
-          discountType: it.discount_type,
-          taxRate: it.tax_rate,
-          isTaxInclusive: it.is_tax_inclusive,
-          productId: it.product_id,
-        })),
-        fees: inv.fees.map((f) => ({
-          description: f.description,
-          amount: f.amount,
-          taxRate: f.tax_rate,
-        })),
-        amountPaid: inv.amount_paid,
-      });
-    } catch (err: any) {
-      if (err.response?.status === 404) {
-        alert("Invoice not found");
-        navigate("/app/invoices");
-        return;
-      }
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (isNew) {
+      const businessId = business?.id || "local";
+      const newDoc = DEFAULT_DOCUMENT(businessId);
+      setDocument(newDoc);
+      setSaveState("saved");
+      return;
     }
-  }
 
-  function updateField(field: string, value: any) {
-    setInvoice({ ...invoice, [field]: value });
-    setSaveState("unsaved");
-  }
+    if (!id) return;
 
-  function updateItem(index: number, field: string, value: any) {
-    const items = [...invoice.items];
-    items[index] = { ...items[index], [field]: value };
-    setInvoice({ ...invoice, items });
-    setSaveState("unsaved");
-  }
+    const loadInvoice = async () => {
+      setLoading(true);
+      try {
+        const data = await getInvoice(id);
+        const inv: ApiInvoice = data.invoice;
 
-  function addItem() {
-    const items = [...invoice.items, {
-      description: "", quantity: "1", unit: "each", unitPrice: "0.00",
-      taxRate: invoice.taxRate ?? "", isTaxInclusive: false,
-    }];
-    setInvoice({ ...invoice, items });
-    setSaveState("unsaved");
-  }
+        let customer: ApiCustomer | undefined;
+        if (inv.customer_id) {
+          const custRes = await getCustomers({ limit: 100 });
+          customer = custRes.customers?.find((c: ApiCustomer) => c.id === inv.customer_id);
+        }
 
-  function removeItem(index: number) {
-    const items = invoice.items.filter((_, i) => i !== index);
-    setInvoice({ ...invoice, items: items.length ? items : [{
-      description: "", quantity: "1", unit: "each", unitPrice: "0.00", taxRate: "", isTaxInclusive: false,
-    }] });
-    setSaveState("unsaved");
-  }
+        const newDoc = invoiceToDocument(inv, business || { id: inv.business_id, name: "Business", email: "", default_currency: inv.currency }, customer);
+        setDocument(newDoc);
 
-   function addFee() {
-    const fees = [...invoice.fees, { description: "", amount: "0.00", taxRate: "0" }];
-    setInvoice({ ...invoice, fees });
-    setSaveState("unsaved");
-  }
+        setEditorData({
+          customerId: inv.customer_id ?? undefined,
+          customer,
+          invoiceNumber: inv.invoice_number ?? undefined,
+          issueDate: inv.issue_date?.split("T")[0],
+          dueDate: inv.due_date?.split("T")[0],
+          currency: inv.currency,
+          notes: inv.notes ?? "",
+          terms: inv.terms ?? "",
+          paymentInstructions: inv.payment_instructions ?? "",
+          templateId: inv.template_id ?? undefined,
+          items: inv.items.map((it) => ({
+            id: it.id,
+            description: it.description,
+            quantity: it.quantity,
+            unit: it.unit,
+            unitPrice: it.unit_price,
+            discount: it.discount,
+            discountType: it.discount_type,
+            taxRate: it.tax_rate,
+            isTaxInclusive: it.is_tax_inclusive,
+            productId: it.product_id,
+          })),
+          fees: inv.fees.map((f) => ({
+            description: f.description,
+            amount: f.amount,
+            taxRate: f.tax_rate,
+          })),
+          amountPaid: inv.amount_paid,
+        });
 
-  function updateFee(index: number, field: string, value: any) {
-    const fees = [...invoice.fees];
-    fees[index] = { ...fees[index], [field]: value };
-    setInvoice({ ...invoice, fees });
-    setSaveState("unsaved");
-  }
-
-  function removeFee(index: number) {
-    const fees = invoice.fees.filter((_, i) => i !== index);
-    setInvoice({ ...invoice, fees });
-    setSaveState("unsaved");
-  }
-
-  function applyProduct(product: ApiProduct, index: number) {
-    const items = [...invoice.items];
-    items[index] = {
-      ...items[index],
-      description: product.name,
-      unitPrice: product.default_unit_price,
-      taxRate: product.default_tax_rate,
-      unit: product.unit,
-      productId: product.id,
+        setSaveState("saved");
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          alert("Invoice not found");
+          navigate("/app/invoices");
+          return;
+        }
+      } finally {
+        setLoading(false);
+      }
     };
-    setInvoice({ ...invoice, items });
-    setSaveState("unsaved");
-  }
+
+    loadInvoice();
+  }, [id, isNew, business]);
+
+  useEffect(() => {
+    if (dirty) {
+      setSaveState("unsaved");
+    }
+  }, [dirty]);
 
   const calcResult = (() => {
     try {
-      const lineItems: LineItemInput[] = invoice.items.map((it) => ({
+      const items = editorData?.items || [];
+      const fees = editorData?.fees || [];
+
+      const lineItems: LineItemInput[] = items.map((it) => ({
         description: it.description,
         quantity: it.quantity,
         unit: it.unit || "each",
@@ -212,20 +227,22 @@ export default function InvoiceEditor() {
         taxRate: it.taxRate ?? "0",
         isTaxInclusive: it.isTaxInclusive ?? false,
       }));
-      const fees: FeeInput[] = invoice.fees.map((f) => ({
+      const feeInputs: FeeInput[] = fees.map((f) => ({
         description: f.description,
         amount: f.amount,
         taxRate: f.taxRate ?? "0",
       }));
+
       const input: InvoiceCalculationInput = {
-        currency: invoice.currency as any,
+        currency: (editorData?.currency || "USD") as any,
         lineItems,
-        fees: fees.length ? fees : undefined,
-        invoiceDiscount: (invoice.discountType && invoice.discountValue && Number(invoice.discountValue) > 0)
-          ? { type: invoice.discountType, value: invoice.discountValue }
+        fees: feeInputs.length ? feeInputs : undefined,
+        invoiceDiscount: (editorData?.discountType && editorData?.discountValue && Number(editorData.discountValue) > 0)
+          ? { type: editorData.discountType, value: editorData.discountValue }
           : undefined,
-        amountPaid: invoice.amountPaid,
+        amountPaid: editorData?.amountPaid,
       };
+
       return calculationEngine.calculate(input);
     } catch {
       return null;
@@ -233,57 +250,71 @@ export default function InvoiceEditor() {
   })();
 
   const totals = calcResult ? {
-    subtotal: formatCurrency(calcResult.subtotal, invoice.currency),
-    discountTotal: formatCurrency(calcResult.discountTotal, invoice.currency),
-    taxTotal: formatCurrency(calcResult.taxTotal, invoice.currency),
-    feeTotal: formatCurrency(calcResult.feeTotal, invoice.currency),
-    total: formatCurrency(calcResult.total, invoice.currency),
-    amountDue: formatCurrency(calcResult.amountDue, invoice.currency),
-    amountPaid: formatCurrency(calcResult.amountPaid, invoice.currency),
+    subtotal: formatCurrency(calcResult.subtotal, editorData?.currency || "USD"),
+    discountTotal: formatCurrency(calcResult.discountTotal, (editorData?.currency || "USD") as any),
+    taxTotal: formatCurrency(calcResult.taxTotal, (editorData?.currency || "USD") as any),
+    feeTotal: formatCurrency(calcResult.feeTotal, (editorData?.currency || "USD") as any),
+    total: formatCurrency(calcResult.total, (editorData?.currency || "USD") as any),
+    amountDue: formatCurrency(calcResult.amountDue, (editorData?.currency || "USD") as any),
+    amountPaid: formatCurrency(calcResult.amountPaid, (editorData?.currency || "USD") as any),
     hasTax: !calcResult.taxTotal.isZero(),
     hasDiscount: !calcResult.discountTotal.isZero(),
     hasFees: !calcResult.feeTotal.isZero(),
     hasPaid: !calcResult.amountPaid.isZero(),
   } : null;
 
-  const previewData: PreviewInvoice = {
-    businessName: business?.name ?? "My Business",
-    businessEmail: business?.email ?? undefined,
-    businessPhone: business?.phone ?? undefined,
-    businessWebsite: business?.website ?? undefined,
-    businessAddress: business?.address_line_1 ?
-      `${business.address_line_1}${business.address_line_2 ? `\n${business.address_line_2}` : ""}\n${business.city ?? ""}${business.state_or_region ? `, ${business.state_or_region}` : ""}${business.postal_code ? ` ${business.postal_code}` : ""}\n${business.country_code ?? ""}`
-      : undefined,
-    customerName: invoice.customer ? invoice.customer.name : customers.find((c) => c.id === invoice.customerId)?.name,
-    customerCompanyName: (invoice.customer ? invoice.customer.company_name : customers.find((c) => c.id === invoice.customerId)?.company_name) ?? undefined,
-    customerEmail: (invoice.customer ? invoice.customer.email : customers.find((c) => c.id === invoice.customerId)?.email) ?? undefined,
-    customerAddress: invoice.customer ? undefined : undefined,
-    invoiceNumber: invoice.invoiceNumber,
-    issueDate: invoice.issueDate,
-    dueDate: invoice.dueDate,
-    currency: invoice.currency,
-    notes: invoice.notes,
-    terms: invoice.terms,
-    paymentInstructions: invoice.paymentInstructions,
-    items: invoice.items.map((it) => ({
-      description: it.description,
-      quantity: it.quantity,
-      unit: it.unit || "each",
-      unitPrice: it.unitPrice,
-      discount: it.discount,
-      discountType: it.discountType,
-      taxRate: it.taxRate,
-      isTaxInclusive: it.isTaxInclusive,
-    })),
-    fees: invoice.fees,
-    subtotal: totals?.subtotal ?? "0.00",
-    discountTotal: totals?.discountTotal ?? "0.00",
-    taxTotal: totals?.taxTotal ?? "0.00",
-    feeTotal: totals?.feeTotal ?? "0.00",
-    total: totals?.total ?? "0.00",
-    amountPaid: totals?.amountPaid ?? "0.00",
-    amountDue: totals?.amountDue ?? "0.00",
-    status: invoice.invoiceNumber ? "draft" : "draft",
+  const calculations = calcResult
+    ? {
+        subtotal: calcResult.subtotal.toFixed(),
+        discountTotal: calcResult.discountTotal.toFixed(),
+        taxTotal: calcResult.taxTotal.toFixed(),
+        feeTotal: calcResult.feeTotal.toFixed(),
+        total: calcResult.total.toFixed(),
+        amountDue: calcResult.amountDue.toFixed(),
+        amountPaid: calcResult.amountPaid.toFixed(),
+        formatCurrency: (value: any, currency: string) => formatCurrency(new Decimal(value), currency as any),
+        computeLineTotal: (item: EditorLineItem, currency: string) => {
+          const qty = new Decimal(item.quantity || 1);
+          const price = new Decimal(item.unitPrice || 0);
+          return qty.mul(price).toFixed(2);
+        },
+        lineItems: calcResult.lineItems.map((li) => ({
+          ...li,
+          lineTotal: li.lineTotal.toFixed(),
+          lineSubtotal: li.lineSubtotal.toFixed(),
+          discountAmount: li.discountAmount.toFixed(),
+          taxAmount: li.taxAmount.toFixed(),
+        })),
+        fees: calcResult.fees.map((f) => ({
+          ...f,
+          amount: f.amount.toFixed(),
+          feeTotal: f.feeTotal.toFixed(),
+          taxAmount: f.taxAmount.toFixed(),
+        })),
+      }
+    : null;
+
+  const renderContext: RenderContext = {
+    document: doc,
+    business: business || undefined,
+    customer: editorData?.customer,
+    invoice: {
+      invoiceNumber: editorData?.invoiceNumber,
+      issueDate: editorData?.issueDate,
+      dueDate: editorData?.dueDate,
+      currency: editorData?.currency || "USD",
+      items: editorData?.items || [],
+      fees: editorData?.fees || [],
+      notes: editorData?.notes,
+      terms: editorData?.terms,
+      paymentInstructions: editorData?.paymentInstructions,
+    },
+    calculations,
+    currency: editorData?.currency || "USD",
+    locale: "en-US",
+    isEditing: true,
+    selectedComponentId: selectedComponentId,
+    onSelect,
   };
 
   async function handleSave() {
@@ -291,15 +322,15 @@ export default function InvoiceEditor() {
     try {
       if (isNew) {
         const res = await createInvoice({
-          customerId: invoice.customerId,
-          currency: invoice.currency,
-          issueDate: invoice.issueDate,
-          dueDate: invoice.dueDate,
-          notes: invoice.notes,
-          terms: invoice.terms,
-          paymentInstructions: invoice.paymentInstructions,
-          templateId: invoice.templateId,
-          items: invoice.items.map((it) => ({
+          customerId: editorData?.customerId,
+          currency: editorData?.currency || "USD",
+          issueDate: editorData?.issueDate,
+          dueDate: editorData?.dueDate,
+          notes: editorData?.notes,
+          terms: editorData?.terms,
+          paymentInstructions: editorData?.paymentInstructions,
+          templateId: editorData?.templateId,
+          items: (editorData?.items || []).map((it) => ({
             description: it.description,
             quantity: it.quantity,
             unit: it.unit || "each",
@@ -310,21 +341,21 @@ export default function InvoiceEditor() {
             isTaxInclusive: it.isTaxInclusive,
             productId: it.productId,
           })),
-          fees: invoice.fees,
+          fees: editorData?.fees || [],
         });
         navigate(`/app/invoices/${res.invoiceId}/edit`);
       } else {
         await updateInvoice(id!, {
-          customerId: invoice.customerId,
-          currency: invoice.currency,
-          issueDate: invoice.issueDate,
-          dueDate: invoice.dueDate,
-          notes: invoice.notes,
-          terms: invoice.terms,
-          paymentInstructions: invoice.paymentInstructions,
-          templateId: invoice.templateId,
+          customerId: editorData?.customerId,
+          currency: editorData?.currency || "USD",
+          issueDate: editorData?.issueDate,
+          dueDate: editorData?.dueDate,
+          notes: editorData?.notes,
+          terms: editorData?.terms,
+          paymentInstructions: editorData?.paymentInstructions,
+          templateId: editorData?.templateId,
         });
-        await setInvoiceItems(id!, invoice.items.map((it) => ({
+        await setInvoiceItems(id!, (editorData?.items || []).map((it) => ({
           id: it.id,
           productId: it.productId,
           description: it.description,
@@ -336,8 +367,9 @@ export default function InvoiceEditor() {
           taxRate: it.taxRate,
           isTaxInclusive: it.isTaxInclusive,
         })));
-        await setInvoiceFees(id!, invoice.fees);
+        await setInvoiceFees(id!, editorData?.fees || []);
       }
+      markSaved();
       setSaveState("saved");
     } catch (err: any) {
       setSaveState("error");
@@ -346,11 +378,11 @@ export default function InvoiceEditor() {
   }
 
   async function handleFinalize() {
-    if (!invoice.customerId) {
+    if (!editorData?.customerId) {
       alert("Please select a customer before finalizing.");
       return;
     }
-    if (!invoice.items.some((it) => Number(it.quantity) > 0 && Number(it.unitPrice) > 0)) {
+    if (!(editorData?.items || []).some((it) => Number(it.quantity) > 0 && Number(it.unitPrice) > 0)) {
       alert("Add at least one line item with a price.");
       return;
     }
@@ -360,7 +392,6 @@ export default function InvoiceEditor() {
       if (isNew) {
         await handleSave();
       }
-      // re-load to get the ID if newly created
       const currentId = id && !isNew ? id : undefined;
       if (currentId) {
         const res = await finalizeInvoice(currentId);
@@ -374,11 +405,11 @@ export default function InvoiceEditor() {
 
   function handleSend() {
     setShowSendDialog(true);
-    const customer = customers.find((c) => c.id === invoice.customerId);
-    const subject = invoice.invoiceNumber
-      ? `Invoice ${invoice.invoiceNumber} from ${business?.name ?? "My Business"}`
+    const customer = editorData?.customerId ? customers.find((c) => c.id === editorData.customerId) : undefined;
+    const subject = editorData?.invoiceNumber
+      ? `Invoice ${editorData.invoiceNumber} from ${business?.name ?? "My Business"}`
       : `Invoice from ${business?.name ?? "My Business"}`;
-    const message = `Dear ${customer?.name ?? "Valued Customer"},\n\nPlease find attached invoice ${invoice.invoiceNumber ?? ""}. You can view and pay this invoice online using the secure link below.\n\nThank you for your business.\n\n${business?.name ?? "My Business"}`;
+    const message = `Dear ${customer?.name ?? "Valued Customer"},\n\nPlease find attached invoice ${editorData?.invoiceNumber ?? ""}. You can view and pay this invoice online using the secure link below.\n\nThank you for your business.\n\n${business?.name ?? "My Business"}`;
     setSendData({ subject, message });
   }
 
@@ -403,10 +434,70 @@ export default function InvoiceEditor() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `invoice-${invoice.invoiceNumber ?? id}.pdf`;
+    a.download = `invoice-${editorData?.invoiceNumber ?? id}.pdf`;
     a.click();
     window.URL.revokeObjectURL(url);
   }
+
+  const handleInsertComponent = (params: { type: ComponentType; parentId: ParentId; index: number }) => {
+    const def = getComponentDefinition(params.type);
+    if (!def) return;
+
+    const newComponent = def.defaultProps
+      ? { ...def.defaultProps }
+      : {};
+
+    doInsertComponent({
+      type: params.type,
+      parentId: params.parentId,
+      index: params.index,
+      props: newComponent,
+      style: { ...def.defaultStyle },
+    });
+  };
+
+  const handleUpdateComponent = (
+    componentId: ComponentId,
+    props: Record<string, unknown>,
+    style?: Partial<StyleProps>
+  ) => {
+    doUpdateComponent(componentId, props, style);
+
+    if (props.currency !== undefined) {
+      setSettings({ currency: props.currency as string });
+    }
+
+    const component = findComponent(doc, componentId);
+    if (!component) return;
+
+    if (component.type === "notes") {
+      setEditorData((prev) => prev ? { ...prev, notes: props.content as string } : prev);
+    }
+    if (component.type === "terms") {
+      setEditorData((prev) => prev ? { ...prev, terms: props.content as string } : prev);
+    }
+    if (component.type === "paymentInstructions") {
+      setEditorData((prev) => prev ? { ...prev, paymentInstructions: props.content as string } : prev);
+    }
+  };
+
+  const handleRemoveComponent = (componentId: ComponentId) => {
+    const component = findComponent(doc, componentId);
+    if (!component) return;
+
+    if (component.type === "notes") {
+      setEditorData((prev) => prev ? { ...prev, notes: undefined } : prev);
+    }
+    if (component.type === "terms") {
+      setEditorData((prev) => prev ? { ...prev, terms: undefined } : prev);
+    }
+    if (component.type === "paymentInstructions") {
+      setEditorData((prev) => prev ? { ...prev, paymentInstructions: undefined } : prev);
+    }
+
+    doRemoveComponent({ componentId });
+    onSelect(null);
+  };
 
   const saveStateLabel = {
     saved: "All changes saved",
@@ -415,7 +506,7 @@ export default function InvoiceEditor() {
     error: "Save failed",
   }[saveState];
 
-  if (loading) {
+  if (loading || !editorData) {
     return <div className="text-center py-20">Loading invoice...</div>;
   }
 
@@ -427,10 +518,10 @@ export default function InvoiceEditor() {
             onClick={() => navigate("/app/invoices")}
             className="text-slate-500 hover:text-slate-700"
           >
-            ← Back
+            &larr; Back
           </button>
           <h1 className="text-xl font-semibold text-slate-900">
-            {invoice.invoiceNumber ?? "New Invoice"}
+            Document Editor
           </h1>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
             saveState === "saved" ? "bg-green-100 text-green-800" :
@@ -443,21 +534,46 @@ export default function InvoiceEditor() {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={undo}
+            disabled={!canUndo}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            title="Undo (Ctrl+Z)"
+          >
+            &larr;
+          </button>
+           <button
+             onClick={redo}
+             disabled={!canRedo}
+             className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+             title="Redo (Ctrl+Y)"
+           >
+             &rarr;
+           </button>
+           <button
+             onClick={() => setPreviewMode(previewMode === "edit" ? "preview" : "edit")}
+             className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
+               previewMode === "preview" ? "bg-primary-100 text-primary-700" : ""
+             }`}
+             title="Toggle preview"
+           >
+             {previewMode === "edit" ? "Preview" : "Edit"}
+           </button>
+           <button
             onClick={handleSave}
             disabled={saveState === "saving"}
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Save
           </button>
-          {!invoice.invoiceNumber && (
+          {!editorData?.invoiceNumber && (
             <button
               onClick={handleFinalize}
               className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
-              Finalize & Send
+              Finalize &amp; Send
             </button>
           )}
-          {invoice.invoiceNumber && (
+          {editorData?.invoiceNumber && (
             <>
               <button
                 onClick={handlePdfDownload}
@@ -476,284 +592,85 @@ export default function InvoiceEditor() {
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden">
-        {/* Controls Panel */}
-        <div className="overflow-y-auto pr-2 space-y-6">
-          {/* Customer */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Customer</label>
-            <CustomerSelector
-              value={invoice.customerId}
-              onChange={(v) => updateField("customerId", v)}
-              onCustomerChange={(c) => setInvoice({ ...invoice, customer: c })}
-            />
-          </div>
-
-          {/* Invoice Details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Invoice #</label>
-              <input
-                type="text"
-                value={invoice.invoiceNumber ?? ""}
-                onChange={(e) => updateField("invoiceNumber", e.target.value || undefined)}
-                placeholder="Auto-generated"
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+      <div className="flex-1 grid grid-cols-[1fr_320px] gap-4 overflow-hidden bg-slate-50">
+        {previewMode === "edit" ? (
+          <>
+            <div className="overflow-auto">
+              <DocumentEditor
+                document={doc}
+                selectedComponentId={selectedComponentId}
+                onSelect={onSelect}
+                onInsertComponent={handleInsertComponent}
+                onReorderComponent={(params) => {
+                  doMoveComponent(params);
+                }}
+                business={business}
+                customer={editorData?.customer}
+                invoice={{
+                  invoiceNumber: editorData?.invoiceNumber,
+                  issueDate: editorData?.issueDate,
+                  dueDate: editorData?.dueDate,
+                  currency: editorData?.currency || "USD",
+                  items: editorData?.items || [],
+                  fees: editorData?.fees || [],
+                  notes: editorData?.notes,
+                  terms: editorData?.terms,
+                  paymentInstructions: editorData?.paymentInstructions,
+                }}
+                calculations={calculations}
+                currency={editorData?.currency || "USD"}
+                locale="en-US"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Currency</label>
-              <select
-                value={invoice.currency}
-                onChange={(e) => updateField("currency", e.target.value)}
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                {SUPPORTED_CURRENCIES.map((c: string) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Issue Date</label>
-              <input
-                type="date"
-                value={invoice.issueDate ?? ""}
-                onChange={(e) => updateField("issueDate", e.target.value || undefined)}
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+
+            <div className="overflow-y-auto">
+              <PropertyInspector
+                componentId={selectedComponentId}
+                component={selectedComponentId ? findComponent(doc, selectedComponentId) ?? null : null}
+                onSelect={onSelect}
+                onUpdate={handleUpdateComponent}
+                onDelete={handleRemoveComponent}
+                onVisibilityToggle={(componentId) => {
+                  const component = findComponent(doc, componentId);
+                  if (!component) return;
+                  doUpdateComponent(componentId, {}, { visibility: component.visible === false ? "visible" : "hidden" });
+                }}
+                document={doc}
+                business={business}
+                customer={editorData?.customer}
+                currency={editorData?.currency || "USD"}
+                locale="en-US"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Due Date</label>
-              <input
-                type="date"
-                value={invoice.dueDate ?? ""}
-                onChange={(e) => updateField("dueDate", e.target.value || undefined)}
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-          </div>
-
-          {/* Template */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Template</label>
-            <TemplateSelector
-              value={invoice.templateId}
-              onChange={(v) => updateField("templateId", v)}
-              placeholder="Default template"
-            />
-          </div>
-
-          {/* Line Items */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Line Items</label>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr>
-                    <th className="text-left py-2 text-xs font-medium text-slate-500 uppercase">Item</th>
-                    <th className="text-right py-2 text-xs font-medium text-slate-500 uppercase w-20">Qty</th>
-                    <th className="text-right py-2 text-xs font-medium text-slate-500 uppercase w-24">Rate</th>
-                    <th className="text-right py-2 text-xs font-medium text-slate-500 uppercase w-20">Tax</th>
-                    <th className="text-right py-2 text-xs font-medium text-slate-500 uppercase w-24">Amount</th>
-                    <th className="w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.items.map((it, i) => (
-                    <tr key={i}>
-                      <td className="py-2">
-                        <input
-                          type="text"
-                          value={it.description}
-                          onChange={(e) => updateItem(i, "description", e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && focusNext(e, i + 1)}
-                          placeholder="Description"
-                          className="w-full text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                        />
-                        {products.length > 0 && (
-                          <select
-                            value={it.productId ?? ""}
-                            onChange={(e) => applyProduct(products.find((p) => p.id === e.target.value)!, i)}
-                            className="mt-1 w-full text-xs border border-slate-300 rounded-lg px-2 py-1"
-                          >
-                            <option value="">Link product</option>
-                            {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                          </select>
-                        )}
-                      </td>
-                      <td className="py-2">
-                        <input
-                          type="number"
-                          value={it.quantity}
-                          onChange={(e) => updateItem(i, "quantity", e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && focusNext(e, i + 1)}
-                          min="0"
-                          step="0.01"
-                          className="w-full text-right text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                        />
-                      </td>
-                      <td className="py-2">
-                        <input
-                          type="number"
-                          value={it.unitPrice}
-                          onChange={(e) => updateItem(i, "unitPrice", e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && focusNext(e, i + 1)}
-                          min="0"
-                          step="0.01"
-                          className="w-full text-right text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                        />
-                      </td>
-                      <td className="py-2">
-                        <TaxSelector
-                          value={it.taxRate}
-                          onChange={(v) => updateItem(i, "taxRate", v)}
-                          placeholder=""
-                        />
-                      </td>
-                      <td className="py-2 text-right">
-                        <span className="text-sm font-medium text-slate-900">
-                          {calcResult ? formatCurrency(calcResult.lineItems[i]?.lineTotal, invoice.currency) : "-"}
-                        </span>
-                      </td>
-                      <td className="py-2 text-center">
-                        <button
-                          onClick={() => removeItem(i)}
-                          className="text-red-500 hover:text-red-700"
-                          title="Remove item"
-                        >
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <button
-              onClick={addItem}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-            >
-              + Add line item
-            </button>
-          </div>
-
-          {/* Discount */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Discount</label>
-              <select
-                value={invoice.discountType ?? "fixed"}
-                onChange={(e) => updateField("discountType", e.target.value as "fixed" | "percentage")}
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="fixed">Fixed</option>
-                <option value="percentage">Percentage</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">&nbsp;</label>
-              <input
-                type="number"
-                value={invoice.discountValue ?? ""}
-                onChange={(e) => updateField("discountValue", e.target.value || undefined)}
-                placeholder={invoice.discountType === "percentage" ? "0%" : "0.00"}
-                min="0"
-                step="0.01"
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          </>
+        ) : (
+          <div className="overflow-auto p-6">
+            <div className="max-w-4xl mx-auto">
+              <DocumentPreview
+                document={doc}
+                business={business}
+                customer={editorData?.customer}
+                invoice={{
+                  invoiceNumber: editorData?.invoiceNumber,
+                  issueDate: editorData?.issueDate,
+                  dueDate: editorData?.dueDate,
+                  currency: editorData?.currency || "USD",
+                  items: editorData?.items || [],
+                  fees: editorData?.fees || [],
+                  notes: editorData?.notes,
+                  terms: editorData?.terms,
+                  paymentInstructions: editorData?.paymentInstructions,
+                }}
+                calculations={calculations}
+                currency={editorData?.currency || "USD"}
+                locale="en-US"
+                className="border border-slate-200 rounded-xl shadow-lg"
               />
             </div>
           </div>
-
-          {/* Fees */}
-          {invoice.fees.length > 0 && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700">Fees</label>
-              {invoice.fees.map((fee, i) => (
-                <div key={i} className="flex gap-2 items-end">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={fee.description}
-                      onChange={(e) => updateFee(i, "description", e.target.value)}
-                      placeholder="Fee description"
-                      className="w-full text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    />
-                  </div>
-                  <div className="w-24">
-                    <input
-                      type="number"
-                      value={fee.amount}
-                      onChange={(e) => updateFee(i, "amount", e.target.value)}
-                      placeholder="0.00"
-                      className="w-full text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    />
-                  </div>
-                  <button
-                    onClick={() => removeFee(i)}
-                    className="text-red-500 hover:text-red-700 pb-1"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={addFee}
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-              >
-                + Add fee
-              </button>
-            </div>
-          )}
-
-          {invoice.fees.length === 0 && (
-            <button
-              onClick={addFee}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-            >
-              + Add fee
-            </button>
-          )}
-
-          {/* Notes & Terms */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Notes</label>
-              <textarea
-                value={invoice.notes ?? ""}
-                onChange={(e) => updateField("notes", e.target.value || undefined)}
-                placeholder="Additional notes for your customer"
-                rows={3}
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Terms</label>
-              <textarea
-                value={invoice.terms ?? ""}
-                onChange={(e) => updateField("terms", e.target.value || undefined)}
-                placeholder="Payment terms"
-                rows={2}
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">Payment Instructions</label>
-              <textarea
-                value={invoice.paymentInstructions ?? ""}
-                onChange={(e) => updateField("paymentInstructions", e.target.value || undefined)}
-                placeholder="How to pay (bank details, etc.)"
-                rows={3}
-                className="mt-1 block w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Preview Panel */}
-        <div className="border border-slate-200 rounded-xl bg-white overflow-auto">
-          <InvoicePreview invoice={previewData} />
-        </div>
+        )}
       </div>
 
-      {/* Send Confirmation Dialog */}
       {showSendDialog && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4">
@@ -765,7 +682,7 @@ export default function InvoiceEditor() {
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-700">To</label>
                 <p className="text-sm text-slate-900">
-                  {customers.find((c) => c.id === invoice.customerId)?.email ?? "No email set"}
+                  {editorData?.customerId ? customers.find((c) => c.id === editorData.customerId)?.email ?? "No email set" : "No customer selected"}
                 </p>
               </div>
               <div className="space-y-2">
@@ -803,16 +720,18 @@ export default function InvoiceEditor() {
             </div>
           </div>
         </div>
-       )}
+      )}
     </div>
   );
 }
 
-function focusNext(e: React.KeyboardEvent, nextIndex: number) {
-  const form = e.currentTarget.closest("tr");
-  const nextRow = form?.parentElement?.children[nextIndex] as HTMLElement | undefined;
-  if (nextRow) {
-    const input = nextRow.querySelector("input, select") as HTMLElement | null;
-    if (input) input.focus();
-  }
+export default function InvoiceEditor() {
+  return (
+    <EditorProvider
+      initialDocument={createEmptyDocument("local", "Loading...")}
+      onDocumentChange={() => {}}
+    >
+      <InvoiceEditorContent />
+    </EditorProvider>
+  );
 }
