@@ -12,8 +12,9 @@ RUN cd webapp && npm install
 
 # Copy source and build both backend and frontend
 COPY . .
-RUN npm run build && cd webapp && npm run build
+RUN npm run build
 
+# Environment variables (set before app starts)
 ENV NODE_ENV=production
 ENV APP_ENV=production
 ENV PORT=4000
