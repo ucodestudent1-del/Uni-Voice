@@ -17,6 +17,7 @@ RUN npm run build && cd webapp && npm run build
 ENV NODE_ENV=production
 ENV APP_ENV=production
 ENV PORT=4000
+ENV APP_PUBLIC_BASE_URL=https://uni-voice-production.up.railway.app
 ENV EMAIL_FROM=noreply@example.com
 ENV EMAIL_PROVIDER=stub
 ENV PDF_PROVIDER=html
@@ -66,4 +67,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 EXPOSE 4000
 
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
