@@ -111,6 +111,8 @@ function InvoiceEditorContent() {
     dirty,
     markSaved,
     saveDocument,
+    enableAutosave,
+    isAutosaveEnabled,
   } = useEditor();
 
   const [business, setBusiness] = useState<ApiBusiness | null>(null);
@@ -132,6 +134,12 @@ function InvoiceEditorContent() {
       getProducts({ limit: 100 }).then((d) => setProducts(d.products ?? [])).catch(() => {}),
     ]);
   }, []);
+
+  useEffect(() => {
+    if (!loading && editorData) {
+      enableAutosave(true, 2000);
+    }
+  }, [loading, editorData, enableAutosave]);
 
   useEffect(() => {
     if (isNew) {
@@ -479,6 +487,19 @@ function InvoiceEditorContent() {
     if (component.type === "paymentInstructions") {
       setEditorData((prev) => prev ? { ...prev, paymentInstructions: props.content as string } : prev);
     }
+    if (component.type === "invoiceNumber") {
+      const invProps = props as { prefix?: string; format?: string };
+      setEditorData((prev) => prev ? { ...prev, invoiceNumber: (invProps.prefix || "") + (invProps.format || "") } : prev);
+    }
+    if (component.type === "date") {
+      const dateProps = props as { dateType?: string; customValue?: string };
+      if (dateProps.dateType === "issue") {
+        setEditorData((prev) => prev ? { ...prev, issueDate: dateProps.customValue as string } : prev);
+      }
+      if (dateProps.dateType === "due") {
+        setEditorData((prev) => prev ? { ...prev, dueDate: dateProps.customValue as string } : prev);
+      }
+    }
   };
 
   const handleRemoveComponent = (componentId: ComponentId) => {
@@ -730,6 +751,7 @@ export default function InvoiceEditor() {
     <EditorProvider
       initialDocument={createEmptyDocument("local", "Loading...")}
       onDocumentChange={() => {}}
+      autosaveDelayMs={2000}
     >
       <InvoiceEditorContent />
     </EditorProvider>

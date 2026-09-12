@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import {
   InvoiceDocument,
   AnyComponent,
@@ -37,6 +37,8 @@ interface EditorContextValue {
   saveDocument: () => void;
   dirty: boolean;
   markSaved: () => void;
+  enableAutosave: (enabled: boolean, delayMs?: number) => void;
+  isAutosaveEnabled: boolean;
 }
 
 const EditorContext = createContext<EditorContextValue | undefined>(undefined);
@@ -44,12 +46,14 @@ const EditorContext = createContext<EditorContextValue | undefined>(undefined);
 interface EditorProviderProps {
   initialDocument: InvoiceDocument;
   onDocumentChange?: (doc: InvoiceDocument) => void;
+  autosaveDelayMs?: number;
   children: ReactNode;
 }
 
 export const EditorProvider: React.FC<EditorProviderProps> = ({
   initialDocument,
   onDocumentChange,
+  autosaveDelayMs = 2000,
   children,
 }) => {
   const [document, setDocument] = useState<InvoiceDocument>(initialDocument);
@@ -57,9 +61,22 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
   const [history, setHistory] = useState<InvoiceDocument[]>([initialDocument]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [dirty, setDirty] = useState(false);
+  const [isAutosaveEnabled, setIsAutosaveEnabled] = useState(false);
+
+  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSaveRef = useRef(false);
+  const lastSavedVersionRef = useRef(initialDocument.version);
 
   React.useEffect(() => {
     initializeRegistry();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
   }, []);
 
   const pushToHistory = useCallback((newDoc: InvoiceDocument) => {
@@ -71,10 +88,7 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       }
       return newHistory;
     });
-    setHistoryIndex((prev) => {
-      const newIndex = prev + 1;
-      return Math.min(newIndex, prev + 1);
-    });
+    setHistoryIndex((prev) => prev + 1);
   }, [historyIndex]);
 
   const handleDocumentChange = useCallback((newDoc: InvoiceDocument) => {
@@ -129,7 +143,7 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       const prevDoc = history[newIndex];
       setDocument(prevDoc);
       setHistoryIndex(newIndex);
-      setDirty(historyIndex !== 0);
+      setDirty(newIndex !== 0);
     }
   }, [historyIndex, history]);
 
@@ -145,14 +159,58 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
 
   const markSaved = useCallback(() => {
     setDirty(false);
-    setHistory([document]);
-    setHistoryIndex(0);
-  }, [document]);
+    lastSavedVersionRef.current = document.version;
+  }, [document.version]);
 
   const saveDocument = useCallback(() => {
     onDocumentChange?.(document);
     markSaved();
   }, [document, onDocumentChange, markSaved]);
+
+  const debouncedSave = useCallback(() => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+    autosaveTimerRef.current = setTimeout(() => {
+      if (dirty && isAutosaveEnabled) {
+        pendingSaveRef.current = true;
+        onDocumentChange?.(document);
+        markSaved();
+        pendingSaveRef.current = false;
+      }
+    }, autosaveDelayMs);
+  }, [dirty, isAutosaveEnabled, autosaveDelayMs, document, onDocumentChange, markSaved]);
+
+  useEffect(() => {
+    if (dirty && isAutosaveEnabled) {
+      debouncedSave();
+    }
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, [dirty, isAutosaveEnabled, debouncedSave]);
+
+  const enableAutosave = useCallback((enabled: boolean, delayMs?: number) => {
+    setIsAutosaveEnabled(enabled);
+    if (enabled && delayMs) {
+      // Timer will be picked up by the effect above
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirty]);
 
   return (
     <EditorContext.Provider
@@ -173,6 +231,8 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
         saveDocument,
         dirty,
         markSaved,
+        enableAutosave,
+        isAutosaveEnabled,
       }}
     >
       {children}

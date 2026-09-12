@@ -1,7 +1,7 @@
 import { Decimal } from "decimal.js";
 import { getClient, query } from "../db/pool.js";
 import type { Invoice, InvoiceLineItem, InvoiceFee, InvoiceSnapshot, InvoiceEvent } from "../domain/models/index.js";
-import { NotFoundError } from "../domain/errors.js";
+import { NotFoundError, ConflictError } from "../domain/errors.js";
 import { rowToDate } from "./helpers.js";
 
 export interface InvoiceItemInput {
@@ -162,12 +162,43 @@ export class InvoiceRepository {
       const current = await this.findById(businessId, id);
       return current;
     }
+    set.push(`version = version + 1`);
     set.push(`updated_at = NOW()`);
     const res = await query(
       `UPDATE invoices SET ${set.join(", ")} WHERE id = $2 AND business_id = $1 RETURNING *`,
       vals
     );
     if (!res.rows.length) throw new NotFoundError(`Invoice ${id} not found`);
+    return this.rowToModel(res.rows[0]);
+  }
+
+  async updateOptimistic(businessId: string, id: string, input: Partial<Record<string, unknown>>, expectedVersion: number): Promise<Invoice> {
+    const ALLOWED_COLUMNS = new Set([
+      "customer_id", "invoice_number", "status", "issue_date", "due_date", "currency",
+      "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
+      "amount_paid", "amount_due", "notes", "terms", "template_id", "public_token",
+      "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
+      "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
+    ]);
+    const set: string[] = [];
+    const vals: unknown[] = [businessId, id, expectedVersion];
+    let i = 4;
+    for (const [key, val] of Object.entries(input)) {
+      if (!ALLOWED_COLUMNS.has(key)) continue;
+      set.push(`${key} = $${i++}`);
+      vals.push(val ?? null);
+    }
+    if (set.length === 0) {
+      const current = await this.findById(businessId, id);
+      return current;
+    }
+    set.push(`version = version + 1`);
+    set.push(`updated_at = NOW()`);
+    const res = await query(
+      `UPDATE invoices SET ${set.join(", ")} WHERE id = $2 AND business_id = $1 AND version = $3 RETURNING *`,
+      vals
+    );
+    if (!res.rows.length) throw new ConflictError(`Invoice ${id} not found or stale version (expected ${expectedVersion})`);
     return this.rowToModel(res.rows[0]);
   }
 
@@ -282,27 +313,79 @@ export class InvoiceRepository {
     return res.rows.map((r) => this.eventRowToModel(r));
   }
 
-  async createSnapshot(invoiceId: string, snapshot: Record<string, unknown>, hash: string, opts?: { pdfStored?: boolean; pdfHash?: string; createdBy?: string }): Promise<InvoiceSnapshot> {
+  async createSnapshot(invoiceId: string, snapshot: Record<string, unknown>, hash: string, opts?: {
+    revision?: number;
+    templateId?: string | null;
+    templateSchemaVersion?: string | null;
+    templateRevision?: number;
+    renderedHtml?: string | null;
+    pdfStored?: boolean;
+    pdfHash?: string;
+    createdBy?: string;
+  }): Promise<InvoiceSnapshot> {
+    const revision = opts?.revision ?? 1;
     const res = await query(
-      `INSERT INTO invoice_snapshots (invoice_id, snapshot, snapshot_hash, pdf_stored, pdf_hash, created_at, created_by)
-       VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING *`,
-      [invoiceId, JSON.stringify(snapshot), hash, opts?.pdfStored ?? false, opts?.pdfHash ?? null, opts?.createdBy ?? null]
+      `INSERT INTO invoice_snapshots (invoice_id, snapshot, snapshot_hash, revision, template_id, template_schema_version, template_revision, rendered_html, pdf_stored, pdf_hash, created_at, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11) RETURNING *`,
+      [invoiceId, JSON.stringify(snapshot), hash, revision, opts?.templateId ?? null, opts?.templateSchemaVersion ?? 1, opts?.templateRevision ?? 1, opts?.renderedHtml ?? null, opts?.pdfStored ?? false, opts?.pdfHash ?? null, opts?.createdBy ?? null]
     );
     const r = res.rows[0];
     return {
-      id: r.id as string, invoiceId: r.invoice_id as string, snapshot: r.snapshot as Record<string, unknown>,
-      snapshotHash: r.snapshot_hash as string, pdfStored: Boolean(r.pdf_stored), pdfHash: r.pdf_hash as string | null,
+      id: r.id as string, invoiceId: r.invoice_id as string, revision: Number(r.revision ?? 1),
+      snapshot: r.snapshot as Record<string, unknown>,
+      snapshotHash: r.snapshot_hash as string,
+      templateId: r.template_id as string | null,
+      templateSchemaVersion: r.template_schema_version as string | null,
+      templateRevision: Number(r.template_revision ?? 1),
+      renderedHtml: r.rendered_html as string | null,
+      pdfStored: Boolean(r.pdf_stored), pdfHash: r.pdf_hash as string | null,
       createdAt: new Date(r.created_at as string), createdBy: r.created_by as string | null,
     };
   }
 
-  async getSnapshot(invoiceId: string): Promise<Record<string, unknown> | null> {
+  async getSnapshot(invoiceId: string, revision?: number | null): Promise<Record<string, unknown> | null> {
+    let res;
+    if (revision != null) {
+      res = await query(
+        `SELECT snapshot, snapshot_hash, revision, template_id, template_schema_version, template_revision, rendered_html, pdf_stored, pdf_hash
+         FROM invoice_snapshots WHERE invoice_id = $1 AND revision = $2 ORDER BY revision DESC LIMIT 1`,
+        [invoiceId, revision]
+      );
+    } else {
+      res = await query(
+        `SELECT snapshot, snapshot_hash, revision, template_id, template_schema_version, template_revision, rendered_html, pdf_stored, pdf_hash
+         FROM invoice_snapshots WHERE invoice_id = $1 ORDER BY revision DESC LIMIT 1`,
+        [invoiceId]
+      );
+    }
+    if (!res.rows.length) return null;
+    return res.rows[0] as Record<string, unknown>;
+  }
+
+  async getSnapshots(invoiceId: string): Promise<InvoiceSnapshot[]> {
     const res = await query(
-      `SELECT snapshot, snapshot_hash, created_at, pdf_stored, pdf_hash FROM invoice_snapshots WHERE invoice_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      `SELECT * FROM invoice_snapshots WHERE invoice_id = $1 ORDER BY revision ASC`,
       [invoiceId]
     );
-    if (!res.rows.length) return null;
-    return res.rows[0].snapshot as Record<string, unknown>;
+    return res.rows.map((r) => ({
+      id: r.id as string, invoiceId: r.invoice_id as string, revision: Number(r.revision ?? 1),
+      snapshot: r.snapshot as Record<string, unknown>,
+      snapshotHash: r.snapshot_hash as string,
+      templateId: r.template_id as string | null,
+      templateSchemaVersion: r.template_schema_version as string | null,
+      templateRevision: Number(r.template_revision ?? 1),
+      renderedHtml: r.rendered_html as string | null,
+      pdfStored: Boolean(r.pdf_stored), pdfHash: r.pdf_hash as string | null,
+      createdAt: new Date(r.created_at as string), createdBy: r.created_by as string | null,
+    }));
+  }
+
+  async getLatestSnapshotRevision(invoiceId: string): Promise<number> {
+    const res = await query(
+      `SELECT COALESCE(MAX(revision), 0) as revision FROM invoice_snapshots WHERE invoice_id = $1`,
+      [invoiceId]
+    );
+    return Number(res.rows[0]?.revision ?? 0);
   }
 
   async getSnapshotHash(invoiceId: string): Promise<string | null> {
@@ -336,6 +419,9 @@ export class InvoiceRepository {
       isFinalized: Boolean(r.is_finalized), finalizedAt: rowToDate(r.finalized_at),
       sentAt: rowToDate(r.sent_at), viewedAt: rowToDate(r.viewed_at), paidAt: rowToDate(r.paid_at),
       cancelledAt: rowToDate(r.cancelled_at), cancelledReason: r.cancelled_reason as string | null,
+      version: Number(r.version ?? 1),
+      templateSchemaVersion: r.template_schema_version as string | null,
+      templateRevision: Number(r.template_revision ?? 1),
       createdAt: rowToDate(r.created_at)!, updatedAt: rowToDate(r.updated_at)!,
       createdBy: r.created_by as string | null, updatedBy: r.updated_by as string | null,
     };

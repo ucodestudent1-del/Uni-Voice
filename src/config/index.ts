@@ -9,15 +9,63 @@ const cleanEnv = Object.fromEntries(
   Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v])
 );
 
+const rawAppEnv = process.env.APP_ENV;
+const inferredAppEnv = (rawAppEnv === undefined
+  ? process.env.NODE_ENV === "production"
+    ? "production"
+    : "development"
+  : rawAppEnv) as "development" | "test" | "production";
+const isProduction = inferredAppEnv === "production";
+const developmentPublicBaseUrl = "http://localhost:4000";
+
+function parseHttpUrl(value: string): URL | null {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+function getRailwayPublicBaseUrl(domain: string | undefined): string | undefined {
+  if (!domain) return undefined;
+
+  const candidate = /^https?:\/\//i.test(domain) ? domain : `https://${domain}`;
+  return parseHttpUrl(candidate)?.origin;
+}
+
+const railwayPublicBaseUrl = getRailwayPublicBaseUrl(process.env.RAILWAY_PUBLIC_DOMAIN);
+
+function isLocalhostUrl(value: string): boolean {
+  const url = parseHttpUrl(value);
+  if (!url) return false;
+
+  const hostname = url.hostname.toLowerCase();
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+
+const baseUrlSchema = z
+  .string()
+  .refine((value) => parseHttpUrl(value) !== null, "Must be a valid http or https URL")
+  .refine(
+    (value) => !isProduction || parseHttpUrl(value)?.protocol === "https:",
+    "Must use https in production"
+  )
+  .refine(
+    (value) => !isProduction || !isLocalhostUrl(value),
+    "Localhost URLs are not allowed in production"
+  )
+  .transform((value) => value.replace(/\/+$/, ""));
+
 const envSchema = z.object({
-  APP_ENV: z.enum(["development", "test", "production"]).default("development"),
+  APP_ENV: z.enum(["development", "test", "production"]).default(inferredAppEnv),
   PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().min(1),
   DATABASE_URL_TEST: z.string().optional(),
   AUTH_MODE: z.enum(["dev", "jwt", "stub"]).default("dev"),
   AUTH_JWT_SECRET: z.string().default("dev-secret-change-me"),
-  APP_PUBLIC_BASE_URL: z.string().default("http://localhost:4000"),
-  APP_FRONTEND_URL: z.string().optional(),
+  APP_PUBLIC_BASE_URL: baseUrlSchema.optional(),
+  APP_FRONTEND_URL: baseUrlSchema.optional(),
   EMAIL_FROM: z.string().default("noreply@example.com"),
   EMAIL_PROVIDER: z.enum(["stub", "smtp", "sendgrid", "ses"]).default("stub"),
   PDF_PROVIDER: z.enum(["html", "stub"]).default("html"),
@@ -33,12 +81,14 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_CALLBACK_URL: z.string().optional(),
+  GOOGLE_CALLBACK_URL: baseUrlSchema.optional(),
 });
 
-type Env = z.infer<typeof envSchema>;
+type Env = Omit<z.infer<typeof envSchema>, "APP_PUBLIC_BASE_URL"> & {
+  APP_PUBLIC_BASE_URL: string;
+};
 
-let parsed: Env;
+let parsed: z.infer<typeof envSchema>;
 try {
   parsed = envSchema.parse(cleanEnv);
 } catch (e) {
@@ -46,7 +96,26 @@ try {
   process.exit(1);
 }
 
-export const env = parsed;
+const resolvedPublicBaseUrl = (
+  parsed.APP_PUBLIC_BASE_URL ??
+  (isProduction ? railwayPublicBaseUrl : developmentPublicBaseUrl)
+)?.replace(/\/+$/, "");
+
+if (
+  !resolvedPublicBaseUrl ||
+  parseHttpUrl(resolvedPublicBaseUrl) === null ||
+  (isProduction && isLocalhostUrl(resolvedPublicBaseUrl))
+) {
+  console.error(
+    "Invalid environment configuration: APP_PUBLIC_BASE_URL must be a non-local http(s) URL in production. Set APP_PUBLIC_BASE_URL or RAILWAY_PUBLIC_DOMAIN."
+  );
+  process.exit(1);
+}
+
+export const env: Env = {
+  ...parsed,
+  APP_PUBLIC_BASE_URL: resolvedPublicBaseUrl,
+};
 
 export const isTest = env.APP_ENV === "test";
 export const isDev = env.APP_ENV === "development";

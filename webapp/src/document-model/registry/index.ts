@@ -76,9 +76,12 @@ export function getComponentSchema(type: ComponentType) {
 
 export function validateComponentProps(type: ComponentType, props: unknown) {
   const schema = componentSchemas[type];
-  if (!schema) return { success: false, error: `No schema for type ${type}` };
+  if (!schema) return { success: false, error: `No schema for type ${type}`, data: null };
   const result = schema.safeParse(props);
-  return result;
+  if (!result.success) {
+    return { success: false, error: result.error.message, data: null };
+  }
+  return { success: true, error: undefined, data: result.data };
 }
 
 export function createDefaultComponent(type: ComponentType): AnyComponent | null {

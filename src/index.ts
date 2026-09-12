@@ -26,9 +26,10 @@ import { stripeService } from "./services/payments/stripe-service.js";
 import bcrypt from "bcrypt";
 
 const app = express();
+const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
 
 app.use(helmet());
-app.use(cors({ origin: isDev ? true : env.APP_PUBLIC_BASE_URL, credentials: true }));
+app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 if (isDev) app.use(morgan("dev"));
@@ -367,8 +368,8 @@ app.post("/api/subscription/upgrade", requireAuth, async (req: AuthRequest, res)
     currency: plan.currency,
     businessId: req.user!.businessId,
     customerEmail: business.email ?? undefined,
-    successUrl: `${env.APP_PUBLIC_BASE_URL}/plans?success=true`,
-    cancelUrl: `${env.APP_PUBLIC_BASE_URL}/plans?canceled=true`,
+    successUrl: `${frontendBaseUrl}/plans?success=true`,
+    cancelUrl: `${frontendBaseUrl}/plans?canceled=true`,
   });
 
   res.json({ checkoutUrl: session.url, sessionId: session.sessionId });

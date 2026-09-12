@@ -119,6 +119,12 @@ const PaletteItemCard: React.FC<{ type: ComponentType; label: string; descriptio
   );
 };
 
+function parseDropZoneId(dropZoneId: string): { parentId: ParentId; index: number } | null {
+  const match = dropZoneId.match(/^dropzone-(.+)-(\d+)$/);
+  if (!match) return null;
+  return { parentId: match[1] as ParentId, index: parseInt(match[2], 10) };
+}
+
 const SortableNode: React.FC<{
   componentId: ComponentId;
   doc: InvoiceDocument;
@@ -204,28 +210,34 @@ const SortableNode: React.FC<{
 
 const DropZone: React.FC<{
   id: string;
+  doc: InvoiceDocument;
   parentId: ParentId;
   index: number;
   activeDrag: ActiveDrag | null;
-}> = ({ id, parentId, index, activeDrag }) => {
+}> = ({ id, doc, parentId, index, activeDrag }) => {
+  const validation = activeDrag ? canDropComponent(doc, activeDrag.componentType!, parentId) : { success: false };
   const canReceive = activeDrag?.operation === "create" ||
     (activeDrag?.operation === "reorder" && activeDrag.componentId !== null);
+
+  const isValidTarget = canReceive && validation.success;
 
   return (
     <div
       key={id}
       id={id}
       data-dropzone={id}
+      data-parent-id={parentId}
+      data-index={index}
       className={`
         border-2 border-dashed rounded-lg py-3 text-center text-sm
         transition-all duration-200 mb-2
-        ${canReceive
+        ${isValidTarget
           ? "border-primary-300 bg-primary-50 text-primary-700"
           : "border-slate-200 text-slate-400"
         }
       `}
     >
-      Drop here
+      {isValidTarget ? `Insert at index ${index}` : "Drop here"}
     </div>
   );
 };
@@ -244,14 +256,14 @@ function renderComponentTree(
     const child = findComponent(doc, childId);
     if (!child) return null;
 
-    const dzKey = `dz-${childId}`;
     const nodeKey = `node-${childId}`;
 
     return (
       <React.Fragment key={nodeKey}>
         <DropZone
-          id={`dropzone-${childId}`}
-          parentId={childId}
+          id={`dropzone-${childId}-${index}`}
+          doc={doc}
+          parentId={parentId}
           index={index}
           activeDrag={activeDrag}
         />
@@ -270,6 +282,7 @@ function renderComponentTree(
     <>
       <DropZone
         id={`dropzone-${parentId as string}-0`}
+        doc={doc}
         parentId={parentId}
         index={0}
         activeDrag={activeDrag}
@@ -277,6 +290,7 @@ function renderComponentTree(
       {items}
       <DropZone
         id={`dropzone-${parentId as string}-${children.length}`}
+        doc={doc}
         parentId={parentId}
         index={children.length}
         activeDrag={activeDrag}
@@ -363,14 +377,15 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     const overId = over.id as string;
 
     if (activeDrag.operation === "create") {
-      if (overId.startsWith("dropzone-")) {
-        const targetParentId = overId.replace("dropzone-", "").replace(/-\d+$/, "") as ParentId;
-
-        if (canDropComponent(doc, activeDrag.componentType!, targetParentId)) {
+      const dropZoneInfo = parseDropZoneId(overId);
+      if (dropZoneInfo) {
+        const { parentId: targetParentId, index: targetIndex } = dropZoneInfo;
+        const validation = canDropComponent(doc, activeDrag.componentType!, targetParentId);
+        if (validation.success) {
           onInsertComponent({
             type: activeDrag.componentType!,
             parentId: targetParentId,
-            index: 0,
+            index: targetIndex,
           });
         }
       }
@@ -382,30 +397,31 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         return;
       }
 
-      if (overId.startsWith("dropzone-")) {
-        const targetParent = overId.replace("dropzone-", "").replace(/-\d+$/, "") as ParentId;
+      const dropZoneInfo = parseDropZoneId(overId);
+      if (dropZoneInfo) {
+        const { parentId: targetParentId, index: targetIndex } = dropZoneInfo;
+        let adjustedIndex = targetIndex;
+
+        if (activeDrag.sourceParentId === targetParentId && activeDrag.sourceIndex < targetIndex) {
+          adjustedIndex = targetIndex - 1;
+        }
+
         onReorderComponent({
           componentId: draggedId,
-          newParentId: targetParent,
-          newIndex: 0,
+          newParentId: targetParentId,
+          newIndex: adjustedIndex,
         });
       } else {
-        const targetSiblings = findSiblings(doc, overId as ComponentId);
-        let targetIndex = targetSiblings.indexOf(overId as ComponentId);
-        let targetParentId: ParentId | null = findParent(doc, overId as ComponentId);
+        const targetComponent = findComponent(doc, overId as ComponentId);
+        if (targetComponent) {
+          const targetParentId = targetComponent.parentId ?? doc.rootSectionId;
+          const targetSiblings = findSiblings(doc, overId as ComponentId);
+          let targetIndex = targetSiblings.indexOf(overId as ComponentId);
 
-        if (!targetParentId) {
-          targetParentId = doc.rootSectionId;
-        }
-
-        if (targetIndex === -1) {
-          const targetComponent = findComponent(doc, overId as ComponentId);
-          if (targetComponent && targetComponent.parentId) {
-            targetParentId = targetComponent.parentId;
+          if (activeDrag.sourceParentId === targetParentId && activeDrag.sourceIndex < targetIndex) {
+            targetIndex = targetIndex - 1;
           }
-        }
 
-        if (targetParentId) {
           onReorderComponent({
             componentId: draggedId,
             newParentId: targetParentId,
@@ -427,7 +443,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     );
   }
 
-              const rootChildren: string[] = getChildren(doc, doc.rootSectionId);
+  const rootChildren: string[] = getChildren(doc, doc.rootSectionId);
   const categories = getCategories();
 
   return (
@@ -467,27 +483,14 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 min-h-[600px]">
                 <SortableContext items={rootChildren} strategy={verticalListSortingStrategy}>
                   <div>
-                    <DropZone
-                      id={`dropzone-${doc.rootSectionId}-0`}
-                      parentId={doc.rootSectionId}
-                      index={0}
-                      activeDrag={activeDrag}
-                    />
-                    {rootChildren.map((childId) => {
-                      const child = findComponent(doc, childId);
-                      if (!child) return null;
-                      return (
-                        <React.Fragment key={childId}>
-                          <SortableNode
-                            componentId={childId}
-                            doc={doc}
-                            isSelected={selectedComponentId === childId}
-                            onSelect={onSelect}
-                            renderContext={renderContext}
-                          />
-                        </React.Fragment>
-                      );
-                    })}
+                    {renderComponentTree(
+                      doc,
+                      doc.rootSectionId,
+                      selectedComponentId,
+                      onSelect,
+                      renderContext,
+                      activeDrag
+                    )}
                   </div>
                 </SortableContext>
               </div>

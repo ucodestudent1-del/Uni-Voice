@@ -20,6 +20,7 @@ export interface BusinessInput {
   defaultCurrency?: string;
   logoUrl?: string | null;
   ownerId?: string;
+  version?: number;
 }
 
 export class BusinessRepository {
@@ -31,8 +32,8 @@ export class BusinessRepository {
     const now = new Date().toISOString();
     const res = await query(
       `INSERT INTO businesses (id, owner_id, name, legal_name, email, phone, website, tax_id, registration_number,
-        address_line_1, address_line_2, city, state_or_region, postal_code, country_code, default_currency, logo_url, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)
+        address_line_1, address_line_2, city, state_or_region, postal_code, country_code, default_currency, logo_url, version, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1,$18,$18)
        RETURNING *`,
       [
         id, ownerId, input.name, input.legalName, input.email, input.phone, input.website,
@@ -66,10 +67,12 @@ export class BusinessRepository {
     const values: unknown[] = [businessId, ownerId];
     let i = 3;
     for (const [key, val] of Object.entries(input)) {
+      if (key === "version") continue;
       const col = key;
       fields.push(`${col} = $${i++}`);
       values.push(val ?? null);
     }
+    fields.push(`version = version + 1`);
     fields.push(`updated_at = NOW()`);
     const res = await query(
       `UPDATE businesses SET ${fields.join(", ")} WHERE id = $1 AND owner_id = $2 RETURNING *`,
@@ -79,9 +82,30 @@ export class BusinessRepository {
     return this.rowToModel(res.rows[0]);
   }
 
+  async updateOptimistic(businessId: string, input: BusinessInput, expectedVersion: number, ownerId: string): Promise<Business> {
+    const fields: string[] = [];
+    const values: unknown[] = [businessId, ownerId, expectedVersion];
+    let i = 4;
+    for (const [key, val] of Object.entries(input)) {
+      if (key === "version") continue;
+      const col = key;
+      fields.push(`${col} = $${i++}`);
+      values.push(val ?? null);
+    }
+    fields.push(`version = version + 1`);
+    fields.push(`updated_at = NOW()`);
+    const res = await query(
+      `UPDATE businesses SET ${fields.join(", ")} WHERE id = $1 AND owner_id = $2 AND version = $3 RETURNING *`,
+      values
+    );
+    if (!res.rows.length) throw new Error("Business not found, access denied, or stale version (conflict)");
+    return this.rowToModel(res.rows[0]);
+  }
+
   private rowToModel(r: Record<string, unknown>): Business {
     return {
       id: r.id as string,
+      version: Number(r.version ?? 1),
       ownerId: r.owner_id as string | undefined,
       name: r.name as string,
       legalName: r.legal_name as string | null,

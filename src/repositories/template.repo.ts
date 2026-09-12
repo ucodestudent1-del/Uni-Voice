@@ -6,6 +6,9 @@ export interface TemplateInput {
   htmlTemplate: string;
   config?: Record<string, unknown>;
   isDefault?: boolean;
+  schemaVersion?: string;
+  revision?: number;
+  version?: number;
 }
 
 export class TemplateRepository {
@@ -13,9 +16,9 @@ export class TemplateRepository {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const res = await query(
-      `INSERT INTO templates (id, business_id, name, is_default, config, html_template, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$7) RETURNING *`,
-      [id, businessId, input.name, input.isDefault ?? false, JSON.stringify(input.config ?? {}), input.htmlTemplate, now]
+      `INSERT INTO templates (id, business_id, name, is_default, config, html_template, schema_version, revision, version, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10) RETURNING *`,
+      [id, businessId, input.name, input.isDefault ?? false, JSON.stringify(input.config ?? {}), input.htmlTemplate, input.schemaVersion ?? "1", input.revision ?? 1, input.version ?? 1, now]
     );
     return this.rowToModel(res.rows[0]);
   }
@@ -51,6 +54,9 @@ export class TemplateRepository {
     if (input.htmlTemplate !== undefined) { set.push(`html_template = $${i++}`); vals.push(input.htmlTemplate); }
     if (input.config !== undefined) { set.push(`config = $${i++}`); vals.push(JSON.stringify(input.config)); }
     if (input.isDefault !== undefined) { set.push(`is_default = $${i++}`); vals.push(input.isDefault); }
+    if (input.schemaVersion !== undefined) { set.push(`schema_version = $${i++}`); vals.push(input.schemaVersion); }
+    if (input.revision !== undefined) { set.push(`revision = $${i++}`); vals.push(input.revision); }
+    if (input.version !== undefined) { set.push(`version = $${i++}`); vals.push(input.version); }
     set.push("updated_at = NOW()");
     const res = await query(
       `UPDATE templates SET ${set.join(", ")} WHERE id = $1 AND business_id = $2 RETURNING *`,
@@ -73,6 +79,9 @@ export class TemplateRepository {
       isDefault: Boolean(r.is_default),
       config: (r.config as Record<string, unknown>) ?? {},
       htmlTemplate: r.html_template as string,
+      schemaVersion: r.schema_version as string | null ?? "1",
+      revision: Number(r.revision ?? 1),
+      version: Number(r.version ?? 1),
       createdAt: new Date(r.created_at as string),
       updatedAt: new Date(r.updated_at as string),
     };

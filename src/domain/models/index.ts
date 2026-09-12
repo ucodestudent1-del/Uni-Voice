@@ -30,6 +30,7 @@ export interface Business {
   countryCode: string;
   defaultCurrency: CurrencyCode;
   logoUrl?: string | null;
+  version: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -112,6 +113,9 @@ export interface Invoice {
   notes?: string | null;
   terms?: string | null;
   templateId?: string | null;
+  templateSchemaVersion?: string | null;
+  templateRevision?: number | null;
+  version: number;
   publicToken?: string | null;
   publicTokenExpiresAt?: Date | null;
   paymentInstructions?: string | null;
@@ -133,6 +137,11 @@ export interface InvoiceSnapshot {
   invoiceId: string;
   snapshot: Record<string, unknown>;
   snapshotHash: string;
+  revision?: number;
+  templateId?: string | null;
+  templateSchemaVersion?: string | null;
+  templateRevision?: number | null;
+  renderedHtml?: string | null;
   pdfStored: boolean;
   pdfHash?: string | null;
   createdAt: Date;
@@ -215,6 +224,58 @@ export interface Template {
   isDefault: boolean;
   config: Record<string, unknown>;
   htmlTemplate: string;
+  schemaVersion: string;
+  revision: number;
+  version: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface DocumentTemplateSchemaVersionRecord {
+  version: string;
+  name: string;
+  description?: string | null;
+  schema: Record<string, unknown>;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface DocumentTemplate {
+  id: string;
+  businessId: string;
+  name: string;
+  schemaVersion: string;
+  revision: number;
+  document: Record<string, unknown>;
+  htmlTemplate?: string | null;
+  config: Record<string, unknown>;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+}
+
+export interface DocumentTemplateRevision {
+  id: string;
+  templateId: string;
+  businessId: string;
+  revision: number;
+  schemaVersion: string;
+  document: Record<string, unknown>;
+  htmlTemplate?: string | null;
+  config: Record<string, unknown>;
+  changeSummary?: string | null;
+  createdAt: Date;
+  createdBy?: string | null;
+}
+
+export interface DocumentTemplateWithCurrentRevision
+  extends DocumentTemplate {
+  currentRevision: number;
+}
+
+export interface DocumentTemplateWithRevisions extends DocumentTemplate {
+  revisions: DocumentTemplateRevision[];
 }

@@ -14,6 +14,23 @@ const MOCK_GOOGLE_USER = {
   locale: "en",
 };
 
+const originalEnvironment = {
+  APP_ENV: process.env.APP_ENV,
+  APP_PUBLIC_BASE_URL: process.env.APP_PUBLIC_BASE_URL,
+  APP_FRONTEND_URL: process.env.APP_FRONTEND_URL,
+  RAILWAY_PUBLIC_DOMAIN: process.env.RAILWAY_PUBLIC_DOMAIN,
+};
+
+function restoreEnvironment() {
+  for (const [key, value] of Object.entries(originalEnvironment)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+}
+
 function mockFetchResponses(
   tokenResponse: Record<string, unknown>,
   userinfoResponse: Record<string, unknown> = MOCK_GOOGLE_USER
@@ -48,6 +65,7 @@ describe("OAuthService", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.resetModules();
+    restoreEnvironment();
     delete process.env.GOOGLE_CLIENT_ID;
     delete process.env.GOOGLE_CLIENT_SECRET;
     delete process.env.GOOGLE_CALLBACK_URL;
@@ -99,6 +117,46 @@ describe("OAuthService", () => {
       expect(params.get("access_type")).toBe("offline");
       expect(params.get("prompt")).toBe("consent");
       expect(params.get("state")).toBe("test-state-123");
+    });
+
+    it("derives the callback from APP_PUBLIC_BASE_URL when no explicit callback is set", async () => {
+      process.env.GOOGLE_CLIENT_ID = "test-client-id";
+      process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
+      process.env.APP_PUBLIC_BASE_URL = "https://api.example.com/";
+      delete process.env.GOOGLE_CALLBACK_URL;
+
+      const { oauthService, env } = await loadFreshService();
+      const url = oauthService.generateAuthUrl("test-state-123");
+      const params = new URLSearchParams(new URL(url).search);
+
+      expect(params.get("redirect_uri")).toBe(
+        "https://api.example.com/api/auth/oauth/google/callback"
+      );
+      expect(env.APP_PUBLIC_BASE_URL).toBe("https://api.example.com");
+    });
+
+    it("uses the Railway public domain in production when APP_PUBLIC_BASE_URL is unset", async () => {
+      process.env.GOOGLE_CLIENT_ID = "test-client-id";
+      process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
+      process.env.APP_ENV = "production";
+      process.env.RAILWAY_PUBLIC_DOMAIN = "api-example.up.railway.app";
+      delete process.env.APP_PUBLIC_BASE_URL;
+      delete process.env.APP_FRONTEND_URL;
+      delete process.env.GOOGLE_CALLBACK_URL;
+      vi.doMock("dotenv", () => ({ config: () => ({}) }));
+
+      try {
+        const { oauthService, env } = await loadFreshService();
+        const url = oauthService.generateAuthUrl("test-state-123");
+        const params = new URLSearchParams(new URL(url).search);
+
+        expect(env.APP_PUBLIC_BASE_URL).toBe("https://api-example.up.railway.app");
+        expect(params.get("redirect_uri")).toBe(
+          "https://api-example.up.railway.app/api/auth/oauth/google/callback"
+        );
+      } finally {
+        vi.doUnmock("dotenv");
+      }
     });
   });
 

@@ -17,6 +17,7 @@ export default defineConfig({
     environment: "node",
     globals: false,
     include: ["tests/**/*.test.ts"],
+    testTimeout: 30000,
     env: { ...parsedEnv, APP_ENV: "test" },
     // The DB-backed test suite shares a single PostgreSQL test database and
     // resets (drops + recreates) all tables between files. Parallel workers

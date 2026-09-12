@@ -12,12 +12,13 @@ import {
   ColumnComponent,
   StyleProps,
 } from "./types";
+import { getComponentDefinition, getComponentSchema, validateComponentProps } from "./registry";
 
 export interface InsertComponentParams {
   type: ComponentType;
   parentId: ParentId;
   index: number;
-  props?: any;
+  props?: Record<string, unknown>;
   style?: StyleProps;
 }
 
@@ -48,6 +49,12 @@ export interface DocumentOperation {
   payload: InsertComponentParams | UpdateComponentParams | MoveComponentParams | RemoveComponentParams | SetSettingsParams;
 }
 
+export interface ValidationResult {
+  success: boolean;
+  error?: string;
+  data?: any;
+}
+
 export class DocumentBuilder {
   private doc: InvoiceDocument;
 
@@ -60,14 +67,30 @@ export class DocumentBuilder {
   }
 
   insertComponent(params: InsertComponentParams): DocumentBuilder {
-    const { type, parentId, index } = params;
-    this.ensureParentExists(parentId);
+    const { type, parentId, index, props, style } = params;
 
-    const component = this.createComponent(type, params.props, params.style);
+    const parentValidation = this.validateAllowedParent(type, parentId);
+    if (!parentValidation.success) {
+      throw new Error(parentValidation.error);
+    }
+
+    const component = this.createComponent(type, props, style);
     component.parentId = parentId;
 
+    const validatedComponent = this.validateComponentProps(type, component);
+    component.props = validatedComponent.props as Record<string, unknown>;
+
     this.addChild(parentId, component.id, index);
-    this.doc.components[component.id] = component;
+
+    if (type === "section") {
+      this.doc.sections[component.id] = component as SectionComponent;
+    } else if (type === "row") {
+      this.doc.rows[component.id] = component as RowComponent;
+    } else if (type === "column") {
+      this.doc.columns[component.id] = component as ColumnComponent;
+    } else {
+      this.doc.components[component.id] = component;
+    }
 
     return this;
   }
@@ -78,7 +101,8 @@ export class DocumentBuilder {
     if (!component) return this;
 
     if (props) {
-      component.props = { ...component.props, ...props };
+      const validatedComponent = this.validateComponentProps(component.type, { ...component, props: { ...component.props, ...props } });
+      component.props = validatedComponent.props as Record<string, unknown>;
     }
     if (style) {
       component.style = { ...component.style, ...style };
@@ -98,9 +122,17 @@ export class DocumentBuilder {
 
   moveComponent(params: MoveComponentParams): DocumentBuilder {
     const { componentId, newParentId, newIndex } = params;
+    const component = this.doc.components[componentId];
+    if (!component) return this;
+
+    const parentValidation = this.validateAllowedParent(component.type, newParentId);
+    if (!parentValidation.success) {
+      throw new Error(parentValidation.error);
+    }
+
     this.removeFromParent(componentId);
     this.insertIntoParent(componentId, newParentId, newIndex);
-    this.doc.components[componentId].parentId = newParentId;
+    component.parentId = newParentId;
     this.doc.updatedAt = new Date().toISOString();
     this.doc.version += 1;
     return this;
@@ -126,25 +158,29 @@ export class DocumentBuilder {
     return this.doc;
   }
 
-  private createComponent(type: ComponentType, props?: any, style?: StyleProps): AnyComponent {
+  private createComponent(type: ComponentType, props?: Record<string, unknown>, style?: StyleProps): AnyComponent {
     const id = this.generateId();
+    const def = getComponentDefinition(type);
+    const defaultProps = def?.defaultProps ?? {};
+    const defaultStyle = def?.defaultStyle ?? {};
+
     const base = {
       id,
       type,
-      props: props ?? {},
-      style: { ...style },
-      children: [],
+      props: { ...defaultProps, ...props },
+      style: { ...defaultStyle, ...style },
+      children: def?.canHaveChildren ? [] : undefined,
       parentId: undefined,
       visible: true,
     };
 
     switch (type) {
       case "section":
-        return { ...base, props: { name: "Section", fullWidth: true, ...props }, children: [] } as SectionComponent;
+        return { ...base, props: { name: "Section", fullWidth: true, ...base.props }, children: [] } as SectionComponent;
       case "row":
-        return { ...base, props: { name: "Row", columns: 2, columnGap: 16, rowGap: 16, ...props }, children: [] } as RowComponent;
+        return { ...base, props: { name: "Row", columns: 2, columnGap: 16, rowGap: 16, ...base.props }, children: [] } as RowComponent;
       case "column":
-        return { ...base, props: { name: "Column", span: 1, ...props }, children: [] } as ColumnComponent;
+        return { ...base, props: { name: "Column", span: 1, ...base.props }, children: [] } as ColumnComponent;
       default:
         return base as AnyComponent;
     }
@@ -160,6 +196,51 @@ export class DocumentBuilder {
     if (this.doc.columns[parentId as string]) return;
     if (this.doc.components[parentId as string]) return;
     throw new Error(`Parent with id ${parentId} not found`);
+  }
+
+  private validateAllowedParent(componentType: ComponentType, parentId: ParentId): ValidationResult {
+    const def = getComponentDefinition(componentType);
+    if (!def) return { success: false, error: `Unknown component type: ${componentType}` };
+
+    if (!def.allowedParentTypes || def.allowedParentTypes.length === 0) {
+      return { success: true };
+    }
+
+    if (parentId === this.doc.rootSectionId) {
+      const rootSection = this.doc.sections[this.doc.rootSectionId];
+      if (rootSection && def.allowedParentTypes.includes("section")) {
+        return { success: true };
+      }
+    }
+
+    const parent = this.getParentComponent(parentId);
+    if (!parent) {
+      return { success: false, error: `Parent with id ${parentId} not found` };
+    }
+
+    if (!def.allowedParentTypes.includes(parent.type)) {
+      return {
+        success: false,
+        error: `Component ${componentType} cannot be child of ${parent.type}. Allowed parents: ${def.allowedParentTypes.join(", ")}`,
+      };
+    }
+
+    return { success: true };
+  }
+
+  private getParentComponent(parentId: ParentId): AnyComponent | SectionComponent | RowComponent | ColumnComponent | null {
+    if (this.doc.sections[parentId as string]) return this.doc.sections[parentId as string];
+    if (this.doc.rows[parentId as string]) return this.doc.rows[parentId as string];
+    if (this.doc.columns[parentId as string]) return this.doc.columns[parentId as string];
+    return this.doc.components[parentId as string] ?? null;
+  }
+
+  private validateComponentProps(type: ComponentType, component: any): any {
+    const result = validateComponentProps(type, component) as { success: boolean; data?: any; error?: any };
+    if (!result.success) {
+      throw new Error(`Invalid component for ${type}: ${result.error}`);
+    }
+    return result.data;
   }
 
   private addChild(parentId: ParentId, childId: string, index: number): void {
@@ -318,22 +399,31 @@ export function canDropComponent(
   doc: InvoiceDocument,
   componentType: ComponentType,
   targetParentId: ParentId | null
-): boolean {
-  if (!componentType) return false;
+): ValidationResult {
+  if (!componentType) return { success: false, error: "No component type provided" };
 
-  const isStructural = componentType === "section" || componentType === "row" || componentType === "column";
+  const def = getComponentDefinition(componentType);
+  if (!def) return { success: false, error: `Unknown component type: ${componentType}` };
 
-  if (isStructural) {
-    if (componentType === "section") {
-      return targetParentId === null || targetParentId === doc.rootSectionId;
+  if (!targetParentId) {
+    if (def.allowedParentTypes.includes("section") || componentType === "section") {
+      return { success: true };
     }
-    if (componentType === "row") {
-      return targetParentId !== null && doc.sections[targetParentId as string] !== undefined;
-    }
-    if (componentType === "column") {
-      return targetParentId !== null && doc.rows[targetParentId as string] !== undefined;
-    }
+    return { success: false, error: "Component cannot be dropped at root level" };
   }
 
-  return targetParentId !== null && doc.columns[targetParentId as string] !== undefined;
+  const parent = doc.sections[targetParentId as string] ??
+    doc.rows[targetParentId as string] ??
+    doc.columns[targetParentId as string] ??
+    doc.components[targetParentId as string];
+
+  if (!parent) return { success: false, error: "Target parent not found" };
+
+  if (def.allowedParentTypes.includes(parent.type)) {
+    return { success: true };
+  }
+
+  return { success: false, error: `Component ${componentType} cannot be dropped into ${parent.type}` };
 }
+
+export { validateComponentProps } from "./registry";
