@@ -106,15 +106,25 @@ if (
   parseHttpUrl(resolvedPublicBaseUrl) === null ||
   (isProduction && isLocalhostUrl(resolvedPublicBaseUrl))
 ) {
-  console.error(
-    "Invalid environment configuration: APP_PUBLIC_BASE_URL must be a non-local http(s) URL in production. Set APP_PUBLIC_BASE_URL or RAILWAY_PUBLIC_DOMAIN."
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    console.error(
+      "Invalid environment configuration: APP_PUBLIC_BASE_URL must be a non-local http(s) URL in production. Set APP_PUBLIC_BASE_URL or RAILWAY_PUBLIC_DOMAIN."
+    );
+    process.exit(1);
+  }
+
+  console.warn(
+    "APP_PUBLIC_BASE_URL not configured; using fallback. OAuth callbacks and public links may be incorrect."
   );
-  process.exit(1);
 }
+
+const finalPublicBaseUrl =
+  resolvedPublicBaseUrl ||
+  (isProduction ? railwayPublicBaseUrl ?? "https://uni-voice-production.up.railway.app" : developmentPublicBaseUrl);
 
 export const env: Env = {
   ...parsed,
-  APP_PUBLIC_BASE_URL: resolvedPublicBaseUrl,
+  APP_PUBLIC_BASE_URL: finalPublicBaseUrl,
 };
 
 export const isTest = env.APP_ENV === "test";
