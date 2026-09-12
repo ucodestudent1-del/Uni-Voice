@@ -2,30 +2,7 @@ FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-# Install backend dependencies
-COPY package*.json ./
-RUN npm install
-
-# Install frontend dependencies
-COPY webapp/package*.json webapp/
-RUN cd webapp && npm install
-
-# Copy source and build both backend and frontend
-COPY . .
-RUN npm run build
-
-# Environment variables (set before app starts)
-ENV NODE_ENV=production
-ENV APP_ENV=production
-ENV PORT=4000
-ENV APP_PUBLIC_BASE_URL=https://uni-voice-production.up.railway.app
-ENV EMAIL_FROM=noreply@example.com
-ENV EMAIL_PROVIDER=stub
-ENV PDF_PROVIDER=html
-ENV PAYMENT_PROVIDER=stub
-ENV TAX_PROVIDER=manual
-ENV AI_PROVIDER=stub
-
+# Install system dependencies needed for Puppeteer and other native modules
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     fonts-liberation \
@@ -65,6 +42,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
+
+# Install backend dependencies
+COPY package*.json ./
+RUN npm install
+
+# Install frontend dependencies
+COPY webapp/package*.json webapp/
+RUN cd webapp && npm install
+
+# Copy source and build both backend and frontend
+COPY . .
+RUN npm run build
+
+# Environment variables (set before app starts)
+ENV NODE_ENV=production
+ENV APP_ENV=production
+ENV PORT=4000
+ENV APP_PUBLIC_BASE_URL=https://uni-voice-production.up.railway.app
+ENV EMAIL_FROM=noreply@example.com
+ENV EMAIL_PROVIDER=stub
+ENV PDF_PROVIDER=html
+ENV PAYMENT_PROVIDER=stub
+ENV TAX_PROVIDER=manual
+ENV AI_PROVIDER=stub
 
 EXPOSE 4000
 
