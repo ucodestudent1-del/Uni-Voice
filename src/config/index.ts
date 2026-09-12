@@ -27,15 +27,6 @@ function parseHttpUrl(value: string): URL | null {
   }
 }
 
-function getRailwayPublicBaseUrl(domain: string | undefined): string | undefined {
-  if (!domain) return undefined;
-
-  const candidate = /^https?:\/\//i.test(domain) ? domain : `https://${domain}`;
-  return parseHttpUrl(candidate)?.origin;
-}
-
-const railwayPublicBaseUrl = getRailwayPublicBaseUrl(process.env.RAILWAY_PUBLIC_DOMAIN);
-
 function isLocalhostUrl(value: string): boolean {
   const url = parseHttpUrl(value);
   if (!url) return false;
@@ -95,6 +86,15 @@ try {
   console.error("Invalid environment configuration:", e);
   process.exit(1);
 }
+
+function getRailwayPublicBaseUrl(domain: string | undefined): string | undefined {
+  if (!domain) return undefined;
+
+  const candidate = /^https?:\/\//i.test(domain) ? domain : `https://${domain}`;
+  return parseHttpUrl(candidate)?.origin;
+}
+
+const railwayPublicBaseUrl = getRailwayPublicBaseUrl(process.env.RAILWAY_PUBLIC_DOMAIN);
 
 const resolvedPublicBaseUrl = (
   parsed.APP_PUBLIC_BASE_URL ??
