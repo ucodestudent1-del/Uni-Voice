@@ -55,7 +55,7 @@ RUN cd webapp && npm install
 
 # Copy source and build both backend and frontend
 COPY . .
-RUN npm run build
+RUN npm run build && cd webapp && npm run build
 
 # Environment variables (set before app starts)
 ENV NODE_ENV=production
@@ -71,4 +71,4 @@ ENV AI_PROVIDER=stub
 
 EXPOSE 4000
 
-CMD ["node", "dist/index.js"]
+CMD ["npm", "start"]
