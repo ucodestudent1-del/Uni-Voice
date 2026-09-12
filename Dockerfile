@@ -45,7 +45,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install backend dependencies
 COPY package*.json ./
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm install
+ENV PUPPETEER_SKIP_DOWNLOAD=false
 
 # Install frontend dependencies
 COPY webapp/package*.json webapp/
