@@ -130,11 +130,15 @@ app.post("/api/auth/login", async (req, res) => {
 
 app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-  const sub = await subscriptionRepository.findSubscriptionByBusinessId(req.user!.businessId!);
-  const plan = sub ? await subscriptionService.getPlanById(sub.planId) : null;
-  const twoFactor = await twoFactorService.getStatus(req.user!.id);
-  const onboarding = await onboardingService.getProgress(req.user!.businessId!);
-  res.json({ user: req.user, subscription: sub, plan, twoFactor, onboarding });
+  try {
+    const sub = await subscriptionRepository.findSubscriptionByBusinessId(req.user!.businessId!);
+    const plan = sub ? await subscriptionService.getPlanById(sub.planId) : null;
+    const twoFactor = await twoFactorService.getStatus(req.user!.id);
+    const onboarding = await onboardingService.getProgress(req.user!.businessId!);
+    res.json({ user: req.user, subscription: sub, plan, twoFactor, onboarding });
+  } catch (err) {
+    handleAuthError(err, res);
+  }
 });
 
 // ============================================================================
@@ -172,9 +176,13 @@ app.post("/api/auth/2fa/verify", async (req, res) => {
 // 2FA management (protected, requires an existing authenticated session)
 app.get("/api/auth/2fa/status", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-  const status = await twoFactorService.getStatus(req.user!.id);
-  const summary = await twoFactorService.getRecoverySummary(req.user!.id);
-  res.json({ status, recoveryCodes: summary });
+  try {
+    const status = await twoFactorService.getStatus(req.user!.id);
+    const summary = await twoFactorService.getRecoverySummary(req.user!.id);
+    res.json({ status, recoveryCodes: summary });
+  } catch (err) {
+    handleAuthError(err, res);
+  }
 });
 
 // Begin setup: generates a TOTP secret (pending, not yet enabled).
@@ -960,6 +968,13 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
     return res.status((err as any).statusCode).json({ error: err.message, code: (err as any).code });
   }
   res.status(500).json({ error: "Internal server error" });
+});
+
+process.on("unhandledRejection", (reason) => {
+  logger.error({ err: reason }, "Unhandled promise rejection — server will continue running");
+});
+process.on("uncaughtException", (err) => {
+  logger.error({ err }, "Uncaught exception — server will continue running");
 });
 
 const PORT = env.PORT;

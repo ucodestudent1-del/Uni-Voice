@@ -8,6 +8,8 @@ Commands to run during this session:
 | `npm run migrate` | Run DB migrations (creates all tables) |
 | `npm run migrate:reset` | Drop & re-run all migrations (dev only) |
 | `npm run dev` | Run backend in watch mode (tsx) |
+| `npm run dev:frontend` | Run frontend dev server (Vite, localhost:5173) |
+| `npm run dev:all` | Run backend + frontend together (concurrently) |
 | `npm run typecheck` | Type-check the backend |
 | `npm run lint` | Lint the backend |
 | `npm run test` | Run all unit/integration tests (vitest) |
@@ -21,6 +23,9 @@ Commands to run during this session:
 | `cd webapp && npm run dev` | Vite dev server (localhost:5173) |
 | `cd webapp && npm run typecheck` | Type-check frontend |
 | `cd webapp && npm run build` | Production build |
+
+> **Tip:** Use `npm run dev:all` from the project root to start both the
+> backend (`localhost:4000`) and frontend (`localhost:5173`) together.
 
 ## Stack
 - **Backend**: Express + TypeScript + PostgreSQL (`node-pg-migrate`-style SQL migrations)
