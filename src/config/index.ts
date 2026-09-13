@@ -48,6 +48,11 @@ const baseUrlSchema = z
   )
   .transform((value) => value.replace(/\/+$/, ""));
 
+const optionalUrlSchema = z
+  .string()
+  .refine((value) => parseHttpUrl(value) !== null, "Must be a valid http or https URL")
+  .transform((value) => value.replace(/\/+$/, ""));
+
 const envSchema = z.object({
   APP_ENV: z.enum(["development", "test", "production"]).default(inferredAppEnv),
   PORT: z.coerce.number().default(4000),
@@ -72,7 +77,7 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_CALLBACK_URL: baseUrlSchema.optional(),
+  GOOGLE_CALLBACK_URL: optionalUrlSchema.optional(),
 });
 
 type Env = Omit<z.infer<typeof envSchema>, "APP_PUBLIC_BASE_URL"> & {
