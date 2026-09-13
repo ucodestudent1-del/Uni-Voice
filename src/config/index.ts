@@ -16,7 +16,7 @@ const inferredAppEnv = (rawAppEnv === undefined
     : "development"
   : rawAppEnv) as "development" | "test" | "production";
 const isProduction = inferredAppEnv === "production";
-const developmentPublicBaseUrl = "http://localhost:4000";
+const developmentPublicBaseUrl = "http://localhost:5173";
 
 function parseHttpUrl(value: string): URL | null {
   try {
