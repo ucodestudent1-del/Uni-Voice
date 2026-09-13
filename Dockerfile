@@ -2,30 +2,9 @@ FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-# Install backend dependencies
-COPY package*.json ./
-RUN npm install
-
-# Install frontend dependencies
-COPY webapp/package*.json webapp/
-RUN cd webapp && npm install
-
-# Copy source and build both backend and frontend
-COPY . .
-RUN npm run build && cd webapp && npm run build
-
-ENV NODE_ENV=production
-ENV APP_ENV=production
-ENV PORT=4000
-ENV APP_PUBLIC_BASE_URL=https://uni-voice-production.up.railway.app
-ENV EMAIL_FROM=noreply@example.com
-ENV EMAIL_PROVIDER=stub
-ENV PDF_PROVIDER=html
-ENV PAYMENT_PROVIDER=stub
-ENV TAX_PROVIDER=manual
-ENV AI_PROVIDER=stub
-
+# Install system dependencies FIRST (needed by Puppeteer/chrome at runtime and during build)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     ca-certificates \
     fonts-liberation \
     libasound2 \
@@ -65,6 +44,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# Install backend dependencies (skip Puppeteer browser download during npm install to prevent build failures)
+COPY package*.json ./
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm install
+ENV PUPPETEER_SKIP_DOWNLOAD=false
+
+# Download Chrome separately for Puppeteer (works reliably in Docker build environment)
+RUN npx puppeteer browsers install chrome
+
+# Install frontend dependencies
+COPY webapp/package*.json webapp/
+RUN cd webapp && npm install
+
+# Copy source and build (npm run build already includes the webapp build step)
+COPY . .
+RUN npm run build
+
+ENV NODE_ENV=production
+ENV APP_ENV=production
+ENV PORT=4000
+ENV APP_PUBLIC_BASE_URL=https://uni-voice-production.up.railway.app
+ENV EMAIL_FROM=noreply@example.com
+ENV EMAIL_PROVIDER=stub
+ENV PDF_PROVIDER=html
+ENV PAYMENT_PROVIDER=stub
+ENV TAX_PROVIDER=manual
+ENV AI_PROVIDER=stub
+
 EXPOSE 4000
 
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
