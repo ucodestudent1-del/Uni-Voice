@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     fonts-liberation \
+    unzip \
     libasound2 \
     libatk1.0-0 \
     libatomic1 \
