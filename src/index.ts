@@ -18,11 +18,16 @@ import { customerRepository } from "./repositories/customer.repo.js";
 import { productRepository } from "./repositories/product.repo.js";
 import { invoiceRepository } from "./repositories/invoice.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
+import { documentTemplateRepository } from "./repositories/document-template.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
 import { onboardingRepository } from "./repositories/onboarding.repo.js";
 import { onboardingService } from "./services/onboarding.service.js";
 import { logger } from "./utils/logger.js";
 import { stripeService } from "./services/payments/stripe-service.js";
+import {
+  DocumentTemplateInputSchema,
+  DocumentTemplateUpdateSchema,
+} from "./domain/schemas/document-template.js";
 import bcrypt from "bcrypt";
 
 const app = express();
@@ -766,6 +771,83 @@ app.delete("/api/templates/:id", requireAuth, async (req: AuthRequest, res) => {
 });
 
 // ============================================================================
+// DOCUMENT TEMPLATES (structured InvoiceDocument JSON layouts)
+// ============================================================================
+app.get("/api/document-templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Number(req.query.limit ?? 50), 200);
+  const offset = Number(req.query.offset ?? 0);
+  const industry = req.query.industry ? String(req.query.industry) : undefined;
+  const isDefault = req.query.isDefault !== undefined ? Boolean(req.query.isDefault) : undefined;
+  const templates = await documentTemplateRepository.findMany(req.user!.businessId, {
+    industry,
+    isDefault,
+    limit,
+    offset,
+  });
+  res.json({ templates, limit, offset });
+});
+
+app.post("/api/document-templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = DocumentTemplateInputSchema.parse(req.body);
+  const template = await documentTemplateRepository.create(
+    req.user!.businessId,
+    parsed,
+    req.user!.id
+  );
+  res.status(201).json({ template });
+});
+
+app.get("/api/document-templates/default", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const industry = req.query.industry ? String(req.query.industry) : null;
+  const template = industry
+    ? await documentTemplateRepository.findDefaultByIndustry(req.user!.businessId, industry)
+    : await documentTemplateRepository.findDefault(req.user!.businessId);
+  res.json({ template });
+});
+
+app.get("/api/document-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await documentTemplateRepository.findById(req.user!.businessId, req.params.id);
+  res.json({ template });
+});
+
+app.patch("/api/document-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = DocumentTemplateUpdateSchema.parse(req.body);
+  const template = await documentTemplateRepository.update(
+    req.user!.businessId,
+    req.params.id,
+    parsed
+  );
+  res.json({ template });
+});
+
+app.delete("/api/document-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await documentTemplateRepository.delete(req.user!.businessId, req.params.id);
+  res.status(204).send();
+});
+
+app.post("/api/document-templates/:id/duplicate", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await documentTemplateRepository.duplicate(
+    req.user!.businessId,
+    req.params.id,
+    req.user!.id
+  );
+  res.status(201).json({ template });
+});
+
+app.post("/api/document-templates/:id/set-default", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await documentTemplateRepository.setDefault(req.user!.businessId, req.params.id);
+  res.json({ template });
+});
+
+// ============================================================================
 // NUMBER SEQUENCES (invoice numbering config)
 // ============================================================================
 app.get("/api/businesses/current/numbering", requireAuth, async (req: AuthRequest, res) => {
@@ -965,7 +1047,8 @@ if (!isDev) {
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error({ err }, "Unhandled error");
   if (err instanceof Error && "statusCode" in err) {
-    return res.status((err as any).statusCode).json({ error: err.message, code: (err as any).code });
+    const e = err as { statusCode: number; code?: string; message: string; context?: Record<string, unknown> };
+    return res.status(e.statusCode).json({ error: e.message, code: e.code, ...(e.context ? { context: e.context } : {}) });
   }
   res.status(500).json({ error: "Internal server error" });
 });

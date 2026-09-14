@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
@@ -24,15 +24,19 @@ import PropertyInspector from "../document-model/editor/PropertyInspector";
 import { invoiceToDocument, getDefaultDocument, documentToInvoice } from "../document-model/converter";
 import { DocumentPreview } from "../document-model/DocumentPreview";
 import { initializeRegistry } from "../document-model";
+import { getPresetTemplate } from "../document-model/templates/preset-templates";
 import {
   insertComponent,
   updateComponent,
   moveComponent,
   removeComponent,
+  duplicateComponent,
   getChildren,
   findComponent,
+  findComponentDeep,
   findParent,
   findSiblings,
+  findSiblingsDeep,
 } from "../document-model/document-operations";
 import {
   getComponentDefinition,
@@ -45,6 +49,31 @@ import type { ApiInvoice, ApiCustomer, ApiBusiness, ApiProduct } from "../types/
 import CustomerSelector from "./CustomerSelector";
 import TaxSelector from "./TaxSelector";
 import TemplateSelector from "./TemplateSelector";
+import TemplateGallery from "./TemplateGallery";
+import DocumentTemplateGallery from "./DocumentTemplateGallery";
+import { ValidationPanel } from "./ValidationPanel";
+import { OutlineEditor } from "./OutlineEditor";
+import { useInvoiceValidation, type ValidationIssue } from "../hooks/useInvoiceValidation";
+import { useAnalytics } from "../hooks/useAnalytics";
+
+export interface EditorLineItem {
+  id?: string;
+  description: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  discount?: string;
+  discountType?: "fixed" | "percentage";
+  taxRate?: string;
+  isTaxInclusive?: boolean;
+  productId?: string | null;
+}
+
+export interface EditorFee {
+  description: string;
+  amount: string;
+  taxRate?: string;
+}
 
 interface EditorInvoiceData {
   customerId?: string;
@@ -63,25 +92,6 @@ interface EditorInvoiceData {
   items: EditorLineItem[];
   fees: EditorFee[];
   amountPaid?: string;
-}
-
-interface EditorLineItem {
-  id?: string;
-  description: string;
-  quantity: string;
-  unit: string;
-  unitPrice: string;
-  discount?: string;
-  discountType?: "fixed" | "percentage";
-  taxRate?: string;
-  isTaxInclusive?: boolean;
-  productId?: string | null;
-}
-
-interface EditorFee {
-  description: string;
-  amount: string;
-  taxRate?: string;
 }
 
 const DEFAULT_DOCUMENT = (businessId: string): InvoiceDocument => {
@@ -124,6 +134,13 @@ function InvoiceEditorContent() {
   const [sendData, setSendData] = useState({ subject: "", message: "" });
   const [editorData, setEditorData] = useState<EditorInvoiceData | null>(null);
   const [previewMode, setPreviewMode] = useState<"edit" | "preview">("edit");
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
+  const [templateChoice, setTemplateChoice] = useState<string | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
+  const [outlineMode, setOutlineMode] = useState(false);
+  const analytics = useAnalytics();
+  const [apiValidationIssues, setApiValidationIssues] = useState<ValidationIssue[]>([]);
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
   useEffect(() => {
     initializeRegistry();
@@ -201,7 +218,7 @@ function InvoiceEditorContent() {
         setSaveState("saved");
       } catch (err: any) {
         if (err.response?.status === 404) {
-          alert("Invoice not found");
+          setActionMessage({ type: "error", text: "Invoice not found" });
           navigate("/app/invoices");
           return;
         }
@@ -325,7 +342,71 @@ function InvoiceEditorContent() {
     onSelect,
   };
 
+  const validation = useInvoiceValidation({
+    customerId: editorData?.customerId,
+    customer: editorData?.customer,
+    currency: editorData?.currency,
+    issueDate: editorData?.issueDate,
+    dueDate: editorData?.dueDate,
+    items: editorData?.items || [],
+    fees: editorData?.fees,
+    notes: editorData?.notes,
+    terms: editorData?.terms,
+    paymentInstructions: editorData?.paymentInstructions,
+  });
+
+  const allValidationIssues = useMemo(() => {
+    const merged = [...validation.issues, ...apiValidationIssues];
+    const seen = new Set<string>();
+    return merged.filter((issue) => {
+      const key = `${issue.code}:${issue.field ?? ""}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [validation.issues, apiValidationIssues]);
+
+  const validationErrorCount = allValidationIssues.filter((i) => i.severity === "error").length;
+  const validationWarningCount = allValidationIssues.filter((i) => i.severity === "warning").length;
+
+  useEffect(() => {
+    if (actionMessage) {
+      const timer = setTimeout(() => setActionMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionMessage]);
+
+  const handleDuplicateComponent = (componentId: ComponentId) => {
+    const newDoc = duplicateComponent(doc, { componentId });
+    setDocument(newDoc);
+    analytics.track("component_duplicated", { componentId });
+  };
+
+  const handleTemplateSelect = (presetKey: string) => {
+    initializeRegistry();
+    const preset = getPresetTemplate(presetKey);
+    if (!preset) return;
+    const businessId = business?.id || "local";
+    const newDoc = preset.build(businessId);
+    setDocument(newDoc);
+    if (isNew) {
+      setEditorData({
+        currency: newDoc.settings.currency,
+        items: [],
+        fees: [],
+      });
+      setTemplateChoice(presetKey);
+      setSaveState("saved");
+    }
+    setShowTemplateGallery(false);
+    analytics.trackTemplateSelected({ presetKey });
+  };
+
   async function handleSave() {
+    if (!validation.isValid) {
+      setShowValidation(true);
+      return;
+    }
     setSaveState("saving");
     try {
       if (isNew) {
@@ -351,6 +432,7 @@ function InvoiceEditorContent() {
           })),
           fees: editorData?.fees || [],
         });
+        analytics.trackInvoiceCreated({ invoiceId: res.invoiceId });
         navigate(`/app/invoices/${res.invoiceId}/edit`);
       } else {
         await updateInvoice(id!, {
@@ -376,22 +458,20 @@ function InvoiceEditorContent() {
           isTaxInclusive: it.isTaxInclusive,
         })));
         await setInvoiceFees(id!, editorData?.fees || []);
+        analytics.track("invoice_saved", { invoiceId: id });
       }
       markSaved();
       setSaveState("saved");
     } catch (err: any) {
       setSaveState("error");
-      alert(err.response?.data?.error || "Failed to save");
+      setActionMessage({ type: "error", text: err.response?.data?.error || "Failed to save" });
     }
   }
 
   async function handleFinalize() {
-    if (!editorData?.customerId) {
-      alert("Please select a customer before finalizing.");
-      return;
-    }
-    if (!(editorData?.items || []).some((it) => Number(it.quantity) > 0 && Number(it.unitPrice) > 0)) {
-      alert("Add at least one line item with a price.");
+    setApiValidationIssues([]);
+    if (!validation.isValid) {
+      setShowValidation(true);
       return;
     }
     const confirmed = window.confirm("Finalize this invoice? It will be assigned an invoice number and can't be edited after.");
@@ -403,15 +483,26 @@ function InvoiceEditorContent() {
       const currentId = id && !isNew ? id : undefined;
       if (currentId) {
         const res = await finalizeInvoice(currentId);
-        alert(`Invoice finalized! Number: ${res.invoiceNumber}`);
-        navigate("/app/invoices");
+        analytics.track("invoice_finalized", { invoiceNumber: res.invoiceNumber });
+        setActionMessage({ type: "success", text: `Invoice finalized! Number: ${res.invoiceNumber}` });
+        setTimeout(() => navigate("/app/invoices"), 1500);
       }
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to finalize invoice");
+      const data = err.response?.data;
+      if (data?.code === "VALIDATION_FAILED" && data?.context?.issues) {
+        setApiValidationIssues(data.context.issues);
+        setShowValidation(true);
+      } else {
+        setActionMessage({ type: "error", text: data?.error || "Failed to finalize invoice" });
+      }
     }
   }
 
   function handleSend() {
+    if (!validation.isValid) {
+      setShowValidation(true);
+      return;
+    }
     setShowSendDialog(true);
     const customer = editorData?.customerId ? customers.find((c) => c.id === editorData.customerId) : undefined;
     const subject = editorData?.invoiceNumber
@@ -426,16 +517,17 @@ function InvoiceEditorContent() {
     try {
       await sendInvoice(id);
       setShowSendDialog(false);
-      alert("Invoice sent successfully!");
-      navigate("/app/invoices");
+      analytics.trackInvoiceSent({ invoiceId: id });
+      setActionMessage({ type: "success", text: "Invoice sent successfully!" });
+      setTimeout(() => navigate("/app/invoices"), 1500);
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to send invoice");
+      setActionMessage({ type: "error", text: err.response?.data?.error || "Failed to send invoice" });
     }
   }
 
   async function handlePdfDownload() {
     if (!id || isNew) {
-      alert("Save the invoice first");
+      setActionMessage({ type: "info", text: "Save the invoice first" });
       return;
     }
     const blob = await getInvoicePdf(id);
@@ -462,6 +554,7 @@ function InvoiceEditorContent() {
       props: newComponent,
       style: { ...def.defaultStyle },
     });
+    analytics.trackComponentAdded({ componentType: params.type, parentId: params.parentId });
   };
 
   const handleUpdateComponent = (
@@ -475,7 +568,7 @@ function InvoiceEditorContent() {
       setSettings({ currency: props.currency as string });
     }
 
-    const component = findComponent(doc, componentId);
+    const component = findComponentDeep(doc, componentId);
     if (!component) return;
 
     if (component.type === "notes") {
@@ -503,16 +596,14 @@ function InvoiceEditorContent() {
   };
 
   const handleRemoveComponent = (componentId: ComponentId) => {
-    const component = findComponent(doc, componentId);
-    if (!component) return;
-
-    if (component.type === "notes") {
+    const component = findComponentDeep(doc, componentId);
+    if (component?.type === "notes") {
       setEditorData((prev) => prev ? { ...prev, notes: undefined } : prev);
     }
-    if (component.type === "terms") {
+    if (component?.type === "terms") {
       setEditorData((prev) => prev ? { ...prev, terms: undefined } : prev);
     }
-    if (component.type === "paymentInstructions") {
+    if (component?.type === "paymentInstructions") {
       setEditorData((prev) => prev ? { ...prev, paymentInstructions: undefined } : prev);
     }
 
@@ -526,6 +617,14 @@ function InvoiceEditorContent() {
     unsaved: "Unsaved changes",
     error: "Save failed",
   }[saveState];
+
+  if (isNew && !templateChoice) {
+    return (
+      <div className="min-h-[calc(100vh-120px)] bg-slate-50 p-6">
+        <DocumentTemplateGallery onSelect={handleTemplateSelect} />
+      </div>
+    );
+  }
 
   if (loading || !editorData) {
     return <div className="text-center py-20">Loading invoice...</div>;
@@ -544,14 +643,24 @@ function InvoiceEditorContent() {
           <h1 className="text-xl font-semibold text-slate-900">
             Document Editor
           </h1>
-          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            saveState === "saved" ? "bg-green-100 text-green-800" :
-            saveState === "saving" ? "bg-blue-100 text-blue-800" :
-            saveState === "error" ? "bg-red-100 text-red-800" :
-            "bg-amber-100 text-amber-800"
-          }`}>
-            {saveStateLabel}
-          </span>
+           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+             saveState === "saved" ? "bg-green-100 text-green-800" :
+             saveState === "saving" ? "bg-blue-100 text-blue-800" :
+             saveState === "error" ? "bg-red-100 text-red-800" :
+             "bg-amber-100 text-amber-800"
+           }`}>
+             {saveStateLabel}
+           </span>
+           {validationErrorCount > 0 && (
+             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800">
+               {validationErrorCount} validation error{validationErrorCount !== 1 ? "s" : ""}
+             </span>
+           )}
+           {validationWarningCount > 0 && validationErrorCount === 0 && (
+             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-800">
+               {validationWarningCount} warning{validationWarningCount !== 1 ? "s" : ""}
+             </span>
+           )}
         </div>
         <div className="flex gap-2">
           <button
@@ -563,55 +672,99 @@ function InvoiceEditorContent() {
             &larr;
           </button>
            <button
-             onClick={redo}
-             disabled={!canRedo}
-             className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-             title="Redo (Ctrl+Y)"
-           >
-             &rarr;
-           </button>
-           <button
-             onClick={() => setPreviewMode(previewMode === "edit" ? "preview" : "edit")}
-             className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
-               previewMode === "preview" ? "bg-primary-100 text-primary-700" : ""
-             }`}
-             title="Toggle preview"
-           >
-             {previewMode === "edit" ? "Preview" : "Edit"}
-           </button>
-           <button
-            onClick={handleSave}
-            disabled={saveState === "saving"}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            Save
-          </button>
-          {!editorData?.invoiceNumber && (
-            <button
-              onClick={handleFinalize}
-              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              onClick={redo}
+              disabled={!canRedo}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              title="Redo (Ctrl+Y)"
             >
-              Finalize &amp; Send
+              &rarr;
             </button>
-          )}
-          {editorData?.invoiceNumber && (
-            <>
+            <button
+              onClick={() => setPreviewMode(previewMode === "edit" ? "preview" : "edit")}
+              className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
+                previewMode === "preview" ? "bg-primary-100 text-primary-700" : ""
+              }`}
+              title="Toggle preview"
+            >
+              {previewMode === "edit" ? "Preview" : "Edit"}
+            </button>
+            <button
+              onClick={() => setShowTemplateGallery(true)}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              title="Choose template"
+            >
+              Gallery
+            </button>
+            <button
+              onClick={() => setOutlineMode(!outlineMode)}
+              className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
+                outlineMode ? "bg-primary-100 text-primary-700" : ""
+              }`}
+              title="Toggle document outline"
+            >
+              Outline
+            </button>
+            <button
+              onClick={() => setShowValidation(!showValidation)}
+              className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
+                showValidation ? "bg-primary-100 text-primary-700" : ""
+              }`}
+              title="Validation"
+            >
+              {validationErrorCount > 0 ? "⚠" : validationWarningCount > 0 ? "!" : "✓"}
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saveState === "saving"}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Save
+            </button>
+            {!editorData?.invoiceNumber && (
               <button
-                onClick={handlePdfDownload}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                onClick={handleFinalize}
+                disabled={!validation.isValid}
+                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Download PDF
+                Finalize &amp; Send
               </button>
-              <button
-                onClick={handleSend}
-                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-              >
-                Send
-              </button>
-            </>
-          )}
+            )}
+            {editorData?.invoiceNumber && (
+              <>
+                <button
+                  onClick={handlePdfDownload}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Download PDF
+                </button>
+                <button
+                  onClick={handleSend}
+                  className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                >
+                  Send
+                </button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+
+        {actionMessage && (
+          <div className={`mb-3 rounded-lg border px-3 py-2 text-sm ${
+            actionMessage.type === "success"
+              ? "border-green-200 bg-green-50 text-green-800"
+              : actionMessage.type === "error"
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-blue-200 bg-blue-50 text-blue-800"
+          }`}>
+            {actionMessage.text}
+          </div>
+        )}
+
+          <ValidationPanel
+            issues={allValidationIssues}
+            hasErrors={validationErrorCount > 0}
+            hasWarnings={validationWarningCount > 0}
+          />
 
       <div className="flex-1 grid grid-cols-[1fr_320px] gap-4 overflow-hidden bg-slate-50">
         {previewMode === "edit" ? (
@@ -644,25 +797,36 @@ function InvoiceEditorContent() {
               />
             </div>
 
-            <div className="overflow-y-auto">
-              <PropertyInspector
-                componentId={selectedComponentId}
-                component={selectedComponentId ? findComponent(doc, selectedComponentId) ?? null : null}
-                onSelect={onSelect}
-                onUpdate={handleUpdateComponent}
-                onDelete={handleRemoveComponent}
-                onVisibilityToggle={(componentId) => {
-                  const component = findComponent(doc, componentId);
-                  if (!component) return;
-                  doUpdateComponent(componentId, {}, { visibility: component.visible === false ? "visible" : "hidden" });
-                }}
+            {outlineMode ? (
+              <OutlineEditor
                 document={doc}
-                business={business}
-                customer={editorData?.customer}
-                currency={editorData?.currency || "USD"}
-                locale="en-US"
+                selectedComponentId={selectedComponentId}
+                onSelect={(id) => onSelect(id ? id as string : null)}
+                onDuplicate={handleDuplicateComponent}
+                onRemove={handleRemoveComponent}
               />
-            </div>
+            ) : (
+              <div className="overflow-y-auto">
+                <PropertyInspector
+                  componentId={selectedComponentId}
+                  component={selectedComponentId ? findComponentDeep(doc, selectedComponentId) ?? findComponent(doc, selectedComponentId) ?? null : null}
+                  onSelect={onSelect}
+                  onUpdate={handleUpdateComponent}
+                  onDelete={handleRemoveComponent}
+                  onDuplicate={selectedComponentId ? handleDuplicateComponent : undefined}
+                  onVisibilityToggle={(componentId) => {
+                    const component = findComponentDeep(doc, componentId) ?? findComponent(doc, componentId);
+                    if (!component) return;
+                    doUpdateComponent(componentId, {}, { visibility: component.visible === false ? "visible" : "hidden" });
+                  }}
+                  document={doc}
+                  business={business}
+                  customer={editorData?.customer}
+                  currency={editorData?.currency || "USD"}
+                  locale="en-US"
+                />
+              </div>
+            )}
           </>
         ) : (
           <div className="overflow-auto p-6">
@@ -742,6 +906,13 @@ function InvoiceEditorContent() {
           </div>
         </div>
       )}
+
+      <TemplateGallery
+        isOpen={showTemplateGallery}
+        onClose={() => setShowTemplateGallery(false)}
+        onSelect={handleTemplateSelect}
+        selectedKey={editorData?.templateId}
+      />
     </div>
   );
 }

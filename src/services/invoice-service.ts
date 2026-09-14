@@ -13,6 +13,7 @@ import { businessRepository } from "../repositories/business.repo.js";
 import { productRepository } from "../repositories/product.repo.js";
 import { generatePublicInvoiceToken } from "../utils/crypto.js";
 import { BusinessLogicError } from "../domain/errors.js";
+import { invoiceValidationService } from "../services/validation/invoice-validation.js";
 import { logger } from "../utils/logger.js";
 import { getClient } from "../db/pool.js";
 import { env } from "../config/index.js";
@@ -233,6 +234,15 @@ export class InvoiceService {
 
     const res = await this.recalculate(invoice);
     if (res.total.isNegative()) throw new BusinessLogicError("Invoice total cannot be negative");
+
+    const validationResult = invoiceValidationService.validate(invoice);
+    if (!validationResult.valid) {
+      throw new BusinessLogicError(
+        "Invoice failed validation and cannot be finalized",
+        "VALIDATION_FAILED",
+        { issues: validationResult.issues }
+      );
+    }
 
     const { number: generatedNumber } = await invoiceNumberService.generate(businessId);
     const client = await getClient();

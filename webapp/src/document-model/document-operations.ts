@@ -1,6 +1,7 @@
 import {
   InvoiceDocument,
   AnyComponent,
+  BaseComponent,
   ComponentId,
   ComponentType,
   SectionId,
@@ -40,13 +41,17 @@ export interface RemoveComponentParams {
   componentId: ComponentId;
 }
 
+export interface DuplicateComponentParams {
+  componentId: ComponentId;
+}
+
 export interface SetSettingsParams {
   settings: Partial<InvoiceDocument["settings"]>;
 }
 
 export interface DocumentOperation {
-  type: "insert" | "update" | "move" | "remove" | "set_settings";
-  payload: InsertComponentParams | UpdateComponentParams | MoveComponentParams | RemoveComponentParams | SetSettingsParams;
+  type: "insert" | "update" | "move" | "remove" | "set_settings" | "duplicate";
+  payload: InsertComponentParams | UpdateComponentParams | MoveComponentParams | RemoveComponentParams | SetSettingsParams | DuplicateComponentParams;
 }
 
 export interface ValidationResult {
@@ -141,7 +146,7 @@ export class DocumentBuilder {
   removeComponent(params: RemoveComponentParams): DocumentBuilder {
     const { componentId } = params;
     this.removeFromParent(componentId);
-    delete this.doc.components[componentId];
+    this.removeSubtree(componentId);
     this.doc.updatedAt = new Date().toISOString();
     this.doc.version += 1;
     return this;
@@ -273,7 +278,7 @@ export class DocumentBuilder {
   }
 
   private removeFromParent(componentId: ComponentId): void {
-    const component = this.doc.components[componentId];
+    const component = this.findAnyComponent(componentId);
     if (!component || !component.parentId) return;
 
     const parentId = component.parentId;
@@ -302,6 +307,110 @@ export class DocumentBuilder {
     }
   }
 
+  private findAnyComponent(id: string): (AnyComponent & BaseComponent) | undefined {
+    const section = this.doc.sections[id as string];
+    if (section) return section as unknown as AnyComponent & BaseComponent;
+    const row = this.doc.rows[id as string];
+    if (row) return row as unknown as AnyComponent & BaseComponent;
+    const column = this.doc.columns[id as string];
+    if (column) return column as unknown as AnyComponent & BaseComponent;
+    return this.doc.components[id as string];
+  }
+
+  private removeSubtree(componentId: ComponentId): void {
+    const component = this.findAnyComponent(componentId);
+    if (!component) return;
+
+    const children = [...(component.children ?? [])];
+    for (const childId of children) {
+      this.removeSubtree(childId);
+    }
+
+    if (component.type === "section") {
+      delete this.doc.sections[componentId as string];
+    } else if (component.type === "row") {
+      delete this.doc.rows[componentId as string];
+    } else if (component.type === "column") {
+      delete this.doc.columns[componentId as string];
+    } else {
+      delete this.doc.components[componentId];
+    }
+  }
+
+  duplicateComponent(params: DuplicateComponentParams): DocumentBuilder {
+    const { componentId } = params;
+    const original = this.findAnyComponent(componentId);
+    if (!original) return this;
+
+    if (original.id === this.doc.rootSectionId) return this;
+
+    const newRootId = this.cloneSubtree(original);
+
+    const parentId = original.parentId ?? this.doc.rootSectionId;
+    const siblings = this.getChildren(parentId);
+    const originalIndex = siblings.indexOf(componentId);
+    const insertIndex = originalIndex >= 0 ? originalIndex + 1 : siblings.length;
+    this.insertIntoParent(newRootId, parentId, insertIndex);
+
+    this.doc.updatedAt = new Date().toISOString();
+    this.doc.version += 1;
+    return this;
+  }
+
+  private cloneSubtree(original: AnyComponent & BaseComponent): ComponentId {
+    const def = getComponentDefinition(original.type as ComponentType);
+    const id = this.generateId();
+
+    const clonedProps = JSON.parse(JSON.stringify(original.props ?? {})) as Record<string, unknown>;
+    const clonedStyle = JSON.parse(JSON.stringify(original.style ?? {})) as StyleProps;
+    const defaultProps = def?.defaultProps ?? {};
+    const defaultStyle = def?.defaultStyle ?? {};
+
+    const newComponent: any = {
+      id,
+      type: original.type,
+      props: { ...defaultProps, ...clonedProps },
+      style: { ...defaultStyle, ...clonedStyle },
+      parentId: original.parentId,
+      visible: original.visible !== false,
+      condition: original.condition,
+    };
+
+    if (def?.canHaveChildren) {
+      const children = [...(original.children ?? [])];
+      const clonedChildren: ComponentId[] = [];
+      for (const childId of children) {
+        const childOriginal = this.findAnyComponent(childId);
+        if (childOriginal) {
+          const clonedChildId = this.cloneSubtree(childOriginal);
+          clonedChildren.push(clonedChildId);
+        }
+      }
+      newComponent.children = clonedChildren;
+    }
+
+    if (newComponent.type === "section") {
+      this.doc.sections[id] = newComponent as unknown as SectionComponent;
+    } else if (newComponent.type === "row") {
+      this.doc.rows[id] = newComponent as unknown as RowComponent;
+    } else if (newComponent.type === "column") {
+      this.doc.columns[id] = newComponent as unknown as ColumnComponent;
+    } else {
+      this.doc.components[id] = newComponent as AnyComponent;
+    }
+
+    if (def?.canHaveChildren && newComponent.children) {
+      for (const childId of newComponent.children as ComponentId[]) {
+        const child = this.findAnyComponent(childId);
+        if (child) {
+          child.parentId = id;
+        }
+      }
+    }
+
+    return id;
+  }
+
   private insertIntoParent(componentId: ComponentId, parentId: ParentId, index: number): void {
     const children = this.getChildren(parentId);
     if (index < 0 || index > children.length) {
@@ -327,6 +436,10 @@ export function removeComponent(doc: InvoiceDocument, params: RemoveComponentPar
   return new DocumentBuilder(doc).removeComponent(params).build();
 }
 
+export function duplicateComponent(doc: InvoiceDocument, params: DuplicateComponentParams): InvoiceDocument {
+  return new DocumentBuilder(doc).duplicateComponent(params).build();
+}
+
 export function setDocumentSettings(doc: InvoiceDocument, settings: SetSettingsParams): InvoiceDocument {
   return new DocumentBuilder(doc).setSettings(settings).build();
 }
@@ -347,8 +460,18 @@ export function findComponent(doc: InvoiceDocument, id: ComponentId): AnyCompone
   return doc.components[id];
 }
 
+export function findComponentDeep(doc: InvoiceDocument, id: ComponentId): AnyComponent | undefined {
+  const section = doc.sections[id as string];
+  if (section) return section as unknown as AnyComponent;
+  const row = doc.rows[id as string];
+  if (row) return row as unknown as AnyComponent;
+  const column = doc.columns[id as string];
+  if (column) return column as unknown as AnyComponent;
+  return doc.components[id];
+}
+
 export function findParent(doc: InvoiceDocument, componentId: ComponentId): ParentId | null {
-  const component = doc.components[componentId];
+  const component = findComponentDeep(doc, componentId);
   if (component && component.parentId) {
     return component.parentId;
   }
@@ -359,6 +482,14 @@ export function findSiblings(doc: InvoiceDocument, componentId: ComponentId): Co
   const parentId = findParent(doc, componentId);
   if (!parentId) return [];
   return getChildren(doc, parentId);
+}
+
+export function findSiblingsDeep(doc: InvoiceDocument, componentId: ComponentId): ComponentId[] {
+  if (componentId === doc.rootSectionId) return [];
+  const component = findComponentDeep(doc, componentId);
+  if (!component) return [];
+  if (!component.parentId) return [];
+  return getChildren(doc, component.parentId);
 }
 
 export function getSiblingIndex(doc: InvoiceDocument, componentId: ComponentId): number {

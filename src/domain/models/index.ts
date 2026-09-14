@@ -244,8 +244,11 @@ export interface DocumentTemplate {
   id: string;
   businessId: string;
   name: string;
+  description?: string | null;
+  industry?: string | null;
   schemaVersion: string;
   revision: number;
+  version: number;
   document: Record<string, unknown>;
   htmlTemplate?: string | null;
   config: Record<string, unknown>;

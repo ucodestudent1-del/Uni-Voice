@@ -287,6 +287,46 @@ export async function deleteTemplate(id: string) {
   return res.data;
 }
 
+export async function getDocumentTemplates(params?: {
+  limit?: number;
+  offset?: number;
+  industry?: string;
+  isDefault?: boolean;
+}) {
+  const res = await api.get("/document-templates", { params });
+  return res.data;
+}
+
+export async function createDocumentTemplate(data: any) {
+  const res = await api.post("/document-templates", data);
+  return res.data;
+}
+
+export async function getDocumentTemplate(id: string) {
+  const res = await api.get(`/document-templates/${id}`);
+  return res.data;
+}
+
+export async function updateDocumentTemplate(id: string, data: any) {
+  const res = await api.patch(`/document-templates/${id}`, data);
+  return res.data;
+}
+
+export async function deleteDocumentTemplate(id: string) {
+  const res = await api.delete(`/document-templates/${id}`);
+  return res.data;
+}
+
+export async function duplicateDocumentTemplate(id: string) {
+  const res = await api.post(`/document-templates/${id}/duplicate`);
+  return res.data;
+}
+
+export async function setDefaultDocumentTemplate(id: string) {
+  const res = await api.post(`/document-templates/${id}/set-default`);
+  return res.data;
+}
+
 export async function getNumberingConfig() {
   const res = await api.get("/businesses/current/numbering");
   return res.data;

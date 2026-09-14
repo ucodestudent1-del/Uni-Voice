@@ -12,13 +12,17 @@ import {
   updateComponent,
   moveComponent,
   removeComponent,
+  duplicateComponent as duplicateComponentOp,
   setDocumentSettings,
+  findSiblingsDeep,
   InsertComponentParams,
   UpdateComponentParams,
   MoveComponentParams,
   RemoveComponentParams,
+  DuplicateComponentParams,
 } from "../document-operations";
 import { initializeRegistry } from "../index";
+import { analytics } from "../../lib/analytics";
 
 interface EditorContextValue {
   document: InvoiceDocument;
@@ -29,6 +33,7 @@ interface EditorContextValue {
   updateComponent: (componentId: ComponentId, props: Record<string, unknown>, style?: Partial<StyleProps>) => void;
   moveComponent: (params: MoveComponentParams) => void;
   removeComponent: (params: RemoveComponentParams) => void;
+  duplicateComponent: (componentId: ComponentId) => void;
   setSettings: (settings: Partial<InvoiceDocument["settings"]>) => void;
   canUndo: boolean;
   canRedo: boolean;
@@ -132,6 +137,17 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
     setSelectedComponentId(null);
   }, [document, handleDocumentChange]);
 
+  const handleDuplicateComponent = useCallback((componentId: ComponentId) => {
+    const beforeSiblings = findSiblingsDeep(document, componentId);
+    const newDoc = duplicateComponentOp(document, { componentId });
+    handleDocumentChange(newDoc);
+    const afterSiblings = findSiblingsDeep(newDoc, componentId);
+    const newSiblings = afterSiblings.filter((id) => !beforeSiblings.includes(id));
+    if (newSiblings.length > 0) {
+      setSelectedComponentId(newSiblings[0]);
+    }
+  }, [document, handleDocumentChange]);
+
   const handleSetSettings = useCallback((settings: Partial<InvoiceDocument["settings"]>) => {
     const newDoc = setDocumentSettings(document, { settings });
     handleDocumentChange(newDoc);
@@ -144,6 +160,9 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       setDocument(prevDoc);
       setHistoryIndex(newIndex);
       setDirty(newIndex !== 0);
+      try {
+        analytics.trackEvent("undo_performed", { documentId: prevDoc.id, version: prevDoc.version });
+      } catch {}
     }
   }, [historyIndex, history]);
 
@@ -154,6 +173,9 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       setDocument(nextDoc);
       setHistoryIndex(newIndex);
       setDirty(true);
+      try {
+        analytics.trackEvent("redo_performed", { documentId: nextDoc.id, version: nextDoc.version });
+      } catch {}
     }
   }, [historyIndex, history]);
 
@@ -212,6 +234,47 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirty]);
 
+  useEffect(() => {
+    const isInputElement = (target: EventTarget | null): boolean => {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || target.isContentEditable;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInputElement(e.target)) return;
+
+      const isMod = e.ctrlKey || e.metaKey;
+
+      if (isMod && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        undo();
+      }
+
+      if (isMod && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+        e.preventDefault();
+        e.stopPropagation();
+        redo();
+      }
+
+      if (e.key === "Delete" && selectedComponentId) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleRemoveComponent({ componentId: selectedComponentId });
+      }
+
+      if (isMod && (e.key === "d" || e.key === "D") && selectedComponentId) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDuplicateComponent(selectedComponentId);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedComponentId, undo, redo, handleRemoveComponent, handleDuplicateComponent]);
+
   return (
     <EditorContext.Provider
       value={{
@@ -223,6 +286,7 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
         updateComponent: handleUpdateComponent,
         moveComponent: handleMoveComponent,
         removeComponent: handleRemoveComponent,
+        duplicateComponent: handleDuplicateComponent,
         setSettings: handleSetSettings,
         canUndo: historyIndex > 0,
         canRedo: historyIndex < history.length - 1,

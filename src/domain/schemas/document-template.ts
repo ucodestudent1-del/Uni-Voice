@@ -15,6 +15,8 @@ export type DocumentTemplateSchemaVersion = z.infer<
 
 export const DocumentTemplateInputSchema = z.object({
   name: z.string().min(1, "name is required").max(255),
+  description: z.string().nullable().optional(),
+  industry: z.string().nullable().optional(),
   schema_version: z.string().default("1.0"),
   document: z.record(z.string(), z.unknown()),
   html_template: z.string().default(""),
@@ -27,6 +29,8 @@ export type DocumentTemplateInput = z.infer<typeof DocumentTemplateInputSchema>;
 
 export const DocumentTemplateUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
+  description: z.string().nullable().optional(),
+  industry: z.string().nullable().optional(),
   schema_version: z.string().optional(),
   document: z.record(z.string(), z.unknown()).optional(),
   html_template: z.string().optional(),
