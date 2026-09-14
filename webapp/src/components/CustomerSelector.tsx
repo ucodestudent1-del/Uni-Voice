@@ -82,9 +82,6 @@ export default function CustomerSelector({ value, onChange, onCustomerChange, pl
         <span className="text-sm text-slate-900 truncate">
           {selected ? `${selected.name}${selected.email ? ` (${selected.email})` : ""}` : placeholder}
         </span>
-        <svg className="h-5 w-5 text-slate-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
       </div>
 
       {open && (

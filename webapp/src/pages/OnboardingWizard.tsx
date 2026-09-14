@@ -72,9 +72,7 @@ const STEP_COMPONENTS: Record<string, JSX.Element> = {
   complete: (
     <div className="text-center py-8">
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg className="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.616 1.4L12 22l-6.384-5.4" />
-        </svg>
+        <span className="text-green-500 text-2xl">✓</span>
       </div>
       <h2 className="text-2xl font-bold text-slate-900 mb-2">You're all set!</h2>
       <p className="text-slate-600 mb-6">

@@ -1,5 +1,4 @@
 import type { MouseEvent } from "react";
-import { CheckIcon, TemplateIcon } from "./icons";
 import type { TemplateModule } from "../../data/landing";
 
 export interface TemplateGalleryProps {
@@ -47,17 +46,16 @@ export default function TemplateGallery({
                   Selected
                 </span>
               )}
-              <div
-                className={`mb-4 aspect-video rounded-lg border ${colors.bg} ${colors.border} flex items-center justify-center`}
-              >
-                <TemplateIcon className={`h-8 w-8 ${colors.text}`} />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900">{item.name}</h3>
-              <p className="mt-1 text-sm text-slate-600 flex-1">{item.description}</p>
-              <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
-                <CheckIcon className="h-4 w-4 text-green-400" />
-                <span>Responsive • Print-ready • Brandable</span>
-              </div>
+               <div
+                 className={`mb-4 aspect-video rounded-lg border ${colors.bg} ${colors.border} flex items-center justify-center`}
+               >
+               </div>
+               <h3 className="text-lg font-semibold text-slate-900">{item.name}</h3>
+               <p className="mt-1 text-sm text-slate-600 flex-1">{item.description}</p>
+               <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
+                 <span className="text-green-400">✓</span>
+                 <span>Responsive • Print-ready • Brandable</span>
+               </div>
             </button>
           );
         })}

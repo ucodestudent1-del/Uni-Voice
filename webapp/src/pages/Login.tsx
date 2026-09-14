@@ -147,20 +147,14 @@ export default function Login() {
                    </div>
                  </div>
 
-                 <button
-                   type="button"
-                   onClick={() => (window.location.href = "/api/auth/oauth/google")}
-                   className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                 >
-                   <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                     <path d="M22.56 12.54c0-.73-.06-1.44-.17-2.12H12v4.07h6.18c-.28 1.34-1.14 2.47-2.4 3.23l-.01 1.35c2.05-1.21 3.47-3.1 3.47-5.53z" />
-                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-.01-1.35c-.44.59-1 .93-1.72 1.21-1.21.69-2.77 1.09-4.55 1.09-3.5 0-6.47-2.35-7.53-5.55l-.01.6C4.23 17.67 5.67 19.56 8 20.53c1.54.72 3.3.98 5.25.98z" />
-                     <path d="M4.47 9.02C4.05 10.02 3.8 11.14 3.8 12.3c0 1.15.24 2.27.67 3.27l-.01.6c0 2.08 1.48 3.8 3.44 4.14-.14.29-.28.57-.44.84-.62.99-1.87 1.69-3.17 1.69-1.14 0-2.2-.4-3.03-1.07l-.01-.6C.99 19.44 0 17.93 0 15.96c0-.87.16-1.73.44-2.57l3.6-2.93z" />
-                     <path fill="none" d="M0 0h24v24H0z" />
-                     <path d="M12 2.5c1.53 0 2.97.58 4.05 1.56l2.95-2.95C17.67 1.1 14.98 0 12 0 8.34 0 5.09 1.52 3.14 3.92l3.62 2.85C9.42 4.21 10.65 2.5 12 2.5z" />
-                   </svg>
-                   Sign in with Google
-                 </button>
+                  <button
+                    type="button"
+                    onClick={() => (window.location.href = "/api/auth/oauth/google")}
+                    className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-100 text-blue-600 font-bold text-xs">G</span>
+                    Sign in with Google
+                  </button>
                </form>
              )}
 

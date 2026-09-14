@@ -11,7 +11,6 @@ import type {
   TwoFactorSetupResult,
   RecoveryCodeSummary,
 } from "../types/api";
-import { CopyIcon, CheckIcon, KeyIcon, ShieldCheckIcon } from "./ui/icons";
 
 type ManageStep = "loading" | "disabled" | "pending" | "enabled";
 
@@ -142,12 +141,10 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
         </div>
         {status?.enabled ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">
-            <ShieldCheckIcon className="h-3 w-3" />
-            Enabled
+            ✓ Enabled
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-            <KeyIcon className="h-3 w-3" />
             Disabled
           </span>
         )}
@@ -190,8 +187,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
               className="ml-2 inline-flex items-center gap-1 rounded-md bg-slate-200 px-1.5 py-0.5 text-xs text-slate-700 hover:bg-slate-300"
               title="Copy otpauth URI"
             >
-              {copied ? <CheckIcon className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
-              Copy URI
+                {copied ? "Copied" : "Copy URI"}
             </button>
           </div>
 

@@ -82,43 +82,36 @@ export default function Dashboard() {
           to="/app/invoices/new"
           className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
           Create Invoice
         </Link>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard
-          title="Outstanding"
-          value={formatCurrency(summary.outstanding, currency)}
-          subtitle={`${invoices.filter((i) => new Decimal(i.amount_due || 0).gt(0)).length} unpaid invoices`}
-          icon="trending-up"
-          color="slate"
-        />
-        <SummaryCard
-          title="Paid"
-          value={formatCurrency(summary.paid, currency)}
-          subtitle="Total received"
-          icon="check-circle"
-          color="green"
-        />
-        <SummaryCard
-          title="Overdue"
-          value={formatCurrency(summary.overdue, currency)}
-          subtitle={`${invoices.filter((i) => i.status === "overdue" || new Date(i.due_date || "") < new Date()).length} overdue`}
-          icon="alert-triangle"
-          color="red"
-        />
-        <SummaryCard
-          title="This Month"
-          value={formatCurrency(summary.totalRevenue, currency)}
-          subtitle={`${summary.count} total invoices`}
-          icon="bar-chart-3"
-          color="primary"
-        />
+         <SummaryCard
+           title="Outstanding"
+           value={formatCurrency(summary.outstanding, currency)}
+           subtitle={`${invoices.filter((i) => new Decimal(i.amount_due || 0).gt(0)).length} unpaid invoices`}
+           color="slate"
+         />
+         <SummaryCard
+           title="Paid"
+           value={formatCurrency(summary.paid, currency)}
+           subtitle="Total received"
+           color="green"
+         />
+         <SummaryCard
+           title="Overdue"
+           value={formatCurrency(summary.overdue, currency)}
+           subtitle={`${invoices.filter((i) => i.status === "overdue" || new Date(i.due_date || "") < new Date()).length} overdue`}
+           color="red"
+         />
+         <SummaryCard
+           title="This Month"
+           value={formatCurrency(summary.totalRevenue, currency)}
+           subtitle={`${summary.count} total invoices`}
+           color="primary"
+         />
       </div>
 
       {/* Recent invoices */}
@@ -132,9 +125,6 @@ export default function Dashboard() {
 
         {recentInvoices.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-            <svg className="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m2 0a2 2 0 11-4 0 2 2 0 014 0zm3 6a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
             <p className="mt-4 text-sm text-slate-500">No invoices yet</p>
             <Link
               to="/app/invoices/new"
@@ -199,21 +189,13 @@ export default function Dashboard() {
 }
 
 function SummaryCard({
-  title, value, subtitle, icon, color,
+  title, value, subtitle, color,
 }: {
   title: string;
   value: string;
   subtitle: string;
-  icon: string;
   color: string;
 }) {
-  const iconPaths: Record<string, JSX.Element> = {
-    "trending-up": <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12v6h6l9-9-3-3-6 6H9" />,
-    "check-circle": <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m0 0l4-4 4 4-4 4m-4-4" />,
-    "alert-triangle": <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M12 4v4m0 0l3 3m-3-3L9 11" />,
-    "bar-chart-3": <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-2 2l2-2m0 0l2-2m-2 2l-2-2" />,
-  };
-
   const colorClasses: Record<string, string> = {
     primary: "bg-primary-50 text-primary-700",
     green: "bg-green-50 text-green-700",
@@ -224,11 +206,9 @@ function SummaryCard({
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className={`rounded-lg p-2 ${colorClasses[color] ?? colorClasses.slate}`}>
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {iconPaths[icon] ?? iconPaths["trending-up"]}
-          </svg>
-        </div>
+        <span className={`rounded-lg p-2 ${colorClasses[color] ?? colorClasses.slate}`} role="img" aria-label={title[0]}>
+          {title[0]}
+        </span>
         <div>
           <p className="text-xs font-medium text-slate-500 uppercase">{title}</p>
           <p className="text-2xl font-bold text-slate-900">{value}</p>

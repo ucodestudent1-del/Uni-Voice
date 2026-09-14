@@ -198,9 +198,6 @@ export default function Products() {
 
       {products.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-          <svg className="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4M4 6l8 4v10l8-4V6" />
-          </svg>
           <p className="mt-4 text-slate-500">No products yet</p>
           <button
             onClick={() => setShowForm(true)}

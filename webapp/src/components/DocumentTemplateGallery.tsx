@@ -27,23 +27,7 @@ const iconFillColor: Record<string, string> = {
   "professional-services": "text-cyan-600",
 };
 
-const silhouetteIcons: Record<string, React.ReactNode> = {
-  blank: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 6h12v12H6z" />,
-  professional: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M8 14h8m-6 4h6m-8 4h8" />,
-  construction: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 15l7-7 7 7M7 16l5-5 5 5" />,
-  consulting: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7h18v10H3zM7 12h10" />,
-  photography: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2 12l6-6 4 4 4-4 6 6v6H2z" />,
-  freelancing: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8h16v8H4M7 8V4h10v4" />,
-  legal: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3h14v2H5M5 21h14v-2H5M9 7v12M15 7v12" />,
-  landscaping: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 17c0-4 3-7 7-7s7 3 7 7M8 17l2-3m4 3l2-2" />,
-  cleaning: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 8c0-2 1-4 3-4s3 2 3 4M6 8l3 6m-6 0h12" />,
-  automotive: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 12h16M6 12V8h12v4m-9 4a3 3 0 106 0 3 3 0 00-6 0z" />,
-  retail: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8h16M8 8V4h8v4M6 8l2 8h10l2-8" />,
-  "professional-services": <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 8h8M8 12h8M8 16h8M6 4h12v2H6z" />,
-};
-
 function PresetSilhouette({ templateKey }: { templateKey: string }) {
-  const Icon = silhouetteIcons[templateKey] ?? silhouetteIcons.professional;
   const fill = iconFillColor[templateKey] ?? iconFillColor.professional;
 
   return (
@@ -51,10 +35,9 @@ function PresetSilhouette({ templateKey }: { templateKey: string }) {
       className="relative mx-auto mb-3 flex h-28 w-20 items-end justify-center overflow-hidden rounded-lg bg-slate-50 p-2"
       aria-hidden="true"
     >
-      <svg className={`h-16 w-16 ${fill}`} fill="none" viewBox="0 0 24 24">
-        <rect x="3" y="2" width="18" height="20" rx="2" ry="2" strokeWidth={1.5} stroke="currentColor" opacity={0.15} />
-        {Icon}
-      </svg>
+      <div className={`h-16 w-16 flex items-center justify-center ${fill} text-3xl font-bold`}>
+        {templateKey.charAt(0).toUpperCase()}
+      </div>
       <div className="absolute inset-x-3 top-2 h-2 w-8 rounded bg-black/5" />
       <div className="absolute inset-x-3 top-5 h-1.5 w-6 rounded bg-black/5" />
     </div>

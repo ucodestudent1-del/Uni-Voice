@@ -81,19 +81,16 @@ export default function Landing() {
             step={1}
             title="Create"
             description="Add your business details, select a customer, and fill in line items with automatic calculations."
-            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.25 4.5v5.25l4.5 2.25" />}
           />
           <StepCard
             step={2}
             title="Send"
             description="Review and send your professional invoice via email with a single click. Customers receive a secure link."
-            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12L3 9v6h12l-3-3M6 12l3 3-3-3z" />}
           />
           <StepCard
             step={3}
             title="Get Paid"
             description="Track views and payments in real time. Get automatic reminders so you never chase payments again."
-            icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />}
           />
         </div>
       </Section>
@@ -166,18 +163,15 @@ export default function Landing() {
   );
 }
 
-function StepCard({ step, title, description, icon }: {
+function StepCard({ step, title, description }: {
   step: number;
   title: string;
   description: string;
-  icon: React.ReactNode;
 }) {
   return (
     <div className="flex text-center flex-col">
       <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 text-primary-700">
-        <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {icon}
-        </svg>
+        <span className="text-2xl font-bold">{step}</span>
       </div>
       <div className="flex items-center justify-center gap-2 mb-2">
         <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2.5 py-0.5 rounded-full">

@@ -2,14 +2,6 @@ import { useState } from "react";
 import type { FaqItem } from "../../data/landing";
 import { Section, SectionHeader } from "./Section";
 
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  );
-}
-
 export interface FaqSectionProps {
   title?: string;
   subtitle?: string;
@@ -53,10 +45,7 @@ export default function FaqSection({
               >
                 <span className="text-sm font-medium text-primary-600">Q{index + 1}</span>
                 <span className="flex-1 font-medium text-slate-900">{item.question}</span>
-                <ChevronDownIcon
-                  className={`h-5 w-5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                  aria-hidden="true"
-                />
+                <span className={`text-sm text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}>▼</span>
               </button>
               <div
                 className="grid transition-[grid-template-rows] duration-300 ease-in-out overflow-hidden"

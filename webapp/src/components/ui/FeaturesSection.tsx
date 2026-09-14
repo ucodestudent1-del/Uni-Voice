@@ -1,4 +1,3 @@
-import { FeatureIcon } from "./icons";
 import type { FeatureItem } from "../../data/landing";
 import { Section, SectionHeader } from "./Section";
 
@@ -33,9 +32,6 @@ export default function FeaturesSection({
                 reverse ? "md:flex-row-reverse" : "md:flex-row"
               }`}
             >
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-primary-700 self-start">
-                <FeatureIcon name={feature.icon} props={{ className: "h-7 w-7" }} />
-              </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-slate-900">{feature.title}</h3>
                 <p className="mt-2 text-slate-600">{feature.description}</p>

@@ -20,12 +20,9 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
     return (
       <div className={`rounded-xl border border-slate-200 bg-white p-6 ${compact ? "text-center" : ""}`}>
         <div className={`flex items-center ${compact ? "justify-center flex-col" : "gap-4"}`}>
-          <div className="rounded-full bg-slate-100 p-3">
-            <svg className="h-6 w-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
-            </svg>
-          </div>
+           <div className="rounded-full bg-slate-100 p-3">
+             <span className="text-slate-600 text-xl">★</span>
+           </div>
           <div className={compact ? "text-center" : ""}>
             <p className="text-lg font-semibold text-slate-900">Free Plan</p>
             <p className="text-sm text-slate-500">You are on the free plan</p>
@@ -67,7 +64,7 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
 
       <div className={`flex items-center ${compact ? "justify-center flex-col" : "gap-4"}`}>
         <div className={`rounded-full ${isFree ? "bg-slate-100" : isPro ? "bg-primary-100" : "bg-accent-100"} p-3`}>
-          {planIcon(plan.code)}
+          {plan.code === "free" ? "★" : plan.code === "pro" ? "★" : "★"}
         </div>
           <div>
             <p className={`font-bold ${compact ? "text-center" : ""}`}>
@@ -92,31 +89,4 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
       )}
     </div>
   );
-}
-
-function planIcon(code: string): JSX.Element {
-  switch (code) {
-    case "free":
-      return (
-        <svg className="h-6 w-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
-        </svg>
-      );
-    case "pro":
-      return (
-        <svg className="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 11V7a1 1 0 012 0v4m0 0h4a1 1 0 010 2h-4m-4-2a1 1 0 001 1h.01M9 15a3 3 0 106 0 3 3 0 01-6 0z" />
-        </svg>
-      );
-    case "business":
-      return (
-        <svg className="h-6 w-6 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0h3m2 0h5m-2 0l-2-2m0 0l-2 2m2-2v-4" />
-        </svg>
-      );
-    default:
-      return <svg className="h-6 w-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>;
-  }
 }

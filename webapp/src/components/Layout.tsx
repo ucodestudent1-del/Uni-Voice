@@ -1,12 +1,11 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 
 interface NavItem {
   name: string;
   to: string;
-  icon: React.ReactNode;
   feature?: string;
   requiredPlan?: string;
 }
@@ -23,15 +22,15 @@ export default function Layout() {
   }
 
   const navItems: NavItem[] = [
-    { name: "Dashboard", to: "/app", icon: <DashboardIcon />, feature: undefined, requiredPlan: undefined },
-    { name: "Invoices", to: "/app/invoices", icon: <InvoiceIcon /> },
-    { name: "Customers", to: "/app/customers", icon: <CustomerIcon /> },
-    { name: "Products", to: "/app/products", icon: <ProductIcon /> },
-    { name: "Templates", to: "/app/templates", icon: <TemplateIcon /> },
-    { name: "Expenses", to: "/app/expenses", icon: <ExpenseIcon />, feature: "expenses.tracking", requiredPlan: "business" },
-    { name: "Reports", to: "/app/reports", icon: <ReportIcon />, feature: "reports.revenue", requiredPlan: "business" },
-    { name: "Plans", to: "/app/plans", icon: <PlanIcon /> },
-    { name: "Settings", to: "/app/settings", icon: <SettingIcon /> },
+    { name: "Dashboard", to: "/app", feature: undefined, requiredPlan: undefined },
+    { name: "Invoices", to: "/app/invoices" },
+    { name: "Customers", to: "/app/customers" },
+    { name: "Products", to: "/app/products" },
+    { name: "Templates", to: "/app/templates" },
+    { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "business" },
+    { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "business" },
+    { name: "Plans", to: "/app/plans" },
+    { name: "Settings", to: "/app/settings" },
   ];
 
   const tierOrder = { free: 0, pro: 1, business: 2 };
@@ -65,8 +64,10 @@ export default function Layout() {
                       }`
                     }
                   >
-                    {item.icon}
-                    <span>{item.name}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-5" />
+                      <span>{item.name}</span>
+                    </span>
                     {item.requiredPlan && (
                       <span className="ml-auto text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
                         {item.requiredPlan}
@@ -103,12 +104,16 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="hidden md:flex items-center justify-between h-16 border-b border-slate-200 bg-white px-6">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-            >
-              <MenuIcon />
-            </button>
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
+              >
+                <span className="block h-5 w-5">
+                  <span className="block h-0.5 w-5 mb-1 bg-slate-600" />
+                  <span className="block h-0.5 w-5 mb-1 bg-slate-600" />
+                  <span className="block h-0.5 w-5 bg-slate-600" />
+                </span>
+              </button>
             <span className="text-sm text-slate-500">
               {user?.email}
             </span>
@@ -148,7 +153,6 @@ export default function Layout() {
                           }`
                         }
                       >
-                        {item.icon}
                         <span>{item.name}</span>
                         {item.requiredPlan && (
                           <span className="ml-auto text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
@@ -176,83 +180,3 @@ export default function Layout() {
   );
 }
 
-function DashboardIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
-    </svg>
-  );
-}
-
-function InvoiceIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m2 0a2 2 0 100-4 2 2 0 000 4zm3 6a3 3 0 11-6 0 3 3 0 016 0zM9 7h6" />
-    </svg>
-  );
-}
-
-function CustomerIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7h-.01z" />
-    </svg>
-  );
-}
-
-function ProductIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10a2 2 0 01-4 0M4 7v10a2 2 0 004 0V7" />
-    </svg>
-  );
-}
-
-function TemplateIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  );
-}
-
-function ExpenseIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4.21.76-5.83 2H12v5.83a7.95 7.95 0 005.83-2V10a6 6 0 00-5.83-2z" />
-    </svg>
-  );
-}
-
-function ReportIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13" />
-    </svg>
-  );
-}
-
-function PlanIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-    </svg>
-  );
-}
-
-function SettingIcon() {
-  return (
-    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3M12 2a10 10 0 100 20 10 10 0 000-20z" />
-    </svg>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  );
-}

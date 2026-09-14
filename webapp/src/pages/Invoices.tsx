@@ -108,9 +108,6 @@ export default function Invoices() {
           onClick={handleCreateAndEdit}
           className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
           New Invoice
         </button>
       </div>
@@ -132,11 +129,8 @@ export default function Invoices() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-          <svg className="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m2 0a2 2 0 11-4 0 2 2 0 014 0zm3 6a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <p className="mt-4 text-slate-500">No invoices found</p>
+          <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
+            <p className="mt-4 text-slate-500">No invoices found</p>
           <button
             onClick={handleCreateAndEdit}
             className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"

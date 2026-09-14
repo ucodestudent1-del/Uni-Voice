@@ -232,9 +232,6 @@ export default function Customers() {
 
       {customers.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-          <svg className="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a6 6 0 00-6 6h12a6 6 0 00-6-6z" />
-          </svg>
           <p className="mt-4 text-slate-500">No customers yet</p>
           <button
             onClick={() => setShowForm(true)}

@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { CheckIcon } from "./icons";
 import type { PricingTier } from "../../data/landing";
 
 export interface PricingTableProps {
@@ -113,7 +112,7 @@ export default function PricingTable({
               <ul className="mt-6 space-y-3">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex items-start">
-                    <CheckIcon className="h-5 w-5 text-green-400 mr-2 shrink-0 mt-0.5" />
+                    <span className="text-sm text-slate-600 mr-2">✓</span>
                     <span className="text-sm text-slate-600">{feature}</span>
                   </li>
                 ))}
