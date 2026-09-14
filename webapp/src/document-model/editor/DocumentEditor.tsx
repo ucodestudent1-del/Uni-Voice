@@ -402,10 +402,10 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; componentId: ComponentId } | null>(null);
   const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
-  const [snapDelta, setSnapDelta] = useState<Transform>({ x: 0, y: 0 });
+  const [snapDelta, setSnapDelta] = useState<Transform>({ x: 0, y: 0, scaleX: 1, scaleY: 1 });
 
   const canvasRef = useRef<HTMLDivElement | null>(null);
-  const dragStartRectRef = useRef<Rect | null>(null);
+  const dragStartRectRef = useRef<DOMRect | null>(null);
   const draggedComponentIdRef = useRef<ComponentId | null>(null);
 
   const SNAP_THRESHOLD = 8;
@@ -444,12 +444,12 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const handleDragMove = useCallback((event: DragMoveEvent) => {
     if (!canvasRef.current || !activeDrag || !dragStartRectRef.current) {
       setAlignmentGuides([]);
-      setSnapDelta({ x: 0, y: 0 });
+      setSnapDelta({ x: 0, y: 0, scaleX: 1, scaleY: 1 });
       return;
     }
 
     const startRect = dragStartRectRef.current;
-    const offset = event.offset ?? { x: 0, y: 0 };
+    const offset = event.delta ?? { x: 0, y: 0 };
     const canvasRect = canvasRef.current.getBoundingClientRect();
 
     const currentLeft = startRect.left + offset.x;
@@ -528,6 +528,8 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     setSnapDelta({
       x: bestSnapX < Infinity ? snapDeltaX : 0,
       y: bestSnapY < Infinity ? snapDeltaY : 0,
+      scaleX: 1,
+      scaleY: 1,
     });
   }, [activeDrag]);
 
@@ -581,7 +583,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       const component = findComponent(doc, activeId as ComponentId);
       if (!component) return;
 
-      const element = document.querySelector(`[data-component-id="${CSS.escape(activeId as string)}"]`);
+      const element = document.querySelector(`[data-component-id="${window.CSS.escape(activeId as string)}"]`);
       if (element) {
         dragStartRectRef.current = element.getBoundingClientRect();
       }
@@ -607,7 +609,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     if (!over || !activeDrag) {
       setActiveDrag(null);
       setAlignmentGuides([]);
-      setSnapDelta({ x: 0, y: 0 });
+      setSnapDelta({ x: 0, y: 0, scaleX: 1, scaleY: 1 });
       dragStartRectRef.current = null;
       draggedComponentIdRef.current = null;
       return;
@@ -676,7 +678,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
     setActiveDrag(null);
     setAlignmentGuides([]);
-    setSnapDelta({ x: 0, y: 0 });
+    setSnapDelta({ x: 0, y: 0, scaleX: 1, scaleY: 1 });
     dragStartRectRef.current = null;
     draggedComponentIdRef.current = null;
   }, [doc, activeDrag, onInsertComponent, onReorderComponent]);

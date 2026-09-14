@@ -271,8 +271,8 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    window.document.addEventListener("keydown", handleKeyDown);
+    return () => window.document.removeEventListener("keydown", handleKeyDown);
   }, [selectedComponentId, undo, redo, handleRemoveComponent, handleDuplicateComponent]);
 
   return (
