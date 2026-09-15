@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { useState } from "react";
@@ -102,8 +102,8 @@ export default function Layout() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="hidden md:flex items-center justify-between h-16 border-b border-slate-200 bg-white px-6">
-          <div className="flex items-center gap-4">
+          <header className="hidden md:flex items-center justify-between h-16 border-b border-slate-200 bg-white px-6">
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => setMobileMenuOpen(true)}
                 className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
@@ -114,11 +114,18 @@ export default function Layout() {
                   <span className="block h-0.5 w-5 bg-slate-600" />
                 </span>
               </button>
-            <span className="text-sm text-slate-500">
-              {user?.email}
-            </span>
-          </div>
-        </header>
+              <span className="text-sm text-slate-500">
+                {user?.email}
+              </span>
+            </div>
+            <Link
+              to="/app/invoices/new"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <span aria-hidden="true">+</span>
+              Create Invoice
+            </Link>
+          </header>
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
