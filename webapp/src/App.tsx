@@ -8,6 +8,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import OnboardingWizard from "./pages/OnboardingWizard";
 import Invoices from "./pages/Invoices";
+import InvoiceDetail from "./pages/InvoiceDetail";
 import InvoiceEditorPage from "./pages/InvoiceEditorPage";
 import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
@@ -60,8 +61,8 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="invoices" element={<Invoices />} />
         <Route path="invoices/new" element={<InvoiceEditorPage />} />
+        <Route path="invoices/:id" element={<InvoiceDetail />} />
         <Route path="invoices/:id/edit" element={<InvoiceEditorPage />} />
-        <Route path="invoices/:id" element={<InvoiceEditorPage />} />
           <Route path="customers" element={<Customers />} />
           <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="products" element={<Products />} />

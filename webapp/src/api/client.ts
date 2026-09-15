@@ -117,7 +117,7 @@ export async function getStripeConfig() {
   return res.data;
 }
 
-export async function getInvoices(params?: { status?: string; customerId?: string; limit?: number; offset?: number }) {
+export async function getInvoices(params?: { status?: string; customerId?: string; search?: string; limit?: number; offset?: number }) {
   const res = await api.get("/invoices", { params });
   return res.data;
 }

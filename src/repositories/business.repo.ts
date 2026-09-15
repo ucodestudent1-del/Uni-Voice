@@ -102,6 +102,28 @@ export class BusinessRepository {
     return this.rowToModel(res.rows[0]);
   }
 
+  
+  async getSettings(businessId: string): Promise<{
+    paymentProvider: string | null;
+    remindersEnabled: boolean;
+    overdueReminderDays: number;
+  }> {
+    const res = await query(
+      `SELECT payment_provider, reminders_enabled, overdue_reminder_days
+       FROM business_settings WHERE business_id = $1`,
+      [businessId]
+    );
+    if (!res.rows.length) {
+      return { paymentProvider: null, remindersEnabled: true, overdueReminderDays: 7 };
+    }
+    const row = res.rows[0];
+    return {
+      paymentProvider: row.payment_provider ?? null,
+      remindersEnabled: row.reminders_enabled ?? true,
+      overdueReminderDays: Number(row.overdue_reminder_days ?? 7),
+    };
+  }
+
   private rowToModel(r: Record<string, unknown>): Business {
     return {
       id: r.id as string,

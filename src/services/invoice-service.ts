@@ -15,7 +15,7 @@ import { generatePublicInvoiceToken } from "../utils/crypto.js";
 import { BusinessLogicError } from "../domain/errors.js";
 import { invoiceValidationService } from "../services/validation/invoice-validation.js";
 import { logger } from "../utils/logger.js";
-import { getClient } from "../db/pool.js";
+import { getClient, query } from "../db/pool.js";
 import { env } from "../config/index.js";
 
 export type RepoInvoice = Awaited<ReturnType<typeof invoiceRepository.findById>>;
@@ -461,6 +461,217 @@ export class InvoiceService {
     await invoiceRepository.setStatus(id, "void", { cancelledAt: new Date() });
     await invoiceRepository.update(businessId, id, { cancelled_reason: reason });
     await invoiceRepository.recordEvent(id, { eventType: "voided", actorId: userId, metadata: { reason } });
+  }
+
+  async sendReminder(businessId: string, id: string, userId?: string): Promise<{ sent: boolean }> {
+    const invoice = await invoiceRepository.findById(businessId, id);
+    if (!invoice.isFinalized) throw new BusinessLogicError("Cannot send a reminder for a draft invoice");
+    if (invoice.status === "paid" || invoice.status === "cancelled" || invoice.status === "void") {
+      throw new BusinessLogicError(`Cannot send a reminder for an invoice in status ${invoice.status}`);
+    }
+
+    const business = await businessRepository.findById(businessId);
+    const customer = invoice.customerId ? await customerRepository.findById(businessId, invoice.customerId) : null;
+    const customerEmail = customer?.email ?? null;
+    if (!customerEmail) throw new BusinessLogicError("Customer has no email address");
+
+    const token = invoice.publicToken ?? generatePublicInvoiceToken();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await invoiceRepository.setPublicToken(id, token, expiresAt);
+
+    const snapshot = await invoiceRepository.getSnapshot(id);
+    const templateData = this.buildSnapshotTemplateData(invoice, snapshot);
+    const html = templateRenderer.render(templateData);
+    const pdf = await pdfService.generatePdfFromHtml(html, templateData);
+
+    const reminderCount = await invoiceRepository.getReminderCount(id);
+    const idempotencyKey = `reminder:${id}:${reminderCount + 1}`;
+
+    const subject = `Reminder: Invoice ${invoice.invoiceNumber ?? ""} — ${business.name}`;
+    const emailData: InvoiceEmailData = {
+      invoiceId: id,
+      businessId,
+      recipient: { email: customerEmail, name: customer?.name },
+      subject,
+      htmlBody: html,
+      attachments: [{ filename: `Invoice-${invoice.invoiceNumber ?? id}.pdf`, content: pdf }],
+      idempotencyKey,
+    };
+
+    await emailService.sendInvoiceEmail(emailData);
+    await invoiceRepository.recordReminder(id, businessId, null, null, customerEmail, subject, reminderCount + 1);
+    await invoiceRepository.recordEvent(id, { eventType: "reminder_sent", actorId: userId, metadata: { reminderCount: reminderCount + 1 } });
+
+    return { sent: true };
+  }
+
+  async recordPublicPayment(token: string, amount: string | number, provider = "stub", idempotencyKey?: string): Promise<void> {
+    const invoice = await invoiceRepository.findByPublicToken(undefined, token);
+    const safeAmount = new Decimal(amount);
+    if (safeAmount.isNegative()) throw new BusinessLogicError("Payment amount must be >= 0");
+    if (safeAmount.isZero()) throw new BusinessLogicError("Payment amount must be greater than 0");
+
+    const remainingDue = new Decimal(invoice.amountDue ?? invoice.total ?? 0);
+    if (safeAmount.gt(remainingDue)) throw new BusinessLogicError("Payment amount exceeds outstanding balance");
+
+    await this.recordPayment(invoice.businessId, invoice.id, amount, provider, undefined, idempotencyKey);
+  }
+
+  async processOverdueInvoices(now: Date = new Date()): Promise<number> {
+    const candidates = await invoiceRepository.findOverdueCandidates(now);
+    let count = 0;
+    for (const row of candidates) {
+      await invoiceRepository.markOverdue(row.id, now);
+      count++;
+    }
+    if (count > 0) {
+      logger.info(`Marked ${count} invoices as overdue`);
+    }
+    return count;
+  }
+
+  async createPaymentIntent(businessId: string, id: string): Promise<{ clientSecret: string | null; provider: string }> {
+    const invoice = await invoiceRepository.findById(businessId, id);
+    if (!invoice.isFinalized) throw new BusinessLogicError("Cannot create payment intent for a draft invoice");
+
+    const amountDue = new Decimal(invoice.amountDue);
+    if (amountDue.lte(0)) throw new BusinessLogicError("Invoice is already fully paid");
+
+    const settings = await businessRepository.getSettings(businessId);
+    const provider = settings.paymentProvider ?? env.PAYMENT_PROVIDER;
+
+    if (provider === "stripe" && env.STRIPE_SECRET_KEY) {
+      const stripe = await this.getStripe();
+      const intent = await stripe.paymentIntents.create({
+        amount: Number(amountDue.mul(100).toFixed(0)),
+        currency: invoice.currency.toLowerCase(),
+        metadata: { invoiceId: id, businessId },
+      });
+      await query(
+        `INSERT INTO payment_intents (invoice_id, business_id, provider, provider_intent_id, amount, currency, status, client_secret)
+         VALUES ($1,$2,'stripe',$3,$4,$5,'pending',$6)`,
+        [id, businessId, intent.id, Number(amountDue), invoice.currency, intent.client_secret]
+      );
+      return { clientSecret: intent.client_secret, provider: "stripe" };
+    }
+
+    await query(
+      `INSERT INTO payment_intents (invoice_id, business_id, provider, provider_intent_id, amount, currency, status)
+       VALUES ($1,$2,'stub',null,$3,$4,'pending')`,
+      [id, businessId, Number(amountDue), invoice.currency]
+    );
+    return { clientSecret: null, provider };
+  }
+
+  private stripeClient: any = null;
+
+  private async getStripe(): Promise<any> {
+    if (!this.stripeClient) {
+      const { default: Stripe } = await import("stripe");
+      this.stripeClient = new Stripe(env.STRIPE_SECRET_KEY!);
+    }
+    return this.stripeClient;
+  }
+
+  async getDashboardData(businessId: string): Promise<{
+    summary: { totalOutstanding: string; totalOverdue: string; totalPaidThisMonth: string; totalRevenue: string; draftCount: number; overdueCount: number; sentCount: number; paidCount: number; totalInvoices: number };
+    recentlyPaid: any[];
+    requiringAttention: any[];
+  }> {
+    const invoices = await invoiceRepository.findForDashboard(businessId);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const summary = invoices.reduce(
+      (acc, inv) => {
+        const amountDue = new Decimal(inv.amount_due || 0);
+        const amountPaid = new Decimal(inv.amount_paid || 0);
+        const total = new Decimal(inv.total || 0);
+        acc.totalRevenue = acc.totalRevenue.plus(total);
+        acc.totalInvoices += 1;
+
+        if (amountDue.gt(0) && !["draft", "cancelled", "void"].includes(inv.status)) {
+          acc.totalOutstanding = acc.totalOutstanding.plus(amountDue);
+          if (inv.status === "overdue" || (inv.due_date && new Date(inv.due_date) < now && amountDue.gt(0))) {
+            acc.totalOverdue = acc.totalOverdue.plus(amountDue);
+            acc.overdueCount += 1;
+          }
+        }
+        if (amountPaid.gt(0) && (inv.paid_at ? new Date(inv.paid_at) >= monthStart : false)) {
+          acc.totalPaidThisMonth = acc.totalPaidThisMonth.plus(amountPaid);
+        }
+        if (inv.status === "draft") acc.draftCount += 1;
+        if (inv.status === "sent") acc.sentCount += 1;
+        if (inv.status === "paid") {
+          acc.paidCount += 1;
+        }
+        return acc;
+      },
+      {
+        totalOutstanding: new Decimal(0),
+        totalOverdue: new Decimal(0),
+        totalPaidThisMonth: new Decimal(0),
+        totalRevenue: new Decimal(0),
+        draftCount: 0,
+        overdueCount: 0,
+        sentCount: 0,
+        paidCount: 0,
+        totalInvoices: 0,
+      }
+    );
+
+    const recentlyPaid = invoices
+      .filter((i) => i.status === "paid" || i.status === "partially_paid")
+      .sort((a, b) => (new Date(b.paid_at || b.updated_at).getTime() - new Date(a.paid_at || a.updated_at).getTime()))
+      .slice(0, 10)
+      .map((i) => ({
+        id: i.id,
+        invoiceNumber: i.invoice_number,
+        customerName: i.customer_name,
+        total: i.total,
+        amountPaid: i.amount_paid,
+        currency: i.currency,
+        paidAt: i.paid_at,
+        status: i.status,
+      }));
+
+    const requiringAttention = invoices
+      .filter((i) => {
+        if (i.amount_due && new Decimal(i.amount_due).gt(0)) {
+          if (i.due_date && new Date(i.due_date) < now && !["draft", "cancelled", "void", "paid"].includes(i.status)) return true;
+        }
+        if (i.status === "draft") return true;
+        if (i.status === "sent" || i.status === "viewed") return true;
+        return false;
+      })
+      .sort((a, b) => (new Date(a.due_date || a.created_at).getTime() - new Date(b.due_date || b.created_at).getTime()))
+      .slice(0, 10)
+      .map((i) => ({
+        id: i.id,
+        invoiceNumber: i.invoice_number,
+        customerName: i.customer_name,
+        total: i.total,
+        amountDue: i.amount_due,
+        dueDate: i.due_date,
+        currency: i.currency,
+        status: i.status,
+      }));
+
+    return {
+      summary: {
+        totalOutstanding: summary.totalOutstanding.toFixed(2),
+        totalOverdue: summary.totalOverdue.toFixed(2),
+        totalPaidThisMonth: summary.totalPaidThisMonth.toFixed(2),
+        totalRevenue: summary.totalRevenue.toFixed(2),
+        draftCount: summary.draftCount,
+        overdueCount: summary.overdueCount,
+        sentCount: summary.sentCount,
+        paidCount: summary.paidCount,
+        totalInvoices: summary.totalInvoices,
+      },
+      recentlyPaid,
+      requiringAttention,
+    };
   }
 
   async getPublicInvoice(token: string): Promise<{ invoice: RepoInvoice; html: string; pdfUrl: string }> {

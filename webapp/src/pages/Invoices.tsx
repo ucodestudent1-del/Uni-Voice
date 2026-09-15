@@ -9,7 +9,6 @@ import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
 import { formatCurrency } from "../utils/format";
 import type { ApiInvoice } from "../types/api";
-import { Decimal } from "decimal.js";
 
 const statusColors: Record<string, string> = {
   draft: "bg-slate-100 text-slate-800",
@@ -22,20 +21,32 @@ const statusColors: Record<string, string> = {
   void: "bg-slate-100 text-slate-800",
 };
 
+const STATUS_FILTERS = [
+  "all", "draft", "sent", "viewed", "partially_paid", "paid", "overdue", "cancelled",
+];
+
 export default function Invoices() {
   const { plan } = useSubscription();
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<ApiInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     loadInvoices();
   }, []);
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchTerm) loadInvoices();
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
   async function loadInvoices() {
     try {
-      const data = await getInvoices({ limit: 200 });
+      const data = await getInvoices({ limit: 200, search: searchTerm, status: statusFilter === "all" ? undefined : statusFilter });
       setInvoices(data.invoices ?? []);
     } catch {
       setInvoices([]);
@@ -91,9 +102,23 @@ export default function Invoices() {
     }
   }
 
-  const filtered = statusFilter === "all"
-    ? invoices
-    : invoices.filter((i) => i.status === statusFilter);
+  function handleStatusFilterChange(status: string) {
+    setStatusFilter(status);
+    loadInvoices();
+  }
+
+  function handleSearchChange(term: string) {
+    setSearchTerm(term);
+  }
+
+  const filtered = invoices.filter((i) => {
+    if (statusFilter !== "all" && i.status !== statusFilter) return false;
+    if (searchTerm && !(
+      (i.invoice_number ?? "").includes(searchTerm) ||
+      (i.customer_name ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+    )) return false;
+    return true;
+  });
 
   if (loading) return <div className="text-center py-20 text-slate-500">Loading invoices...</div>;
 
@@ -113,24 +138,36 @@ export default function Invoices() {
       </div>
 
       <div className="flex items-center gap-4">
-        {["all", "draft", "sent", "viewed", "paid", "overdue", "cancelled"].map((s) => (
+        <div className="flex-1 max-w-md">
+          <input
+            type="text"
+            placeholder="Search by invoice number or customer..."
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {STATUS_FILTERS.map((s) => (
           <button
             key={s}
-            onClick={() => setStatusFilter(s)}
+            onClick={() => handleStatusFilterChange(s)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               statusFilter === s
                 ? "bg-primary-100 text-primary-700"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
           >
-            {s.charAt(0).toUpperCase() + s.slice(1)}
+            {s === "partially_paid" ? "Partially Paid" : s.charAt(0).toUpperCase() + s.slice(1)}
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-            <p className="mt-4 text-slate-500">No invoices found</p>
+        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
+          <p className="mt-4 text-slate-500">No invoices found</p>
           <button
             onClick={handleCreateAndEdit}
             className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
@@ -148,7 +185,7 @@ export default function Invoices() {
                 <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Total</th>
                 <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Due</th>
                 <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Status</th>
-                <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
+                <th className="center text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -156,22 +193,22 @@ export default function Invoices() {
                 <tr key={inv.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
                   <td className="py-3 px-4">
                     <div className="flex flex-col">
-                      <Link to={`/app/invoices/${inv.id}/edit`} className="text-sm font-medium text-slate-900 hover:text-primary-600">
+                      <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-slate-900 hover:text-primary-600">
                         {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
                       </Link>
-                      <span className="text-xs text-slate-500">{inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ""}</span>
+                      <span className="text-xs text-slate-500">
+                        {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : ""}
+                      </span>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-sm text-slate-600">
-                    {inv.customer_id || "—"}
+                    {inv.customer_name || "—"}
                   </td>
                   <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">
                     {formatCurrency(inv.total, inv.currency)}
                   </td>
                   <td className="py-3 px-4 text-right text-sm text-slate-600">
-                    {inv.amount_due && Number(inv.amount_due) > 0
-                      ? formatCurrency(inv.amount_due, inv.currency)
-                      : "-"}
+                    {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "-"}
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[inv.status] || statusColors.draft}`}>

@@ -228,21 +228,6 @@ export class InvoiceRepository {
     return { ...invoice, items: itemRes.rows.map((r) => this.itemRowToModel(r)), fees: feeRes.rows.map((r) => this.feeRowToModel(r)) };
   }
 
-  async findMany(businessId: string, opts: { status?: string; customerId?: string; limit?: number; offset?: number } = {}): Promise<Invoice[]> {
-    const conditions: string[] = ["business_id = $1"];
-    const vals: unknown[] = [businessId];
-    let i = 2;
-    if (opts.status) { conditions.push(`status = $${i++}`); vals.push(opts.status); }
-    if (opts.customerId) { conditions.push(`customer_id = $${i++}`); vals.push(opts.customerId); }
-    const limit = opts.limit ?? 50;
-    const offset = opts.offset ?? 0;
-    const res = await query(
-      `SELECT * FROM invoices WHERE ${conditions.join(" AND ")} ORDER BY created_at DESC LIMIT $${i++} OFFSET $${i++}`,
-      [...vals, limit, offset]
-    );
-    return res.rows.map((r) => this.rowToModel(r));
-  }
-
   async findByPublicToken(businessId?: string, token?: string): Promise<InvoiceWithDetails> {
     let res;
     if (businessId && token) {
@@ -310,6 +295,98 @@ export class InvoiceRepository {
 
   async recordPayment(invoiceId: string, amountPaid: string | number, amountDue: string | number): Promise<void> {
     await query(`UPDATE invoices SET amount_paid = $1, amount_due = $2, updated_at = NOW() WHERE id = $3`, [amountPaid, amountDue, invoiceId]);
+  }
+
+  async findPayments(invoiceId: string, businessId: string, limit = 100): Promise<any[]> {
+    const res = await query(
+      `SELECT p.*, i.invoice_number, i.currency as invoice_currency
+       FROM payments p
+       JOIN invoices i ON i.id = p.invoice_id
+       WHERE p.invoice_id = $1 AND p.business_id = $2
+       ORDER BY p.created_at DESC
+       LIMIT $3`,
+      [invoiceId, businessId, limit]
+    );
+    return res.rows;
+  }
+
+  async findMany(businessId: string, opts: { status?: string; customerId?: string; search?: string; limit?: number; offset?: number } = {}): Promise<any[]> {
+    const conditions: string[] = ["business_id = $1"];
+    const vals: unknown[] = [businessId];
+    let i = 2;
+    if (opts.status) { conditions.push(`status = $${i++}`); vals.push(opts.status); }
+    if (opts.customerId) { conditions.push(`customer_id = $${i++}`); vals.push(opts.customerId); }
+    if (opts.search) {
+      const term = `%${opts.search}%`;
+      conditions.push(`(invoice_number ILIKE $${i} OR customer_id::text ILIKE $${i} OR c.name ILIKE $${i})`);
+      vals.push(term, term, term);
+      i++;
+    }
+    const limit = opts.limit ?? 50;
+    const offset = opts.offset ?? 0;
+    const res = await query(
+      `SELECT i.*, c.name as customer_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE ${conditions.join(" AND ")}
+       ORDER BY i.created_at DESC
+       LIMIT $${i++} OFFSET $${i++}`,
+      [...vals, limit, offset]
+    );
+    return res.rows;
+  }
+
+  async findForDashboard(businessId: string): Promise<any[]> {
+    const res = await query(
+      `SELECT i.*, c.name as customer_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE i.business_id = $1
+       ORDER BY i.created_at DESC
+       LIMIT 500`,
+      [businessId]
+    );
+    return res.rows;
+  }
+
+  async findOverdueCandidates(now: Date): Promise<any[]> {
+    const res = await query(
+      `SELECT id, business_id, due_date, amount_due, status
+       FROM invoices
+       WHERE due_date < $1
+         AND amount_due > 0
+         AND status IN ('sent', 'viewed', 'partially_paid')`,
+      [now]
+    );
+    return res.rows;
+  }
+
+  async markOverdue(invoiceId: string, timestamp: Date): Promise<void> {
+    await query(
+      `UPDATE invoices SET status = 'overdue', updated_at = NOW()
+       WHERE id = $1 AND status IN ('sent','viewed','partially_paid')`,
+      [invoiceId]
+    );
+    await this.recordEvent(invoiceId, {
+      eventType: "overdue", actorType: "system", metadata: { detectedAt: timestamp.toISOString() },
+    });
+  }
+
+  async recordReminder(invoiceId: string, businessId: string, ruleId: string | null, emailLogId: string | null, recipientEmail: string, subject: string, sendCount: number): Promise<string> {
+    const res = await query(
+      `INSERT INTO invoice_reminders (invoice_id, business_id, rule_id, email_log_id, recipient_email, subject, send_count)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [invoiceId, businessId, ruleId, emailLogId, recipientEmail, subject, sendCount]
+    );
+    return res.rows[0].id as string;
+  }
+
+  async getReminderCount(invoiceId: string): Promise<number> {
+    const res = await query(
+      `SELECT COUNT(*)::int FROM invoice_reminders WHERE invoice_id = $1`,
+      [invoiceId]
+    );
+    return res.rows[0]?.count ?? 0;
   }
 
   async getEvents(invoiceId: string, businessId: string, limit = 100): Promise<InvoiceEvent[]> {

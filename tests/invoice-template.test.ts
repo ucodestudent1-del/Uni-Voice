@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, test } from "vitest";
 import { invoiceTemplateRepository } from "../src/repositories/invoice-template.repo.js";
 import { invoiceTemplateService } from "../src/services/templates/invoice-template-service.js";
 import { resetTestDb, createTestBusiness } from "./helpers/db.js";
@@ -7,7 +7,7 @@ const BUSINESS_A = "00000000-0000-0000-0000-000000000001";
 const BUSINESS_B = "00000000-0000-0000-0000-000000000002";
 const USER_A = "11111111-1111-1111-1111-111111111111";
 
-const sampleDocument: any = {
+const sampleDocument = {
   id: "doc_1",
   version: 1,
   name: "Test Invoice",
@@ -60,7 +60,7 @@ const sampleDocument: any = {
     currency: "USD",
     locale: "en-US",
   },
-};
+  };
 
 describe("InvoiceTemplateRepository (DB integration)", () => {
   beforeEach(async () => {
@@ -70,7 +70,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("create / findById", () => {
-    it("creates a template with draft lifecycle by default", async () => {
+    test.sequential("creates a template with draft lifecycle by default", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "My Template",
         document: sampleDocument,
@@ -88,7 +88,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(created.archivedAt).toBeNull();
     });
 
-    it("retrieves a template by id", async () => {
+    test.sequential("retrieves a template by id", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Test Template",
         document: sampleDocument,
@@ -99,13 +99,13 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(found.name).toBe("Test Template");
     });
 
-    it("throws when template does not exist", async () => {
+    test.sequential("throws when template does not exist", async () => {
       await expect(
         invoiceTemplateRepository.findById(BUSINESS_A, "00000000-0000-0000-0000-000000009999")
       ).rejects.toThrow("not found or access denied");
     });
 
-    it("prevents tenant isolation (business A cannot see business B templates)", async () => {
+    test.sequential("prevents tenant isolation (business A cannot see business B templates)", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_B, {
         name: "B Template",
         document: sampleDocument,
@@ -118,7 +118,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("findMany", () => {
-    it("lists all templates for a business", async () => {
+    test.sequential("lists all templates for a business", async () => {
       await invoiceTemplateRepository.create(BUSINESS_A, { name: "T1", document: sampleDocument });
       await invoiceTemplateRepository.create(BUSINESS_A, { name: "T2", document: sampleDocument });
 
@@ -126,7 +126,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(templates).toHaveLength(2);
     });
 
-    it("filters by lifecycle", async () => {
+    test.sequential("filters by lifecycle", async () => {
       await invoiceTemplateRepository.create(BUSINESS_A, { name: "Draft", document: sampleDocument });
       const published = await invoiceTemplateRepository.create(BUSINESS_A, { name: "Pub", document: sampleDocument });
       await invoiceTemplateRepository.publish(BUSINESS_A, published.id, USER_A);
@@ -143,7 +143,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(multi).toHaveLength(2);
     });
 
-    it("filters by industry", async () => {
+    test.sequential("filters by industry", async () => {
       await invoiceTemplateRepository.create(BUSINESS_A, { name: "Retail", industry: "retail", document: sampleDocument });
       await invoiceTemplateRepository.create(BUSINESS_A, { name: "Legal", industry: "legal", document: sampleDocument });
 
@@ -152,7 +152,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(retail[0].industry).toBe("retail");
     });
 
-    it("only returns published templates in default lookup", async () => {
+    test.sequential("only returns published templates in default lookup", async () => {
       await invoiceTemplateRepository.create(BUSINESS_A, { name: "Draft Default", document: sampleDocument, isDefault: true });
       const published = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Published Default",
@@ -168,7 +168,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("publish lifecycle", () => {
-    it("transitions template from draft to published", async () => {
+    test.sequential("transitions template from draft to published", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Lifecycle Test",
         document: sampleDocument,
@@ -180,7 +180,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(published.publishedRevision).not.toBeNull();
     });
 
-    it("throws when publishing an archived template", async () => {
+    test.sequential("throws when publishing an archived template", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Archive Test",
         document: sampleDocument,
@@ -193,7 +193,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       ).rejects.toThrow("Cannot publish an archived template");
     });
 
-    it("archives a published template", async () => {
+    test.sequential("archives a published template", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Archive Test",
         document: sampleDocument,
@@ -205,7 +205,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(archived.archivedAt).not.toBeNull();
     });
 
-    it("cannot archive the default template", async () => {
+    test.sequential("cannot archive the default template", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Default Template",
         document: sampleDocument,
@@ -219,7 +219,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       ).rejects.toThrow("Cannot archive the default template");
     });
 
-    it("unarchives a template", async () => {
+    test.sequential("unarchives a template", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Unarchive Test",
         document: sampleDocument,
@@ -235,7 +235,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("revision management", () => {
-    it("creates a revision with incremented revision number", async () => {
+    test.sequential("creates a revision with incremented revision number", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Revision Test",
         document: sampleDocument,
@@ -257,7 +257,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(rev.changeSummary).toBe("Updated name");
     });
 
-    it("lists revisions in order", async () => {
+    test.sequential("lists revisions in order", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Revision List Test",
         document: sampleDocument,
@@ -278,7 +278,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(revisions[1].revision).toBe(3);
     });
 
-    it("restores a previous revision", async () => {
+    test.sequential("restores a previous revision", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Restore Test",
         document: sampleDocument,
@@ -299,7 +299,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("service layer", () => {
-    it("create + get template flow works", async () => {
+    test.sequential("create + get template flow works", async () => {
       const created = await invoiceTemplateService.create(
         BUSINESS_A,
         {
@@ -313,7 +313,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(found.name).toBe("Service Template");
     });
 
-    it("publish via service", async () => {
+    test.sequential("publish via service", async () => {
       const created = await invoiceTemplateService.create(
         BUSINESS_A,
         {
@@ -327,7 +327,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(published.lifecycle).toBe("published");
     });
 
-    it("archive via service", async () => {
+    test.sequential("archive via service", async () => {
       const created = await invoiceTemplateService.create(
         BUSINESS_A,
         {
@@ -356,7 +356,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("permissions", () => {
-    it("records and retrieves permissions", async () => {
+    test.sequential("records and retrieves permissions", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Perm Test",
         document: sampleDocument,
@@ -369,7 +369,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
       expect(perms[0].permission).toBe("edit");
     });
 
-    it("checks permission", async () => {
+    test.sequential("checks permission", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Perm Check",
         document: sampleDocument,
@@ -385,7 +385,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("usage tracking", () => {
-    it("records and counts usage", async () => {
+    test.sequential("records and counts usage", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Usage Test",
         document: sampleDocument,
@@ -399,7 +399,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("duplicate", () => {
-    it("creates a copy with draft lifecycle", async () => {
+    test.sequential("creates a copy with draft lifecycle", async () => {
       const created = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "Original",
         industry: "retail",
@@ -417,7 +417,7 @@ describe("InvoiceTemplateRepository (DB integration)", () => {
   });
 
   describe("setDefault", () => {
-    it("sets a template as default and clears previous defaults", async () => {
+    test.sequential("sets a template as default and clears previous defaults", async () => {
       const t1 = await invoiceTemplateRepository.create(BUSINESS_A, {
         name: "T1", document: sampleDocument, isDefault: true,
       }, USER_A);
