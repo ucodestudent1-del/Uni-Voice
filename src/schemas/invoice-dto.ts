@@ -32,6 +32,7 @@ export const CreateInvoiceDraftSchema = z.object({
   currency: z.string().optional(),
   issueDate: z.union([z.string(), z.date()]).nullable().optional(),
   dueDate: z.union([z.string(), z.date()]).nullable().optional(),
+  projectId: z.string().uuid().nullable().optional(),
   notes: z.string().nullable().optional(),
   terms: z.string().nullable().optional(),
   templateId: z.string().nullable().optional(),

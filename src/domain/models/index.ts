@@ -140,6 +140,7 @@ export interface Invoice {
   id: string;
   businessId: string;
   customerId?: string | null;
+  projectId?: string | null;
   invoiceNumber?: string | null;
   status: Status;
   issueDate?: Date | null;
@@ -343,6 +344,64 @@ export interface InvoiceTemplateRevision {
 
 export interface InvoiceTemplateWithRevisions extends InvoiceTemplate {
   revisions: InvoiceTemplateRevision[];
+}
+
+export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "archived";
+
+export interface ProjectTag {
+  id: string;
+  businessId: string;
+  name: string;
+  color: string;
+  createdAt: Date;
+}
+
+export interface ProjectTeamMember {
+  id: string;
+  projectId: string;
+  businessId: string;
+  userId: string;
+  role: string;
+  assignedAt: Date;
+  assignedBy: string | null;
+}
+
+export interface ProjectEvent {
+  id: string;
+  projectId: string;
+  businessId: string;
+  eventType: string;
+  actorId: string | null;
+  actorType: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: Date;
+}
+
+export interface Project {
+  id: string;
+  businessId: string;
+  customerId: string | null;
+  name: string;
+  description: string | null;
+  status: ProjectStatus;
+  startDate: Date | null;
+  dueDate: Date | null;
+  budget: string;
+  currency: string;
+  amountInvoiced: string;
+  amountPaid: string;
+  remainingBillable: string;
+  version: number;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProjectWithDetails extends Project {
+  customer: Customer | null;
+  tags: ProjectTag[];
+  teamMembers: ProjectTeamMember[];
 }
 
 export {

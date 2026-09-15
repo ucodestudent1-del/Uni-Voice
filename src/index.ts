@@ -32,6 +32,11 @@ import {
   DocumentTemplateUpdateSchema,
 } from "./domain/schemas/document-template.js";
 import {
+  ProjectCreateSchema,
+  ProjectUpdateSchema,
+  ProjectSearchQuerySchema,
+} from "./domain/schemas/project.js";
+import {
   CustomerCreateSchema,
   CustomerUpdateSchema,
   CustomerSearchQuerySchema,
@@ -52,6 +57,8 @@ import {
   InvoiceTemplateListParamsSchema,
 } from "./schemas/invoice-template-dto.js";
 import { invoiceTemplateService } from "./services/templates/invoice-template-service.js";
+import { projectService } from "./services/project-service.js";
+import { projectRepository } from "./repositories/project.repo.js";
 import bcrypt from "bcrypt";
 
 const app = express();
@@ -82,7 +89,7 @@ if (isDev) {
       version: "1.0.0",
       status: "ok",
       docs: "/api/health",
-      endpoints: ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/plans", "/api/invoices", "/api/customers", "/api/products"],
+       endpoints: ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/plans", "/api/invoices", "/api/customers", "/api/products", "/api/projects"],
     });
   });
 }
@@ -168,6 +175,67 @@ app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
   } catch (err) {
     handleAuthError(err, res);
   }
+});
+
+app.patch("/api/auth/profile", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  const { email, name } = req.body;
+  try {
+    const updates: string[] = [];
+    const values: unknown[] = [req.user!.id];
+    let i = 2;
+    if (email) {
+      updates.push(`email = $${i++}`);
+      values.push(email);
+    }
+    if (updates.length === 0) return res.json({ user: req.user });
+    const result = await query(
+      `UPDATE users SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $1 RETURNING id, email, created_at`,
+      values
+    );
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    handleAuthError(err, res);
+  }
+});
+
+app.post("/api/auth/change-password", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: "currentPassword and newPassword required" });
+  try {
+    const userRow = await query("SELECT password_hash FROM users WHERE id = $1", [req.user!.id]);
+    if (!userRow.rows.length) return res.status(404).json({ error: "User not found" });
+    const valid = await bcrypt.compare(currentPassword, userRow.rows[0].password_hash);
+    if (!valid) return res.status(400).json({ error: "Current password is incorrect" });
+    const hash = await bcrypt.hash(newPassword, 10);
+    await query("UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2", [hash, req.user!.id]);
+    res.json({ changed: true });
+  } catch (err) {
+    handleAuthError(err, res);
+  }
+});
+
+// ============================================================================
+// ACTIVE SESSIONS
+// ============================================================================
+app.get("/api/auth/sessions", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  const result = await query(
+    "SELECT id, session_token, ip_address, user_agent, created_at, last_seen FROM user_sessions WHERE user_id = $1 ORDER BY last_seen DESC",
+    [req.user!.id]
+  );
+  res.json({ sessions: result.rows });
+});
+
+app.delete("/api/auth/sessions/:sessionId", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  const result = await query(
+    "DELETE FROM user_sessions WHERE id = $1 AND user_id = $2 RETURNING id",
+    [req.params.sessionId, req.user!.id]
+  );
+  if (!result.rows.length) return res.status(404).json({ error: "Session not found" });
+  res.json({ revoked: true });
 });
 
 // ============================================================================
@@ -420,6 +488,49 @@ app.post("/api/subscription/downgrade", requireAuth, async (req: AuthRequest, re
   const sub = await subscriptionService.downgradeBusiness(req.user!.businessId, planCode);
   const plan = await subscriptionService.getPlanById(sub.planId);
   res.json({ subscription: sub, plan });
+});
+
+app.post("/api/subscription/cancel", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const ctx = await subscriptionService.getSubscriptionContext(req.user!.businessId);
+  if (ctx.subscription.stripeSubscriptionId) {
+    try {
+      await stripeService.cancelSubscription(ctx.subscription.stripeSubscriptionId);
+    } catch (e) {
+      logger.warn({ err: e }, "Failed to cancel Stripe subscription; cancelling locally");
+    }
+  }
+  const freePlan = await subscriptionRepository.findPlanByCode("free");
+  const updated = await subscriptionRepository.updateSubscriptionByBusinessId(req.user!.businessId, {
+    planId: freePlan?.id,
+    status: "cancelled",
+    cancelledAt: new Date(),
+  });
+  await subscriptionRepository.recordSubscriptionEvent(
+    req.user!.businessId, updated.id, "subscription_cancelled", ctx.plan.code, "free"
+  );
+  const plan = freePlan ?? ctx.plan;
+  res.json({ subscription: updated, plan });
+});
+
+app.get("/api/subscription/invoices", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const ctx = await subscriptionService.getSubscriptionContext(req.user!.businessId);
+  const invoices: any[] = [];
+  if (ctx.subscription.stripeSubscriptionId && env.STRIPE_SECRET_KEY) {
+    try {
+      const stripeInvoices = await stripeService.getSubscriptionInvoices(ctx.subscription.stripeSubscriptionId);
+      invoices.push(...stripeInvoices);
+    } catch (e) {
+      logger.warn({ err: e }, "Failed to fetch Stripe invoices");
+    }
+  }
+  res.json({ invoices });
+});
+
+app.get("/api/subscription/payment-methods", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  res.json({ paymentMethods: [], stripeConfigured: !!env.STRIPE_SECRET_KEY });
 });
 
 app.get("/api/stripe/config", async (_req, res) => {
@@ -1238,6 +1349,163 @@ app.post("/api/invoice-templates/:id/usage", requireAuth, async (req: AuthReques
 });
 
 // ============================================================================
+// PROJECTS
+// ============================================================================
+app.get("/api/projects", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = ProjectSearchQuerySchema.parse({
+    search: req.query.search,
+    status: req.query.status,
+    customerId: req.query.customerId,
+    tagId: req.query.tagId,
+    includeArchived: req.query.includeArchived,
+    limit: req.query.limit ?? 50,
+    offset: req.query.offset ?? 0,
+    sortBy: req.query.sortBy,
+    sortOrder: req.query.sortOrder,
+  });
+  const result = await projectService.search(req.user!.businessId, {
+    search: parsed.search,
+    status: parsed.status,
+    customerId: parsed.customerId,
+    tagId: parsed.tagId,
+    includeArchived: parsed.includeArchived,
+    limit: parsed.limit,
+    offset: parsed.offset,
+    sortBy: parsed.sortBy,
+    sortOrder: parsed.sortOrder,
+  });
+  res.json(result);
+});
+
+app.post("/api/projects", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await requireUsageLimit("projects.unlimited", true)(req as any, res, async () => {
+    const parsed = ProjectCreateSchema.parse(req.body);
+    const businessId = req.user?.businessId;
+    if (!businessId) return res.status(400).json({ error: "No business context" });
+    const project = await projectService.create(parsed, businessId, req.user!.id);
+    res.status(201).json({ project });
+  });
+});
+
+app.get("/api/projects/search", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const search = req.query.q as string | undefined;
+  const projects = await projectService.searchForSelection(req.user!.businessId, search);
+  res.json({ projects });
+});
+
+app.get("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const summary = await projectService.getSummary(req.user!.businessId, req.params.id);
+  res.json({ project: summary.project, customer: summary.customer, tags: summary.tags, teamMembers: summary.teamMembers, financialSummary: summary.financialSummary });
+});
+
+app.patch("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = ProjectUpdateSchema.parse(req.body);
+  const project = await projectService.update(req.user!.businessId, req.params.id, parsed, req.user!.id);
+  res.json({ project });
+});
+
+app.post("/api/projects/:id/status", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { status } = req.body;
+  if (!status) return res.status(400).json({ error: "status required" });
+  const project = await projectService.updateStatus(req.user!.businessId, req.params.id, status, req.user!.id);
+  res.json({ project });
+});
+
+app.post("/api/projects/:id/archive", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const project = await projectService.archive(req.user!.businessId, req.params.id, req.user!.id);
+  res.json({ project });
+});
+
+app.post("/api/projects/:id/restore", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const project = await projectService.restore(req.user!.businessId, req.params.id, req.user!.id);
+  res.json({ project });
+});
+
+app.delete("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await projectService.delete(req.user!.businessId, req.params.id);
+  res.status(204).send();
+});
+
+app.post("/api/projects/:id/invoice", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await projectService.createInvoiceFromProject(req.user!.businessId, req.params.id, req.body, req.user!.id);
+  res.status(201).json(result);
+});
+
+app.get("/api/projects/:id/invoices", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Number(req.query.limit ?? 50), 200);
+  const offset = Number(req.query.offset ?? 0);
+  const status = req.query.status as string | undefined;
+  const result = await projectService.getInvoices(req.user!.businessId, req.params.id, { limit, offset, status });
+  res.json({ invoices: result.data, total: result.total, limit, offset });
+});
+
+app.get("/api/projects/:id/financial-summary", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const summary = await projectService.getFinancialSummary(req.user!.businessId, req.params.id);
+  res.json({ summary });
+});
+
+app.get("/api/projects/:id/events", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Number(req.query.limit ?? 100), 500);
+  const events = await projectService.getEvents(req.user!.businessId, req.params.id, limit);
+  res.json({ events });
+});
+
+// Project tags
+app.get("/api/projects/tags", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const tags = await projectService.getTagsByBusiness(req.user!.businessId);
+  res.json({ tags });
+});
+
+app.post("/api/projects/:id/tags", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { name, color } = req.body;
+  if (!name) return res.status(400).json({ error: "tag name required" });
+  const tag = await projectService.addTag(req.user!.businessId, req.params.id, name, color);
+  res.status(201).json({ tag });
+});
+
+app.delete("/api/projects/:id/tags/:tagId", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await projectService.removeTag(req.user!.businessId, req.params.id, req.params.tagId);
+  res.status(204).send();
+});
+
+// Project team members
+app.get("/api/projects/:id/team", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const members = await projectService.getTeamMembers(req.user!.businessId, req.params.id);
+  res.json({ members });
+});
+
+app.post("/api/projects/:id/team", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { userId, role } = req.body;
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  const member = await projectService.addTeamMember(req.user!.businessId, req.params.id, userId, role, req.user!.id);
+  res.status(201).json({ member });
+});
+
+app.delete("/api/projects/:id/team/:userId", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await projectService.removeTeamMember(req.user!.businessId, req.params.id, req.params.userId);
+  res.status(204).send();
+});
+
+// ============================================================================
 // NUMBER SEQUENCES (invoice numbering config)
 // ============================================================================
 app.get("/api/businesses/current/numbering", requireAuth, async (req: AuthRequest, res) => {
@@ -1259,7 +1527,53 @@ app.patch("/api/businesses/current/numbering", requireAuth, async (req: AuthRequ
 });
 
 // ============================================================================
-// PAYMENTS
+// BUSINESS SETTINGS (branding, defaults, payment config)
+// ============================================================================
+app.get("/api/businesses/current/settings", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    `SELECT business_id, default_currency, default_tax_rate, default_terms, default_notes,
+     time_zone, locale, pdf_template_id, payment_provider, payment_provider_config,
+     reminders_enabled, overdue_reminder_days, created_at, updated_at
+     FROM business_settings WHERE business_id = $1`,
+    [req.user!.businessId]
+  );
+  if (!result.rows.length) {
+    return res.status(404).json({ error: "Business settings not found" });
+  }
+  res.json({ settings: result.rows[0] });
+});
+
+app.patch("/api/businesses/current/settings", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const allowedFields = [
+    "default_currency", "default_tax_rate", "default_terms", "default_notes",
+    "time_zone", "locale", "pdf_template_id", "payment_provider",
+    "payment_provider_config", "reminders_enabled", "overdue_reminder_days",
+  ];
+  const updates: string[] = [];
+  const values: unknown[] = [req.user!.businessId];
+  let i = 2;
+  for (const [key, val] of Object.entries(req.body)) {
+    if (!allowedFields.includes(key)) continue;
+    updates.push(`${key} = $${i++}`);
+    values.push(val);
+  }
+  if (updates.length === 0) return res.json({ settings: null });
+  updates.push(`updated_at = NOW()`);
+  const result = await query(
+    `UPDATE business_settings SET ${updates.join(", ")}
+     WHERE business_id = $1 RETURNING business_id, default_currency, default_tax_rate,
+     default_terms, default_notes, time_zone, locale, pdf_template_id, payment_provider,
+     payment_provider_config, reminders_enabled, overdue_reminder_days, created_at, updated_at`,
+    values
+  );
+  res.json({ settings: result.rows[0] });
+});
+
+// ============================================================================
+// TAX RATES CRUD
+// ============================================================================
 // ============================================================================
 app.get("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
@@ -1288,10 +1602,52 @@ app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res
 app.get("/api/tax-rates", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await query(
-    "SELECT * FROM business_tax_rates WHERE business_id = $1 AND enabled = TRUE ORDER BY name",
+    "SELECT * FROM business_tax_rates WHERE business_id = $1 ORDER BY name",
     [req.user!.businessId]
   );
   res.json({ taxRates: result.rows });
+});
+
+app.post("/api/tax-rates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { name, code, rate, type, country_code, region, is_compound, enabled } = req.body;
+  if (!name || !rate) return res.status(400).json({ error: "name and rate are required" });
+  const result = await query(
+    `INSERT INTO business_tax_rates (business_id, name, code, rate, type, country_code, region, is_compound, enabled)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    [req.user!.businessId, name, code, rate, type ?? "percentage", country_code, region, is_compound ?? false, enabled ?? true]
+  );
+  res.status(201).json({ taxRate: result.rows[0] });
+});
+
+app.patch("/api/tax-rates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const allowedFields = ["name", "code", "rate", "type", "country_code", "region", "is_compound", "enabled"];
+  const updates: string[] = [];
+  const values: unknown[] = [req.user!.businessId, req.params.id];
+  let i = 3;
+  for (const [key, val] of Object.entries(req.body)) {
+    if (!allowedFields.includes(key)) continue;
+    updates.push(`${key} = $${i++}`);
+    values.push(val);
+  }
+  if (updates.length === 0) return res.status(400).json({ error: "No valid fields to update" });
+  const result = await query(
+    `UPDATE business_tax_rates SET ${updates.join(", ")} WHERE business_id = $1 AND id = $2 RETURNING *`,
+    values
+  );
+  if (!result.rows.length) return res.status(404).json({ error: "Tax rate not found" });
+  res.json({ taxRate: result.rows[0] });
+});
+
+app.delete("/api/tax-rates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    "DELETE FROM business_tax_rates WHERE business_id = $1 AND id = $2 RETURNING id",
+    [req.user!.businessId, req.params.id]
+  );
+  if (!result.rows.length) return res.status(404).json({ error: "Tax rate not found" });
+  res.json({ deleted: true });
 });
 
 // ============================================================================

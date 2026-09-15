@@ -20,6 +20,8 @@ import Settings from "./pages/Settings";
 import PublicInvoice from "./pages/PublicInvoice";
 import Reports from "./pages/Reports";
 import Expenses from "./pages/Expenses";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -70,7 +72,9 @@ export default function App() {
          <Route path="templates" element={<Templates />} />
          <Route path="templates/new" element={<TemplateEditorPage />} />
          <Route path="templates/:id/edit" element={<TemplateEditorPage />} />
-         <Route path="expenses" element={<Expenses />} />
+          <Route path="expenses" element={<Expenses />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectDetail />} />
          <Route path="reports" element={<Reports />} />
          <Route path="plans" element={<Plans />} />
          <Route path="settings">

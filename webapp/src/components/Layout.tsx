@@ -28,6 +28,7 @@ export default function Layout() {
     { name: "Products", to: "/app/products" },
     { name: "Templates", to: "/app/templates" },
     { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "business" },
+    { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" },
     { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "business" },
     { name: "Plans", to: "/app/plans" },
     { name: "Settings", to: "/app/settings" },

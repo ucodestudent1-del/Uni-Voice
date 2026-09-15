@@ -21,6 +21,7 @@ export interface SubscriptionInput {
   currentPeriodEnd?: Date;
   trialEndsAt?: Date | null;
   stripeSubscriptionId?: string | null;
+  cancelledAt?: Date | null;
   metadata?: Record<string, unknown>;
 }
 
@@ -165,6 +166,8 @@ export class SubscriptionRepository {
       else if (key === "currentPeriodEnd") fields.push(`current_period_end = $${i++}`);
       else if (key === "trialEndsAt") fields.push(`trial_ends_at = $${i++}`);
       else if (key === "stripeSubscriptionId") fields.push(`stripe_subscription_id = $${i++}`);
+      else if (key === "cancelledAt") fields.push(`cancelled_at = $${i++}`);
+      else if (key === "planId") fields.push(`plan_id = $${i++}`);
       else fields.push(`${key} = $${i++}`);
       vals.push(val ?? null);
     }
@@ -183,6 +186,8 @@ export class SubscriptionRepository {
       else if (key === "currentPeriodEnd") fields.push(`current_period_end = $${i++}`);
       else if (key === "trialEndsAt") fields.push(`trial_ends_at = $${i++}`);
       else if (key === "stripeSubscriptionId") fields.push(`stripe_subscription_id = $${i++}`);
+      else if (key === "cancelledAt") fields.push(`cancelled_at = $${i++}`);
+      else if (key === "planId") fields.push(`plan_id = $${i++}`);
       else fields.push(`${key} = $${i++}`);
       vals.push(val ?? null);
     }

@@ -1,0 +1,329 @@
+import { useState, useEffect, useRef } from "react";
+import {
+  getProjects,
+  archiveProject,
+  restoreProject,
+  updateProjectStatus,
+  deleteProject,
+  updateProject,
+  type ProjectSearchParams,
+  buildProjectSearchParams,
+} from "../api/client";
+import type { ApiProject, ApiCustomer } from "../types/api";
+import ProjectStatusBadge from "../components/ProjectStatusBadge";
+import ProjectForm from "../components/ProjectForm";
+import ProjectTagManager from "../components/ProjectTagManager";
+import { formatDate } from "../utils/format";
+
+interface ProjectsProps {
+  customers?: ApiCustomer[];
+}
+
+const STATUS_FILTERS = [
+  { value: "", label: "All Statuses" },
+  { value: "planning", label: "Planning" },
+  { value: "active", label: "Active" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "completed", label: "Completed" },
+];
+
+export default function Projects({ customers }: ProjectsProps) {  const [projects, setProjects] = useState<ApiProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProject, setEditingProject] = useState<ApiProject | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+  const [sortBy, setSortBy] = useState<"created_at" | "due_date" | "name">("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const loadProjects = async (searchParams: ProjectSearchParams = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getProjects(searchParams);
+      setProjects(data.projects ?? []);
+    } catch (err: any) {
+      setError(err.message || "Failed to load projects");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const params = buildProjectSearchParams({
+        search,
+        status: statusFilter || undefined,
+        includeArchived: showArchived,
+        sortBy,
+        sortOrder,
+      });
+      loadProjects(params);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [search, statusFilter, showArchived, sortBy, sortOrder]);
+
+  const handleCreate = () => {
+    setEditingProject(null);
+    setShowForm(true);
+  };
+
+  const handleEdit = (project: ApiProject) => {
+    setEditingProject(project);
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingProject(null);
+  };
+
+  const handleSaved = () => {
+    setShowForm(false);
+    setEditingProject(null);
+    loadProjects({
+      search,
+      status: statusFilter || undefined,
+      includeArchived: showArchived,
+      sortBy,
+      sortOrder,
+    });
+  };
+
+  const handleArchive = async (project: ApiProject) => {
+    try {
+      if (project.status === "archived") {
+        await restoreProject(project.id);
+      } else {
+        await archiveProject(project.id);
+      }
+      loadProjects({
+        search,
+        status: statusFilter || undefined,
+        includeArchived: showArchived,
+        sortBy,
+        sortOrder,
+      });
+    } catch (err: any) {
+      setError(err.message || "Action failed");
+    }
+  };
+
+  const handleStatusChange = async (project: ApiProject, newStatus: string) => {
+    try {
+      await updateProjectStatus(project.id, newStatus);
+      loadProjects({
+        search,
+        status: statusFilter || undefined,
+        includeArchived: showArchived,
+        sortBy,
+        sortOrder,
+      });
+    } catch (err: any) {
+      setError(err.message || "Status update failed");
+    }
+  };
+
+  const handleDelete = async (project: ApiProject) => {
+    if (!confirm(`Delete project "${project.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteProject(project.id);
+      loadProjects({
+        search,
+        status: statusFilter || undefined,
+        includeArchived: showArchived,
+        sortBy,
+        sortOrder,
+      });
+    } catch (err: any) {
+      setError(err.message || "Delete failed");
+    }
+  };
+
+  const handleSort = (field: "created_at" | "due_date" | "name") => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("desc");
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
+        <button
+          onClick={handleCreate}
+          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+        >
+          + New Project
+        </button>
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div className="flex-1 relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search projects..."
+            className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {STATUS_FILTERS.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+          <label className="flex items-center gap-1.5 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+            />
+            Show archived
+          </label>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-24 bg-slate-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          {projects.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-slate-500">No projects found</p>
+            </div>
+          ) : (
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Project</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Customer</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Status</th>
+                  <th
+                    className="px-4 py-3 text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100"
+                    onClick={() => handleSort("due_date")}
+                  >
+                    Due Date
+                    {sortBy === "due_date" && (
+                      <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Tags</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {projects.map((project) => (
+                  <tr key={project.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-slate-900">{project.name}</p>
+                      {project.description && (
+                        <p className="text-sm text-slate-500 line-clamp-1">{project.description}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm text-slate-900">{project.customer?.name || project.customer_name || "-"}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <ProjectStatusBadge status={project.status} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm text-slate-900">
+                        {project.due_date ? formatDate(project.due_date) : "-"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {(project.tags || []).slice(0, 3).map((t) => (
+                          <span
+                            key={t.id}
+                            className="inline-flex items-center rounded-full px-2 py-0.5 text-xs"
+                            style={{
+                              backgroundColor: `${t.color || "#6b7280"}20`,
+                              color: t.color || "#6b7280",
+                            }}
+                          >
+                            {t.name}
+                          </span>
+                        ))}
+                        {(project.tags || []).length > 3 && (
+                          <span className="text-xs text-slate-500">
+                            +{(project.tags || []).length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(project)}
+                          className="text-sm text-slate-600 hover:text-slate-900"
+                          title="Edit project"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(project)}
+                          className="text-sm text-red-600 hover:text-red-700"
+                          title="Delete project"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {showForm && (
+        <ProjectForm
+          project={editingProject}
+          customers={customers}
+          onClose={handleCloseForm}
+          onSaved={handleSaved}
+        />
+      )}
+    </div>
+  );
+}

@@ -97,6 +97,9 @@ interface EditorInvoiceData {
   items: EditorLineItem[];
   fees: EditorFee[];
   amountPaid?: string;
+  depositType?: "fixed" | "percentage" | "none";
+  depositValue?: string;
+  depositDueDate?: string;
 }
 
 const DEFAULT_DOCUMENT = (businessId: string): InvoiceDocument => {
@@ -223,6 +226,9 @@ function InvoiceEditorContent() {
             taxRate: f.tax_rate,
           })),
           amountPaid: inv.amount_paid,
+          depositType: (inv as any).deposit_type ?? "none",
+          depositValue: (inv as any).deposit_value ?? "0",
+          depositDueDate: (inv as any).deposit_due_date?.split("T")[0],
         });
 
         setSaveState("saved");
@@ -429,6 +435,9 @@ function InvoiceEditorContent() {
           terms: editorData?.terms,
           paymentInstructions: editorData?.paymentInstructions,
           templateId: editorData?.templateId,
+          depositType: editorData?.depositType || "none",
+          depositValue: editorData?.depositValue || "0",
+          depositDueDate: editorData?.depositDueDate,
           items: (editorData?.items || []).map((it) => ({
             description: it.description,
             quantity: it.quantity,
@@ -459,6 +468,9 @@ function InvoiceEditorContent() {
           terms: editorData?.terms,
           paymentInstructions: editorData?.paymentInstructions,
           templateId: editorData?.templateId,
+          depositType: editorData?.depositType || "none",
+          depositValue: editorData?.depositValue || "0",
+          depositDueDate: editorData?.depositDueDate,
         });
         await setInvoiceItems(id!, (editorData?.items || []).map((it) => ({
           id: it.id,

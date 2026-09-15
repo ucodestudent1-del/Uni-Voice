@@ -5,6 +5,13 @@ import type {
   TwoFactorVerifyResult,
   TwoFactorStatus,
   RecoveryCodeSummary,
+  InvoiceSearchParams,
+  CreditNoteSearchParams,
+  RecurringInvoiceCreateInput,
+  RecurringInvoiceUpdateInput,
+  ApiReminderConfig,
+  ApiReminderTemplate,
+  ApiEnhancedDashboard,
 } from "../types/api";
 
 declare module "axios" {
@@ -465,11 +472,6 @@ export async function getPublicInvoicePdf(token: string) {
   return res.data;
 }
 
-export async function getTaxRates() {
-  const res = await api.get("/tax-rates");
-  return res.data;
-}
-
 export async function getOnboarding() {
   const res = await api.get("/onboarding");
   return res.data;
@@ -600,5 +602,413 @@ export async function getInvoiceTemplatePermissions(templateId: string) {
 
 export async function recordInvoiceTemplateUsage(templateId: string, invoiceId?: string) {
   const res = await api.post(`/invoice-templates/${templateId}/usage`, invoiceId ? { invoiceId } : {});
+  return res.data;
+}
+
+export async function getBusinessSettings() {
+  const res = await api.get("/businesses/current/settings");
+  return res.data;
+}
+
+export async function updateBusinessSettings(data: Record<string, unknown>) {
+  const res = await api.patch("/businesses/current/settings", data);
+  return res.data;
+}
+
+export async function getTaxRates() {
+  const res = await api.get("/tax-rates");
+  return res.data;
+}
+
+export async function createTaxRate(data: Record<string, unknown>) {
+  const res = await api.post("/tax-rates", data);
+  return res.data;
+}
+
+export async function updateTaxRate(id: string, data: Record<string, unknown>) {
+  const res = await api.patch(`/tax-rates/${id}`, data);
+  return res.data;
+}
+
+export async function deleteTaxRate(id: string) {
+  const res = await api.delete(`/tax-rates/${id}`);
+  return res.data;
+}
+
+export async function updateUserProfile(data: { email?: string }) {
+  const res = await api.patch("/auth/profile", data);
+  return res.data;
+}
+
+export async function changePassword(data: { currentPassword: string; newPassword: string }) {
+  const res = await api.post("/auth/change-password", data);
+  return res.data;
+}
+
+export async function getUserSessions() {
+  const res = await api.get("/auth/sessions");
+  return res.data;
+}
+
+export async function revokeUserSession(sessionId: string) {
+  const res = await api.delete(`/auth/sessions/${sessionId}`);
+  return res.data;
+}
+
+export async function cancelSubscription() {
+  const res = await api.post("/subscription/cancel");
+  return res.data;
+}
+
+export async function getBillingInvoices() {
+  const res = await api.get("/subscription/invoices");
+  return res.data;
+}
+
+export async function getPaymentMethods() {
+  const res = await api.get("/subscription/payment-methods");
+  return res.data;
+}
+
+// ============================================================================
+// PROJECTS
+// ============================================================================
+
+export interface ProjectSearchParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: string;
+  customerId?: string;
+  tagId?: string;
+  includeArchived?: boolean;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export async function getProjects(params?: ProjectSearchParams) {
+  const res = await api.get("/projects", { params });
+  return res.data;
+}
+
+export async function searchProjects(query?: string) {
+  const res = await api.get("/projects/search", { params: { q: query } });
+  return res.data;
+}
+
+export async function getProject(id: string) {
+  const res = await api.get(`/projects/${id}`);
+  const data = res.data;
+  if (data.project) {
+    return {
+      ...data.project,
+      customer: data.customer ?? null,
+      tags: data.tags ?? [],
+      teamMembers: data.teamMembers ?? [],
+      financial_summary: data.financialSummary ?? null,
+    };
+  }
+  return data;
+}
+
+export async function createProject(data: any) {
+  const res = await api.post("/projects", data);
+  return res.data;
+}
+
+export async function updateProject(id: string, data: any) {
+  const res = await api.patch(`/projects/${id}`, data);
+  return res.data;
+}
+
+export async function archiveProject(id: string) {
+  const res = await api.post(`/projects/${id}/archive`);
+  return res.data;
+}
+
+export async function restoreProject(id: string) {
+  const res = await api.post(`/projects/${id}/restore`);
+  return res.data;
+}
+
+export async function updateProjectStatus(id: string, status: string) {
+  const res = await api.post(`/projects/${id}/status`, { status });
+  return res.data;
+}
+
+export async function deleteProject(id: string) {
+  const res = await api.delete(`/projects/${id}`);
+  return res.data;
+}
+
+export async function createInvoiceFromProject(projectId: string, data?: any) {
+  const res = await api.post(`/projects/${projectId}/invoice`, data ?? {});
+  return res.data;
+}
+
+export async function getProjectInvoices(projectId: string, params?: { limit?: number; offset?: number; status?: string }) {
+  const res = await api.get(`/projects/${projectId}/invoices`, { params });
+  return res.data;
+}
+
+export async function getProjectFinancialSummary(projectId: string) {
+  const res = await api.get(`/projects/${projectId}/financial-summary`);
+  return res.data;
+}
+
+export async function getProjectEvents(projectId: string, params?: { limit?: number }) {
+  const res = await api.get(`/projects/${projectId}/events`, { params });
+  return res.data;
+}
+
+export async function addProjectTag(projectId: string, name: string, color?: string) {
+  const res = await api.post(`/projects/${projectId}/tags`, { name, color });
+  return res.data;
+}
+
+export async function removeProjectTag(projectId: string, tagId: string) {
+  const res = await api.delete(`/projects/${projectId}/tags/${tagId}`);
+  return res.data;
+}
+
+export async function getProjectTags() {
+  const res = await api.get("/projects/tags");
+  return res.data;
+}
+
+export async function getProjectTeam(projectId: string) {
+  const res = await api.get(`/projects/${projectId}/team`);
+  return res.data;
+}
+
+export async function addProjectTeamMember(projectId: string, userId: string, role?: string) {
+  const res = await api.post(`/projects/${projectId}/team`, { userId, role });
+  return res.data;
+}
+
+export async function removeProjectTeamMember(projectId: string, userId: string) {
+  const res = await api.delete(`/projects/${projectId}/team/${userId}`);
+  return res.data;
+}
+
+export function buildProjectSearchParams(params: ProjectSearchParams): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (params.limit !== undefined) result.limit = params.limit;
+  if (params.offset !== undefined) result.offset = params.offset;
+  if (params.search !== undefined) result.search = params.search;
+  if (params.status !== undefined) result.status = params.status;
+  if (params.customerId !== undefined) result.customerId = params.customerId;
+  if (params.tagId !== undefined) result.tagId = params.tagId;
+  if (params.includeArchived !== undefined) result.includeArchived = params.includeArchived;
+  if (params.sortBy !== undefined) result.sortBy = params.sortBy;
+  if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
+  return result;
+}
+
+// ============================================================================
+// INVOICE SEARCH (Enhanced)
+// ============================================================================
+
+export async function getInvoicesEnhanced(params?: InvoiceSearchParams) {
+  const res = await api.get("/invoices", { params });
+  return res.data;
+}
+
+export function buildInvoiceSearchParams(params: InvoiceSearchParams): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (params.limit !== undefined) result.limit = params.limit;
+  if (params.offset !== undefined) result.offset = params.offset;
+  if (params.status !== undefined) result.status = params.status;
+  if (params.paymentState !== undefined) result.payment_state = params.paymentState;
+  if (params.customerId !== undefined) result.customer_id = params.customerId;
+  if (params.customerName !== undefined) result.customer_name = params.customerName;
+  if (params.search !== undefined) result.search = params.search;
+  if (params.currency !== undefined) result.currency = params.currency;
+  if (params.minAmount !== undefined) result.min_amount = params.minAmount;
+  if (params.maxAmount !== undefined) result.max_amount = params.maxAmount;
+  if (params.issueDateFrom !== undefined) result.issue_date_from = params.issueDateFrom;
+  if (params.issueDateTo !== undefined) result.issue_date_to = params.issueDateTo;
+  if (params.dueDateFrom !== undefined) result.due_date_from = params.dueDateFrom;
+  if (params.dueDateTo !== undefined) result.due_date_to = params.dueDateTo;
+  if (params.sortBy !== undefined) result.sort_by = params.sortBy;
+  if (params.sortOrder !== undefined) result.sort_order = params.sortOrder;
+  return result;
+}
+
+// ============================================================================
+// CREDIT NOTES
+// ============================================================================
+
+export async function getCreditNotes(params?: CreditNoteSearchParams) {
+  const res = await api.get("/credit-notes", { params });
+  return res.data;
+}
+
+export async function getCreditNote(id: string) {
+  const res = await api.get(`/credit-notes/${id}`);
+  return res.data;
+}
+
+export async function createCreditNote(data: any) {
+  const res = await api.post("/credit-notes", data);
+  return res.data;
+}
+
+export async function updateCreditNote(id: string, data: any) {
+  const res = await api.patch(`/credit-notes/${id}`, data);
+  return res.data;
+}
+
+export async function finalizeCreditNote(id: string) {
+  const res = await api.post(`/credit-notes/${id}/finalize`);
+  return res.data;
+}
+
+export async function cancelCreditNote(id: string, data?: { reason?: string }) {
+  const res = await api.post(`/credit-notes/${id}/cancel`, data ?? {});
+  return res.data;
+}
+
+export async function applyCreditNote(id: string, invoiceId: string, amount?: string) {
+  const res = await api.post(`/credit-notes/${id}/apply`, { invoiceId, amount });
+  return res.data;
+}
+
+export async function getCreditNotePdf(id: string) {
+  const res = await api.get(`/credit-notes/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getCreditNoteEvents(id: string) {
+  const res = await api.get(`/credit-notes/${id}/events`);
+  return res.data;
+}
+
+export function buildCreditNoteSearchParams(params: CreditNoteSearchParams): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (params.limit !== undefined) result.limit = params.limit;
+  if (params.offset !== undefined) result.offset = params.offset;
+  if (params.status !== undefined) result.status = params.status;
+  if (params.customerId !== undefined) result.customer_id = params.customerId;
+  if (params.search !== undefined) result.search = params.search;
+  if (params.currency !== undefined) result.currency = params.currency;
+  if (params.sortBy !== undefined) result.sort_by = params.sortBy;
+  if (params.sortOrder !== undefined) result.sort_order = params.sortOrder;
+  return result;
+}
+
+// ============================================================================
+// RECURRING INVOICES
+// ============================================================================
+
+export async function getRecurringInvoices() {
+  const res = await api.get("/recurring");
+  return res.data;
+}
+
+export async function getRecurringInvoice(id: string) {
+  const res = await api.get(`/recurring/${id}`);
+  return res.data;
+}
+
+export async function createRecurringInvoice(data: RecurringInvoiceCreateInput) {
+  const res = await api.post("/recurring", data);
+  return res.data;
+}
+
+export async function updateRecurringInvoice(id: string, data: RecurringInvoiceUpdateInput) {
+  const res = await api.patch(`/recurring/${id}`, data);
+  return res.data;
+}
+
+export async function pauseRecurringInvoice(id: string) {
+  const res = await api.post(`/recurring/${id}/pause`);
+  return res.data;
+}
+
+export async function resumeRecurringInvoice(id: string) {
+  const res = await api.post(`/recurring/${id}/resume`);
+  return res.data;
+}
+
+export async function deleteRecurringInvoice(id: string) {
+  const res = await api.delete(`/recurring/${id}`);
+  return res.data;
+}
+
+// ============================================================================
+// REMINDERS
+// ============================================================================
+
+export async function getReminderConfig() {
+  const res = await api.get("/businesses/current/settings");
+  return res.data;
+}
+
+export async function updateReminderConfig(data: Partial<ApiReminderConfig>) {
+  const res = await api.patch("/businesses/current/settings", { reminders: data });
+  return res.data;
+}
+
+export async function getReminderTemplates() {
+  const res = await api.get("/reminder-templates");
+  return res.data;
+}
+
+export async function createReminderTemplate(data: { name: string; subject: string; message: string }) {
+  const res = await api.post("/reminder-templates", data);
+  return res.data;
+}
+
+export async function updateReminderTemplate(id: string, data: Partial<ApiReminderTemplate>) {
+  const res = await api.patch(`/reminder-templates/${id}`, data);
+  return res.data;
+}
+
+export async function deleteReminderTemplate(id: string) {
+  const res = await api.delete(`/reminder-templates/${id}`);
+  return res.data;
+}
+
+// ============================================================================
+// DEPOSITS
+// ============================================================================
+
+export async function setInvoiceDeposit(id: string, data: { depositType: "fixed" | "percentage" | "none"; depositValue: string; depositDueDate?: string }) {
+  const res = await api.patch(`/invoices/${id}/deposit`, data);
+  return res.data;
+}
+
+export async function recordDepositPayment(id: string, data: { amount: number; provider?: string; idempotencyKey?: string }) {
+  const res = await api.post(`/invoices/${id}/deposit/pay`, data);
+  return res.data;
+}
+
+// ============================================================================
+// ENHANCED REPORTS / DASHBOARD
+// ============================================================================
+
+export async function getEnhancedDashboard() {
+  const res = await api.get("/dashboard/enhanced");
+  return res.data;
+}
+
+export async function getAgingReport() {
+  const res = await api.get("/reports/aging");
+  return res.data;
+}
+
+export async function getPaymentMetricsReport() {
+  const res = await api.get("/reports/payment-metrics");
+  return res.data;
+}
+
+export async function getVolumeTrendReport(params?: { period?: "day" | "week" | "month"; months?: number }) {
+  const res = await api.get("/reports/volume-trend", { params });
+  return res.data;
+}
+
+export async function exportInvoicesJson() {
+  const res = await api.get("/export/invoices/json", { responseType: "blob" });
   return res.data;
 }

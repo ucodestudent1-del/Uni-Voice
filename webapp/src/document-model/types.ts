@@ -79,6 +79,7 @@ export type ComponentType =
   | "fees"
   | "total"
   | "amountDue"
+  | "deposit"
   | "businessInfo"
   | "spacer"
   | "divider"
@@ -91,7 +92,7 @@ export const BusinessComponentTypes: ComponentType[] = [
   "text", "image", "logo", "customerInfo", "invoiceNumber", "date",
   "lineItems", "subtotal", "tax", "discount", "paymentTerms", "signature",
   "customField", "notes", "terms", "paymentInstructions", "fees",
-  "total", "amountDue", "businessInfo", "spacer", "divider"
+  "total", "amountDue", "deposit", "businessInfo", "spacer", "divider"
 ];
 
 export function isStructuralComponent(type: ComponentType): boolean {
@@ -291,6 +292,19 @@ export interface AmountDueComponent extends BaseComponent {
   };
 }
 
+export interface DepositComponent extends BaseComponent {
+  type: "deposit";
+  props: {
+    label?: string;
+    currency: string;
+    depositType: "fixed" | "percentage" | "none";
+    depositValue: string;
+    depositDueDate?: string;
+    showDepositDue: boolean;
+    showDepositPaid: boolean;
+  };
+}
+
 export interface BusinessInfoComponent extends BaseComponent {
   type: "businessInfo";
   props: {
@@ -368,6 +382,7 @@ export type AnyComponent =
   | FeesComponent
   | TotalComponent
   | AmountDueComponent
+  | DepositComponent
   | BusinessInfoComponent
   | SpacerComponent
   | DividerComponent

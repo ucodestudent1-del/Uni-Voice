@@ -11,6 +11,7 @@ import { invoiceRepository } from "../repositories/invoice.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
 import { productServiceRepository } from "../repositories/product-service.repo.js";
+import { projectRepository } from "../repositories/project.repo.js";
 import { generatePublicInvoiceToken } from "../utils/crypto.js";
 import { BusinessLogicError } from "../domain/errors.js";
 import { invoiceValidationService } from "../services/validation/invoice-validation.js";
@@ -22,6 +23,7 @@ export type RepoInvoice = Awaited<ReturnType<typeof invoiceRepository.findById>>
 
 export interface CreateInvoiceDraftInput {
   customerId?: string | null;
+  projectId?: string | null;
   currency?: string;
   issueDate?: Date | null;
   dueDate?: Date | null;
@@ -273,6 +275,9 @@ export class InvoiceService {
       eventType: "finalized", actorId: userId, actorType: userId ? "user" : "system",
       metadata: { invoiceNumber: invoice.invoiceNumber ?? generatedNumber },
     });
+    if (invoice.projectId) {
+      await projectRepository.recordInvoiceCreated(invoice.projectId, invoice.total);
+    }
     logger.info(`Invoice ${id} finalized as ${invoice.invoiceNumber ?? generatedNumber}`);
     return { invoiceNumber: invoice.invoiceNumber ?? generatedNumber };
   }
@@ -432,6 +437,9 @@ export class InvoiceService {
         actorType: "payment",
         metadata: { amount, provider, newStatus },
       });
+      if (invoice.projectId) {
+        await projectRepository.recordPayment(invoice.projectId, new Decimal(amount));
+      }
       await client.query("COMMIT");
     } catch (e) {
       await client.query("ROLLBACK");

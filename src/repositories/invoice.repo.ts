@@ -32,6 +32,7 @@ export interface InvoiceFeeInput {
 
 export interface CreateInvoiceInput {
   customerId?: string | null;
+  projectId?: string | null;
   currency: string;
   issueDate?: Date | null;
   dueDate?: Date | null;
@@ -67,11 +68,11 @@ export class InvoiceRepository {
     try {
       await client.query("BEGIN");
       await client.query(
-        `INSERT INTO invoices (id, business_id, customer_id, currency, issue_date, due_date, notes, terms,
+        `INSERT INTO invoices (id, business_id, customer_id, project_id, currency, issue_date, due_date, notes, terms,
           template_id, payment_instructions, created_at, updated_at, created_by, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$11,$12,$12)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$13,$13)`,
         [
-          id, businessId, input.customerId, input.currency,
+          id, businessId, input.customerId, input.projectId, input.currency,
           input.issueDate?.toISOString(), input.dueDate?.toISOString(),
           input.notes, input.terms, input.templateId, input.paymentInstructions, now, input.createdBy,
         ]
@@ -152,7 +153,7 @@ export class InvoiceRepository {
 
   async update(businessId: string, id: string, input: Partial<Record<string, unknown>>): Promise<Invoice> {
     const ALLOWED_COLUMNS = new Set([
-      "customer_id", "invoice_number", "status", "issue_date", "due_date", "currency",
+      "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
       "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
       "amount_paid", "amount_due", "notes", "terms", "template_id", "public_token",
       "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
@@ -182,7 +183,7 @@ export class InvoiceRepository {
 
   async updateOptimistic(businessId: string, id: string, input: Partial<Record<string, unknown>>, expectedVersion: number): Promise<Invoice> {
     const ALLOWED_COLUMNS = new Set([
-      "customer_id", "invoice_number", "status", "issue_date", "due_date", "currency",
+      "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
       "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
       "amount_paid", "amount_due", "notes", "terms", "template_id", "public_token",
       "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
@@ -310,12 +311,13 @@ export class InvoiceRepository {
     return res.rows;
   }
 
-  async findMany(businessId: string, opts: { status?: string; customerId?: string; search?: string; limit?: number; offset?: number } = {}): Promise<any[]> {
+  async findMany(businessId: string, opts: { status?: string; customerId?: string; projectId?: string; search?: string; limit?: number; offset?: number } = {}): Promise<any[]> {
     const conditions: string[] = ["business_id = $1"];
     const vals: unknown[] = [businessId];
     let i = 2;
     if (opts.status) { conditions.push(`status = $${i++}`); vals.push(opts.status); }
     if (opts.customerId) { conditions.push(`customer_id = $${i++}`); vals.push(opts.customerId); }
+    if (opts.projectId) { conditions.push(`project_id = $${i++}`); vals.push(opts.projectId); }
     if (opts.search) {
       const term = `%${opts.search}%`;
       conditions.push(`(invoice_number ILIKE $${i} OR customer_id::text ILIKE $${i} OR c.name ILIKE $${i})`);
@@ -493,6 +495,7 @@ export class InvoiceRepository {
   private rowToModel(r: Record<string, unknown>): Invoice {
     return {
       id: r.id as string, businessId: r.business_id as string, customerId: r.customer_id as string | null,
+      projectId: r.project_id as string | null,
       invoiceNumber: r.invoice_number as string | null, status: r.status as Invoice["status"],
       issueDate: rowToDate(r.issue_date), dueDate: rowToDate(r.due_date),
       currency: r.currency as Invoice["currency"], exchangeRate: r.exchange_rate as string | null,

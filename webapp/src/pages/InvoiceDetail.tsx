@@ -13,9 +13,10 @@ import {
   createPaymentIntent,
   payInvoicePublic,
   recordPublicView,
+  recordDepositPayment,
 } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
-import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent } from "../types/api";
+import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-slate-100 text-slate-800",
@@ -51,6 +52,8 @@ export default function InvoiceDetail() {
   const [showVoidDialog, setShowVoidDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payAmount, setPayAmount] = useState<string>("");
+  const [showDepositDialog, setShowDepositDialog] = useState(false);
+  const [depositAmount, setDepositAmount] = useState<string>("");
 
   useEffect(() => {
     if (id) loadInvoice();
@@ -91,6 +94,13 @@ export default function InvoiceDetail() {
   const canEdit = invoice && !invoice.is_finalized;
   const canCancel = invoice && ["draft", "sent", "viewed"].includes(invoice.status);
   const canVoid = invoice && ["draft", "sent", "viewed", "partially_paid", "overdue"].includes(invoice.status);
+  
+  const depositType = (invoice as any).deposit_type ?? "none";
+  const depositValue = (invoice as any).deposit_value ?? "0";
+  const depositDueDate = (invoice as any).deposit_due_date;
+  const depositPaid = new Decimal((invoice as any).deposit_paid ?? 0);
+  const depositDue = new Decimal((invoice as any).deposit_due ?? 0);
+  const hasDeposit = depositType !== "none" && depositDue.gt(0);
 
   async function handleSendReminder() {
     if (!id) return;
@@ -183,6 +193,22 @@ export default function InvoiceDetail() {
     }
   }
 
+  async function handleRecordDeposit() {
+    if (!id || !depositAmount) return;
+    try {
+      await recordDepositPayment(id, {
+        amount: Number(depositAmount),
+        provider: "stub",
+      });
+      setActionMessage("Deposit payment recorded successfully!");
+      setShowDepositDialog(false);
+      setDepositAmount("");
+      loadInvoice();
+    } catch (err: any) {
+      setActionMessage(err.message || err.response?.data?.error || "Failed to record deposit");
+    }
+  }
+
   if (loading) return <div className="text-center py-20 text-slate-500">Loading invoice...</div>;
   if (!invoice) return <div className="text-center py-20 text-slate-500">Invoice not found</div>;
 
@@ -255,6 +281,14 @@ export default function InvoiceDetail() {
               Void
             </button>
           )}
+          {hasDeposit && depositDue.gt(0) && invoice.status !== "draft" && invoice.status !== "cancelled" && invoice.status !== "void" && (
+            <button
+              onClick={() => setShowDepositDialog(true)}
+              className="rounded-lg bg-orange-600 px-3 py-2 text-sm font-medium text-white hover:bg-orange-700"
+            >
+              Record Deposit
+            </button>
+          )}
         </div>
       </div>
 
@@ -285,6 +319,22 @@ export default function InvoiceDetail() {
             value={formatCurrency(invoice.amount_due, invoice.currency)}
             subtitle="Still due"
           />
+          {hasDeposit && (
+            <>
+              <SummaryCard
+                title="Deposit Due"
+                value={formatCurrency(depositDue, invoice.currency)}
+                subtitle="Deposit outstanding"
+              />
+              <SummaryCard
+                title="Deposit Paid"
+                value={formatCurrency(depositPaid, invoice.currency)}
+                subtitle="Deposit received"
+              />
+              <InfoRow label="Deposit Type" value={depositType === "fixed" ? "Fixed Amount" : depositType === "percentage" ? `${depositValue}%` : "None"} />
+              {depositDueDate && <InfoRow label="Deposit Due Date" value={formatDate(depositDueDate)} />}
+            </>
+          )}
           <InfoRow label="Issue date" value={invoice.issue_date ? formatDate(invoice.issue_date) : "—"} />
           <InfoRow label="Due date" value={invoice.due_date ? formatDate(invoice.due_date) : "—"} />
           <InfoRow label="Currency" value={invoice.currency} />
@@ -359,6 +409,17 @@ export default function InvoiceDetail() {
           onAmountChange={setPayAmount}
           onConfirm={handleRecordPayment}
           onCancel={() => setShowPayDialog(false)}
+        />
+      )}
+
+      {showDepositDialog && (
+        <DepositDialog
+          invoice={invoice}
+          depositDue={depositDue}
+          depositAmount={depositAmount}
+          onAmountChange={setDepositAmount}
+          onConfirm={handleRecordDeposit}
+          onCancel={() => setShowDepositDialog(false)}
         />
       )}
     </div>
@@ -494,6 +555,63 @@ function PaymentDialog({
             className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
           >
             Record Payment
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DepositDialog({
+  invoice, depositDue, depositAmount, onAmountChange, onConfirm, onCancel
+}: {
+  invoice: ApiInvoice;
+  depositDue: Decimal;
+  depositAmount: string;
+  onAmountChange: (value: string) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const isFull = new Decimal(depositAmount || 0).eq(depositDue);
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-lg font-semibold text-slate-900">Record Deposit Payment</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            Deposit due: {formatCurrency(depositDue, invoice.currency)}
+          </p>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+            <input
+              type="number"
+              step="0.01"
+              value={depositAmount}
+              onChange={(e) => onAmountChange(e.target.value)}
+              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder={depositDue.toFixed()}
+            />
+          </div>
+          <button
+            onClick={() => onAmountChange(depositDue.toFixed(2))}
+            className="text-sm text-primary-600 hover:text-primary-700"
+          >
+            Pay full deposit ({formatCurrency(depositDue, invoice.currency)})
+          </button>
+          {isFull && <p className="text-xs text-green-600">This will fully pay the deposit.</p>}
+        </div>
+        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg">
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!depositAmount || Number(depositAmount) <= 0}
+            className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+          >
+            Record Deposit
           </button>
         </div>
       </div>

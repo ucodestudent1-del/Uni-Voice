@@ -79,7 +79,12 @@ export class SubscriptionService {
       { code: "invoices.basic_templates", name: "Basic Templates", category: "templates", isPremium: false, requiresPlan: undefined, metadata: {} },
       { code: "invoices.basic_customization", name: "Basic Customization", category: "templates", isPremium: false, requiresPlan: undefined, metadata: {} },
       { code: "invoices.status_tracking", name: "Invoice Status Tracking", category: "invoicing", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
-      { code: "invoices.late_tracking", name: "Late Payment Tracking", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+       { code: "invoices.late_tracking", name: "Late Payment Tracking", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+       { code: "projects.create", name: "Create Projects", category: "projects", isPremium: false, requiresPlan: undefined as PlanCode | undefined, metadata: {} },
+       { code: "projects.unlimited", name: "Unlimited Projects", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: { freeLimit: 5 } },
+       { code: "projects.budget_tracking", name: "Project Budget & Financial Tracking", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
+       { code: "projects.team_assignment", name: "Project Team Assignment", category: "projects", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+       { code: "projects.invoicing", name: "Create Invoices from Projects", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
     ];
 
     for (const f of featureFlags) {

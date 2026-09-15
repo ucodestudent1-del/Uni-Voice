@@ -19,6 +19,7 @@ import {
   FeesComponent,
   TotalComponent,
   AmountDueComponent,
+  DepositComponent,
   BusinessInfoComponent,
   SpacerComponent,
   DividerComponent,
@@ -49,6 +50,7 @@ export function registerAllComponents() {
   registerFeesComponent();
   registerTotalComponent();
   registerAmountDueComponent();
+  registerDepositComponent();
   registerBusinessInfoComponent();
   registerSpacerComponent();
   registerDividerComponent();
@@ -2058,6 +2060,182 @@ function registerColumnComponent() {
               onChange={(e) => onChange({ span: parseInt(e.target.value) || 1 }, {})}
               className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
+          </div>
+        </div>
+      );
+    },
+  };
+  registerComponent(def);
+}
+
+function registerDepositComponent() {
+  const def: ComponentDefinition<DepositComponent> = {
+    type: "deposit",
+    label: "Deposit",
+    description: "Display deposit information",
+    icon: null,
+    category: "business",
+    defaultProps: {
+      label: "Deposit",
+      currency: "USD",
+      depositType: "none",
+      depositValue: "0",
+      depositDueDate: "",
+      showDepositDue: true,
+      showDepositPaid: true,
+    },
+    defaultStyle: { display: "flex", flexDirection: "column", gap: "8px", padding: "12px 0", borderTop: "1px solid #e5e7eb" },
+    schema: z.object({
+      id: z.string(),
+      type: z.literal("deposit"),
+      props: z.object({
+        label: z.string().optional(),
+        currency: z.string(),
+        depositType: z.enum(["fixed", "percentage", "none"]),
+        depositValue: z.string(),
+        depositDueDate: z.string().optional(),
+        showDepositDue: z.boolean(),
+        showDepositPaid: z.boolean(),
+      }),
+      style: z.record(z.string(), z.unknown()),
+      children: z.array(z.string()).optional(),
+      parentId: z.string().optional(),
+      visible: z.boolean().optional(),
+      condition: z.string().optional(),
+    }) as any,
+    canHaveChildren: false,
+    allowedParentTypes: ["column", "row", "section"],
+    render: (component, ctx) => {
+      const { label, currency, depositType, depositValue, depositDueDate, showDepositDue, showDepositPaid } = component.props;
+      const calculations = ctx.calculations;
+      const invoice = ctx.invoice;
+      
+      const Decimal = require("decimal.js").Decimal;
+      const depositTotal = calculations ? new Decimal(calculations.amountDue || 0).mul(
+        depositType === "percentage" ? new Decimal(depositValue).div(100) : depositValue
+      ).toFixed(2) : "0.00";
+      
+      const depositPaid = invoice ? new Decimal(invoice.amount_paid || 0).min(depositTotal).toFixed(2) : "0.00";
+      const depositDue = new Decimal(depositTotal).minus(depositPaid).toFixed(2);
+      
+      const formatCurrency = (val: string) => ctx.calculations?.formatCurrency(val, currency) || val;
+      
+      return (
+        <div style={{ ...component.style }}>
+          {label && <h4 className="text-sm font-semibold text-slate-700">{label}</h4>}
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <span className="text-slate-500">Type:</span>
+              <span className="ml-2 font-medium capitalize">{depositType === "none" ? "No deposit" : depositType}</span>
+            </div>
+            {depositType !== "none" && (
+              <>
+                <div>
+                  <span className="text-slate-500">Value:</span>
+                  <span className="ml-2 font-medium">
+                    {depositType === "percentage" ? `${depositValue}%` : formatCurrency(depositValue)}
+                  </span>
+                </div>
+                {depositDueDate && (
+                  <div className="col-span-2">
+                    <span className="text-slate-500">Due:</span>
+                    <span className="ml-2 font-medium">{new Date(depositDueDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+                {showDepositDue && (
+                  <div className="col-span-2 text-primary-700 font-semibold">
+                    <span>Deposit Due: </span>
+                    <span>{formatCurrency(depositDue)}</span>
+                  </div>
+                )}
+                {showDepositPaid && (
+                  <div className="col-span-2 text-green-700 font-semibold">
+                    <span>Deposit Paid: </span>
+                    <span>{formatCurrency(depositPaid)}</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      );
+    },
+    inspector: (component, onChange) => {
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <input
+              type="text"
+              value={component.props.label || ""}
+              onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
+              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <input
+              type="text"
+              value={component.props.currency || "USD"}
+              onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
+              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Deposit Type</label>
+            <select
+              value={component.props.depositType || "none"}
+              onChange={(e) => onChange({ depositType: e.target.value }, {})}
+              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="none">None</option>
+              <option value="fixed">Fixed Amount</option>
+              <option value="percentage">Percentage</option>
+            </select>
+          </div>
+          {(component.props.depositType === "fixed" || component.props.depositType === "percentage") && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                {component.props.depositType === "percentage" ? "Percentage (%)" : "Fixed Amount"}
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={component.props.depositValue || "0"}
+                onChange={(e) => onChange({ depositValue: e.target.value || "0" }, {})}
+                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Deposit Due Date (optional)</label>
+            <input
+              type="date"
+              value={component.props.depositDueDate || ""}
+              onChange={(e) => onChange({ depositDueDate: e.target.value || undefined }, {})}
+              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={component.props.showDepositDue}
+                onChange={(e) => onChange({ showDepositDue: e.target.checked }, {})}
+                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              />
+              Show Deposit Due
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={component.props.showDepositPaid}
+                onChange={(e) => onChange({ showDepositPaid: e.target.checked }, {})}
+                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              />
+              Show Deposit Paid
+            </label>
           </div>
         </div>
       );

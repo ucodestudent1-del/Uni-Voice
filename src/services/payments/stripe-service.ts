@@ -90,6 +90,48 @@ export class StripeService {
     const stripe = getStripe();
     return stripe.subscriptions.cancel(subscriptionId);
   }
+
+  async getSubscriptionInvoices(subscriptionId: string): Promise<any[]> {
+    const stripe = getStripe();
+    const invoices: any[] = [];
+    const params: Stripe.InvoiceListParams = {
+      subscription: subscriptionId,
+      limit: 100,
+    };
+    const result = await stripe.invoices.list(params);
+    for (const inv of result.data) {
+      invoices.push({
+        id: inv.id,
+        amount: inv.total,
+        currency: inv.currency.toUpperCase(),
+        status: inv.status ?? "open",
+        created: inv.created,
+        invoiceNumber: inv.number,
+        hostedInvoiceUrl: inv.hosted_invoice_url,
+        invoicePdf: inv.invoice_pdf,
+      });
+    }
+    return invoices;
+  }
+
+  async getPaymentMethods(customerId: string): Promise<any[]> {
+    const stripe = getStripe();
+    const result = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: "card",
+    });
+    return result.data.map((pm) => ({
+      id: pm.id,
+      type: "card",
+      card: {
+        brand: pm.card?.brand,
+        last4: pm.card?.last4,
+        expMonth: pm.card?.exp_month,
+        expYear: pm.card?.exp_year,
+      },
+      isDefault: false,
+    }));
+  }
 }
 
 export const stripeService = new StripeService();
