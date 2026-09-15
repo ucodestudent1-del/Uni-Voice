@@ -66,14 +66,14 @@ export default function Customers() {
     offset,
     search: search || undefined,
     status: statusFilter === "all" ? undefined : (statusFilter as any),
-    includeArchived: statusFilter === "archived" ? true : includeArchived,
+    includeArchived: statusFilter === "archived" || includeArchived ? true : undefined,
     sortBy,
     sortOrder,
   };
 
   useEffect(() => {
     loadCustomers(currentParams);
-  }, [loadCustomers, currentParams]);
+  }, [loadCustomers, limit, offset, search, statusFilter, includeArchived, sortBy, sortOrder]);
 
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
