@@ -3,9 +3,6 @@ import { z } from "zod";
 export const InvoiceTemplateLifecycleSchema = z.enum(["draft", "published", "archived"]);
 export type InvoiceTemplateLifecycle = z.infer<typeof InvoiceTemplateLifecycleSchema>;
 
-export const InvoiceTemplateStatus = InvoiceTemplateLifecycleSchema;
-export type InvoiceTemplateStatus = InvoiceTemplateLifecycle;
-
 export const INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION = "1.0";
 export const INVOICE_TEMPLATE_SCHEMA_VERSIONS = ["1.0"] as const;
 export type InvoiceTemplateSchemaVersion = (typeof INVOICE_TEMPLATE_SCHEMA_VERSIONS)[number];
@@ -46,6 +43,7 @@ export const InvoiceTemplateDocumentSchema = z.object({
   businessId: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  schemaVersion: z.string().optional().default(INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION),
   sections: z.record(z.string(), z.record(z.string(), z.unknown())),
   rows: z.record(z.string(), z.record(z.string(), z.unknown())),
   columns: z.record(z.string(), z.record(z.string(), z.unknown())),
@@ -72,6 +70,7 @@ export const InvoiceTemplateSchema = z.object({
   isActive: z.boolean().default(true),
   lifecycle: InvoiceTemplateLifecycleSchema.default("draft"),
   publishedAt: z.date().nullable().optional(),
+  publishedRevision: z.number().int().min(1).nullable().optional(),
   archivedAt: z.date().nullable().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),

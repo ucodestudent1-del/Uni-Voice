@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ReactNode } from "react";
 
 export type ComponentId = string;
 export type SectionId = string;
@@ -408,7 +409,7 @@ export interface DragState {
   originalIndex: number;
   targetParentId: ComponentId | SectionId | RowId | ColumnId | null;
   targetIndex: number;
-  dragOverlay: React.ReactNode | null;
+  dragOverlay: ReactNode | null;
 }
 
 export interface EditorState {

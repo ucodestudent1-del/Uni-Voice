@@ -4,12 +4,12 @@ import { getChildren, findComponentDeep } from "../document-model";
 
 interface TemplateRenderProps {
   document: FrontendInvoiceTemplateDocument;
-  business: Record<string, unknown>;
-  customer: Record<string, unknown> | null;
-  invoice: Record<string, unknown>;
-  lineItems: Record<string, unknown>[];
-  fees: Record<string, unknown>[];
-  totals: Record<string, unknown>;
+  business: any;
+  customer: any;
+  invoice: any;
+  lineItems: any[];
+  fees: any[];
+  totals: any;
   currency?: string;
   locale?: string;
 }
@@ -109,14 +109,15 @@ function evalCondition(condition: string, ctx: RenderContext): boolean {
 }
 
 interface RenderContext extends TemplateRenderProps {
-  business: Record<string, unknown>;
-  customer: Record<string, unknown> | null;
-  invoice: Record<string, unknown>;
-  lineItems: Record<string, unknown>[];
-  fees: Record<string, unknown>[];
-  totals: Record<string, unknown>;
+  business: any;
+  customer: any;
+  invoice: any;
+  lineItems: any[];
+  fees: any[];
+  totals: any;
   currency: string;
   locale: string;
+  calculations?: any;
 }
 
 function styleToReactStyle(style: Record<string, unknown> | undefined): React.CSSProperties {
@@ -190,8 +191,8 @@ function renderLineItemValue(item: Record<string, unknown>, key: string, currenc
 }
 
 function renderComponent(
-  comp: Record<string, unknown>,
-  doc: FrontendInvoiceTemplateDocument,
+  comp: any,
+  doc: any,
   ctx: RenderContext
 ): React.ReactNode {
   if (!comp) return null;
@@ -205,8 +206,8 @@ function renderComponent(
   const childIds = comp.children as string[] | undefined;
   const children = childIds && childIds.length > 0
     ? childIds.map((id) => {
-        const child = findComponentDeep(doc, id);
-        return child ? <React.Fragment key={id}>{renderComponent(child as Record<string, unknown>, doc, ctx)}</React.Fragment> : null;
+        const child = findComponentDeep(doc as any, id);
+        return child ? <React.Fragment key={id}>{renderComponent(child, doc, ctx)}</React.Fragment> : null;
       })
     : undefined;
 
@@ -218,7 +219,7 @@ function renderComponent(
 
   switch (compType) {
     case ComponentRendererType.Text: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       return (
         <div {...baseProps}>{props?.content ?? ""}</div>
       );
@@ -226,7 +227,7 @@ function renderComponent(
 
     case ComponentRendererType.Image:
     case ComponentRendererType.Logo: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const imgStyle: React.CSSProperties = props?.width || props?.height
         ? { width: props.width, height: props.height, objectFit: props.fit ?? "contain" }
         : { maxWidth: "100%", height: "auto" };
@@ -234,7 +235,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.CustomerInfo: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const c = ctx.customer;
       if (!c) return <div {...baseProps}>No customer</div>;
       const showName = props?.showName;
@@ -263,7 +264,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.BusinessInfo: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const b = ctx.business;
       const showName = props?.showName;
       const showEmail = props?.showEmail;
@@ -295,7 +296,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.InvoiceNumber: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const prefix = (props?.prefix as string) ?? "";
       const label = props?.label as string | undefined;
       const number = ctx.invoice.invoiceNumber ?? "";
@@ -308,7 +309,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Date: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const dateType = props?.dateType as string;
       const fmt = props?.format as string | undefined;
       const label = props?.label as string | undefined;
@@ -327,7 +328,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.LineItems: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const columns = (props?.columns as Array<{
         key: string;
         label: string;
@@ -344,7 +345,7 @@ function renderComponent(
               <thead>
                 <tr>
                   {columns.filter((c) => c.visible).map((col) => (
-                    <th key={col.key} style={{ textAlign: col.align ?? "left" as React.CSSProperties["textAlign"] }}>
+                    <th key={col.key} style={{ textAlign: (col.align ?? "left") as React.CSSProperties["textAlign"] }}>
                       {col.label}
                     </th>
                   ))}
@@ -355,7 +356,7 @@ function renderComponent(
               {ctx.lineItems.map((item, idx) => (
                 <tr key={idx}>
                   {columns.filter((c) => c.visible).map((col) => (
-                    <td key={col.key} style={{ textAlign: col.align ?? "left" as React.CSSProperties["textAlign"] }}>
+                    <td key={col.key} style={{ textAlign: (col.align ?? "left") as React.CSSProperties["textAlign"] }}>
                       {renderLineItemValue(item, col.key, ctx.currency, ctx.locale)}
                     </td>
                   ))}
@@ -368,7 +369,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Subtotal: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const label = (props?.label as string) ?? "Subtotal";
       const currency = (props?.currency as string) ?? ctx.currency;
       return (
@@ -380,7 +381,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Tax: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const label = (props?.label as string) ?? "Tax";
       const currency = (props?.currency as string) ?? ctx.currency;
       return (
@@ -392,7 +393,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Discount: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const label = (props?.label as string) ?? "Discount";
       const currency = (props?.currency as string) ?? ctx.currency;
       return (
@@ -404,7 +405,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Fees: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const label = (props?.label as string) ?? "Fees";
       const currency = (props?.currency as string) ?? ctx.currency;
       return (
@@ -416,7 +417,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Total: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const label = (props?.label as string) ?? "Total";
       const currency = (props?.currency as string) ?? ctx.currency;
       return (
@@ -428,7 +429,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.AmountDue: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const label = (props?.label as string) ?? "Amount Due";
       const currency = (props?.currency as string) ?? ctx.currency;
       return (
@@ -440,7 +441,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.PaymentTerms: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const content = props?.content as string ?? "";
       const label = props?.label as string | undefined;
       return (
@@ -452,7 +453,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Notes: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const content = props?.content as string ?? "";
       const label = props?.label as string | undefined;
       return (
@@ -464,7 +465,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Terms: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const content = props?.content as string ?? "";
       const label = props?.label as string | undefined;
       return (
@@ -476,7 +477,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.PaymentInstructions: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const content = props?.content as string ?? "";
       const label = props?.label as string | undefined;
       return (
@@ -488,7 +489,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Signature: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const label = (props?.label as string) ?? "Signature";
       const placeholder = (props?.placeholder as string) ?? "__________________________";
       const showDate = props?.showDate !== false;
@@ -505,7 +506,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.CustomField: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const key = props?.key as string ?? "";
       const label = (props?.label as string) ?? key;
       const value = props?.value as string ?? "";
@@ -517,14 +518,14 @@ function renderComponent(
     }
 
     case ComponentRendererType.Spacer: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const height = props?.height ?? 16;
       const h = typeof height === "number" ? `${height}px` : height;
-      return <div {...baseProps} style={{ ...style, height: h }} />;
+      return <div {...baseProps} style={{ ...style, height: h as string | number }} />;
     }
 
     case ComponentRendererType.Divider: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const thickness = (props?.thickness as number) ?? 1;
       const color = (props?.color as string) ?? "#e2e8f0";
       const divStyle = (props?.style as string) ?? "solid";
@@ -537,7 +538,7 @@ function renderComponent(
     }
 
     case ComponentRendererType.Section: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const fullWidth = props?.fullWidth !== false;
       const sectionStyle: React.CSSProperties = fullWidth ? { width: "100%" } : { width: "auto" };
       const childIds = comp.children as string[] | undefined;
@@ -551,14 +552,14 @@ function renderComponent(
           {childIds.map((id) => {
             const child = doc.sections[id] || doc.rows[id] || doc.columns[id];
             if (!child) return null;
-            return <React.Fragment key={id}>{renderComponent(child as Record<string, unknown>, doc, ctx)}</React.Fragment>;
+            return <React.Fragment key={id}>{renderComponent(child, doc, ctx)}</React.Fragment>;
           })}
         </section>
       );
     }
 
     case ComponentRendererType.Row: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const columnGap = (props?.columnGap as number | string) ?? 16;
       const gap = typeof columnGap === "number" ? `${columnGap}px` : columnGap;
       const childIds = comp.children as string[] | undefined;
@@ -579,14 +580,14 @@ function renderComponent(
           {childIds.map((id) => {
             const child = doc.columns[id];
             if (!child) return null;
-            return <React.Fragment key={id}>{renderComponent(child as Record<string, unknown>, doc, ctx)}</React.Fragment>;
+            return <React.Fragment key={id}>{renderComponent(child, doc, ctx)}</React.Fragment>;
           })}
         </div>
       );
     }
 
     case ComponentRendererType.Column: {
-      const props = comp.props as Record<string, unknown>;
+      const props = comp.props as any;
       const span = (props?.span as number) ?? 1;
       const childIds = comp.children as string[] | undefined;
 
@@ -602,9 +603,9 @@ function renderComponent(
       return (
         <div {...baseProps} style={colStyle}>
           {childIds.map((id) => {
-            const child = findComponentDeep(doc, id);
+            const child = findComponentDeep(doc as any, id);
             if (!child) return null;
-            return <React.Fragment key={id}>{renderComponent(child as Record<string, unknown>, doc, ctx)}</React.Fragment>;
+            return <React.Fragment key={id}>{renderComponent(child, doc, ctx)}</React.Fragment>;
           })}
         </div>
       );
@@ -615,7 +616,7 @@ function renderComponent(
   }
 }
 
-function formatAddressReact(address: Record<string, unknown> | undefined): React.ReactNode {
+function formatAddressReact(address: any): React.ReactNode {
   if (!address) return null;
   return (
     <>
@@ -641,6 +642,7 @@ export function TemplateRender({
   locale = "en-US",
 }: TemplateRenderProps): React.ReactElement {
   const ctx: RenderContext = {
+    document,
     business,
     customer,
     invoice,
@@ -656,7 +658,7 @@ export function TemplateRender({
     return <div className="error">Invalid document structure</div>;
   }
 
-  const childIds = rootSection.children ?? [];
+  const childIds = (rootSection.children ?? []) as string[];
   const settings = document.settings;
   const margins = settings.margins ?? { top: 40, right: 40, bottom: 40, left: 40 };
 
@@ -671,9 +673,9 @@ export function TemplateRender({
       }}
     >
       {childIds.map((id) => {
-        const child = document.sections[id] || document.rows[id] || document.columns[id];
+        const child = document.sections[id] || document.rows[id] || document.columns[id] || document.components[id];
         if (!child) return null;
-        return <React.Fragment key={id}>{renderComponent(child as Record<string, unknown>, document, ctx)}</React.Fragment>;
+        return <React.Fragment key={id}>{renderComponent(child, document, ctx)}</React.Fragment>;
       })}
     </div>
   );

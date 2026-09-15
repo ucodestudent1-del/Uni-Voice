@@ -66,7 +66,7 @@ export class ProductServiceRepository {
           id, business_id, product_type, name, description, sku, unit,
           default_unit_price, tax_category, default_currency, status,
           discount_type, discount_value, version, created_at, updated_at
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$14)
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15)
          RETURNING *`,
         [
           id,
@@ -402,13 +402,13 @@ export class ProductServiceRepository {
       description: r.description as string | null,
       sku: r.sku as string | null,
       unit: r.unit as string,
-      unitPrice: (new Decimal(r.default_unit_price ?? 0)).toFixed(6),
-      defaultTaxRate: (new Decimal(r.default_tax_rate ?? 0)).toFixed(6),
+      unitPrice: (new Decimal(r.default_unit_price as string ?? 0)).toFixed(6),
+      defaultTaxRate: (new Decimal(r.default_tax_rate as string ?? 0)).toFixed(6),
       taxCategory: r.tax_category as string | null,
       currency: (r.default_currency as string) as ProductService["currency"],
       status: (r.status as string) as ProductService["status"],
       discountType: (r.discount_type as string) as "fixed" | "percentage",
-      discountValue: (new Decimal(r.discount_value ?? 0)).toFixed(6),
+      discountValue: (new Decimal(r.discount_value as string ?? 0)).toFixed(6),
       version: Number(r.version ?? 1),
       createdAt: rowToDate(r.created_at) || new Date(),
       updatedAt: rowToDate(r.updated_at) || new Date(),

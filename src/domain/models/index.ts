@@ -319,6 +319,7 @@ export interface InvoiceTemplate {
   isActive: boolean;
   lifecycle: string;
   publishedAt?: Date | null;
+  publishedRevision?: number | null;
   archivedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;

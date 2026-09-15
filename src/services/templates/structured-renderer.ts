@@ -128,13 +128,20 @@ function renderChildren(
   return childIds
     .map((id) => {
       const comp = doc.components[id];
-      if (!comp) return "";
-      return renderComponent(comp as any, doc, ctx);
+      if (comp) return renderComponent(comp as any, doc, ctx);
+      const row = doc.rows[id];
+      if (row) return renderComponent(row as any, doc, ctx);
+      const col = doc.columns[id];
+      if (col) return renderComponent(col as any, doc, ctx);
+      const section = doc.sections[id];
+      if (section) return renderComponent(section as any, doc, ctx);
+      return "";
     })
     .join("");
 }
 
 function renderComponent(comp: any, doc: InvoiceTemplateDocument, ctx: RenderContext): string {
+  if (!comp || !comp.visible) return "";
   const styleStr = comp.style ? ` style="${escapeHtml(styleToString(comp.style))}"` : "";
 
   switch (comp.type) {
@@ -468,8 +475,7 @@ export class StructuredTemplateRenderer {
     const rootSection = doc.sections[doc.rootSectionId] as Record<string, unknown> | undefined;
     if (!rootSection) return `<div class="error">Invalid document structure</div>`;
 
-    const childIds = (rootSection.children as string[] | undefined) ?? [];
-    return renderChildren(childIds, doc, ctx);
+    return renderComponent(rootSection as any, doc, ctx);
   }
 
   private buildSettingsStyles(settings: InvoiceTemplateSettings): string {

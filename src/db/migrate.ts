@@ -77,8 +77,14 @@ export async function rollbackAll() {
       await client.query(`DROP TABLE IF EXISTS "${t}" CASCADE`);
     }
     await client.query(
-      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status, onboarding_step_status, customer_status, customer_event_type, invoice_template_lifecycle CASCADE`
+      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status, onboarding_step_status, customer_status, customer_event_type, invoice_template_lifecycle, product_service_type, product_service_status CASCADE`
     );
+    const typeRes = await client.query(
+      `SELECT typname FROM pg_type WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public') AND typname NOT IN ('migrations') AND typisdefined = true AND typcategory != 'A' AND typcategory != 'E' AND typname NOT LIKE 'gtrgm%'`
+    );
+    for (const tr of typeRes.rows) {
+      await client.query(`DROP TYPE IF EXISTS "${tr.typname}" CASCADE`);
+    }
     await client.query("COMMIT");
     logger.info(`Dropped ${tables.length} tables (rollback)`);
   } catch (e) {

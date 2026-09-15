@@ -23,7 +23,7 @@ export interface CustomerInput {
   paymentTerms?: number | null;
 }
 
-export interface CustomerUpdateInput extends CustomerInput {}
+export type CustomerUpdateInput = CustomerInput;
 
 export interface CustomerSearchOptions {
   search?: string;

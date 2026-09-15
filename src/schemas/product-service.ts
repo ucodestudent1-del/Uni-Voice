@@ -69,7 +69,7 @@ export const CatalogSearchSchema = z.object({
   search: z.string().max(255).optional(),
   type: ProductServiceTypeSchema.optional(),
   status: z
-    .enum([...PRODUCT_SERVICE_STATUSES, "all"] as [string, ...string[]])
+    .enum([...PRODUCT_SERVICE_STATUSES, "all"] as unknown as [string, ...string[]])
     .default("all"),
   taxCategory: z.string().max(50).optional(),
   hasSku: z.boolean().optional(),

@@ -1,9 +1,8 @@
 import type { InvoiceTemplate } from "../schemas/invoice-template.js";
 import type { InvoiceTemplateRevision } from "../schemas/invoice-template.js";
 
-export interface InvoiceTemplateModel extends InvoiceTemplate {}
-
-export interface InvoiceTemplateRevisionModel extends InvoiceTemplateRevision {}
+export type InvoiceTemplateModel = InvoiceTemplate;
+export type InvoiceTemplateRevisionModel = InvoiceTemplateRevision;
 
 export {
   InvoiceTemplateLifecycleSchema,

@@ -60,9 +60,6 @@ class TemplateMigrationEngine {
       }
       path.push(migration);
       current = migration.toVersion;
-      if (!INVOICE_TEMPLATE_SCHEMA_VERSIONS.includes(current as any)) {
-        break;
-      }
     }
 
     if (current !== toVersion) {

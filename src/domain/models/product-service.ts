@@ -58,6 +58,6 @@ export interface InvoiceLineItemSnapshot {
   isTaxInclusive: boolean;
 }
 
-export const PRODUCT_SERVICE_STATUSES: ProductServiceStatus[] = ["active", "archived", "draft"];
+export const PRODUCT_SERVICE_STATUSES = ["active", "archived", "draft"] as const;
 
-export const PRODUCT_SERVICE_TYPES: ProductServiceType[] = ["product", "service"];
+export const PRODUCT_SERVICE_TYPES = ["product", "service"] as const;

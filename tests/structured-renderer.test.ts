@@ -86,14 +86,14 @@ function makeBaseContext(): RenderContext {
 
 function makeSampleDocument(): InvoiceDocument {
   const doc = createEmptyDocument("biz_1", "Test Invoice");
-  doc.components["cmp_1"] = {
-    id: "cmp_1",
+  doc.components["comp_1"] = {
+    id: "comp_1",
     type: "text",
     props: { content: "Hello World" },
     style: {},
     visible: true,
   };
-  doc.sections["section_root"].children = ["cmp_1"];
+  doc.sections[doc.rootSectionId].children = ["comp_1"];
   return doc;
 }
 
@@ -102,7 +102,7 @@ describe("StructuredTemplateRenderer", () => {
     const doc = makeSampleDocument();
     const ctx = makeBaseContext();
 
-    const html = structuredTemplateRenderer.render(doc, ctx);
+    const html = structuredTemplateRenderer.render(doc as any, ctx);
 
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("Hello World");
@@ -127,9 +127,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_biz"];
+    doc.sections[doc.rootSectionId].children = ["comp_biz"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Acme Corp");
     expect(html).toContain("info@acme.com");
@@ -156,9 +156,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_cust"];
+    doc.sections[doc.rootSectionId].children = ["comp_cust"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Jane Doe");
     expect(html).toContain("Doe Inc");
@@ -177,9 +177,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_inv"];
+    doc.sections[doc.rootSectionId].children = ["comp_inv"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("INV-001");
     expect(html).toContain("Invoice");
@@ -201,9 +201,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_issue", "comp_due"];
+    doc.sections[doc.rootSectionId].children = ["comp_issue", "comp_due"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Issue Date");
     expect(html).toContain("Due Date");
@@ -234,9 +234,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_items"];
+    doc.sections[doc.rootSectionId].children = ["comp_items"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Description");
     expect(html).toContain("Qty");
@@ -267,9 +267,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_subtotal", "comp_tax", "comp_total"];
+    doc.sections[doc.rootSectionId].children = ["comp_subtotal", "comp_tax", "comp_total"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Subtotal");
     expect(html).toContain("Tax");
@@ -303,9 +303,9 @@ describe("StructuredTemplateRenderer", () => {
       children: ["col_test"],
       visible: true,
     };
-    doc.sections["section_root"].children = ["row_test"];
+    doc.sections[doc.rootSectionId].children = ["row_test"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Column content");
     expect(html).toContain("<section");
@@ -322,9 +322,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: false,
     };
-    doc.sections["section_root"].children = ["comp_hidden"];
+    doc.sections[doc.rootSectionId].children = ["comp_hidden"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).not.toContain("Should not be visible");
   });
@@ -345,9 +345,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_spacer", "comp_divider"];
+    doc.sections[doc.rootSectionId].children = ["comp_spacer", "comp_divider"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("<hr");
     expect(html).toContain("#ff0000");
@@ -376,9 +376,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_notes", "comp_terms", "comp_pay"];
+    doc.sections[doc.rootSectionId].children = ["comp_notes", "comp_terms", "comp_pay"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Thank you for your business.");
     expect(html).toContain("Net 30");
@@ -394,9 +394,9 @@ describe("StructuredTemplateRenderer", () => {
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_sig"];
+    doc.sections[doc.rootSectionId].children = ["comp_sig"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Authorized Signature");
     expect(html).toContain("____");
@@ -409,13 +409,13 @@ describe("StructuredTemplateRenderer", () => {
     doc.components["comp_cf"] = {
       id: "comp_cf",
       type: "customField",
-      props: { key: "project", label: "Project", value: "PROJ-2024" },
+      props: { key: "project", label: "Project", value: "PROJ-2024", type: "text" },
       style: {},
       visible: true,
     };
-    doc.sections["section_root"].children = ["comp_cf"];
+    doc.sections[doc.rootSectionId].children = ["comp_cf"];
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Project");
     expect(html).toContain("PROJ-2024");
@@ -425,7 +425,7 @@ describe("StructuredTemplateRenderer", () => {
     const doc = createEmptyDocument("biz_1", "Test Invoice");
     doc.sections = {};
 
-    const html = structuredTemplateRenderer.render(doc, makeBaseContext());
+    const html = structuredTemplateRenderer.render(doc as any, makeBaseContext());
 
     expect(html).toContain("Invalid document structure");
   });

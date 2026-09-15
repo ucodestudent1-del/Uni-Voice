@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { InvoiceTemplateLifecycleSchema } from "../schemas/invoice-template";
+
+const InvoiceTemplateLifecycleSchema = z.enum(["draft", "published", "archived"]);
 
 export const FrontendInvoiceTemplateSettingsSchema = z.object({
   pageSize: z.enum(["A4", "Letter", "Legal"]).default("A4"),
@@ -9,7 +10,7 @@ export const FrontendInvoiceTemplateSettingsSchema = z.object({
     right: z.number().default(40),
     bottom: z.number().default(40),
     left: z.number().default(40),
-  }).default({}),
+  }).default({ top: 40, right: 40, bottom: 40, left: 40 }),
   defaultFont: z.string().default("system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"),
   defaultFontSize: z.number().default(14),
   defaultColor: z.string().default("#1f2937"),

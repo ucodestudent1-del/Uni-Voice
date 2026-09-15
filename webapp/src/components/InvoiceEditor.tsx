@@ -67,6 +67,11 @@ export interface EditorLineItem {
   taxRate?: string;
   isTaxInclusive?: boolean;
   productId?: string | null;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
 }
 
 export interface EditorFee {
@@ -206,6 +211,11 @@ function InvoiceEditorContent() {
             taxRate: it.tax_rate,
             isTaxInclusive: it.is_tax_inclusive,
             productId: it.product_id,
+            catalogName: it.catalog_name ?? null,
+            catalogSku: it.catalog_sku ?? null,
+            catalogTaxCategory: it.catalog_tax_category ?? null,
+            catalogUnitPrice: it.catalog_unit_price ?? null,
+            catalogTaxRate: it.catalog_tax_rate ?? null,
           })),
           fees: inv.fees.map((f) => ({
             description: f.description,
@@ -429,6 +439,11 @@ function InvoiceEditorContent() {
             taxRate: it.taxRate,
             isTaxInclusive: it.isTaxInclusive,
             productId: it.productId,
+            catalogName: it.catalogName,
+            catalogSku: it.catalogSku,
+            catalogTaxCategory: it.catalogTaxCategory,
+            catalogUnitPrice: it.catalogUnitPrice,
+            catalogTaxRate: it.catalogTaxRate,
           })),
           fees: editorData?.fees || [],
         });
@@ -456,6 +471,11 @@ function InvoiceEditorContent() {
           discountType: it.discountType,
           taxRate: it.taxRate,
           isTaxInclusive: it.isTaxInclusive,
+          catalogName: it.catalogName,
+          catalogSku: it.catalogSku,
+          catalogTaxCategory: it.catalogTaxCategory,
+          catalogUnitPrice: it.catalogUnitPrice,
+          catalogTaxRate: it.catalogTaxRate,
         })));
         await setInvoiceFees(id!, editorData?.fees || []);
         analytics.track("invoice_saved", { invoiceId: id });

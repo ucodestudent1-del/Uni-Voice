@@ -2,9 +2,8 @@ import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { TemplateRender } from "../components/TemplateRender";
 import { createEmptyDocument, type InvoiceDocument } from "../document-model/types";
-import type { RenderContext } from "../../../src/services/templates/structured-renderer";
 
-function makeBaseContext(): RenderContext {
+function makeBaseContext(): any {
   return {
     business: {
       id: "biz_1",
@@ -96,7 +95,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: true,
     };
-    doc.sections["root_section"].children = ["comp_text"];
+    doc.sections[doc.rootSectionId].children = ["comp_text"];
 
     const ctx = makeBaseContext();
     const { container } = render(
@@ -133,7 +132,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: true,
     };
-    doc.sections["root_section"].children = ["comp_biz"];
+    doc.sections[doc.rootSectionId].children = ["comp_biz"];
 
     const ctx = makeBaseContext();
     const { container } = render(
@@ -163,7 +162,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: true,
     };
-    doc.sections["root_section"].children = ["comp_inv"];
+    doc.sections[doc.rootSectionId].children = ["comp_inv"];
 
     const ctx = makeBaseContext();
     const { container } = render(
@@ -193,7 +192,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: false,
     };
-    doc.sections["root_section"].children = ["comp_hidden"];
+    doc.sections[doc.rootSectionId].children = ["comp_hidden"];
 
     const ctx = makeBaseContext();
     const { container } = render(
@@ -229,7 +228,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: true,
     };
-    doc.sections["root_section"].children = ["comp_total", "comp_due"];
+    doc.sections[doc.rootSectionId].children = ["comp_total", "comp_due"];
 
     const ctx = makeBaseContext();
     const { container } = render(
@@ -275,7 +274,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: true,
     };
-    doc.sections["root_section"].children = ["comp_items"];
+    doc.sections[doc.rootSectionId].children = ["comp_items"];
 
     const ctx = makeBaseContext();
     const { container } = render(
@@ -313,7 +312,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: true,
     };
-    doc.sections["root_section"].children = ["comp_div", "comp_sp"];
+    doc.sections[doc.rootSectionId].children = ["comp_div", "comp_sp"];
 
     const ctx = makeBaseContext();
     const { container } = render(
@@ -345,7 +344,7 @@ describe("TemplateRender (frontend)", () => {
       style: {},
       visible: true,
     };
-    doc.sections["root_section"].children = ["comp_sig"];
+    doc.sections[doc.rootSectionId].children = ["comp_sig"];
 
     const ctx = makeBaseContext();
     const { container } = render(

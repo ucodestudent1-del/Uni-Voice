@@ -1,3 +1,4 @@
+import type { ProductServiceStatus } from "../../domain/models/product-service.js";
 import { Decimal } from "decimal.js";
 import type { ProductService, ProductServiceSnapshot, InvoiceLineItemSnapshot } from "../../domain/models/product-service.js";
 import type { CurrencyCode } from "../../domain/value-objects/currency.js";
@@ -12,10 +13,10 @@ import {
   type PagedProductServices,
   type ProductServiceDTO,
   type ProductServiceSnapshotDTO,
-} from "../schemas/product-service.js";
-import { productServiceRepository, type CatalogFilter } from "../repositories/product-service.repo.js";
-import { NotFoundError, BusinessLogicError, ConflictError } from "../domain/errors.js";
-import { query } from "../db/pool.js";
+} from "../../schemas/product-service.js";
+import { productServiceRepository, type CatalogFilter } from "../../repositories/product-service.repo.js";
+import { NotFoundError, BusinessLogicError, ConflictError } from "../../domain/errors.js";
+import { query } from "../../db/pool.js";
 
 const CURRENCY_SET = new Set<string>(SUPPORTED_CURRENCIES);
 
@@ -112,7 +113,7 @@ export class ProductServiceService {
     const filter: CatalogFilter = {
       search: params.search,
       type: params.type,
-      status: params.status === "all" ? undefined : params.status,
+      status: params.status === "all" ? undefined : (params.status as ProductServiceStatus),
       taxCategory: params.taxCategory,
       hasSku: params.hasSku,
       sortBy: params.sortBy,
@@ -238,7 +239,7 @@ export class ProductServiceService {
       isTaxInclusive?: boolean;
     }
   ): InvoiceLineItemSnapshot {
-    const unitPrice = overrides?.unitPrice ?? new Decimal(snapshot.unitPrice);
+    const unitPrice = new Decimal(overrides?.unitPrice ?? snapshot.unitPrice);
     const qty = new Decimal(quantity);
     const base = unitPrice.mul(qty);
 

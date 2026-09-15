@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { templateMigrationEngine } from "../src/services/templates/migrations.js";
 import { INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION } from "../src/domain/schemas/invoice-template.js";
+import type { InvoiceTemplateDocument } from "../src/domain/schemas/invoice-template.js";
 
 describe("TemplateMigrationEngine", () => {
   it("returns current version", () => {
@@ -27,15 +28,15 @@ describe("TemplateMigrationEngine", () => {
     const testMigration = {
       fromVersion: "1.0",
       toVersion: "1.1",
-      migrate: (doc: Record<string, unknown>) => ({
+      migrate: (doc: InvoiceTemplateDocument) => ({
         ...doc,
-        version: (Number(doc.version) || 1) + 1,
+        version: doc.version + 1,
         schemaVersion: "1.1",
         extraField: "added",
       }),
     };
 
-    templateMigrationEngine.register(testMigration);
+    templateMigrationEngine.register(testMigration as any);
 
     const path = templateMigrationEngine.getMigrationPath("1.0", "1.1");
     expect(path).toHaveLength(1);
@@ -67,7 +68,7 @@ describe("TemplateMigrationEngine", () => {
     };
 
     const result = await templateMigrationEngine.migrate(
-      doc as any,
+      doc as InvoiceTemplateDocument,
       "1.0",
       "1.1",
       "biz_1",
@@ -83,33 +84,34 @@ describe("TemplateMigrationEngine", () => {
     const m1 = {
       fromVersion: "1.0",
       toVersion: "1.1",
-      migrate: (doc: Record<string, unknown>) => ({ ...doc, step: 1 }),
+      migrate: (doc: InvoiceTemplateDocument) => ({ ...doc, step: 1 }),
     };
     const m2 = {
       fromVersion: "1.1",
       toVersion: "1.2",
-      migrate: (doc: Record<string, unknown>) => ({ ...doc, step: 2 }),
+      migrate: (doc: InvoiceTemplateDocument) => ({ ...doc, step: 2 }),
     };
 
-    templateMigrationEngine.register(m1);
-    templateMigrationEngine.register(m2);
+    templateMigrationEngine.register(m1 as any);
+    templateMigrationEngine.register(m2 as any);
 
     const path = templateMigrationEngine.getMigrationPath("1.0", "1.2");
     expect(path).toHaveLength(2);
   });
 
-  it("does not register duplicate migrations", () => {
+    it("does not register duplicate migrations", () => {
     const migration = {
-      fromVersion: "1.0",
-      toVersion: "1.3",
-      migrate: (doc: Record<string, unknown>) => doc,
+      fromVersion: "9.0",
+      toVersion: "9.1",
+      migrate: (doc: InvoiceTemplateDocument) => doc,
     };
-    templateMigrationEngine.register(migration);
-    templateMigrationEngine.register(migration);
+    templateMigrationEngine.register(migration as any);
 
     expect(() => {
-      const path = templateMigrationEngine.getMigrationPath("1.0", "1.3");
-      expect(path).toHaveLength(1);
+      templateMigrationEngine.register(migration as any);
     }).not.toThrow();
+
+    const path = templateMigrationEngine.getMigrationPath("9.0", "9.1");
+    expect(path).toHaveLength(1);
   });
 });
