@@ -14,6 +14,7 @@ import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
 import Products from "./pages/Products";
 import Templates from "./pages/Templates";
+import TemplateEditorPage from "./pages/TemplateEditorPage";
 import Plans from "./pages/Plans";
 import Settings from "./pages/Settings";
 import PublicInvoice from "./pages/PublicInvoice";
@@ -67,11 +68,16 @@ export default function App() {
           <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="products" element={<Products />} />
          <Route path="templates" element={<Templates />} />
+         <Route path="templates/new" element={<TemplateEditorPage />} />
+         <Route path="templates/:id/edit" element={<TemplateEditorPage />} />
          <Route path="expenses" element={<Expenses />} />
          <Route path="reports" element={<Reports />} />
          <Route path="plans" element={<Plans />} />
-         <Route path="settings" element={<Settings />} />
-         <Route path="security" element={<Settings defaultTab="security" />} />
+         <Route path="settings">
+           <Route index element={<Navigate to="/app/settings/business" replace />} />
+           <Route path=":section" element={<Settings />} />
+         </Route>
+         <Route path="security" element={<Navigate to="/app/settings/security" replace />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
