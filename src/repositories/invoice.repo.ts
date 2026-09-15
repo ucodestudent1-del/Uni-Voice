@@ -16,6 +16,11 @@ export interface InvoiceItemInput {
   taxRate?: string | number;
   isTaxInclusive?: boolean;
   sortOrder?: number;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
 }
 
 export interface InvoiceFeeInput {
@@ -88,12 +93,15 @@ export class InvoiceRepository {
       const it = items![i];
       await client.query(
         `INSERT INTO invoice_items (id, invoice_id, product_id, description, quantity, unit, unit_price,
-          discount, discount_type, tax_rate, tax_amount, line_subtotal, line_total, sort_order, is_tax_inclusive, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+          discount, discount_type, tax_rate, tax_amount, line_subtotal, line_total, sort_order, is_tax_inclusive,
+          catalog_name, catalog_sku, catalog_tax_category, catalog_unit_price, catalog_tax_rate, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
         [
           crypto.randomUUID(), invoiceId, it.productId, it.description, it.quantity,
           it.unit ?? "each", it.unitPrice, it.discount ?? 0, it.discountType ?? "fixed",
-          it.taxRate ?? 0, 0, 0, 0, it.sortOrder ?? i, it.isTaxInclusive ?? false, now,
+          it.taxRate ?? 0, 0, 0, 0, it.sortOrder ?? i, it.isTaxInclusive ?? false,
+          it.catalogName ?? null, it.catalogSku ?? null, it.catalogTaxCategory ?? null,
+          it.catalogUnitPrice ?? null, it.catalogTaxRate ?? null, now,
         ]
       );
     }
@@ -435,6 +443,11 @@ export class InvoiceRepository {
       discountType: r.discount_type as "fixed" | "percentage", taxRate: r.tax_rate as string,
       taxAmount: r.tax_amount as string, lineSubtotal: r.line_subtotal as string, lineTotal: r.line_total as string,
       sortOrder: Number(r.sort_order), isTaxInclusive: Boolean(r.is_tax_inclusive),
+      catalogName: r.catalog_name as string | null,
+      catalogSku: r.catalog_sku as string | null,
+      catalogTaxCategory: r.catalog_tax_category as string | null,
+      catalogUnitPrice: r.catalog_unit_price as string | null,
+      catalogTaxRate: r.catalog_tax_rate as string | null,
     };
   }
 

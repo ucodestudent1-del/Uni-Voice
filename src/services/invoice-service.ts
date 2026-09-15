@@ -10,7 +10,7 @@ import { emailService, type InvoiceEmailData } from "../services/email/email-ser
 import { invoiceRepository } from "../repositories/invoice.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
-import { productRepository } from "../repositories/product.repo.js";
+import { productServiceRepository } from "../repositories/product-service.repo.js";
 import { generatePublicInvoiceToken } from "../utils/crypto.js";
 import { BusinessLogicError } from "../domain/errors.js";
 import { invoiceValidationService } from "../services/validation/invoice-validation.js";
@@ -45,6 +45,11 @@ export interface DraftLineItem {
   taxRate?: string | number;
   isTaxInclusive?: boolean;
   sortOrder?: number;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
 }
 
 export interface DraftFee {
@@ -72,36 +77,21 @@ export interface InvoiceSummary {
 
 export class InvoiceService {
   private async buildCalculationInput(invoice: RepoInvoice): Promise<InvoiceCalculationInput> {
-    const lineItems = await Promise.all(
-      invoice.items.map(async (it) => {
-        let unitPrice = it.unitPrice;
-        let taxRate = it.taxRate;
-        let unit = it.unit;
-        if (it.productId) {
-          try {
-            const product = await productRepository.findById(invoice.businessId, it.productId);
-            unitPrice = product.defaultUnitPrice;
-            taxRate = product.defaultTaxRate;
-            unit = product.unit;
-          } catch {
-            /* product may have been deleted; use stored snapshot values */
-          }
-        }
-        const discount =
-          it.discount && !new Decimal(it.discount).isZero()
-            ? { type: it.discountType as "fixed" | "percentage", value: it.discount }
-            : undefined;
-        return {
-          description: it.description,
-          quantity: it.quantity,
-          unit,
-          unitPrice,
-          discount,
-          taxRate,
-          isTaxInclusive: it.isTaxInclusive,
-        };
-      })
-    );
+    const lineItems = invoice.items.map((it) => {
+      const discount =
+        it.discount && !new Decimal(it.discount).isZero()
+          ? { type: it.discountType as "fixed" | "percentage", value: it.discount }
+          : undefined;
+      return {
+        description: it.description,
+        quantity: it.quantity,
+        unit: it.unit,
+        unitPrice: it.unitPrice,
+        discount,
+        taxRate: it.taxRate,
+        isTaxInclusive: it.isTaxInclusive,
+      };
+    });
     return {
       currency: invoice.currency,
       lineItems,
@@ -155,17 +145,15 @@ export class InvoiceService {
     if (input.customerId) {
       await customerRepository.findById(businessId, input.customerId);
     }
-    if (input.items?.some((it) => it.productId)) {
-      for (const it of input.items.filter((it) => it.productId)) {
-        await productRepository.findById(businessId, it.productId!);
-      }
-    }
+    const items = input.items ?? undefined;
+    const itemsWithSnapshot = await this.applyProductSnapshots(businessId, items);
     if (input.issueDate && input.dueDate && input.dueDate < input.issueDate) {
       throw new BusinessLogicError("due_date must be on or after issue_date");
     }
 
     const invoiceId = await invoiceRepository.createDraft(businessId, {
       ...input,
+      items: itemsWithSnapshot,
       currency: input.currency ?? "USD",
       createdBy: userId,
     });
@@ -173,6 +161,28 @@ export class InvoiceService {
       eventType: "created", actorId: userId, actorType: userId ? "user" : "system",
     });
     return invoiceId;
+  }
+
+  private async applyProductSnapshots(businessId: string, items: DraftLineItem[] | undefined): Promise<DraftLineItem[] | undefined> {
+    if (!items) return undefined;
+    return Promise.all(
+      items.map(async (it) => {
+        if (!it.productId) return it;
+        const snapshot = await this.snapshotProduct(businessId, it.productId);
+        return { ...it, ...snapshot };
+      })
+    );
+  }
+
+  private async snapshotProduct(businessId: string, productId: string): Promise<Partial<DraftLineItem>> {
+    const product = await productServiceRepository.findById(businessId, productId);
+    return {
+      catalogName: product.name,
+      catalogSku: product.sku,
+      catalogTaxCategory: product.taxCategory,
+      catalogUnitPrice: product.unitPrice,
+      catalogTaxRate: product.defaultTaxRate,
+    };
   }
 
   async getInvoice(businessId: string, id: string): Promise<InvoiceSummary> {
@@ -209,12 +219,8 @@ export class InvoiceService {
   async setItems(businessId: string, id: string, items: DraftLineItem[], userId?: string): Promise<void> {
     const invoice = await invoiceRepository.findById(businessId, id);
     if (invoice.isFinalized) throw new BusinessLogicError("Cannot modify a finalized invoice");
-    if (items.some((it) => it.productId)) {
-      for (const it of items.filter((it) => it.productId)) {
-        await productRepository.findById(businessId, it.productId!);
-      }
-    }
-    await invoiceRepository.setItems(businessId, id, items as any);
+    const itemsWithSnapshot = await this.applyProductSnapshots(businessId, items);
+    await invoiceRepository.setItems(businessId, id, itemsWithSnapshot as any);
     await invoiceRepository.recordEvent(id, { eventType: "line_item_updated", actorId: userId });
   }
 
@@ -283,6 +289,11 @@ export class InvoiceService {
       lineSubtotal: it.lineSubtotal,
       lineTotal: it.lineTotal,
       isTaxInclusive: it.isTaxInclusive,
+      catalogName: it.catalogName,
+      catalogSku: it.catalogSku,
+      catalogTaxCategory: it.catalogTaxCategory,
+      catalogUnitPrice: it.catalogUnitPrice,
+      catalogTaxRate: it.catalogTaxRate,
     }));
   }
 

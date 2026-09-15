@@ -15,6 +15,11 @@ export interface TemplateLineItem {
   lineSubtotal: Decimal.Value;
   lineTotal: Decimal.Value;
   isTaxInclusive: boolean;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
 }
 
 export interface TemplateFee {

@@ -60,6 +60,11 @@ export interface ApiInvoiceItem {
   is_tax_inclusive: boolean;
   product_id?: string | null;
   sort_order: number;
+  catalog_name?: string | null;
+  catalog_sku?: string | null;
+  catalog_tax_category?: string | null;
+  catalog_unit_price?: string | null;
+  catalog_tax_rate?: string | null;
 }
 
 export interface ApiInvoiceFee {
@@ -104,24 +109,72 @@ export interface ApiInvoice {
   fees: ApiInvoiceFee[];
 }
 
+export interface ApiTaxIdentifier {
+  id: string;
+  customerId: string;
+  type: string;
+  value: string;
+  isDefault: boolean;
+  verified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiCustomer {
   id: string;
-  business_id: string;
+  businessId: string;
   name: string;
-  company_name?: string | null;
+  companyName?: string | null;
   email?: string | null;
   phone?: string | null;
-  tax_id?: string | null;
-  address_line_1?: string | null;
-  address_line_2?: string | null;
-  city?: string | null;
-  state_or_region?: string | null;
-  postal_code?: string | null;
-  country_code?: string | null;
-  default_currency?: string | null;
+  taxId?: string | null;
+  address: {
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    stateOrRegion?: string | null;
+    postalCode?: string | null;
+    countryCode: string;
+    taxId?: string | null;
+  };
+  countryCode?: string | null;
+  defaultCurrency?: string | null;
   notes?: string | null;
-  created_at: string;
-  updated_at: string;
+  status: "active" | "inactive" | "archived";
+  paymentTerms?: number | null;
+  taxIdentifiers?: ApiTaxIdentifier[];
+  billingAddressId?: string | null;
+  shippingAddressId?: string | null;
+  archivedAt?: string | null;
+  archivedBy?: string | null;
+  updatedBy?: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiCustomerInvoiceSummary {
+  id: string;
+  invoiceNumber: string | null;
+  status: string;
+  currency: string;
+  total: string;
+  amountPaid: string;
+  amountDue: string;
+  issueDate: string | null;
+  dueDate: string | null;
+  finalizedAt: string | null;
+  createdAt: string;
+}
+
+export interface ApiCustomerSummary {
+  customer: ApiCustomer;
+  invoices: ApiCustomerInvoiceSummary[];
+  totalInvoiceCount: number;
+  finalizedInvoiceCount: number;
+  totalBilled: string;
+  totalPaid: string;
+  totalOutstanding: string;
 }
 
 export interface ApiProduct {
@@ -169,6 +222,12 @@ export interface DraftLineItem {
   discount_type?: "fixed" | "percentage";
   tax_rate?: string;
   is_tax_inclusive?: boolean;
+  product_id?: string | null;
+  catalog_name?: string | null;
+  catalog_sku?: string | null;
+  catalog_tax_category?: string | null;
+  catalog_unit_price?: string | null;
+  catalog_tax_rate?: string | null;
 }
 
 export interface InvoiceTotals {
@@ -222,4 +281,41 @@ export interface OnboardingProgress {
   totalSteps: number;
   percentComplete: number;
   isComplete: boolean;
+}
+
+export interface InvoiceTemplateDTO {
+  id: string;
+  businessId: string;
+  name: string;
+  description?: string | null;
+  industry?: string | null;
+  schemaVersion: string;
+  revision: number;
+  version: number;
+  document: Record<string, unknown>;
+  htmlTemplate?: string | null;
+  config: Record<string, unknown>;
+  isDefault: boolean;
+  isActive: boolean;
+  lifecycle: "draft" | "published" | "archived";
+  publishedAt?: string | null;
+  archivedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+}
+
+export interface InvoiceTemplateRevisionDTO {
+  id: string;
+  templateId: string;
+  businessId: string;
+  revision: number;
+  schemaVersion: string;
+  document: Record<string, unknown>;
+  htmlTemplate?: string | null;
+  config: Record<string, unknown>;
+  changeSummary?: string | null;
+  createdAt: string;
+  createdBy?: string | null;
 }

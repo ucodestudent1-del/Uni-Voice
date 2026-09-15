@@ -10,6 +10,7 @@ import OnboardingWizard from "./pages/OnboardingWizard";
 import Invoices from "./pages/Invoices";
 import InvoiceEditorPage from "./pages/InvoiceEditorPage";
 import Customers from "./pages/Customers";
+import CustomerDetail from "./pages/CustomerDetail";
 import Products from "./pages/Products";
 import Templates from "./pages/Templates";
 import Plans from "./pages/Plans";
@@ -61,7 +62,8 @@ export default function App() {
         <Route path="invoices/new" element={<InvoiceEditorPage />} />
         <Route path="invoices/:id/edit" element={<InvoiceEditorPage />} />
         <Route path="invoices/:id" element={<InvoiceEditorPage />} />
-        <Route path="customers" element={<Customers />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="products" element={<Products />} />
          <Route path="templates" element={<Templates />} />
          <Route path="expenses" element={<Expenses />} />

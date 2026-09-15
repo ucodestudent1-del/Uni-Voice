@@ -35,6 +35,35 @@ export interface Business {
   updatedAt: Date;
 }
 
+export type CustomerStatus = "active" | "inactive" | "archived";
+
+export interface CustomerAddress {
+  id: string;
+  customerId: string;
+  label?: string | null;
+  type: "billing" | "shipping";
+  isDefault: boolean;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  stateOrRegion?: string | null;
+  postalCode?: string | null;
+  countryCode: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TaxIdentifier {
+  id: string;
+  customerId: string;
+  type: string;
+  value: string;
+  isDefault: boolean;
+  verified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Customer {
   id: string;
   businessId: string;
@@ -47,6 +76,15 @@ export interface Customer {
   countryCode?: string | null;
   defaultCurrency?: CurrencyCode | null;
   notes?: string | null;
+  status: CustomerStatus;
+  paymentTerms?: number | null;
+  taxIdentifiers?: TaxIdentifier[];
+  billingAddressId?: string | null;
+  shippingAddressId?: string | null;
+  archivedAt?: Date | null;
+  archivedBy?: string | null;
+  updatedBy?: string | null;
+  version: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -81,6 +119,11 @@ export interface InvoiceLineItem {
   lineTotal: Decimal.Value;
   sortOrder: number;
   isTaxInclusive: boolean;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
 }
 
 export interface InvoiceFee {
@@ -260,7 +303,30 @@ export interface DocumentTemplate {
   updatedBy?: string | null;
 }
 
-export interface DocumentTemplateRevision {
+export interface InvoiceTemplate {
+  id: string;
+  businessId: string;
+  name: string;
+  description?: string | null;
+  industry?: string | null;
+  schemaVersion: string;
+  revision: number;
+  version: number;
+  document: Record<string, unknown>;
+  htmlTemplate?: string | null;
+  config: Record<string, unknown>;
+  isDefault: boolean;
+  isActive: boolean;
+  lifecycle: string;
+  publishedAt?: Date | null;
+  archivedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+}
+
+export interface InvoiceTemplateRevision {
   id: string;
   templateId: string;
   businessId: string;
@@ -274,11 +340,16 @@ export interface DocumentTemplateRevision {
   createdBy?: string | null;
 }
 
-export interface DocumentTemplateWithCurrentRevision
-  extends DocumentTemplate {
-  currentRevision: number;
+export interface InvoiceTemplateWithRevisions extends InvoiceTemplate {
+  revisions: InvoiceTemplateRevision[];
 }
 
-export interface DocumentTemplateWithRevisions extends DocumentTemplate {
-  revisions: DocumentTemplateRevision[];
-}
+export {
+  type ProductService,
+  type ProductServiceType,
+  type ProductServiceStatus,
+  type ProductServiceSnapshot,
+  type InvoiceLineItemSnapshot,
+  PRODUCT_SERVICE_STATUSES,
+  PRODUCT_SERVICE_TYPES,
+} from "./product-service.js";

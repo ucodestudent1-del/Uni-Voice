@@ -1,0 +1,115 @@
+import { describe, it, expect } from "vitest";
+import { templateMigrationEngine } from "../src/services/templates/migrations.js";
+import { INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION } from "../src/domain/schemas/invoice-template.js";
+
+describe("TemplateMigrationEngine", () => {
+  it("returns current version", () => {
+    expect(templateMigrationEngine.currentVersion()).toBe(INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION);
+  });
+
+  it("returns supported versions", () => {
+    const versions = templateMigrationEngine.listVersions();
+    expect(versions).toContain("1.0");
+  });
+
+  it("returns empty migration path for same version", () => {
+    const path = templateMigrationEngine.getMigrationPath("1.0", "1.0");
+    expect(path).toHaveLength(0);
+  });
+
+  it("throws when no migration path exists", () => {
+    expect(() => templateMigrationEngine.getMigrationPath("1.0", "2.0")).toThrow(
+      "Cannot migrate template from 1.0 to 2.0"
+    );
+  });
+
+  it("registers and uses migrations", async () => {
+    const testMigration = {
+      fromVersion: "1.0",
+      toVersion: "1.1",
+      migrate: (doc: Record<string, unknown>) => ({
+        ...doc,
+        version: (Number(doc.version) || 1) + 1,
+        schemaVersion: "1.1",
+        extraField: "added",
+      }),
+    };
+
+    templateMigrationEngine.register(testMigration);
+
+    const path = templateMigrationEngine.getMigrationPath("1.0", "1.1");
+    expect(path).toHaveLength(1);
+    expect(path[0].fromVersion).toBe("1.0");
+    expect(path[0].toVersion).toBe("1.1");
+
+    const doc = {
+      id: "test",
+      version: 1,
+      name: "Test",
+      businessId: "biz_1",
+      createdAt: "2024-01-01",
+      updatedAt: "2024-01-01",
+      sections: {},
+      rows: {},
+      columns: {},
+      components: {},
+      rootSectionId: "root",
+      settings: {
+        pageSize: "A4",
+        orientation: "portrait",
+        margins: { top: 0, right: 0, bottom: 0, left: 0 },
+        defaultFont: "test",
+        defaultFontSize: 12,
+        defaultColor: "#000",
+        currency: "USD",
+        locale: "en-US",
+      },
+    };
+
+    const result = await templateMigrationEngine.migrate(
+      doc as any,
+      "1.0",
+      "1.1",
+      "biz_1",
+      "template_1"
+    );
+
+    expect(result.migrations).toHaveLength(1);
+    expect(result.document.schemaVersion).toBe("1.1");
+    expect(result.document.version).toBe(2);
+  });
+
+  it("handles chained migrations", async () => {
+    const m1 = {
+      fromVersion: "1.0",
+      toVersion: "1.1",
+      migrate: (doc: Record<string, unknown>) => ({ ...doc, step: 1 }),
+    };
+    const m2 = {
+      fromVersion: "1.1",
+      toVersion: "1.2",
+      migrate: (doc: Record<string, unknown>) => ({ ...doc, step: 2 }),
+    };
+
+    templateMigrationEngine.register(m1);
+    templateMigrationEngine.register(m2);
+
+    const path = templateMigrationEngine.getMigrationPath("1.0", "1.2");
+    expect(path).toHaveLength(2);
+  });
+
+  it("does not register duplicate migrations", () => {
+    const migration = {
+      fromVersion: "1.0",
+      toVersion: "1.3",
+      migrate: (doc: Record<string, unknown>) => doc,
+    };
+    templateMigrationEngine.register(migration);
+    templateMigrationEngine.register(migration);
+
+    expect(() => {
+      const path = templateMigrationEngine.getMigrationPath("1.0", "1.3");
+      expect(path).toHaveLength(1);
+    }).not.toThrow();
+  });
+});

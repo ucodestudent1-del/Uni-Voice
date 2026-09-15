@@ -167,7 +167,17 @@ export async function getInvoicePdf(id: string) {
   return res.data;
 }
 
-export async function getCustomers(params?: { limit?: number; offset?: number }) {
+export interface CustomerSearchParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: string;
+  includeArchived?: boolean;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export async function getCustomers(params?: CustomerSearchParams) {
   const res = await api.get("/customers", { params });
   return res.data;
 }
@@ -182,9 +192,51 @@ export async function updateCustomer(id: string, data: any) {
   return res.data;
 }
 
+export async function archiveCustomer(id: string) {
+  const res = await api.post(`/customers/${id}/archive`);
+  return res.data;
+}
+
+export async function restoreCustomer(id: string) {
+  const res = await api.post(`/customers/${id}/restore`);
+  return res.data;
+}
+
 export async function deleteCustomer(id: string) {
   const res = await api.delete(`/customers/${id}`);
   return res.data;
+}
+
+export async function getCustomer(id: string) {
+  const res = await api.get(`/customers/${id}`);
+  return res.data;
+}
+
+export async function getCustomerInvoices(customerId: string, params?: { limit?: number; offset?: number; status?: string }) {
+  const res = await api.get(`/customers/${customerId}/invoices`, { params });
+  return res.data;
+}
+
+export async function getCustomerSummary(customerId: string) {
+  const res = await api.get(`/customers/${customerId}/summary`);
+  return res.data;
+}
+
+export async function getCustomerEvents(customerId: string, params?: { limit?: number }) {
+  const res = await api.get(`/customers/${customerId}/events`, { params });
+  return res.data;
+}
+
+export function buildCustomerSearchParams(params: CustomerSearchParams): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (params.limit !== undefined) result.limit = params.limit;
+  if (params.offset !== undefined) result.offset = params.offset;
+  if (params.search !== undefined) result.search = params.search;
+  if (params.status !== undefined) result.status = params.status;
+  if (params.includeArchived !== undefined) result.includeArchived = params.includeArchived;
+  if (params.sortBy !== undefined) result.sortBy = params.sortBy;
+  if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
+  return result;
 }
 
 export async function getProducts(params?: { limit?: number; offset?: number }) {
@@ -389,5 +441,113 @@ export async function skipOnboardingStep(step: string) {
 
 export async function finishOnboarding() {
   const res = await api.post("/onboarding/complete");
+  return res.data;
+}
+
+export interface InvoiceTemplateListParams {
+  limit?: number;
+  offset?: number;
+  industry?: string;
+  isDefault?: boolean;
+  lifecycle?: string;
+}
+
+export async function getInvoiceTemplates(params?: InvoiceTemplateListParams) {
+  const res = await api.get("/invoice-templates", { params });
+  return res.data;
+}
+
+export async function getInvoiceTemplate(id: string) {
+  const res = await api.get(`/invoice-templates/${id}`);
+  return res.data;
+}
+
+export async function createInvoiceTemplate(data: any) {
+  const res = await api.post("/invoice-templates", data);
+  return res.data;
+}
+
+export async function updateInvoiceTemplate(id: string, data: any) {
+  const res = await api.patch(`/invoice-templates/${id}`, data);
+  return res.data;
+}
+
+export async function deleteInvoiceTemplate(id: string) {
+  const res = await api.delete(`/invoice-templates/${id}`);
+  return res.data;
+}
+
+export async function duplicateInvoiceTemplate(id: string) {
+  const res = await api.post(`/invoice-templates/${id}/duplicate`);
+  return res.data;
+}
+
+export async function setDefaultInvoiceTemplate(id: string) {
+  const res = await api.post(`/invoice-templates/${id}/set-default`);
+  return res.data;
+}
+
+export async function publishInvoiceTemplate(id: string, data?: { changeSummary?: string }) {
+  const res = await api.post(`/invoice-templates/${id}/publish`, data ?? {});
+  return res.data;
+}
+
+export async function archiveInvoiceTemplate(id: string) {
+  const res = await api.post(`/invoice-templates/${id}/archive`);
+  return res.data;
+}
+
+export async function unarchiveInvoiceTemplate(id: string) {
+  const res = await api.post(`/invoice-templates/${id}/unarchive`);
+  return res.data;
+}
+
+export async function getInvoiceTemplateRevisions(id: string) {
+  const res = await api.get(`/invoice-templates/${id}/revisions`);
+  return res.data;
+}
+
+export async function getInvoiceTemplateRevision(id: string, revision: number) {
+  const res = await api.get(`/invoice-templates/${id}/revisions/${revision}`);
+  return res.data;
+}
+
+export async function restoreInvoiceTemplateRevision(id: string, revision: number) {
+  const res = await api.post(`/invoice-templates/${id}/revisions/${revision}/restore`);
+  return res.data;
+}
+
+export async function getInvoiceTemplateWithRevisions(id: string) {
+  const res = await api.get(`/invoice-templates/${id}/with-revisions`);
+  return res.data;
+}
+
+export async function migrateInvoiceTemplate(id: string, targetVersion?: string) {
+  const res = await api.post(`/invoice-templates/${id}/migrate`, targetVersion ? { targetVersion } : {});
+  return res.data;
+}
+
+export async function renderInvoiceTemplateHtml(id: string, data: any) {
+  const res = await api.post(`/invoice-templates/${id}/render`, data);
+  return res.data;
+}
+
+export async function getInvoiceTemplateUsage(id: string) {
+  const res = await api.get(`/invoice-templates/${id}/usage`);
+  return res.data;
+}
+
+export async function setInvoiceTemplatePermission(templateId: string, userId: string, permission: string) {
+  const res = await api.post(`/invoice-templates/${templateId}/permissions`, { userId, permission });
+  return res.data;
+}
+
+export async function getInvoiceTemplatePermissions(templateId: string) {
+  const res = await api.get(`/invoice-templates/${templateId}/permissions`);
+  return res.data;
+}
+
+export async function recordInvoiceTemplateUsage(templateId: string, invoiceId?: string) {
+  const res = await api.post(`/invoice-templates/${templateId}/usage`, invoiceId ? { invoiceId } : {});
   return res.data;
 }

@@ -117,9 +117,9 @@ export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, cu
 
   insert("customerInfo", {
     showName: true,
-    showCompany: !!customer?.company_name,
+    showCompany: !!customer?.companyName,
     showEmail: !!customer?.email,
-    showAddress: !!(customer?.address_line_1 || customer?.address_line_2),
+    showAddress: !!(customer?.address?.addressLine1 || customer?.address?.addressLine2),
     showPhone: !!customer?.phone,
     label: "Bill To",
   });

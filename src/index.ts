@@ -12,10 +12,13 @@ import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { customerService } from "./services/customer-service.js";
 import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
 import { customerRepository } from "./repositories/customer.repo.js";
 import { productRepository } from "./repositories/product.repo.js";
+import { productServiceRepository } from "./repositories/product-service.repo.js";
+import { productServiceService } from "./services/product-service/product-service.js";
 import { invoiceRepository } from "./repositories/invoice.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { documentTemplateRepository } from "./repositories/document-template.repo.js";
@@ -28,6 +31,26 @@ import {
   DocumentTemplateInputSchema,
   DocumentTemplateUpdateSchema,
 } from "./domain/schemas/document-template.js";
+import {
+  CustomerCreateSchema,
+  CustomerUpdateSchema,
+  CustomerSearchQuerySchema,
+  CustomerSchema,
+} from "./domain/schemas/customer.js";
+import {
+  CreateProductServiceSchema,
+  UpdateProductServiceSchema,
+  CatalogSearchSchema,
+  CatalogSelectionSchema,
+  BulkCatalogSchema,
+} from "./schemas/product-service.js";
+import {
+  InvoiceTemplateCreateRequestSchema,
+  InvoiceTemplateUpdateRequestSchema,
+  InvoiceTemplatePublishRequestSchema,
+  InvoiceTemplateListParamsSchema,
+} from "./schemas/invoice-template-dto.js";
+import { invoiceTemplateService } from "./services/templates/invoice-template-service.js";
 import bcrypt from "bcrypt";
 
 const app = express();
@@ -444,36 +467,71 @@ app.patch("/api/businesses/current", requireAuth, async (req: AuthRequest, res) 
 // ============================================================================
 app.get("/api/customers", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const limit = Math.min(Number(req.query.limit ?? 50), 200);
-  const offset = Number(req.query.offset ?? 0);
-  const customers = await customerRepository.findMany(req.user!.businessId, limit, offset);
-  res.json({ customers, limit, offset });
+  const parsed = CustomerSearchQuerySchema.parse(req.query);
+  const result = await customerService.search(req.user!.businessId, parsed);
+  res.json(result);
 });
 
 app.post("/api/customers", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await requireUsageLimit("customers.unlimited", true)(req as any, res, async () => {
-    const customer = await customerRepository.create(req.user!.businessId!, req.body);
+    const parsed = CustomerCreateSchema.parse(req.body);
+    const customer = await customerService.create(parsed, req.user!.businessId!, req.user!.id);
     res.status(201).json({ customer });
   });
 });
 
 app.get("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const customer = await customerRepository.findById(req.user!.businessId, req.params.id);
+  const customer = await customerService.getById(req.user!.businessId, req.params.id);
   res.json({ customer });
 });
 
 app.patch("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const customer = await customerRepository.update(req.user!.businessId, req.params.id, req.body);
+  const parsed = CustomerUpdateSchema.parse(req.body);
+  const customer = await customerService.update(req.user!.businessId, req.params.id, parsed, req.user!.id);
   res.json({ customer });
 });
 
 app.delete("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await customerRepository.delete(req.user!.businessId, req.params.id);
-  res.status(204).send();
+  await customerService.archive(req.user!.businessId, req.params.id, req.user!.id);
+  res.json({ archived: true });
+});
+
+app.post("/api/customers/:id/archive", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const customer = await customerService.archive(req.user!.businessId, req.params.id, req.user!.id);
+  res.json({ customer });
+});
+
+app.post("/api/customers/:id/restore", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const customer = await customerService.restore(req.user!.businessId, req.params.id, req.user!.id);
+  res.json({ customer });
+});
+
+app.get("/api/customers/:id/invoices", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Number(req.query.limit ?? 50), 200);
+  const offset = Number(req.query.offset ?? 0);
+  const status = req.query.status as string | undefined;
+  const result = await customerService.getInvoiceHistory(req.user!.businessId, req.params.id, { limit, offset, status });
+  res.json(result);
+});
+
+app.get("/api/customers/:id/summary", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const summary = await customerService.getSummary(req.user!.businessId, req.params.id);
+  res.json({ summary });
+});
+
+app.get("/api/customers/:id/events", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Number(req.query.limit ?? 50), 200);
+  const events = await customerService.getEvents(req.user!.businessId, req.params.id, limit);
+  res.json({ events });
 });
 
 // ============================================================================
@@ -509,6 +567,94 @@ app.delete("/api/products/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await productRepository.delete(req.user!.businessId, req.params.id);
   res.status(204).send();
+});
+
+// ============================================================================
+// CATALOG (Product/Service domain)
+// ============================================================================
+app.get("/api/catalog", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const params = CatalogSearchSchema.parse({
+    search: req.query.search,
+    type: req.query.type,
+    status: req.query.status,
+    taxCategory: req.query.taxCategory,
+    hasSku: req.query.hasSku,
+    sortBy: req.query.sortBy,
+    sortOrder: req.query.sortOrder,
+    limit: req.query.limit,
+    offset: req.query.offset,
+  });
+  const result = await productServiceService.search(req.user!.businessId, params);
+  res.json(result);
+});
+
+app.post("/api/catalog", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = CreateProductServiceSchema.parse(req.body);
+  const item = await productServiceService.create(req.user!.businessId, parsed, req.user.id);
+  res.status(201).json({ item });
+});
+
+app.get("/api/catalog/selection", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const params = CatalogSelectionSchema.parse({
+    search: req.query.search,
+    type: req.query.type,
+    onlyActive: req.query.onlyActive,
+    limit: req.query.limit,
+    offset: req.query.offset,
+  });
+  const items = await productServiceService.getForSelection(req.user!.businessId, params);
+  res.json({ items });
+});
+
+app.post("/api/catalog/bulk", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = BulkCatalogSchema.parse(req.body);
+  const result = await productServiceService.bulk(
+    req.user!.businessId,
+    parsed.items,
+    parsed.conflictStrategy
+  );
+  res.json(result);
+});
+
+app.get("/api/catalog/stats", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const counts = await productServiceService.countByStatus(req.user!.businessId);
+  res.json({ counts });
+});
+
+app.get("/api/catalog/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const item = await productServiceService.getById(req.user!.businessId, req.params.id);
+  res.json({ item });
+});
+
+app.patch("/api/catalog/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = UpdateProductServiceSchema.parse(req.body);
+  const item = await productServiceService.update(req.user!.businessId, req.params.id, parsed, req.body.version ?? undefined);
+  res.json({ item });
+});
+
+app.post("/api/catalog/:id/archive", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const item = await productServiceService.archive(req.user!.businessId, req.params.id);
+  res.json({ item });
+});
+
+app.post("/api/catalog/:id/restore", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const item = await productServiceService.restore(req.user!.businessId, req.params.id);
+  res.json({ item });
+});
+
+app.get("/api/catalog/sku/:sku/check", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const existing = await productServiceRepository.findBySku(req.user!.businessId, req.params.sku);
+  res.json({ available: !existing, exists: !!existing });
 });
 
 // ============================================================================
@@ -602,6 +748,11 @@ app.post("/api/invoices/:id/duplicate", requireAuth, requireEntitlement("invoice
       discountType: it.discountType,
       taxRate: Number(it.taxRate),
       isTaxInclusive: it.isTaxInclusive,
+      catalogName: it.catalogName,
+      catalogSku: it.catalogSku,
+      catalogTaxCategory: it.catalogTaxCategory,
+      catalogUnitPrice: it.catalogUnitPrice,
+      catalogTaxRate: it.catalogTaxRate,
     })),
     fees: original.fees.map((f) => ({
       description: f.description,
@@ -845,6 +996,193 @@ app.post("/api/document-templates/:id/set-default", requireAuth, async (req: Aut
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const template = await documentTemplateRepository.setDefault(req.user!.businessId, req.params.id);
   res.json({ template });
+});
+
+// ============================================================================
+// INVOICE TEMPLATES (canonical lifecycle + versioning)
+// ============================================================================
+app.get("/api/invoice-templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = InvoiceTemplateListParamsSchema.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+  const templates = await invoiceTemplateService.listTemplates(req.user!.businessId, {
+    industry: parsed.data.industry ?? null,
+    isDefault: parsed.data.isDefault,
+    lifecycle: parsed.data.lifecycle,
+    limit: parsed.data.limit,
+    offset: parsed.data.offset,
+  });
+  res.json({ templates, limit: parsed.data.limit, offset: parsed.data.offset });
+});
+
+app.post("/api/invoice-templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = InvoiceTemplateCreateRequestSchema.parse(req.body);
+  const template = await invoiceTemplateService.create(req.user!.businessId, parsed, req.user!.id);
+  res.status(201).json({ template });
+});
+
+app.get("/api/invoice-templates/default", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const industry = req.query.industry ? String(req.query.industry) : undefined;
+  const template = await invoiceTemplateService.getDefaultTemplate(req.user!.businessId, industry);
+  res.json({ template });
+});
+
+app.get("/api/invoice-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await invoiceTemplateService.getTemplate(req.user!.businessId, req.params.id);
+  res.json({ template });
+});
+
+app.patch("/api/invoice-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = InvoiceTemplateUpdateRequestSchema.parse(req.body);
+  const template = await invoiceTemplateService.updateTemplate(
+    req.user!.businessId,
+    req.params.id,
+    parsed,
+    req.user!.id
+  );
+  res.json({ template });
+});
+
+app.delete("/api/invoice-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await invoiceTemplateService.deleteTemplate(req.user!.businessId, req.params.id);
+  res.status(204).send();
+});
+
+app.post("/api/invoice-templates/:id/duplicate", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await invoiceTemplateService.duplicateTemplate(
+    req.user!.businessId,
+    req.params.id,
+    req.user!.id
+  );
+  res.status(201).json({ template });
+});
+
+app.post("/api/invoice-templates/:id/set-default", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await invoiceTemplateService.setDefault(req.user!.businessId, req.params.id);
+  res.json({ template });
+});
+
+app.post("/api/invoice-templates/:id/publish", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = InvoiceTemplatePublishRequestSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+  const template = await invoiceTemplateService.publish(
+    req.user!.businessId,
+    req.params.id,
+    parsed.data.changeSummary ? { changeSummary: parsed.data.changeSummary } : undefined,
+    req.user!.id
+  );
+  res.json({ template });
+});
+
+app.post("/api/invoice-templates/:id/archive", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await invoiceTemplateService.archive(req.user!.businessId, req.params.id, req.user!.id);
+  res.json({ template });
+});
+
+app.post("/api/invoice-templates/:id/unarchive", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await invoiceTemplateService.unarchive(req.user!.businessId, req.params.id, req.user!.id);
+  res.json({ template });
+});
+
+app.get("/api/invoice-templates/:id/revisions", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const revisions = await invoiceTemplateService.getRevisions(req.user!.businessId, req.params.id);
+  res.json({ revisions });
+});
+
+app.get("/api/invoice-templates/:id/revisions/:revision", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const revision = Number(req.params.revision);
+  if (!Number.isInteger(revision) || revision < 1) {
+    return res.status(400).json({ error: "Invalid revision number" });
+  }
+  const rev = await invoiceTemplateService.getRevision(req.user!.businessId, req.params.id, revision);
+  res.json({ revision: rev });
+});
+
+app.post("/api/invoice-templates/:id/revisions/:revision/restore", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const revision = Number(req.params.revision);
+  if (!Number.isInteger(revision) || revision < 1) {
+    return res.status(400).json({ error: "Invalid revision number" });
+  }
+  const template = await invoiceTemplateService.restoreRevision(
+    req.user!.businessId,
+    req.params.id,
+    revision,
+    req.user!.id
+  );
+  res.json({ template });
+});
+
+app.get("/api/invoice-templates/:id/with-revisions", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const template = await invoiceTemplateService.getWithRevisions(req.user!.businessId, req.params.id);
+  res.json({ template });
+});
+
+app.post("/api/invoice-templates/:id/migrate", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const targetVersion = req.body.targetVersion as string | undefined;
+  const result = await invoiceTemplateService.migrateSchema(
+    req.user!.businessId,
+    req.params.id,
+    targetVersion
+  );
+  res.json({ template: result.template, migrated: result.migrated });
+});
+
+app.post("/api/invoice-templates/:id/render", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const html = await invoiceTemplateService.renderToHtml(
+    req.user!.businessId,
+    req.params.id,
+    req.body
+  );
+  res.json({ html });
+});
+
+app.get("/api/invoice-templates/:id/usage", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const count = await invoiceTemplateService.getUsageCount(req.user!.businessId, req.params.id);
+  res.json({ templateId: req.params.id, usageCount: count });
+});
+
+app.post("/api/invoice-templates/:id/permissions", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await invoiceTemplateService.setPermission(
+    req.user!.businessId,
+    req.params.id,
+    req.body.userId,
+    req.body.permission
+  );
+  res.status(201).json({ ok: true });
+});
+
+app.get("/api/invoice-templates/:id/permissions", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const permissions = await invoiceTemplateService.getPermissions(req.user!.businessId, req.params.id);
+  res.json({ permissions });
+});
+
+app.post("/api/invoice-templates/:id/usage", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await invoiceTemplateService.recordUsage(
+    req.user!.businessId,
+    req.params.id,
+    req.body.invoiceId ?? null
+  );
+  res.status(201).json({ ok: true });
 });
 
 // ============================================================================

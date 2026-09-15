@@ -86,10 +86,41 @@ export async function createTestCustomer(businessId: string, name = "Test Custom
   const id = "22222222-2222-2222-2222-222222222222";
   const now = new Date().toISOString();
   await query(
-    `INSERT INTO customers (id, business_id, name, email, country_code, default_currency, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
-     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`,
-    [id, businessId, name, "customer@example.com", "US", "USD", now]
+    `INSERT INTO customers (id, business_id, name, email, country_code, default_currency, status, version, search_name, search_email, search_company, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, 'active', 1, $7, $8, $9, $10, $10)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = 'active'`,
+    [id, businessId, name, "customer@example.com", "US", "USD", name.toLowerCase(), "customer@example.com", null, now]
+  );
+  return id;
+}
+
+export async function createTestCustomerById(
+  businessId: string,
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    email: string;
+    countryCode: string;
+    defaultCurrency: string;
+    status: string;
+    taxId: string;
+    companyName: string;
+  }>
+): Promise<string> {
+  const id = overrides?.id ?? "22222222-2222-2222-2222-222222222222";
+  const name = overrides?.name ?? "Test Customer";
+  const email = overrides?.email ?? `${id}@example.com`;
+  const countryCode = overrides?.countryCode ?? "US";
+  const defaultCurrency = overrides?.defaultCurrency ?? "USD";
+  const status = overrides?.status ?? "active";
+  const taxId = overrides?.taxId;
+  const companyName = overrides?.companyName;
+  const now = new Date().toISOString();
+  await query(
+    `INSERT INTO customers (id, business_id, name, email, country_code, default_currency, status, tax_id, company_name, version, search_name, search_email, search_company, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1, $10, $11, $12, $13, $13)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status`,
+    [id, businessId, name, email, countryCode, defaultCurrency, status, taxId ?? null, companyName ?? null, name.toLowerCase(), email.toLowerCase(), companyName?.toLowerCase() ?? null, now]
   );
   return id;
 }

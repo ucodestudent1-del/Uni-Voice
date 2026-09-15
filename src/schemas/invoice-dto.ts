@@ -13,6 +13,11 @@ export const DraftLineItemSchema = z.object({
   taxRate: z.union([z.string(), z.number()]).optional().transform((v) => (v == null ? new Decimal(0) : new Decimal(v))),
   isTaxInclusive: z.boolean().optional(),
   sortOrder: z.number().optional(),
+  catalogName: z.string().nullable().optional(),
+  catalogSku: z.string().nullable().optional(),
+  catalogTaxCategory: z.string().nullable().optional(),
+  catalogUnitPrice: z.string().nullable().optional(),
+  catalogTaxRate: z.string().nullable().optional(),
 });
 
 export const DraftFeeSchema = z.object({
