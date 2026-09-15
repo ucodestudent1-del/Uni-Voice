@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCustomers,
@@ -13,19 +13,21 @@ import UpgradePrompt from "../components/UpgradePrompt";
 import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import CustomerImport from "../components/CustomerImport";
-import { formatCurrency } from "../utils/format";
-import { formatDate } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
+import { getCustomerPrimaryContact, customerHasBalance } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Customers" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
+  { value: "overdue", label: "Overdue (Has Balance)" },
   { value: "archived", label: "Archived" },
 ];
 
 const SORT_OPTIONS = [
   { value: "name", label: "Name" },
+  { value: "total_outstanding", label: "Outstanding" },
   { value: "created_at", label: "Created Date" },
   { value: "updated_at", label: "Updated Date" },
   { value: "email", label: "Email" },
@@ -55,7 +57,7 @@ export default function Customers() {
     limit,
     offset,
     search: search || undefined,
-    status: statusFilter === "all" ? undefined : (statusFilter as any),
+    status: statusFilter === "all" || statusFilter === "overdue" ? undefined : (statusFilter as any),
     includeArchived: statusFilter === "archived" || includeArchived ? true : undefined,
     sortBy,
     sortOrder,
@@ -120,10 +122,6 @@ export default function Customers() {
     setShowForm(true);
   }
 
-  function handleView(customer: ApiCustomer) {
-    navigate(`/app/customers/${customer.id}`);
-  }
-
   async function handleCreateInvoice(customer: ApiCustomer) {
     setCreatingInvoiceFor(customer.id);
     try {
@@ -158,11 +156,15 @@ export default function Customers() {
     loadCustomers(currentParams);
   }
 
-  const totalOutstanding = customers.reduce((sum, c) => sum + Number(c.totalOutstanding || 0), 0);
+  const totalOutstanding = customers.reduce(
+    (sum, c) => sum + Number(c.totalOutstanding || 0),
+    0
+  );
 
-  if (loading && customers.length === 0) {
-    return <div className="text-center py-20 text-slate-500">Loading customers...</div>;
-  }
+  const effectiveRows =
+    statusFilter === "overdue"
+      ? customers.filter((c) => customerHasBalance(c))
+      : customers;
 
   return (
     <div className="space-y-6">
@@ -170,7 +172,13 @@ export default function Customers() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Customers</h1>
           <p className="text-sm text-slate-600 mt-1">
-            {total} customers • <span className="text-slate-900">{formatCurrency(totalOutstanding.toString(), "USD")}</span> total outstanding
+            {total} customers •{" "}
+            <span className="text-slate-900 font-medium">
+              {totalOutstanding > 0
+                ? formatCurrency(totalOutstanding.toString(), "USD")
+                : formatCurrency(0, "USD")}
+            </span>{" "}
+            total outstanding
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -185,7 +193,7 @@ export default function Customers() {
           <FeatureGate feature="customers.create" requiredPlan="free" fallback={null}>
             <button
               onClick={() => { setShowForm(true); setEditingCustomer(null); }}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
               + Add Customer
             </button>
@@ -195,10 +203,10 @@ export default function Customers() {
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div>
+          <div className="md:col-span-2">
             <input
               type="text"
-              placeholder="Search customers..."
+              placeholder="Search customers by name, email, or company..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -226,26 +234,26 @@ export default function Customers() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={includeArchived}
+                  onChange={(e) => setIncludeArchived(e.target.checked)}
+                  className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                />
+                Show archived
+              </label>
+            </div>
             <select
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as any)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>
             </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={includeArchived}
-                onChange={(e) => setIncludeArchived(e.target.checked)}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-              />
-              Show archived
-            </label>
           </div>
         </div>
       </div>
@@ -271,7 +279,9 @@ export default function Customers() {
         />
       )}
 
-      {customers.length === 0 ? (
+      {loading && customers.length === 0 ? (
+        <div className="text-center py-20 text-slate-500">Loading customers...</div>
+      ) : effectiveRows.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
           <p className="mt-4 text-slate-500">
             {search || statusFilter !== "all" ? "No matching customers found" : "No customers yet"}
@@ -295,76 +305,108 @@ export default function Customers() {
                   <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Outstanding</th>
                   <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Last Invoice</th>
                   <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Status</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
+                  <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {customers.map((c) => (
-                  <tr key={c.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
-                    <td className="py-3 px-4">
-                      <p className="text-sm font-medium text-slate-900">{c.name}</p>
-                      {c.companyName && <p className="text-xs text-slate-500">{c.companyName}</p>}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
-                      {c.email && <p>{c.email}</p>}
-                      {c.phone && <p>{c.phone}</p>}
-                      {!c.email && !c.phone && <span className="text-slate-400">—</span>}
-                    </td>
-                    <td className="py-3 px-4 text-center text-sm text-slate-900">{c.invoiceCount ?? 0}</td>
-                    <td className="py-3 px-4 text-right">
-                      {Number(c.totalOutstanding || 0) > 0
-                        ? formatCurrency(c.totalOutstanding || "0", c.defaultCurrency || "USD")
-                        : <span className="text-slate-400">—</span>}
-                    </td>
-                    <td className="py-3 px-4 text-right text-sm text-slate-600">
-                      {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-slate-400">—</span>}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <CustomerStatusBadge status={c.status} />
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleView(c)}
-                          className="text-xs text-slate-600 hover:text-slate-900"
-                          title="View"
+                {effectiveRows.map((c) => {
+                  const hasBalance = customerHasBalance(c);
+                  return (
+                    <tr
+                      key={c.id}
+                      className={`border-b border-slate-100 last:border-b-0 hover:bg-slate-50 ${
+                        hasBalance ? "border-l-2 border-l-red-400 bg-red-50/20" : ""
+                      }`}
+                    >
+                      <td className="py-3 px-4">
+                        <Link
+                          to={`/app/customers/${c.id}`}
+                          className="text-sm font-medium text-slate-900 hover:text-primary-600"
                         >
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleEdit(c)}
-                          className="text-xs text-slate-600 hover:text-slate-900"
-                          title="Edit"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleCreateInvoice(c)}
-                          disabled={creatingInvoiceFor === c.id}
-                          className="text-xs text-primary-600 hover:text-primary-700"
-                          title="Create Invoice"
-                        >
-                          {creatingInvoiceFor === c.id ? "..." : "Invoice"}
-                        </button>
-                        {c.status === "archived" ? (
-                          <button
-                            onClick={() => handleRestore(c)}
-                            className="text-xs text-primary-600 hover:text-primary-700"
-                            title="Restore"
-                          >
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleArchive(c)}
-                            className="text-xs text-red-500 hover:text-red-700"
-                            title="Archive"
-                          >
-                          </button>
+                          {c.name}
+                        </Link>
+                        {c.companyName && (
+                          <p className="text-xs text-slate-500">{c.companyName}</p>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        {!c.companyName && c.mostRecentInvoiceDate && (
+                          <p className="text-xs text-slate-400">
+                            Last activity: {formatDate(c.mostRecentInvoiceDate)}
+                          </p>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-slate-600">
+                        {getCustomerPrimaryContact(c) ? (
+                          <span className="break-all">{getCustomerPrimaryContact(c)}</span>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center text-sm text-slate-900">
+                        {c.invoiceCount ?? 0}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {hasBalance ? (
+                          <span className="text-sm font-medium text-red-600">
+                            {formatCurrency(c.totalOutstanding || "0", c.defaultCurrency || "USD")}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-slate-400">— paid</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right text-sm text-slate-600">
+                        {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-slate-400">—</span>}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <CustomerStatusBadge status={c.status} />
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => navigate(`/app/customers/${c.id}`)}
+                            className="text-xs text-slate-600 hover:text-slate-900"
+                            title="View customer"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleEdit(c)}
+                            className="text-xs text-slate-600 hover:text-slate-900"
+                            title="Edit customer"
+                          >
+                            Edit
+                          </button>
+                          <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
+                            <button
+                              onClick={() => handleCreateInvoice(c)}
+                              disabled={creatingInvoiceFor === c.id}
+                              className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                              title="Create invoice for this customer"
+                            >
+                              {creatingInvoiceFor === c.id ? "..." : "Invoice"}
+                            </button>
+                          </FeatureGate>
+                          {c.status === "archived" ? (
+                            <button
+                              onClick={() => handleRestore(c)}
+                              className="text-xs text-primary-600 hover:text-primary-700"
+                              title="Restore customer"
+                            >
+                              Restore
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleArchive(c)}
+                              className="text-xs text-slate-600 hover:text-red-600"
+                              title="Archive customer"
+                            >
+                              Archive
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
