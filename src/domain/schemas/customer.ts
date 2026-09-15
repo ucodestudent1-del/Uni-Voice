@@ -112,12 +112,19 @@ export const CustomerSearchQuerySchema = z.object({
   sortBy: CustomerSortFieldSchema.default("name"),
   sortOrder: CustomerSortOrderSchema.default("asc"),
   includeArchived: z.boolean().optional(),
+  enrich: z.coerce.boolean().optional(),
 });
 
 export type CustomerSearchQuery = z.infer<typeof CustomerSearchQuerySchema>;
 
 export const CustomerListItemSchema = CustomerSchema.extend({
   invoiceCount: z.number().int().nonnegative().optional(),
+  totalOutstanding: z.string().optional(),
+  mostRecentInvoiceDate: z.string().nullable().optional(),
 });
 
 export type CustomerListItem = z.infer<typeof CustomerListItemSchema>;
+
+export const CustomerImportSchema = z.object({
+  csv: z.string().min(1, "CSV data is required"),
+});

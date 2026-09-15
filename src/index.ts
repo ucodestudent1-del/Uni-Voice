@@ -35,6 +35,7 @@ import {
   CustomerCreateSchema,
   CustomerUpdateSchema,
   CustomerSearchQuerySchema,
+  CustomerImportSchema,
   CustomerSchema,
 } from "./domain/schemas/customer.js";
 import {
@@ -468,7 +469,18 @@ app.patch("/api/businesses/current", requireAuth, async (req: AuthRequest, res) 
 app.get("/api/customers", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const parsed = CustomerSearchQuerySchema.parse(req.query);
-  const result = await customerService.search(req.user!.businessId, parsed);
+  const enrich = parsed.enrich ?? false;
+  const result = enrich
+    ? await customerService.searchEnriched(req.user!.businessId, parsed)
+    : await customerService.search(req.user!.businessId, parsed);
+  res.json({ data: result.data, total: result.total, limit: result.limit, offset: result.offset });
+});
+
+app.post("/api/customers/import", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const parsed = CustomerImportSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+  const result = await customerService.importFromCsv(req.user!.businessId, parsed.data.csv, req.user!.id);
   res.json(result);
 });
 
@@ -714,6 +726,32 @@ app.post("/api/invoices/:id/send", requireAuth, requireEntitlement("reminders.au
   res.json({ ok: true });
 });
 
+app.post("/api/invoices/:id/send-reminder", requireAuth, requireEntitlement("reminders.automated"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await invoiceService.sendReminder(req.user!.businessId, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/invoices/:id/cancel", requireAuth, requireEntitlement("invoices.cancel"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { reason } = req.body;
+  await invoiceService.cancel(req.user!.businessId, req.params.id, req.user.id, reason);
+  res.json({ ok: true });
+});
+
+app.post("/api/invoices/:id/void", requireAuth, requireEntitlement("invoices.void"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { reason } = req.body;
+  await invoiceService.void(req.user!.businessId, req.params.id, req.user.id, reason);
+  res.json({ ok: true });
+});
+
+app.post("/api/invoices/:id/payment-intent", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await invoiceService.createPaymentIntent(req.user!.businessId, req.params.id);
+  res.json(result);
+});
+
 app.post("/api/invoices/:id/pdf", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const pdf = await invoiceService.generatePdf(req.user!.businessId, req.params.id);
@@ -726,6 +764,20 @@ app.get("/api/invoices/:id/events", requireAuth, async (req: AuthRequest, res) =
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const events = await invoiceRepository.getEvents(req.params.id, req.user!.businessId);
   res.json({ events });
+});
+
+app.delete("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
+  if (invoice.isFinalized) return res.status(400).json({ error: "Cannot delete a finalized invoice" });
+  await query("DELETE FROM invoices WHERE id = $1 AND business_id = $2", [req.params.id, req.user!.businessId]);
+  res.status(204).send();
+});
+
+app.get("/api/dashboard", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const data = await invoiceService.getDashboardData(req.user!.businessId);
+  res.json(data);
 });
 
 app.post("/api/invoices/:id/duplicate", requireAuth, requireEntitlement("invoices.duplicate"), async (req: AuthRequest, res) => {
@@ -1211,11 +1263,8 @@ app.patch("/api/businesses/current/numbering", requireAuth, async (req: AuthRequ
 // ============================================================================
 app.get("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await query(
-    "SELECT * FROM payments WHERE invoice_id = $1 AND business_id = $2 ORDER BY created_at DESC",
-    [req.params.id, req.user!.businessId]
-  );
-  res.json({ payments: result.rows });
+  const payments = await invoiceRepository.findPayments(req.params.id, req.user!.businessId);
+  res.json({ payments });
 });
 
 app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
@@ -1264,6 +1313,21 @@ app.get("/api/public/invoices/:token/pdf", optionalAuth, async (req: AuthRequest
 app.post("/api/public/invoices/:token/view", optionalAuth, async (req: AuthRequest, res) => {
   const invoiceId = await invoiceService.recordView(req.params.token);
   res.json({ invoiceId });
+});
+
+app.post("/api/public/invoices/:token/pay", optionalAuth, async (req: AuthRequest, res) => {
+  const { amount, provider = "stub", idempotencyKey } = req.body;
+  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Valid amount required" });
+  try {
+    await invoiceService.recordPublicPayment(req.params.token, amount, provider, idempotencyKey);
+    res.status(201).json({ ok: true });
+  } catch (err: any) {
+    if (err.statusCode) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+    } else {
+      res.status(400).json({ error: err.message || "Payment failed" });
+    }
+  }
 });
 
 // ============================================================================
@@ -1405,7 +1469,19 @@ async function start() {
   app.listen(PORT, () => {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
     subscriptionService.ensureDefaults().catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
+    processOverdueJob();
   });
+}
+
+let overdueJobRunning = false;
+function processOverdueJob() {
+  if (overdueJobRunning) return;
+  overdueJobRunning = true;
+  invoiceService.processOverdueInvoices().then((count) => {
+    if (count > 0) logger.info(`Processed ${count} overdue invoices`);
+  }).catch((e) => logger.error({ err: e }, "Overdue processing failed"));
+  overdueJobRunning = false;
+  setTimeout(processOverdueJob, 15 * 60 * 1000);
 }
 
 start();

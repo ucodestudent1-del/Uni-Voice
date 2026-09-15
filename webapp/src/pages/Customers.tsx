@@ -1,20 +1,24 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCustomers,
   archiveCustomer,
   restoreCustomer,
+  createInvoice as apiCreateInvoice,
   type CustomerSearchParams,
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
 import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
+import CustomerImport from "../components/CustomerImport";
+import { formatCurrency } from "../utils/format";
+import { formatDate } from "../utils/format";
 import type { ApiCustomer } from "../types/api";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "All Statuses" },
+  { value: "all", label: "All Customers" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
   { value: "archived", label: "Archived" },
@@ -44,22 +48,8 @@ export default function Customers() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<ApiCustomer | null>(null);
-
-  const loadCustomers = useCallback(async (params: CustomerSearchParams) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getCustomers(params);
-      setCustomers(data.data ?? []);
-      setTotal(data.total ?? 0);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to load customers");
-      setCustomers([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [showImport, setShowImport] = useState(false);
+  const [creatingInvoiceFor, setCreatingInvoiceFor] = useState<string | null>(null);
 
   const currentParams: CustomerSearchParams = {
     limit,
@@ -69,7 +59,31 @@ export default function Customers() {
     includeArchived: statusFilter === "archived" || includeArchived ? true : undefined,
     sortBy,
     sortOrder,
+    enrich: true,
   };
+
+  const loadCustomers = useCallback(async (params: CustomerSearchParams) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getCustomers(params);
+      const list = data.data ?? [];
+      const enriched: ApiCustomer[] = list.map((c: any) => ({
+        ...c,
+        invoiceCount: c.invoiceCount ?? 0,
+        totalOutstanding: c.totalOutstanding ?? "0",
+        mostRecentInvoiceDate: c.mostRecentInvoiceDate ?? null,
+      }));
+      setCustomers(enriched);
+      setTotal(data.total ?? 0);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to load customers");
+      setCustomers([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadCustomers(currentParams);
@@ -110,6 +124,29 @@ export default function Customers() {
     navigate(`/app/customers/${customer.id}`);
   }
 
+  async function handleCreateInvoice(customer: ApiCustomer) {
+    setCreatingInvoiceFor(customer.id);
+    try {
+      const res = await apiCreateInvoice({
+        customerId: customer.id,
+        currency: customer.defaultCurrency || "USD",
+        items: [{
+          description: "",
+          quantity: "1",
+          unit: "each",
+          unitPrice: "0.00",
+          taxRate: "0",
+          isTaxInclusive: false,
+        }],
+      });
+      navigate(`/app/invoices/${res.invoiceId}/edit`);
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to create invoice");
+    } finally {
+      setCreatingInvoiceFor(null);
+    }
+  }
+
   function handleCloseForm() {
     setShowForm(false);
     setEditingCustomer(null);
@@ -121,6 +158,8 @@ export default function Customers() {
     loadCustomers(currentParams);
   }
 
+  const totalOutstanding = customers.reduce((sum, c) => sum + Number(c.totalOutstanding || 0), 0);
+
   if (loading && customers.length === 0) {
     return <div className="text-center py-20 text-slate-500">Loading customers...</div>;
   }
@@ -130,16 +169,28 @@ export default function Customers() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Customers</h1>
-          <p className="text-sm text-slate-600 mt-1">{total} customers total</p>
+          <p className="text-sm text-slate-600 mt-1">
+            {total} customers • <span className="text-slate-900">{formatCurrency(totalOutstanding.toString(), "USD")}</span> total outstanding
+          </p>
         </div>
-        <FeatureGate feature="customers.create" requiredPlan="free">
-          <button
-            onClick={() => { setShowForm(true); setEditingCustomer(null); }}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-          >
-            + Add Customer
-          </button>
-        </FeatureGate>
+        <div className="flex items-center gap-3">
+          <FeatureGate feature="customers.import" requiredPlan="free" fallback={null}>
+            <button
+              onClick={() => setShowImport(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Import
+            </button>
+          </FeatureGate>
+          <FeatureGate feature="customers.create" requiredPlan="free" fallback={null}>
+            <button
+              onClick={() => { setShowForm(true); setEditingCustomer(null); }}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              + Add Customer
+            </button>
+          </FeatureGate>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -213,6 +264,13 @@ export default function Customers() {
         />
       )}
 
+      {showImport && (
+        <CustomerImport
+          onClose={() => setShowImport(false)}
+          onImported={() => { setShowImport(false); loadCustomers(currentParams); }}
+        />
+      )}
+
       {customers.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
           <p className="mt-4 text-slate-500">
@@ -232,8 +290,10 @@ export default function Customers() {
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Customer</th>
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Email</th>
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Company</th>
+                  <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Contact</th>
+                  <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Invoices</th>
+                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Outstanding</th>
+                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Last Invoice</th>
                   <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Status</th>
                   <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
                 </tr>
@@ -243,44 +303,65 @@ export default function Customers() {
                   <tr key={c.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
                     <td className="py-3 px-4">
                       <p className="text-sm font-medium text-slate-900">{c.name}</p>
+                      {c.companyName && <p className="text-xs text-slate-500">{c.companyName}</p>}
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">{c.email || "—"}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600">{c.companyName || "—"}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600">
+                      {c.email && <p>{c.email}</p>}
+                      {c.phone && <p>{c.phone}</p>}
+                      {!c.email && !c.phone && <span className="text-slate-400">—</span>}
+                    </td>
+                    <td className="py-3 px-4 text-center text-sm text-slate-900">{c.invoiceCount ?? 0}</td>
+                    <td className="py-3 px-4 text-right">
+                      {Number(c.totalOutstanding || 0) > 0
+                        ? formatCurrency(c.totalOutstanding || "0", c.defaultCurrency || "USD")
+                        : <span className="text-slate-400">—</span>}
+                    </td>
+                    <td className="py-3 px-4 text-right text-sm text-slate-600">
+                      {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-slate-400">—</span>}
+                    </td>
                     <td className="py-3 px-4 text-center">
                       <CustomerStatusBadge status={c.status} />
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => handleView(c)}
-                        className="text-xs text-slate-600 hover:text-slate-900 mr-2"
-                        title="View"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleEdit(c)}
-                        className="text-xs text-slate-600 hover:text-slate-900 mr-2"
-                        title="Edit"
-                      >
-                        Edit
-                      </button>
-                      {c.status === "archived" ? (
+                      <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => handleRestore(c)}
+                          onClick={() => handleView(c)}
+                          className="text-xs text-slate-600 hover:text-slate-900"
+                          title="View"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleEdit(c)}
+                          className="text-xs text-slate-600 hover:text-slate-900"
+                          title="Edit"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleCreateInvoice(c)}
+                          disabled={creatingInvoiceFor === c.id}
                           className="text-xs text-primary-600 hover:text-primary-700"
-                          title="Restore"
+                          title="Create Invoice"
                         >
-                          Restore
+                          {creatingInvoiceFor === c.id ? "..." : "Invoice"}
                         </button>
-                      ) : (
-                        <button
-                          onClick={() => handleArchive(c)}
-                          className="text-xs text-red-500 hover:text-red-700"
-                          title="Archive"
-                        >
-                          Archive
-                        </button>
-                      )}
+                        {c.status === "archived" ? (
+                          <button
+                            onClick={() => handleRestore(c)}
+                            className="text-xs text-primary-600 hover:text-primary-700"
+                            title="Restore"
+                          >
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleArchive(c)}
+                            className="text-xs text-red-500 hover:text-red-700"
+                            title="Archive"
+                          >
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -312,6 +393,10 @@ export default function Customers() {
             </div>
           )}
         </>
+      )}
+
+      {plan && !plan.code && (
+        <UpgradePrompt feature="customers" requiredPlan="free" />
       )}
     </div>
   );

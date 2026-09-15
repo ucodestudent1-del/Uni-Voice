@@ -80,6 +80,8 @@ export interface ApiInvoice {
   id: string;
   business_id: string;
   customer_id?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
   invoice_number?: string | null;
   status: string;
   issue_date?: string | null;
@@ -95,15 +97,17 @@ export interface ApiInvoice {
   notes?: string | null;
   terms?: string | null;
   template_id?: string | null;
-  payment_instructions?: string | null;
-  is_finalized: boolean;
-  finalized_at?: string | null;
-  sent_at?: string | null;
-  viewed_at?: string | null;
-  paid_at?: string | null;
-  cancelled_at?: string | null;
-  cancelled_reason?: string | null;
-  created_at: string;
+   payment_instructions?: string | null;
+   is_finalized: boolean;
+   finalized_at?: string | null;
+   sent_at?: string | null;
+   viewed_at?: string | null;
+   paid_at?: string | null;
+   cancelled_at?: string | null;
+   cancelled_reason?: string | null;
+   public_token?: string | null;
+   public_token_expires_at?: string | null;
+   created_at: string;
   updated_at: string;
   items: ApiInvoiceItem[];
   fees: ApiInvoiceFee[];
@@ -151,6 +155,9 @@ export interface ApiCustomer {
   version: number;
   createdAt: string;
   updatedAt: string;
+  invoiceCount?: number;
+  totalOutstanding?: string;
+  mostRecentInvoiceDate?: string | null;
 }
 
 export interface ApiCustomerInvoiceSummary {
@@ -175,6 +182,7 @@ export interface ApiCustomerSummary {
   totalBilled: string;
   totalPaid: string;
   totalOutstanding: string;
+  totalOverdue: string;
 }
 
 export interface ApiProduct {
@@ -318,4 +326,71 @@ export interface InvoiceTemplateRevisionDTO {
   changeSummary?: string | null;
   createdAt: string;
   createdBy?: string | null;
+}
+
+export interface ApiPayment {
+  id: string;
+  invoice_id: string;
+  business_id: string;
+  provider: string;
+  provider_payment_id?: string | null;
+  amount: string;
+  currency: string;
+  status: string;
+  method?: string | null;
+  paid_at?: string | null;
+  idempotency_key?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiInvoiceEvent {
+  id: string;
+  invoice_id: string;
+  event_type: string;
+  actor_id?: string | null;
+  actor_type?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ApiPaymentIntent {
+  clientSecret: string | null;
+  provider: string;
+}
+
+export interface ApiDashboardSummary {
+  totalOutstanding: string;
+  totalOverdue: string;
+  totalPaidThisMonth: string;
+  totalRevenue: string;
+  draftCount: number;
+  overdueCount: number;
+  sentCount: number;
+  paidCount: number;
+  totalInvoices: number;
+}
+
+export interface ApiInvoiceListItem {
+  id: string;
+  invoice_number?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  currency: string;
+  total: string;
+  amount_paid: string;
+  amount_due: string;
+  created_at: string;
+  sent_at?: string | null;
+  paid_at?: string | null;
+}
+
+export interface ApiDashboardData {
+  summary: ApiDashboardSummary;
+  recentlyPaid: ApiInvoiceListItem[];
+  requiringAttention: ApiInvoiceListItem[];
 }

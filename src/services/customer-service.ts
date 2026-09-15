@@ -1,10 +1,11 @@
 import type { Customer, CustomerStatus, TaxIdentifier } from "../domain/models/index.js";
-import type { CustomerInvoiceSummary } from "../repositories/customer.repo.js";
+import type { CustomerInvoiceSummary, EnrichedCustomer } from "../repositories/customer.repo.js";
 import type { Address } from "../domain/value-objects/address.js";
 import { CustomerRepository } from "../repositories/customer.repo.js";
 import { NotFoundError, ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
 import type { CustomerCreateInput, CustomerUpdateInput, CustomerSearchQuery } from "../domain/schemas/customer.js";
 import type { PagedResult } from "../repositories/helpers.js";
+import { TERMINAL_STATUSES } from "../services/state-machine/invoice-state-machine.js";
 
 export interface CustomerSummary {
   customer: Customer;
@@ -14,6 +15,7 @@ export interface CustomerSummary {
   totalBilled: string;
   totalPaid: string;
   totalOutstanding: string;
+  totalOverdue: string;
 }
 
 export interface CustomerSearchInput {
@@ -24,6 +26,7 @@ export interface CustomerSearchInput {
   countryCode?: string;
   currency?: string;
   includeArchived?: boolean;
+  enrich?: boolean;
   limit?: number;
   offset?: number;
   sortBy?: string;
@@ -182,6 +185,7 @@ export class CustomerService {
       countryCode: opts.countryCode,
       defaultCurrency: opts.currency,
       includeArchived: opts.includeArchived,
+      enrich: opts.enrich,
       limit: opts.limit,
       offset: opts.offset,
       sortBy: opts.sortBy ?? "name",
@@ -194,6 +198,13 @@ export class CustomerService {
       limit: result.limit,
       offset: result.offset,
     };
+  }
+
+  async searchEnriched(businessId: string, opts: CustomerSearchInput): Promise<PagedResult<EnrichedCustomer>> {
+    return this.repo.findManyWithCount(businessId, {
+      ...opts,
+      enrich: true,
+    }) as Promise<PagedResult<EnrichedCustomer>>;
   }
 
   async getInvoiceHistory(
@@ -211,10 +222,28 @@ export class CustomerService {
 
     let totalBilled = 0;
     let totalPaid = 0;
+    let totalOverdue = 0;
+
+    const now = new Date();
 
     for (const inv of invoices) {
       totalBilled += parseFloat(inv.total);
       totalPaid += parseFloat(inv.amountPaid);
+
+      // Overdue = open invoices (not paid, not void/cancelled) past due with balance outstanding
+      if (!TERMINAL_STATUSES.includes(inv.status as any) && inv.status !== "overdue") {
+        const amountDue = parseFloat(inv.amountDue);
+        const isPastDue = inv.dueDate && now >= new Date(inv.dueDate);
+        if (amountDue > 0 && isPastDue) {
+          totalOverdue += amountDue;
+        }
+      }
+      if (inv.status === "overdue") {
+        const amountDue = parseFloat(inv.amountDue);
+        if (amountDue > 0) {
+          totalOverdue += amountDue;
+        }
+      }
     }
 
     const finalizedCount = invoices.filter((i) => i.finalizedAt !== null).length;
@@ -227,6 +256,7 @@ export class CustomerService {
       totalBilled: totalBilled.toFixed(2),
       totalPaid: totalPaid.toFixed(2),
       totalOutstanding: (totalBilled - totalPaid).toFixed(2),
+      totalOverdue: totalOverdue.toFixed(2),
     };
   }
 
@@ -261,6 +291,69 @@ export class CustomerService {
 
   async validateCustomerExists(businessId: string, customerId: string): Promise<Customer> {
     return this.repo.findById(businessId, customerId);
+  }
+
+  async importFromCsv(
+    businessId: string,
+    csv: string,
+    userId?: string
+  ): Promise<{ imported: number; skipped: number; errors: string[] }> {
+    const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length === 0) {
+      return { imported: 0, skipped: 0, errors: [] };
+    }
+
+    const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+
+    const colIdx = (name: string) => header.indexOf(name);
+
+    let imported = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (let rowIdx = 1; rowIdx < lines.length; rowIdx++) {
+      const rowNum = rowIdx + 1;
+      const cols = lines[rowIdx].split(",").map((c) => c.trim());
+
+      const getValue = (name: string) => {
+        const idx = colIdx(name);
+        return idx >= 0 ? cols[idx] : "";
+      };
+
+      const name = getValue("name");
+      if (!name) {
+        errors.push(`Row ${rowNum}: missing name`);
+        skipped++;
+        continue;
+      }
+
+      try {
+        const email = getValue("email") || undefined;
+        await this.create(
+          {
+            name,
+            email: email ? email : undefined,
+            companyName: getValue("company") || undefined,
+            phone: getValue("phone") || undefined,
+            taxId: getValue("tax_id") || undefined,
+            addressLine1: getValue("address_line_1") || undefined,
+            addressLine2: getValue("address_line_2") || undefined,
+            city: getValue("city") || undefined,
+            stateOrRegion: getValue("state_or_region") || undefined,
+            postalCode: getValue("postal_code") || undefined,
+            countryCode: getValue("country_code") || "US",
+          },
+          businessId,
+          userId
+        );
+        imported++;
+      } catch (err: any) {
+        errors.push(`Row ${rowNum}: ${err.message || "import failed"}`);
+        skipped++;
+      }
+    }
+
+    return { imported, skipped, errors };
   }
 }
 

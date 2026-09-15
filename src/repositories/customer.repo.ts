@@ -33,10 +33,17 @@ export interface CustomerSearchOptions {
   countryCode?: string;
   defaultCurrency?: string;
   includeArchived?: boolean;
+  enrich?: boolean;
   limit?: number;
   offset?: number;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+}
+
+export interface EnrichedCustomer extends Customer {
+  invoiceCount: number;
+  totalOutstanding: string;
+  mostRecentInvoiceDate: Date | null;
 }
 
 export interface CustomerInvoiceSummary {
@@ -117,6 +124,7 @@ export class CustomerRepository {
     const sortBy = opts.sortBy ?? "name";
     const sortOrder = opts.sortOrder ?? "asc";
     const includeArchived = opts.includeArchived ?? false;
+    const enrich = opts.enrich ?? false;
 
     const conditions: string[] = ["business_id = $1"];
     const vals: unknown[] = [businessId];
@@ -166,8 +174,24 @@ export class CustomerRepository {
     const sortCol = SORTABLE_COLUMNS[sortBy] || SORTABLE_COLUMNS[sortBy.replace(/([A-Z])/g, "_$1").toLowerCase()] || "c.name";
     const sortDirection = sortOrder === "desc" ? "DESC" : "ASC";
 
+    const selectCols = enrich
+      ? `c.*, COALESCE(stats.invoice_count, 0) AS invoice_count, COALESCE(stats.total_outstanding, 0) AS total_outstanding, stats.most_recent_invoice_date`
+      : "c.*";
+
+    const joinClause = enrich
+      ? `LEFT JOIN (
+           SELECT customer_id,
+                  COUNT(*) AS invoice_count,
+                  COALESCE(SUM(COALESCE(amount_due, 0)), 0) AS total_outstanding,
+                  MAX(created_at) AS most_recent_invoice_date
+           FROM invoices
+           WHERE business_id = $1
+           GROUP BY customer_id
+         ) stats ON stats.customer_id = c.id`
+      : "";
+
     const dataRes = await query(
-      `SELECT c.* FROM customers c
+      `SELECT ${selectCols} FROM customers c ${joinClause}
        WHERE ${conditions.join(" AND ")}
        ORDER BY ${sortCol} ${sortDirection}, c.created_at DESC
        LIMIT $${i++} OFFSET $${i}`,
@@ -180,7 +204,16 @@ export class CustomerRepository {
       vals
     );
 
-    const data = dataRes.rows.map((r) => this.rowToModel(r));
+    const data = dataRes.rows.map((r) => {
+      const customer = this.rowToModel(r);
+      if (enrich) {
+        (customer as EnrichedCustomer).invoiceCount = Number(r.invoice_count ?? 0);
+        (customer as EnrichedCustomer).totalOutstanding = r.total_outstanding?.toString() ?? "0";
+        (customer as EnrichedCustomer).mostRecentInvoiceDate = rowToDate(r.most_recent_invoice_date);
+      }
+      return customer;
+    });
+
     const total = Number(countRes.rows[0]?.total ?? 0);
 
     return { data, total, limit, offset };

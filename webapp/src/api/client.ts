@@ -167,6 +167,51 @@ export async function getInvoicePdf(id: string) {
   return res.data;
 }
 
+export async function getInvoiceEvents(id: string) {
+  const res = await api.get(`/invoices/${id}/events`);
+  return res.data;
+}
+
+export async function getInvoicePayments(id: string) {
+  const res = await api.get(`/invoices/${id}/payments`);
+  return res.data;
+}
+
+export async function sendReminder(id: string) {
+  const res = await api.post(`/invoices/${id}/send-reminder`);
+  return res.data;
+}
+
+export async function cancelInvoice(id: string, data?: { reason?: string }) {
+  const res = await api.post(`/invoices/${id}/cancel`, data ?? {});
+  return res.data;
+}
+
+export async function voidInvoice(id: string, data?: { reason?: string }) {
+  const res = await api.post(`/invoices/${id}/void`, data ?? {});
+  return res.data;
+}
+
+export async function deleteInvoice(id: string) {
+  const res = await api.delete(`/invoices/${id}`);
+  return res.data;
+}
+
+export async function createPaymentIntent(id: string) {
+  const res = await api.post(`/invoices/${id}/payment-intent`);
+  return res.data;
+}
+
+export async function getDashboardData() {
+  const res = await api.get("/dashboard");
+  return res.data;
+}
+
+export async function payInvoicePublic(token: string, data: { amount: number; provider?: string; idempotencyKey?: string }) {
+  const res = await api.post(`/public/invoices/${token}/pay`, data);
+  return res.data;
+}
+
 export interface CustomerSearchParams {
   limit?: number;
   offset?: number;
@@ -175,6 +220,7 @@ export interface CustomerSearchParams {
   includeArchived?: boolean;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  enrich?: boolean;
 }
 
 export async function getCustomers(params?: CustomerSearchParams) {
@@ -209,6 +255,11 @@ export async function deleteCustomer(id: string) {
 
 export async function getCustomer(id: string) {
   const res = await api.get(`/customers/${id}`);
+  return res.data;
+}
+
+export async function importCustomers(csv: string) {
+  const res = await api.post(`/customers/import`, { csv });
   return res.data;
 }
 
