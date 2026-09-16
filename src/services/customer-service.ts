@@ -6,6 +6,7 @@ import { NotFoundError, ConflictError, BusinessLogicError, ValidationError } fro
 import type { CustomerCreateInput, CustomerUpdateInput, CustomerSearchQuery } from "../domain/schemas/customer.js";
 import type { PagedResult } from "../repositories/helpers.js";
 import { TERMINAL_STATUSES } from "../services/state-machine/invoice-state-machine.js";
+import { query } from "../db/pool.js";
 
 export interface CustomerSummary {
   customer: Customer;
@@ -46,6 +47,21 @@ export class CustomerService {
   async create(input: CustomerCreateInput, businessId: string, userId?: string): Promise<Customer> {
     if (!input.name || input.name.trim().length === 0) {
       throw new ValidationError("Customer name is required");
+    }
+
+    // Check for duplicate: same email or (same name + company)
+    if (input.email) {
+      const existing = await this.repo.findByEmail(businessId, input.email.trim());
+      if (existing) {
+        throw new ConflictError(`Customer with email "${input.email}" already exists`);
+      }
+    }
+
+    if (input.name && input.companyName) {
+      const existing = await this.repo.findByNameAndCompany(businessId, input.name.trim(), input.companyName.trim());
+      if (existing) {
+        throw new ConflictError(`Customer "${input.name}" with company "${input.companyName}" already exists`);
+      }
     }
 
     const customer = await this.repo.create(businessId, {
@@ -291,6 +307,39 @@ export class CustomerService {
 
   async validateCustomerExists(businessId: string, customerId: string): Promise<Customer> {
     return this.repo.findById(businessId, customerId);
+  }
+
+  async exportToCsv(businessId: string): Promise<string> {
+    const customers = await this.repo.findMany(businessId, { includeArchived: true, limit: 1000 });
+    const headers = ["name", "email", "company", "phone", "tax_id", "address_line_1", "address_line_2", "city", "state_or_region", "postal_code", "country_code", "currency", "payment_terms", "status", "notes"];
+    const escape = (v: string | null | undefined) => {
+      const s = (v ?? "").toString();
+      if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+    const lines = [headers.join(",")];
+    for (const c of customers) {
+      lines.push([
+        escape(c.name),
+        escape(c.email),
+        escape(c.companyName),
+        escape(c.phone),
+        escape(c.taxId),
+        escape(c.address?.addressLine1),
+        escape(c.address?.addressLine2),
+        escape(c.address?.city),
+        escape(c.address?.stateOrRegion),
+        escape(c.address?.postalCode),
+        escape(c.address?.countryCode),
+        escape(c.defaultCurrency),
+        c.paymentTerms?.toString() ?? "",
+        escape(c.status),
+        escape(c.notes),
+      ].join(","));
+    }
+    return lines.join("\n");
   }
 
   async importFromCsv(

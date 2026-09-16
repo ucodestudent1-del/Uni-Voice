@@ -2,7 +2,7 @@ import { Decimal } from "decimal.js";
 import { getClient, query } from "../db/pool.js";
 import type { Invoice, InvoiceLineItem, InvoiceFee, InvoiceSnapshot, InvoiceEvent } from "../domain/models/index.js";
 import { NotFoundError, ConflictError } from "../domain/errors.js";
-import { rowToDate, type PagedResult } from "./helpers.js";
+import { rowToDate, type PagedResult, asSqlDate } from "./helpers.js";
 
 export interface InvoiceItemInput {
   id?: string;
@@ -63,6 +63,49 @@ export interface InvoiceWithDetails extends Invoice {
   items: InvoiceLineItem[];
   fees: InvoiceFee[];
 }
+
+export interface InvoiceListOptions {
+  status?: string;
+  customerId?: string;
+  projectId?: string;
+  invoiceNumber?: string;
+  currency?: string;
+  minAmount?: string | number;
+  maxAmount?: string | number;
+  issueDateFrom?: string;
+  issueDateTo?: string;
+  dueDateFrom?: string;
+  dueDateTo?: string;
+  search?: string;
+  paymentState?: string;
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export type InvoiceListItem = Invoice & {
+  customer_name: string | null;
+  customer_email: string | null;
+};
+
+const INVOICE_SORT_COLUMNS: Record<string, string> = {
+  id: "i.id",
+  invoice_number: "i.invoice_number",
+  customer_name: "c.name",
+  customer_email: "c.email",
+  status: "i.status",
+  total: "i.total",
+  amount_due: "i.amount_due",
+  amount_paid: "i.amount_paid",
+  issue_date: "i.issue_date",
+  due_date: "i.due_date",
+  created_at: "i.created_at",
+  updated_at: "i.updated_at",
+  finalized_at: "i.finalized_at",
+  sent_at: "i.sent_at",
+  paid_at: "i.paid_at",
+};
 
 export class InvoiceRepository {
   async createDraft(businessId: string, input: CreateInvoiceInput): Promise<string> {
@@ -322,7 +365,7 @@ export class InvoiceRepository {
     return res.rows;
   }
 
-  async findManyPage(businessId: string, opts: InvoiceListOptions = {}): Promise<PagedResult<Invoice>> {
+  async findManyPage(businessId: string, opts: InvoiceListOptions = {}): Promise<PagedResult<InvoiceListItem>> {
     const conditions: string[] = ["business_id = $1"];
     const vals: unknown[] = [businessId];
     let i = 2;
@@ -360,7 +403,7 @@ export class InvoiceRepository {
 
     const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
     const offset = Math.max(opts.offset ?? 0, 0);
-    const sortColumn = INVOICE_SORT_COLUMNS[opts.sortBy ?? "createdAt"] ?? INVOICE_SORT_COLUMNS.createdAt!;
+    const sortColumn = INVOICE_SORT_COLUMNS[opts.sortBy ?? "created_at"] ?? INVOICE_SORT_COLUMNS.created_at;
     const direction = opts.sortOrder === "asc" ? "ASC" : "DESC";
     const from = `FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id WHERE ${conditions.join(" AND ")}`;
     const dataRes = await query(
@@ -370,7 +413,10 @@ export class InvoiceRepository {
     );
     const countRes = await query(`SELECT COUNT(*)::int AS total ${from}`, vals);
     return {
-      data: dataRes.rows.map((r) => this.rowToModel(r)),
+      data: dataRes.rows.map((r) => {
+        const model = this.rowToModel(r);
+        return { ...model, customer_name: r.customer_name ?? null, customer_email: r.customer_email ?? null };
+      }),
       total: Number(countRes.rows[0]?.total ?? 0),
       limit,
       offset,

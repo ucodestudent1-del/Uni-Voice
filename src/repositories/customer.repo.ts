@@ -230,6 +230,46 @@ export class CustomerRepository {
     return customer;
   }
 
+  async findByEmail(businessId: string, email: string): Promise<Customer | null> {
+    const res = await query(
+      `SELECT * FROM customers WHERE business_id = $1 AND email ILIKE $2 AND status != 'archived'`,
+      [businessId, email]
+    );
+    if (!res.rows.length) return null;
+    const customer = this.rowToModel(res.rows[0]);
+    customer.taxIdentifiers = await this.findTaxIdentifiers(res.rows[0].id);
+    return customer;
+  }
+
+  async findByNameAndCompany(businessId: string, name: string, companyName: string): Promise<Customer | null> {
+    const res = await query(
+      `SELECT * FROM customers WHERE business_id = $1 AND name ILIKE $2 AND company_name ILIKE $3 AND status != 'archived'`,
+      [businessId, name, companyName]
+    );
+    if (!res.rows.length) return null;
+    const customer = this.rowToModel(res.rows[0]);
+    customer.taxIdentifiers = await this.findTaxIdentifiers(res.rows[0].id);
+    return customer;
+  }
+
+  async findByEmail(businessId: string, email: string): Promise<Customer | null> {
+    const res = await query(
+      `SELECT * FROM customers WHERE business_id = $1 AND email ILIKE $2`,
+      [businessId, email]
+    );
+    if (!res.rows.length) return null;
+    return this.rowToModel(res.rows[0]);
+  }
+
+  async findByNameAndCompany(businessId: string, name: string, companyName: string): Promise<Customer | null> {
+    const res = await query(
+      `SELECT * FROM customers WHERE business_id = $1 AND search_name = $2 AND search_company = $3`,
+      [businessId, name.toLowerCase(), companyName.toLowerCase()]
+    );
+    if (!res.rows.length) return null;
+    return this.rowToModel(res.rows[0]);
+  }
+
   async findByPublicId(publicId: string): Promise<Customer | null> {
     const res = await query(`SELECT * FROM customers WHERE id = $1`, [publicId]);
     if (!res.rows.length) return null;

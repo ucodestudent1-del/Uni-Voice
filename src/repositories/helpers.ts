@@ -27,3 +27,14 @@ export interface PagedResult<T> {
   limit: number;
   offset: number;
 }
+
+export function asSqlDate(v: string | Date | undefined | null): string | null {
+  if (v == null) return null;
+  if (v instanceof Date) {
+    if (Number.isNaN(v.getTime())) return null;
+    return v.toISOString().split("T")[0];
+  }
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString().split("T")[0];
+}

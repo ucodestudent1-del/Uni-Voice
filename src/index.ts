@@ -19,7 +19,7 @@ import { customerRepository } from "./repositories/customer.repo.js";
 import { productRepository } from "./repositories/product.repo.js";
 import { productServiceRepository } from "./repositories/product-service.repo.js";
 import { productServiceService } from "./services/product-service/product-service.js";
-import { invoiceRepository } from "./repositories/invoice.repo.js";
+import { invoiceRepository, type InvoiceListOptions, type InvoiceListItem } from "./repositories/invoice.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { documentTemplateRepository } from "./repositories/document-template.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
@@ -656,6 +656,14 @@ app.get("/api/customers/:id/events", requireAuth, async (req: AuthRequest, res) 
   res.json({ events });
 });
 
+app.get("/api/customers/export", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const csv = await customerService.exportToCsv(req.user!.businessId);
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", 'attachment; filename="customers.csv"');
+  res.send(csv);
+});
+
 // ============================================================================
 // PRODUCTS
 // ============================================================================
@@ -784,12 +792,72 @@ app.get("/api/catalog/sku/:sku/check", requireAuth, async (req: AuthRequest, res
 // ============================================================================
 app.get("/api/invoices", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const limit = Math.min(Number(req.query.limit ?? 50), 200);
-  const offset = Number(req.query.offset ?? 0);
-  const status = req.query.status as string | undefined;
-  const customerId = req.query.customerId as string | undefined;
-  const invoices = await invoiceRepository.findMany(req.user!.businessId, { status, customerId, limit, offset });
-  res.json({ invoices, limit, offset });
+  const q = req.query;
+  const opts: InvoiceListOptions = {
+    status: q.status as string | undefined,
+    customerId: (q.customerId ?? q.customer_id) as string | undefined,
+    projectId: (q.projectId ?? q.project_id) as string | undefined,
+    invoiceNumber: q.invoice_number as string | undefined,
+    currency: q.currency as string | undefined,
+    minAmount: q.min_amount ? Number(q.min_amount) : undefined,
+    maxAmount: q.max_amount ? Number(q.max_amount) : undefined,
+    issueDateFrom: q.issue_date_from as string | undefined,
+    issueDateTo: q.issue_date_to as string | undefined,
+    dueDateFrom: q.due_date_from as string | undefined,
+    dueDateTo: q.due_date_to as string | undefined,
+    search: q.search as string | undefined,
+    paymentState: q.payment_state as string | undefined,
+    limit: q.limit ? Number(q.limit) : undefined,
+    offset: q.offset ? Number(q.offset) : undefined,
+    sortBy: (q.sortBy ?? q.sort_by) as string | undefined,
+    sortOrder: (q.sortOrder ?? q.sort_order) as "asc" | "desc" | undefined,
+  };
+  const page = await invoiceRepository.findManyPage(req.user!.businessId, opts);
+  const invoices = page.data.map((inv: InvoiceListItem) => ({
+    id: inv.id,
+    business_id: inv.businessId,
+    customer_id: inv.customerId,
+    project_id: inv.projectId,
+    invoice_number: inv.invoiceNumber,
+    status: inv.status,
+    issue_date: inv.issueDate instanceof Date ? inv.issueDate.toISOString().split("T")[0] : inv.issueDate ?? null,
+    due_date: inv.dueDate instanceof Date ? inv.dueDate.toISOString().split("T")[0] : inv.dueDate ?? null,
+    currency: inv.currency,
+    exchange_rate: inv.exchangeRate ?? null,
+    subtotal: String(inv.subtotal ?? 0),
+    discount_total: String(inv.discountTotal ?? 0),
+    tax_total: String(inv.taxTotal ?? 0),
+    fee_total: String(inv.feeTotal ?? 0),
+    total: String(inv.total ?? 0),
+    amount_paid: String(inv.amountPaid ?? 0),
+    amount_due: String(inv.amountDue ?? 0),
+    credit_applied: String(inv.creditApplied ?? 0),
+    deposit_amount: String(inv.depositAmount ?? 0),
+    deposit_type: inv.depositType ?? "none",
+    deposit_due_date: inv.depositDueDate instanceof Date ? inv.depositDueDate.toISOString().split("T")[0] : inv.depositDueDate ?? null,
+    deposit_payment_purpose: inv.depositPaymentPurpose ?? null,
+    notes: inv.notes ?? null,
+    terms: inv.terms ?? null,
+    template_id: inv.templateId ?? null,
+    public_token: inv.publicToken ?? null,
+    public_token_expires_at: inv.publicTokenExpiresAt ?? null,
+    payment_instructions: inv.paymentInstructions ?? null,
+    is_finalized: inv.isFinalized ?? false,
+    finalized_at: inv.finalizedAt ?? null,
+    sent_at: inv.sentAt ?? null,
+    viewed_at: inv.viewedAt ?? null,
+    paid_at: inv.paidAt ?? null,
+    cancelled_at: inv.cancelledAt ?? null,
+    cancelled_reason: inv.cancelledReason ?? null,
+    version: inv.version ?? 1,
+    created_at: inv.createdAt instanceof Date ? inv.createdAt.toISOString() : inv.createdAt,
+    updated_at: inv.updatedAt instanceof Date ? inv.updatedAt.toISOString() : inv.updatedAt,
+    created_by: inv.createdBy ?? null,
+    updated_by: inv.updatedBy ?? null,
+    customer_name: inv.customer_name ?? null,
+    customer_email: inv.customer_email ?? null,
+  }));
+  res.json({ invoices, total: page.total, limit: page.limit, offset: page.offset });
 });
 
 app.post("/api/invoices", requireAuth, async (req: AuthRequest, res) => {
