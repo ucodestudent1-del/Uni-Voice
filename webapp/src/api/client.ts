@@ -7,21 +7,20 @@ import type {
   RecoveryCodeSummary,
   InvoiceSearchParams,
   CreditNoteSearchParams,
-  RecurringInvoiceCreateInput,
-  RecurringInvoiceUpdateInput,
-  ApiReminderConfig,
-  ApiReminderTemplate,
-  ApiEnhancedDashboard,
-} from "../types/api";
+   RecurringInvoiceCreateInput,
+   RecurringInvoiceUpdateInput,
+   ApiRecurringInvoice,
+   ApiReminderConfig,
+   ApiReminderTemplate,
+   ApiEnhancedDashboard,
+ } from "../types/api";
 
 export type {
-  InvoiceSearchParams,
-  CreditNoteSearchParams,
-  RecurringInvoiceCreateInput,
-  RecurringInvoiceUpdateInput,
-  ApiReminderConfig,
-  ApiReminderTemplate,
-  ApiEnhancedDashboard,
+   InvoiceSearchParams,
+   CreditNoteSearchParams,
+   RecurringInvoiceCreateInput,
+   RecurringInvoiceUpdateInput,
+   ApiEnhancedDashboard,
 };
 
 declare module "axios" {
@@ -911,7 +910,7 @@ export function buildCreditNoteSearchParams(params: CreditNoteSearchParams): Rec
 // RECURRING INVOICES
 // ============================================================================
 
-export async function getRecurringInvoices() {
+export async function getRecurringInvoices(): Promise<{ recurringInvoices: ApiRecurringInvoice[] | null }> {
   const res = await api.get("/recurring");
   return res.data;
 }

@@ -37,6 +37,10 @@ export const CreateInvoiceDraftSchema = z.object({
   terms: z.string().nullable().optional(),
   templateId: z.string().nullable().optional(),
   paymentInstructions: z.string().nullable().optional(),
+  depositAmount: z.union([z.string(), z.number()]).optional(),
+  depositType: z.enum(["none", "fixed", "percentage"]).optional(),
+  depositDueDate: z.union([z.string(), z.date()]).nullable().optional(),
+  depositPaymentPurpose: z.string().max(255).nullable().optional(),
   items: z.array(DraftLineItemSchema).optional(),
   fees: z.array(DraftFeeSchema).optional(),
 });

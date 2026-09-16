@@ -21,6 +21,7 @@ import {
   FeesComponent,
   TotalComponent,
   AmountDueComponent,
+  DepositComponent,
   BusinessInfoComponent,
   SpacerComponent,
   DividerComponent,
@@ -320,6 +321,25 @@ export const amountDueComponentSchema = z.object({
   condition: z.string().optional(),
 }) satisfies z.ZodType<AmountDueComponent>;
 
+export const depositComponentSchema = z.object({
+  id: z.string(),
+  type: z.literal("deposit"),
+  props: z.object({
+    label: z.string().optional(),
+    currency: z.string(),
+    depositType: z.enum(["fixed", "percentage", "none"]),
+    depositValue: z.string(),
+    depositDueDate: z.string().optional(),
+    showDepositDue: z.boolean(),
+    showDepositPaid: z.boolean(),
+  }),
+  style: stylePropsSchema,
+  children: z.array(z.string()).optional(),
+  parentId: z.string().optional(),
+  visible: z.boolean().optional(),
+  condition: z.string().optional(),
+}) satisfies z.ZodType<DepositComponent>;
+
 export const businessInfoComponentSchema = z.object({
   id: z.string(),
   type: z.literal("businessInfo"),
@@ -430,6 +450,7 @@ export const anyComponentSchema: z.ZodType<AnyComponent> = z.discriminatedUnion(
   feesComponentSchema,
   totalComponentSchema,
   amountDueComponentSchema,
+  depositComponentSchema,
   businessInfoComponentSchema,
   spacerComponentSchema,
   dividerComponentSchema,
@@ -497,6 +518,7 @@ export const componentSchemas: Record<ComponentType, z.ZodType<any>> = {
   fees: feesComponentSchema,
   total: totalComponentSchema,
   amountDue: amountDueComponentSchema,
+  deposit: depositComponentSchema,
   businessInfo: businessInfoComponentSchema,
   spacer: spacerComponentSchema,
   divider: dividerComponentSchema,

@@ -207,6 +207,148 @@ export interface InvoiceEvent {
   createdAt: Date;
 }
 
+export interface CreditNoteLineItem {
+  id: string;
+  creditNoteId: string;
+  productId?: string | null;
+  description: string;
+  quantity: Decimal.Value;
+  unit: string;
+  unitPrice: Decimal.Value;
+  discount: Decimal.Value;
+  discountType: "fixed" | "percentage";
+  taxRate: Decimal.Value;
+  taxAmount: Decimal.Value;
+  lineSubtotal: Decimal.Value;
+  lineTotal: Decimal.Value;
+  sortOrder: number;
+  isTaxInclusive: boolean;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
+}
+
+export interface CreditNote {
+  id: string;
+  businessId: string;
+  customerId: string;
+  referenceInvoiceId?: string | null;
+  creditNoteNumber?: string | null;
+  status: "draft" | "finalized" | "cancelled" | "void";
+  issueDate?: Date | null;
+  currency: CurrencyCode;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  templateId?: string | null;
+  subtotal: Decimal.Value;
+  discountTotal: Decimal.Value;
+  taxTotal: Decimal.Value;
+  feeTotal: Decimal.Value;
+  total: Decimal.Value;
+  appliedTotal: Decimal.Value;
+  amountDue: Decimal.Value;
+  isFinalized: boolean;
+  finalizedAt?: Date | null;
+  cancelledAt?: Date | null;
+  cancelledReason?: string | null;
+  voidedAt?: Date | null;
+  voidReason?: string | null;
+  publicToken?: string | null;
+  version: number;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+}
+
+export interface CreditNoteApplication {
+  id: string;
+  creditNoteId: string;
+  invoiceId: string;
+  businessId: string;
+  amount: Decimal.Value;
+  appliedAt: Date;
+  idempotencyKey: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface ReminderRule {
+  id: string;
+  businessId: string;
+  name: string;
+  triggerType: "before_due" | "after_due" | "manual";
+  offsetDays: number;
+  minStatus: string;
+  maxSendCount: number;
+  subjectTemplate: string;
+  messageTemplate: string;
+  includePdf: boolean;
+  emailTemplateId?: string | null;
+  repeatEveryDays: number;
+  isActive: boolean;
+  lastRunAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EmailTemplate {
+  id: string;
+  businessId: string;
+  name: string;
+  templateType: string;
+  locale: string;
+  subjectTemplate: string;
+  bodyTemplate: string;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+}
+
+export interface ScheduledEmail {
+  id: string;
+  businessId: string;
+  invoiceId?: string | null;
+  creditNoteId?: string | null;
+  emailTemplateId?: string | null;
+  recipient: string;
+  recipientName?: string | null;
+  subject: string;
+  bodyHtml: string;
+  attachmentType?: string | null;
+  attachmentFilename?: string | null;
+  idempotencyKey: string;
+  status: "pending" | "processing" | "sent" | "failed" | "cancelled";
+  attempts: number;
+  availableAt: Date;
+  sentAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Receipt {
+  id: string;
+  businessId: string;
+  invoiceId: string;
+  paymentId: string;
+  receiptNumber: string;
+  amount: Decimal.Value;
+  currency: CurrencyCode;
+  paymentMethod?: string | null;
+  paymentPurpose?: string | null;
+  status: "pending" | "issued" | "sent" | "failed";
+  issuedAt?: Date | null;
+  emailLogId?: string | null;
+  idempotencyKey: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Payment {
   id: string;
   invoiceId: string;

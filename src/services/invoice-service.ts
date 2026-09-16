@@ -31,6 +31,10 @@ export interface CreateInvoiceDraftInput {
   terms?: string | null;
   templateId?: string | null;
   paymentInstructions?: string | null;
+  depositAmount?: string | number;
+  depositType?: "none" | "fixed" | "percentage";
+  depositDueDate?: Date | string | null;
+  depositPaymentPurpose?: string | null;
   items?: DraftLineItem[];
   fees?: DraftFee[];
 }
@@ -210,6 +214,10 @@ export class InvoiceService {
       terms: input.terms,
       payment_instructions: input.paymentInstructions,
       template_id: input.templateId,
+      deposit_amount: input.depositAmount,
+      deposit_type: input.depositType,
+      deposit_due_date: input.depositDueDate instanceof Date ? input.depositDueDate.toISOString() : input.depositDueDate,
+      deposit_payment_purpose: input.depositPaymentPurpose,
     });
     await invoiceRepository.recordEvent(id, {
       eventType: "updated", actorId: userId, actorType: userId ? "user" : "system",

@@ -73,12 +73,17 @@ export class InvoiceRepository {
       await client.query("BEGIN");
       await client.query(
         `INSERT INTO invoices (id, business_id, customer_id, project_id, currency, issue_date, due_date, notes, terms,
-          template_id, payment_instructions, created_at, updated_at, created_by, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$13,$13)`,
+          template_id, payment_instructions, deposit_amount, deposit_type, deposit_due_date, deposit_payment_purpose,
+          created_at, updated_at, created_by, updated_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$16,$17,$17)`,
         [
           id, businessId, input.customerId, input.projectId, input.currency,
-          input.issueDate?.toISOString(), input.dueDate?.toISOString(),
-          input.notes, input.terms, input.templateId, input.paymentInstructions, now, input.createdBy,
+          input.issueDate instanceof Date ? input.issueDate.toISOString() : input.issueDate,
+          input.dueDate instanceof Date ? input.dueDate.toISOString() : input.dueDate,
+          input.notes, input.terms, input.templateId, input.paymentInstructions,
+          input.depositAmount ?? 0, input.depositType ?? "none",
+          input.depositDueDate instanceof Date ? input.depositDueDate.toISOString() : input.depositDueDate,
+          input.depositPaymentPurpose, now, input.createdBy,
         ]
       );
       await this.insertItems(client, id, input.items, now);
@@ -159,7 +164,8 @@ export class InvoiceRepository {
     const ALLOWED_COLUMNS = new Set([
       "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
       "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
-      "amount_paid", "amount_due", "notes", "terms", "template_id", "public_token",
+      "amount_paid", "amount_due", "credit_applied", "deposit_amount", "deposit_type",
+      "deposit_due_date", "deposit_payment_purpose", "notes", "terms", "template_id", "public_token",
       "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
       "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
     ]);
@@ -189,7 +195,8 @@ export class InvoiceRepository {
     const ALLOWED_COLUMNS = new Set([
       "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
       "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
-      "amount_paid", "amount_due", "notes", "terms", "template_id", "public_token",
+      "amount_paid", "amount_due", "credit_applied", "deposit_amount", "deposit_type",
+      "deposit_due_date", "deposit_payment_purpose", "notes", "terms", "template_id", "public_token",
       "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
       "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
     ]);

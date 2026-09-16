@@ -571,6 +571,7 @@ export interface ApiRecurringInvoice {
   next_generation_at?: string | null;
   end_date?: string | null;
   currency: string;
+  total?: string | null;
   notes?: string | null;
   terms?: string | null;
   template_id?: string | null;
