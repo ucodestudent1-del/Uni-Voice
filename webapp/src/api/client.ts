@@ -14,6 +14,16 @@ import type {
   ApiEnhancedDashboard,
 } from "../types/api";
 
+export type {
+  InvoiceSearchParams,
+  CreditNoteSearchParams,
+  RecurringInvoiceCreateInput,
+  RecurringInvoiceUpdateInput,
+  ApiReminderConfig,
+  ApiReminderTemplate,
+  ApiEnhancedDashboard,
+};
+
 declare module "axios" {
   export interface InternalAxiosRequestConfig {
     skipAuthRedirect?: boolean;

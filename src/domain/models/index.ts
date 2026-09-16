@@ -154,6 +154,11 @@ export interface Invoice {
   total: Decimal.Value;
   amountPaid: Decimal.Value;
   amountDue: Decimal.Value;
+  depositAmount: Decimal.Value;
+  depositType: "none" | "fixed" | "percentage";
+  depositDueDate?: Date | null;
+  depositPaymentPurpose?: string | null;
+  creditApplied: Decimal.Value;
   notes?: string | null;
   terms?: string | null;
   templateId?: string | null;
@@ -233,6 +238,20 @@ export interface RecurringInvoice {
   terms?: string | null;
   isActive: boolean;
   lastGeneratedInvoiceId?: string | null;
+  templateId?: string | null;
+  issueOffsetDays: number;
+  dueOffsetDays: number;
+  autoSend: boolean;
+  deliveryMethod: string;
+  emailTemplateId?: string | null;
+  paymentInstructions?: string | null;
+  depositAmount: Decimal.Value;
+  depositType: "none" | "fixed" | "percentage";
+  depositDueOffsetDays?: number | null;
+  depositPaymentPurpose?: string | null;
+  lastGenerationAt?: Date | null;
+  pausedAt?: Date | null;
+  generationVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }

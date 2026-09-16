@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { query, getClient } from "../db/pool.js";
+import { query } from "../db/pool.js";
 import type { Project, ProjectTag, ProjectTeamMember, ProjectEvent, ProjectStatus } from "../domain/models/index.js";
 import { NotFoundError, ConflictError, BusinessLogicError } from "../domain/errors.js";
 import { rowToDate } from "./helpers.js";

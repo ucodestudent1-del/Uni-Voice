@@ -58,7 +58,6 @@ import {
 } from "./schemas/invoice-template-dto.js";
 import { invoiceTemplateService } from "./services/templates/invoice-template-service.js";
 import { projectService } from "./services/project-service.js";
-import { projectRepository } from "./repositories/project.repo.js";
 import bcrypt from "bcrypt";
 
 const app = express();
@@ -1375,7 +1374,7 @@ app.get("/api/projects", requireAuth, async (req: AuthRequest, res) => {
     sortBy: parsed.sortBy,
     sortOrder: parsed.sortOrder,
   });
-  res.json(result);
+  res.json({ projects: result.data, total: result.total, limit: result.limit, offset: result.offset });
 });
 
 app.post("/api/projects", requireAuth, async (req: AuthRequest, res) => {

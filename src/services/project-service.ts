@@ -1,16 +1,14 @@
 import { Decimal } from "decimal.js";
-import type { Project, ProjectStatus, ProjectTag, ProjectTeamMember, ProjectEvent, Customer } from "../domain/models/index.js";
+import type { Project, ProjectTag, ProjectTeamMember, ProjectEvent, Customer } from "../domain/models/index.js";
 import type {
-  ProjectInput,
   ProjectUpdateInput,
-  ProjectSearchOptions,
   ProjectFinancialSummary,
   ProjectListItem,
 } from "../repositories/project.repo.js";
 import type { PagedResult } from "../repositories/helpers.js";
 import { ProjectRepository } from "../repositories/project.repo.js";
 import { CustomerRepository } from "../repositories/customer.repo.js";
-import { NotFoundError, ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
+import { ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
 import type { ProjectCreateInput, ProjectUpdateInput as SchemaProjectUpdateInput } from "../domain/schemas/project.js";
 import { invoiceService } from "./invoice-service.js";
 import type { DraftLineItem, DraftFee } from "./invoice-service.js";
