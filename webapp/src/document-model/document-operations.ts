@@ -37,6 +37,13 @@ export interface MoveComponentParams {
   newIndex: number;
 }
 
+export interface MoveComponentToParams {
+  componentId: ComponentId;
+  x?: number;
+  y?: number;
+  style?: Partial<StyleProps>;
+}
+
 export interface RemoveComponentParams {
   componentId: ComponentId;
 }
@@ -138,6 +145,28 @@ export class DocumentBuilder {
     this.removeFromParent(componentId);
     this.insertIntoParent(componentId, newParentId, newIndex);
     component.parentId = newParentId;
+    this.doc.updatedAt = new Date().toISOString();
+    this.doc.version += 1;
+    return this;
+  }
+
+  moveComponentTo(params: MoveComponentToParams): DocumentBuilder {
+    const { componentId, x, y, style } = params;
+    const component = this.doc.components[componentId];
+    if (!component) return this;
+
+    if (style) {
+      component.style = { ...component.style, ...style };
+    }
+
+    if (x !== undefined) {
+      component.style = { ...component.style, x, left: x };
+    }
+
+    if (y !== undefined) {
+      component.style = { ...component.style, y, top: y };
+    }
+
     this.doc.updatedAt = new Date().toISOString();
     this.doc.version += 1;
     return this;
@@ -555,6 +584,10 @@ export function canDropComponent(
   }
 
   return { success: false, error: `Component ${componentType} cannot be dropped into ${parent.type}` };
+}
+
+export function moveComponentTo(doc: InvoiceDocument, params: MoveComponentToParams): InvoiceDocument {
+  return new DocumentBuilder(doc).moveComponentTo(params).build();
 }
 
 export { validateComponentProps } from "./registry";

@@ -6,6 +6,7 @@ import {
   archiveCustomer,
   restoreCustomer,
   createInvoice as apiCreateInvoice,
+  exportCustomersCsv,
   type CustomerSearchParams,
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
@@ -117,6 +118,21 @@ export default function Customers() {
     }
   }
 
+  async function handleExport() {
+    try {
+      const csv = await exportCustomersCsv();
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "customers.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Failed to export customers");
+    }
+  }
+
   function handleEdit(customer: ApiCustomer) {
     setEditingCustomer(customer);
     setShowForm(true);
@@ -188,6 +204,14 @@ export default function Customers() {
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Import
+            </button>
+          </FeatureGate>
+          <FeatureGate feature="customers.export" requiredPlan="free" fallback={null}>
+            <button
+              onClick={handleExport}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Export
             </button>
           </FeatureGate>
           <FeatureGate feature="customers.create" requiredPlan="free" fallback={null}>

@@ -32,9 +32,12 @@ import {
   findParent,
   findSiblings,
   canDropComponent,
+  moveComponentTo,
+  duplicateComponent,
 } from "../document-operations";
 import { getComponentDefinition, RenderContext, PaletteItem, getPaletteItems } from "../registry/index";
 import { analytics } from "../../lib/analytics";
+import { useEditor } from "./EditorContext";
 
 type DragOperation = "create" | "reorder";
 
@@ -44,6 +47,11 @@ interface ActiveDrag {
   componentType: ComponentType | null;
   sourceParentId: ParentId | null;
   sourceIndex: number;
+}
+
+interface ResizeDirection {
+  horizontal: "left" | "right" | "none";
+  vertical: "top" | "bottom" | "none";
 }
 
 interface AlignmentGuide {
@@ -403,12 +411,18 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; componentId: ComponentId } | null>(null);
   const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
   const [snapDelta, setSnapDelta] = useState<Transform>({ x: 0, y: 0, scaleX: 1, scaleY: 1 });
+  const [resizeDirection, setResizeDirection] = useState<ResizeDirection | null>(null);
+  const [resizeStartRect, setResizeStartRect] = useState<DOMRect | null>(null);
+  const [clipboard, setClipboard] = useState<{ component: AnyComponent; parentId: ParentId; index: number } | null>(null);
 
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const dragStartRectRef = useRef<DOMRect | null>(null);
   const draggedComponentIdRef = useRef<ComponentId | null>(null);
+  const { updateComponent: editorUpdateComponent, moveComponent: editorMoveComponent, duplicateComponent: editorDuplicateComponent } = useEditor();
 
   const SNAP_THRESHOLD = 8;
+  const NUDGE_DISTANCE = 1;
+  const NUDGE_DISTANCE_SHIFT = 10;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -537,8 +551,120 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         closeContextMenu();
+        setResizeDirection(null);
+        setResizeStartRect(null);
+      }
+
+      if (selectedComponentId && !isInputElement(e.target)) {
+        const isMod = e.ctrlKey || e.metaKey;
+
+        if (isMod && (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+          e.preventDefault();
+          e.stopPropagation();
+          const component = findComponent(doc, selectedComponentId);
+          if (!component) return;
+
+          const currentX = Number(component.style.x ?? component.style.left ?? 0);
+          const currentY = Number(component.style.y ?? component.style.top ?? 0);
+          const distance = e.shiftKey ? NUDGE_DISTANCE_SHIFT : NUDGE_DISTANCE;
+
+          let newX = currentX;
+          let newY = currentY;
+
+          switch (e.key) {
+            case "ArrowUp":
+              newY = Math.max(0, currentY - distance);
+              break;
+            case "ArrowDown":
+              newY = currentY + distance;
+              break;
+            case "ArrowLeft":
+              newX = Math.max(0, currentX - distance);
+              break;
+            case "ArrowRight":
+              newX = currentX + distance;
+              break;
+          }
+
+          if (newX !== currentX || newY !== currentY) {
+            editorMoveComponentTo(selectedComponentId, newX, newY);
+          }
+          return;
+        }
+
+        if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          e.preventDefault();
+          e.stopPropagation();
+          const component = findComponent(doc, selectedComponentId);
+          if (!component) return;
+
+          const currentX = Number(component.style.x ?? component.style.left ?? 0);
+          const currentY = Number(component.style.y ?? component.style.top ?? 0);
+          const distance = e.shiftKey ? NUDGE_DISTANCE_SHIFT : NUDGE_DISTANCE;
+
+          let newX = currentX;
+          let newY = currentY;
+
+          switch (e.key) {
+            case "ArrowUp":
+              newY = Math.max(0, currentY - distance);
+              break;
+            case "ArrowDown":
+              newY = currentY + distance;
+              break;
+            case "ArrowLeft":
+              newX = Math.max(0, currentX - distance);
+              break;
+            case "ArrowRight":
+              newX = currentX + distance;
+              break;
+          }
+
+          if (newX !== currentX || newY !== currentY) {
+            editorMoveComponentTo(selectedComponentId, newX, newY);
+          }
+          return;
+        }
+
+        if (isMod && (e.key === "[" || e.key === "]")) {
+          e.preventDefault();
+          e.stopPropagation();
+          const component = findComponent(doc, selectedComponentId);
+          if (!component) return;
+
+          const currentZ = Number(component.style.zIndex ?? 0);
+          const newZ = e.key === "]" ? currentZ + 1 : Math.max(0, currentZ - 1);
+          if (newZ !== currentZ) {
+            editorUpdateComponentStyle(selectedComponentId, { zIndex: newZ });
+          }
+        }
+      }
+
+      if (isMod && (e.key === "c" || e.key === "C") && selectedComponentId) {
+        e.preventDefault();
+        e.stopPropagation();
+        const component = findComponent(doc, selectedComponentId);
+        if (component) {
+          const parentId = findParent(doc, selectedComponentId);
+          const siblings = parentId ? findSiblings(doc, selectedComponentId) : [];
+          const index = siblings.indexOf(selectedComponentId);
+          setClipboard({ component, parentId: parentId ?? doc.rootSectionId, index });
+        }
+      }
+
+      if (isMod && (e.key === "v" || e.key === "V") && clipboard) {
+        e.preventDefault();
+        e.stopPropagation();
+        onDuplicate(clipboard.component.id);
       }
     };
+
+    const isInputElement = (target: EventTarget | null): boolean => {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || target.isContentEditable;
+    };
+
     const handleClick = () => {
       if (contextMenu) closeContextMenu();
     };
@@ -550,7 +676,48 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         document.removeEventListener("mousedown", handleClick);
       };
     }
-  }, [contextMenu, closeContextMenu]);
+  }, [contextMenu, closeContextMenu, doc, selectedComponentId, editorMoveComponentTo, editorUpdateComponentStyle, onDuplicate, clipboard]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInputElement(e.target)) return;
+
+      const isMod = e.ctrlKey || e.metaKey;
+
+      if (isMod && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        // undo handled by EditorContext
+      }
+
+      if (isMod && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+        e.preventDefault();
+        e.stopPropagation();
+        // redo handled by EditorContext
+      }
+
+      if (e.key === "Delete" && selectedComponentId) {
+        e.preventDefault();
+        e.stopPropagation();
+        onDelete(selectedComponentId);
+      }
+
+      if (isMod && (e.key === "d" || e.key === "D") && selectedComponentId) {
+        e.preventDefault();
+        e.stopPropagation();
+        onDuplicate(selectedComponentId);
+      }
+    };
+
+    const isInputElement = (target: EventTarget | null): boolean => {
+      if (!target || !(target instanceof HTMLElement)) return false;
+      const tag = target.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || target.isContentEditable;
+    };
+
+    window.document.addEventListener("keydown", handleKeyDown);
+    return () => window.document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedComponentId, onDelete, onDuplicate]);
 
   const renderContext: RenderContext = {
     document: doc,
@@ -564,6 +731,25 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     selectedComponentId: selectedComponentId ?? null,
     onSelect,
   };
+
+  const editorMoveComponentTo = useCallback((componentId: ComponentId, x?: number, y?: number) => {
+    const newDoc = moveComponentTo(doc, { componentId, x, y });
+    setDocument(newDoc);
+  }, [doc, setDocument]);
+
+  const editorUpdateComponentStyle = useCallback((componentId: ComponentId, style: Partial<StyleProps>) => {
+    const newDoc = updateComponent(doc, {
+      componentId,
+      style,
+    });
+    setDocument(newDoc);
+  }, [doc, setDocument]);
+
+  const editorDuplicateComponent = useCallback((componentId: ComponentId) => {
+    const newDoc = duplicateComponent(doc, { componentId });
+    setDocument(newDoc);
+    analytics.track("component_duplicated", { componentId });
+  }, [doc, setDocument]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const activeId = event.active.id as string;

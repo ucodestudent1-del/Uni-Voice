@@ -294,6 +294,11 @@ export async function getCustomerEvents(customerId: string, params?: { limit?: n
   return res.data;
 }
 
+export async function exportCustomersCsv() {
+  const res = await api.get("/customers/export", { responseType: "blob" });
+  return res.data;
+}
+
 export function buildCustomerSearchParams(params: CustomerSearchParams): Record<string, any> {
   const result: Record<string, any> = {};
   if (params.limit !== undefined) result.limit = params.limit;

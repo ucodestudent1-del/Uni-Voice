@@ -50,6 +50,14 @@ export interface StyleProps {
   opacity?: number;
   visibility?: "visible" | "hidden" | "collapse";
   overflow?: "visible" | "hidden" | "scroll" | "auto";
+  position?: "static" | "relative" | "absolute" | "fixed" | "sticky";
+  left?: number;
+  top?: number;
+  right?: number;
+  bottom?: number;
+  zIndex?: number;
+  transform?: string;
+  transformOrigin?: string;
   [key: string]: unknown;
 }
 

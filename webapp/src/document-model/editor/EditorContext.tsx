@@ -11,6 +11,7 @@ import {
   insertComponent,
   updateComponent,
   moveComponent,
+  moveComponentTo,
   removeComponent,
   duplicateComponent as duplicateComponentOp,
   setDocumentSettings,
@@ -20,6 +21,7 @@ import {
   MoveComponentParams,
   RemoveComponentParams,
   DuplicateComponentParams,
+  MoveComponentToParams,
 } from "../document-operations";
 import { initializeRegistry } from "../index";
 import { analytics } from "../../lib/analytics";
@@ -32,6 +34,8 @@ interface EditorContextValue {
   insertComponent: (params: InsertComponentParams) => void;
   updateComponent: (componentId: ComponentId, props: Record<string, unknown>, style?: Partial<StyleProps>) => void;
   moveComponent: (params: MoveComponentParams) => void;
+  moveComponentTo: (componentId: ComponentId, x?: number, y?: number) => void;
+  updateComponentStyle: (componentId: ComponentId, style: Partial<StyleProps>) => void;
   removeComponent: (params: RemoveComponentParams) => void;
   duplicateComponent: (componentId: ComponentId) => void;
   setSettings: (settings: Partial<InvoiceDocument["settings"]>) => void;
@@ -128,6 +132,19 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
 
   const handleMoveComponent = useCallback((params: MoveComponentParams) => {
     const newDoc = moveComponent(document, params);
+    handleDocumentChange(newDoc);
+  }, [document, handleDocumentChange]);
+
+  const handleMoveComponentTo = useCallback((componentId: ComponentId, x?: number, y?: number) => {
+    const newDoc = moveComponentTo(document, { componentId, x, y });
+    handleDocumentChange(newDoc);
+  }, [document, handleDocumentChange]);
+
+  const handleUpdateComponentStyle = useCallback((componentId: ComponentId, style: Partial<StyleProps>) => {
+    const newDoc = updateComponent(document, {
+      componentId,
+      style,
+    });
     handleDocumentChange(newDoc);
   }, [document, handleDocumentChange]);
 
@@ -285,6 +302,8 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
         insertComponent: handleInsertComponent,
         updateComponent: handleUpdateComponent,
         moveComponent: handleMoveComponent,
+        moveComponentTo: handleMoveComponentTo,
+        updateComponentStyle: handleUpdateComponentStyle,
         removeComponent: handleRemoveComponent,
         duplicateComponent: handleDuplicateComponent,
         setSettings: handleSetSettings,

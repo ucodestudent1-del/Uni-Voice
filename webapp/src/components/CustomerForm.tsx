@@ -39,6 +39,9 @@ const defaultValues: CustomerFormValues = {
   postalCode: "",
   countryCode: "US",
   notes: "",
+  status: "active",
+  paymentTerms: undefined,
+  defaultCurrency: undefined,
 };
 
 export default function CustomerForm({ customer, onClose, onSaved }: CustomerFormProps) {
@@ -63,6 +66,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
         notes: customer.notes || "",
         status: customer.status as any,
         paymentTerms: customer.paymentTerms ?? undefined,
+        defaultCurrency: customer.defaultCurrency || undefined,
       });
     }
   }, [customer]);
@@ -168,6 +172,39 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
               onChange={(e) => handleChange("taxId", e.target.value)}
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Payment Terms (Days)</label> Net
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={formData.paymentTerms ?? ""}
+                onChange={(e) => handleChange("paymentTerms", e.target.value ? Number(e.target.value) : undefined)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="e.g. 30"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Default Currency</label>
+              <select
+                value={formData.defaultCurrency || ""}
+                onChange={(e) => handleChange("defaultCurrency", e.target.value || undefined)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Default</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="CAD">CAD</option>
+                <option value="AUD">AUD</option>
+                <option value="JPY">JPY</option>
+                <option value="CNY">CNY</option>
+                <option value="INR">INR</option>
+              </select>
+            </div>
           </div>
 
           <fieldset className="border border-slate-200 rounded-lg p-4">
