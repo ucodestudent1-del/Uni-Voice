@@ -40,6 +40,10 @@ export interface CreateInvoiceInput {
   terms?: string | null;
   templateId?: string | null;
   paymentInstructions?: string | null;
+  depositAmount?: string | number;
+  depositType?: "none" | "fixed" | "percentage";
+  depositDueDate?: Date | string | null;
+  depositPaymentPurpose?: string | null;
   items?: InvoiceItemInput[];
   fees?: InvoiceFeeInput[];
   createdBy?: string;
@@ -492,7 +496,7 @@ export class InvoiceRepository {
     );
   }
 
-  private rowToModel(r: Record<string, unknown>): Invoice {
+   private rowToModel(r: Record<string, unknown>): Invoice {
     return {
       id: r.id as string, businessId: r.business_id as string, customerId: r.customer_id as string | null,
       projectId: r.project_id as string | null,
@@ -512,6 +516,11 @@ export class InvoiceRepository {
       templateRevision: Number(r.template_revision ?? 1),
       createdAt: rowToDate(r.created_at)!, updatedAt: rowToDate(r.updated_at)!,
       createdBy: r.created_by as string | null, updatedBy: r.updated_by as string | null,
+      depositAmount: r.deposit_amount as string,
+      depositType: (r.deposit_type as "none" | "fixed" | "percentage") ?? "none",
+      depositDueDate: rowToDate(r.deposit_due_date),
+      depositPaymentPurpose: r.deposit_payment_purpose as string | null ?? null,
+      creditApplied: r.credit_applied as string ?? "0",
     };
   }
 

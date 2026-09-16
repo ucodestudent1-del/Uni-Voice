@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import type { Project, ProjectTag, ProjectTeamMember, ProjectEvent, Customer } from "../domain/models/index.js";
+import type { Project, ProjectStatus, ProjectTag, ProjectTeamMember, ProjectEvent, Customer } from "../domain/models/index.js";
 import type {
   ProjectUpdateInput,
   ProjectFinancialSummary,
