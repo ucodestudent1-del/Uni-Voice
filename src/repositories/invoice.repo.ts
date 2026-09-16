@@ -2,7 +2,7 @@ import { Decimal } from "decimal.js";
 import { getClient, query } from "../db/pool.js";
 import type { Invoice, InvoiceLineItem, InvoiceFee, InvoiceSnapshot, InvoiceEvent } from "../domain/models/index.js";
 import { NotFoundError, ConflictError } from "../domain/errors.js";
-import { rowToDate } from "./helpers.js";
+import { rowToDate, type PagedResult } from "./helpers.js";
 
 export interface InvoiceItemInput {
   id?: string;
@@ -322,6 +322,60 @@ export class InvoiceRepository {
     return res.rows;
   }
 
+  async findManyPage(businessId: string, opts: InvoiceListOptions = {}): Promise<PagedResult<Invoice>> {
+    const conditions: string[] = ["business_id = $1"];
+    const vals: unknown[] = [businessId];
+    let i = 2;
+    if (opts.status) { conditions.push(`status = $${i++}`); vals.push(opts.status); }
+    if (opts.customerId) { conditions.push(`customer_id = $${i++}`); vals.push(opts.customerId); }
+    if (opts.projectId) { conditions.push(`project_id = $${i++}`); vals.push(opts.projectId); }
+    if (opts.invoiceNumber) { conditions.push(`invoice_number ILIKE $${i++}`); vals.push(`%${opts.invoiceNumber}%`); }
+    if (opts.currency) { conditions.push(`currency = $${i++}`); vals.push(opts.currency.toUpperCase()); }
+    if (opts.minAmount !== undefined) { conditions.push(`total >= $${i++}`); vals.push(opts.minAmount); }
+    if (opts.maxAmount !== undefined) { conditions.push(`total <= $${i++}`); vals.push(opts.maxAmount); }
+    if (asSqlDate(opts.issueDateFrom)) { conditions.push(`issue_date >= $${i++}`); vals.push(asSqlDate(opts.issueDateFrom)); }
+    if (asSqlDate(opts.issueDateTo)) { conditions.push(`issue_date <= $${i++}`); vals.push(asSqlDate(opts.issueDateTo)); }
+    if (asSqlDate(opts.dueDateFrom)) { conditions.push(`due_date >= $${i++}`); vals.push(asSqlDate(opts.dueDateFrom)); }
+    if (asSqlDate(opts.dueDateTo)) { conditions.push(`due_date <= $${i++}`); vals.push(asSqlDate(opts.dueDateTo)); }
+    if (opts.search) {
+      const term = `%${opts.search}%`;
+      conditions.push(`(i.invoice_number ILIKE $${i} OR c.name ILIKE $${i} OR c.email ILIKE $${i} OR c.company_name ILIKE $${i})`);
+      vals.push(term, term, term, term);
+      i++;
+    }
+    if (opts.paymentState) {
+      const paymentState = opts.paymentState.toLowerCase();
+      if (paymentState === "paid") {
+        conditions.push(`(status = 'paid' OR amount_due <= 0)`);
+      } else if (paymentState === "partial" || paymentState === "partially_paid") {
+        conditions.push(`(status = 'partially_paid' OR (amount_paid > 0 AND amount_due > 0))`);
+      } else if (paymentState === "overdue") {
+        conditions.push(`(status = 'overdue' OR (due_date < CURRENT_DATE AND amount_due > 0 AND status NOT IN ('paid', 'cancelled', 'void', 'draft')))`);
+      } else if (paymentState === "unpaid" || paymentState === "open") {
+        conditions.push(`(amount_due > 0 AND status NOT IN ('paid', 'cancelled', 'void'))`);
+      } else if (paymentState === "pending") {
+        conditions.push(`status = 'draft'`);
+      }
+    }
+
+    const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+    const offset = Math.max(opts.offset ?? 0, 0);
+    const sortColumn = INVOICE_SORT_COLUMNS[opts.sortBy ?? "createdAt"] ?? INVOICE_SORT_COLUMNS.createdAt!;
+    const direction = opts.sortOrder === "asc" ? "ASC" : "DESC";
+    const from = `FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id WHERE ${conditions.join(" AND ")}`;
+    const dataRes = await query(
+      `SELECT i.*, c.name AS customer_name, c.email AS customer_email ${from}
+       ORDER BY ${sortColumn} ${direction}, i.created_at DESC LIMIT $${i++} OFFSET $${i++}`,
+      [...vals, limit, offset]
+    );
+    const countRes = await query(`SELECT COUNT(*)::int AS total ${from}`, vals);
+    return {
+      data: dataRes.rows.map((r) => this.rowToModel(r)),
+      total: Number(countRes.rows[0]?.total ?? 0),
+      limit,
+      offset,
+    };
+  }
   async findMany(businessId: string, opts: { status?: string; customerId?: string; projectId?: string; search?: string; limit?: number; offset?: number } = {}): Promise<any[]> {
     const conditions: string[] = ["business_id = $1"];
     const vals: unknown[] = [businessId];

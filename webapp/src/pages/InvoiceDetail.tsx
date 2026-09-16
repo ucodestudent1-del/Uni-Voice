@@ -94,7 +94,7 @@ export default function InvoiceDetail() {
   const canEdit = invoice && !invoice.is_finalized;
   const canCancel = invoice && ["draft", "sent", "viewed"].includes(invoice.status);
   const canVoid = invoice && ["draft", "sent", "viewed", "partially_paid", "overdue"].includes(invoice.status);
-  
+
   const depositType = (invoice as any).deposit_type ?? "none";
   const depositValue = (invoice as any).deposit_value ?? "0";
   const depositDueDate = (invoice as any).deposit_due_date;
