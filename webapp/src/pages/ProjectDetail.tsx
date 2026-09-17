@@ -4,7 +4,6 @@ import {
   getProject,
   archiveProject,
   restoreProject,
-  updateProject,
   updateProjectStatus,
   deleteProject,
   createInvoiceFromProject,
@@ -19,6 +18,8 @@ import type { ApiProject, ApiProjectTag, ApiProjectEvent, ApiProjectInvoice, Api
 import ProjectStatusBadge from "../components/ProjectStatusBadge";
 import ProjectForm from "../components/ProjectForm";
 import ProjectTagManager from "../components/ProjectTagManager";
+import ProjectTimeTab from "../components/ProjectTimeTab";
+import ProjectNotesTab from "../components/ProjectNotesTab";
 import { formatDate, formatCurrency } from "../utils/format";
 
 const STATUS_OPTIONS = [
@@ -37,7 +38,7 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "invoices" | "activity">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "invoices" | "activity" | "time" | "notes">("overview");
 
   const loadProject = async () => {
     if (!projectId) return;
@@ -95,7 +96,7 @@ export default function ProjectDetail() {
   const handleCreateInvoice = async () => {
     if (!project) return;
     try {
-      await createInvoiceFromProject(project.id);
+      await createInvoiceFromProject(project.id, { includeUnbilledTime: true });
       loadProject();
     } catch (err: any) {
       setError(err.message || "Failed to create invoice");
@@ -208,6 +209,18 @@ export default function ProjectDetail() {
           >
             Activity
           </button>
+          <button
+            onClick={() => setActiveTab("time")}
+            className={`text-sm font-medium pb-2 ${activeTab === "time" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600"}`}
+          >
+            Time
+          </button>
+          <button
+            onClick={() => setActiveTab("notes")}
+            className={`text-sm font-medium pb-2 ${activeTab === "notes" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600"}`}
+          >
+            Notes
+          </button>
         </nav>
 
         <div className="p-4">
@@ -293,6 +306,21 @@ export default function ProjectDetail() {
 
           {activeTab === "activity" && (
             <ProjectActivity projectId={project.id} />
+          )}
+
+          {activeTab === "time" && (
+            <ProjectTimeTab
+              projectId={project.id}
+              currency={project.currency}
+              onEntriesChanged={loadProject}
+            />
+          )}
+
+          {activeTab === "notes" && (
+            <ProjectNotesTab
+              projectId={project.id}
+              onNotesChanged={loadProject}
+            />
           )}
         </div>
       </div>

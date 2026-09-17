@@ -515,6 +515,7 @@ export interface InvoiceTemplateListParams {
   limit?: number;
   offset?: number;
   industry?: string;
+  documentType?: string;
   isDefault?: boolean;
   lifecycle?: string;
 }
@@ -755,7 +756,7 @@ export async function deleteProject(id: string) {
   return res.data;
 }
 
-export async function createInvoiceFromProject(projectId: string, data?: any) {
+export async function createInvoiceFromProject(projectId: string, data?: { includeUnbilledTime?: boolean; items?: any[]; fees?: any[] }) {
   const res = await api.post(`/projects/${projectId}/invoice`, data ?? {});
   return res.data;
 }
@@ -803,6 +804,78 @@ export async function addProjectTeamMember(projectId: string, userId: string, ro
 export async function removeProjectTeamMember(projectId: string, userId: string) {
   const res = await api.delete(`/projects/${projectId}/team/${userId}`);
   return res.data;
+}
+
+// ============================================================================
+// PROJECT TIME TRACKING
+// ============================================================================
+
+export async function createTimeEntry(projectId: string, data: any) {
+  const res = await api.post(`/projects/${projectId}/time-entries`, data);
+  return res.data;
+}
+
+export async function getTimeEntries(projectId: string, params?: {
+  limit?: number;
+  offset?: number;
+  billable?: boolean;
+  isInvoiced?: boolean;
+  userId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}) {
+  const res = await api.get(`/projects/${projectId}/time-entries`, { params });
+  return res.data;
+}
+
+export async function updateTimeEntry(entryId: string, data: any) {
+  const res = await api.patch(`/time-entries/${entryId}`, data);
+  return res.data;
+}
+
+export async function deleteTimeEntry(entryId: string) {
+  const res = await api.delete(`/time-entries/${entryId}`);
+  return res.data;
+}
+
+export async function startTimer(projectId: string, data: any) {
+  const res = await api.post(`/time-entries/timer/start`, { projectId, ...data });
+  return res.data;
+}
+
+export async function stopTimer(entryId: string) {
+  const res = await api.post(`/time-entries/${entryId}/stop`);
+  return res.data;
+}
+
+export async function getTimeEntrySummary(projectId: string, currency?: string) {
+  const res = await api.get(`/projects/${projectId}/time-entries/summary`, { params: { currency } });
+  return res.data;
+}
+
+// Project Notes
+export async function addProjectNote(projectId: string, data: { title?: string; content: string }) {
+  const res = await api.post(`/projects/${projectId}/notes`, data);
+  return res.data;
+}
+
+export async function getProjectNotes(projectId: string, params?: { limit?: number; offset?: number }) {
+  const res = await api.get(`/projects/${projectId}/notes`, { params });
+  return res.data;
+}
+
+export async function deleteProjectNote(projectId: string, noteId: string) {
+  const res = await api.delete(`/projects/${projectId}/notes/${noteId}`);
+  return res.data;
+}
+
+export function formatDuration(minutes: number): string {
+  if (!minutes || minutes === 0) return "0h 0m";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}h ${m}m`;
 }
 
 export function buildProjectSearchParams(params: ProjectSearchParams): Record<string, any> {

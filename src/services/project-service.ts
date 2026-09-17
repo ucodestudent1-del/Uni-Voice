@@ -12,6 +12,7 @@ import { ConflictError, BusinessLogicError, ValidationError } from "../domain/er
 import type { ProjectCreateInput, ProjectUpdateInput as SchemaProjectUpdateInput } from "../domain/schemas/project.js";
 import { invoiceService } from "./invoice-service.js";
 import type { DraftLineItem, DraftFee } from "./invoice-service.js";
+import { projectTimeEntryRepository } from "../repositories/project-time.repo.js";
 
 export interface ProjectSummary {
   project: Project;
@@ -48,6 +49,7 @@ export interface CreateInvoiceFromProjectInput {
   terms?: string | null;
   items?: DraftLineItem[];
   fees?: DraftFee[];
+  includeUnbilledTime?: boolean;
 }
 
 export class ProjectService {
@@ -284,6 +286,19 @@ export class ProjectService {
       throw new BusinessLogicError("Project must have a customer to create an invoice");
     }
 
+    let items = input.items ?? [];
+
+    if (input.includeUnbilledTime !== false) {
+      const timeLineItems = await projectTimeEntryRepository.convertToLineItems(
+        businessId,
+        projectId,
+        ""
+      );
+      if (timeLineItems.length > 0) {
+        items = [...items, ...timeLineItems];
+      }
+    }
+
     const invoiceId = await invoiceService.createDraft({
       customerId: project.customerId,
       projectId: project.id,
@@ -292,13 +307,19 @@ export class ProjectService {
       dueDate: input.dueDate ?? null,
       notes: input.notes ?? project.description ?? null,
       terms: input.terms ?? null,
-      items: input.items,
+      items: items.length > 0 ? items : undefined,
       fees: input.fees,
     }, businessId, userId);
+
+    if (input.includeUnbilledTime !== false && items.length > 0) {
+      await projectTimeEntryRepository.markInvoiced(businessId, projectId, invoiceId);
+    }
 
     await this.repo.recordEvent(projectId, businessId, "invoice_created", userId, {
       invoiceId,
       currency: input.currency ?? project.currency,
+      includedTimeEntries: input.includeUnbilledTime !== false,
+      lineItemCount: items.length,
     });
 
     return { invoiceId };

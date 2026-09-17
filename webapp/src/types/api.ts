@@ -379,6 +379,7 @@ export interface InvoiceTemplateDTO {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
+  documentType: "invoice" | "quote" | "recurring_invoice";
   lifecycle: "draft" | "published" | "archived";
   publishedAt?: string | null;
   archivedAt?: string | null;
@@ -747,4 +748,45 @@ export interface ApiProjectDetail {
   tags: ApiProjectTag[];
   team_members: ApiProjectTeamMember[];
   financial_summary: ApiProjectFinancialSummary;
+}
+
+export interface ApiProjectTimeEntry {
+  id: string;
+  project_id: string;
+  business_id: string;
+  user_id?: string | null;
+  catalog_service_id?: string | null;
+  description: string;
+  billable: boolean;
+  start_time?: string | null;
+  end_time?: string | null;
+  duration_minutes?: number | null;
+  billable_rate: string;
+  billable_amount: string;
+  is_invoiced: boolean;
+  invoice_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiProjectTimeEntrySummary {
+  total_minutes: number;
+  billable_minutes: number;
+  non_billable_minutes: number;
+  unbilled_billable_minutes: number;
+  invoiced_billable_minutes: number;
+  total_billable_amount: string;
+  unbilled_billable_amount: string;
+  currency: string;
+}
+
+export interface ApiProjectNote {
+  id: string;
+  project_id: string;
+  business_id: string;
+  user_id?: string | null;
+  title?: string | null;
+  content: string;
+  created_at: string;
+  updated_at: string;
 }

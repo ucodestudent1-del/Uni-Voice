@@ -58,6 +58,13 @@ import {
 } from "./schemas/invoice-template-dto.js";
 import { invoiceTemplateService } from "./services/templates/invoice-template-service.js";
 import { projectService } from "./services/project-service.js";
+import { projectTimeEntryService } from "./services/project-time-service.js";
+import {
+  ProjectTimeEntryCreateSchema,
+  ProjectTimeEntryUpdateSchema,
+  ProjectTimeEntrySearchSchema,
+  ProjectNoteCreateSchema,
+} from "./domain/schemas/project-time-entry.js";
 import bcrypt from "bcrypt";
 
 const app = express();
@@ -1247,6 +1254,7 @@ app.get("/api/invoice-templates", requireAuth, async (req: AuthRequest, res) => 
     industry: parsed.data.industry ?? null,
     isDefault: parsed.data.isDefault,
     lifecycle: parsed.data.lifecycle,
+    documentType: parsed.data.documentType,
     limit: parsed.data.limit,
     offset: parsed.data.offset,
   });
@@ -1263,7 +1271,8 @@ app.post("/api/invoice-templates", requireAuth, async (req: AuthRequest, res) =>
 app.get("/api/invoice-templates/default", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const industry = req.query.industry ? String(req.query.industry) : undefined;
-  const template = await invoiceTemplateService.getDefaultTemplate(req.user!.businessId, industry);
+  const documentType = req.query.documentType ? String(req.query.documentType) : undefined;
+  const template = await invoiceTemplateService.getDefaultTemplate(req.user!.businessId, industry, documentType);
   res.json({ template });
 });
 
@@ -1582,6 +1591,161 @@ app.delete("/api/projects/:id/team/:userId", requireAuth, async (req: AuthReques
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await projectService.removeTeamMember(req.user!.businessId, req.params.id, req.params.userId);
   res.status(204).send();
+});
+
+// ============================================================================
+// PROJECT TIME TRACKING
+// ============================================================================
+
+app.post("/api/projects/:projectId/time-entries", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = ProjectTimeEntryCreateSchema.parse(req.body);
+    const entry = await projectTimeEntryService.create(
+      req.user!.businessId,
+      req.params.projectId,
+      parsed,
+      req.user!.id
+    );
+    res.status(201).json({ entry });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/projects/:projectId/time-entries", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = ProjectTimeEntrySearchSchema.parse({
+      ...req.query,
+      limit: req.query.limit ?? 50,
+      offset: req.query.offset ?? 0,
+    });
+    const result = await projectTimeEntryService.getProjectEntries(
+      req.user!.businessId,
+      req.params.projectId,
+      parsed
+    );
+    res.json({ entries: result.data, total: result.total, limit: result.limit, offset: result.offset });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/time-entries/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = ProjectTimeEntryUpdateSchema.parse(req.body);
+    const entry = await projectTimeEntryService.update(
+      req.user!.businessId,
+      req.params.id,
+      parsed
+    );
+    res.json({ entry });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete("/api/time-entries/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    await projectTimeEntryService.delete(req.user!.businessId, req.params.id);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/time-entries/:id/start", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const entry = await projectTimeEntryService.startTimer(
+      req.user!.businessId,
+      req.body.projectId,
+      req.body,
+      req.user!.id
+    );
+    res.status(201).json({ entry });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/time-entries/:id/stop", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const entry = await projectTimeEntryService.stopTimer(
+      req.user!.businessId,
+      req.params.id,
+      req.user!.id
+    );
+    res.json({ entry });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/projects/:projectId/time-entries/summary", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const summary = await projectTimeEntryService.getSummary(
+      req.user!.businessId,
+      req.params.projectId,
+      req.query.currency as string | undefined
+    );
+    res.json({ summary });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Project notes
+app.post("/api/projects/:projectId/notes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = ProjectNoteCreateSchema.parse(req.body);
+    const note = await projectTimeEntryService.addNote(
+      req.user!.businessId,
+      req.params.projectId,
+      parsed,
+      req.user!.id
+    );
+    res.status(201).json({ note });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/projects/:projectId/notes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const limit = Math.min(Number(req.query.limit ?? 50), 200);
+    const offset = Number(req.query.offset ?? 0);
+    const result = await projectTimeEntryService.getNotes(
+      req.user!.businessId,
+      req.params.projectId,
+      limit,
+      offset
+    );
+    res.json({ notes: result.data, total: result.total, limit, offset });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete("/api/projects/:projectId/notes/:noteId", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    await projectTimeEntryService.deleteNote(
+      req.user!.businessId,
+      req.params.projectId,
+      req.params.noteId
+    );
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ============================================================================
