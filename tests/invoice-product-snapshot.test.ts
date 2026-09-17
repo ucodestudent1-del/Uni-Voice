@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { invoiceService } from "../src/services/invoice-service.js";
 import { productServiceRepository } from "../src/repositories/product-service.repo.js";
-import { resetTestDb, createTestBusiness, createTestCustomer } from "./helpers/db.js";
+import { truncateTestDb, createTestBusiness, createTestCustomer } from "./helpers/db.js";
 
 describe("Invoice product snapshot", () => {
   let businessId: string;
 
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
     const biz = await createTestBusiness();
     businessId = biz.id;
   }, 60000);

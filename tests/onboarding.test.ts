@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { onboardingService } from "../src/services/onboarding.service.js";
 import { onboardingRepository } from "../src/repositories/onboarding.repo.js";
-import { resetTestDb, createTestUser } from "./helpers/db.js";
+import { truncateTestDb, createTestUser } from "./helpers/db.js";
 
 describe("OnboardingService (DB integration)", () => {
   let user: { id: string; email: string; businessId: string };
 
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
     user = await createTestUser();
   });
 

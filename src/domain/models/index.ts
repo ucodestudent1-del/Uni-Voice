@@ -459,6 +459,7 @@ export interface DocumentTemplate {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
+  documentType: string;
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string | null;
@@ -479,6 +480,7 @@ export interface InvoiceTemplate {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
+  documentType: "invoice" | "quote" | "recurring_invoice";
   lifecycle: string;
   publishedAt?: Date | null;
   publishedRevision?: number | null;

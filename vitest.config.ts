@@ -22,6 +22,13 @@ export default defineConfig({
     env: { ...parsedEnv, APP_ENV: "test" },
     fileParallelism: false,
     maxWorkers: 1,
+    minWorkers: 1,
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
     globalSetup: "./tests/global-setup.ts",
     coverage: {
       provider: "v8",

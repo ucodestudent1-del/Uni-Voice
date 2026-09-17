@@ -3,6 +3,9 @@ import { z } from "zod";
 export const InvoiceTemplateLifecycleSchema = z.enum(["draft", "published", "archived"]);
 export type InvoiceTemplateLifecycle = z.infer<typeof InvoiceTemplateLifecycleSchema>;
 
+export const DocumentTypeSchema = z.enum(["invoice", "quote", "recurring_invoice"]);
+export type DocumentType = z.infer<typeof DocumentTypeSchema>;
+
 export const INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION = "1.0";
 export const INVOICE_TEMPLATE_SCHEMA_VERSIONS = ["1.0"] as const;
 export type InvoiceTemplateSchemaVersion = (typeof INVOICE_TEMPLATE_SCHEMA_VERSIONS)[number];
@@ -68,6 +71,7 @@ export const InvoiceTemplateSchema = z.object({
   config: z.record(z.string(), z.unknown()).default({}),
   isDefault: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  documentType: DocumentTypeSchema.default("invoice"),
   lifecycle: InvoiceTemplateLifecycleSchema.default("draft"),
   publishedAt: z.date().nullable().optional(),
   publishedRevision: z.number().int().min(1).nullable().optional(),
@@ -90,6 +94,7 @@ export const InvoiceTemplateInputSchema = z.object({
   config: z.record(z.string(), z.unknown()).default({}),
   isDefault: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  documentType: DocumentTypeSchema.default("invoice"),
 });
 
 export type InvoiceTemplateInput = z.infer<typeof InvoiceTemplateInputSchema>;
@@ -104,6 +109,7 @@ export const InvoiceTemplateUpdateSchema = z.object({
   config: z.record(z.string(), z.unknown()).optional(),
   isDefault: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  documentType: DocumentTypeSchema.optional(),
 });
 
 export type InvoiceTemplateUpdate = z.infer<typeof InvoiceTemplateUpdateSchema>;

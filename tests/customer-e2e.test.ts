@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import app from "../src/index.js";
 import request from "supertest";
-import { resetTestDb, createTestBusiness, createTestUser } from "./helpers/db.js";
+import { truncateTestDb, createTestBusiness, createTestUser } from "./helpers/db.js";
 import { generateToken } from "../src/middleware/auth.js";
 import { query } from "../src/db/pool.js";
 
@@ -18,7 +18,7 @@ describe("Customer → Invoice e2e", () => {
   let headers: { Authorization: string };
 
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
     const biz = await createTestBusiness();
     businessId = biz.id;
     const user = await createTestUser({ businessId });

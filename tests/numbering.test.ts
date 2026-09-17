@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { invoiceNumberService } from "../src/services/numbering/service.js";
-import { resetTestDb, createTestBusiness } from "./helpers/db.js";
+import { truncateTestDb, createTestBusiness } from "./helpers/db.js";
 import { query } from "../src/db/pool.js";
 
 describe("InvoiceNumberService", () => {
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
   });
 
   it("creates a sequence and generates INV-YYYY-000001", async () => {

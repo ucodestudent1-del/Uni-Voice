@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { customerService } from "../src/services/customer-service.js";
 import { customerRepository } from "../src/repositories/customer.repo.js";
-import { resetTestDb, createTestBusiness, createTestCustomer } from "./helpers/db.js";
+import { truncateTestDb, createTestBusiness, createTestCustomer } from "./helpers/db.js";
 import { ValidationError, BusinessLogicError, ConflictError, NotFoundError } from "../src/domain/errors.js";
 
 describe("CustomerService", () => {
   let businessId: string;
 
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
     const biz = await createTestBusiness();
     businessId = biz.id;
   });

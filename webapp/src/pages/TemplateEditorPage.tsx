@@ -50,6 +50,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
   const [templateName, setTemplateName] = useState(existingTemplate?.name || "");
   const [templateDescription, setTemplateDescription] = useState(existingTemplate?.description || "");
   const [templateIndustry, setTemplateIndustry] = useState(existingTemplate?.industry || "");
+  const [documentType, setDocumentType] = useState<InvoiceTemplateDTO["documentType"]>(existingTemplate?.documentType || "invoice");
   const [lifecycle, setLifecycle] = useState<InvoiceTemplateDTO["lifecycle"]>(existingTemplate?.lifecycle || "draft");
 
   useEffect(() => {
@@ -103,6 +104,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
         name: templateName,
         description: templateDescription || null,
         industry: templateIndustry || null,
+        documentType,
         document: doc,
       };
       if (isNew) {
@@ -122,7 +124,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
     } catch {
       setSaveState("error");
     }
-  }, [doc, templateName, templateDescription, templateIndustry, isNew, templateId, markSaved, navigate]);
+  }, [doc, templateName, templateDescription, templateIndustry, documentType, isNew, templateId, markSaved, navigate]);
 
   const handlePublish = useCallback(async () => {
     if (!templateId) return;
@@ -201,18 +203,33 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
               className="text-xl font-semibold text-slate-900 border-none outline-none bg-transparent focus:ring-0"
               placeholder="Template name"
             />
-            <input
-              type="text"
-              value={templateDescription}
-              onChange={(e) => {
-                setTemplateDescription(e.target.value);
-                setSaveState("unsaved");
-              }}
-              className="mt-0.5 text-sm text-slate-500 border-none outline-none bg-transparent focus:ring-0"
-              placeholder="Description (optional)"
-            />
-          </div>
-        </div>
+             <input
+               type="text"
+               value={templateDescription}
+               onChange={(e) => {
+                 setTemplateDescription(e.target.value);
+                 setSaveState("unsaved");
+               }}
+               className="mt-0.5 text-sm text-slate-500 border-none outline-none bg-transparent focus:ring-0"
+               placeholder="Description (optional)"
+             />
+           </div>
+         </div>
+         <div className="flex items-center gap-2 text-xs text-slate-600">
+           <label className="text-slate-500">For:</label>
+           <select
+             value={documentType}
+             onChange={(e) => {
+               setDocumentType(e.target.value as InvoiceTemplateDTO["documentType"]);
+               setSaveState("unsaved");
+             }}
+             className="border border-slate-300 rounded px-2 py-0.5 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+           >
+             <option value="invoice">Invoice</option>
+             <option value="quote">Estimate / Quote</option>
+             <option value="recurring_invoice">Recurring Invoice</option>
+           </select>
+         </div>
         <div className="flex items-center gap-3">
           {existingTemplate && (
             <>
@@ -339,13 +356,14 @@ export default function TemplateEditorPage() {
       const businessId = user?.businessId || "local";
       const doc = preset.build(businessId);
       setInitialDocument(doc);
-      setLoadedTemplate({
-        id: "",
-        businessId: businessId,
-        name: preset.metadata.name,
-        description: preset.metadata.description,
-        industry: preset.metadata.industry ?? null,
-        schemaVersion: "1.0",
+       setLoadedTemplate({
+         id: "",
+         businessId: businessId,
+         name: preset.metadata.name,
+         description: preset.metadata.description,
+         industry: preset.metadata.industry ?? null,
+         documentType: "invoice",
+         schemaVersion: "1.0",
         revision: 1,
         version: doc.version,
         document: doc,

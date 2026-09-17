@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { documentTemplateRepository } from "../src/repositories/document-template.repo.js";
-import { resetTestDb, createTestBusiness } from "./helpers/db.js";
+import { truncateTestDb, createTestBusiness } from "./helpers/db.js";
 
 const BUSINESS_A = "00000000-0000-0000-0000-000000000001";
 const BUSINESS_B = "00000000-0000-0000-0000-000000000002";
@@ -15,7 +15,7 @@ const sampleDocument = {
 
 describe("DocumentTemplateRepository (DB integration)", () => {
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
     await createTestBusiness({ id: BUSINESS_A, ownerId: USER_A });
     await createTestBusiness({ id: BUSINESS_B, ownerId: USER_A });
   });

@@ -6,6 +6,7 @@ export interface FindManyOptions {
   industry?: string | null;
   isDefault?: boolean;
   isActive?: boolean;
+  documentType?: string | string[];
   limit?: number;
   offset?: number;
 }
@@ -20,6 +21,7 @@ export interface DocumentTemplateCreateInput {
   config?: Record<string, unknown>;
   is_default?: boolean;
   is_active?: boolean;
+  document_type?: string;
 }
 
 export interface DocumentTemplateUpdateInput {
@@ -32,6 +34,7 @@ export interface DocumentTemplateUpdateInput {
   config?: Record<string, unknown>;
   is_default?: boolean;
   is_active?: boolean;
+  document_type?: string;
   revision?: number;
   version?: number;
 }
@@ -47,10 +50,10 @@ export class DocumentTemplateRepository {
     const now = new Date().toISOString();
     const res = await query(
       `INSERT INTO document_templates
-        (id, business_id, name, description, industry, schema_version, revision, version,
-         document, html_template, config, is_default, is_active, created_at, updated_at, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15)
-       RETURNING *`,
+         (id, business_id, name, description, industry, schema_version, revision, version,
+          document, html_template, config, is_default, is_active, document_type, created_at, updated_at, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$16,$18)
+        RETURNING *`,
       [
         id,
         businessId,
@@ -65,6 +68,7 @@ export class DocumentTemplateRepository {
         JSON.stringify(parsed.config ?? {}),
         parsed.is_default ?? false,
         parsed.is_active ?? true,
+        parsed.document_type ?? "invoice",
         now,
         createdBy ?? null,
       ]
@@ -85,7 +89,7 @@ export class DocumentTemplateRepository {
     businessId: string,
     opts: FindManyOptions = {}
   ): Promise<DocumentTemplate[]> {
-    const { industry, isDefault, isActive, limit = 50, offset = 0 } = opts;
+    const { industry, isDefault, isActive, documentType, limit = 50, offset = 0 } = opts;
     const vals: unknown[] = [businessId];
     const conditions: string[] = ["business_id = $1"];
     let i = 2;
@@ -101,6 +105,16 @@ export class DocumentTemplateRepository {
     if (isActive !== undefined) {
       conditions.push(`is_active = $${i++}`);
       vals.push(isActive);
+    }
+    if (documentType !== undefined) {
+      if (Array.isArray(documentType)) {
+        const placeholders = documentType.map(() => `$` + i++).join(", ");
+        conditions.push(`document_type IN (${placeholders})`);
+        vals.push(...documentType);
+      } else {
+        conditions.push(`document_type = $${i++}`);
+        vals.push(documentType);
+      }
     }
 
     vals.push(Math.min(limit, 200), offset);
@@ -155,6 +169,7 @@ export class DocumentTemplateRepository {
     if (input.config !== undefined) { set.push(`config = $${i++}`); vals.push(JSON.stringify(input.config)); }
     if (input.is_default !== undefined) { set.push(`is_default = $${i++}`); vals.push(input.is_default); }
     if (input.is_active !== undefined) { set.push(`is_active = $${i++}`); vals.push(input.is_active); }
+    if (input.document_type !== undefined) { set.push(`document_type = $${i++}`); vals.push(input.document_type); }
     if (input.revision !== undefined) { set.push(`revision = $${i++}`); vals.push(input.revision); }
     if (input.version !== undefined) { set.push(`version = $${i++}`); vals.push(input.version); }
 
@@ -194,10 +209,10 @@ export class DocumentTemplateRepository {
 
     const res = await query(
       `INSERT INTO document_templates
-        (id, business_id, name, description, industry, schema_version, revision, version,
-         document, html_template, config, is_default, is_active, created_at, updated_at, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15)
-       RETURNING *`,
+         (id, business_id, name, description, industry, schema_version, revision, version,
+          document, html_template, config, is_default, is_active, document_type, created_at, updated_at, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15,$16)
+        RETURNING *`,
       [
         newId,
         businessId,
@@ -212,6 +227,7 @@ export class DocumentTemplateRepository {
         JSON.stringify(original.config),
         false,
         original.isActive,
+        original.documentType ?? "invoice",
         now,
         createdBy ?? original.createdBy ?? null,
       ]
@@ -259,6 +275,7 @@ export class DocumentTemplateRepository {
       config: (r.config as Record<string, unknown>) ?? {},
       isDefault: Boolean(r.is_default),
       isActive: Boolean(r.is_active),
+      documentType: (r.document_type as string) ?? "invoice",
       createdAt: new Date(r.created_at as string),
       updatedAt: new Date(r.updated_at as string),
       createdBy: r.created_by as string | null,

@@ -11,6 +11,7 @@ export interface FindInvoiceTemplatesOptions {
   isDefault?: boolean;
   isActive?: boolean;
   lifecycle?: string | string[];
+  documentType?: string | string[];
   limit?: number;
   offset?: number;
 }
@@ -25,6 +26,7 @@ export interface InvoiceTemplateCreateInput {
   config?: Record<string, unknown>;
   isDefault?: boolean;
   isActive?: boolean;
+  documentType?: string;
 }
 
 export interface InvoiceTemplateUpdateInput {
@@ -37,6 +39,7 @@ export interface InvoiceTemplateUpdateInput {
   config?: Record<string, unknown>;
   isDefault?: boolean;
   isActive?: boolean;
+  documentType?: string;
 }
 
 export interface InvoiceTemplateRevisionInput {
@@ -61,9 +64,9 @@ export class InvoiceTemplateRepository {
     const res = await query(
       `INSERT INTO document_templates
          (id, business_id, name, description, industry, schema_version, revision, version,
-          document, html_template, config, is_default, is_active, lifecycle, published_at,
-          published_revision, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17,$18)
+          document, html_template, config, is_default, is_active, document_type,
+          lifecycle, published_at, published_revision, created_at, updated_at, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19)
         RETURNING *`,
       [
         id,
@@ -79,6 +82,7 @@ export class InvoiceTemplateRepository {
         JSON.stringify(parsed.config ?? {}),
         parsed.isDefault ?? false,
         parsed.isActive ?? true,
+        parsed.documentType ?? "invoice",
         "draft",
         null,
         null,
@@ -102,7 +106,7 @@ export class InvoiceTemplateRepository {
     businessId: string,
     opts: FindInvoiceTemplatesOptions = {}
   ): Promise<InvoiceTemplate[]> {
-    const { industry, isDefault, isActive, lifecycle, limit = 50, offset = 0 } = opts;
+    const { industry, isDefault, isActive, lifecycle, documentType, limit = 50, offset = 0 } = opts;
     const vals: unknown[] = [businessId];
     const conditions: string[] = ["business_id = $1"];
     let i = 2;
@@ -129,6 +133,16 @@ export class InvoiceTemplateRepository {
         vals.push(lifecycle);
       }
     }
+    if (documentType !== undefined) {
+      if (Array.isArray(documentType)) {
+        const placeholders = documentType.map(() => `$` + i++).join(", ");
+        conditions.push(`document_type IN (${placeholders})`);
+        vals.push(...documentType);
+      } else {
+        conditions.push(`document_type = $${i++}`);
+        vals.push(documentType);
+      }
+    }
 
     vals.push(Math.min(limit, 200), offset);
     const res = await query(
@@ -141,7 +155,7 @@ export class InvoiceTemplateRepository {
     return res.rows.map((r) => this.rowToModel(r));
   }
 
-  async findDefault(businessId: string, opts?: { industry?: string }): Promise<InvoiceTemplate | null> {
+  async findDefault(businessId: string, opts?: { industry?: string; documentType?: string }): Promise<InvoiceTemplate | null> {
     const vals: unknown[] = [businessId];
     let i = 2;
     let conditions = "business_id = $1 AND is_default = TRUE AND lifecycle = 'published'";
@@ -151,14 +165,25 @@ export class InvoiceTemplateRepository {
       vals.push(opts.industry);
     }
 
+    if (opts?.documentType) {
+      conditions += ` AND document_type = $${i++}`;
+      vals.push(opts.documentType);
+    }
+
     const res = await query(
       `SELECT * FROM document_templates WHERE ${conditions} ORDER BY created_at DESC LIMIT 1`,
       vals
     );
     if (!res.rows.length) {
+      const fbVals: unknown[] = [businessId];
+      let fbConditions = "business_id = $1 AND is_default = TRUE AND lifecycle = 'published'";
+      if (opts?.documentType) {
+        fbConditions += ` AND document_type = $2`;
+        fbVals.push(opts.documentType);
+      }
       const fallback = await query(
-        "SELECT * FROM document_templates WHERE business_id = $1 AND is_default = TRUE AND lifecycle = 'published' ORDER BY created_at DESC LIMIT 1",
-        [businessId]
+        `SELECT * FROM document_templates WHERE ${fbConditions} ORDER BY created_at DESC LIMIT 1`,
+        fbVals
       );
       if (!fallback.rows.length) return null;
       return this.rowToModel(fallback.rows[0]);
@@ -166,8 +191,8 @@ export class InvoiceTemplateRepository {
     return this.rowToModel(res.rows[0]);
   }
 
-  async findDefaultByIndustry(businessId: string, industry: string): Promise<InvoiceTemplate | null> {
-    return this.findDefault(businessId, { industry });
+  async findDefaultByIndustry(businessId: string, industry: string, documentType?: string): Promise<InvoiceTemplate | null> {
+    return this.findDefault(businessId, { industry, documentType });
   }
 
   async update(
@@ -216,6 +241,10 @@ export class InvoiceTemplateRepository {
       set.push(`is_active = $${i++}`);
       vals.push(input.isActive);
     }
+    if (input.documentType !== undefined) {
+      set.push(`document_type = $${i++}`);
+      vals.push(input.documentType);
+    }
 
     if (!set.length) {
       return this.findById(businessId, id);
@@ -258,9 +287,9 @@ export class InvoiceTemplateRepository {
     const res = await query(
       `INSERT INTO document_templates
          (id, business_id, name, description, industry, schema_version, revision, version,
-          document, html_template, config, is_default, is_active, lifecycle, published_at,
-          published_revision, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17,$18)
+          document, html_template, config, is_default, is_active, document_type, lifecycle,
+          published_at, published_revision, created_at, updated_at, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19)
         RETURNING *`,
       [
         newId,
@@ -276,6 +305,7 @@ export class InvoiceTemplateRepository {
         JSON.stringify(original.config ?? {}),
         false,
         original.isActive,
+        original.documentType ?? "invoice",
         "draft",
         null,
         null,
@@ -710,6 +740,7 @@ export class InvoiceTemplateRepository {
       config: (r.config as Record<string, unknown>) ?? {},
       isDefault: Boolean(r.is_default),
       isActive: Boolean(r.is_active),
+      documentType: (r.document_type as "invoice" | "quote" | "recurring_invoice") ?? "invoice",
       lifecycle: (r.lifecycle as string) ?? "draft",
       publishedAt: r.published_at ? new Date(r.published_at as string) : null,
       archivedAt: r.archived_at ? new Date(r.archived_at as string) : null,

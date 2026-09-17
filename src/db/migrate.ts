@@ -1,8 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import pg from "pg";
 import { query, getClient } from "./pool.js";
 import { logger } from "../utils/logger.js";
+import { env, isTest } from "../config/index.js";
+
+const { Client } = pg;
 
 const MIGRATIONS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
@@ -66,31 +70,35 @@ export async function runMigrations() {
 }
 
 export async function rollbackAll() {
-  const client = await getClient();
+  const connectionString = isTest && env.DATABASE_URL_TEST ? env.DATABASE_URL_TEST : env.DATABASE_URL;
+  const adminClient = new Client({ connectionString });
+  await adminClient.connect();
   try {
-    await client.query("BEGIN");
-    const res = await client.query(
+    await adminClient.query("BEGIN");
+    const res = await adminClient.query(
       `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 'pg_%'`
     );
     const tables = res.rows.map((r) => r.tablename);
     for (const t of tables) {
-      await client.query(`DROP TABLE IF EXISTS "${t}" CASCADE`);
+      await adminClient.query(`DROP TABLE IF EXISTS "${t}" CASCADE`);
     }
-    await client.query(
-      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status, onboarding_step_status, customer_status, customer_event_type, invoice_template_lifecycle, product_service_type, product_service_status, project_status, project_event_type CASCADE`    );
-    const typeRes = await client.query(
+    await adminClient.query(
+      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status, onboarding_step_status, customer_status, customer_event_type, invoice_template_lifecycle, product_service_type, product_service_status, project_status, project_event_type CASCADE`
+    );
+    await adminClient.query(`DROP TABLE IF EXISTS migrations CASCADE`);
+    const typeRes = await adminClient.query(
       `SELECT typname FROM pg_type WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public') AND typname NOT IN ('migrations') AND typisdefined = true AND typcategory != 'A' AND typcategory != 'E' AND typname NOT LIKE 'gtrgm%'`
     );
     for (const tr of typeRes.rows) {
-      await client.query(`DROP TYPE IF EXISTS "${tr.typname}" CASCADE`);
+      await adminClient.query(`DROP TYPE IF EXISTS "${tr.typname}" CASCADE`);
     }
-    await client.query("COMMIT");
+    await adminClient.query("COMMIT");
     logger.info(`Dropped ${tables.length} tables (rollback)`);
   } catch (e) {
-    await client.query("ROLLBACK");
+    await adminClient.query("ROLLBACK");
     throw e;
   } finally {
-    client.release();
+    await adminClient.end();
   }
 }
 

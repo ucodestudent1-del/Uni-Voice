@@ -7,14 +7,16 @@ const connectionString = isTest && env.DATABASE_URL_TEST ? env.DATABASE_URL_TEST
 
 export const pool = new Pool({
   connectionString,
-  max: 20,
+  max: isTest ? 1 : 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });
 
 pool.on("error", (err) => {
   console.error("Unexpected error on idle pg client", err);
-  process.exit(-1);
+  if (!isTest) {
+    process.exit(-1);
+  }
 });
 
 export async function query(text: string, params?: unknown[]) {

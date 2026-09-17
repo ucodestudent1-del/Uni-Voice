@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { twoFactorService } from "../src/services/auth/two-factor.service.js";
 import { totp } from "../src/services/auth/totp.js";
-import { resetTestDb, createTestUser } from "./helpers/db.js";
+import { truncateTestDb, createTestUser } from "./helpers/db.js";
 import { query } from "../src/db/pool.js";
 import { AppError, UnauthorizedError, ForbiddenError } from "../src/domain/errors.js";
 
@@ -15,7 +15,7 @@ describe("TwoFactorService (DB integration)", () => {
   let user: { id: string; email: string; businessId: string };
 
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
     user = await createTestUser();
   });
 

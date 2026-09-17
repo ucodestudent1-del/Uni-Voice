@@ -45,6 +45,7 @@ export const InvoiceTemplateResponseSchema = z.object({
   config: z.record(z.string(), z.unknown()).default({}),
   isDefault: z.boolean(),
   isActive: z.boolean(),
+  documentType: z.enum(["invoice", "quote", "recurring_invoice"]).default("invoice"),
   lifecycle: z.enum(["draft", "published", "archived"]).default("draft"),
   publishedAt: z.string().nullable().optional(),
   archivedAt: z.string().nullable().optional(),
@@ -75,6 +76,7 @@ export const InvoiceTemplateCreateRequestSchema = z.object({
   config: z.record(z.string(), z.unknown()).default({}),
   isDefault: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  documentType: z.enum(["invoice", "quote", "recurring_invoice"]).default("invoice"),
 });
 
 export type InvoiceTemplateCreateRequestDTO = z.infer<typeof InvoiceTemplateCreateRequestSchema>;
@@ -89,6 +91,7 @@ export const InvoiceTemplateUpdateRequestSchema = z.object({
   config: z.record(z.string(), z.unknown()).optional(),
   isDefault: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  documentType: z.enum(["invoice", "quote", "recurring_invoice"]).optional(),
 });
 
 export type InvoiceTemplateUpdateRequestDTO = z.infer<typeof InvoiceTemplateUpdateRequestSchema>;
@@ -168,6 +171,7 @@ export const InvoiceTemplateListParamsSchema = z.object({
   limit: z.string().optional().transform((v) => (v ? Math.min(Number(v), 200) : 50)),
   offset: z.string().optional().transform((v) => (v ? Number(v) : 0)),
   industry: z.string().optional(),
+  documentType: z.enum(["invoice", "quote", "recurring_invoice"]).optional(),
   isDefault: z
     .string()
     .optional()

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { resetTestDb, createTestUser } from "./helpers/db.js";
+import { truncateTestDb, createTestUser } from "./helpers/db.js";
 import { query } from "../src/db/pool.js";
 import jwt from "jsonwebtoken";
 
@@ -59,7 +59,7 @@ async function loadFreshService() {
 
 describe("OAuthService", () => {
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
   });
 
   afterEach(() => {

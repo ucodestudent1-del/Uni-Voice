@@ -26,6 +26,7 @@ export default function Templates() {
   const [loading, setLoading] = useState(true);
   const [showPresetGallery, setShowPresetGallery] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("");
 
   useEffect(() => {
     initializeRegistry();
@@ -33,16 +34,16 @@ export default function Templates() {
     getBusiness().then((d) => setBusiness(d.business)).catch(() => {});
   }, []);
 
-  async function loadTemplates() {
-    try {
-      const data = await getInvoiceTemplates({ limit: 50 });
-      setTemplates(data.templates ?? []);
-    } catch {
-      setTemplates([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+   async function loadTemplates(documentType?: string) {
+     try {
+       const data = await getInvoiceTemplates({ limit: 50, documentType: documentType || undefined });
+       setTemplates(data.templates ?? []);
+     } catch {
+       setTemplates([]);
+     } finally {
+       setLoading(false);
+     }
+   }
 
   const handlePresetSelect = useCallback((key: string) => {
     navigate(`/app/templates/new?preset=${key}`);
@@ -97,6 +98,12 @@ export default function Templates() {
     archived: { bg: "bg-slate-100", text: "text-slate-800", label: "Archived" },
   };
 
+  const DOCUMENT_TYPE_LABEL: Record<string, string> = {
+    invoice: "Invoice",
+    quote: "Quote",
+    recurring_invoice: "Recurring",
+  };
+
   if (loading) {
     return <div className="text-center py-20 text-slate-500">Loading templates...</div>;
   }
@@ -117,6 +124,22 @@ export default function Templates() {
           <span aria-hidden="true">+</span>
           New Template
         </button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <select
+          value={documentTypeFilter}
+          onChange={(e) => {
+            setDocumentTypeFilter(e.target.value);
+            loadTemplates(e.target.value);
+          }}
+          className="text-xs border border-slate-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+        >
+          <option value="">All document types</option>
+          <option value="invoice">Invoice</option>
+          <option value="quote">Quote</option>
+          <option value="recurring_invoice">Recurring Invoice</option>
+        </select>
       </div>
 
       {templates.length === 0 && !showPresetGallery && (
@@ -169,6 +192,11 @@ export default function Templates() {
                   {t.industry && (
                     <span className="mt-2 inline-block text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
                       {t.industry}
+                    </span>
+                  )}
+                  {t.documentType && (
+                    <span className="mt-2 inline-block text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                      {DOCUMENT_TYPE_LABEL[t.documentType] ?? t.documentType}
                     </span>
                   )}
 

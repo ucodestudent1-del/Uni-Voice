@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, test } from "vitest";
 import { invoiceTemplateRepository } from "../src/repositories/invoice-template.repo.js";
 import { invoiceTemplateService } from "../src/services/templates/invoice-template-service.js";
-import { resetTestDb, createTestBusiness } from "./helpers/db.js";
+import { truncateTestDb, createTestBusiness } from "./helpers/db.js";
 import type { InvoiceTemplateDocument } from "../src/domain/schemas/invoice-template.js";
 
 const BUSINESS_A = "00000000-0000-0000-0000-000000000001";
@@ -66,7 +66,7 @@ const sampleDocument: InvoiceTemplateDocument = {
 
 describe("InvoiceTemplateRepository (DB integration)", () => {
   beforeEach(async () => {
-    await resetTestDb();
+    await truncateTestDb();
     await createTestBusiness({ id: BUSINESS_A, ownerId: USER_A });
     await createTestBusiness({ id: BUSINESS_B, ownerId: USER_A });
   });

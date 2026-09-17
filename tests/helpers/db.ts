@@ -9,6 +9,17 @@ export async function resetTestDb(): Promise<void> {
   await subscriptionService.ensureDefaults();
 }
 
+export async function truncateTestDb(): Promise<void> {
+  const res = await query(
+    `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 'pg_%' AND tablename != 'migrations'`
+  );
+  const tables = res.rows.map((r) => `"${r.tablename}"`).join(", ");
+  if (tables) {
+    await query(`TRUNCATE TABLE ${tables} RESTART IDENTITY CASCADE`);
+  }
+  await subscriptionService.ensureDefaults();
+}
+
 export interface TestBusiness {
   id: string;
   ownerId: string;

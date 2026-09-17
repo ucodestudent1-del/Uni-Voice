@@ -33,6 +33,7 @@ export interface ListInvoiceTemplatesFilter {
   isDefault?: boolean;
   isActive?: boolean;
   lifecycle?: string | string[];
+  documentType?: string | string[];
   limit?: number;
   offset?: number;
 }
@@ -66,7 +67,7 @@ export interface InvoiceTemplateService {
     businessId: string,
     filters?: ListInvoiceTemplatesFilter
   ): Promise<InvoiceTemplate[]>;
-  getDefaultTemplate(businessId: string, industry?: string): Promise<InvoiceTemplate | null>;
+   getDefaultTemplate(businessId: string, industry?: string, documentType?: string): Promise<InvoiceTemplate | null>;
   updateTemplate(
     businessId: string,
     id: string,
@@ -149,8 +150,11 @@ class InvoiceTemplateServiceImpl implements InvoiceTemplateService {
     return invoiceTemplateRepository.findMany(businessId, filters);
   }
 
-  async getDefaultTemplate(businessId: string, industry?: string): Promise<InvoiceTemplate | null> {
-    return invoiceTemplateRepository.findDefault(businessId, industry ? { industry } : undefined);
+  async getDefaultTemplate(businessId: string, industry?: string, documentType?: string): Promise<InvoiceTemplate | null> {
+    const opts: { industry?: string; documentType?: string } = {};
+    if (industry) opts.industry = industry;
+    if (documentType) opts.documentType = documentType;
+    return invoiceTemplateRepository.findDefault(businessId, Object.keys(opts).length ? opts : undefined);
   }
 
   async updateTemplate(
