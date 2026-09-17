@@ -25,6 +25,7 @@ import {
   ComponentId,
   ComponentType,
   ParentId,
+  StyleProps,
 } from "../types";
 import {
   getChildren,
@@ -68,6 +69,8 @@ export interface DocumentEditorProps {
   onSelect: (id: ComponentId) => void;
   onInsertComponent: (params: { type: ComponentType; parentId: ParentId; index: number }) => void;
   onReorderComponent: (params: { componentId: ComponentId; newParentId: ParentId; newIndex: number }) => void;
+  onMoveComponentTo: (componentId: ComponentId, x?: number, y?: number) => void;
+  onUpdateComponentStyle: (componentId: ComponentId, style: Partial<StyleProps>) => void;
   onDuplicate?: (componentId: ComponentId) => void;
   onDelete?: (componentId: ComponentId) => void;
   business: any;
@@ -398,6 +401,8 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   onSelect,
   onInsertComponent,
   onReorderComponent,
+  onMoveComponentTo,
+  onUpdateComponentStyle,
   onDuplicate = () => {},
   onDelete = () => {},
   business,
@@ -418,7 +423,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const dragStartRectRef = useRef<DOMRect | null>(null);
   const draggedComponentIdRef = useRef<ComponentId | null>(null);
-  const { updateComponent: editorUpdateComponent, moveComponent: editorMoveComponent, duplicateComponent: editorDuplicateComponent } = useEditor();
 
   const SNAP_THRESHOLD = 8;
   const NUDGE_DISTANCE = 1;
@@ -454,6 +458,10 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     } catch {}
     onDelete(componentId);
   }, [onDelete]);
+
+  const editorDuplicateComponent = useCallback((componentId: ComponentId) => {
+    analytics.trackEvent("component_duplicated", { componentId });
+  }, []);
 
   const handleDragMove = useCallback((event: DragMoveEvent) => {
     if (!canvasRef.current || !activeDrag || !dragStartRectRef.current) {
@@ -555,9 +563,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         setResizeStartRect(null);
       }
 
-      if (selectedComponentId && !isInputElement(e.target)) {
-        const isMod = e.ctrlKey || e.metaKey;
+      const isMod = e.ctrlKey || e.metaKey;
 
+      if (selectedComponentId && !isInputElement(e.target)) {
         if (isMod && (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight")) {
           e.preventDefault();
           e.stopPropagation();
@@ -572,7 +580,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           let newY = currentY;
 
           switch (e.key) {
-            case "ArrowUp":
+case "ArrowUp":
               newY = Math.max(0, currentY - distance);
               break;
             case "ArrowDown":
@@ -584,15 +592,15 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             case "ArrowRight":
               newX = currentX + distance;
               break;
-          }
-
-          if (newX !== currentX || newY !== currentY) {
-            editorMoveComponentTo(selectedComponentId, newX, newY);
-          }
-          return;
-        }
-
-        if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+            }
+ 
+             if (newX !== currentX || newY !== currentY) {
+               onMoveComponentTo(selectedComponentId, newX, newY);
+             }
+             return;
+         }
+ 
+         if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
           e.preventDefault();
           e.stopPropagation();
           const component = findComponent(doc, selectedComponentId);
@@ -621,7 +629,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           }
 
           if (newX !== currentX || newY !== currentY) {
-            editorMoveComponentTo(selectedComponentId, newX, newY);
+            onMoveComponentTo(selectedComponentId, newX, newY);
           }
           return;
         }
@@ -635,7 +643,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           const currentZ = Number(component.style.zIndex ?? 0);
           const newZ = e.key === "]" ? currentZ + 1 : Math.max(0, currentZ - 1);
           if (newZ !== currentZ) {
-            editorUpdateComponentStyle(selectedComponentId, { zIndex: newZ });
+            onUpdateComponentStyle(selectedComponentId, { zIndex: newZ });
           }
         }
       }
@@ -676,7 +684,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         document.removeEventListener("mousedown", handleClick);
       };
     }
-  }, [contextMenu, closeContextMenu, doc, selectedComponentId, editorMoveComponentTo, editorUpdateComponentStyle, onDuplicate, clipboard]);
+  }, [contextMenu, closeContextMenu, doc, selectedComponentId, onMoveComponentTo, onUpdateComponentStyle, onDuplicate, clipboard]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -730,28 +738,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     isEditing: true,
     selectedComponentId: selectedComponentId ?? null,
     onSelect,
-  };
+   };
 
-  const editorMoveComponentTo = useCallback((componentId: ComponentId, x?: number, y?: number) => {
-    const newDoc = moveComponentTo(doc, { componentId, x, y });
-    setDocument(newDoc);
-  }, [doc, setDocument]);
-
-  const editorUpdateComponentStyle = useCallback((componentId: ComponentId, style: Partial<StyleProps>) => {
-    const newDoc = updateComponent(doc, {
-      componentId,
-      style,
-    });
-    setDocument(newDoc);
-  }, [doc, setDocument]);
-
-  const editorDuplicateComponent = useCallback((componentId: ComponentId) => {
-    const newDoc = duplicateComponent(doc, { componentId });
-    setDocument(newDoc);
-    analytics.track("component_duplicated", { componentId });
-  }, [doc, setDocument]);
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
+   const handleDragStart = useCallback((event: DragStartEvent) => {
     const activeId = event.active.id as string;
 
     if (activeId.startsWith("palette-")) {

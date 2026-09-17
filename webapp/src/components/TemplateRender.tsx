@@ -214,7 +214,6 @@ function renderComponent(
   const baseProps = {
     "data-component": dataComponent,
     style,
-    key: dataComponent,
   };
 
   switch (compType) {

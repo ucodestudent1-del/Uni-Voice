@@ -120,6 +120,7 @@ function InvoiceEditorContent() {
     insertComponent: doInsertComponent,
     updateComponent: doUpdateComponent,
     moveComponent: doMoveComponent,
+    moveComponentTo: doMoveComponentTo,
     removeComponent: doRemoveComponent,
     setSettings,
     undo,
@@ -810,6 +811,8 @@ function InvoiceEditorContent() {
                 onReorderComponent={(params) => {
                   doMoveComponent(params);
                 }}
+                onMoveComponentTo={doMoveComponentTo}
+                onUpdateComponentStyle={doUpdateComponent}
                 business={business}
                 customer={editorData?.customer}
                 invoice={{

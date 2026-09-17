@@ -1,10 +1,12 @@
 import { query, getClient } from "../../src/db/pool.js";
 import { runMigrations, rollbackAll } from "../../src/db/migrate.js";
+import { subscriptionService } from "../../src/services/subscription.service.js";
 import bcrypt from "bcrypt";
 
 export async function resetTestDb(): Promise<void> {
   await rollbackAll();
   await runMigrations();
+  await subscriptionService.ensureDefaults();
 }
 
 export interface TestBusiness {

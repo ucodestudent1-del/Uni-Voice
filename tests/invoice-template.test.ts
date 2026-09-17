@@ -2,12 +2,13 @@ import { describe, it, expect, beforeEach, test } from "vitest";
 import { invoiceTemplateRepository } from "../src/repositories/invoice-template.repo.js";
 import { invoiceTemplateService } from "../src/services/templates/invoice-template-service.js";
 import { resetTestDb, createTestBusiness } from "./helpers/db.js";
+import type { InvoiceTemplateDocument } from "../src/domain/schemas/invoice-template.js";
 
 const BUSINESS_A = "00000000-0000-0000-0000-000000000001";
 const BUSINESS_B = "00000000-0000-0000-0000-000000000002";
 const USER_A = "11111111-1111-1111-1111-111111111111";
 
-const sampleDocument = {
+const sampleDocument: InvoiceTemplateDocument = {
   id: "doc_1",
   version: 1,
   name: "Test Invoice",
@@ -50,6 +51,7 @@ const sampleDocument = {
   },
   components: {},
   rootSectionId: "root_section",
+  schemaVersion: "1.0",
   settings: {
     pageSize: "A4",
     orientation: "portrait",

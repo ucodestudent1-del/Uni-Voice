@@ -3,7 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "node:path";
-import { env, isDev } from "./config/index.js";
+import { env, isDev, isTest } from "./config/index.js";
 import { query } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
@@ -594,13 +594,17 @@ app.post("/api/customers/import", requireAuth, async (req: AuthRequest, res) => 
   res.json(result);
 });
 
-app.post("/api/customers", requireAuth, async (req: AuthRequest, res) => {
+app.post("/api/customers", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await requireUsageLimit("customers.unlimited", true)(req as any, res, async () => {
-    const parsed = CustomerCreateSchema.parse(req.body);
-    const customer = await customerService.create(parsed, req.user!.businessId!, req.user!.id);
-    res.status(201).json({ customer });
-  });
+  try {
+    await requireUsageLimit("customers.unlimited", true)(req as any, res, async () => {
+      const parsed = CustomerCreateSchema.parse(req.body);
+      const customer = await customerService.create(parsed, req.user!.businessId!, req.user!.id);
+      res.status(201).json({ customer });
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.get("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
@@ -860,12 +864,16 @@ app.get("/api/invoices", requireAuth, async (req: AuthRequest, res) => {
   res.json({ invoices, total: page.total, limit: page.limit, offset: page.offset });
 });
 
-app.post("/api/invoices", requireAuth, async (req: AuthRequest, res) => {
+app.post("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await requireUsageLimit("invoices.unlimited", true)(req as any, res, async () => {
-    const invoiceId = await invoiceService.createDraft(req.body, req.user!.businessId!, req.user!.id);
-    res.status(201).json({ invoiceId });
-  });
+  try {
+    await requireUsageLimit("invoices.unlimited", true)(req as any, res, async () => {
+      const invoiceId = await invoiceService.createDraft(req.body, req.user!.businessId!, req.user!.id);
+      res.status(201).json({ invoiceId });
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.get("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
@@ -1445,15 +1453,19 @@ app.get("/api/projects", requireAuth, async (req: AuthRequest, res) => {
   res.json({ projects: result.data, total: result.total, limit: result.limit, offset: result.offset });
 });
 
-app.post("/api/projects", requireAuth, async (req: AuthRequest, res) => {
+app.post("/api/projects", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await requireUsageLimit("projects.unlimited", true)(req as any, res, async () => {
-    const parsed = ProjectCreateSchema.parse(req.body);
-    const businessId = req.user?.businessId;
-    if (!businessId) return res.status(400).json({ error: "No business context" });
-    const project = await projectService.create(parsed, businessId, req.user!.id);
-    res.status(201).json({ project });
-  });
+  try {
+    await requireUsageLimit("projects.unlimited", true)(req as any, res, async () => {
+      const parsed = ProjectCreateSchema.parse(req.body);
+      const businessId = req.user?.businessId;
+      if (!businessId) return res.status(400).json({ error: "No business context" });
+      const project = await projectService.create(parsed, businessId, req.user!.id);
+      res.status(201).json({ project });
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.get("/api/projects/search", requireAuth, async (req: AuthRequest, res) => {
@@ -1907,6 +1919,8 @@ function processOverdueJob() {
   setTimeout(processOverdueJob, 15 * 60 * 1000);
 }
 
-start();
+if (!isTest) {
+  start();
+}
 
 export default app;

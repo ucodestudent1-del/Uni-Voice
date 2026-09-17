@@ -14,6 +14,7 @@ export class SubscriptionService {
   private planCache = new Map<string, Plan>();
 
   async ensureDefaults(): Promise<void> {
+    this.planCache.clear();
     const plans = [
       { code: "free" as PlanCode, name: "Free", description: "Make professional invoices", price: 0, sortOrder: 0 },
       { code: "pro" as PlanCode, name: "Pro", description: "Automate your invoicing", price: 19, sortOrder: 1 },
