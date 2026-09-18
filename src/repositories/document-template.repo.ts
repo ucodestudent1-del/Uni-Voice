@@ -52,7 +52,7 @@ export class DocumentTemplateRepository {
       `INSERT INTO document_templates
          (id, business_id, name, description, industry, schema_version, revision, version,
           document, html_template, config, is_default, is_active, document_type, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$16,$18)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
         RETURNING *`,
       [
         id,
@@ -69,6 +69,7 @@ export class DocumentTemplateRepository {
         parsed.is_default ?? false,
         parsed.is_active ?? true,
         parsed.document_type ?? "invoice",
+        now,
         now,
         createdBy ?? null,
       ]
@@ -211,7 +212,7 @@ export class DocumentTemplateRepository {
       `INSERT INTO document_templates
          (id, business_id, name, description, industry, schema_version, revision, version,
           document, html_template, config, is_default, is_active, document_type, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$15,$16)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
         RETURNING *`,
       [
         newId,
@@ -228,6 +229,7 @@ export class DocumentTemplateRepository {
         false,
         original.isActive,
         original.documentType ?? "invoice",
+        now,
         now,
         createdBy ?? original.createdBy ?? null,
       ]
