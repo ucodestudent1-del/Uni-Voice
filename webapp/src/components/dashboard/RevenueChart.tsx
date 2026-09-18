@@ -41,7 +41,7 @@ export default function RevenueChart() {
   }, [timeframe]);
 
   const chartData = useMemo(() => {
-    if (!data) return [];
+    if (!data || !Array.isArray(data)) return [];
     return data.map((d) => ({
       period: d.period,
       revenue: Number(d.invoiced),

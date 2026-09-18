@@ -66,6 +66,7 @@ import {
   ProjectNoteCreateSchema,
 } from "./domain/schemas/project-time-entry.js";
 import bcrypt from "bcrypt";
+import { Decimal } from "decimal.js";
 
 const app = express();
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
@@ -1090,6 +1091,131 @@ app.get("/api/reports/tax-summary", requireAuth, requireEntitlement("reports.tax
     [req.user!.businessId]
   );
   res.json({ report: result.rows });
+});
+
+app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const monthsParam = Number(req.query.months ?? 1);
+  const months = Number.isInteger(monthsParam) && monthsParam > 0 && monthsParam <= 24 ? monthsParam : 1;
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
+  const result = await query(
+    `SELECT
+      TO_CHAR(date_trunc('month', COALESCE(issue_date, created_at)), 'YYYY-MM') as period,
+      COUNT(*) as count,
+      COALESCE(SUM(total), 0) as invoiced,
+      COALESCE(SUM(amount_paid), 0) as paid
+     FROM invoices
+     WHERE business_id = $1
+       AND (issue_date IS NULL OR issue_date >= $2 OR created_at >= $2)
+     GROUP BY date_trunc('month', COALESCE(issue_date, created_at))
+     ORDER BY period ASC`,
+    [req.user!.businessId, cutoff.toISOString()]
+  );
+  res.json(result.rows);
+});
+
+// ============================================================================
+// ENHANCED DASHBOARD
+// ============================================================================
+app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const invoices = await invoiceRepository.findForDashboard(req.user!.businessId);
+  const now = new Date();
+
+  const agingBuckets = [
+    { bucket: "current" as const, count: 0, amount: "0" },
+    { bucket: "1-30" as const, count: 0, amount: "0" },
+    { bucket: "31-60" as const, count: 0, amount: "0" },
+    { bucket: "61-90" as const, count: 0, amount: "0" },
+    { bucket: "90+" as const, count: 0, amount: "0" },
+  ];
+  let totalInvoiced = new Decimal(0);
+  let totalPaid = new Decimal(0);
+  let totalOutstanding = new Decimal(0);
+  let totalOverdue = new Decimal(0);
+  let count = 0;
+
+  for (const inv of invoices) {
+    const total = new Decimal(inv.total || 0);
+    const amountPaid = new Decimal(inv.amount_paid || 0);
+    const amountDue = new Decimal(inv.amount_due || 0);
+    totalInvoiced = totalInvoiced.plus(total);
+    totalPaid = totalPaid.plus(amountPaid);
+    if (amountDue.gt(0)) {
+      totalOutstanding = totalOutstanding.plus(amountDue);
+      const daysOverdue = Math.floor((now.getTime() - new Date(inv.due_date || inv.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      if (daysOverdue > 90) {
+        agingBuckets[4].count++;
+        agingBuckets[4].amount = new Decimal(agingBuckets[4].amount).plus(amountDue).toString();
+      } else if (daysOverdue > 60) {
+        agingBuckets[3].count++;
+        agingBuckets[3].amount = new Decimal(agingBuckets[3].amount).plus(amountDue).toString();
+      } else if (daysOverdue > 30) {
+        agingBuckets[2].count++;
+        agingBuckets[2].amount = new Decimal(agingBuckets[2].amount).plus(amountDue).toString();
+      } else if (daysOverdue >= 0) {
+        agingBuckets[1].count++;
+        agingBuckets[1].amount = new Decimal(agingBuckets[1].amount).plus(amountDue).toString();
+      } else {
+        agingBuckets[0].count++;
+        agingBuckets[0].amount = new Decimal(agingBuckets[0].amount).plus(amountDue).toString();
+      }
+      if (daysOverdue < 0) {
+        totalOverdue = totalOverdue.plus(amountDue);
+      }
+    }
+    count++;
+  }
+
+  const volumeTrend = invoices
+    .filter((i) => i.created_at)
+    .reduce<{ period: string; invoiced: string; paid: string; count: number }[]>((acc, inv) => {
+      const date = new Date(inv.created_at);
+      const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const existing = acc.find((a) => a.period === period);
+      if (existing) {
+        existing.invoiced = new Decimal(existing.invoiced).plus(inv.total || 0).toString();
+        existing.paid = new Decimal(existing.paid).plus(inv.amount_paid || 0).toString();
+        existing.count++;
+      } else {
+        acc.push({
+          period,
+          invoiced: String(inv.total || 0),
+          paid: String(inv.amount_paid || 0),
+          count: 1,
+        });
+      }
+      return acc;
+    }, [])
+    .sort((a, b) => a.period.localeCompare(b.period));
+
+  const averagePaymentTimeDays = count > 0 ? Math.round(totalPaid.toNumber() / count) : 0;
+  const paymentRate = totalInvoiced.gt(0) ? Math.round((totalPaid.div(totalInvoiced).toNumber() * 100)) : 0;
+
+  res.json({
+    summary: {
+      totalOutstanding: totalOutstanding.toString(),
+      totalOverdue: totalOverdue.toString(),
+      totalPaidThisMonth: "0",
+      totalRevenue: totalInvoiced.toString(),
+      draftCount: invoices.filter((i) => i.status === "draft").length,
+      overdueCount: invoices.filter((i) => i.status === "overdue").length,
+      sentCount: invoices.filter((i) => i.status === "sent").length,
+      paidCount: invoices.filter((i) => i.status === "paid").length,
+      totalInvoices: count,
+    },
+    agingBuckets,
+    paymentMetrics: {
+      averagePaymentTimeDays,
+      paymentRate,
+      totalInvoiced: totalInvoiced.toString(),
+      totalPaid: totalPaid.toString(),
+      totalOutstanding: totalOutstanding.toString(),
+      totalOverdue: totalOverdue.toString(),
+    },
+    volumeTrend,
+  });
 });
 
 // ============================================================================

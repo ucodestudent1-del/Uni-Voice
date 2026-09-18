@@ -44,7 +44,18 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const contentType = response.headers["content-type"];
+    const responseType = response.config?.responseType;
+    if (
+      responseType !== "blob" &&
+      typeof contentType === "string" &&
+      !contentType.includes("application/json")
+    ) {
+      return Promise.reject(new Error("Unexpected response format"));
+    }
+    return response;
+  },
   (error) => {
     const status = error.response?.status;
     const skipRedirect = error.config?.skipAuthRedirect === true;
