@@ -63,10 +63,10 @@ export class InvoiceTemplateRepository {
     const now = new Date().toISOString();
     const res = await query(
       `INSERT INTO document_templates
-         (id, business_id, name, description, industry, schema_version, revision, version,
-          document, html_template, config, is_default, is_active, document_type,
-          lifecycle, published_at, published_revision, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19)
+(id, business_id, name, description, industry, schema_version, revision, version,
+           document, html_template, config, is_default, is_active, document_type,
+           lifecycle, published_at, published_revision, created_at, updated_at, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
         RETURNING *`,
       [
         id,
@@ -86,6 +86,7 @@ export class InvoiceTemplateRepository {
         "draft",
         null,
         null,
+        now,
         now,
         createdBy ?? null,
       ]
@@ -289,7 +290,7 @@ export class InvoiceTemplateRepository {
          (id, business_id, name, description, industry, schema_version, revision, version,
           document, html_template, config, is_default, is_active, document_type, lifecycle,
           published_at, published_revision, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18,$19)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
         RETURNING *`,
       [
         newId,
@@ -306,9 +307,10 @@ export class InvoiceTemplateRepository {
         false,
         original.isActive,
         original.documentType ?? "invoice",
-        "draft",
+"draft",
         null,
         null,
+        now,
         now,
         createdBy ?? original.createdBy ?? null,
       ]
