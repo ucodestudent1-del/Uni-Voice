@@ -190,7 +190,7 @@ export async function duplicateInvoice(id: string) {
 }
 
 export async function getInvoicePdf(id: string) {
-  const res = await api.get(`/invoices/${id}/pdf`, { responseType: "blob" });
+  const res = await api.post(`/invoices/${id}/pdf`, {}, { responseType: "blob" });
   return res.data;
 }
 

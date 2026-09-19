@@ -1,7 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
-import InvoiceEditor from "../components/InvoiceEditor";
+import InvoiceWorkspace from "../components/InvoiceWorkspace";
 
 export default function InvoiceEditorPage() {
-  const { id } = useParams<{ id: string }>();
-  return <InvoiceEditor />;
+  return <InvoiceWorkspace />;
 }

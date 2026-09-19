@@ -32,6 +32,9 @@ export default function PublicInvoice() {
   const [invoice, setInvoice] = useState<PublicInvoiceData | null>(null);
   const [html, setHtml] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [payAmount, setPayAmount] = useState<string>("");
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -40,21 +43,58 @@ export default function PublicInvoice() {
   const [showDepositPayment, setShowDepositPayment] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      recordPublicView(token).catch(() => {});
-      getPublicInvoice(token)
-        .then((data) => {
+    if (!token) {
+      setLoading(false);
+      setLoadError("Invoice link is missing.");
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+
+    recordPublicView(token).catch(() => {});
+
+    getPublicInvoice(token)
+      .then((data) => {
+        if (!cancelled) {
           setInvoice(data.invoice);
           setHtml(data.html || "");
-        })
-        .catch(() => {
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
           setInvoice(null);
-        })
-        .finally(() => setLoading(false));
-    }
+          setLoadError(err.response?.data?.error || "Could not load invoice");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   if (loading) return <div className="text-center py-20 text-slate-500">Loading invoice...</div>;
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm font-medium text-red-800">{loadError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!invoice) return <div className="text-center py-20 text-slate-500">Invoice not found or link has expired.</div>;
 
   const paid = new Decimal(invoice.amount_paid || 0);
@@ -105,18 +145,23 @@ export default function PublicInvoice() {
     }
   }
 
-  function handleDownloadPdf() {
+  async function handleDownloadPdf() {
     if (!token) return;
-    getPublicInvoicePdf(token)
-      .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `invoice-${invoice?.invoice_number ?? invoice?.id ?? "invoice"}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => {});
+    setPdfLoading(true);
+    setPdfError(null);
+    try {
+      const blob = await getPublicInvoicePdf(token);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${invoice?.invoice_number ?? invoice?.id ?? "invoice"}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setPdfError(err.response?.data?.error || "Could not download PDF");
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   return (
@@ -290,14 +335,27 @@ export default function PublicInvoice() {
           )}
 
           <div className="border-t border-slate-200 px-8 py-4 flex justify-end gap-3">
+            {pdfError && (
+              <div className="flex items-center gap-2 text-sm text-red-600">
+                <span>{pdfError}</span>
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={pdfLoading}
+                  className="text-sm text-primary-600 hover:text-primary-700 underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
             <button
               onClick={handleDownloadPdf}
+              disabled={pdfLoading}
               className="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Download PDF
+              {pdfLoading ? "Preparing..." : "Download PDF"}
             </button>
           </div>
         </div>

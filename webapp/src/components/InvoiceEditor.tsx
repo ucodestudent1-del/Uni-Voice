@@ -139,6 +139,8 @@ function InvoiceEditorContent() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved" | "error">("saved");
   const [loading, setLoading] = useState(!isNew);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [sendData, setSendData] = useState({ subject: "", message: "" });
   const [editorData, setEditorData] = useState<EditorInvoiceData | null>(null);
@@ -180,6 +182,7 @@ function InvoiceEditorContent() {
 
     const loadInvoice = async () => {
       setLoading(true);
+      setLoadError(null);
       try {
         const data = await getInvoice(id);
         const inv: ApiInvoice = data.invoice;
@@ -239,13 +242,14 @@ function InvoiceEditorContent() {
           navigate("/app/invoices");
           return;
         }
+        setLoadError(err.response?.data?.error || "Could not load invoice");
       } finally {
         setLoading(false);
       }
     };
 
     loadInvoice();
-  }, [id, isNew, business]);
+  }, [id, isNew, business, retryKey]);
 
   useEffect(() => {
     if (dirty) {
@@ -655,6 +659,31 @@ function InvoiceEditorContent() {
     return (
       <div className="min-h-[calc(100vh-120px)] bg-slate-50 p-6">
         <DocumentTemplateGallery onSelect={handleTemplateSelect} />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-[calc(100vh-120px)] bg-slate-50 p-6 text-center">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 max-w-md mx-auto">
+          <h1 className="text-lg font-semibold text-red-800">Could not load invoice</h1>
+          <p className="mt-2 text-sm text-red-700">{loadError}</p>
+          <div className="mt-4 flex gap-3 justify-center">
+            <button
+              onClick={() => setRetryKey((key) => key + 1)}
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => navigate("/app/invoices")}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Back to invoices
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

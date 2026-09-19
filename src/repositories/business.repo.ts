@@ -124,6 +124,108 @@ export class BusinessRepository {
     };
   }
 
+  async getReminderSettings(businessId: string): Promise<{
+    enabled: boolean;
+    beforeDue: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;
+    afterDue: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;
+  }> {
+    const res = await query(
+      `SELECT reminders_enabled, reminders_before_due, reminders_after_due
+       FROM business_settings WHERE business_id = $1`,
+      [businessId]
+    );
+    if (!res.rows.length) {
+      return { enabled: true, beforeDue: [], afterDue: [] };
+    }
+    const row = res.rows[0];
+    const parseRules = (value: unknown) => {
+      if (!Array.isArray(value)) return [];
+      return value.filter((rule): rule is { id: string; offsetDays: number; maxSends: number; enabled: boolean } => {
+        if (!rule || typeof rule !== "object") return false;
+        const candidate = rule as Record<string, unknown>;
+        return typeof candidate.id === "string"
+          && typeof candidate.offsetDays === "number"
+          && typeof candidate.maxSends === "number"
+          && typeof candidate.enabled === "boolean";
+      });
+    };
+    return {
+      enabled: row.reminders_enabled ?? true,
+      beforeDue: parseRules(row.reminders_before_due),
+      afterDue: parseRules(row.reminders_after_due),
+    };
+  }
+
+  async listReminderEnabledBusinesses(): Promise<string[]> {
+    const res = await query(
+      `SELECT business_id FROM business_settings
+       WHERE reminders_enabled = TRUE
+       AND (jsonb_array_length(COALESCE(reminders_before_due, '[]'::jsonb)) > 0
+         OR jsonb_array_length(COALESCE(reminders_after_due, '[]'::jsonb)) > 0)`
+    );
+    return res.rows.map((row) => row.business_id as string);
+  }
+
+  async updateReminderSettings(businessId: string, input: {
+    enabled?: boolean;
+    beforeDue?: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;
+    afterDue?: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;
+  }): Promise<void> {
+    const updates: string[] = [];
+    const values: unknown[] = [businessId];
+    let i = 2;
+
+    if (input.enabled !== undefined) {
+      updates.push(`reminders_enabled = $${i++}`);
+      values.push(input.enabled);
+    }
+    if (input.beforeDue !== undefined) {
+      updates.push(`reminders_before_due = $${i++}::jsonb`);
+      values.push(JSON.stringify(input.beforeDue));
+    }
+    if (input.afterDue !== undefined) {
+      updates.push(`reminders_after_due = $${i++}::jsonb`);
+      values.push(JSON.stringify(input.afterDue));
+    }
+    if (updates.length === 0) return;
+
+    updates.push(`updated_at = NOW()`);
+    await query(
+      `UPDATE business_settings SET ${updates.join(", ")} WHERE business_id = $1`,
+      values
+    );
+  }
+
+  async getReminderRulesForBusiness(businessId: string): Promise<{
+    beforeDue: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;
+    afterDue: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;
+  }> {
+    const res = await query(
+      `SELECT reminders_before_due, reminders_after_due
+       FROM business_settings WHERE business_id = $1`,
+      [businessId]
+    );
+    if (!res.rows.length) {
+      return { beforeDue: [], afterDue: [] };
+    }
+    const row = res.rows[0];
+    const parseRules = (value: unknown) => {
+      if (!Array.isArray(value)) return [];
+      return value.filter((rule): rule is { id: string; offsetDays: number; maxSends: number; enabled: boolean } => {
+        if (!rule || typeof rule !== "object") return false;
+        const candidate = rule as Record<string, unknown>;
+        return typeof candidate.id === "string"
+          && typeof candidate.offsetDays === "number"
+          && typeof candidate.maxSends === "number"
+          && typeof candidate.enabled === "boolean";
+      });
+    };
+    return {
+      beforeDue: parseRules(row.reminders_before_due),
+      afterDue: parseRules(row.reminders_after_due),
+    };
+  }
+
   private rowToModel(r: Record<string, unknown>): Business {
     return {
       id: r.id as string,

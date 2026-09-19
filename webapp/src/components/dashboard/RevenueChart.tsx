@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -19,26 +19,51 @@ const palette = {
   payments: "#16a34a",
 };
 
-function formatCurrencyCompact(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value}`;
+function formatCurrencyCompact(value: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    return `$${value}`;
+  }
 }
 
-export default function RevenueChart() {
+export default function RevenueChart({ currency = "USD" }: { currency?: string }) {
   const [timeframe, setTimeframe] = useState<Timeframe>("30");
   const [data, setData] = useState<ApiVolumeTrend[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
-  useMemo(() => {
-    (async () => {
-      try {
-        const res = await getVolumeTrendReport({ period: "day", months: Number(timeframe) === 30 ? 1 : Number(timeframe) === 90 ? 3 : 12 });
-        setData(res.data ?? res);
-      } catch {
-        setData(null);
-      }
-    })();
-  }, [timeframe]);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    const months = Number(timeframe) === 30 ? 1 : Number(timeframe) === 90 ? 3 : 12;
+
+    getVolumeTrendReport({ period: "day", months })
+      .then((res) => {
+        const result = Array.isArray(res) ? res : res.data ?? res;
+        if (!cancelled) setData(Array.isArray(result) ? result : []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setData(null);
+          setError("Could not load revenue trends");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [timeframe, retryKey]);
 
   const chartData = useMemo(() => {
     if (!data || !Array.isArray(data)) return [];
@@ -74,7 +99,21 @@ export default function RevenueChart() {
         </div>
       </div>
 
-      {chartData.length > 0 ? (
+      {loading ? (
+        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 rounded-lg">
+          <p className="text-sm text-slate-400">Loading trends...</p>
+        </div>
+      ) : error ? (
+        <div className="h-64 flex flex-col items-center justify-center gap-3 border border-dashed border-red-300 rounded-lg">
+          <p className="text-sm text-red-600">{error}</p>
+          <button
+            onClick={() => setRetryKey((key) => key + 1)}
+            className="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
+          >
+            Try again
+          </button>
+        </div>
+      ) : chartData.length > 0 ? (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -100,7 +139,7 @@ export default function RevenueChart() {
                 tick={{ fontSize: 12, fill: "#64748b" }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v: number) => formatCurrencyCompact(v)}
+                tickFormatter={(v: number) => formatCurrencyCompact(v, currency)}
                 width={60}
               />
               <Tooltip
@@ -112,7 +151,7 @@ export default function RevenueChart() {
                   fontSize: "12px",
                   padding: "8px 12px",
                 }}
-                formatter={(value) => [formatCurrencyCompact(Number(value) ?? 0), ""]}
+                formatter={(value) => [formatCurrencyCompact(Number(value) ?? 0, currency), ""]}
                 labelStyle={{ color: "#94a3b8", marginBottom: "4px" }}
               />
               <Legend

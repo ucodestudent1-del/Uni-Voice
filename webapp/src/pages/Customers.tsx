@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCustomers,
@@ -14,6 +14,7 @@ import UpgradePrompt from "../components/UpgradePrompt";
 import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import CustomerImport from "../components/CustomerImport";
+import CustomerQuickView from "../components/CustomerQuickView";
 import { formatCurrency, formatDate } from "../utils/format";
 import { getCustomerPrimaryContact, customerHasBalance } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
@@ -53,6 +54,7 @@ export default function Customers() {
   const [editingCustomer, setEditingCustomer] = useState<ApiCustomer | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [creatingInvoiceFor, setCreatingInvoiceFor] = useState<string | null>(null);
+  const [quickViewCustomer, setQuickViewCustomer] = useState<ApiCustomer | null>(null);
 
   const currentParams: CustomerSearchParams = {
     limit,
@@ -343,12 +345,14 @@ export default function Customers() {
                       }`}
                     >
                       <td className="py-3 px-4">
-                        <Link
-                          to={`/app/customers/${c.id}`}
-                          className="text-sm font-medium text-slate-900 hover:text-primary-600"
+                        <button
+                          type="button"
+                          onClick={() => setQuickViewCustomer(c)}
+                          className="text-left text-sm font-medium text-slate-900 hover:text-primary-600"
+                          aria-label={`Quick view ${c.name}`}
                         >
                           {c.name}
-                        </Link>
+                        </button>
                         {c.companyName && (
                           <p className="text-xs text-slate-500">{c.companyName}</p>
                         )}
@@ -463,6 +467,15 @@ export default function Customers() {
 
       {plan && !plan.code && (
         <UpgradePrompt feature="customers" requiredPlan="free" />
+      )}
+
+      {quickViewCustomer && (
+        <CustomerQuickView
+          customerId={quickViewCustomer.id}
+          customerName={quickViewCustomer.name}
+          currency={quickViewCustomer.defaultCurrency || "USD"}
+          onClose={() => setQuickViewCustomer(null)}
+        />
       )}
     </div>
   );

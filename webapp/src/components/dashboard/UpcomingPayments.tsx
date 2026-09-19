@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "../../utils/format";
 import { getInvoices } from "../../api/client";
@@ -37,14 +37,60 @@ export default function UpcomingPayments({ items: propItems }: UpcomingPaymentsP
 
 function UpcomingPaymentsList({ preloadedItems }: { preloadedItems?: ApiInvoiceListItem[] }) {
   const [items, setItems] = useState<ApiInvoiceListItem[]>(preloadedItems ?? []);
+  const [loading, setLoading] = useState(!preloadedItems);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
-  if (!preloadedItems) {
-    useEffect(() => {
-      getInvoices({ status: "sent", limit: 5 }).then((res: any) => {
-        const data = (res.data as any).invoices ?? (res.data as any).data ?? [];
-        setItems(data);
-      }).catch(() => setItems([]));
-    }, []);
+  useEffect(() => {
+    if (preloadedItems) {
+      setItems(preloadedItems);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    getInvoices({ status: "sent", limit: 5 })
+      .then((res) => {
+        const data = Array.isArray(res)
+          ? res
+          : (res as any).invoices ?? (res as any).data?.invoices ?? [];
+        if (!cancelled) setItems(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Could not load upcoming payments");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [preloadedItems, retryKey]);
+
+  if (loading) {
+    return (
+      <div className="py-8 text-center text-sm text-slate-400">
+        Loading upcoming payments...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-sm text-red-600">{error}</p>
+        <button
+          onClick={() => setRetryKey((key) => key + 1)}
+          className="mt-3 rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   const sorted = [...items].sort((a, b) => {

@@ -2,6 +2,7 @@ import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { useState } from "react";
+import BottomTabBar from "./BottomTabBar";
 
 interface NavItem {
   name: string;
@@ -103,6 +104,32 @@ export default function Layout() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
+          {/* Mobile header - visible on mobile, hidden on desktop */}
+          <header className="flex md:hidden items-center justify-between h-16 border-b border-slate-200 bg-white px-4">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+              aria-label="Open navigation menu"
+            >
+              <span className="block h-5 w-5">
+                <span className="block h-0.5 w-5 mb-1 bg-slate-600" />
+                <span className="block h-0.5 w-5 mb-1 bg-slate-600" />
+                <span className="block h-0.5 w-5 bg-slate-600" />
+              </span>
+            </button>
+            <span className="text-sm text-slate-500 truncate">
+              {user?.email}
+            </span>
+            <Link
+              to="/app/invoices/new"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              <span aria-hidden="true">+</span>
+              <span className="hidden sm:inline">Create Invoice</span>
+            </Link>
+          </header>
+
+          {/* Desktop header - hidden on mobile, visible on desktop */}
           <header className="hidden md:flex items-center justify-between h-16 border-b border-slate-200 bg-white px-6">
             <div className="flex items-center gap-4">
               <button
@@ -184,6 +211,8 @@ export default function Layout() {
           </div>
         </div>
       )}
+      {/* Mobile bottom tab bar + FAB (field-optimized nav) */}
+      <BottomTabBar />
     </div>
   );
 }

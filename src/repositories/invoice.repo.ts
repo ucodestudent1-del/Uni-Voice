@@ -365,6 +365,26 @@ export class InvoiceRepository {
     return res.rows;
   }
 
+  async sumPaidSince(businessId: string, since: Date): Promise<string> {
+    const res = await query(
+      `SELECT COALESCE(SUM(amount), 0) AS total
+       FROM payments
+       WHERE business_id = $1 AND status = 'succeeded' AND paid_at >= $2`,
+      [businessId, since.toISOString()]
+    );
+    return String(res.rows[0]?.total ?? 0);
+  }
+
+  async hasReminderIdempotencyKey(businessId: string, idempotencyKey: string): Promise<boolean> {
+    const res = await query(
+      `SELECT 1 FROM invoice_reminders
+       WHERE business_id = $1 AND idempotency_key = $2
+       LIMIT 1`,
+      [businessId, idempotencyKey]
+    );
+    return res.rows.length > 0;
+  }
+
   async findManyPage(businessId: string, opts: InvoiceListOptions = {}): Promise<PagedResult<InvoiceListItem>> {
     const conditions: string[] = ["business_id = $1"];
     const vals: unknown[] = [businessId];
@@ -462,6 +482,28 @@ export class InvoiceRepository {
     return res.rows;
   }
 
+  /**
+   * Invoices that are still open (outstanding balance) and due within the
+   * next `days` days. Powers the cash-flow "Upcoming" stream on the dashboard.
+   */
+  async findUpcomingInvoices(businessId: string, days: number): Promise<any[]> {
+    const res = await query(
+      `SELECT i.id, i.invoice_number, i.status, i.currency, i.total, i.amount_due, i.due_date, i.sent_at, i.paid_at,
+              c.name as customer_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE i.business_id = $1
+         AND i.amount_due > 0
+         AND i.status IN ('sent','viewed','partially_paid','overdue')
+         AND i.due_date IS NOT NULL
+         AND i.due_date <= (NOW() + $2 * interval '1 day')
+       ORDER BY i.due_date ASC
+       LIMIT 20`,
+      [businessId, days]
+    );
+    return res.rows;
+  }
+
   async findOverdueCandidates(now: Date): Promise<any[]> {
     const res = await query(
       `SELECT id, business_id, due_date, amount_due, status
@@ -474,24 +516,112 @@ export class InvoiceRepository {
     return res.rows;
   }
 
-  async markOverdue(invoiceId: string, timestamp: Date): Promise<void> {
-    await query(
+  async findInvoicesNeedingReminders(businessId: string, now: Date): Promise<Array<{
+    id: string;
+    invoiceNumber: string | null;
+    status: string;
+    dueDate: Date | null;
+    issueDate: Date | null;
+    customerId: string | null;
+    amountDue: string;
+    customerEmail: string | null;
+    customerName: string | null;
+  }>> {
+    const res = await query(
+      `SELECT i.id, i.invoice_number, i.status, i.due_date, i.issue_date, i.customer_id,
+              i.amount_due, c.email as customer_email, c.name as customer_name
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE i.business_id = $1
+         AND i.amount_due > 0
+         AND i.is_finalized = TRUE
+         AND i.status IN ('sent', 'viewed', 'partially_paid', 'overdue')`,
+      [businessId]
+    );
+    return res.rows.map(r => ({
+      id: r.id,
+      invoiceNumber: r.invoice_number,
+      status: r.status,
+      dueDate: r.due_date ? new Date(r.due_date) : null,
+      issueDate: r.issue_date ? new Date(r.issue_date) : null,
+      customerId: r.customer_id,
+      amountDue: r.amount_due,
+      customerEmail: r.customer_email,
+      customerName: r.customer_name,
+    }));
+  }
+
+  async getReminderRules(businessId: string): Promise<Array<{
+    id: string;
+    name: string;
+    triggerType: 'before_due' | 'after_due' | 'manual';
+    offsetDays: number;
+    minStatus: string;
+    maxSendCount: number;
+    subjectTemplate: string;
+    messageTemplate: string;
+    isActive: boolean;
+  }>> {
+    const res = await query(
+      `SELECT id, name, trigger_type, offset_days, min_status, max_send_count,
+              subject_template, message_template, is_active
+       FROM invoice_reminder_rules
+       WHERE business_id = $1 AND is_active = TRUE
+       ORDER BY trigger_type, offset_days`,
+      [businessId]
+    );
+    return res.rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      triggerType: r.trigger_type,
+      offsetDays: r.offset_days,
+      minStatus: r.min_status,
+      maxSendCount: r.max_send_count,
+      subjectTemplate: r.subject_template,
+      messageTemplate: r.message_template,
+      isActive: r.is_active,
+    }));
+  }
+
+  async getReminderSendCount(invoiceId: string, ruleId: string): Promise<number> {
+    const res = await query(
+      `SELECT COALESCE(SUM(send_count), 0)::int as total
+       FROM invoice_reminders
+       WHERE invoice_id = $1 AND rule_id = $2`,
+      [invoiceId, ruleId]
+    );
+    return res.rows[0]?.total ?? 0;
+  }
+
+  async markOverdue(invoiceId: string, timestamp: Date): Promise<boolean> {
+    const res = await query(
       `UPDATE invoices SET status = 'overdue', updated_at = NOW()
-       WHERE id = $1 AND status IN ('sent','viewed','partially_paid')`,
+       WHERE id = $1 AND status IN ('sent','viewed','partially_paid')
+       RETURNING id`,
       [invoiceId]
     );
+    if (!res.rows.length) return false;
     await this.recordEvent(invoiceId, {
       eventType: "overdue", actorType: "system", metadata: { detectedAt: timestamp.toISOString() },
     });
+    return true;
   }
 
-  async recordReminder(invoiceId: string, businessId: string, ruleId: string | null, emailLogId: string | null, recipientEmail: string, subject: string, sendCount: number): Promise<string> {
+  async recordReminder(invoiceId: string, businessId: string, ruleId: string | null, emailLogId: string | null, recipientEmail: string, subject: string, sendCount: number, idempotencyKey?: string | null): Promise<string> {
     const res = await query(
-      `INSERT INTO invoice_reminders (invoice_id, business_id, rule_id, email_log_id, recipient_email, subject, send_count)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [invoiceId, businessId, ruleId, emailLogId, recipientEmail, subject, sendCount]
+      `INSERT INTO invoice_reminders (invoice_id, business_id, rule_id, email_log_id, recipient_email, subject, send_count, idempotency_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT DO NOTHING RETURNING id`,
+      [invoiceId, businessId, ruleId, emailLogId, recipientEmail, subject, sendCount, idempotencyKey ?? null]
     );
-    return res.rows[0].id as string;
+    if (res.rows[0]?.id) return res.rows[0].id as string;
+    const existing = await query(
+      `SELECT id FROM invoice_reminders
+       WHERE business_id = $1 AND idempotency_key = $2
+       LIMIT 1`,
+      [businessId, idempotencyKey ?? ""]
+    );
+    return (existing.rows[0]?.id as string) ?? "";
   }
 
   async getReminderCount(invoiceId: string): Promise<number> {

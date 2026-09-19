@@ -1122,6 +1122,7 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const invoices = await invoiceRepository.findForDashboard(req.user!.businessId);
   const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const agingBuckets = [
     { bucket: "current" as const, count: 0, amount: "0" },
@@ -1134,7 +1135,10 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
   let totalPaid = new Decimal(0);
   let totalOutstanding = new Decimal(0);
   let totalOverdue = new Decimal(0);
+  let totalPaidThisMonth = new Decimal(0);
   let count = 0;
+  let paidInvoiceCount = 0;
+  let totalPaymentDays = 0;
 
   for (const inv of invoices) {
     const total = new Decimal(inv.total || 0);
@@ -1142,9 +1146,18 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
     const amountDue = new Decimal(inv.amount_due || 0);
     totalInvoiced = totalInvoiced.plus(total);
     totalPaid = totalPaid.plus(amountPaid);
+    
+    if (inv.paid_at && new Date(inv.paid_at) >= monthStart) {
+      totalPaidThisMonth = totalPaidThisMonth.plus(amountPaid);
+    }
+
     if (amountDue.gt(0)) {
       totalOutstanding = totalOutstanding.plus(amountDue);
-      const daysOverdue = Math.floor((now.getTime() - new Date(inv.due_date || inv.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      const dueDate = inv.due_date ? new Date(inv.due_date) : null;
+      const createdDate = inv.created_at ? new Date(inv.created_at) : now;
+      const referenceDate = dueDate ?? createdDate;
+      const daysOverdue = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
+      
       if (daysOverdue > 90) {
         agingBuckets[4].count++;
         agingBuckets[4].amount = new Decimal(agingBuckets[4].amount).plus(amountDue).toString();
@@ -1161,10 +1174,22 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
         agingBuckets[0].count++;
         agingBuckets[0].amount = new Decimal(agingBuckets[0].amount).plus(amountDue).toString();
       }
-      if (daysOverdue < 0) {
+      
+      if (daysOverdue > 0) {
         totalOverdue = totalOverdue.plus(amountDue);
       }
     }
+    
+    if (inv.status === "paid" && inv.paid_at && inv.created_at) {
+      const paidAt = new Date(inv.paid_at);
+      const createdAt = new Date(inv.created_at);
+      const paymentDays = Math.floor((paidAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+      if (paymentDays >= 0) {
+        totalPaymentDays += paymentDays;
+        paidInvoiceCount++;
+      }
+    }
+    
     count++;
   }
 
@@ -1190,14 +1215,14 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
     }, [])
     .sort((a, b) => a.period.localeCompare(b.period));
 
-  const averagePaymentTimeDays = count > 0 ? Math.round(totalPaid.toNumber() / count) : 0;
-  const paymentRate = totalInvoiced.gt(0) ? Math.round((totalPaid.div(totalInvoiced).toNumber() * 100)) : 0;
+  const averagePaymentTimeDays = paidInvoiceCount > 0 ? Math.round(totalPaymentDays / paidInvoiceCount) : 0;
+  const collectionRate = totalInvoiced.gt(0) ? Math.round((totalPaid.div(totalInvoiced).toNumber() * 100)) : 0;
 
   res.json({
     summary: {
       totalOutstanding: totalOutstanding.toString(),
       totalOverdue: totalOverdue.toString(),
-      totalPaidThisMonth: "0",
+      totalPaidThisMonth: totalPaidThisMonth.toString(),
       totalRevenue: totalInvoiced.toString(),
       draftCount: invoices.filter((i) => i.status === "draft").length,
       overdueCount: invoices.filter((i) => i.status === "overdue").length,
@@ -1208,7 +1233,7 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
     agingBuckets,
     paymentMetrics: {
       averagePaymentTimeDays,
-      paymentRate,
+      collectionRate,
       totalInvoiced: totalInvoiced.toString(),
       totalPaid: totalPaid.toString(),
       totalOutstanding: totalOutstanding.toString(),
@@ -1903,7 +1928,8 @@ app.get("/api/businesses/current/settings", requireAuth, async (req: AuthRequest
   const result = await query(
     `SELECT business_id, default_currency, default_tax_rate, default_terms, default_notes,
      time_zone, locale, pdf_template_id, payment_provider, payment_provider_config,
-     reminders_enabled, overdue_reminder_days, created_at, updated_at
+     reminders_enabled, overdue_reminder_days, reminders_before_due, reminders_after_due,
+     created_at, updated_at
      FROM business_settings WHERE business_id = $1`,
     [req.user!.businessId]
   );
@@ -1938,6 +1964,27 @@ app.patch("/api/businesses/current/settings", requireAuth, async (req: AuthReque
     values
   );
   res.json({ settings: result.rows[0] });
+});
+
+// ============================================================================
+// BUSINESS REMINDER SETTINGS (JSONB)
+// ============================================================================
+app.get("/api/businesses/current/settings/reminders", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const settings = await businessRepository.getReminderSettings(req.user!.businessId);
+  res.json({ settings });
+});
+
+app.patch("/api/businesses/current/settings/reminders", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { enabled, beforeDue, afterDue } = req.body;
+  await businessRepository.updateReminderSettings(req.user!.businessId, {
+    enabled: enabled ?? undefined,
+    beforeDue: beforeDue ?? undefined,
+    afterDue: afterDue ?? undefined,
+  });
+  const settings = await businessRepository.getReminderSettings(req.user!.businessId);
+  res.json({ settings });
 });
 
 // ============================================================================
@@ -2205,6 +2252,11 @@ function processOverdueJob() {
   invoiceService.processOverdueInvoices().then((count) => {
     if (count > 0) logger.info(`Processed ${count} overdue invoices`);
   }).catch((e) => logger.error({ err: e }, "Overdue processing failed"));
+  
+  invoiceService.processAutomatedReminders().then((count) => {
+    if (count > 0) logger.info(`Sent ${count} automated reminders`);
+  }).catch((e) => logger.error({ err: e }, "Automated reminder processing failed"));
+  
   overdueJobRunning = false;
   setTimeout(processOverdueJob, 15 * 60 * 1000);
 }

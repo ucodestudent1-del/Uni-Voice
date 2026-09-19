@@ -34,12 +34,20 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             {this.state.error && (
               <p className="text-xs text-slate-400 mb-4 font-mono">{this.state.error.message}</p>
             )}
-            <button
-              onClick={() => window.location.href = "/login"}
-              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-            >
-              Back to Login
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => this.setState({ hasError: false, error: null })}
+                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              >
+                Try again
+              </button>
+              <button
+                onClick={() => window.location.href = "/login"}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Back to Login
+              </button>
+            </div>
           </div>
         </div>
       );

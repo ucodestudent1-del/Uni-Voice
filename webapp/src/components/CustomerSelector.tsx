@@ -43,7 +43,7 @@ export default function CustomerSelector({ value, onChange, onCustomerChange, pl
     setLoading(true);
     try {
       const data = await getCustomers(params);
-      setCustomers(data.data ?? []);
+      setCustomers(data.customers ?? data.data ?? []);
     } catch {
       setCustomers([]);
     } finally {

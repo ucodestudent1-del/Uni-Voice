@@ -65,6 +65,11 @@ export interface DraftFee {
   sortOrder?: number;
 }
 
+export interface ReminderSendOptions {
+  idempotencyKey?: string;
+  ruleId?: string | null;
+}
+
 export interface InvoiceSummary {
   invoiceId: string;
   invoice: RepoInvoice;
@@ -208,8 +213,14 @@ export class InvoiceService {
     await invoiceRepository.update(businessId, id, {
       customer_id: input.customerId,
       currency: input.currency,
-      issue_date: input.issueDate?.toISOString(),
-      due_date: input.dueDate?.toISOString(),
+      issue_date:
+        input.issueDate instanceof Date
+          ? input.issueDate.toISOString()
+          : input.issueDate ?? null,
+      due_date:
+        input.dueDate instanceof Date
+          ? input.dueDate.toISOString()
+          : input.dueDate ?? null,
       notes: input.notes,
       terms: input.terms,
       payment_instructions: input.paymentInstructions,
@@ -546,6 +557,186 @@ export class InvoiceService {
     return count;
   }
 
+  async processAutomatedReminders(now: Date = new Date()): Promise<number> {
+    const businessIds = await businessRepository.listReminderEnabledBusinesses();
+    let totalSent = 0;
+
+    for (const businessId of businessIds) {
+      try {
+        const sent = await this.processRemindersForBusiness(businessId, now);
+        totalSent += sent;
+      } catch (err) {
+        logger.error({ err, businessId }, "Failed to process reminders for business");
+      }
+    }
+
+    if (totalSent > 0) {
+      logger.info(`Sent ${totalSent} automated reminders across ${businessIds.length} businesses`);
+    }
+    return totalSent;
+  }
+
+  private async processRemindersForBusiness(businessId: string, now: Date): Promise<number> {
+    const rules = await invoiceRepository.getReminderRules(businessId);
+    if (rules.length === 0) return 0;
+
+    const invoices = await invoiceRepository.findInvoicesNeedingReminders(businessId, now);
+    if (invoices.length === 0) return 0;
+
+    const business = await businessRepository.findById(businessId);
+    let sentCount = 0;
+
+    for (const invoice of invoices) {
+      if (!invoice.customerEmail) continue;
+
+      for (const rule of rules) {
+        const shouldSend = this.evaluateReminderRule(invoice, rule, now);
+        if (!shouldSend) continue;
+
+        const existingCount = await invoiceRepository.getReminderSendCount(invoice.id, rule.id);
+        if (existingCount >= rule.maxSendCount) continue;
+
+        try {
+          await this.sendAutomatedReminder(businessId, business, invoice, rule, existingCount + 1);
+          sentCount++;
+        } catch (err) {
+          logger.error({ err, invoiceId: invoice.id, ruleId: rule.id }, "Failed to send automated reminder");
+        }
+      }
+    }
+
+    return sentCount;
+  }
+
+  private evaluateReminderRule(invoice: {
+    dueDate: Date | null;
+    issueDate: Date | null;
+    status: string;
+    customerId: string | null;
+  }, rule: {
+    triggerType: 'before_due' | 'after_due' | 'manual';
+    offsetDays: number;
+    minStatus: string;
+  }, now: Date): boolean {
+    if (rule.triggerType === 'manual') return false;
+
+    const statusOrder = ['draft', 'sent', 'viewed', 'partially_paid', 'overdue', 'paid', 'cancelled', 'void'];
+    const invoiceStatusIndex = statusOrder.indexOf(invoice.status);
+    const minStatusIndex = statusOrder.indexOf(rule.minStatus);
+    if (invoiceStatusIndex === -1 || minStatusIndex === -1 || invoiceStatusIndex < minStatusIndex) {
+      return false;
+    }
+
+    if (!invoice.dueDate) return false;
+
+    const dueDate = new Date(invoice.dueDate);
+    const targetDate = new Date(dueDate);
+    if (rule.triggerType === 'before_due') {
+      targetDate.setDate(dueDate.getDate() - rule.offsetDays);
+    } else if (rule.triggerType === 'after_due') {
+      targetDate.setDate(dueDate.getDate() + rule.offsetDays);
+    }
+
+    const startOfTargetDay = new Date(targetDate);
+    startOfTargetDay.setHours(0, 0, 0, 0);
+    const endOfTargetDay = new Date(targetDate);
+    endOfTargetDay.setHours(23, 59, 59, 999);
+    const startOfNow = new Date(now);
+    startOfNow.setHours(0, 0, 0, 0);
+
+    return startOfNow >= startOfTargetDay && startOfNow <= endOfTargetDay;
+  }
+
+private async sendAutomatedReminder(
+    businessId: string,
+    business: { name: string; email?: string | null },
+    invoice: {
+      id: string;
+      invoiceNumber: string | null;
+      amountDue: string;
+      dueDate: Date | null;
+      customerEmail: string | null;
+      customerName: string | null;
+      customerId: string | null;
+    },
+    rule: {
+      id: string;
+      subjectTemplate: string;
+      messageTemplate: string;
+    },
+    sendCount: number
+  ): Promise<void> {
+    const customer = await customerRepository.findById(businessId, invoice.customerId!);
+    const customerEmail = customer?.email ?? invoice.customerEmail;
+    if (!customerEmail) return;
+
+    const token = await this.ensurePublicToken(businessId, invoice.id);
+    const snapshot = await invoiceRepository.getSnapshot(invoice.id);
+    const invoiceData = await invoiceRepository.findById(businessId, invoice.id);
+    const templateData = this.buildSnapshotTemplateData(invoiceData, snapshot);
+    const html = templateRenderer.render(templateData);
+    const pdf = await pdfService.generatePdfFromHtml(html, templateData);
+
+    const subject = rule.subjectTemplate
+      .replace('{{invoice_number}}', invoice.invoiceNumber ?? '')
+      .replace('{{amount_due}}', invoice.amountDue)
+      .replace('{{due_date}}', invoice.dueDate ? invoice.dueDate.toISOString().split('T')[0] : '')
+      .replace('{{business_name}}', business.name);
+
+    const messageBody = rule.messageTemplate
+      .replace('{{invoice_number}}', invoice.invoiceNumber ?? '')
+      .replace('{{amount_due}}', invoice.amountDue)
+      .replace('{{due_date}}', invoice.dueDate ? invoice.dueDate.toISOString().split('T')[0] : '')
+      .replace('{{business_name}}', business.name);
+
+    const fullHtml = `
+      <div style="font-family: system-ui, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+        <div style="background: #f8fafc; padding: 24px; border-radius: 8px; margin-bottom: 16px;">
+          <h2 style="margin: 0 0 16px; color: #1e293b;">${subject}</h2>
+          <div style="white-space: pre-wrap; color: #334155;">${messageBody}</div>
+        </div>
+        <div style="text-align: center;">
+          <a href="${env.APP_PUBLIC_BASE_URL}/invoice/${token}"
+             style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+            View Invoice
+          </a>
+        </div>
+        <p style="margin-top: 24px; font-size: 12px; color: #94a3b8; text-align: center;">
+          This is an automated reminder. If you have already paid, please disregard.
+        </p>
+      </div>
+    `;
+
+    const idempotencyKey = `auto-reminder:${invoice.id}:${rule.id}:${sendCount}`;
+    const emailData: InvoiceEmailData = {
+      invoiceId: invoice.id,
+      businessId,
+      recipient: { email: customerEmail, name: customer?.name ?? invoice.customerName ?? undefined },
+      subject,
+      htmlBody: fullHtml,
+      attachments: [{ filename: `Invoice-${invoice.invoiceNumber ?? invoice.id}.pdf`, content: pdf }],
+      idempotencyKey,
+    };
+
+    await emailService.sendInvoiceEmail(emailData);
+    await invoiceRepository.recordReminder(invoice.id, businessId, rule.id, null, customerEmail, subject, sendCount, idempotencyKey);
+    await invoiceRepository.recordEvent(invoice.id, {
+      eventType: "reminder_sent", actorType: "system", metadata: { ruleId: rule.id, sendCount, automated: true },
+    });
+  }
+
+private async ensurePublicToken(businessId: string, invoiceId: string): Promise<string> {
+    const invoice = await invoiceRepository.findById(businessId, invoiceId);
+    if (invoice.publicToken && invoice.publicTokenExpiresAt && invoice.publicTokenExpiresAt > new Date()) {
+      return invoice.publicToken;
+    }
+    const { generatePublicInvoiceToken } = await import("../utils/crypto.js");
+    const token = generatePublicInvoiceToken();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await invoiceRepository.setPublicToken(invoiceId, token, expiresAt);
+    return token;
+  }
+
   async createPaymentIntent(businessId: string, id: string): Promise<{ clientSecret: string | null; provider: string }> {
     const invoice = await invoiceRepository.findById(businessId, id);
     if (!invoice.isFinalized) throw new BusinessLogicError("Cannot create payment intent for a draft invoice");
@@ -593,6 +784,8 @@ export class InvoiceService {
     summary: { totalOutstanding: string; totalOverdue: string; totalPaidThisMonth: string; totalRevenue: string; draftCount: number; overdueCount: number; sentCount: number; paidCount: number; totalInvoices: number };
     recentlyPaid: any[];
     requiringAttention: any[];
+    upcoming: any[];
+    moneyIn: { total: string; count: number; currency: string };
   }> {
     const invoices = await invoiceRepository.findForDashboard(businessId);
     const now = new Date();
@@ -673,6 +866,30 @@ export class InvoiceService {
         status: i.status,
       }));
 
+    // Cash-flow: invoices due within the next 7 days (open + outstanding).
+    const upcoming = (await invoiceRepository.findUpcomingInvoices(businessId, 7)).map((i) => ({
+      id: i.id,
+      invoiceNumber: i.invoice_number,
+      customerName: i.customer_name,
+      amountDue: i.amount_due,
+      total: i.total,
+      dueDate: i.due_date,
+      currency: i.currency,
+      status: i.status,
+    }));
+
+    // Cash-flow: money collected in the last 7 days.
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const moneyInTotal = await invoiceRepository.sumPaidSince(businessId, weekAgo);
+    const paidInLastWeek = recentlyPaid.filter((i) => {
+      const paidAt = i.paidAt ? new Date(i.paidAt) : new Date(0);
+      return paidAt >= weekAgo && new Decimal(i.amountPaid || 0).gt(0);
+    });
+
+    // Get business default currency
+    const business = await businessRepository.findById(businessId);
+    const businessCurrency = business.defaultCurrency || "USD";
+
     return {
       summary: {
         totalOutstanding: summary.totalOutstanding.toFixed(2),
@@ -687,6 +904,12 @@ export class InvoiceService {
       },
       recentlyPaid,
       requiringAttention,
+      upcoming,
+      moneyIn: {
+        total: moneyInTotal,
+        count: paidInLastWeek.length,
+        currency: businessCurrency,
+      },
     };
   }
 

@@ -1,4 +1,5 @@
 import { Decimal } from "decimal.js";
+import { CreditCard, Upload } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 
 export interface PreviewLineItem {
@@ -16,6 +17,14 @@ export interface PreviewFee {
   description: string;
   amount: string;
   taxRate?: string;
+}
+
+export interface PreviewAttachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  category?: "attachment" | "before" | "after";
 }
 
 export interface PreviewInvoice {
@@ -46,6 +55,8 @@ export interface PreviewInvoice {
   amountPaid: string;
   amountDue: string;
   status: string;
+  paymentLink?: string;
+  attachments?: PreviewAttachment[];
 }
 
 function fmt(v: string | number, currency: string, dp = 2): string {
@@ -212,6 +223,58 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
           <p className="text-sm text-slate-700 whitespace-pre-line">{invoice.paymentInstructions}</p>
         </div>
       )}
+
+      {invoice.attachments && invoice.attachments.length > 0 && (
+        <div className="mt-8">
+          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            Photos &amp; Attachments
+          </h4>
+          <div className="grid grid-cols-3 gap-3">
+            {invoice.attachments.map((a) => (
+              <div key={a.id} className="group">
+                {a.type.startsWith("image/") ? (
+                  <img
+                    src={a.url}
+                    alt={a.name}
+                    className={`w-full h-24 object-cover rounded-lg border border-slate-200 ${
+                      a.category === "before"
+                        ? "ring-2 ring-offset-2 ring-amber-500"
+                        : a.category === "after"
+                        ? "ring-2 ring-offset-2 ring-green-500"
+                        : ""
+                    }`}
+                  />
+                ) : (
+                  <div className="flex h-24 w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
+                    <Upload className="h-6 w-6 text-slate-400" />
+                  </div>
+                )}
+                <p className="mt-1 text-xs text-slate-500 truncate">{a.name}</p>
+                {a.category && a.category !== "attachment" && (
+                  <span className="text-[10px] font-medium capitalize text-slate-600">
+                    {a.category}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {invoice.paymentLink && (
+        <div className="mt-10 border-t border-slate-200 pt-6 text-center">
+          <a
+            href={invoice.paymentLink}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-md hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            <CreditCard className="h-5 w-5" />
+            Pay {fmt(invoice.amountDue, cur)} now
+          </a>
+          <p className="mt-2 text-xs text-slate-500">
+            Secure online payment — no account required
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -219,5 +282,15 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
 function computeLineTotal(item: PreviewLineItem, currency: string): string {
   const qty = new Decimal(item.quantity || 1);
   const price = new Decimal(item.unitPrice || 0);
-  return fmt(qty.mul(price).toFixed(2), currency);
+  let total = qty.mul(price);
+
+  if (item.discount && new Decimal(item.discount).gt(0)) {
+    if (item.discountType === "percentage") {
+      total = total.minus(total.mul(new Decimal(item.discount).div(100)));
+    } else {
+      total = total.minus(new Decimal(item.discount));
+    }
+  }
+
+  return fmt(total.toFixed(2), currency);
 }

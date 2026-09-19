@@ -6,7 +6,6 @@ import {
   duplicateInvoice,
   finalizeInvoice,
   sendInvoice,
-  createInvoice as apiCreateInvoice,
   getCustomers,
   exportInvoicesCsv,
   exportInvoicesJson,
@@ -126,22 +125,7 @@ export default function Invoices() {
   const totalPages = Math.ceil(total / pageSize);
 
   async function handleCreateAndEdit() {
-    try {
-      const res = await apiCreateInvoice({
-        currency: "USD",
-        items: [{
-          description: "",
-          quantity: "1",
-          unit: "each",
-          unitPrice: "0.00",
-          taxRate: "0",
-          isTaxInclusive: false,
-        }],
-      });
-      navigate(`/app/invoices/${res.invoiceId}/edit`);
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to create invoice");
-    }
+    navigate("/app/invoices/new");
   }
 
   async function handleDuplicate(id: string) {

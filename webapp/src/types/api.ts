@@ -469,10 +469,29 @@ export interface ApiInvoiceListItem {
   paid_at?: string | null;
 }
 
+export interface ApiUpcomingInvoice {
+  id: string;
+  invoiceNumber?: string | null;
+  customerName?: string | null;
+  amountDue: string;
+  total: string;
+  dueDate?: string | null;
+  currency: string;
+  status: string;
+}
+
+export interface ApiMoneyIn {
+  total: string;
+  count: number;
+  currency: string;
+}
+
 export interface ApiDashboardData {
   summary: ApiDashboardSummary;
   recentlyPaid: ApiInvoiceListItem[];
   requiringAttention: ApiInvoiceListItem[];
+  upcoming: ApiUpcomingInvoice[];
+  moneyIn: ApiMoneyIn;
 }
 
 export interface InvoiceSearchParams {
@@ -648,7 +667,7 @@ export interface ApiAgingBucket {
 
 export interface ApiPaymentMetrics {
   averagePaymentTimeDays: number;
-  paymentRate: number;
+  collectionRate: number;
   totalInvoiced: string;
   totalPaid: string;
   totalOutstanding: string;
