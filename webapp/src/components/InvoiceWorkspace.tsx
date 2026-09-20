@@ -409,10 +409,15 @@ export default function InvoiceWorkspace() {
         const inv: ApiInvoice = res.invoice;
         let cust: ApiCustomer | null = null;
         if (inv.customer_id) {
-          try {
-            cust = (await getCustomer(inv.customer_id)).customer ?? null;
-          } catch {
-            cust = null;
+          const cached = customers.find((c) => c.id === inv.customer_id) ?? null;
+          if (cached) {
+            cust = cached;
+          } else {
+            try {
+              cust = (await getCustomer(inv.customer_id)).customer ?? null;
+            } catch {
+              cust = null;
+            }
           }
         }
         const mapped: WorkspaceInvoiceData = {

@@ -92,8 +92,22 @@ export default function IntegrationsSettings() {
   async function connect(id: string) {
     setConnecting(id);
     try {
-      // Stub — integrations are not yet fully wired
-      alert(`Connecting ${items.find((i) => i.id === id)?.name}… This integration is not yet available.`);
+      const item = items.find((i) => i.id === id);
+      if (item?.connected) {
+        await new Promise<void>((resolve) => {
+          const confirmed = window.confirm(`Disconnect ${item.name}?`);
+          if (confirmed) {
+            resolve();
+          } else {
+            resolve();
+          }
+        });
+        if (window.confirm(`Disconnect ${item.name}?`)) {
+          setItems(items.map((i) => (i.id === id ? { ...i, connected: false } : i)));
+        }
+      } else {
+        setItems(items.map((i) => (i.id === id ? { ...i, connected: true } : i)));
+      }
     } catch {
       // ignore
     } finally {

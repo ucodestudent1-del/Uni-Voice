@@ -198,6 +198,23 @@ export class InvoiceService {
 
   async getInvoice(businessId: string, id: string): Promise<InvoiceSummary> {
     const invoice = await invoiceRepository.findById(businessId, id);
+    if (invoice.isFinalized) {
+      return {
+        invoiceId: invoice.id,
+        invoice,
+        items: invoice.items,
+        fees: invoice.fees,
+        totals: {
+          subtotal: String(invoice.subtotal ?? 0),
+          discountTotal: String(invoice.discountTotal ?? 0),
+          taxTotal: String(invoice.taxTotal ?? 0),
+          feeTotal: String(invoice.feeTotal ?? 0),
+          total: String(invoice.total ?? 0),
+          amountPaid: String(invoice.amountPaid ?? 0),
+          amountDue: String(invoice.amountDue ?? 0),
+        },
+      };
+    }
     const calc = await this.recalculate(invoice);
     return this.summarize(invoice, calc);
   }

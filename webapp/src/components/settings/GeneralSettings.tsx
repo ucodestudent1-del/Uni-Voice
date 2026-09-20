@@ -94,8 +94,8 @@ export default function GeneralSettings() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Account</h2>
-          <p className="text-sm text-slate-600 mt-1">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Account</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             Manage your personal account details.
           </p>
         </div>
@@ -104,15 +104,15 @@ export default function GeneralSettings() {
           <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 space-y-6">
           <div>
-            <h3 className="text-md font-semibold text-slate-900 mb-4">Profile</h3>
+            <h3 className="text-md font-semibold text-slate-900 dark:text-slate-100 mb-4">Profile</h3>
             <FormField label="Email Address" description="Your login email address.">
               <input
                 type="email"
                 value={accountForm.email}
                 onChange={(e) => setAccountForm({ email: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </FormField>
           </div>
@@ -134,8 +134,8 @@ export default function GeneralSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">General</h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">General</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
           Configure app-level preferences for your business.
         </p>
       </div>
@@ -144,7 +144,7 @@ export default function GeneralSettings() {
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 space-y-6">
         <FormField
           label="Default Currency"
           description="The default currency for new invoices."
@@ -152,7 +152,7 @@ export default function GeneralSettings() {
           <select
             value={prefsForm.defaultCurrency}
             onChange={(e) => setPrefsForm({ ...prefsForm, defaultCurrency: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="USD">USD — US Dollar</option>
             <option value="EUR">EUR — Euro</option>
@@ -172,7 +172,7 @@ export default function GeneralSettings() {
           <select
             value={prefsForm.timeZone}
             onChange={(e) => setPrefsForm({ ...prefsForm, timeZone: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="UTC">UTC</option>
             <option value="America/New_York">Eastern Time (America/New_York)</option>
@@ -195,7 +195,7 @@ export default function GeneralSettings() {
           <select
             value={prefsForm.locale}
             onChange={(e) => setPrefsForm({ ...prefsForm, locale: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="en-US">English (US)</option>
             <option value="en-GB">English (UK)</option>
@@ -214,7 +214,7 @@ export default function GeneralSettings() {
           <select
             value={prefsForm.dateFormat}
             onChange={(e) => setPrefsForm({ ...prefsForm, dateFormat: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="MM/DD/YYYY">MM/DD/YYYY</option>
             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -231,7 +231,7 @@ export default function GeneralSettings() {
           <select
             value={prefsForm.language}
             onChange={(e) => setPrefsForm({ ...prefsForm, language: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="en">English</option>
             <option value="es">Español</option>

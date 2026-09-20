@@ -252,26 +252,26 @@ export default function Invoices() {
     return colors[state] || colors.unpaid;
   };
 
-  if (loading && invoices.length === 0) return <div className="text-center py-20 text-slate-500">Loading invoices...</div>;
+  if (loading && invoices.length === 0) return <div className="text-center py-20 text-slate-500 dark:text-slate-400">Loading invoices...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
-          <p className="text-sm text-slate-600 mt-1">{total} invoices total</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Invoices</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{total} invoices total</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportCsv}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hidden sm:inline-flex"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hidden sm:inline-flex"
             title="Export CSV"
           >
             CSV
           </button>
           <button
             onClick={handleExportJson}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hidden sm:inline-flex"
+            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hidden sm:inline-flex"
             title="Export JSON"
           >
             JSON
@@ -285,20 +285,20 @@ export default function Invoices() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filters</h3>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-600" : "text-slate-600 hover:text-slate-900"}`}
+              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-600 dark:text-primary-400" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"}`}
             >
               {showAdvancedFilters ? "Hide" : "Show"} Advanced
             </button>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
               >
                 Clear All
               </button>
@@ -308,21 +308,21 @@ export default function Invoices() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Search</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Search</label>
             <input
               type="text"
               placeholder="Invoice #, customer name, email..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s} value={s}>{s === "partially_paid" ? "Partially Paid" : s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -330,11 +330,11 @@ export default function Invoices() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Payment State</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Payment State</label>
             <select
               value={paymentStateFilter}
               onChange={(e) => { setPaymentStateFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               {PAYMENT_STATE_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -344,13 +344,13 @@ export default function Invoices() {
         </div>
 
         {showAdvancedFilters && (
-          <div className="mt-4 border-t border-slate-200 pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Customer</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Customer</label>
               <select
                 value={customerFilter}
                 onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">All Customers</option>
                 {customers.map((c) => (
@@ -359,17 +359,17 @@ export default function Invoices() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Currency</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Currency</label>
               <input
                 type="text"
                 placeholder="USD, EUR, etc."
                 value={currencyFilter}
                 onChange={(e) => { setCurrencyFilter(e.target.value.toUpperCase()); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Min Amount</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Min Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -377,11 +377,11 @@ export default function Invoices() {
                 placeholder="0.00"
                 value={minAmount}
                 onChange={(e) => { setMinAmount(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Max Amount</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Max Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -389,43 +389,43 @@ export default function Invoices() {
                 placeholder="999999.99"
                 value={maxAmount}
                 onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Issue Date From</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Issue Date From</label>
               <input
                 type="date"
                 value={issueDateFrom}
                 onChange={(e) => { setIssueDateFrom(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Issue Date To</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Issue Date To</label>
               <input
                 type="date"
                 value={issueDateTo}
                 onChange={(e) => { setIssueDateTo(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Due Date From</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Due Date From</label>
               <input
                 type="date"
                 value={dueDateFrom}
                 onChange={(e) => { setDueDateFrom(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Due Date To</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Due Date To</label>
               <input
                 type="date"
                 value={dueDateTo}
                 onChange={(e) => { setDueDateTo(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -433,60 +433,60 @@ export default function Invoices() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100"
-                  onClick={() => handleSort("invoice_number")}>
+            <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+              <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => handleSort("invoice_number")}>
                 Invoice
                 {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100"
-                  onClick={() => handleSort("customer_name")}>
+              <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => handleSort("customer_name")}>
                 Customer
                 {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">
+              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">
                 Payment State
               </th>
-              <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100"
-                  onClick={() => handleSort("total")}>
+              <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => handleSort("total")}>
                 Total
                 {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100"
-                  onClick={() => handleSort("amount_due")}>
+              <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => handleSort("amount_due")}>
                 Amount Due
                 {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100"
-                  onClick={() => handleSort("due_date")}>
+              <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => handleSort("due_date")}>
                 Due Date
                 {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100"
-                  onClick={() => handleSort("issue_date")}>
+              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => handleSort("issue_date")}>
                 Issue Date
                 {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100"
-                  onClick={() => handleSort("status")}>
+              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                onClick={() => handleSort("status")}>
                 Status
                 {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
+              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {invoices.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-slate-500">
+                <td colSpan={9} className="py-16 text-center text-slate-500 dark:text-slate-400">
                   {hasActiveFilters ? "No invoices match your filters" : "No invoices yet"}
                   {!hasActiveFilters && (
                     <button
@@ -502,38 +502,38 @@ export default function Invoices() {
               invoices.map((inv) => {
                 const paymentState = getPaymentState(inv);
                 return (
-                  <tr key={inv.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                  <tr key={inv.id} className="border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800">
                     <td className="py-3 px-4">
                       <div className="flex flex-col">
-                        <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-slate-900 hover:text-primary-600">
+                        <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-slate-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400">
                           {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
                         </Link>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
                           {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
+                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
                       {inv.customer_name || "—"}
-                      {inv.customer_email && <span className="text-xs text-slate-400 block">{inv.customer_email}</span>}
+                      {inv.customer_email && <span className="text-xs text-slate-400 dark:text-slate-500 block">{inv.customer_email}</span>}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getPaymentStateColor(paymentState)}`}>
                         {getPaymentStateLabel(paymentState)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">
+                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">
                       {formatCurrency(inv.total, inv.currency)}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">
+                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">
                       {Number(inv.amount_due || 0) > 0
                         ? formatCurrency(inv.amount_due, inv.currency)
-                        : <span className="text-green-600">Paid</span>}
+                        : <span className="text-green-600 dark:text-green-400">Paid</span>}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-slate-600">
+                    <td className="py-3 px-4 text-right text-sm text-slate-600 dark:text-slate-400">
                       {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3 px-4 text-center text-sm text-slate-600">
+                    <td className="py-3 px-4 text-center text-sm text-slate-600 dark:text-slate-400">
                       {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -544,7 +544,7 @@ export default function Invoices() {
                         <FeatureGate feature="invoices.duplicate" requiredPlan="pro" fallback={null}>
                           <button
                             onClick={() => handleDuplicate(inv.id)}
-                            className="text-xs text-slate-600 hover:text-slate-900"
+                            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                             title="Duplicate"
                           >
                             Copy
@@ -554,7 +554,7 @@ export default function Invoices() {
                           <FeatureGate feature="reminders.automated" requiredPlan="pro" fallback={null}>
                             <button
                               onClick={() => handleSend(inv.id)}
-                              className="text-xs text-slate-600 hover:text-slate-900"
+                              className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                               title="Send"
                             >
                               Send
@@ -564,7 +564,7 @@ export default function Invoices() {
                         {inv.status === "draft" && (
                           <button
                             onClick={() => handleFinalize(inv.id)}
-                            className="text-xs text-primary-600 hover:text-primary-700"
+                            className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
                             title="Finalize"
                           >
                             Finalize
@@ -580,15 +580,15 @@ export default function Invoices() {
         </table>
 
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-between">
-            <p className="text-sm text-slate-600">
+          <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Page {page} of {totalPages} • {total} invoices
             </p>
             <div className="flex items-center gap-2">
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>{size} per page</option>
@@ -597,14 +597,14 @@ export default function Invoices() {
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
               >
                 Previous
               </button>
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
               >
                 Next
               </button>

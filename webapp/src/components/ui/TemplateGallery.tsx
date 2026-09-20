@@ -37,8 +37,8 @@ export default function TemplateGallery({
               key={item.id}
               type="button"
               onClick={handleSelect(item)}
-              className={`group relative flex flex-col text-left rounded-xl border-2 bg-white p-5 shadow-sm transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                isSelected ? `${colors.border} ring-2 ring-primary-500` : "border-slate-200"
+               className={`group relative flex flex-col text-left rounded-xl border-2 bg-white dark:bg-slate-900 p-5 shadow-sm transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                isSelected ? `${colors.border} ring-2 ring-primary-500` : "border-slate-200 dark:border-slate-700"
               }`}
             >
               {isSelected && (
@@ -47,12 +47,12 @@ export default function TemplateGallery({
                 </span>
               )}
                <div
-                 className={`mb-4 aspect-video rounded-lg border ${colors.bg} ${colors.border} flex items-center justify-center`}
-               >
+                className={`mb-4 aspect-video rounded-lg border ${colors.bg} ${colors.border} flex items-center justify-center`}
+              >
                </div>
-               <h3 className="text-lg font-semibold text-slate-900">{item.name}</h3>
-               <p className="mt-1 text-sm text-slate-600 flex-1">{item.description}</p>
-               <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
+               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{item.name}</h3>
+               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 flex-1">{item.description}</p>
+               <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                  <span className="text-green-400">✓</span>
                  <span>Responsive • Print-ready • Brandable</span>
                </div>

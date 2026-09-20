@@ -47,10 +47,10 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-8">
-        <div className="h-8 bg-slate-200 rounded w-48" />
+        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-48" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 h-28" />
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5 h-28" />
           ))}
         </div>
       </div>
@@ -59,8 +59,8 @@ export default function Dashboard() {
 
   if (loadError) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-        <p className="text-sm font-medium text-red-800">{loadError}</p>
+      <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-6 text-center">
+        <p className="text-sm font-medium text-red-800 dark:text-red-300">{loadError}</p>
         <button
           onClick={() => setRetryKey((key) => key + 1)}
           className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
@@ -107,9 +107,9 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
           {plan && (
-            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium mt-1 ml-3 bg-primary-100 text-primary-800">
+            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium mt-1 ml-3 bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-300">
               {plan.name} Plan
             </span>
           )}
@@ -125,41 +125,41 @@ export default function Dashboard() {
 
       {/* Cash-Flow KPI Cards — the trader's command center */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
-        <KPICard
-          title="Money Out"
-          value={formatCurrency(summary.totalOutstanding, currency)}
-          subtitle={`${(summary.draftCount + summary.sentCount + summary.overdueCount)} unpaid invoices`}
-          icon={<DollarSign className="w-5 h-5" />}
-          iconBackground="bg-blue-50 text-blue-600"
-        />
-        <KPICard
-          title="Overdue"
-          value={formatCurrency(summary.totalOverdue, currency)}
-          subtitle={`${summary.overdueCount} overdue invoices`}
-          icon={<AlertTriangle className="w-5 h-5" />}
-          iconBackground="bg-red-50 text-red-600"
-        />
-        <KPICard
-          title="Money In (7d)"
-          value={formatCurrency(moneyIn.total, moneyIn.currency || currency)}
-          subtitle={`${moneyIn.count} payment${moneyIn.count === 1 ? "" : "s"} this week`}
-          icon={<CheckCircle className="w-5 h-5" />}
-          iconBackground="bg-green-50 text-green-600"
-        />
-        <KPICard
-          title="Paid This Month"
-          value={formatCurrency(summary.totalPaidThisMonth, currency)}
-          subtitle={`${summary.paidCount} paid invoices`}
-          icon={<CheckCircle className="w-5 h-5" />}
-          iconBackground="bg-emerald-50 text-emerald-600"
-        />
-        <KPICard
-          title="Due Next 7 Days"
-          value={formatCurrency(upcomingTotal, currency)}
-          subtitle={`${upcoming.length} invoices due`}
-          icon={<CalendarDays className="w-5 h-5" />}
-          iconBackground="bg-amber-50 text-amber-600"
-        />
+         <KPICard
+           title="Money Out"
+           value={formatCurrency(summary.totalOutstanding, currency)}
+           subtitle={`${(summary.draftCount + summary.sentCount + summary.overdueCount)} unpaid invoices`}
+           icon={<DollarSign className="w-5 h-5" />}
+           iconBackground="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400"
+         />
+         <KPICard
+           title="Overdue"
+           value={formatCurrency(summary.totalOverdue, currency)}
+           subtitle={`${summary.overdueCount} overdue invoices`}
+           icon={<AlertTriangle className="w-5 h-5" />}
+           iconBackground="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"
+         />
+         <KPICard
+           title="Money In (7d)"
+           value={formatCurrency(moneyIn.total, moneyIn.currency || currency)}
+           subtitle={`${moneyIn.count} payment${moneyIn.count === 1 ? "" : "s"} this week`}
+           icon={<CheckCircle className="w-5 h-5" />}
+           iconBackground="bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+         />
+         <KPICard
+           title="Paid This Month"
+           value={formatCurrency(summary.totalPaidThisMonth, currency)}
+           subtitle={`${summary.paidCount} paid invoices`}
+           icon={<CheckCircle className="w-5 h-5" />}
+           iconBackground="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400"
+         />
+         <KPICard
+           title="Due Next 7 Days"
+           value={formatCurrency(upcomingTotal, currency)}
+           subtitle={`${upcoming.length} invoices due`}
+           icon={<CalendarDays className="w-5 h-5" />}
+           iconBackground="bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400"
+         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -174,33 +174,33 @@ export default function Dashboard() {
       {/* Cash-Flow: Upcoming + Recent Invoices */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
-              <h3 className="text-sm font-semibold text-slate-900">Due Next 7 Days</h3>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Due Next 7 Days</h3>
               <Link
                 to="/app/invoices?status=sent"
-                className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
               >
                 View All
               </Link>
             </div>
             {upcoming.length === 0 ? (
-              <div className="px-5 pb-6 text-center text-sm text-slate-400">
+              <div className="px-5 pb-6 text-center text-sm text-slate-400 dark:text-slate-500">
                 Nothing due this week
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {upcoming.map((inv) => (
                   <Link
                     key={inv.id}
                     to={`/app/invoices/${inv.id}`}
-                    className="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors"
+                    className="flex items-center justify-between px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
                         {inv.customerName || "—"}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {inv.dueDate
                           ? new Date(inv.dueDate).toLocaleDateString("en-US", {
                               month: "short",
@@ -210,10 +210,10 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-slate-900">
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
                         {formatCurrency(inv.amountDue || inv.total, inv.currency)}
                       </p>
-                      <span className="text-xs text-slate-500">Invoice {inv.invoiceNumber || `#${inv.id.slice(0, 8)}`}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">Invoice {inv.invoiceNumber || `#${inv.id.slice(0, 8)}`}</span>
                     </div>
                   </Link>
                 ))}

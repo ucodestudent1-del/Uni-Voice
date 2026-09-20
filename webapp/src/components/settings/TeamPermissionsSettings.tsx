@@ -7,7 +7,7 @@ export default function TeamPermissionsSettings() {
   const [inviteError, setInviteError] = useState<string | null>(null);
 
   const teamMembers = [
-    { id: "1", name: "You (Owner)", email: "you@business.com", role: "owner", status: "active" },
+    { id: "current-user", name: "You (Owner)", email: "owner", role: "owner", status: "active" },
   ];
 
   async function invite() {
@@ -15,9 +15,7 @@ export default function TeamPermissionsSettings() {
     setInviting(true);
     setInviteError(null);
     try {
-      // Stub — team management is not yet fully wired in the backend
-      alert(`Invitation sent to ${inviteEmail} as ${inviteRole}`);
-      setInviteEmail("");
+      setInviteError("Team management features are not yet available. Please check back later.");
     } catch (err: any) {
       setInviteError(err.message ?? "Failed to send invitation");
     } finally {

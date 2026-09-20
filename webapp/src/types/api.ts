@@ -809,3 +809,66 @@ export interface ApiProjectNote {
   created_at: string;
   updated_at: string;
 }
+
+export type ExpenseCategory =
+  | "supplies"
+  | "software"
+  | "meals"
+  | "travel"
+  | "office"
+  | "marketing"
+  | "utilities"
+  | "professional_fees"
+  | "taxes"
+  | "insurance"
+  | "equipment"
+  | "other";
+
+export interface ApiExpense {
+  id: string;
+  business_id: string;
+  user_id?: string | null;
+  customer_id?: string | null;
+  project_id?: string | null;
+  invoice_id?: string | null;
+  description: string;
+  amount: string;
+  currency: string;
+  category: ExpenseCategory;
+  expense_date: string;
+  payment_method: string;
+  receipt_url?: string | null;
+  notes?: string | null;
+  is_billable: boolean;
+  is_reimbursed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiExpenseSummary {
+  total_amount: string;
+  billable_amount: string;
+  reimbursed_amount: string;
+  non_reimbursed_billable: string;
+  count: number;
+  currency: string;
+  period_start?: string | null;
+  period_end?: string | null;
+}
+
+export interface ExpenseSearchParams {
+  limit?: number;
+  offset?: number;
+  customerId?: string;
+  projectId?: string;
+  category?: string;
+  isBillable?: boolean;
+  isReimbursed?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}

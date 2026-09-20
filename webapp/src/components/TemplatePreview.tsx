@@ -10,56 +10,46 @@ import { formatCurrency } from "../utils/format";
 
 const SAMPLE_BUSINESS = {
   id: "sample-business",
-  name: "Acme Corporation",
-  email: "billing@acme.com",
-  phone: "+1 (555) 123-4567",
-  website: "www.acme.com",
-  address: "123 Business Street\nNew York, NY 10001",
+  name: "Your Business",
+  email: "billing@yourbusiness.com",
+  phone: "+1 (555) 000-0000",
+  website: "www.yourbusiness.com",
+  address: "",
   logo_url: null as string | null,
 };
 
 const SAMPLE_CUSTOMER = {
   id: "sample-customer",
-  name: "Jane Cooper",
-  company_name: "Globex Inc.",
-  email: "jane.cooper@globex.com",
-  phone: "+1 (555) 987-6543",
-  address: "456 Client Avenue, Suite 200\nSan Francisco, CA 94102",
+  name: "Your Customer",
+  company_name: "Customer Company",
+  email: "customer@customer.com",
+  phone: "",
+  address: "",
 };
 
 const SAMPLE_ITEMS = [
   {
     id: "item-1",
-    description: "Professional Services - June",
-    quantity: "10",
-    unit: "hours",
-    unitPrice: "75.00",
-    discount: "0.00",
-    taxRate: "0.08",
-    isTaxInclusive: false,
-  },
-  {
-    id: "item-2",
-    description: "Software License (Annual)",
+    description: "Service — Monthly Retainer",
     quantity: "1",
-    unit: "license",
-    unitPrice: "200.00",
+    unit: "month",
+    unitPrice: "0.00",
     discount: "0.00",
-    taxRate: "0.08",
+    taxRate: "0.00",
     isTaxInclusive: false,
   },
 ];
 
 const SAMPLE_INVOICE = {
-  invoiceNumber: "INV-2024-001",
-  issueDate: "2024-06-15",
-  dueDate: "2024-07-15",
+  invoiceNumber: "INV-000001",
+  issueDate: "",
+  dueDate: "",
   currency: "USD",
   items: SAMPLE_ITEMS,
   fees: [],
-  notes: "Thank you for your business! Please reach out with any questions.",
-  terms: "Payment is due within 30 days of the invoice date.",
-  paymentInstructions: "Pay via bank transfer to account #1234-5678-90.",
+  notes: "",
+  terms: "",
+  paymentInstructions: "",
 };
 
 interface TemplatePreviewProps {

@@ -6,9 +6,7 @@ interface CustomerImportProps {
   onImported: () => void;
 }
 
-const SAMPLE_CSV = `name,email,company,phone,tax_id,address_line_1,city,state_or_region,postal_code,country_code
-Acme Corp,acme@example.com,Acme Inc,555-0100,12-3456789,123 Business St,New York,NY,10001,US
-Beta LLC,beta@example.com,,555-0200,,,Los Angeles,CA,90001,US`;
+const SAMPLE_CSV_HEADER = `name,email,company,phone,tax_id,address_line_1,city,state_or_region,postal_code,country_code`;
 
 export default function CustomerImport({ onClose, onImported }: CustomerImportProps) {
   const [csv, setCsv] = useState("");
@@ -96,9 +94,9 @@ export default function CustomerImport({ onClose, onImported }: CustomerImportPr
               </div>
 
               <details className="bg-slate-50 rounded-lg p-3">
-                <summary className="text-sm text-slate-600 cursor-pointer">Show sample CSV format</summary>
+                <summary className="text-sm text-slate-600 cursor-pointer">Show CSV format</summary>
                 <pre className="mt-2 text-xs text-slate-600 whitespace-pre-wrap overflow-x-auto">
-                  {SAMPLE_CSV}
+                  {SAMPLE_CSV_HEADER}
                 </pre>
               </details>
             </>

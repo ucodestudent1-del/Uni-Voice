@@ -4,6 +4,7 @@ import { Section, SectionHeader } from "../components/ui/Section";
 import FeaturesSection from "../components/ui/FeaturesSection";
 import FaqSection from "../components/ui/FaqSection";
 import TemplateGallery from "../components/ui/TemplateGallery";
+import ThemeToggle from "../components/ThemeToggle";
 import { pricingFeatures, faqs, templateModules } from "../data/landing";
 
 export default function Landing() {
@@ -11,15 +12,15 @@ export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center justify-between h-16 py-4">
-          <div className="text-xl font-bold text-slate-900">InvoiceFlow</div>
+          <div className="text-xl font-bold text-slate-900 dark:text-slate-100">InvoiceFlow</div>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="#templates" className="text-sm text-slate-600 hover:text-slate-900">Templates</Link>
-            <Link to="#features" className="text-sm text-slate-600 hover:text-slate-900">Features</Link>
-            <Link to="#faq" className="text-sm text-slate-600 hover:text-slate-900">FAQ</Link>
-            <button onClick={() => navigate("/login")} className="text-sm text-slate-600 hover:text-slate-900">
+            <Link to="#templates" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Templates</Link>
+            <Link to="#features" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Features</Link>
+            <Link to="#faq" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">FAQ</Link>
+            <button onClick={() => navigate("/login")} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
               Login
             </button>
             <button
@@ -29,12 +30,15 @@ export default function Landing() {
               Create Free Invoice
             </button>
           </div>
-          <button
-            onClick={() => navigate("/register")}
-            className="inline-flex md:hidden items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-          >
-            Get Started
-          </button>
+          <div className="flex md:hidden items-center gap-3">
+            <ThemeToggle />
+            <button
+              onClick={() => navigate("/register")}
+              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              Get Started
+            </button>
+          </div>
         </nav>
       </header>
 
@@ -45,7 +49,7 @@ export default function Landing() {
             <h1 className="text-4xl font-bold text-slate-900 sm:text-5xl leading-tight">
               Professional invoices without the accounting headache
             </h1>
-            <p className="text-lg text-slate-600 max-w-lg">
+            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-lg">
               Create, send, and track invoices in seconds. Free plan includes everything you need to get started.
               Upgrade to Pro for automation that saves you hours every month.
             </p>
@@ -56,12 +60,12 @@ export default function Landing() {
               >
                 Create Free Invoice
               </button>
-              <span className="text-sm text-slate-500">No credit card required · Cancel anytime</span>
+              <span className="text-sm text-slate-500 dark:text-slate-400">No credit card required · Cancel anytime</span>
             </div>
           </div>
           <div className="relative">
             <div className="absolute -inset-4 bg-primary-100/50 blur-3xl rounded-full" />
-            <div className="relative bg-white border border-slate-200 rounded-2xl shadow-xl">
+            <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl">
               <InvoicePreviewHero />
             </div>
           </div>
@@ -116,10 +120,10 @@ export default function Landing() {
       {/* Final CTA */}
       <Section className="py-20">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
             {isAuthenticated ? "Continue to your dashboard" : "Ready to get started?"}
           </h2>
-          <p className="text-slate-600 mb-8 max-w-lg mx-auto">
+          <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-lg mx-auto">
             {isAuthenticated
               ? "Go to your dashboard to manage invoices."
               : "Join over 10,000 businesses using InvoiceFlow to get paid faster."}
@@ -133,13 +137,13 @@ export default function Landing() {
         </div>
       </Section>
 
-      <footer className="border-t border-slate-200 py-8">
+      <footer className="border-t border-slate-200 dark:border-slate-700 py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">© 2026 InvoiceFlow. All rights reserved.</p>
+            <p className="text-slate-500 dark:text-slate-400">© 2026 InvoiceFlow. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link to="/privacy" className="text-sm text-slate-500 hover:text-slate-900">Privacy</Link>
-              <Link to="/terms" className="text-sm text-slate-500 hover:text-slate-900">Terms</Link>
+              <Link to="/privacy" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Privacy</Link>
+              <Link to="/terms" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Terms</Link>
             </div>
           </div>
         </div>
@@ -155,7 +159,7 @@ function StepCard({ step, title, description }: {
 }) {
   return (
     <div className="flex text-center flex-col">
-      <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 text-primary-700">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-400">
         <span className="text-2xl font-bold">{step}</span>
       </div>
       <div className="flex items-center justify-center gap-2 mb-2">
@@ -163,8 +167,8 @@ function StepCard({ step, title, description }: {
           Step {step}
         </span>
       </div>
-      <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
-      <p className="text-slate-600">{description}</p>
+        <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
+      <p className="text-slate-600 dark:text-slate-400">{description}</p>
     </div>
   );
 }

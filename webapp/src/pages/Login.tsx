@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { login as apiLogin } from "../api/client";
+import ThemeToggle from "../components/ThemeToggle";
 
 type LoginStep = "credentials" | "two-factor";
 
@@ -89,15 +90,15 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
                 {step === "two-factor" ? "Two-factor authentication" : "Sign in to your account"}
               </h1>
-              <p className="text-slate-600 mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
+              <p className="text-slate-600 dark:text-slate-400 mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
             </div>
 
                {step === "credentials" && (
@@ -109,26 +110,26 @@ export default function Login() {
                    <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{oauthError}</div>
                  )}
                  <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">Email address</label>
-                   <input
-                     type="email"
-                     required
-                     value={email}
-                     onChange={(e) => setEmail(e.target.value)}
-                     className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="you@example.com"
-                   />
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email address</label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="you@example.com"
+                    />
                  </div>
                  <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                   <input
-                     type="password"
-                     required
-                     value={password}
-                     onChange={(e) => setPassword(e.target.value)}
-                     className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="••••••••"
-                   />
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="••••••••"
+                    />
                  </div>
                  <button
                    type="submit"
@@ -138,20 +139,20 @@ export default function Login() {
                    {loading ? "Signing in..." : "Sign In"}
                  </button>
 
-                 <div className="relative my-6">
-                   <div className="absolute inset-0 flex items-center">
-                     <div className="w-full border-t border-slate-300" />
-                   </div>
-                   <div className="relative flex justify-center text-sm">
-                     <span className="px-3 bg-white text-slate-500">Or sign in with</span>
-                   </div>
-                 </div>
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-300 dark:border-slate-600" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-3 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400">Or sign in with</span>
+                      </div>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => (window.location.href = "/api/auth/oauth/google")}
-                    className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
+                   <button
+                     type="button"
+                     onClick={() => (window.location.href = "/api/auth/oauth/google")}
+                     className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                   >
                     <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-100 text-blue-600 font-bold text-xs">G</span>
                     Sign in with Google
                   </button>
@@ -164,26 +165,26 @@ export default function Login() {
                   <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Authentication code
-                  </label>
-                  <p className="text-xs text-slate-500 mb-2">
-                    Enter the 6-digit code from your authenticator app for{" "}
-                    <span className="font-medium text-slate-700">{twoFactorEmail}</span>
-                    . You can also enter a recovery code.
-                  </p>
-                  <input
-                    ref={codeInputRef}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-password"
-                    required
-                    value={code}
-                    onChange={(e) => handleCodeChange(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="—— ——"
-                    maxLength={7}
-                  />
+                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                     Authentication code
+                   </label>
+                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                     Enter the 6-digit code from your authenticator app for{" "}
+                     <span className="font-medium text-slate-700 dark:text-slate-300">{twoFactorEmail}</span>
+                     . You can also enter a recovery code.
+                   </p>
+                   <input
+                     ref={codeInputRef}
+                     type="text"
+                     inputMode="numeric"
+                     autoComplete="one-time-password"
+                     required
+                     value={code}
+                     onChange={(e) => handleCodeChange(e.target.value)}
+                     className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="—— ——"
+                     maxLength={7}
+                   />
                 </div>
                 <button
                   type="submit"
@@ -197,11 +198,11 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setStep("credentials")}
-                    className="text-sm text-slate-600 hover:text-slate-900"
+                    className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   >
                     ← Use a different account
                   </button>
-                  <Link to="/login" className="text-sm text-slate-600 hover:text-slate-900">
+                  <Link to="/login" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
                     Didn't receive a code?
                   </Link>
                 </div>
@@ -209,16 +210,22 @@ export default function Login() {
             )}
 
             {step === "credentials" && (
-              <div className="mt-6 text-center text-sm text-slate-600">
+              <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
                 Don't have an account?{" "}
-                <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+                <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
                   Create your account
                 </Link>
               </div>
             )}
 
+            {step === "credentials" && (
+              <div className="mt-6 flex items-center justify-center">
+                <ThemeToggle />
+              </div>
+            )}
+
             <div className="mt-4 text-center">
-              <Link to="/" className="text-sm text-slate-500 hover:text-slate-700">
+              <Link to="/" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">
                 ← Back to homepage
               </Link>
             </div>

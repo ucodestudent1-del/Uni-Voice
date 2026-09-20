@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { register as apiRegister } from "../api/client";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function Register() {
   const [step, setStep] = useState<"account" | "business">("account");
@@ -75,13 +76,13 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-slate-950">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-slate-900">Create your account</h1>
-              <p className="text-slate-600 mt-2">Start creating professional invoices in under two minutes</p>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Create your account</h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-2">Start creating professional invoices in under two minutes</p>
             </div>
 
             <div className="mb-6">
@@ -95,35 +96,35 @@ export default function Register() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email address</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email address</label>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="you@example.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="At least 8 characters"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Confirm password</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm password</label>
                   <input
                     type="password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <button
@@ -141,22 +142,22 @@ export default function Register() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Business Name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Business Name</label>
                   <input
                     type="text"
                     required
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="e.g. Acme Design Studio"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Country / Region</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Country / Region</label>
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     {countries.map((c) => (
                       <option key={c.code} value={c.code}>{c.name}</option>
@@ -164,11 +165,11 @@ export default function Register() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Default Currency</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Default Currency</label>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     {currencies.map((c) => (
                       <option key={c} value={c}>{c}</option>
@@ -185,9 +186,10 @@ export default function Register() {
               </form>
             )}
 
-            <div className="mt-6 text-center text-sm text-slate-600">
+<div className="mt-6 flex flex-col items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+              <ThemeToggle />
               Already have an account?{" "}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link to="/login" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
                 Sign in
               </Link>
             </div>

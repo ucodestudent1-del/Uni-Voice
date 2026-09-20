@@ -75,10 +75,10 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
   }, [data]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-semibold text-slate-900">Revenue & Payment Trends</h3>
-        <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Revenue & Payment Trends</h3>
+        <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
           {([
             { key: "30", label: "30 Days" },
             { key: "90", label: "90 Days" },
@@ -89,8 +89,8 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
               onClick={() => setTimeframe(t.key)}
               className={`px-3 py-1 text-xs font-medium transition-colors ${
                 timeframe === t.key
-                  ? "bg-primary-50 text-primary-700"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
               {t.label}
@@ -100,12 +100,12 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
       </div>
 
       {loading ? (
-        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 rounded-lg">
-          <p className="text-sm text-slate-400">Loading trends...</p>
+        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
+          <p className="text-sm text-slate-400 dark:text-slate-500">Loading trends...</p>
         </div>
       ) : error ? (
-        <div className="h-64 flex flex-col items-center justify-center gap-3 border border-dashed border-red-300 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="h-64 flex flex-col items-center justify-center gap-3 border border-dashed border-red-300 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
           <button
             onClick={() => setRetryKey((key) => key + 1)}
             className="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
@@ -127,16 +127,16 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
                   <stop offset="95%" stopColor={palette.payments} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200 dark:stroke-slate-700" />
               <XAxis
                 dataKey="period"
-                tick={{ fontSize: 12, fill: "#64748b" }}
+                tick={{ fontSize: 12, fill: "var(--chart-text)" }}
                 tickLine={false}
-                axisLine={{ stroke: "#e2e8f0" }}
+                axisLine={{ stroke: "var(--chart-border)" }}
                 minTickGap={30}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: "#64748b" }}
+                tick={{ fontSize: 12, fill: "var(--chart-text)" }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(v: number) => formatCurrencyCompact(v, currency)}
@@ -144,18 +144,18 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
               />
               <Tooltip
                 contentStyle={{
-                  background: "#0f172a",
+                  background: "var(--color-surface)",
                   border: "none",
                   borderRadius: "8px",
-                  color: "#fff",
+                  color: "var(--color-text)",
                   fontSize: "12px",
                   padding: "8px 12px",
                 }}
                 formatter={(value) => [formatCurrencyCompact(Number(value) ?? 0, currency), ""]}
-                labelStyle={{ color: "#94a3b8", marginBottom: "4px" }}
+                labelStyle={{ color: "var(--chart-text-secondary)", marginBottom: "4px" }}
               />
               <Legend
-                wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
+                wrapperStyle={{ fontSize: "12px", paddingTop: "8px", color: "var(--chart-text-secondary)" }}
                 iconType="circle"
                 iconSize={8}
                 verticalAlign="top"
@@ -185,8 +185,8 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 rounded-lg">
-          <p className="text-sm text-slate-400">No data available</p>
+        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
+          <p className="text-sm text-slate-400 dark:text-slate-500">No data available</p>
         </div>
       )}
     </div>

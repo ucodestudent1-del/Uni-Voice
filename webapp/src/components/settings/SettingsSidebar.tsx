@@ -13,7 +13,7 @@ export default function SettingsSidebar({ sections, accountSection }: SettingsSi
         {sections.map((group) => (
           <div key={group.id} className={group.heading ? "mb-4" : ""}>
             {group.heading && (
-              <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+              <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
                 {group.heading}
               </p>
             )}
@@ -25,8 +25,8 @@ export default function SettingsSidebar({ sections, accountSection }: SettingsSi
                     className={({ isActive }) =>
                       `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-primary-50 text-primary-700"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          ? "bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-400"
+                          : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
                       }`
                     }
                   >
@@ -39,8 +39,8 @@ export default function SettingsSidebar({ sections, accountSection }: SettingsSi
           </div>
         ))}
       </nav>
-      <div className="border-t border-slate-200 pt-4">
-        <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+      <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+        <p className="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
           Account
         </p>
         <ul className="space-y-1">
@@ -51,8 +51,8 @@ export default function SettingsSidebar({ sections, accountSection }: SettingsSi
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      ? "bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-400"
+                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900"
                   }`
                 }
               >

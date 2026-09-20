@@ -1,1 +1,52 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-bg: 255 255 255;
+    --color-bg-alt: 248 252 255;
+    --color-surface: 255 255 255;
+    --color-border: 226 232 240;
+    --color-text: 15  23 42;
+    --color-text-secondary: 100 116 139;
+    --color-text-tertiary: 148 163 184;
+    --color-nav-bg: 255 255 255;
+    --color-nav-border: 226 232 240;
+    --color-shadow: 0 0 0 / 0.06;
+    --color-popover: 255 255 255;
+    --chart-text: #64748b;
+    --chart-text-secondary: #94a3b8;
+    --chart-border: #e2e8f0;
+    --chart-grid: #f1f5f9;
+  }
+
+  .dark {
+    --color-bg: 15 23 42;
+    --color-bg-alt: 17 24 39;
+    --color-surface: 24 35 54;
+    --color-border: 44 49 61;
+    --color-text: 253 255 252;
+    --color-text-secondary: 194 201 213;
+    --color-text-tertiary: 148 163 184;
+    --color-nav-bg: 17 24 39;
+    --color-nav-border: 44 49 61;
+    --color-shadow: 0 0 0 / 0.3;
+    --color-popover: 24 35 54;
+    --chart-text: #cbd5e1;
+    --chart-text-secondary: #94a3b8;
+    --chart-border: #2c313d;
+    --chart-grid: #1e293b;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  .dark html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-text));
+  }
+}

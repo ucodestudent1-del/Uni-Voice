@@ -7,20 +7,28 @@ import type {
   RecoveryCodeSummary,
   InvoiceSearchParams,
   CreditNoteSearchParams,
-   RecurringInvoiceCreateInput,
-   RecurringInvoiceUpdateInput,
-   ApiRecurringInvoice,
-   ApiReminderConfig,
-   ApiReminderTemplate,
-   ApiEnhancedDashboard,
- } from "../types/api";
+  RecurringInvoiceCreateInput,
+  RecurringInvoiceUpdateInput,
+  ApiRecurringInvoice,
+  ApiReminderConfig,
+  ApiReminderTemplate,
+  ApiEnhancedDashboard,
+  ApiExpense,
+  ApiExpenseSummary,
+  ExpenseSearchParams,
+  ExpenseCategory,
+} from "../types/api";
 
 export type {
-   InvoiceSearchParams,
-   CreditNoteSearchParams,
-   RecurringInvoiceCreateInput,
-   RecurringInvoiceUpdateInput,
-   ApiEnhancedDashboard,
+  InvoiceSearchParams,
+  CreditNoteSearchParams,
+  RecurringInvoiceCreateInput,
+  RecurringInvoiceUpdateInput,
+  ApiEnhancedDashboard,
+  ApiExpense,
+  ApiExpenseSummary,
+  ExpenseSearchParams,
+  ExpenseCategory,
 };
 
 declare module "axios" {
@@ -1109,4 +1117,80 @@ export async function getVolumeTrendReport(params?: { period?: "day" | "week" | 
 export async function exportInvoicesJson() {
   const res = await api.get("/export/invoices/json", { responseType: "blob" });
   return res.data;
+}
+
+// ============================================================================
+// EXPENSE TRACKING (Business plan)
+// ============================================================================
+
+export async function getExpenses(params?: {
+  limit?: number;
+  offset?: number;
+  customerId?: string;
+  projectId?: string;
+  category?: string;
+  isBillable?: boolean;
+  isReimbursed?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number }> {
+  const res = await api.get("/expenses", { params });
+  return res.data;
+}
+
+export async function getExpense(id: string): Promise<{ expense: ApiExpense }> {
+  const res = await api.get(`/expenses/${id}`);
+  return res.data;
+}
+
+export async function createExpense(data: Partial<ApiExpense>): Promise<{ expense: ApiExpense }> {
+  const res = await api.post("/expenses", data);
+  return res.data;
+}
+
+export async function updateExpense(id: string, data: Partial<ApiExpense>): Promise<{ expense: ApiExpense }> {
+  const res = await api.patch(`/expenses/${id}`, data);
+  return res.data;
+}
+
+export async function deleteExpense(id: string): Promise<void> {
+  const res = await api.delete(`/expenses/${id}`);
+  return res.data;
+}
+
+export async function getExpenseSummary(params?: {
+  limit?: number;
+  offset?: number;
+  customerId?: string;
+  projectId?: string;
+  category?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{ summary: ApiExpenseSummary }> {
+  const res = await api.get("/expenses/summary", { params });
+  return res.data;
+}
+
+export function buildExpenseSearchParams(params: ExpenseSearchParams): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (params.limit !== undefined) result.limit = params.limit;
+  if (params.offset !== undefined) result.offset = params.offset;
+  if (params.customerId !== undefined) result.customerId = params.customerId;
+  if (params.projectId !== undefined) result.projectId = params.projectId;
+  if (params.category !== undefined) result.category = params.category;
+  if (params.isBillable !== undefined) result.isBillable = params.isBillable;
+  if (params.isReimbursed !== undefined) result.isReimbursed = params.isReimbursed;
+  if (params.dateFrom !== undefined) result.dateFrom = params.dateFrom;
+  if (params.dateTo !== undefined) result.dateTo = params.dateTo;
+  if (params.minAmount !== undefined) result.minAmount = params.minAmount;
+  if (params.maxAmount !== undefined) result.maxAmount = params.maxAmount;
+  if (params.search !== undefined) result.search = params.search;
+  if (params.sortBy !== undefined) result.sortBy = params.sortBy;
+  if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
+  return result;
 }

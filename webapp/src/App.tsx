@@ -25,14 +25,14 @@ import ProjectDetail from "./pages/ProjectDetail";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-600">Loading...</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function OnboardedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, onboarding } = useAuth();
-  if (isLoading || (isAuthenticated && onboarding === null)) return <div className="flex items-center justify-center h-screen text-slate-600">Loading...</div>;
+  if (isLoading || (isAuthenticated && onboarding === null)) return <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (onboarding && !onboarding.isComplete) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
@@ -40,7 +40,7 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-600">Loading...</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">Loading...</div>;
   if (isAuthenticated) return <Navigate to="/app" replace />;
   return <>{children}</>;
 }

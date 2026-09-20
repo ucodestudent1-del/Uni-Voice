@@ -25,7 +25,7 @@ export default function BottomTabBar() {
       </Link>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 md:hidden bg-white/95 border-t border-slate-200 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
+        className="fixed inset-x-0 bottom-0 z-40 md:hidden bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-700 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around h-16 pb-[env(safe-area-inset-bottom,0px)]">
@@ -38,7 +38,7 @@ export default function BottomTabBar() {
                 `flex flex-col items-center justify-center flex-1 pt-1 text-xs font-medium transition-colors ${
                   isActive
                     ? "text-primary-700"
-                    : "text-slate-500 hover:text-slate-900"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                 }`
               }
             >
@@ -48,7 +48,7 @@ export default function BottomTabBar() {
                   <>
                     <span
                       className={`rounded-lg w-10 h-10 flex items-center justify-center mb-0.5 ${
-                        isActive ? "bg-primary-50 text-primary-700" : "text-slate-400"
+                        isActive ? "bg-primary-50 dark:bg-primary-950 text-primary-700" : "text-slate-400 dark:text-slate-500"
                       }`}
                     >
                       <Icon className="w-5 h-5" />

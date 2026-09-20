@@ -15,12 +15,12 @@ export default function StatusBreakdown({ data = [] }: { data?: StatusSegment[] 
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <h3 className="text-sm font-semibold text-slate-900 mb-4">Invoice Status</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Invoice Status</h3>
 
       {total === 0 ? (
-        <div className="h-40 flex items-center justify-center border border-dashed border-slate-300 rounded-lg">
-          <p className="text-sm text-slate-400">No invoices yet</p>
+        <div className="h-40 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
+          <p className="text-sm text-slate-400 dark:text-slate-500">No invoices yet</p>
         </div>
       ) : (
         <div className="relative h-40">
@@ -74,9 +74,9 @@ export default function StatusBreakdown({ data = [] }: { data?: StatusSegment[] 
           <div key={segment.label} className="flex items-center justify-between py-1.5 text-sm">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: segment.color }} />
-              <span className="text-slate-600">{segment.label}</span>
+              <span className="text-slate-600 dark:text-slate-400">{segment.label}</span>
             </div>
-            <span className="font-medium text-slate-900">{segment.value}</span>
+            <span className="font-medium text-slate-900 dark:text-slate-100">{segment.value}</span>
           </div>
         ))}
       </div>

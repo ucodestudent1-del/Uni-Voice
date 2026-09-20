@@ -12,6 +12,7 @@ import TeamPermissionsSettings from "../components/settings/TeamPermissionsSetti
 import IntegrationsSettings from "../components/settings/IntegrationsSettings";
 import SecuritySettings from "../components/settings/SecuritySettings";
 import BillingSubscriptionSettings from "../components/settings/BillingSubscriptionSettings";
+import ThemeSettings from "../components/settings/ThemeSettings";
 import FeatureGate from "../components/FeatureGate";
 import type { SettingsNavItem, SettingsSection } from "../types/settings";
 
@@ -27,7 +28,8 @@ export type SettingsTab =
   | "integrations"
   | "security"
   | "billing"
-  | "account";
+  | "account"
+  | "theme";
 
 function IconGeneral(): React.ReactNode {
   return (
@@ -131,6 +133,14 @@ function IconAccount(): React.ReactNode {
     </svg>
   );
 }
+function IconTheme(): React.ReactNode {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeWidth="2" d="M12 3v1m0 16v1M5.6 5.6l.7.7m11.4 11.4.7.7M3 12h1m16 0h1M5.6 18.4l.7-.7m11.4-11.4.7-.7" />
+      <path strokeWidth="2" d="M12 7a5 5 0 110 10 5 5 0 010-10z" />
+    </svg>
+  );
+}
 
 const mainNavItems: SettingsNavItem[] = [
   { id: "general", label: "General", icon: <IconGeneral />, description: "App preferences and defaults" },
@@ -144,6 +154,7 @@ const mainNavItems: SettingsNavItem[] = [
   { id: "integrations", label: "Integrations", icon: <IconIntegrations />, description: "Accounting, CRM, automation" },
   { id: "security", label: "Security", icon: <IconSecurity />, description: "Password, 2FA, sessions" },
   { id: "billing", label: "Billing & Subscription", icon: <IconBilling />, description: "Plan, usage, invoices" },
+  { id: "theme", label: "Appearance", icon: <IconTheme />, description: "Dark mode, preferences" },
 ];
 
 const accountNavItems: SettingsNavItem[] = [
@@ -202,9 +213,11 @@ export default function Settings() {
         return <BillingSubscriptionSettings />;
       case "account":
         return <GeneralSettings />;
+      case "theme":
+        return <ThemeSettings />;
       default:
         return (
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
             Select a section from the sidebar to get started.
           </div>
         );
@@ -212,10 +225,10 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] min-h-0">
-      <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h1 className="text-xl font-bold text-slate-900">Settings</h1>
+    <div className="flex h-[calc(100vh-4rem)] min-h-0 bg-slate-50 dark:bg-slate-950">
+      <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Settings</h1>
         </div>
         <SettingsSidebar sections={mainSections} accountSection={accountSection} />
       </aside>

@@ -6,87 +6,90 @@ import {
 } from "../contexts/AuthContext";
 import type { OnboardingProgress as OnboardingProgressType } from "../types/api";
 
-const STEP_COMPONENTS: Record<string, JSX.Element> = {
-  welcome: (
-    <div className="text-center py-6">
-      <h2 className="text-xl font-semibold text-slate-900 mb-2">Welcome aboard!</h2>
-      <p className="text-slate-600">Let's get your business set up in just a few steps.</p>
-    </div>
-  ),
-  business: (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Tell us about your business</h2>
-      <p className="text-slate-600">
-        You can update your business details in Settings at any time.
-      </p>
-      <button
-        onClick={() => alert("This feature is coming soon!")}
-        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-      >
-        Open Business Profile
-      </button>
-    </div>
-  ),
-  customer: (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Add your first customer</h2>
-      <p className="text-slate-600">
-        Customers help you create invoices faster and track who owes what.
-      </p>
-      <button
-        onClick={() => alert("This feature is coming soon!")}
-        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-      >
-        Add Customer
-      </button>
-    </div>
-  ),
-  product: (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Add a product or service</h2>
-      <p className="text-slate-600">
-        Save line items so you can add them to invoices quickly.
-      </p>
-      <button
-        onClick={() => alert("This feature is coming soon!")}
-        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-      >
-        Add Product/Service
-      </button>
-    </div>
-  ),
-  invoice: (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Create your first invoice</h2>
-      <p className="text-slate-600">
-        Send your first invoice to a customer to start tracking income.
-      </p>
-      <button
-        onClick={() => alert("This feature is coming soon!")}
-        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-      >
-        New Invoice
-      </button>
-    </div>
-  ),
-  complete: (
-    <div className="text-center py-8">
-      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <span className="text-green-500 text-2xl">✓</span>
+function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<string, JSX.Element> {
+  return {
+    welcome: (
+      <div className="text-center py-6">
+        <h2 className="text-xl font-semibold text-slate-900 mb-2">Welcome aboard!</h2>
+        <p className="text-slate-600">Let's get your business set up in just a few steps.</p>
       </div>
-      <h2 className="text-2xl font-bold text-slate-900 mb-2">You're all set!</h2>
-      <p className="text-slate-600 mb-6">
-        Your business is fully configured. Let's start creating invoices.
-      </p>
-      <button
-        onClick={() => window.location.assign("/app")}
-        className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-      >
-        Go to Dashboard
-      </button>
-    </div>
-  ),
-};
+    ),
+    business: (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-slate-900">Tell us about your business</h2>
+        <p className="text-slate-600">
+          You can update your business details in Settings at any time.
+        </p>
+        <button
+          onClick={() => navigate("/app/settings")}
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Open Business Profile
+        </button>
+      </div>
+    ),
+    customer: (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-slate-900">Add your first customer</h2>
+        <p className="text-slate-600">
+          Customers help you create invoices faster and track who owes what.
+        </p>
+        <button
+          onClick={() => navigate("/app/customers")}
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Add Customer
+        </button>
+      </div>
+    ),
+    product: (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-slate-900">Add a product or service</h2>
+        <p className="text-slate-600">
+          Save line items so you can add them to invoices quickly.
+        </p>
+        <button
+          onClick={() => navigate("/app/products")}
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Add Product/Service
+        </button>
+      </div>
+    ),
+    invoice: (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-slate-900">Create your first invoice</h2>
+        <p className="text-slate-600">
+          Send your first invoice to a customer to start tracking income.
+        </p>
+        <button
+          onClick={() => navigate("/app/invoices/new")}
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          New Invoice
+        </button>
+      </div>
+    ),
+    complete: (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-green-500 text-2xl">✓</span>
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">You're all set!</h2>
+        <p className="text-slate-600 mb-6">
+          Your business is fully configured. Let's start creating invoices.
+        </p>
+        <button
+          onClick={() => window.location.assign("/app")}
+          className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+        >
+          Go to Dashboard
+        </button>
+      </div>
+    ),
+  };
+}
+
 
 export default function OnboardingWizard() {
   const { user, onboarding, refreshOnboarding, completeStep, skipOnboarding } = useAuth();
@@ -173,6 +176,7 @@ export default function OnboardingWizard() {
 
   const currentStepData = progress.steps.find((s) => s.step === progress.currentStep);
   const currentTitle = currentStepData?.title ?? progress.currentStep;
+  const STEP_COMPONENTS = buildStepComponents(navigate);
   const stepContent = STEP_COMPONENTS[progress.currentStep] ?? STEP_COMPONENTS.welcome;
   const isLastStep = progress.currentStep === "complete";
 

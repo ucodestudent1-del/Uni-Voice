@@ -4,7 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "node:path";
 import { env, isDev, isTest } from "./config/index.js";
-import { query } from "./db/pool.js";
+import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import { requireAuth, optionalAuth, AuthRequest, generateToken } from "./middleware/auth.js";
@@ -65,6 +65,12 @@ import {
   ProjectTimeEntrySearchSchema,
   ProjectNoteCreateSchema,
 } from "./domain/schemas/project-time-entry.js";
+import { expenseService } from "./services/expense-service.js";
+import {
+  ExpenseCreateSchema,
+  ExpenseUpdateSchema,
+  ExpenseSearchSchema,
+} from "./domain/schemas/expense.js";
 import bcrypt from "bcrypt";
 import { Decimal } from "decimal.js";
 
@@ -76,6 +82,33 @@ app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 if (isDev) app.use(morgan("dev"));
+
+const QUERY_COUNT_LOG_THRESHOLD = 10;
+const REQUEST_DURATION_LOG_THRESHOLD_MS = 1000;
+
+app.use((req, res, next) => {
+  const url = req.url;
+  if (!url.startsWith("/api/")) return next();
+  const start = Date.now();
+  const done = () => {
+    const ms = Date.now() - start;
+    const ctx = getRequestContext();
+    if (ctx) {
+      if (ctx.queryCount > QUERY_COUNT_LOG_THRESHOLD || ctx.slowQueries.length > 0) {
+        const slowList = ctx.slowQueries.map((s) => `${s.ms}ms ${s.text}`).join("; ");
+        console.warn(
+          `Request ${req.method} ${url} took ${ms}ms, ${ctx.queryCount} queries` +
+            (ctx.slowQueries.length ? ` (${ctx.slowQueries.length} slow: ${slowList})` : "")
+        );
+      }
+    } else if (ms > REQUEST_DURATION_LOG_THRESHOLD_MS) {
+      console.warn(`Request ${req.method} ${url} took ${ms}ms`);
+    }
+  };
+  res.on("finish", done);
+  res.on("close", done);
+  runWithRequestContext(() => next());
+});
 
 function getCookie(header: string | undefined, name: string): string | null {
   if (!header) return null;
@@ -1898,6 +1931,111 @@ app.delete("/api/projects/:projectId/notes/:noteId", requireAuth, async (req: Au
     next(err);
   }
 });
+
+// ============================================================================
+// EXPENSE TRACKING (Business tier)
+// ============================================================================
+app.get(
+  "/api/expenses",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = ExpenseSearchSchema.parse({
+        ...req.query,
+        limit: req.query.limit ?? 50,
+        offset: req.query.offset ?? 0,
+      });
+      const result = await expenseService.list(req.user!.businessId, parsed);
+      res.json({ expenses: result.data, total: result.total, limit: result.limit, offset: result.offset });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.post(
+  "/api/expenses",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = ExpenseCreateSchema.parse(req.body);
+      const expense = await expenseService.create(req.user!.businessId, parsed, req.user!.id);
+      res.status(201).json({ expense });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.get(
+  "/api/expenses/:id",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const expense = await expenseService.getById(req.user!.businessId, req.params.id);
+      res.json({ expense });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.patch(
+  "/api/expenses/:id",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = ExpenseUpdateSchema.parse(req.body);
+      const expense = await expenseService.update(req.user!.businessId, req.params.id, parsed);
+      res.json({ expense });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.delete(
+  "/api/expenses/:id",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      await expenseService.delete(req.user!.businessId, req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.get(
+  "/api/expenses/summary",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = ExpenseSearchSchema.parse({
+        ...req.query,
+        limit: req.query.limit ?? 50,
+        offset: req.query.offset ?? 0,
+      });
+      const summary = await expenseService.getSummary(req.user!.businessId, parsed);
+      res.json({ summary });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 // ============================================================================
 // NUMBER SEQUENCES (invoice numbering config)

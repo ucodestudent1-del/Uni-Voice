@@ -287,8 +287,10 @@ export class InvoiceRepository {
     const invRes = await query(`SELECT * FROM invoices WHERE id = $1 AND business_id = $2`, [id, businessId]);
     if (!invRes.rows.length) throw new NotFoundError(`Invoice ${id} not found`);
     const invoice = this.rowToModel(invRes.rows[0]);
-    const itemRes = await query(`SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`, [id]);
-    const feeRes = await query(`SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`, [id]);
+    const [itemRes, feeRes] = await Promise.all([
+      query(`SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`, [id]),
+      query(`SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`, [id]),
+    ]);
     return { ...invoice, items: itemRes.rows.map((r) => this.itemRowToModel(r)), fees: feeRes.rows.map((r) => this.feeRowToModel(r)) };
   }
 
@@ -303,8 +305,10 @@ export class InvoiceRepository {
     }
     if (!res.rows.length) throw new NotFoundError("Invoice not found");
     const invoice = this.rowToModel(res.rows[0]);
-    const itemRes = await query(`SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]);
-    const feeRes = await query(`SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]);
+    const [itemRes, feeRes] = await Promise.all([
+      query(`SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]),
+      query(`SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]),
+    ]);
     return { ...invoice, items: itemRes.rows.map((r) => this.itemRowToModel(r)), fees: feeRes.rows.map((r) => this.feeRowToModel(r)) };
   }
 

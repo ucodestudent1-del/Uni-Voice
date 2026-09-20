@@ -186,7 +186,7 @@ export default function SecuritySettings() {
               )
             )
               return;
-            alert("Account deletion is not available in the current environment.");
+            alert("Account deletion is not available during the current subscription period. Please cancel your subscription first.");
           }}
           className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
         >

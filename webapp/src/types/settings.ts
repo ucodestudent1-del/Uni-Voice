@@ -12,7 +12,8 @@ export type SettingsTab =
   | "integrations"
   | "security"
   | "billing"
-  | "account";
+  | "account"
+  | "theme";
 
 export interface SettingsNavItem {
   id: SettingsTab;
