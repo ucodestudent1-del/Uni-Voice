@@ -5,6 +5,7 @@ import {
 } from "../api/client";
 import type { ApiCustomer } from "../types/api";
 import { validateCustomerForm, type CustomerFormValues } from "../schemas/customer";
+import { Button } from "./ui/Button";
 
 interface CustomerFormProps {
   customer?: ApiCustomer | null;
@@ -282,22 +283,22 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
         </form>
 
         <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="md"
             onClick={onClose}
             disabled={loading}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
-          </button>
-          <button
-            type="submit"
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
             onClick={(e) => { e.preventDefault(); handleSubmit(e); }}
             disabled={loading}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
           >
             {loading ? "Saving..." : isEditing ? "Update" : "Add Customer"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

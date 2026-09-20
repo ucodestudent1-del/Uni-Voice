@@ -15,9 +15,11 @@ import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import CustomerImport from "../components/CustomerImport";
 import CustomerQuickView from "../components/CustomerQuickView";
+import { Plus, FileText, Upload, Download, Eye, Edit2, Archive, RefreshCw } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import { getCustomerPrimaryContact, customerHasBalance } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
+import { Button } from "../components/ui/Button";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Customers" },
@@ -188,8 +190,8 @@ export default function Customers() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Customers</h1>
-          <p className="text-sm text-slate-600 mt-1">
+           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Customers</h1>
+           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
             {total} customers •{" "}
             <span className="text-slate-900 font-medium">
               {totalOutstanding > 0
@@ -201,88 +203,94 @@ export default function Customers() {
         </div>
         <div className="flex items-center gap-3">
           <FeatureGate feature="customers.import" requiredPlan="free" fallback={null}>
-            <button
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<Upload className="w-4 h-4" />}
               onClick={() => setShowImport(true)}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Import
-            </button>
+            </Button>
           </FeatureGate>
           <FeatureGate feature="customers.export" requiredPlan="free" fallback={null}>
-            <button
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<Download className="w-4 h-4" />}
               onClick={handleExport}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               Export
-            </button>
+            </Button>
           </FeatureGate>
           <FeatureGate feature="customers.create" requiredPlan="free" fallback={null}>
-            <button
+            <Button
+              variant="primary"
+              size="md"
+              icon={<Plus className="w-4 h-4" />}
               onClick={() => { setShowForm(true); setEditingCustomer(null); }}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
             >
-              + Add Customer
-            </button>
+              Add Customer
+            </Button>
           </FeatureGate>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="md:col-span-2">
-            <input
-              type="text"
-              placeholder="Search customers by name, email, or company..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div>
-            <select
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {SORT_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="md:col-span-2">
                 <input
-                  type="checkbox"
-                  checked={includeArchived}
-                  onChange={(e) => setIncludeArchived(e.target.checked)}
-                  className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  type="text"
+                  placeholder="Search customers by name, email, or company..."
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                Show archived
-              </label>
+              </div>
+              <div>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {STATUS_OPTIONS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {SORT_OPTIONS.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={includeArchived}
+                      onChange={(e) => setIncludeArchived(e.target.checked)}
+                      className="rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500"
+                    />
+                    Show archived
+                  </label>
+                </div>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as any)}
+                  className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="asc">Ascending</option>
+                  <option value="desc">Descending</option>
+                </select>
+              </div>
             </div>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as any)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
-            </select>
           </div>
-        </div>
-      </div>
 
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -312,38 +320,41 @@ export default function Customers() {
           <p className="mt-4 text-slate-500">
             {search || statusFilter !== "all" ? "No matching customers found" : "No customers yet"}
           </p>
-          <button
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
             onClick={() => setShowForm(true)}
-            className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="mt-2"
           >
             Add Customer
-          </button>
+          </Button>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Customer</th>
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Contact</th>
-                  <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Invoices</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Outstanding</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Last Invoice</th>
-                  <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Status</th>
-                  <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Customer</th>
+                  <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Contact</th>
+                  <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Invoices</th>
+                  <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Outstanding</th>
+                  <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Last Invoice</th>
+                  <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Status</th>
+                  <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {effectiveRows.map((c) => {
                   const hasBalance = customerHasBalance(c);
                   return (
-                    <tr
-                      key={c.id}
-                      className={`border-b border-slate-100 last:border-b-0 hover:bg-slate-50 ${
-                        hasBalance ? "border-l-2 border-l-red-400 bg-red-50/20" : ""
-                      }`}
-                    >
+                     <tr
+                       key={c.id}
+                       className={`border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                         hasBalance ? "border-l-2 border-l-red-400 bg-red-50/20" : ""
+                       }`}
+                     >
                       <td className="py-3 px-4">
                         <button
                           type="button"
@@ -387,51 +398,56 @@ export default function Customers() {
                       <td className="py-3 px-4 text-center">
                         <CustomerStatusBadge status={c.status} />
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => navigate(`/app/customers/${c.id}`)}
-                            className="text-xs text-slate-600 hover:text-slate-900"
-                            title="View customer"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleEdit(c)}
-                            className="text-xs text-slate-600 hover:text-slate-900"
-                            title="Edit customer"
-                          >
-                            Edit
-                          </button>
-                          <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
-                            <button
-                              onClick={() => handleCreateInvoice(c)}
-                              disabled={creatingInvoiceFor === c.id}
-                              className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                              title="Create invoice for this customer"
-                            >
-                              {creatingInvoiceFor === c.id ? "..." : "Invoice"}
-                            </button>
-                          </FeatureGate>
-                          {c.status === "archived" ? (
-                            <button
-                              onClick={() => handleRestore(c)}
-                              className="text-xs text-primary-600 hover:text-primary-700"
-                              title="Restore customer"
-                            >
-                              Restore
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleArchive(c)}
-                              className="text-xs text-slate-600 hover:text-red-600"
-                              title="Archive customer"
-                            >
-                              Archive
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                       <td className="py-3 px-4">
+                         <div className="flex items-center justify-center gap-1">
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             icon={<Eye className="w-3.5 h-3.5" />}
+                             onClick={() => navigate(`/app/customers/${c.id}`)}
+                             title="View customer"
+                           />
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             icon={<Edit2 className="w-3.5 h-3.5" />}
+                             onClick={() => handleEdit(c)}
+                             title="Edit customer"
+                           />
+                           <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               icon={<FileText className="w-3.5 h-3.5" />}
+                               onClick={() => handleCreateInvoice(c)}
+                               disabled={creatingInvoiceFor === c.id}
+                               title="Create invoice for this customer"
+                               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                             >
+                               {creatingInvoiceFor === c.id ? "..." : ""}
+                             </Button>
+                           </FeatureGate>
+                           {c.status === "archived" ? (
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               icon={<RefreshCw className="w-3.5 h-3.5" />}
+                               onClick={() => handleRestore(c)}
+                               title="Restore customer"
+                               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                             />
+                           ) : (
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               icon={<Archive className="w-3.5 h-3.5" />}
+                               onClick={() => handleArchive(c)}
+                               title="Archive customer"
+                               className="text-red-600 hover:text-red-700"
+                             />
+                           )}
+                         </div>
+                       </td>
                     </tr>
                   );
                 })}
@@ -441,24 +457,28 @@ export default function Customers() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Page {currentPage} of {totalPages} • {total} customers
               </p>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handlePage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => handlePage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handlePage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1"
+              >
+                Previous
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handlePage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1"
+              >
+                Next
+              </Button>
               </div>
             </div>
           )}

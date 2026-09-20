@@ -5,7 +5,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useState } from "react";
 import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
-import { Menu } from "lucide-react";
+import { Menu, Plus } from "lucide-react";
 
 interface NavItem {
   name: string;
@@ -121,9 +121,9 @@ export default function Layout() {
             </span>
             <Link
               to="/app/invoices/new"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors min-h-[44px]"
             >
-              <span aria-hidden="true">+</span>
+              <Plus className="w-4 h-4" aria-hidden="true" />
               <span className="hidden sm:inline">Create Invoice</span>
             </Link>
           </header>
@@ -143,13 +143,13 @@ export default function Layout() {
             </div>
             <div className="flex items-center gap-4">
               <ThemeToggle />
-              <Link
-                to="/app/invoices/new"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              >
-                <span aria-hidden="true">+</span>
-                Create Invoice
-              </Link>
+            <Link
+              to="/app/invoices/new"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors min-h-[44px]"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Create Invoice
+            </Link>
             </div>
           </header>
         <main className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">

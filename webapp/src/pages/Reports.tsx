@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Download, FileText } from "lucide-react";
 import { getRevenueReport, getTaxSummaryReport } from "../api/client";
 import { formatCurrency } from "../utils/format";
+import { Button } from "../components/ui/Button";
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState<"revenue" | "tax">("revenue");
@@ -32,36 +34,69 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Reports</h1>
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Download className="w-4 h-4" />}
+          onClick={() => {
+            const csvContent = "Report data export coming soon";
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "reports-export.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Export Report
+        </Button>
+      </div>
 
-      <div className="flex gap-2 border-b border-slate-200">
-        <button
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+        <Button
+          variant={activeTab === "revenue" ? "primary" : "ghost"}
+          size="sm"
+          className="pb-2 border-b-2 border-transparent"
+          style={{
+            borderBottomColor: activeTab === "revenue" ? "#0284c7" : "transparent",
+          }}
           onClick={() => setActiveTab("revenue")}
-          className={`px-4 py-2 text-sm font-medium ${
-            activeTab === "revenue"
-              ? "text-primary-600 border-b-2 border-primary-600"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
         >
           Revenue Dashboard
-        </button>
-        <button
+        </Button>
+        <Button
+          variant={activeTab === "tax" ? "primary" : "ghost"}
+          size="sm"
+          className="pb-2 border-b-2 border-transparent"
+          style={{
+            borderBottomColor: activeTab === "tax" ? "#0284c7" : "transparent",
+          }}
           onClick={() => setActiveTab("tax")}
-          className={`px-4 py-2 text-sm font-medium ${
-            activeTab === "tax"
-              ? "text-primary-600 border-b-2 border-primary-600"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
         >
           Tax Summary
-        </button>
+        </Button>
       </div>
 
       {activeTab === "revenue" && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Revenue by Status</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Revenue by Status</h3>
           {revenue.length === 0 ? (
-            <p className="text-sm text-slate-500">No data yet</p>
+            <div className="text-center py-12">
+              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">No revenue data yet</p>
+              <Button
+                variant="primary"
+                size="md"
+                icon={<Download className="w-4 h-4" />}
+                onClick={() => {}}
+                className="mt-4"
+              >
+                Generate First Report
+              </Button>
+            </div>
           ) : (
             <table className="w-full">
               <thead>
@@ -88,10 +123,22 @@ export default function Reports() {
       )}
 
       {activeTab === "tax" && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Tax Summary (Last 12 Months)</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Tax Summary (Last 12 Months)</h3>
           {taxSummary.length === 0 ? (
-            <p className="text-sm text-slate-500">No tax data yet</p>
+            <div className="text-center py-12">
+              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-sm text-slate-500 dark:text-slate-400">No tax data yet</p>
+              <Button
+                variant="primary"
+                size="md"
+                icon={<Download className="w-4 h-4" />}
+                onClick={() => {}}
+                className="mt-4"
+              >
+                Export Tax Summary
+              </Button>
+            </div>
           ) : (
             <table className="w-full">
               <thead>

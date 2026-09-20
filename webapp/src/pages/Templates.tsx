@@ -10,10 +10,12 @@ import {
   unarchiveInvoiceTemplate,
   getBusiness,
 } from "../api/client";
+import { Plus, Trash2, Archive, Copy, MousePointerClick, Settings2 } from "lucide-react";
 import { initializeRegistry, type InvoiceDocument } from "../document-model";
 import TemplatePreview from "../components/TemplatePreview";
 import DocumentTemplateGallery from "../components/DocumentTemplateGallery";
 import type { ApiBusiness, InvoiceTemplateDTO } from "../types/api";
+import { Button } from "../components/ui/Button";
 
 interface PresetChoiceState {
   isOpen: boolean;
@@ -112,18 +114,19 @@ export default function Templates() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Templates</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Templates</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Choose a preset to get started or customize an existing template.
           </p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
           onClick={() => setShowPresetGallery(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
         >
-          <span aria-hidden="true">+</span>
           New Template
-        </button>
+        </Button>
       </div>
 
       <div className="flex items-center gap-3">
@@ -143,15 +146,16 @@ export default function Templates() {
       </div>
 
       {templates.length === 0 && !showPresetGallery && (
-        <div className="text-center py-16 bg-slate-50 rounded-xl border border-slate-200">
-          <p className="text-slate-400 mb-4">No templates yet</p>
-          <button
-            onClick={() => setShowPresetGallery(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-          >
-            <span aria-hidden="true">+</span>
-            Create from preset
-          </button>
+        <div className="text-center py-16 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+          <p className="text-slate-400 dark:text-slate-500 mb-4">No templates yet</p>
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
+          onClick={() => setShowPresetGallery(true)}
+        >
+          Create from preset
+        </Button>
         </div>
       )}
 
@@ -200,84 +204,83 @@ export default function Templates() {
                     </span>
                   )}
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-                    <span>Updated {new Date(t.updatedAt).toLocaleDateString()}</span>
-                    <div className="flex items-center gap-1">
-                      {t.lifecycle === "draft" && (
-                        <button
-                          onClick={() => handleLifecycle(t.id, t.lifecycle)}
-                          disabled={actionLoading === `lc-${t.id}`}
-                          className="text-primary-600 hover:text-primary-700 font-medium"
-                          title="Publish"
-                        >
-                          Publish
-                        </button>
-                      )}
-                      {t.lifecycle === "published" && (
-                        <button
-                          onClick={() => handleLifecycle(t.id, t.lifecycle)}
-                          disabled={actionLoading === `lc-${t.id}`}
-                          className="text-slate-600 hover:text-slate-900 font-medium"
-                          title="Archive"
-                        >
-                          Archive
-                        </button>
-                      )}
-                      {!isDefault && (
-                        <button
-                          onClick={() => handleSetDefault(t.id)}
-                          disabled={actionLoading === `default-${t.id}`}
-                          className="text-slate-600 hover:text-slate-900 font-medium"
-                          title="Set as default"
-                        >
-                          Set Default
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDuplicate(t.id)}
-                        disabled={actionLoading === `dup-${t.id}`}
-                        className="text-slate-600 hover:text-slate-900 font-medium"
-                        title="Duplicate"
+                   <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                     <span>Updated {new Date(t.updatedAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-1">
+                        {t.lifecycle === "draft" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<MousePointerClick className="w-3.5 h-3.5" />}
+                            onClick={() => handleLifecycle(t.id, t.lifecycle)}
+                            disabled={actionLoading === `lc-${t.id}`}
+                            title="Publish"
+                          />
+                        )}
+                        {t.lifecycle === "published" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Archive className="w-3.5 h-3.5" />}
+                            onClick={() => handleLifecycle(t.id, t.lifecycle)}
+                            disabled={actionLoading === `lc-${t.id}`}
+                            title="Archive"
+                          />
+                        )}
+                        {!isDefault && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Settings2 className="w-3.5 h-3.5" />}
+                            onClick={() => handleSetDefault(t.id)}
+                            disabled={actionLoading === `default-${t.id}`}
+                            title="Set as default"
+                          />
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={<Copy className="w-3.5 h-3.5" />}
+                          onClick={() => handleDuplicate(t.id)}
+                          disabled={actionLoading === `dup-${t.id}`}
+                          title="Duplicate"
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          icon={<Trash2 className="w-3.5 h-3.5" />}
+                          onClick={() => handleDelete(t.id, t.name)}
+                          disabled={actionLoading === `del-${t.id}`}
+                          title="Delete"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <Link
+                        to={`/app/templates/${t.id}/edit`}
+                        className="text-xs font-medium text-primary-600 hover:text-primary-700"
                       >
-                        Duplicate
-                      </button>
-                      <button
-                        onClick={() => handleDelete(t.id, t.name)}
-                        disabled={actionLoading === `del-${t.id}`}
-                        className="text-red-500 hover:text-red-700 font-medium"
-                        title="Delete"
-                      >
-                        Delete
-                      </button>
+                        Edit template →
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="mt-2">
-                    <Link
-                      to={`/app/templates/${t.id}/edit`}
-                      className="text-xs font-medium text-primary-600 hover:text-primary-700"
-                    >
-                      Edit template →
-                    </Link>
-                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
 
-      {showPresetGallery && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-900">Choose a starting template</h2>
-              <button
-                onClick={() => setShowPresetGallery(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                ✕
-              </button>
+        {showPresetGallery && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] overflow-y-auto">
+              <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-slate-900">Choose a starting template</h2>
+                <button
+                  onClick={() => setShowPresetGallery(false)}
+                  className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                >
+                  ✕
+                </button>
             </div>
             <div className="p-6">
               <DocumentTemplateGallery onSelect={handlePresetSelect} />

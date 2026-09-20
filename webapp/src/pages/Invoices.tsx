@@ -14,8 +14,10 @@ import {
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
+import { Plus, FileText, Send, Copy } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
+import { Button } from "../components/ui/Button";
 import type { ApiInvoice, ApiCustomer, ApiInvoiceListItem } from "../types/api";
 
 const STATUS_FILTERS = [
@@ -262,26 +264,32 @@ export default function Invoices() {
           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{total} invoices total</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleExportCsv}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hidden sm:inline-flex"
             title="Export CSV"
+            className="hidden sm:inline-flex"
           >
             CSV
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleExportJson}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hidden sm:inline-flex"
             title="Export JSON"
+            className="hidden sm:inline-flex"
           >
             JSON
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
             onClick={handleCreateAndEdit}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             New Invoice
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -489,12 +497,15 @@ export default function Invoices() {
                 <td colSpan={9} className="py-16 text-center text-slate-500 dark:text-slate-400">
                   {hasActiveFilters ? "No invoices match your filters" : "No invoices yet"}
                   {!hasActiveFilters && (
-                    <button
+                    <Button
+                      variant="primary"
+                      size="md"
+                      icon={<Plus className="w-4 h-4" />}
                       onClick={handleCreateAndEdit}
-                      className="ml-2 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                      className="ml-2"
                     >
                       Create your first invoice
-                    </button>
+                    </Button>
                   )}
                 </td>
               </tr>
@@ -539,36 +550,37 @@ export default function Invoices() {
                     <td className="py-3 px-4 text-center">
                       <InvoiceStatusBadge status={inv.status} />
                     </td>
-                    <td className="py-3 px-4 text-center">
+                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <FeatureGate feature="invoices.duplicate" requiredPlan="pro" fallback={null}>
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Copy className="w-3.5 h-3.5" />}
                             onClick={() => handleDuplicate(inv.id)}
-                            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                             title="Duplicate"
-                          >
-                            Copy
-                          </button>
+                          />
                         </FeatureGate>
                         {inv.status === "sent" && (
                           <FeatureGate feature="reminders.automated" requiredPlan="pro" fallback={null}>
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              icon={<Send className="w-3.5 h-3.5" />}
                               onClick={() => handleSend(inv.id)}
-                              className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                               title="Send"
-                            >
-                              Send
-                            </button>
+                            />
                           </FeatureGate>
                         )}
                         {inv.status === "draft" && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<FileText className="w-3.5 h-3.5" />}
                             onClick={() => handleFinalize(inv.id)}
-                            className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
                             title="Finalize"
-                          >
-                            Finalize
-                          </button>
+                            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                          />
                         )}
                       </div>
                     </td>
@@ -594,20 +606,24 @@ export default function Invoices() {
                   <option key={size} value={size}>{size} per page</option>
                 ))}
               </select>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                className="px-3 py-1"
               >
                 Previous
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                className="px-3 py-1"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}

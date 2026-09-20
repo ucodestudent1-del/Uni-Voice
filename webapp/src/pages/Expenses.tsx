@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { getExpenses, createExpense, updateExpense, deleteExpense, getExpenseSummary, type ExpenseSearchParams } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import { formatCurrency } from "../utils/format";
 import type { ApiExpense, ApiExpenseSummary } from "../types/api";
+import { Button } from "../components/ui/Button";
 
 const CATEGORY_OPTIONS = [
   { value: "supplies", label: "Supplies" },
@@ -182,16 +184,18 @@ export default function Expenses() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-900">Expenses</h1>
-          <button
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
             onClick={() => {
               setShowForm(true);
               setEditingId(null);
               setFormData({});
             }}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
-            + Add Expense
-          </button>
+            Add Expense
+          </Button>
         </div>
 
         {error && (
@@ -200,21 +204,21 @@ export default function Expenses() {
 
         {summary && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900">{formatCurrency(summary.total_amount, currency)}</p>
-              <p className="text-sm text-slate-600">Total Expenses</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(summary.total_amount, currency)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Total Expenses</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900">{summary.count}</p>
-              <p className="text-sm text-slate-600">Expenses</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{summary.count}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Expenses</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900">{formatCurrency(summary.billable_amount, currency)}</p>
-              <p className="text-sm text-slate-600">Billable</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(summary.billable_amount, currency)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Billable</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900">{formatCurrency(summary.reimbursed_amount, currency)}</p>
-              <p className="text-sm text-slate-600">Reimbursed</p>
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(summary.reimbursed_amount, currency)}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Reimbursed</p>
             </div>
           </div>
         )}
@@ -363,74 +367,90 @@ export default function Expenses() {
                   )}
                 </div>
               </form>
-              <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingId(null);
-                    setFormData({});
-                  }}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  onClick={(e) => handleSubmit(e)}
-                  disabled={saving || !formData.description || !formData.amount}
-                  className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
-                >
-                  {saving ? "Saving..." : editingId ? "Update" : "Save"}
-                </button>
-              </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingId(null);
+                  setFormData({});
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={(e) => handleSubmit(e)}
+                disabled={saving || !formData.description || !formData.amount}
+              >
+                {saving ? "Saving..." : editingId ? "Update" : "Save"}
+              </Button>
+            </div>
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200">
-                <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Date</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Description</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Category</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Amount</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Payment</th>
-                <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Date</th>
+                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Description</th>
+                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Category</th>
+                <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Amount</th>
+                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Payment</th>
+                <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-slate-400">Loading…</td>
+                  <td colSpan={6} className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">Loading…</td>
                 </tr>
               ) : expenses.map((exp) => (
-                <tr key={exp.id} className="border-b border-slate-100 last:border-b-0">
-                  <td className="py-3 px-4 text-sm text-slate-600">{exp.expense_date}</td>
-                  <td className="py-3 px-4 text-sm text-slate-900">{exp.description}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{EXPENSE_CATEGORIES[exp.category] ?? exp.category}</td>
-                  <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">{formatCurrency(exp.amount, exp.currency)}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{exp.payment_method}</td>
-                  <td className="py-3 px-4 text-center">
-                    <button
-                      onClick={() => handleEdit(exp)}
-                      className="text-sm text-primary-600 hover:text-primary-700"
-                    >
-                      Edit
-                    </button>
-                    {" | "}
-                    <button
-                      onClick={() => handleDelete(exp.id)}
-                      className="text-sm text-red-600 hover:text-red-700"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                <tr key={exp.id} className="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
+                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{exp.expense_date}</td>
+                  <td className="py-3 px-4 text-sm text-slate-900 dark:text-slate-100">{exp.description}</td>
+                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{EXPENSE_CATEGORIES[exp.category] ?? exp.category}</td>
+                  <td className="py-3 px-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">{formatCurrency(exp.amount, exp.currency)}</td>
+                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{exp.payment_method}</td>
+                    <td className="py-3 px-4 text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Edit2 className="w-3.5 h-3.5" />}
+                        onClick={() => handleEdit(exp)}
+                        title="Edit expense"
+                      />
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={<Trash2 className="w-3.5 h-3.5" />}
+                        onClick={() => handleDelete(exp.id)}
+                        title="Delete expense"
+                      />
+                    </td>
                 </tr>
               ))}
               {!loading && expenses.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-slate-400">No expenses yet</td>
+                  <td colSpan={6} className="py-12 text-center">
+                    <p className="text-slate-500 dark:text-slate-400 mb-4">No expenses yet</p>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      icon={<Plus className="w-4 h-4" />}
+                      onClick={() => {
+                        setShowForm(true);
+                        setEditingId(null);
+                        setFormData({});
+                      }}
+                    >
+                      Add Your First Expense
+                    </Button>
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -438,23 +458,27 @@ export default function Expenses() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex justify-between items-center text-sm text-slate-600">
+          <div className="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400">
             <span>Showing {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} of {total}</span>
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-3 py-1 rounded-lg border border-slate-300 text-sm disabled:opacity-50"
+                className="px-3 py-1"
               >
                 Previous
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setPage(page + 1)}
                 disabled={page * pageSize >= total}
-                className="px-3 py-1 rounded-lg border border-slate-300 text-sm disabled:opacity-50"
+                className="px-3 py-1"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -462,3 +486,4 @@ export default function Expenses() {
     </FeatureGate>
   );
 }
+

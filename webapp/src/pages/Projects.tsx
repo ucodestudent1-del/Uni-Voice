@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
 import {
   getProjects,
   archiveProject,
@@ -14,6 +15,7 @@ import ProjectStatusBadge from "../components/ProjectStatusBadge";
 import ProjectForm from "../components/ProjectForm";
 import ProjectTagManager from "../components/ProjectTagManager";
 import { formatDate } from "../utils/format";
+import { Button } from "../components/ui/Button";
 
 interface ProjectsProps {
   customers?: ApiCustomer[];
@@ -154,15 +156,17 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Projects</h1>
-        <button
+         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Projects</h1>
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
           onClick={handleCreate}
-          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
         >
-          + New Project
-        </button>
+          New Project
+        </Button>
       </div>
 
       {error && (
@@ -227,17 +231,25 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
         <div className="overflow-x-auto">
           {projects.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-slate-500">No projects found</p>
+              <p className="text-slate-500 dark:text-slate-400 mb-4">No projects found</p>
+              <Button
+                variant="primary"
+                size="md"
+                icon={<Plus className="w-4 h-4" />}
+                onClick={handleCreate}
+              >
+                Create Your First Project
+              </Button>
             </div>
           ) : (
             <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Project</th>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Project</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Customer</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Status</th>
                   <th
-                    className="px-4 py-3 text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100"
+                    className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
                     onClick={() => handleSort("due_date")}
                   >
                     Due Date
@@ -245,27 +257,27 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
                       <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>
                     )}
                   </th>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Tags</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tags</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-slate-50">
+                  <tr key={project.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900">{project.name}</p>
+                      <p className="font-medium text-slate-900 dark:text-slate-100">{project.name}</p>
                       {project.description && (
-                        <p className="text-sm text-slate-500 line-clamp-1">{project.description}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{project.description}</p>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-slate-900">{project.customer?.name || project.customer_name || "-"}</p>
+                      <p className="text-sm text-slate-900 dark:text-slate-100">{project.customer?.name || project.customer_name || "-"}</p>
                     </td>
                     <td className="px-4 py-3">
                       <ProjectStatusBadge status={project.status} />
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-slate-900">
+                      <p className="text-sm text-slate-900 dark:text-slate-100">
                         {project.due_date ? formatDate(project.due_date) : "-"}
                       </p>
                     </td>
@@ -292,20 +304,20 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={<Edit2 className="w-3.5 h-3.5" />}
                           onClick={() => handleEdit(project)}
-                          className="text-sm text-slate-600 hover:text-slate-900"
                           title="Edit project"
-                        >
-                          Edit
-                        </button>
-                        <button
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          icon={<Trash2 className="w-3.5 h-3.5" />}
                           onClick={() => handleDelete(project)}
-                          className="text-sm text-red-600 hover:text-red-700"
                           title="Delete project"
-                        >
-                          Delete
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>

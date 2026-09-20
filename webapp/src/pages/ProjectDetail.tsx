@@ -14,6 +14,7 @@ import {
   removeProjectTag,
   type ProjectSearchParams,
 } from "../api/client";
+import { Edit2, Archive, RefreshCw, Trash2, Plus } from "lucide-react";
 import type { ApiProject, ApiProjectTag, ApiProjectEvent, ApiProjectInvoice, ApiProjectFinancialSummary } from "../types/api";
 import ProjectStatusBadge from "../components/ProjectStatusBadge";
 import ProjectForm from "../components/ProjectForm";
@@ -21,6 +22,7 @@ import ProjectTagManager from "../components/ProjectTagManager";
 import ProjectTimeTab from "../components/ProjectTimeTab";
 import ProjectNotesTab from "../components/ProjectNotesTab";
 import { formatDate, formatCurrency } from "../utils/format";
+import { Button } from "../components/ui/Button";
 
 const STATUS_OPTIONS = [
   { value: "planning", label: "Planning" },
@@ -139,40 +141,48 @@ export default function ProjectDetail() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onBack}
-          className="text-sm text-slate-600 hover:text-slate-900"
+          className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
         >
           ← Back
-        </button>
+        </Button>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="secondary"
+            size="md"
+            icon={<Edit2 className="w-4 h-4" />}
             onClick={() => setShowForm(true)}
-            className="text-sm text-slate-600 hover:text-slate-900 border border-slate-300 rounded-lg px-3 py-1.5"
           >
             Edit
-          </button>
+          </Button>
           {project.status !== "archived" ? (
-            <button
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<Archive className="w-4 h-4" />}
               onClick={handleArchive}
-              className="text-sm text-yellow-600 hover:text-yellow-700 border border-yellow-300 rounded-lg px-3 py-1.5"
             >
-              Archive
-            </button>
+            Archive
+          </Button>
           ) : (
-            <button
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<RefreshCw className="w-4 h-4" />}
               onClick={handleArchive}
-              className="text-sm text-green-600 hover:text-green-700 border border-green-300 rounded-lg px-3 py-1.5"
             >
-              Restore
-            </button>
+            Restore
+          </Button>
           )}
-          <button
+          <Button
+            variant="danger"
+            size="md"
+            icon={<Trash2 className="w-4 h-4" />}
             onClick={handleDelete}
-            className="text-sm text-red-600 hover:text-red-700 border border-red-300 rounded-lg px-3 py-1.5"
-          >
-            Delete
-          </button>
+          />
         </div>
       </div>
 
@@ -189,35 +199,35 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      <div className="border border-slate-200 rounded-lg">
-        <nav className="flex gap-4 px-4 pt-3 border-b border-slate-200">
+      <div className="border border-slate-200 dark:border-slate-700 rounded-lg">
+        <nav className="flex gap-4 px-4 pt-3 border-b border-slate-200 dark:border-slate-700">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`text-sm font-medium pb-2 ${activeTab === "overview" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "overview" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"}`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab("invoices")}
-            className={`text-sm font-medium pb-2 ${activeTab === "invoices" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "invoices" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"}`}
           >
             Invoices
           </button>
           <button
             onClick={() => setActiveTab("activity")}
-            className={`text-sm font-medium pb-2 ${activeTab === "activity" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "activity" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"}`}
           >
             Activity
           </button>
           <button
             onClick={() => setActiveTab("time")}
-            className={`text-sm font-medium pb-2 ${activeTab === "time" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "time" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"}`}
           >
             Time
           </button>
           <button
             onClick={() => setActiveTab("notes")}
-            className={`text-sm font-medium pb-2 ${activeTab === "notes" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "notes" ? "text-primary-600 border-b-2 border-primary-600" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"}`}
           >
             Notes
           </button>
@@ -278,12 +288,14 @@ export default function ProjectDetail() {
               <div>
                 <h3 className="text-sm font-medium text-slate-700 mb-3">Actions</h3>
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    variant="primary"
+                    size="md"
+                    icon={<Plus className="w-4 h-4" />}
                     onClick={handleCreateInvoice}
-                    className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
                   >
                     Create Invoice
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -293,12 +305,14 @@ export default function ProjectDetail() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-slate-700">Project Invoices</h3>
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<Plus className="w-3.5 h-3.5" />}
                   onClick={handleCreateInvoice}
-                  className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
                 >
                   + New Invoice
-                </button>
+                </Button>
               </div>
               <ProjectInvoices projectId={project.id} />
             </div>

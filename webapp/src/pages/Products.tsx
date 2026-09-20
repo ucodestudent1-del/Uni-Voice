@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Plus, Edit2, Trash2 } from "lucide-react";
 import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from "../api/client";
 import type { ApiProduct } from "../types/api";
+import { Button } from "../components/ui/Button";
 
 export default function Products() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -77,12 +79,14 @@ export default function Products() {
           <h1 className="text-2xl font-bold text-slate-900">Products / Services</h1>
           <p className="text-sm text-slate-600 mt-1">{products.length} products</p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
           onClick={() => { setShowForm(true); setEditingProduct(null); }}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
         >
-          + Add Product
-        </button>
+          Add Product
+        </Button>
       </div>
 
       {showForm && (
@@ -177,20 +181,20 @@ export default function Products() {
               </div>
             </form>
             <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => { setShowForm(false); setEditingProduct(null); }}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 Cancel
-              </button>
-              <button
-                type="submit"
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
                 onClick={(e) => { e.preventDefault(); handleSubmit(e); }}
-                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
               >
                 {editingProduct ? "Update" : "Add Product"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -199,12 +203,15 @@ export default function Products() {
       {products.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
           <p className="mt-4 text-slate-500">No products yet</p>
-          <button
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
             onClick={() => setShowForm(true)}
-            className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="mt-2"
           >
             Add Product
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -229,18 +236,20 @@ export default function Products() {
                   <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">${parseFloat(p.default_unit_price).toFixed(2)}</td>
                   <td className="py-3 px-4 text-right text-sm text-slate-600">{(parseFloat(p.default_tax_rate) * 100).toFixed(0)}%</td>
                   <td className="py-3 px-4 text-right">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={<Edit2 className="w-3.5 h-3.5" />}
                       onClick={() => handleEdit(p)}
-                      className="text-xs text-slate-600 hover:text-slate-900 mr-2"
-                    >
-                      Edit
-                    </button>
-                    <button
+                      title="Edit product"
+                    />
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      icon={<Trash2 className="w-3.5 h-3.5" />}
                       onClick={() => handleDelete(p.id)}
-                      className="text-xs text-red-500 hover:text-red-700"
-                    >
-                      Delete
-                    </button>
+                      title="Delete product"
+                    />
                   </td>
                 </tr>
               ))}

@@ -17,6 +17,7 @@ import StatusBreakdown from "../components/dashboard/StatusBreakdown";
 import InvoiceTable from "../components/dashboard/InvoiceTable";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import { formatCurrency } from "../utils/format";
+import { Button } from "../components/ui/Button";
 
 export default function Dashboard() {
   const { plan } = useSubscription();
@@ -61,12 +62,13 @@ export default function Dashboard() {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-6 text-center">
         <p className="text-sm font-medium text-red-800 dark:text-red-300">{loadError}</p>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => setRetryKey((key) => key + 1)}
-          className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
         >
           Try again
-        </button>
+        </Button>
       </div>
     );
   }
@@ -116,7 +118,7 @@ export default function Dashboard() {
         </div>
         <Link
           to="/app/invoices/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors min-h-[44px]"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
           New Invoice
