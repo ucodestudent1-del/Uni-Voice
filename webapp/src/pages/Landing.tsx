@@ -1,11 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Section, SectionHeader } from "../components/ui/Section";
-import PricingTable from "../components/ui/PricingTable";
 import FeaturesSection from "../components/ui/FeaturesSection";
 import FaqSection from "../components/ui/FaqSection";
 import TemplateGallery from "../components/ui/TemplateGallery";
-import { pricingTiers, pricingFeatures, faqs, templateModules } from "../data/landing";
+import { pricingFeatures, faqs, templateModules } from "../data/landing";
 
 export default function Landing() {
   const { isAuthenticated } = useAuth();
@@ -17,7 +16,6 @@ export default function Landing() {
         <nav className="flex items-center justify-between h-16 py-4">
           <div className="text-xl font-bold text-slate-900">InvoiceFlow</div>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="#pricing" className="text-sm text-slate-600 hover:text-slate-900">Pricing</Link>
             <Link to="#templates" className="text-sm text-slate-600 hover:text-slate-900">Templates</Link>
             <Link to="#features" className="text-sm text-slate-600 hover:text-slate-900">Features</Link>
             <Link to="#faq" className="text-sm text-slate-600 hover:text-slate-900">FAQ</Link>
@@ -102,19 +100,6 @@ export default function Landing() {
           subtitle="Choose from professionally designed templates for every business"
         />
         <TemplateGallery items={templateModules} className="mx-auto max-w-5xl" />
-      </Section>
-
-      {/* Pricing */}
-      <Section id="pricing" bg="slate-50" className="py-16">
-        <SectionHeader
-          title="Simple, transparent pricing"
-          subtitle="No per-invoice fees. No hidden costs. Cancel anytime."
-        />
-        <PricingTable
-          tiers={pricingTiers}
-          subtitle="No per-invoice fees. No hidden costs."
-          className="mx-auto max-w-7xl"
-        />
       </Section>
 
       {/* Features */}

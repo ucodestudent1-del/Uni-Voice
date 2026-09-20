@@ -13,7 +13,7 @@ import { businessRepository } from "../repositories/business.repo.js";
 import { productServiceRepository } from "../repositories/product-service.repo.js";
 import { projectRepository } from "../repositories/project.repo.js";
 import { generatePublicInvoiceToken } from "../utils/crypto.js";
-import { BusinessLogicError } from "../domain/errors.js";
+import { BusinessLogicError, NotFoundError } from "../domain/errors.js";
 import { invoiceValidationService } from "../services/validation/invoice-validation.js";
 import { logger } from "../utils/logger.js";
 import { getClient, query } from "../db/pool.js";
@@ -443,12 +443,14 @@ export class InvoiceService {
          VALUES ($1,$2,$3,$4,$5,$6,$7,'succeeded',$8,$9,NOW(),NOW())`,
         [crypto.randomUUID(), id, businessId, provider, providerPaymentId, amount, invoice.currency, new Date().toISOString(), idempotencyKey ?? null]
       );
-      await client.query(
-        `UPDATE invoices SET amount_paid = amount_paid + $1, amount_due = GREATEST(amount_due - $1, 0), updated_at = NOW() WHERE id = $2`,
-        [amount, id]
+      const updateRes = await client.query(
+        `UPDATE invoices SET amount_paid = amount_paid + $1, amount_due = GREATEST(amount_due - $1, 0), updated_at = NOW()
+         WHERE id = $2 AND business_id = $3 RETURNING amount_due, amount_paid`,
+        [amount, id, businessId]
       );
-      const updated = await invoiceRepository.findById(businessId, id);
-      const newStatus = invoiceStateMachine.statusAfterPayment(invoice.status, new Decimal(updated.amountDue).toNumber(), new Decimal(updated.amountPaid).toNumber());
+      if (!updateRes.rows.length) throw new NotFoundError(`Invoice ${id} not found`);
+      const updatedRow = updateRes.rows[0];
+      const newStatus = invoiceStateMachine.statusAfterPayment(invoice.status, updatedRow.amount_due, updatedRow.amount_paid);
       if (newStatus !== invoice.status) invoiceStateMachine.transition(invoice.status, newStatus);
       await invoiceRepository.setStatus(id, newStatus, { paidAt: newStatus === "paid" ? new Date() : undefined });
       await invoiceRepository.recordEvent(id, {
@@ -620,9 +622,8 @@ export class InvoiceService {
   }, now: Date): boolean {
     if (rule.triggerType === 'manual') return false;
 
-    const statusOrder = ['draft', 'sent', 'viewed', 'partially_paid', 'overdue', 'paid', 'cancelled', 'void'];
-    const invoiceStatusIndex = statusOrder.indexOf(invoice.status);
-    const minStatusIndex = statusOrder.indexOf(rule.minStatus);
+    const invoiceStatusIndex = STATUS_ORDER.indexOf(invoice.status);
+    const minStatusIndex = STATUS_ORDER.indexOf(rule.minStatus);
     if (invoiceStatusIndex === -1 || minStatusIndex === -1 || invoiceStatusIndex < minStatusIndex) {
       return false;
     }
@@ -787,84 +788,35 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     upcoming: any[];
     moneyIn: { total: string; count: number; currency: string };
   }> {
-    const invoices = await invoiceRepository.findForDashboard(businessId);
+    const [summary, recentlyPaidRows, requiringAttentionRows] = await Promise.all([
+      invoiceRepository.getDashboardSummary(businessId),
+      invoiceRepository.findRecentlyPaid(businessId, 10),
+      invoiceRepository.findRequiringAttention(businessId, new Date(), 10),
+    ]);
+
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const summary = invoices.reduce(
-      (acc, inv) => {
-        const amountDue = new Decimal(inv.amount_due || 0);
-        const amountPaid = new Decimal(inv.amount_paid || 0);
-        const total = new Decimal(inv.total || 0);
-        acc.totalRevenue = acc.totalRevenue.plus(total);
-        acc.totalInvoices += 1;
+    const recentlyPaid = recentlyPaidRows.map((i) => ({
+      id: i.id,
+      invoiceNumber: i.invoice_number,
+      customerName: i.customer_name,
+      total: i.total,
+      amountPaid: i.amount_paid,
+      currency: i.currency,
+      paidAt: i.paid_at,
+      status: i.status,
+    }));
 
-        if (amountDue.gt(0) && !["draft", "cancelled", "void"].includes(inv.status)) {
-          acc.totalOutstanding = acc.totalOutstanding.plus(amountDue);
-          if (inv.status === "overdue" || (inv.due_date && new Date(inv.due_date) < now && amountDue.gt(0))) {
-            acc.totalOverdue = acc.totalOverdue.plus(amountDue);
-            acc.overdueCount += 1;
-          }
-        }
-        if (amountPaid.gt(0) && (inv.paid_at ? new Date(inv.paid_at) >= monthStart : false)) {
-          acc.totalPaidThisMonth = acc.totalPaidThisMonth.plus(amountPaid);
-        }
-        if (inv.status === "draft") acc.draftCount += 1;
-        if (inv.status === "sent") acc.sentCount += 1;
-        if (inv.status === "paid") {
-          acc.paidCount += 1;
-        }
-        return acc;
-      },
-      {
-        totalOutstanding: new Decimal(0),
-        totalOverdue: new Decimal(0),
-        totalPaidThisMonth: new Decimal(0),
-        totalRevenue: new Decimal(0),
-        draftCount: 0,
-        overdueCount: 0,
-        sentCount: 0,
-        paidCount: 0,
-        totalInvoices: 0,
-      }
-    );
-
-    const recentlyPaid = invoices
-      .filter((i) => i.status === "paid" || i.status === "partially_paid")
-      .sort((a, b) => (new Date(b.paid_at || b.updated_at).getTime() - new Date(a.paid_at || a.updated_at).getTime()))
-      .slice(0, 10)
-      .map((i) => ({
-        id: i.id,
-        invoiceNumber: i.invoice_number,
-        customerName: i.customer_name,
-        total: i.total,
-        amountPaid: i.amount_paid,
-        currency: i.currency,
-        paidAt: i.paid_at,
-        status: i.status,
-      }));
-
-    const requiringAttention = invoices
-      .filter((i) => {
-        if (i.amount_due && new Decimal(i.amount_due).gt(0)) {
-          if (i.due_date && new Date(i.due_date) < now && !["draft", "cancelled", "void", "paid"].includes(i.status)) return true;
-        }
-        if (i.status === "draft") return true;
-        if (i.status === "sent" || i.status === "viewed") return true;
-        return false;
-      })
-      .sort((a, b) => (new Date(a.due_date || a.created_at).getTime() - new Date(b.due_date || b.created_at).getTime()))
-      .slice(0, 10)
-      .map((i) => ({
-        id: i.id,
-        invoiceNumber: i.invoice_number,
-        customerName: i.customer_name,
-        total: i.total,
-        amountDue: i.amount_due,
-        dueDate: i.due_date,
-        currency: i.currency,
-        status: i.status,
-      }));
+    const requiringAttention = requiringAttentionRows.map((i) => ({
+      id: i.id,
+      invoiceNumber: i.invoice_number,
+      customerName: i.customer_name,
+      total: i.total,
+      amountDue: i.amount_due,
+      dueDate: i.due_date,
+      currency: i.currency,
+      status: i.status,
+    }));
 
     // Cash-flow: invoices due within the next 7 days (open + outstanding).
     const upcoming = (await invoiceRepository.findUpcomingInvoices(businessId, 7)).map((i) => ({
@@ -892,17 +844,17 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
 
     return {
       summary: {
-        totalOutstanding: summary.totalOutstanding.toFixed(2),
-        totalOverdue: summary.totalOverdue.toFixed(2),
-        totalPaidThisMonth: summary.totalPaidThisMonth.toFixed(2),
-        totalRevenue: summary.totalRevenue.toFixed(2),
+        totalOutstanding: new Decimal(summary.totalOutstanding).toFixed(2),
+        totalOverdue: new Decimal(summary.totalOverdue).toFixed(2),
+        totalPaidThisMonth: new Decimal(summary.totalPaidThisMonth).toFixed(2),
+        totalRevenue: new Decimal(summary.totalRevenue).toFixed(2),
         draftCount: summary.draftCount,
         overdueCount: summary.overdueCount,
         sentCount: summary.sentCount,
         paidCount: summary.paidCount,
         totalInvoices: summary.totalInvoices,
       },
-      recentlyPaid,
+      recentlyPaid: recentlyPaid,
       requiringAttention,
       upcoming,
       moneyIn: {
@@ -935,3 +887,5 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
 }
 
 export const invoiceService = new InvoiceService();
+
+const STATUS_ORDER: readonly string[] = ['draft', 'sent', 'viewed', 'partially_paid', 'overdue', 'paid', 'cancelled', 'void'];

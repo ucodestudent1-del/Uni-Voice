@@ -1,6 +1,9 @@
 import { Decimal } from "decimal.js";
 import { CurrencyCode, getCurrencyMetadata } from "./value-objects/currency.js";
 
+const ZERO = new Decimal(0);
+const ONE = new Decimal(1);
+
 export type DiscountType = "fixed" | "percentage";
 
 export interface DiscountDefinition {
@@ -9,22 +12,17 @@ export interface DiscountDefinition {
 }
 
 export function discountAmount(discount: DiscountDefinition | undefined, base: Decimal, currency: CurrencyCode): Decimal {
-  if (!discount) return new Decimal(0);
+  if (!discount) return ZERO;
+  const d = discount.value instanceof Decimal ? discount.value : new Decimal(discount.value);
   const meta = getCurrencyMetadata(currency);
-  const d = new Decimal(discount.value);
   let amount: Decimal;
   if (discount.type === "percentage") {
     amount = base.mul(d.div(100));
   } else {
-    amount = new Decimal(d);
+    amount = d;
   }
-  // A discount cannot exceed the base amount
-  if (amount.gt(base)) {
-    amount = base;
-  }
-  if (amount.isNegative()) {
-    amount = new Decimal(0);
-  }
+  if (amount.gt(base)) amount = base;
+  if (amount.isNegative()) return ZERO;
   return amount.toDecimalPlaces(meta.decimalPlaces, Decimal.ROUND_HALF_UP);
 }
 
@@ -97,8 +95,9 @@ export class CalculationEngine {
     const { currency } = input;
     const meta = getCurrencyMetadata(currency);
     const dp = meta.decimalPlaces;
-    const round = (v: Decimal.Value): Decimal => new Decimal(v).toDecimalPlaces(dp, Decimal.ROUND_HALF_UP);
-    const roundRate = (v: Decimal.Value): Decimal => new Decimal(v).toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
+
+    const round = (v: Decimal.Value): Decimal => (v instanceof Decimal ? v : new Decimal(v)).toDecimalPlaces(dp, Decimal.ROUND_HALF_UP);
+    const roundRate = (v: Decimal.Value): Decimal => (v instanceof Decimal ? v : new Decimal(v)).toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
 
     const lineItems: CalculatedLineItem[] = [];
 
@@ -124,21 +123,20 @@ export class CalculationEngine {
         description: item.description,
         quantity: qty,
         unit: item.unit,
-        unitPrice: round(unitPrice),
+        unitPrice,
         discountAmount: lineDiscount,
-        taxRate: roundRate(taxRate),
+        taxRate: taxRate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
         isTaxInclusive: item.isTaxInclusive,
         lineSubtotal,
-        // filled in pass 2
-        taxableAmount: new Decimal(0),
-        taxAmount: new Decimal(0),
-        lineTotal: new Decimal(0),
+        taxableAmount: ZERO,
+        taxAmount: ZERO,
+        lineTotal: ZERO,
       });
     }
 
-    let subtotal = new Decimal(0);
-    let lineDiscountTotal = new Decimal(0);
-    let totalNet = new Decimal(0); // sum of (lineSubtotal - lineDiscount)
+    let subtotal = ZERO;
+    let lineDiscountTotal = ZERO;
+    let totalNet = ZERO; // sum of (lineSubtotal - lineDiscount)
 
     for (const li of lineItems) {
       subtotal = subtotal.plus(li.lineSubtotal);
@@ -146,14 +144,15 @@ export class CalculationEngine {
       totalNet = totalNet.plus(li.lineSubtotal.minus(li.discountAmount));
     }
 
+    const netAfterLineDiscounts = subtotal.minus(lineDiscountTotal);
     // Invoice-level discount (applied to the net subtotal, i.e. after line discounts)
-    const invoiceDiscount = discountAmount(input.invoiceDiscount, subtotal.minus(lineDiscountTotal), currency);
+    const invoiceDiscount = discountAmount(input.invoiceDiscount, netAfterLineDiscounts, currency);
     const discountTotal = round(lineDiscountTotal.plus(invoiceDiscount));
 
     // Distribute the invoice discount proportionally across lines based on their net contribution
-    const lineShares = new Array(lineItems.length).fill(new Decimal(0));
+    const lineShares = new Array(lineItems.length).fill(null).map(() => ZERO);
     if (totalNet.isZero()) {
-      for (let i = 0; i < lineItems.length; i++) lineShares[i] = new Decimal(0);
+      // lineShares already zero by default
     } else {
       for (let i = 0; i < lineItems.length; i++) {
         const net = lineItems[i].lineSubtotal.minus(lineItems[i].discountAmount);
@@ -161,8 +160,8 @@ export class CalculationEngine {
       }
     }
 
-    let taxTotal = new Decimal(0);
-    let total = new Decimal(0);
+    let taxTotal = ZERO;
+    let total = ZERO;
 
     // Pass 2: tax + line total per line (handles inclusive & exclusive)
     for (let i = 0; i < lineItems.length; i++) {
@@ -174,9 +173,9 @@ export class CalculationEngine {
       if (li.isTaxInclusive) {
         // unit price already includes tax; extract the tax component
         if (li.taxRate.isZero() || effectiveTaxable.isZero()) {
-          taxAmount = round(new Decimal(0));
+          taxAmount = ZERO;
         } else {
-          const ratio = li.taxRate.div(new Decimal(1).plus(li.taxRate));
+          const ratio = li.taxRate.div(ONE.plus(li.taxRate));
           taxAmount = round(effectiveTaxable.mul(ratio));
         }
         const netAmount = round(effectiveTaxable.minus(taxAmount));
@@ -195,7 +194,7 @@ export class CalculationEngine {
     }
 
     const fees: CalculatedFee[] = [];
-    let feeTotal = new Decimal(0);
+    let feeTotal = ZERO;
 
     for (const fee of input.fees ?? []) {
       const feeBase = round(new Decimal(fee.amount));
@@ -217,14 +216,17 @@ export class CalculationEngine {
       total = total.plus(feeLineTotal);
     }
 
-    const amountPaid = round(new Decimal(input.amountPaid ?? 0));
+    const amountPaid = round(input.amountPaid ?? 0);
     if (amountPaid.isNegative()) {
       throw new Error("Amount paid must be >= 0");
     }
 
     const amountDue = round(total.minus(amountPaid));
 
-    const isTaxInclusive = lineItems.some((li) => li.isTaxInclusive);
+    let hasTaxInclusive = false;
+    for (const li of lineItems) {
+      if (li.isTaxInclusive) { hasTaxInclusive = true; break; }
+    }
 
     return {
       currency,
@@ -233,13 +235,13 @@ export class CalculationEngine {
       fees,
       subtotal: round(subtotal),
       discountTotal,
-      taxableTotal: round(totalNet.minus(invoiceDiscount)),
+      taxableTotal: round(netAfterLineDiscounts.minus(invoiceDiscount)),
       taxTotal: round(taxTotal),
       feeTotal: round(feeTotal),
       total: round(total),
       amountDue,
       amountPaid,
-      isTaxInclusive,
+      isTaxInclusive: hasTaxInclusive,
     };
   }
 }

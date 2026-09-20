@@ -1,20 +1,3 @@
-import type { ReactNode } from "react";
-
-export interface PricingTier {
-  code: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  features: string[];
-  cta?: string;
-  ctaLink?: string;
-  highlighted?: boolean;
-  badge?: string;
-  beta?: boolean;
-  betaLink?: string;
-}
-
 export interface FeatureItem {
   title: string;
   description: string;
@@ -41,72 +24,6 @@ export type FeatureIcon =
   | "globe-currency"
   | "clock-arrow"
   | "document-sparkle";
-
-const USD = "USD" as const;
-
-export const freeTier: PricingTier = {
-  code: "free",
-  name: "Free",
-  description: "Make professional invoices",
-  price: 0,
-  currency: USD,
-  features: [
-    "Up to 5 invoices per month",
-    "5 customers",
-    "Basic templates",
-    "PDF generation & download",
-    "Multiple currencies",
-    "Basic customization",
-  ],
-  cta: "Get Started",
-  ctaLink: "/register",
-};
-
-export const proTier: PricingTier = {
-  code: "pro",
-  name: "Pro",
-  description: "Automate your invoicing",
-  price: 19,
-  currency: USD,
-  features: [
-    "Unlimited invoices",
-    "Unlimited customers",
-    "Custom branding (logo, colors, fonts)",
-    "Premium templates",
-    "Recurring invoices",
-    "Scheduled invoices",
-    "Automated payment reminders",
-    "Payment links",
-    "CSV/Excel exports",
-  ],
-  cta: "Start free trial",
-  ctaLink: "/register",
-  highlighted: true,
-  badge: "Most Popular",
-};
-
-export const businessTier: PricingTier = {
-  code: "business",
-  name: "Business",
-  description: "Manage your billing and financial workflow",
-  price: 49,
-  currency: USD,
-  features: [
-    "Everything in Pro",
-    "Quotes & estimates",
-    "Purchase orders & receipts",
-    "Credit notes & refunds",
-    "Revenue dashboards",
-    "Advanced reports",
-    "API access",
-    "Multiple businesses/brands",
-  ],
-  cta: "Contact sales",
-  ctaLink: "/register",
-  beta: true,
-};
-
-export const pricingTiers: PricingTier[] = [freeTier, proTier, businessTier];
 
 export const pricingFeatures: FeatureItem[] = [
   {

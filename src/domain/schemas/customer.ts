@@ -111,7 +111,7 @@ export const CustomerSearchQuerySchema = z.object({
   offset: z.coerce.number().int().nonnegative().default(0),
   sortBy: CustomerSortFieldSchema.default("name"),
   sortOrder: CustomerSortOrderSchema.default("asc"),
-  includeArchived: z.boolean().optional(),
+  includeArchived: z.coerce.boolean().optional(),
   enrich: z.coerce.boolean().optional(),
 });
 

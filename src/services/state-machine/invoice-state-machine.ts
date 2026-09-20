@@ -11,7 +11,7 @@ export interface TransitionEvent {
   createdAt?: Date;
 }
 
-type TransitionMap = Record<InvoiceStatus, InvoiceStatus[]>;
+type TransitionMap = Record<InvoiceStatus, readonly InvoiceStatus[]>;
 
 export const ALLOWED_TRANSITIONS: TransitionMap = {
   draft: ["sent", "cancelled", "void"],
@@ -24,10 +24,21 @@ export const ALLOWED_TRANSITIONS: TransitionMap = {
   void: [],
 };
 
-export const TERMINAL_STATUSES: InvoiceStatus[] = ["paid", "cancelled", "void"];
+const ALLOWED_TRANSITIONS_SETS: Record<InvoiceStatus, Set<InvoiceStatus>> = (() => {
+  const m: Record<string, Set<InvoiceStatus>> = {};
+  for (const status of Object.keys(ALLOWED_TRANSITIONS)) {
+    m[status] = new Set(ALLOWED_TRANSITIONS[status as InvoiceStatus]);
+  }
+  return m as Record<InvoiceStatus, Set<InvoiceStatus>>;
+})();
 
-export const CANCELLABLE_STATUSES: InvoiceStatus[] = ["draft", "sent", "viewed"];
-export const VOIDABLE_STATUSES: InvoiceStatus[] = ["draft", "sent", "viewed", "partially_paid", "overdue"];
+export const TERMINAL_STATUSES: readonly InvoiceStatus[] = ["paid", "cancelled", "void"];
+export const TERMINAL_STATUSES_SET = new Set(TERMINAL_STATUSES);
+
+export const CANCELLABLE_STATUSES: readonly InvoiceStatus[] = ["draft", "sent", "viewed"];
+export const CANCELLABLE_STATUSES_SET = new Set(CANCELLABLE_STATUSES);
+export const VOIDABLE_STATUSES: readonly InvoiceStatus[] = ["draft", "sent", "viewed", "partially_paid", "overdue"];
+export const VOIDABLE_STATUSES_SET = new Set(VOIDABLE_STATUSES);
 
 export interface OverdueCheckInput {
   status: InvoiceStatus;
@@ -45,8 +56,7 @@ export interface OverdueCheckInput {
 export class InvoiceStateMachine {
   canTransition(from: InvoiceStatus, to: InvoiceStatus): boolean {
     if (from === to) return true;
-    const allowed = ALLOWED_TRANSITIONS[from] ?? [];
-    return allowed.includes(to);
+    return ALLOWED_TRANSITIONS_SETS[from]?.has(to) ?? false;
   }
 
   transition(from: InvoiceStatus, to: InvoiceStatus): void {
@@ -60,15 +70,15 @@ export class InvoiceStateMachine {
   }
 
   isTerminal(status: InvoiceStatus): boolean {
-    return TERMINAL_STATUSES.includes(status);
+    return TERMINAL_STATUSES_SET.has(status);
   }
 
   isCancellable(status: InvoiceStatus): boolean {
-    return CANCELLABLE_STATUSES.includes(status);
+    return CANCELLABLE_STATUSES_SET.has(status);
   }
 
   isVoidable(status: InvoiceStatus): boolean {
-    return VOIDABLE_STATUSES.includes(status);
+    return VOIDABLE_STATUSES_SET.has(status);
   }
 
   /**

@@ -16,7 +16,6 @@ import CustomerDetail from "./pages/CustomerDetail";
 import Products from "./pages/Products";
 import Templates from "./pages/Templates";
 import TemplateEditorPage from "./pages/TemplateEditorPage";
-import Plans from "./pages/Plans";
 import Settings from "./pages/Settings";
 import PublicInvoice from "./pages/PublicInvoice";
 import Reports from "./pages/Reports";
@@ -54,7 +53,6 @@ export default function App() {
       <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
       <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
       <Route path="/auth/callback" element={<PublicOnly><AuthCallback /></PublicOnly>} />
-      <Route path="/pricing" element={<Plans />} />
       <Route path="/invoice/:token" element={<PublicInvoice />} />
 
       {/* Onboarding */}
@@ -76,9 +74,8 @@ export default function App() {
           <Route path="expenses" element={<Expenses />} />
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:id" element={<ProjectDetail />} />
-         <Route path="reports" element={<Reports />} />
-         <Route path="plans" element={<Plans />} />
-         <Route path="settings">
+          <Route path="reports" element={<Reports />} />
+          <Route path="settings">
            <Route index element={<Navigate to="/app/settings/business" replace />} />
            <Route path=":section" element={<Settings />} />
          </Route>

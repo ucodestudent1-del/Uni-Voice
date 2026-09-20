@@ -55,7 +55,7 @@ export const ProjectSearchQuerySchema = z.object({
   status: ProjectStatusSchema.optional(),
   customerId: z.string().uuid().optional(),
   tagId: z.string().uuid().optional(),
-  includeArchived: z.boolean().optional(),
+  includeArchived: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().nonnegative().default(0),
   sortBy: z.enum(["name", "created_at", "updated_at", "due_date", "start_date", "budget", "amount_invoiced"]).default("created_at"),

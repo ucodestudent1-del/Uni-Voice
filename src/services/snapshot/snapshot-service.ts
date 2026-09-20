@@ -38,6 +38,27 @@ export class SnapshotService {
     return createHash("sha256").update(signature).digest("hex");
   }
 
+  private mapItems(invoice: InvoiceWithDetails) {
+    return invoice.items.map((i) => ({
+      description: i.description, quantity: i.quantity, unit: i.unit, unitPrice: i.unitPrice,
+      discount: i.discount, discountType: i.discountType, taxRate: i.taxRate, taxAmount: i.taxAmount,
+      lineSubtotal: i.lineSubtotal, lineTotal: i.lineTotal, isTaxInclusive: i.isTaxInclusive, productId: i.productId,
+    }));
+  }
+
+  private mapFees(invoice: InvoiceWithDetails) {
+    return invoice.fees.map((f) => ({
+      description: f.description, amount: f.amount, taxRate: f.taxRate, taxAmount: f.taxAmount,
+    }));
+  }
+
+  private mapTotals(invoice: InvoiceWithDetails) {
+    return {
+      subtotal: invoice.subtotal, discountTotal: invoice.discountTotal, taxTotal: invoice.taxTotal,
+      feeTotal: invoice.feeTotal, total: invoice.total, amountPaid: invoice.amountPaid, amountDue: invoice.amountDue,
+    };
+  }
+
   async build(invoice: InvoiceWithDetails, businessId: string, opts?: SnapshotBuildOptions): Promise<SnapshotResult> {
     const business = await businessRepository.findById(businessId);
     let customer: Customer | null = null;
@@ -60,6 +81,10 @@ export class SnapshotService {
 
     const templateSchemaVersion = opts?.templateSchemaVersion ?? template?.schemaVersion ?? "1";
     const templateRevision = opts?.templateRevision ?? template?.revision ?? 1;
+
+    const items = this.mapItems(invoice);
+    const fees = this.mapFees(invoice);
+    const totals = this.mapTotals(invoice);
 
     const templateData = buildTemplateData(
       {
@@ -93,18 +118,9 @@ export class SnapshotService {
             notes: customer.notes,
           }
         : null,
-      invoice.items.map((i) => ({
-        description: i.description, quantity: i.quantity, unit: i.unit, unitPrice: i.unitPrice,
-        discount: i.discount, discountType: i.discountType, taxRate: i.taxRate, taxAmount: i.taxAmount,
-        lineSubtotal: i.lineSubtotal, lineTotal: i.lineTotal, isTaxInclusive: i.isTaxInclusive, productId: i.productId,
-      })),
-      invoice.fees.map((f) => ({
-        description: f.description, amount: f.amount, taxRate: f.taxRate, taxAmount: f.taxAmount,
-      })),
-      {
-        subtotal: invoice.subtotal, discountTotal: invoice.discountTotal, taxTotal: invoice.taxTotal,
-        feeTotal: invoice.feeTotal, total: invoice.total, amountPaid: invoice.amountPaid, amountDue: invoice.amountDue,
-      },
+      items,
+      fees,
+      totals,
       {
         htmlTemplate: template?.htmlTemplate,
         schemaVersion: templateSchemaVersion,
@@ -156,14 +172,8 @@ export class SnapshotService {
             defaultCurrency: customer.defaultCurrency, notes: customer.notes,
           }
         : null,
-      items: invoice.items.map((i) => ({
-        description: i.description, quantity: i.quantity, unit: i.unit, unitPrice: i.unitPrice,
-        discount: i.discount, discountType: i.discountType, taxRate: i.taxRate, taxAmount: i.taxAmount,
-        lineSubtotal: i.lineSubtotal, lineTotal: i.lineTotal, isTaxInclusive: i.isTaxInclusive, productId: i.productId,
-      })),
-      fees: invoice.fees.map((f) => ({
-        description: f.description, amount: f.amount, taxRate: f.taxRate, taxAmount: f.taxAmount,
-      })),
+      items,
+      fees,
       template: template
         ? {
             id: template.id,

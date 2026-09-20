@@ -75,11 +75,34 @@ const CURRENCY_METADATA: Record<string, CurrencyMetadata> = {
   VND: { code: "VND", name: "Vietnamese Đồng", symbol: "₫", decimalPlaces: 0, minorUnitName: "hào", localeKey: "vi-VN" },
 };
 
+const numberFormatters = new Map<string, Intl.NumberFormat>();
+
+function getFormatter(locale: string, currency: string, dp: number): Intl.NumberFormat {
+  const key = `${locale}:${currency}:${dp}`;
+  let fmt = numberFormatters.get(key);
+  if (!fmt) {
+    fmt = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: dp,
+      maximumFractionDigits: dp,
+    });
+    numberFormatters.set(key, fmt);
+  }
+  return fmt;
+}
+
+const metadataCache = new Map<string, CurrencyMetadata>();
+
 export function getCurrencyMetadata(code: string): CurrencyMetadata {
-  const meta = CURRENCY_METADATA[code.toUpperCase()];
+  const upper = code.toUpperCase();
+  const cached = metadataCache.get(upper);
+  if (cached) return cached;
+  const meta = CURRENCY_METADATA[upper];
   if (!meta) {
     throw new Error(`Unsupported currency: ${code}`);
   }
+  metadataCache.set(upper, meta);
   return meta;
 }
 
@@ -91,12 +114,8 @@ export const ROUNDING_MODE = Decimal.ROUND_HALF_UP;
 
 export function formatMoney(amount: Decimal.Value, currency: CurrencyCode, locale?: string): string {
   const meta = getCurrencyMetadata(currency);
-  const d = new Decimal(amount);
+  const d = amount instanceof Decimal ? amount : new Decimal(amount);
   const loc = locale ?? meta.localeKey;
-  return new Intl.NumberFormat(loc, {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: meta.decimalPlaces,
-    maximumFractionDigits: meta.decimalPlaces,
-  }).format(Number(d.toNumber()));
+  const formatter = getFormatter(loc, currency, meta.decimalPlaces);
+  return formatter.format(d.toNumber());
 }

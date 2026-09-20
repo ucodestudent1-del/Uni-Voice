@@ -100,6 +100,17 @@ function fmtRate(v: Decimal.Value | undefined): string {
   return `${new Decimal(v).mul(100).toFixed(2)}%`;
 }
 
+const templateCache = new Map<string, HandlebarsTemplateDelegate<any>>();
+
+function compileTemplate(templateHtml: string): HandlebarsTemplateDelegate<any> {
+  let compiled = templateCache.get(templateHtml);
+  if (!compiled) {
+    compiled = Handlebars.compile(templateHtml, { noEscape: true });
+    templateCache.set(templateHtml, compiled);
+  }
+  return compiled;
+}
+
 export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
 <html lang="{{invoice.language}}">
 <head>
@@ -210,15 +221,11 @@ export class TemplateRenderer {
   }
 
   build(data: InvoiceTemplateData): any {
-    return Handlebars.compile(data.config?.htmlTemplate as string | undefined ?? this.defaultTemplate, {
-      noEscape: true,
-    });
+    return compileTemplate(data.config?.htmlTemplate as string | undefined ?? this.defaultTemplate);
   }
 
   render(data: InvoiceTemplateData, templateHtml?: string): string {
-    const template = Handlebars.compile(templateHtml ?? data.config?.htmlTemplate as string | undefined ?? this.defaultTemplate, {
-      noEscape: true,
-    });
+    const template = compileTemplate(templateHtml ?? data.config?.htmlTemplate as string | undefined ?? this.defaultTemplate);
     return template({
       ...data,
       formatMoney: (v: Decimal.Value) => fmt(v, data.invoice.currency),

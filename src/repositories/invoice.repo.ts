@@ -107,6 +107,15 @@ const INVOICE_SORT_COLUMNS: Record<string, string> = {
   paid_at: "i.paid_at",
 };
 
+const INVOICE_ALLOWED_COLUMNS = new Set([
+  "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
+  "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
+  "amount_paid", "amount_due", "credit_applied", "deposit_amount", "deposit_type",
+  "deposit_due_date", "deposit_payment_purpose", "notes", "terms", "template_id", "public_token",
+  "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
+  "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
+]);
+
 export class InvoiceRepository {
   async createDraft(businessId: string, input: CreateInvoiceInput): Promise<string> {
     const client = await getClient();
@@ -142,33 +151,49 @@ export class InvoiceRepository {
   }
 
   private async insertItems(client: any, invoiceId: string, items: InvoiceItemInput[] | undefined, now: string): Promise<void> {
-    for (let i = 0; i < (items?.length ?? 0); i++) {
-      const it = items![i];
-      await client.query(
-        `INSERT INTO invoice_items (id, invoice_id, product_id, description, quantity, unit, unit_price,
-          discount, discount_type, tax_rate, tax_amount, line_subtotal, line_total, sort_order, is_tax_inclusive,
-          catalog_name, catalog_sku, catalog_tax_category, catalog_unit_price, catalog_tax_rate, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
-        [
-          crypto.randomUUID(), invoiceId, it.productId, it.description, it.quantity,
-          it.unit ?? "each", it.unitPrice, it.discount ?? 0, it.discountType ?? "fixed",
-          it.taxRate ?? 0, 0, 0, 0, it.sortOrder ?? i, it.isTaxInclusive ?? false,
-          it.catalogName ?? null, it.catalogSku ?? null, it.catalogTaxCategory ?? null,
-          it.catalogUnitPrice ?? null, it.catalogTaxRate ?? null, now,
-        ]
+    if (!items || items.length === 0) return;
+    const values: unknown[] = [];
+    const rows: string[] = [];
+    let paramIdx = 1;
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const placeholders = Array.from({ length: 21 }, (_, j) => `$${paramIdx + j}`);
+      rows.push(`(${placeholders.join(", ")})`);
+      values.push(
+        crypto.randomUUID(), invoiceId, it.productId, it.description, it.quantity,
+        it.unit ?? "each", it.unitPrice, it.discount ?? 0, it.discountType ?? "fixed",
+        it.taxRate ?? 0, 0, 0, 0, it.sortOrder ?? i, it.isTaxInclusive ?? false,
+        it.catalogName ?? null, it.catalogSku ?? null, it.catalogTaxCategory ?? null,
+        it.catalogUnitPrice ?? null, it.catalogTaxRate ?? null, now,
       );
+      paramIdx += 21;
     }
+    await client.query(
+      `INSERT INTO invoice_items (id, invoice_id, product_id, description, quantity, unit, unit_price,
+        discount, discount_type, tax_rate, tax_amount, line_subtotal, line_total, sort_order, is_tax_inclusive,
+        catalog_name, catalog_sku, catalog_tax_category, catalog_unit_price, catalog_tax_rate, created_at)
+       VALUES ${rows.join(", ")}`,
+      values
+    );
   }
 
   private async insertFees(client: any, invoiceId: string, fees: InvoiceFeeInput[] | undefined, now: string): Promise<void> {
-    for (let i = 0; i < (fees?.length ?? 0); i++) {
-      const f = fees![i];
-      await client.query(
-        `INSERT INTO invoice_fees (id, invoice_id, description, amount, tax_rate, tax_amount, sort_order, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [crypto.randomUUID(), invoiceId, f.description, f.amount, f.taxRate ?? 0, 0, f.sortOrder ?? i, now]
-      );
+    if (!fees || fees.length === 0) return;
+    const values: unknown[] = [];
+    const rows: string[] = [];
+    let paramIdx = 1;
+    for (let i = 0; i < fees.length; i++) {
+      const f = fees[i];
+      const placeholders = Array.from({ length: 8 }, (_, j) => `$${paramIdx + j}`);
+      rows.push(`(${placeholders.join(", ")})`);
+      values.push(crypto.randomUUID(), invoiceId, f.description, f.amount, f.taxRate ?? 0, 0, f.sortOrder ?? i, now);
+      paramIdx += 8;
     }
+    await client.query(
+      `INSERT INTO invoice_fees (id, invoice_id, description, amount, tax_rate, tax_amount, sort_order, created_at)
+       VALUES ${rows.join(", ")}`,
+      values
+    );
   }
 
   async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[]): Promise<void> {
@@ -204,19 +229,11 @@ export class InvoiceRepository {
   }
 
   async update(businessId: string, id: string, input: Partial<Record<string, unknown>>): Promise<Invoice> {
-    const ALLOWED_COLUMNS = new Set([
-      "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
-      "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
-      "amount_paid", "amount_due", "credit_applied", "deposit_amount", "deposit_type",
-      "deposit_due_date", "deposit_payment_purpose", "notes", "terms", "template_id", "public_token",
-      "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
-      "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
-    ]);
     const set: string[] = [];
     const vals: unknown[] = [businessId, id];
     let i = 3;
     for (const [key, val] of Object.entries(input)) {
-      if (!ALLOWED_COLUMNS.has(key)) continue;
+      if (!INVOICE_ALLOWED_COLUMNS.has(key)) continue;
       set.push(`${key} = $${i++}`);
       vals.push(val ?? null);
     }
@@ -235,19 +252,11 @@ export class InvoiceRepository {
   }
 
   async updateOptimistic(businessId: string, id: string, input: Partial<Record<string, unknown>>, expectedVersion: number): Promise<Invoice> {
-    const ALLOWED_COLUMNS = new Set([
-      "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
-      "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
-      "amount_paid", "amount_due", "credit_applied", "deposit_amount", "deposit_type",
-      "deposit_due_date", "deposit_payment_purpose", "notes", "terms", "template_id", "public_token",
-      "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
-      "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
-    ]);
     const set: string[] = [];
     const vals: unknown[] = [businessId, id, expectedVersion];
     let i = 4;
     for (const [key, val] of Object.entries(input)) {
-      if (!ALLOWED_COLUMNS.has(key)) continue;
+      if (!INVOICE_ALLOWED_COLUMNS.has(key)) continue;
       set.push(`${key} = $${i++}`);
       vals.push(val ?? null);
     }
@@ -482,6 +491,50 @@ export class InvoiceRepository {
     return res.rows;
   }
 
+  async getDashboardSummary(businessId: string): Promise<{
+    totalOutstanding: string;
+    totalOverdue: string;
+    totalPaidThisMonth: string;
+    totalRevenue: string;
+    draftCount: number;
+    overdueCount: number;
+    sentCount: number;
+    paidCount: number;
+    totalInvoices: number;
+  }> {
+    const monthStart = new Date();
+    monthStart.setHours(0, 0, 0, 0);
+    monthStart.setDate(1);
+
+    const res = await query(
+      `SELECT
+         COUNT(*) AS total_invoices,
+         SUM(total) AS total_revenue,
+         SUM(CASE WHEN amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END) AS total_outstanding,
+         SUM(CASE WHEN (status = 'overdue' OR (due_date < NOW() AND amount_due > 0)) AND amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END) AS total_overdue,
+         SUM(CASE WHEN amount_paid > 0 AND paid_at >= $2 THEN amount_paid ELSE 0 END) AS total_paid_this_month,
+         COUNT(CASE WHEN status = 'draft' THEN 1 END) AS draft_count,
+         COUNT(CASE WHEN status = 'sent' THEN 1 END) AS sent_count,
+         COUNT(CASE WHEN status = 'paid' THEN 1 END) AS paid_count,
+         COUNT(CASE WHEN (status = 'overdue' OR (due_date < NOW() AND amount_due > 0)) AND amount_due > 0 AND status NOT IN ('draft','cancelled','void','paid') THEN 1 END) AS overdue_count
+       FROM invoices WHERE business_id = $1`,
+      [businessId, monthStart.toISOString()]
+    );
+
+    const row = res.rows[0];
+    return {
+      totalOutstanding: row.total_outstanding ?? "0",
+      totalOverdue: row.total_overdue ?? "0",
+      totalPaidThisMonth: row.total_paid_this_month ?? "0",
+      totalRevenue: row.total_revenue ?? "0",
+      draftCount: Number(row.draft_count ?? 0),
+      overdueCount: Number(row.overdue_count ?? 0),
+      sentCount: Number(row.sent_count ?? 0),
+      paidCount: Number(row.paid_count ?? 0),
+      totalInvoices: Number(row.total_invoices ?? 0),
+    };
+  }
+
   /**
    * Invoices that are still open (outstanding balance) and due within the
    * next `days` days. Powers the cash-flow "Upcoming" stream on the dashboard.
@@ -549,6 +602,38 @@ export class InvoiceRepository {
       customerEmail: r.customer_email,
       customerName: r.customer_name,
     }));
+  }
+
+  /**
+   * Fetches recently paid invoices and invoices requiring attention in a single
+   * query each, avoiding the need to load 500 rows and filter client-side.
+   */
+  async findRecentlyPaid(businessId: string, limit = 10): Promise<any[]> {
+    const res = await query(
+      `SELECT i.*, c.name as customer_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE i.business_id = $1 AND i.status IN ('paid', 'partially_paid')
+       ORDER BY COALESCE(i.paid_at, i.updated_at) DESC
+       LIMIT $2`,
+      [businessId, limit]
+    );
+    return res.rows;
+  }
+
+  async findRequiringAttention(businessId: string, now: Date, limit = 10): Promise<any[]> {
+    const res = await query(
+      `SELECT i.*, c.name as customer_name, c.email as customer_email
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE i.business_id = $1
+         AND (i.status IN ('draft', 'sent', 'viewed')
+              OR (i.amount_due > 0 AND i.due_date < $2 AND i.status NOT IN ('paid', 'cancelled', 'void')))
+       ORDER BY COALESCE(i.due_date, i.created_at) ASC
+       LIMIT $3`,
+      [businessId, now.toISOString(), limit]
+    );
+    return res.rows;
   }
 
   async getReminderRules(businessId: string): Promise<Array<{
