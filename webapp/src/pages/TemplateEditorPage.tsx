@@ -177,22 +177,22 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
   }, [templateId, onNavigateBack]);
 
   const lifecycleBadge = {
-    draft: { bg: "bg-amber-100", text: "text-amber-800", label: "Draft" },
-    published: { bg: "bg-green-100", text: "text-green-800", label: "Published" },
-    archived: { bg: "bg-slate-100", text: "text-slate-800", label: "Archived" },
+    draft: { bg: "status-warning-bg", text: "status-warning-text", label: "Draft" },
+    published: { bg: "status-success-bg", text: "status-success-text", label: "Published" },
+    archived: { bg: "bg-surface-alt", text: "text-primary", label: "Archived" },
   }[lifecycle];
 
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col">
-      <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
+      <div className="flex items-center justify-between mb-4 pb-4 border-b border-color-subtle">
         <div className="flex items-center gap-4">
           <button
             onClick={onNavigateBack}
-            className="text-slate-500 hover:text-slate-700 text-sm"
+            className="text-secondary hover:text-secondary text-sm"
           >
             &larr; Back to Templates
           </button>
-          <div className="border-l border-slate-200 pl-4">
+          <div className="border-l border-color-subtle pl-4">
             <input
               type="text"
               value={templateName}
@@ -200,7 +200,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
                 setTemplateName(e.target.value);
                 setSaveState("unsaved");
               }}
-              className="text-xl font-semibold text-slate-900 border-none outline-none bg-transparent focus:ring-0"
+              className="text-xl font-semibold text-primary border-none outline-none bg-transparent focus:ring-0"
               placeholder="Template name"
             />
              <input
@@ -210,20 +210,20 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
                  setTemplateDescription(e.target.value);
                  setSaveState("unsaved");
                }}
-               className="mt-0.5 text-sm text-slate-500 border-none outline-none bg-transparent focus:ring-0"
+               className="mt-0.5 text-sm text-secondary border-none outline-none bg-transparent focus:ring-0"
                placeholder="Description (optional)"
              />
            </div>
          </div>
-         <div className="flex items-center gap-2 text-xs text-slate-600">
-           <label className="text-slate-500">For:</label>
+         <div className="flex items-center gap-2 text-xs text-secondary">
+           <label className="text-secondary">For:</label>
            <select
              value={documentType}
              onChange={(e) => {
                setDocumentType(e.target.value as InvoiceTemplateDTO["documentType"]);
                setSaveState("unsaved");
              }}
-             className="border border-slate-300 rounded px-2 py-0.5 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+             className="border border-input-border rounded px-2 py-0.5 bg-surface text-xs focus:outline-none focus:ring-1 focus:ring-primary"
            >
              <option value="invoice">Invoice</option>
              <option value="quote">Estimate / Quote</option>
@@ -233,11 +233,11 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
         <div className="flex items-center gap-3">
           {existingTemplate && (
             <>
-              <span className="text-xs text-slate-400">Last modified: {formatDate(existingTemplate.updatedAt)}</span>
+              <span className="text-xs text-tertiary">Last modified: {formatDate(existingTemplate.updatedAt)}</span>
               {!existingTemplate.isDefault && (
                 <button
                   onClick={handleSetDefault}
-                  className="text-xs text-slate-600 hover:text-slate-900 underline"
+                  className="text-xs text-secondary hover:text-primary underline"
                   title="Set as default template"
                 >
                   Set Default
@@ -247,7 +247,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
                 <button
                   onClick={handlePublish}
                   disabled={!templateName.trim()}
-                  className="text-xs text-primary-600 hover:text-primary-700 underline disabled:opacity-50"
+                  className="text-xs text-primary-brand hover:text-primary-brand underline disabled:opacity-50"
                 >
                   Publish
                 </button>
@@ -255,7 +255,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
               {lifecycle === "published" && (
                 <button
                   onClick={handleArchive}
-                  className="text-xs text-slate-600 hover:text-slate-900 underline"
+                  className="text-xs text-secondary hover:text-primary underline"
                 >
                   Archive
                 </button>
@@ -263,14 +263,14 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
               {lifecycle === "archived" && (
                 <button
                   onClick={handleUnarchive}
-                  className="text-xs text-primary-600 hover:text-primary-700 underline"
+                  className="text-xs text-primary-brand hover:text-primary-brand underline"
                 >
                   Unarchive
                 </button>
               )}
               <button
                 onClick={handleDelete}
-                className="text-xs text-red-500 hover:text-red-700 underline"
+                className="text-xs status-error-text hover:status-error-text underline"
                 title="Delete template"
               >
                 Delete
@@ -280,7 +280,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
           <button
             onClick={undo}
             disabled={!canUndo}
-            className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-lg border border-input-border px-2.5 py-1.5 text-sm text-secondary hover:bg-surface-alt disabled:opacity-50"
             title="Undo (Ctrl+Z)"
           >
             ↶
@@ -288,7 +288,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
           <button
             onClick={redo}
             disabled={!canRedo}
-            className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-lg border border-input-border px-2.5 py-1.5 text-sm text-secondary hover:bg-surface-alt disabled:opacity-50"
             title="Redo (Ctrl+Y)"
           >
             ↷
@@ -296,13 +296,13 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${lifecycleBadge.bg} ${lifecycleBadge.text}`}>
             {lifecycleBadge.label}
           </span>
-          <span className={`text-xs ${saveState === "saved" ? "text-green-600" : saveState === "saving" ? "text-blue-600" : saveState === "error" ? "text-red-600" : "text-amber-600"}`}>
+          <span className={`text-xs ${saveState === "saved" ? "status-success-text" : saveState === "saving" ? "status-info-text" : saveState === "error" ? "status-error-text" : "status-warning-text"}`}>
             {saveStateLabel}
           </span>
           <button
             onClick={handleSave}
             disabled={saveState === "saving" || !dirty}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isNew ? "Create" : "Save"}
           </button>
@@ -310,18 +310,18 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
       </div>
 
       <div className="flex-1 grid grid-cols-[340px_1fr] gap-4 overflow-hidden">
-        <div className="overflow-y-auto border-r border-slate-200">
+        <div className="overflow-y-auto border-r border-color-subtle">
           <TemplateCustomizationPanel
             businessLogoUrl={logoUrl}
             onLogoUrlChange={setLogoUrl}
           />
         </div>
-        <div className="overflow-auto bg-slate-100 p-6">
+        <div className="overflow-auto bg-surface-alt p-6">
           <div className="max-w-4xl mx-auto">
             <TemplatePreview
               document={doc}
               business={businessOverride ?? undefined}
-              className="border border-slate-200 rounded-xl shadow-lg"
+              className="border border-color-subtle rounded-xl shadow-lg"
             />
           </div>
         </div>
@@ -398,7 +398,7 @@ export default function TemplateEditorPage() {
 
   if (isNew && !presetKey) {
     return (
-      <div className="min-h-[calc(100vh-120px)] bg-slate-50 p-6">
+      <div className="min-h-[calc(100vh-120px)] bg-surface-alt p-6">
         <DocumentTemplateGallery
           onSelect={(key) => {
             const url = new URL(window.location.href);
@@ -411,7 +411,7 @@ export default function TemplateEditorPage() {
   }
 
   if (loading || !initialDocument) {
-    return <div className="text-center py-20 text-slate-500">Loading template...</div>;
+    return <div className="text-center py-20 text-secondary">Loading template...</div>;
   }
 
   return (
@@ -429,3 +429,8 @@ export default function TemplateEditorPage() {
     </EditorProvider>
   );
 }
+
+
+
+
+

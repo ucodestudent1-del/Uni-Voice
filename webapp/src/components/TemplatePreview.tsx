@@ -121,7 +121,7 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
 
   const rootSection = document.sections[document.rootSectionId];
   if (!rootSection) {
-    return <div className={`text-slate-400 text-sm ${className}`}>Invalid template document</div>;
+    return <div className={`text-tertiary text-sm ${className}`}>Invalid template document</div>;
   }
 
   const content = renderDocumentTree(document, ctx, {
@@ -133,7 +133,7 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
   if (compact) {
     return (
       <div
-        className={`overflow-hidden bg-white border border-slate-200 rounded-lg ${className}`}
+        className={`overflow-hidden bg-surface border border-color-subtle rounded-lg ${className}`}
         style={{ maxHeight: "120px" }}
       >
         <div className="scale-[0.3] origin-top-left">
@@ -154,10 +154,13 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
   }
 
   return (
-    <div className={`bg-white border border-slate-200 rounded-xl p-8 ${className}`}>
+    <div className={`bg-surface border border-color-subtle rounded-xl p-8 ${className}`}>
       {content}
     </div>
   );
 };
 
 export default TemplatePreview;
+
+
+

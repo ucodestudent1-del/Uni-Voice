@@ -97,33 +97,33 @@ export default function InvoicingSettings() {
   }
 
   if (loading) {
-    return <div className="text-sm text-slate-500">Loading invoice settings…</div>;
+    return <div className="text-sm text-secondary">Loading invoice settings…</div>;
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Invoicing</h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <h2 className="text-lg font-semibold text-primary">Invoicing</h2>
+        <p className="text-sm text-secondary mt-1">
           Configure invoice numbering, invoice prefixes, default payment terms, due dates,
           late-payment rules, default notes, and PDF/email behavior.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="text-md font-semibold text-slate-900 mb-4">Invoice Numbering</h3>
-        <p className="text-sm text-slate-600 mb-4">Configure how invoice numbers are generated and formatted.</p>
+      <div className="rounded-xl border border-color-subtle bg-surface p-6">
+        <h3 className="text-md font-semibold text-primary mb-4">Invoice Numbering</h3>
+        <p className="text-sm text-secondary mb-4">Configure how invoice numbers are generated and formatted.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField label="Prefix" description="Text before the invoice number.">
             <input
               type="text"
               value={numberingData.prefix}
               onChange={(e) => setNumberingData({ ...numberingData, prefix: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </FormField>
           <FormField label="Padding" description="Minimum number of digits in the sequence.">
@@ -133,17 +133,17 @@ export default function InvoicingSettings() {
               max="10"
               value={numberingData.padding}
               onChange={(e) => setNumberingData({ ...numberingData, padding: parseInt(e.target.value) || 6 })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </FormField>
           <div className="flex items-end">
             <FormField label="" description="">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+              <label className="flex items-center gap-2 text-sm text-secondary">
                 <input
                   type="checkbox"
                   checked={numberingData.includesYear}
                   onChange={(e) => setNumberingData({ ...numberingData, includesYear: e.target.checked })}
-                  className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-input-border text-primary-brand focus:ring-primary"
                 />
                 Include year (e.g. INV-2026-000001)
               </label>
@@ -151,14 +151,14 @@ export default function InvoicingSettings() {
           </div>
         </div>
         {numbering && (
-          <div className="mt-4 text-sm text-slate-500">
-            Next number: <span className="font-medium text-slate-900">{numbering.next_number}</span>
+          <div className="mt-4 text-sm text-secondary">
+            Next number: <span className="font-medium text-primary">{numbering.next_number}</span>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="text-md font-semibold text-slate-900 mb-4">Invoice Defaults</h3>
+      <div className="rounded-xl border border-color-subtle bg-surface p-6">
+        <h3 className="text-md font-semibold text-primary mb-4">Invoice Defaults</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField label="Default Tax Rate" description="Applied when no line-item rate is specified.">
             <input
@@ -168,14 +168,14 @@ export default function InvoicingSettings() {
               step="0.0001"
               value={settingsForm.defaultTaxRate}
               onChange={(e) => setSettingsForm({ ...settingsForm, defaultTaxRate: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </FormField>
           <FormField label="Default Payment Terms" description="Net days before payment is due.">
             <select
               value={settingsForm.defaultTerms}
               onChange={(e) => setSettingsForm({ ...settingsForm, defaultTerms: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="Net 7">Net 7</option>
               <option value="Net 14">Net 14</option>
@@ -193,17 +193,17 @@ export default function InvoicingSettings() {
               max="120"
               value={settingsForm.overdueReminderDays}
               onChange={(e) => setSettingsForm({ ...settingsForm, overdueReminderDays: parseInt(e.target.value) || 7 })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </FormField>
           <div className="flex items-end">
             <FormField label="" description="">
-              <label className="flex items-center gap-2 text-sm text-slate-700">
+              <label className="flex items-center gap-2 text-sm text-secondary">
                 <input
                   type="checkbox"
                   checked={settingsForm.remindersEnabled}
                   onChange={(e) => setSettingsForm({ ...settingsForm, remindersEnabled: e.target.checked })}
-                  className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-input-border text-primary-brand focus:ring-primary"
                 />
                 Enable automated reminders
               </label>
@@ -212,27 +212,27 @@ export default function InvoicingSettings() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="text-md font-semibold text-slate-900 mb-4">Default Content</h3>
+      <div className="rounded-xl border border-color-subtle bg-surface p-6">
+        <h3 className="text-md font-semibold text-primary mb-4">Default Content</h3>
         <FormField label="Default Notes" description="Pre-filled notes shown on every new invoice.">
           <textarea
             value={settingsForm.defaultNotes}
             onChange={(e) => setSettingsForm({ ...settingsForm, defaultNotes: e.target.value })}
             rows={3}
             placeholder="Thank you for your business!"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </FormField>
         <FormField
           label="PDF & Email Behavior"
           description="Attach a PDF to customer emails automatically when sending an invoice."
         >
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-secondary">
             <input
               type="checkbox"
               defaultChecked
               onChange={() => {}}
-              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-input-border text-primary-brand focus:ring-primary"
             />
             Attach PDF to email notifications
           </label>
@@ -244,7 +244,7 @@ export default function InvoicingSettings() {
         <button
           onClick={save}
           disabled={saving}
-          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save Changes"}
         </button>
@@ -252,3 +252,7 @@ export default function InvoicingSettings() {
     </div>
   );
 }
+
+
+
+

@@ -866,8 +866,8 @@ export default function InvoiceWorkspace() {
 
   if (!invoice) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="flex items-center gap-3 text-slate-600">
+      <div className="flex h-screen items-center justify-center bg-page">
+        <div className="flex items-center gap-3 text-secondary">
           <RefreshCw className="h-5 w-5 animate-spin" />
           <span>Setting up your invoice…</span>
         </div>
@@ -877,8 +877,8 @@ export default function InvoiceWorkspace() {
 
   if (loading && invoiceId) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="flex items-center gap-3 text-slate-600">
+      <div className="flex h-screen items-center justify-center bg-page">
+        <div className="flex items-center gap-3 text-secondary">
           <RefreshCw className="h-5 w-5 animate-spin" />
           <span>Loading invoice…</span>
         </div>
@@ -887,7 +887,7 @@ export default function InvoiceWorkspace() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 text-slate-900">
+    <div className="flex h-screen flex-col bg-page text-primary">
       <WorkspaceHeader
         isNew={isNew}
         invoiceId={invoiceId}
@@ -896,148 +896,148 @@ export default function InvoiceWorkspace() {
         validation={validation}
       />
 
-      {actionMessage && (
-        <div className="fixed top-4 right-4 z-40 max-w-sm rounded-lg bg-slate-800 px-4 py-3 text-sm text-white shadow-lg">
-          {actionMessage}
+    {actionMessage && (
+      <div className="fixed top-4 right-4 z-40 max-w-sm rounded-lg bg-surface-elevated px-4 py-3 text-sm text-primary shadow-lg">
+        {actionMessage}
+      </div>
+    )}
+
+    <main className="flex flex-1 overflow-hidden">
+      <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
+        <div className="flex-shrink-0 border-b border-color bg-surface">
+          <CustomerHeaderSection invoice={invoice} onField={handleField} />
+          <TotalsCard invoice={invoice} calc={calc} onField={handleField} />
         </div>
-      )}
-
-      <main className="flex flex-1 overflow-hidden">
-        <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
-          <div className="flex-shrink-0 border-b border-slate-200 bg-white">
-            <CustomerHeaderSection invoice={invoice} onField={handleField} />
-            <TotalsCard invoice={invoice} calc={calc} onField={handleField} />
-          </div>
-          <div className="overflow-y-auto px-8 py-6">
-            {validation.hasErrors && (
-              <ValidationBanner issues={validation.issues} />
-            )}
-            {invoice.items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white py-12">
-                <FileText className="h-10 w-10 text-slate-300" />
-                <p className="mt-3 text-sm text-slate-500">No line items yet.</p>
-                <button
-                  type="button"
-                  onClick={() => addItem("service")}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add line item
-                </button>
-              </div>
-            ) : (
-              <LineItemsTable
-                invoice={invoice}
-                calc={calc}
-                onItemChange={handleItemChange}
-                onAdd={addItem}
-                onDuplicate={duplicateItem}
-                onRemove={removeItem}
-                defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
-              />
-            )}
-
-            {products.length > 0 && invoice.items.length > 0 && (
-              <SavedServicesBar products={products} onSelect={addFromProduct} />
-            )}
-
-            <FeesSection
-              fees={invoice.fees}
-              onChange={(fees) => updateData({ fees })}
-            />
-
-            <NotesSection
-              invoice={invoice}
-              onField={handleField}
-              onFiles={handleFilesSelected}
-              attachments={invoice.attachments}
-              beforePhotos={invoice.beforePhotos}
-              afterPhotos={invoice.afterPhotos}
-              onRemoveAttachment={removeAttachment}
-            />
-          </div>
-        </aside>
-
-        <div
-          onMouseDown={startResize}
-          className="flex-shrink-0 cursor-col-resize hover:bg-primary-500/20"
-          style={{ width: "8px" }}
-          aria-label="Resize preview"
-        />
-
-        <aside
-          className="flex flex-col overflow-y-auto bg-slate-100"
-          style={{ width: `${previewWidth}px`, minWidth: "320px" }}
-        >
-          <div className="border-b border-slate-200 bg-white px-6 py-3 text-center text-xs text-slate-500">
-            {invoice.isFinalized ? "Customer view" : "Live preview (not yet sent)"}
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            {previewInvoice ? <InvoicePreview invoice={previewInvoice} /> : null}
-          </div>
-          {previewInvoice && previewInvoice.amountDue && Number(parseDecimal(previewInvoice.amountDue).toFixed(2)) > 0 && (
-            <div className="border-t border-slate-200 p-6 text-center">
-              <a
-                href={previewInvoice.paymentLink ?? "#"}
-                onClick={(e) => {
-                  if (!previewInvoice.paymentLink) {
-                    e.preventDefault();
-                    copyToClipboard(
-                      "Payment link will be available once the invoice is finalized and sent."
-                    );
-                  }
-                }}
-                className={`inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white shadow-md hover:shadow-lg ${
-                  previewInvoice.paymentLink
-                    ? "bg-primary-600 hover:bg-primary-700"
-                    : "cursor-not-allowed bg-slate-400"
-                }`}
-              >
-                <CreditCard className="h-5 w-5" />
-                Pay {fmt(parseDecimal(previewInvoice.amountDue), previewInvoice.currency)} now
-              </a>
-            </div>
+        <div className="overflow-y-auto px-8 py-6">
+          {validation.hasErrors && (
+            <ValidationBanner issues={validation.issues} />
           )}
-        </aside>
-      </main>
+          {invoice.items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-color bg-surface py-12">
+              <FileText className="h-10 w-10 text-tertiary" />
+              <p className="mt-3 text-sm text-tertiary">No line items yet.</p>
+              <button
+                type="button"
+                onClick={() => addItem("service")}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover"
+              >
+                <Plus className="h-4 w-4" />
+                Add line item
+              </button>
+            </div>
+          ) : (
+            <LineItemsTable
+              invoice={invoice}
+              calc={calc}
+              onItemChange={handleItemChange}
+              onAdd={addItem}
+              onDuplicate={duplicateItem}
+              onRemove={removeItem}
+              defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
+            />
+          )}
 
-      <ActionFooter
-        isNew={isNew}
-        hasInvoiceId={!!invoiceId}
-        saveState={saveState}
-        onSaveDraft={handleSaveDraft}
-        onDuplicate={handleDuplicate}
-        onCreateAnother={handleCreateAnother}
-        onPreview={() => setPreviewOpen(true)}
-        onReviewAndSend={handleReviewAndSend}
-        validation={validation}
+          {products.length > 0 && invoice.items.length > 0 && (
+            <SavedServicesBar products={products} onSelect={addFromProduct} />
+          )}
+
+          <FeesSection
+            fees={invoice.fees}
+            onChange={(fees) => updateData({ fees })}
+          />
+
+          <NotesSection
+            invoice={invoice}
+            onField={handleField}
+            onFiles={handleFilesSelected}
+            attachments={invoice.attachments}
+            beforePhotos={invoice.beforePhotos}
+            afterPhotos={invoice.afterPhotos}
+            onRemoveAttachment={removeAttachment}
+          />
+        </div>
+      </aside>
+
+      <div
+        onMouseDown={startResize}
+        className="flex-shrink-0 cursor-col-resize hover:bg-primary/20"
+        style={{ width: "8px" }}
+        aria-label="Resize preview"
       />
 
-      {reviewOpen && (
-        <ReviewAndSendDialog
-          invoice={invoice}
-          invoiceId={invoiceId}
-          calc={calc}
-          validation={validation}
-          step={reviewStep}
-          sending={reviewSending}
-          error={reviewError}
-          onFinalizeAndSend={handleFinalizeAndSend}
-          onClose={() => setReviewOpen(false)}
-          onCopyPaymentLink={() => {
-            if (invoice.publicToken) {
-              copyToClipboard(`${window.location.origin}/invoice/${invoice.publicToken}`);
-              setActionMessage("Payment link copied to clipboard");
-            }
-          }}
-          onDownloadPdf={downloadPdf}
-        />
-      )}
+      <aside
+        className="flex flex-col overflow-y-auto bg-surface-alt"
+        style={{ width: `${previewWidth}px`, minWidth: "320px" }}
+      >
+        <div className="border-b border-color bg-surface px-6 py-3 text-center text-xs text-tertiary">
+          {invoice.isFinalized ? "Customer view" : "Live preview (not yet sent)"}
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {previewInvoice ? <InvoicePreview invoice={previewInvoice} /> : null}
+        </div>
+        {previewInvoice && previewInvoice.amountDue && Number(parseDecimal(previewInvoice.amountDue).toFixed(2)) > 0 && (
+          <div className="border-t border-color p-6 text-center">
+            <a
+              href={previewInvoice.paymentLink ?? "#"}
+              onClick={(e) => {
+                if (!previewInvoice.paymentLink) {
+                  e.preventDefault();
+                  copyToClipboard(
+                    "Payment link will be available once the invoice is finalized and sent."
+                  );
+                }
+              }}
+              className={`inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-on-primary shadow-md ${
+                previewInvoice.paymentLink
+                  ? "bg-primary-action hover:bg-primary-hover"
+                  : "cursor-not-allowed bg-tertiary"
+              }`}
+            >
+              <CreditCard className="h-5 w-5" />
+              Pay {fmt(parseDecimal(previewInvoice.amountDue), previewInvoice.currency)} now
+            </a>
+          </div>
+        )}
+      </aside>
+    </main>
 
-      {previewOpen && previewInvoice && (
-        <PreviewDialog invoice={previewInvoice} onClose={() => setPreviewOpen(false)} onDownloadPdf={downloadPdf} />
-      )}
-    </div>
+    <ActionFooter
+      isNew={isNew}
+      hasInvoiceId={!!invoiceId}
+      saveState={saveState}
+      onSaveDraft={handleSaveDraft}
+      onDuplicate={handleDuplicate}
+      onCreateAnother={handleCreateAnother}
+      onPreview={() => setPreviewOpen(true)}
+      onReviewAndSend={handleReviewAndSend}
+      validation={validation}
+    />
+
+    {reviewOpen && (
+      <ReviewAndSendDialog
+        invoice={invoice}
+        invoiceId={invoiceId}
+        calc={calc}
+        validation={validation}
+        step={reviewStep}
+        sending={reviewSending}
+        error={reviewError}
+        onFinalizeAndSend={handleFinalizeAndSend}
+        onClose={() => setReviewOpen(false)}
+        onCopyPaymentLink={() => {
+          if (invoice.publicToken) {
+            copyToClipboard(`${window.location.origin}/invoice/${invoice.publicToken}`);
+            setActionMessage("Payment link copied to clipboard");
+          }
+        }}
+        onDownloadPdf={downloadPdf}
+      />
+    )}
+
+    {previewOpen && previewInvoice && (
+      <PreviewDialog invoice={previewInvoice} onClose={() => setPreviewOpen(false)} onDownloadPdf={downloadPdf} />
+    )}
+  </div>
   );
 
   function startResize(e: React.MouseEvent) {
@@ -1088,35 +1088,35 @@ function WorkspaceHeader({
 
   const statusColor =
     saveState === "saved"
-      ? "text-green-600"
+      ? "text-success-text"
       : saveState === "saving"
-      ? "text-slate-500"
+      ? "text-tertiary"
       : saveState === "error"
-      ? "text-red-600"
-      : "text-amber-600";
+      ? "text-error-text"
+      : "text-warning-text";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6">
+    <header className="flex h-14 items-center justify-between border-b border-color bg-surface px-6">
       <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={navigateBack}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          className="rounded-lg p-1.5 text-tertiary hover-bg-hover hover:text-primary"
           aria-label="Back to invoices"
         >
           <X className="h-5 w-5" />
         </button>
-        <span className="text-slate-300">|</span>
-        <h1 className="text-xl font-semibold text-slate-900">
+        <span className="text-tertiary">|</span>
+        <h1 className="text-xl font-semibold text-primary">
           {invoiceNumber ? `Invoice #${invoiceNumber}` : isNew ? "Create Invoice" : "Edit Invoice"}
         </h1>
         {invoiceId && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-alt px-2.5 py-0.5 text-xs font-medium text-tertiary">
             {isNew ? "Draft" : "Editing"}
           </span>
         )}
         {!invoiceId && isNew && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-warning-bg px-2.5 py-0.5 text-xs font-medium text-warning-text">
             <AlertCircle className="h-3 w-3" /> Not yet saved
           </span>
         )}
@@ -1128,7 +1128,7 @@ function WorkspaceHeader({
           {statusLabel}
         </div>
         {validation.hasErrors && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-error-bg px-2.5 py-0.5 text-xs font-medium text-error-text">
             <AlertCircle className="h-3 w-3" /> {validation.issues.filter((i) => i.severity === "error").length} issue
             {validation.issues.filter((i) => i.severity === "error").length !== 1 ? "s" : ""}
           </span>
@@ -1148,7 +1148,7 @@ function CustomerHeaderSection({
   return (
     <div className="flex flex-wrap items-end gap-4 p-6">
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-slate-500 uppercase">Customer</label>
+        <label className="text-xs font-semibold text-tertiary uppercase">Customer</label>
         <div className="mt-1 w-64">
           <CustomerSelector
             value={invoice.customerId ?? undefined}
@@ -1160,43 +1160,43 @@ function CustomerHeaderSection({
       </div>
 
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-slate-500 uppercase">Invoice #</label>
+        <label className="text-xs font-semibold text-tertiary uppercase">Invoice #</label>
         <input
           type="text"
           value={invoice.invoiceNumber ?? ""}
           onChange={(e) => onField("invoiceNumber", e.target.value || null)}
           placeholder="Auto-assigned"
           disabled={invoice.isFinalized}
-          className="mt-1 w-36 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50"
+          className="mt-1 w-36 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
         />
       </div>
 
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-slate-500 uppercase">Issue date</label>
+        <label className="text-xs font-semibold text-tertiary uppercase">Issue date</label>
         <input
           type="date"
           value={invoice.issueDate ?? ""}
           onChange={(e) => onField("issueDate", e.target.value || null)}
-          className="mt-1 w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-slate-500 uppercase">Due date</label>
+        <label className="text-xs font-semibold text-tertiary uppercase">Due date</label>
         <input
           type="date"
           value={invoice.dueDate ?? ""}
           onChange={(e) => onField("dueDate", e.target.value || null)}
-          className="mt-1 w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-slate-500 uppercase">Currency</label>
+        <label className="text-xs font-semibold text-tertiary uppercase">Currency</label>
         <select
           value={invoice.currency}
           onChange={(e) => onField("currency", e.target.value)}
-          className="mt-1 w-28 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="mt-1 w-28 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CNY"].map((c) => (
             <option key={c} value={c}>
@@ -1207,13 +1207,13 @@ function CustomerHeaderSection({
       </div>
 
       <div className="flex flex-col">
-        <label className="text-xs font-semibold text-slate-500 uppercase">Tax rate</label>
+        <label className="text-xs font-semibold text-tertiary uppercase">Tax rate</label>
         <input
           type="text"
           value={toPercent(invoice.taxRate ?? "0")}
           onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
           placeholder="e.g. 8.5"
-          className="mt-1 w-24 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="mt-1 w-24 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
     </div>
@@ -1238,44 +1238,44 @@ function TotalsCard({
   const subtotal = calc?.subtotal ?? 0;
 
   return (
-    <div className="border-t border-slate-200 px-6 py-4">
+    <div className="border-t border-color px-6 py-4">
       <div className="mx-auto grid max-w-2xl grid-cols-2 gap-x-6 gap-y-2 text-sm">
-        <div className="text-slate-500">Subtotal</div>
-        <div className="text-right font-medium text-slate-900">{fmt(subtotal, c)}</div>
+        <div className="text-tertiary">Subtotal</div>
+        <div className="text-right font-medium text-primary">{fmt(subtotal, c)}</div>
         {Number(new Decimal(discount ?? 0).toString()) > 0 && (
           <>
-            <div className="text-slate-500">Discount</div>
-            <div className="text-right font-medium text-green-600">−{fmt(discount, c)}</div>
+            <div className="text-tertiary">Discount</div>
+            <div className="text-right font-medium text-success-text">−{fmt(discount, c)}</div>
           </>
         )}
         {Number(new Decimal(tax ?? 0).toString()) > 0 && (
           <>
-            <div className="text-slate-500">Tax</div>
-            <div className="text-right font-medium text-slate-900">{fmt(tax, c)}</div>
+            <div className="text-tertiary">Tax</div>
+            <div className="text-right font-medium text-primary">{fmt(tax, c)}</div>
           </>
         )}
         {Number(new Decimal(fees ?? 0).toString()) > 0 && (
           <>
-            <div className="text-slate-500">Fees</div>
-            <div className="text-right font-medium text-slate-900">{fmt(fees, c)}</div>
+            <div className="text-tertiary">Fees</div>
+            <div className="text-right font-medium text-primary">{fmt(fees, c)}</div>
           </>
         )}
-        <div className="border-t border-slate-200 pt-2 text-slate-600">Total</div>
-        <div className="border-t border-slate-200 pt-2 text-right text-xl font-bold text-slate-900">
+        <div className="border-t border-color pt-2 text-secondary">Total</div>
+        <div className="border-t border-color pt-2 text-right text-xl font-bold text-primary">
           {fmt(total, c)}
         </div>
 
-        <div className="pt-2 text-slate-500">Amount paid</div>
+        <div className="pt-2 text-tertiary">Amount paid</div>
         <div className="pt-2 text-right">
           <input
             type="number"
             value={invoice.amountPaid ?? "0"}
             onChange={(e) => onField("amountPaid", e.target.value || null)}
-            className="w-28 rounded-lg border border-slate-300 bg-white px-2 py-1 text-right text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-28 rounded-lg border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-        <div className="pt-1 text-slate-600">Balance due</div>
-        <div className="pt-1 text-right text-xl font-bold text-primary-700">{fmt(due, c)}</div>
+        <div className="pt-1 text-secondary">Balance due</div>
+        <div className="pt-1 text-right text-xl font-bold text-primary-brand">{fmt(due, c)}</div>
       </div>
     </div>
   );
@@ -1289,18 +1289,18 @@ function SavedServicesBar({
   onSelect: (p: ApiProduct) => void;
 }) {
   return (
-    <div className="mb-6 border border-slate-200 rounded-xl bg-white p-4">
-      <p className="mb-2 text-xs font-semibold text-slate-500 uppercase">Saved services</p>
+    <div className="mb-6 border border-color rounded-xl bg-surface p-4">
+      <p className="mb-2 text-xs font-semibold text-tertiary uppercase">Saved services</p>
       <div className="flex gap-2 overflow-x-auto">
         {products.map((p) => (
           <button
             key={p.id}
             type="button"
             onClick={() => onSelect(p)}
-            className="flex flex-col items-start rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left whitespace-nowrap hover:border-slate-300 hover:bg-white"
+            className="flex flex-col items-start rounded-lg border border-color bg-surface-alt px-3 py-2 text-left whitespace-nowrap hover:border-color-strong hover:bg-surface"
           >
-            <span className="text-sm font-medium text-slate-900">{p.name}</span>
-            <span className="text-xs text-slate-500">{fmt(p.default_unit_price, p.default_currency)}</span>
+            <span className="text-sm font-medium text-primary">{p.name}</span>
+            <span className="text-xs text-tertiary">{fmt(p.default_unit_price, p.default_currency)}</span>
           </button>
         ))}
       </div>
@@ -1329,10 +1329,10 @@ function LineItemsTable({
   const lineTotals = calc?.lineItems ?? [];
 
   return (
-    <div className="mb-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+    <div className="mb-6 overflow-x-auto rounded-xl border border-color bg-surface">
       <table className="min-w-full border-collapse">
         <thead>
-          <tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase">
+          <tr className="bg-surface-alt text-left text-xs font-semibold text-tertiary uppercase">
             <th className="px-3 py-2">#</th>
             <th className="px-3 py-2">Type</th>
             <th className="px-3 py-2">Description</th>
@@ -1349,15 +1349,15 @@ function LineItemsTable({
             const Icon = LINE_TYPE_ICON[item.type];
             const lineTotal = lineTotals[i]?.lineTotal ?? null;
             return (
-              <tr key={item.id ?? i} className="border-t border-slate-100">
-                <td className="px-3 py-2 text-sm text-slate-500">{i + 1}</td>
+              <tr key={item.id ?? i} className="border-t border-color-subtle">
+                <td className="px-3 py-2 text-sm text-tertiary">{i + 1}</td>
                 <td className="px-3 py-2">
                   <select
                     value={item.type}
                     onChange={(e) =>
                       onItemChange(item.id ?? String(i), { type: e.target.value as LineItemType })
                     }
-                    className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="rounded-lg border border-input-border bg-input px-2 py-1 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     title="Line type"
                   >
                     {LINE_ITEM_TYPES.map((t) => (
@@ -1373,7 +1373,7 @@ function LineItemsTable({
                     value={item.description}
                     onChange={(e) => onItemChange(item.id ?? String(i), { description: e.target.value })}
                     placeholder="What did you do?"
-                    className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </td>
                 <td className="px-3 py-2">
@@ -1385,7 +1385,7 @@ function LineItemsTable({
                     }
                     min={1}
                     step="any"
-                    className="w-16 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-right text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-16 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </td>
                 <td className="px-3 py-2">
@@ -1397,7 +1397,7 @@ function LineItemsTable({
                     }
                     min={0}
                     step="any"
-                    className="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-right text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-20 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </td>
                 <td className="px-3 py-2">
@@ -1411,7 +1411,7 @@ function LineItemsTable({
                     }
                     min={0}
                     step="any"
-                    className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-right text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-14 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     title="Tax rate %"
                   />
                 </td>
@@ -1424,12 +1424,12 @@ function LineItemsTable({
                     }
                     min={0}
                     step="any"
-                    className="w-14 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-right text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-14 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="0.00"
                     title="Discount (fixed)"
                   />
                 </td>
-                <td className="px-3 py-2 text-right text-sm font-medium text-slate-900">
+                <td className="px-3 py-2 text-right text-sm font-medium text-primary">
                   {lineTotal !== null ? fmt(lineTotal, c) : ""}
                 </td>
                 <td className="px-3 py-2 text-center">
@@ -1438,7 +1438,7 @@ function LineItemsTable({
                       type="button"
                       onClick={() => onDuplicate(item.id ?? String(i))}
                       title="Duplicate line"
-                      className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      className="rounded p-1 text-tertiary hover-bg-hover hover:text-primary"
                     >
                       <FileText className="h-3.5 w-3.5" />
                     </button>
@@ -1446,7 +1446,7 @@ function LineItemsTable({
                       type="button"
                       onClick={() => onRemove(item.id ?? String(i))}
                       title="Remove line"
-                      className="rounded p-1 text-slate-400 hover:bg-red-100 hover:text-red-600"
+                      className="rounded p-1 text-tertiary hover:bg-error-bg hover:text-error-text"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1457,11 +1457,11 @@ function LineItemsTable({
           })}
         </tbody>
       </table>
-      <div className="border-t border-slate-200 p-3 text-center">
+      <div className="border-t border-color p-3 text-center">
         <button
           type="button"
           onClick={() => onAdd("service")}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-surface-alt px-3 py-1.5 text-sm text-secondary hover:bg-surface"
         >
           <Plus className="h-3.5 w-3.5" />
           Add another line
@@ -1499,7 +1499,7 @@ function FeesSection({
         <button
           type="button"
           onClick={addFee}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-1.5 text-sm text-secondary hover:bg-hover"
         >
           <Plus className="h-3.5 w-3.5" />
           Add fee or charge
@@ -1509,27 +1509,27 @@ function FeesSection({
   }
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-xs font-semibold text-slate-500 uppercase"> Fees &amp; charges</p>
+      <p className="text-xs font-semibold text-tertiary uppercase"> Fees &amp; charges</p>
       {fees.map((fee, i) => (
-        <div key={i} className="flex items-end gap-2 rounded-lg border border-slate-200 bg-white p-2">
+        <div key={i} className="flex items-end gap-2 rounded-lg border border-color bg-surface p-2">
           <input
             type="text"
             value={fee.description}
             onChange={(e) => updateFee(i, { description: e.target.value })}
             placeholder="Description"
-            className="flex-1 rounded border border-slate-200 bg-transparent px-2 py-1 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 rounded border border-input-border bg-input px-2 py-1 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <input
             type="number"
             value={fee.amount}
             onChange={(e) => updateFee(i, { amount: e.target.value || "0" })}
             placeholder="0.00"
-            className="w-24 rounded border border-slate-200 bg-transparent px-2 py-1 text-right text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-24 rounded border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <button
             type="button"
             onClick={() => removeFee(i)}
-            className="rounded p-1 text-slate-400 hover:text-red-600"
+            className="rounded p-1 text-tertiary hover:bg-error-bg hover:text-error-text"
             title="Remove fee"
           >
             <Trash2 className="h-4 w-4" />
@@ -1539,7 +1539,7 @@ function FeesSection({
       <button
         type="button"
         onClick={addFee}
-        className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900"
+        className="inline-flex items-center gap-1.5 text-sm text-secondary hover:text-primary"
       >
         <Plus className="h-3.5 w-3.5" />
         Add another fee
@@ -1568,36 +1568,36 @@ function NotesSection({
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-slate-700">Job notes</label>
+        <label className="block text-sm font-semibold text-secondary">Job notes</label>
         <textarea
           value={invoice.notes ?? ""}
           onChange={(e) => onField("notes", e.target.value || null)}
           rows={3}
           placeholder="Add a note for the customer…"
-          className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-semibold text-slate-700">Payment instructions</label>
+          <label className="block text-sm font-semibold text-secondary">Payment instructions</label>
           <textarea
             value={invoice.paymentInstructions ?? ""}
             onChange={(e) => onField("paymentInstructions", e.target.value || null)}
             rows={3}
             placeholder="Bank transfer, PayPal, etc.…"
-            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700">Terms</label>
+          <label className="block text-sm font-semibold text-secondary">Terms</label>
           <textarea
             value={invoice.terms ?? ""}
             onChange={(e) => onField("terms", e.target.value || null)}
             rows={3}
             placeholder="Payment terms (e.g. Net 30)…"
-            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
@@ -1640,9 +1640,9 @@ function PhotoUploadSection({
 }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-slate-700">{label}</label>
+      <label className="block text-sm font-semibold text-secondary">{label}</label>
       {items.length === 0 ? (
-        <label className="mt-1 flex h-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600">
+        <label className="mt-1 flex h-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-color bg-surface text-tertiary hover:border-color-strong">
           <input
             type="file"
             multiple
@@ -1659,21 +1659,21 @@ function PhotoUploadSection({
               {a.type.startsWith("image/") ? (
                 <img src={a.url} alt={a.name} className="h-20 w-20 rounded-lg object-cover" />
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
-                  <FileText className="h-6 w-6 text-slate-400" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-color bg-surface-alt">
+                  <FileText className="h-6 w-6 text-tertiary" />
                 </div>
               )}
               <button
                 type="button"
                 onClick={() => onRemove(a.id)}
-                className="absolute -top-1 -right-1 rounded-full bg-slate-100 text-slate-500 hover:bg-red-100 hover:text-red-600"
+                className="absolute -top-1 -right-1 rounded-full bg-surface-alt text-tertiary hover:bg-error-bg hover:text-error-text"
                 title="Remove"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
           ))}
-          <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-white text-slate-400 hover:border-slate-300">
+          <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-color bg-surface text-tertiary hover:border-color-strong">
             <input
               type="file"
               multiple
@@ -1692,7 +1692,7 @@ function PhotoUploadSection({
 function ValidationBanner({ issues }: { issues: ReturnType<typeof useInvoiceValidation>["issues"] }) {
   if (!issues.length) return null;
   return (
-    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+    <div className="mb-4 rounded-lg border border-error-border bg-error-bg p-3 text-sm text-error-text">
       <div className="flex items-center gap-2 font-semibold">
         <AlertCircle className="h-4 w-4" />
         <span>
@@ -1733,12 +1733,12 @@ function ActionFooter({
   validation: ReturnType<typeof useInvoiceValidation>;
 }) {
   return (
-    <footer className="flex h-16 items-center justify-between border-t border-slate-200 bg-white px-6">
+    <footer className="flex h-16 items-center justify-between border-t border-color bg-surface px-6">
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onCreateAnother}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover"
         >
           Create another
         </button>
@@ -1746,14 +1746,14 @@ function ActionFooter({
           type="button"
           onClick={onDuplicate}
           disabled={!hasInvoiceId}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
         >
           Duplicate
         </button>
         <button
           type="button"
           onClick={onPreview}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover"
         >
           Preview
         </button>
@@ -1761,7 +1761,7 @@ function ActionFooter({
           type="button"
           onClick={onSaveDraft}
           disabled={saveState === "saving" || saveState === "saved"}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
         >
           <Save className="h-4 w-4" />
           Save draft
@@ -1771,7 +1771,7 @@ function ActionFooter({
         type="button"
         onClick={onReviewAndSend}
         disabled={validation.hasErrors}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-5 py-2.5 text-sm font-semibold text-on-primary focus:ring-2 focus:ring-primary disabled:opacity-50"
       >
         <Send className="h-4 w-4" />
         Review &amp; Send
@@ -1810,34 +1810,34 @@ function ReviewAndSendDialog({
   const due = calc?.amountDue ?? 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay backdrop-blur-sm">
+      <div className="w-full max-w-2xl rounded-xl bg-surface shadow-xl">
         {step === "review" ? (
           <>
-            <div className="border-b border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-900">Review &amp; Send</h2>
-              <p className="mt-1 text-sm text-slate-500">
+            <div className="border-b border-color p-6">
+              <h2 className="text-xl font-semibold text-primary">Review &amp; Send</h2>
+              <p className="mt-1 text-sm text-secondary">
                 Finalizing assigns an invoice number and locks this invoice. You'll then be able to
                 send it by email, copy a payment link, and download a PDF.
               </p>
             </div>
 
-            {error && <div className="p-4 text-sm text-red-700">{error}</div>}
+            {error && <div className="p-4 text-sm text-error-text">{error}</div>}
 
             <div className="p-6">
               <div className="mb-4 flex justify-end">
                 <div className="text-right">
-                  <p className="text-sm text-slate-500">Total</p>
-                  <p className="text-2xl font-bold text-slate-900">{fmt(total, c)}</p>
-                  <p className="text-sm text-slate-500">Balance due</p>
-                  <p className="text-xl font-semibold text-primary-700">{fmt(due, c)}</p>
+                  <p className="text-sm text-tertiary">Total</p>
+                  <p className="text-2xl font-bold text-primary">{fmt(total, c)}</p>
+                  <p className="text-sm text-tertiary">Balance due</p>
+                  <p className="text-xl font-semibold text-primary-brand">{fmt(due, c)}</p>
                 </div>
               </div>
 
               {validation.issues.filter((i) => i.severity === "error").length > 0 && (
                 <div className="mb-4 space-y-1 text-sm">
                   {validation.issues.filter((i) => i.severity === "error").map((i) => (
-                    <p key={i.code} className="flex items-center gap-2 text-red-700">
+                    <p key={i.code} className="flex items-center gap-2 text-error-text">
                       <AlertCircle className="h-4 w-4" />
                       {i.message}
                     </p>
@@ -1847,36 +1847,36 @@ function ReviewAndSendDialog({
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Customer</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="text-tertiary">Customer</span>
+                  <span className="font-medium text-primary">
                     {invoice.customer?.name ?? invoice.customerId ?? "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Issue date</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="text-tertiary">Issue date</span>
+                  <span className="font-medium text-primary">
                     {invoice.issueDate ? formatDate(invoice.issueDate) : "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Due date</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="text-tertiary">Due date</span>
+                  <span className="font-medium text-primary">
                     {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Items</span>
-                  <span className="font-medium text-slate-900">{invoice.items.length} line item(s)</span>
+                  <span className="text-tertiary">Items</span>
+                  <span className="font-medium text-primary">{invoice.items.length} line item(s)</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-slate-200 p-4">
+            <div className="flex justify-end gap-3 border-t border-color p-4">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={sending}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -1884,7 +1884,7 @@ function ReviewAndSendDialog({
                 type="button"
                 onClick={onFinalizeAndSend}
                 disabled={sending || validation.hasErrors}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-5 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50"
               >
                 {sending ? (
                   <>
@@ -1902,22 +1902,22 @@ function ReviewAndSendDialog({
           </>
         ) : (
           <>
-            <div className="border-b border-slate-200 p-6">
+            <div className="border-b border-color p-6">
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-8 w-8 text-green-500" />
+                <CheckCircle className="h-8 w-8 text-success-text" />
                 <div>
-                  <h2 className="text-xl font-semibold text-slate-900">Invoice sent!</h2>
-                  <p className="text-sm text-slate-500">Your customer will receive it by email.</p>
+                  <h2 className="text-xl font-semibold text-primary">Invoice sent!</h2>
+                  <p className="text-sm text-secondary">Your customer will receive it by email.</p>
                 </div>
               </div>
             </div>
             <div className="p-6 text-center">
-              <p className="text-sm text-slate-500">What would you like to do next?</p>
+              <p className="text-sm text-secondary">What would you like to do next?</p>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row justify-center gap-2">
                 <button
                   type="button"
                   onClick={onCopyPaymentLink}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-input-border bg-surface px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
                 >
                   <Link2 className="h-4 w-4" />
                   Copy payment link
@@ -1925,7 +1925,7 @@ function ReviewAndSendDialog({
                 <button
                   type="button"
                   onClick={onDownloadPdf}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-input-border bg-surface px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
                 >
                   <Download className="h-4 w-4" />
                   Download PDF
@@ -1934,18 +1934,18 @@ function ReviewAndSendDialog({
                   href={invoice.publicToken ? `${window.location.origin}/invoice/${invoice.publicToken}` : "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-input-border bg-surface px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
                 >
                   <Mail className="h-4 w-4" />
                   Share via text
                 </a>
               </div>
             </div>
-            <div className="flex justify-end border-t border-slate-200 p-4">
+            <div className="flex justify-end border-t border-color p-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-lg bg-primary-600 px-5 py-2 text-sm font-semibold text-white hover:bg-primary-700"
+                className="rounded-lg bg-primary-action px-5 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover"
               >
                 Done
               </button>
@@ -1967,22 +1967,22 @@ function PreviewDialog({
   onDownloadPdf: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="h-[85vh] w-[90vw] max-w-4xl overflow-auto rounded-xl bg-white">
-        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
-          <h3 className="text-sm font-semibold text-slate-700">Invoice preview</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
+      <div className="h-[85vh] w-[90vw] max-w-4xl overflow-auto rounded-xl bg-surface">
+        <div className="sticky top-0 flex items-center justify-between border-b border-color bg-surface-alt px-4 py-2">
+          <h3 className="text-sm font-semibold text-secondary">Invoice preview</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onDownloadPdf}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-input-border bg-surface px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover"
             >
               <Download className="h-3.5 w-3.5" /> Download
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1 text-slate-500 hover:bg-slate-200"
+              className="rounded-lg p-1 text-tertiary hover:bg-hover"
             >
               <X className="h-4 w-4" />
             </button>

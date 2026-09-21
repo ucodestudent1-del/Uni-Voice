@@ -177,39 +177,39 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-y-auto py-8">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 my-8">
-        <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-3xl mx-4 my-8">
+        <div className="p-6 border-b border-color-subtle">
+          <h3 className="text-lg font-semibold text-primary">
             {isEditing ? "Edit Project" : "New Project"}
           </h3>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="p-3 status-error-bg border status-error-border rounded-lg">
+              <p className="text-sm status-error-text">{error}</p>
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Project Name *</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Project Name *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="e.g. Website Redesign"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => handleChange("status", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -218,11 +218,11 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
               <select
                 value={formData.currency}
                 onChange={(e) => handleChange("currency", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="USD">USD - US Dollar</option>
                 <option value="EUR">EUR - Euro</option>
@@ -236,13 +236,13 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Customer</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Customer</label>
               <div className="relative">
                 <div
-                  className="flex items-center justify-between w-full px-3 py-2 border border-slate-300 rounded-lg bg-white cursor-pointer focus-within:ring-2 focus-within:ring-primary-500"
+                  className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500"
                   onClick={() => setCustomerDropdownOpen(!customerDropdownOpen)}
                 >
-                  <span className="text-sm text-slate-900 truncate">
+                  <span className="text-sm text-primary truncate">
                     {selectedCustomer
                       ? `${selectedCustomer.name}${selectedCustomer.companyName ? ` (${selectedCustomer.companyName})` : ""}`
                       : "Select a customer"}
@@ -255,35 +255,35 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                       e.stopPropagation();
                       handleChange("customerId", "");
                     }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-tertiary hover:text-secondary"
                     title="Clear customer"
                   >
                     ×
                   </button>
                 )}
                 {customerDropdownOpen && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-50 mt-1 w-full bg-surface border border-color-subtle rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {loadingCustomers ? (
-                      <div className="p-3 text-sm text-slate-500">Loading customers...</div>
+                      <div className="p-3 text-sm text-secondary">Loading customers...</div>
                     ) : (
                       filteredCustomers.map((c) => (
                         <div
                           key={c.id}
-                          className="p-3 cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                          className="p-3 cursor-pointer hover:bg-surface-alt border-b border-color-subtle last:border-b-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleChange("customerId", c.id);
                             setCustomerDropdownOpen(false);
                           }}
                         >
-                          <p className="font-medium text-sm text-slate-900">{c.name}</p>
-                          {c.companyName && <p className="text-xs text-slate-500">{c.companyName}</p>}
-                          {c.email && <p className="text-xs text-slate-400">{c.email}</p>}
+                          <p className="font-medium text-sm text-primary">{c.name}</p>
+                          {c.companyName && <p className="text-xs text-secondary">{c.companyName}</p>}
+                          {c.email && <p className="text-xs text-tertiary">{c.email}</p>}
                         </div>
                       ))
                     )}
                     {filteredCustomers.length === 0 && !loadingCustomers && (
-                      <div className="p-3 text-sm text-slate-500">No customers found</div>
+                      <div className="p-3 text-sm text-secondary">No customers found</div>
                     )}
                   </div>
                 )}
@@ -291,53 +291,53 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Budget</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Budget</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">{formData.currency}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-sm">{formData.currency}</span>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.budget}
                   onChange={(e) => handleChange("budget", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 pl-16 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 pl-16 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="0.00"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Start Date</label>
               <input
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => handleChange("startDate", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Due Date</label>
               <input
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => handleChange("dueDate", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Description</label>
               <textarea
                 rows={3}
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Project description, scope, objectives..."
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Tags</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Tags</label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.tags.map((t) => (
                   <span
@@ -368,13 +368,13 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                       handleAddCustomTag();
                     }
                   }}
-                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex-1 rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Add a tag..."
                 />
                 <button
                   type="button"
                   onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-input-border px-3 py-2 text-sm text-secondary hover:bg-surface-alt"
                   title="Presets"
                 >
                   Presets
@@ -383,17 +383,17 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                   type="button"
                   onClick={handleAddCustomTag}
                   disabled={!tagInput.trim()}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-lg border border-input-border px-3 py-2 text-sm text-secondary hover:bg-surface-alt disabled:opacity-50"
                 >
                   Add
                 </button>
               </div>
               {tagDropdownOpen && (
-                <div className="absolute z-50 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg">
+                <div className="absolute z-50 mt-1 bg-surface border border-color-subtle rounded-lg shadow-lg">
                   {PRESET_TAGS.map((t) => (
                     <div
                       key={t.name}
-                      className="px-3 py-2 cursor-pointer hover:bg-slate-50 flex items-center gap-2"
+                      className="px-3 py-2 cursor-pointer hover:bg-surface-alt flex items-center gap-2"
                       onClick={() => handleTagToggle(t)}
                     >
                       <span
@@ -409,7 +409,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
           </div>
         </form>
 
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+        <div className="p-6 border-t border-color-subtle flex justify-end gap-3">
           <Button
             variant="secondary"
             size="md"
@@ -431,3 +431,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
     </div>
   );
 }
+
+
+
+

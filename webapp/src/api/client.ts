@@ -490,6 +490,17 @@ export async function recordPayment(invoiceId: string, data: { amount: number; p
   return res.data;
 }
 
+export async function getPaymentsByBusiness(params?: {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  provider?: string;
+  search?: string;
+}) {
+  const res = await api.get("/payments", { params });
+  return res.data;
+}
+
 export async function getPublicInvoice(token: string) {
   const res = await api.get(`/public/invoices/${token}`);
   return res.data;

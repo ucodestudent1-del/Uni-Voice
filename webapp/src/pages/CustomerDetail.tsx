@@ -100,16 +100,16 @@ export default function CustomerDetail() {
   }
 
   if (loading) {
-    return <div className="text-center py-20 text-slate-500">Loading customer...</div>;
+    return <div className="text-center py-20 text-secondary">Loading customer...</div>;
   }
 
   if (error) {
     return (
       <div className="text-center py-20">
-        <p className="text-red-500">{error}</p>
+        <p className="status-error-text">{error}</p>
         <button
           onClick={() => navigate("/app/customers")}
-          className="mt-4 text-sm text-primary-600 hover:text-primary-700"
+          className="mt-4 text-sm text-primary-brand hover:text-primary-brand"
         >
           Back to Customers
         </button>
@@ -125,24 +125,24 @@ export default function CustomerDetail() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/app/customers")}
-            className="text-slate-500 hover:text-slate-700"
+            className="text-secondary hover:text-secondary"
           >
             &larr; Customers
           </button>
-          <h1 className="text-2xl font-bold text-slate-900">{customer.name}</h1>
+          <h1 className="text-2xl font-bold text-primary">{customer.name}</h1>
           <CustomerStatusBadge status={customer.status} />
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowForm(true)}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
           >
             Edit
           </button>
           <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
             <button
               onClick={handleCreateInvoice}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               + Create Invoice
             </button>
@@ -150,14 +150,14 @@ export default function CustomerDetail() {
           {customer.status === "archived" ? (
             <button
               onClick={handleRestore}
-              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
             >
               Restore
             </button>
           ) : (
             <button
               onClick={handleArchive}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              className="rounded-lg status-error-text px-4 py-2 text-sm font-medium text-on-primary hover:status-error-text"
             >
               Archive
             </button>
@@ -241,7 +241,7 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
   return (
     <>
       {actionMessage && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+        <div className="rounded-lg border border-color-subtle bg-surface-alt px-3 py-2 text-sm text-secondary">
           {actionMessage}
         </div>
       )}
@@ -250,8 +250,8 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="text-sm font-medium text-slate-500 uppercase mb-4">Contact Information</h3>
+          <div className="bg-surface rounded-xl border border-color-subtle p-6">
+            <h3 className="text-sm font-medium text-secondary uppercase mb-4">Contact Information</h3>
             <dl className="space-y-3">
               <InfoRow label="Name" value={customer.name} />
               {customer.companyName && <InfoRow label="Company" value={customer.companyName} />}
@@ -277,13 +277,13 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
           </div>
 
           {customer.taxIdentifiers && customer.taxIdentifiers.length > 0 && (
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-sm font-medium text-slate-500 uppercase mb-4">Tax Identifiers</h3>
+            <div className="bg-surface rounded-xl border border-color-subtle p-6">
+              <h3 className="text-sm font-medium text-secondary uppercase mb-4">Tax Identifiers</h3>
               <ul className="space-y-2">
                 {customer.taxIdentifiers.map((ti) => (
                   <li key={ti.id} className="flex justify-between">
-                    <span className="text-sm text-slate-900">{ti.type}: {ti.value}</span>
-                    {ti.isDefault && <span className="text-xs text-slate-500">Default</span>}
+                    <span className="text-sm text-primary">{ti.type}: {ti.value}</span>
+                    {ti.isDefault && <span className="text-xs text-secondary">Default</span>}
                   </li>
                 ))}
               </ul>
@@ -292,9 +292,9 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="bg-surface rounded-xl border border-color-subtle p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-slate-500 uppercase">Invoice History</h3>
+              <h3 className="text-sm font-medium text-secondary uppercase">Invoice History</h3>
               <div className="flex gap-1 flex-wrap">
                 {INVOICE_STATUS_FILTERS.map((f) => (
                   <button
@@ -302,8 +302,8 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
                     onClick={() => setInvoiceStatusFilter(f.value)}
                     className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                       invoiceStatusFilter === f.value
-                        ? "bg-primary-100 text-primary-700"
-                        : "text-slate-600 hover:bg-slate-100"
+                        ? "bg-primary-bg text-primary-brand"
+                        : "text-secondary hover:bg-surface-alt"
                     }`}
                   >
                     {f.label}
@@ -313,9 +313,9 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
             </div>
 
             {loadingInvoices ? (
-              <div className="text-center py-8 text-slate-500">Loading invoices...</div>
+              <div className="text-center py-8 text-secondary">Loading invoices...</div>
             ) : filteredInvoices.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">
+              <div className="text-center py-8 text-secondary">
                 {invoiceStatusFilter !== "all"
                   ? "No invoices match the selected filter"
                   : "No invoices for this customer yet"}
@@ -324,14 +324,14 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left text-xs font-medium text-slate-500 uppercase py-2">Invoice</th>
-                      <th className="text-center text-xs font-medium text-slate-500 uppercase py-2">Status</th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Total</th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Paid</th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Due</th>
-                      <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Due Date</th>
-                      <th className="text-center text-xs font-medium text-slate-500 uppercase py-2">Actions</th>
+                    <tr className="border-b border-color-subtle">
+                      <th className="text-left text-xs font-medium text-secondary uppercase py-2">Invoice</th>
+                      <th className="text-center text-xs font-medium text-secondary uppercase py-2">Status</th>
+                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Total</th>
+                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Paid</th>
+                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Due</th>
+                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Due Date</th>
+                      <th className="text-center text-xs font-medium text-secondary uppercase py-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -341,34 +341,34 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
                       return (
                         <tr
                           key={inv.id}
-                          className={`border-b border-slate-100 last:border-b-0 ${overdue ? "bg-red-50" : "hover:bg-slate-50"}`}
+                          className={`border-b border-color-subtle last:border-b-0 ${overdue ? "status-error-bg" : "hover:bg-surface-alt"}`}
                         >
                           <td className="py-2">
                             <Link
                               to={`/app/invoices/${inv.id}`}
-                              className="text-sm font-medium text-slate-900 hover:text-primary-600"
+                              className="text-sm font-medium text-primary hover:text-primary-brand"
                             >
                               {inv.invoiceNumber || `Draft #${inv.id.slice(0, 8)}`}
                             </Link>
-                            <p className="text-xs text-slate-500">{formatDate(inv.createdAt)}</p>
+                            <p className="text-xs text-secondary">{formatDate(inv.createdAt)}</p>
                           </td>
                           <td className="py-2 text-center">
                             <InvoiceStatusBadge status={displayStatus(inv)} isOverdue={overdue} />
                           </td>
-                          <td className="py-2 text-right text-sm font-medium text-slate-900">
+                          <td className="py-2 text-right text-sm font-medium text-primary">
                             {formatCurrency(inv.total, currency)}
                           </td>
-                          <td className="py-2 text-right text-sm text-slate-600">
+                          <td className="py-2 text-right text-sm text-secondary">
                             {new Decimal(inv.amountPaid ?? 0).gt(0)
                               ? formatCurrency(inv.amountPaid, currency)
                               : "-"}
                           </td>
-                          <td className="py-2 text-right text-sm text-slate-600">
+                          <td className="py-2 text-right text-sm text-secondary">
                             {new Decimal(inv.amountDue ?? 0).gt(0)
                               ? formatCurrency(inv.amountDue, currency)
                               : "-"}
                           </td>
-                          <td className="py-2 text-right text-sm text-slate-600">
+                          <td className="py-2 text-right text-sm text-secondary">
                             {inv.dueDate ? formatDate(inv.dueDate) : "-"}
                           </td>
                           <td className="py-2 text-center">
@@ -378,7 +378,7 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
                                   <button
                                     onClick={() => handleSendReminder(inv)}
                                     disabled={remindingInvoice === inv.id}
-                                    className="text-xs text-slate-600 hover:text-slate-900"
+                                    className="text-xs text-secondary hover:text-primary"
                                     title="Send reminder"
                                   >
                                     {remindingInvoice === inv.id ? "..." : "Remind"}
@@ -387,7 +387,7 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
                               )}
                               <Link
                                 to={`/app/invoices/${inv.id}`}
-                                className="text-xs text-slate-600 hover:text-slate-900"
+                                className="text-xs text-secondary hover:text-primary"
                                 title="View invoice"
                               >
                                 View
@@ -411,8 +411,8 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
 function InfoRow({ label, value, preWrap }: { label: string; value: string; preWrap?: boolean }) {
   return (
     <div>
-      <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className={`text-sm text-slate-900 ${preWrap ? "whitespace-pre-wrap" : ""}`}>{value}</dd>
+      <dt className="text-xs text-secondary">{label}</dt>
+      <dd className={`text-sm text-primary ${preWrap ? "whitespace-pre-wrap" : ""}`}>{value}</dd>
     </div>
   );
 }
@@ -423,18 +423,18 @@ function FinancialSummaryCard({
   title: string; value: string; subtitle?: string; color?: "primary" | "green" | "red" | "slate";
 }) {
   const colorClasses: Record<string, string> = {
-    primary: "bg-primary-50 text-primary-700",
-    green: "bg-green-50 text-green-700",
-    red: "bg-red-50 text-red-700",
-    slate: "bg-slate-50 text-slate-700",
+    primary: "bg-primary-bg text-primary-brand",
+    green: "status-success-bg status-success-text",
+    red: "status-error-bg status-error-text",
+    slate: "bg-surface-alt text-secondary",
   };
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-      <p className="text-xs font-medium text-slate-500 uppercase">{title}</p>
-      <p className={`text-2xl font-bold mt-1 ${color === "red" ? "text-red-600" : "text-slate-900"}`}>
+    <div className="bg-surface rounded-xl border border-color-subtle p-5 shadow-sm">
+      <p className="text-xs font-medium text-secondary uppercase">{title}</p>
+      <p className={`text-2xl font-bold mt-1 ${color === "red" ? "status-error-text" : "text-primary"}`}>
         {value}
       </p>
-      {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-xs text-secondary">{subtitle}</p>}
     </div>
   );
 }
@@ -444,10 +444,10 @@ function renderFinancialSummary(summary: ApiCustomerSummary | null, loading: boo
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
-            <div className="h-3 w-20 bg-slate-200 rounded mb-2" />
-            <div className="h-7 w-24 bg-slate-200 rounded mb-1" />
-            <div className="h-3 w-16 bg-slate-200 rounded" />
+          <div key={i} className="bg-surface rounded-xl border border-color-subtle p-5 animate-pulse">
+            <div className="h-3 w-20 bg-surface-alt rounded mb-2" />
+            <div className="h-7 w-24 bg-surface-alt rounded mb-1" />
+            <div className="h-3 w-16 bg-surface-alt rounded" />
           </div>
         ))}
       </div>
@@ -456,8 +456,8 @@ function renderFinancialSummary(summary: ApiCustomerSummary | null, loading: boo
 
   if (!summary) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <p className="text-sm text-slate-500">Financial summary unavailable.</p>
+      <div className="bg-surface rounded-xl border border-color-subtle p-6">
+        <p className="text-sm text-secondary">Financial summary unavailable.</p>
       </div>
     );
   }
@@ -494,3 +494,8 @@ function renderFinancialSummary(summary: ApiCustomerSummary | null, loading: boo
     </div>
   );
 }
+
+
+
+
+

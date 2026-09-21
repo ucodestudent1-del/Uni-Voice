@@ -657,7 +657,7 @@ function InvoiceEditorContent() {
 
   if (isNew && !templateChoice) {
     return (
-      <div className="min-h-[calc(100vh-120px)] bg-slate-50 p-6">
+      <div className="min-h-[calc(100vh-120px)] bg-page p-6">
         <DocumentTemplateGallery onSelect={handleTemplateSelect} />
       </div>
     );
@@ -665,20 +665,20 @@ function InvoiceEditorContent() {
 
   if (loadError) {
     return (
-      <div className="min-h-[calc(100vh-120px)] bg-slate-50 p-6 text-center">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 max-w-md mx-auto">
-          <h1 className="text-lg font-semibold text-red-800">Could not load invoice</h1>
-          <p className="mt-2 text-sm text-red-700">{loadError}</p>
+      <div className="min-h-[calc(100vh-120px)] bg-page p-6 text-center">
+        <div className="rounded-xl border border-error-border bg-error-bg p-6 max-w-md mx-auto">
+          <h1 className="text-lg font-semibold text-error-text">Could not load invoice</h1>
+          <p className="mt-2 text-sm text-error-text">{loadError}</p>
           <div className="mt-4 flex gap-3 justify-center">
             <button
               onClick={() => setRetryKey((key) => key + 1)}
-              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
             >
               Try again
             </button>
             <button
               onClick={() => navigate("/app/invoices")}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
             >
               Back to invoices
             </button>
@@ -698,37 +698,37 @@ function InvoiceEditorContent() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/app/invoices")}
-            className="text-slate-500 hover:text-slate-700"
+            className="text-tertiary hover:text-primary"
           >
             &larr; Back
           </button>
-          <h1 className="text-xl font-semibold text-slate-900">
+          <h1 className="text-xl font-semibold text-primary">
             Document Editor
           </h1>
-           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-             saveState === "saved" ? "bg-green-100 text-green-800" :
-             saveState === "saving" ? "bg-blue-100 text-blue-800" :
-             saveState === "error" ? "bg-red-100 text-red-800" :
-             "bg-amber-100 text-amber-800"
-           }`}>
+            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+             saveState === "saved" ? "status-success-bg status-success-text" :
+             saveState === "saving" ? "status-info-bg status-info-text" :
+             saveState === "error" ? "status-error-bg status-error-text" :
+             "status-warning-bg status-warning-text"
+            }`}>
              {saveStateLabel}
            </span>
            {validationErrorCount > 0 && (
-             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800">
-               {validationErrorCount} validation error{validationErrorCount !== 1 ? "s" : ""}
-             </span>
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium status-error-bg status-error-text">
+                {validationErrorCount} validation error{validationErrorCount !== 1 ? "s" : ""}
+              </span>
            )}
            {validationWarningCount > 0 && validationErrorCount === 0 && (
-             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-800">
-               {validationWarningCount} warning{validationWarningCount !== 1 ? "s" : ""}
-             </span>
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium status-warning-bg status-warning-text">
+                {validationWarningCount} warning{validationWarningCount !== 1 ? "s" : ""}
+              </span>
            )}
         </div>
         <div className="flex gap-2">
           <button
             onClick={undo}
             disabled={!canUndo}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
             title="Undo (Ctrl+Z)"
           >
             &larr;
@@ -736,15 +736,15 @@ function InvoiceEditorContent() {
            <button
               onClick={redo}
               disabled={!canRedo}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
               title="Redo (Ctrl+Y)"
             >
               &rarr;
             </button>
             <button
               onClick={() => setPreviewMode(previewMode === "edit" ? "preview" : "edit")}
-              className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
-                previewMode === "preview" ? "bg-primary-100 text-primary-700" : ""
+              className={`rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover ${
+                previewMode === "preview" ? "bg-primary-bg text-on-primary" : ""
               }`}
               title="Toggle preview"
             >
@@ -752,15 +752,15 @@ function InvoiceEditorContent() {
             </button>
             <button
               onClick={() => setShowTemplateGallery(true)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover"
               title="Choose template"
             >
               Gallery
             </button>
             <button
               onClick={() => setOutlineMode(!outlineMode)}
-              className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
-                outlineMode ? "bg-primary-100 text-primary-700" : ""
+              className={`rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover ${
+                outlineMode ? "bg-primary-bg text-on-primary" : ""
               }`}
               title="Toggle document outline"
             >
@@ -768,8 +768,8 @@ function InvoiceEditorContent() {
             </button>
             <button
               onClick={() => setShowValidation(!showValidation)}
-              className={`rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 ${
-                showValidation ? "bg-primary-100 text-primary-700" : ""
+              className={`rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover ${
+                showValidation ? "bg-primary-bg text-on-primary" : ""
               }`}
               title="Validation"
             >
@@ -778,7 +778,7 @@ function InvoiceEditorContent() {
             <button
               onClick={handleSave}
               disabled={saveState === "saving"}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
             >
               Save
             </button>
@@ -786,7 +786,7 @@ function InvoiceEditorContent() {
               <button
                 onClick={handleFinalize}
                 disabled={!validation.isValid}
-                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Finalize &amp; Send
               </button>
@@ -795,13 +795,13 @@ function InvoiceEditorContent() {
               <>
                 <button
                   onClick={handlePdfDownload}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
                 >
                   Download PDF
                 </button>
                 <button
                   onClick={handleSend}
-                  className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                  className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
                 >
                   Send
                 </button>
@@ -813,10 +813,10 @@ function InvoiceEditorContent() {
         {actionMessage && (
           <div className={`mb-3 rounded-lg border px-3 py-2 text-sm ${
             actionMessage.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
+              ? "border-success-border bg-success-bg text-success-text"
               : actionMessage.type === "error"
-              ? "border-red-200 bg-red-50 text-red-800"
-              : "border-blue-200 bg-blue-50 text-blue-800"
+              ? "border-error-border bg-error-bg text-error-text"
+              : "border-info-border bg-info-bg text-info-text"
           }`}>
             {actionMessage.text}
           </div>
@@ -828,7 +828,7 @@ function InvoiceEditorContent() {
             hasWarnings={validationWarningCount > 0}
           />
 
-      <div className="flex-1 grid grid-cols-[1fr_320px] gap-4 overflow-hidden bg-slate-50">
+      <div className="flex-1 grid grid-cols-[1fr_320px] gap-4 overflow-hidden bg-page">
         {previewMode === "edit" ? (
           <>
             <div className="overflow-auto">
@@ -913,7 +913,7 @@ function InvoiceEditorContent() {
                 calculations={calculations}
                 currency={editorData?.currency || "USD"}
                 locale="en-US"
-                className="border border-slate-200 rounded-xl shadow-lg"
+                className="border border-color rounded-xl shadow-lg"
               />
             </div>
           </div>
@@ -921,48 +921,48 @@ function InvoiceEditorContent() {
       </div>
 
       {showSendDialog && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4">
-            <div className="p-6 border-b border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900">Send Invoice</h3>
-              <p className="text-sm text-slate-500">Review before sending</p>
+          <div className="fixed inset-0 bg-overlay flex items-center justify-center z-50">
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl mx-4">
+            <div className="p-6 border-b border-color">
+              <h3 className="text-lg font-semibold text-primary">Send Invoice</h3>
+              <p className="text-sm text-secondary">Review before sending</p>
             </div>
             <div className="p-6 space-y-4">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">To</label>
-                <p className="text-sm text-slate-900">
+                <label className="block text-sm font-medium text-secondary">To</label>
+                <p className="text-sm text-primary">
                   {editorData?.customerId ? customers.find((c) => c.id === editorData.customerId)?.email ?? "No email set" : "No customer selected"}
                 </p>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">Subject</label>
+                <label className="block text-sm font-medium text-secondary">Subject</label>
                 <input
                   type="text"
                   value={sendData.subject}
                   onChange={(e) => setSendData({ ...sendData, subject: e.target.value })}
-                  className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full text-sm border border-input-border rounded-lg px-3 py-2 bg-input text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">Message</label>
+                <label className="block text-sm font-medium text-secondary">Message</label>
                 <textarea
                   value={sendData.message}
                   onChange={(e) => setSendData({ ...sendData, message: e.target.value })}
                   rows={4}
-                  className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full text-sm border border-input-border rounded-lg px-3 py-2 bg-input text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
-            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-color flex justify-end gap-3">
               <button
                 onClick={() => setShowSendDialog(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg"
+                className="px-4 py-2 text-sm font-medium text-secondary hover:bg-hover rounded-lg"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmSend}
-                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700"
+                className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover"
               >
                 Send Invoice
               </button>

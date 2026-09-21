@@ -183,14 +183,14 @@ export default function ReminderAutomation() {
 
   const hasReminderEntitlement = features?.some((f: any) => f.code === "reminders.automated") ?? false;
 
-  if (loading) return <div className="text-center py-20 text-slate-500">Loading reminder settings...</div>;
+  if (loading) return <div className="text-center py-20 text-secondary">Loading reminder settings...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Reminder Automation</h1>
-          <p className="text-sm text-slate-600 mt-1">Configure automatic payment reminders for your invoices</p>
+          <h1 className="text-2xl font-bold text-primary">Reminder Automation</h1>
+          <p className="text-sm text-secondary mt-1">Configure automatic payment reminders for your invoices</p>
         </div>
         <FeatureGate feature="reminders.automated" requiredPlan="pro" fallback={
           <UpgradePrompt feature="Automated Reminders" requiredPlan="pro" />
@@ -198,7 +198,7 @@ export default function ReminderAutomation() {
           <button
             onClick={saveConfig}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Settings"}
           </button>
@@ -208,32 +208,32 @@ export default function ReminderAutomation() {
       {actionMessage && (
         <div className={`rounded-lg border px-3 py-2 text-sm ${
           actionMessage.type === "success"
-            ? "border-green-200 bg-green-50 text-green-800"
+            ? "status-success-border status-success-bg status-success-text"
             : actionMessage.type === "error"
-            ? "border-red-200 bg-red-50 text-red-800"
-            : "border-blue-200 bg-blue-50 text-blue-800"
+            ? "status-error-border status-error-bg status-error-text"
+            : "status-info-border status-info-bg status-info-text"
         }`}>
           {actionMessage.text}
         </div>
       )}
 
       <FeatureGate feature="reminders.automated" requiredPlan="pro" fallback={null}>
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
+        <div className="bg-surface rounded-xl border border-color-subtle p-6 space-y-6">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={config.enabled}
                 onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
-                className="w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="w-5 h-5 rounded border-input-border text-primary-brand focus:ring-primary"
               />
-              <span className="text-lg font-medium text-slate-900">Enable Automated Reminders</span>
+              <span className="text-lg font-medium text-primary">Enable Automated Reminders</span>
             </label>
           </div>
 
           {!config.enabled && (
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <p className="text-sm text-slate-600">
+            <div className="p-4 bg-surface-alt rounded-lg border border-color-subtle">
+              <p className="text-sm text-secondary">
                 Automated reminders are disabled. Enable them to automatically send payment reminders
                 before and after invoice due dates.
               </p>
@@ -270,37 +270,37 @@ export default function ReminderAutomation() {
         </div>
       </FeatureGate>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Email Templates</h2>
-        <p className="text-sm text-slate-600 mb-4">Create reusable email templates for your reminders</p>
+      <div className="bg-surface rounded-xl border border-color-subtle p-6">
+        <h2 className="text-lg font-semibold text-primary mb-4">Email Templates</h2>
+        <p className="text-sm text-secondary mb-4">Create reusable email templates for your reminders</p>
         <div className="flex justify-end mb-4">
           <button
             onClick={() => openTemplateDialog()}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
             + New Template
           </button>
         </div>
         {templates.length === 0 ? (
-          <p className="text-sm text-slate-500">No templates yet. Create one to use in your reminder sequences.</p>
+          <p className="text-sm text-secondary">No templates yet. Create one to use in your reminder sequences.</p>
         ) : (
           <div className="space-y-3">
             {templates.map((template) => (
-              <div key={template.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+              <div key={template.id} className="flex items-center justify-between p-4 border border-color-subtle rounded-lg">
                 <div>
-                  <p className="font-medium text-slate-900">{template.name}</p>
-                  <p className="text-sm text-slate-600">Subject: {template.subject}</p>
+                  <p className="font-medium text-primary">{template.name}</p>
+                  <p className="text-sm text-secondary">Subject: {template.subject}</p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => openTemplateDialog(template)}
-                    className="text-sm text-primary-600 hover:text-primary-700"
+                    className="text-sm text-primary-brand hover:text-primary-brand"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleTemplateDelete(template.id)}
-                    className="text-sm text-red-600 hover:text-red-700"
+                    className="text-sm status-error-text hover:status-error-text"
                   >
                     Delete
                   </button>
@@ -348,15 +348,15 @@ function ReminderSection({
   direction: "before" | "after";
 }) {
   return (
-    <div className="bg-slate-50 rounded-lg p-5 space-y-4">
+    <div className="bg-surface-alt rounded-lg p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-          <p className="text-sm text-slate-600">{description}</p>
+          <h3 className="text-lg font-semibold text-primary">{title}</h3>
+          <p className="text-sm text-secondary">{description}</p>
         </div>
         <button
           onClick={onAdd}
-          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+          className="text-sm text-primary-brand hover:text-primary-brand font-medium"
         >
           + Add Reminder
         </button>
@@ -364,7 +364,7 @@ function ReminderSection({
 
       <div className="space-y-3">
         {sequences.map((seq, index) => (
-          <div key={seq.id} className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+          <div key={seq.id} className="bg-surface rounded-lg border border-color-subtle p-4 space-y-3">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
@@ -373,20 +373,20 @@ function ReminderSection({
                       type="checkbox"
                       checked={seq.enabled}
                       onChange={(e) => onUpdate(index, "enabled", e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      className="w-4 h-4 rounded border-input-border text-primary-brand focus:ring-primary"
                     />
-                    <span className={`text-sm font-medium ${seq.enabled ? "text-slate-900" : "text-slate-500"}`}>
+                    <span className={`text-sm font-medium ${seq.enabled ? "text-primary" : "text-secondary"}`}>
                       {seq.enabled ? "Enabled" : "Disabled"}
                     </span>
                   </label>
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-700">
+                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary-bg text-primary-brand">
                     #{index + 1}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                    <label className="block text-xs font-medium text-secondary mb-1">
                       {direction === "before" ? "Days Before Due" : "Days After Due"}
                     </label>
                     <input
@@ -395,32 +395,32 @@ function ReminderSection({
                       max={365}
                       value={seq.offsetDays}
                       onChange={(e) => onUpdate(index, "offsetDays", Number(e.target.value))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Max Sends</label>
+                    <label className="block text-xs font-medium text-secondary mb-1">Max Sends</label>
                     <input
                       type="number"
                       min={1}
                       max={10}
                       value={seq.maxSends}
                       onChange={(e) => onUpdate(index, "maxSends", Number(e.target.value))}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                   <div className="flex items-end gap-2">
                     <button
                       onClick={() => onTest(seq.id)}
                       disabled={isTesting === seq.id}
-                      className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      className="flex-1 rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
                     >
                       {isTesting === seq.id ? "Sending..." : "Test"}
                     </button>
                     <button
                       onClick={() => onRemove(index)}
                       disabled={sequences.length <= 1}
-                      className="rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      className="rounded-lg border status-error-border px-3 py-2 text-sm font-medium status-error-text hover:status-error-bg disabled:opacity-50"
                     >
                       Remove
                     </button>
@@ -432,7 +432,7 @@ function ReminderSection({
                 {index > 0 && (
                   <button
                     onClick={() => onMove(index, "up")}
-                    className="text-xs text-slate-600 hover:text-slate-900"
+                    className="text-xs text-secondary hover:text-primary"
                     title="Move up"
                   >
                     ↑ Up
@@ -441,7 +441,7 @@ function ReminderSection({
                 {index < sequences.length - 1 && (
                   <button
                     onClick={() => onMove(index, "down")}
-                    className="text-xs text-slate-600 hover:text-slate-900"
+                    className="text-xs text-secondary hover:text-primary"
                     title="Move down"
                   >
                     ↓ Down
@@ -450,25 +450,25 @@ function ReminderSection({
               </div>
             </div>
 
-            <div className="space-y-3 pt-3 border-t border-slate-200">
+            <div className="space-y-3 pt-3 border-t border-color-subtle">
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Subject</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Subject</label>
                 <input
                   type="text"
                   value={seq.subject ?? ""}
                   onChange={(e) => onUpdate(index, "subject", e.target.value)}
                   placeholder="e.g. Invoice {{invoice_number}} due in {{days}} days"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Message</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Message</label>
                 <textarea
                   value={seq.message ?? ""}
                   onChange={(e) => onUpdate(index, "message", e.target.value)}
                   rows={3}
                   placeholder="Dear {{customer_name}},\n\nThis is a reminder that invoice {{invoice_number}} for {{amount_due}} is due on {{due_date}}.\n\nThank you!"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -502,61 +502,61 @@ function TemplateDialog({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-color-subtle">
+          <h3 className="text-lg font-semibold text-primary">
             {isEditing ? "Edit Template" : "New Template"}
           </h3>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Template Name *</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Template Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               required
               placeholder="e.g. Standard Reminder"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Subject *</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Subject *</label>
             <input
               type="text"
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               required
               placeholder="Invoice {{invoice_number}} - Payment Reminder"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Message *</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Message *</label>
             <textarea
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               rows={6}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               required
               placeholder="Dear {{customer_name}},\n\nThis is a reminder that invoice {{invoice_number}} for {{amount_due}} is due on {{due_date}}.\n\nYou can view and pay this invoice online using the secure link below.\n\nThank you for your business.\n\n{{business_name}}"
             />
           </div>
-          <div className="text-xs text-slate-500 p-3 bg-slate-50 rounded-lg">
+          <div className="text-xs text-secondary p-3 bg-surface-alt rounded-lg">
             <p className="font-medium mb-1">Available placeholders:</p>
             <p>{"{{invoice_number}}, {{customer_name}}, {{amount_due}}, {{due_date}}, {{issue_date}}, {{business_name}}, {{invoice_url}}, {{days_until_due}}, {{days_overdue}}"}</p>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-color-subtle">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg"
+              className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700"
+              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover"
             >
               {isEditing ? "Save Changes" : "Create Template"}
             </button>
@@ -566,3 +566,7 @@ function TemplateDialog({
     </div>
   );
 }
+
+
+
+

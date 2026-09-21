@@ -98,18 +98,18 @@ export default function CustomerSelector({ value, onChange, onCustomerChange, pl
   return (
     <div ref={containerRef} className="relative">
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-slate-300 rounded-lg bg-white cursor-pointer focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500"
+        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500"
         onClick={() => { setOpen(!open); setCreateMode(false); }}
       >
-        <span className="text-sm text-slate-900 truncate" title={selectedDisplay}>
+        <span className="text-sm text-primary truncate" title={selectedDisplay}>
           {selectedDisplay}
         </span>
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full bg-surface border border-color-subtle rounded-lg shadow-lg max-h-96 overflow-y-auto">
           {createMode ? (
-            <div className="p-3 border-b border-slate-200">
+            <div className="p-3 border-b border-color-subtle">
               <form onSubmit={handleCreate} className="space-y-2">
                 <input
                   type="text"
@@ -117,61 +117,61 @@ export default function CustomerSelector({ value, onChange, onCustomerChange, pl
                   required
                   value={createForm?.name ?? ""}
                   onChange={(e) => setCreateForm((prev) => prev ? { ...prev, name: e.target.value } : { name: e.target.value, email: "", countryCode: "US" })}
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-2 py-1 text-sm border border-input-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <input
                   type="email"
                   placeholder="Email address"
                   value={createForm?.email ?? ""}
                   onChange={(e) => setCreateForm((prev) => prev ? { ...prev, email: e.target.value } : { name: "", email: e.target.value, countryCode: "US" })}
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="w-full px-2 py-1 text-sm border border-input-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
                 />
-                {createError && <p className="text-xs text-red-600">{createError}</p>}
+                {createError && <p className="text-xs status-error-text">{createError}</p>}
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="w-full px-2 py-1 text-sm text-white bg-primary-600 rounded hover:bg-primary-700 disabled:opacity-50"
+                  className="w-full px-2 py-1 text-sm text-on-primary bg-primary-action rounded hover:bg-primary-hover disabled:opacity-50"
                 >
                   {createLoading ? "Adding..." : "Add Customer"}
                 </button>
               </form>
             </div>
           ) : (
-            <div className="p-2 border-b border-slate-200">
+            <div className="p-2 border-b border-color-subtle">
               <input
                 type="text"
                 placeholder="Search customers..."
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full px-2 py-1 text-sm border border-input-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
           )}
 
           {loading ? (
-            <div className="p-3 text-sm text-slate-500">Loading customers...</div>
+            <div className="p-3 text-sm text-secondary">Loading customers...</div>
           ) : (
             customers.map((c) => (
               <div
                 key={c.id}
-                className="p-3 cursor-pointer hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                className="p-3 cursor-pointer hover:bg-surface-alt border-b border-color-subtle last:border-b-0"
                 onClick={() => {
                   onChange(c.id);
                   onCustomerChange?.(c);
                   setOpen(false);
                 }}
               >
-                <p className="font-medium text-sm text-slate-900">{c.name}</p>
-                {c.companyName && <p className="text-xs text-slate-500">{c.companyName}</p>}
-                {c.email && <p className="text-xs text-slate-400">{c.email}</p>}
+                <p className="font-medium text-sm text-primary">{c.name}</p>
+                {c.companyName && <p className="text-xs text-secondary">{c.companyName}</p>}
+                {c.email && <p className="text-xs text-tertiary">{c.email}</p>}
               </div>
             ))
           )}
 
           {!createMode && (
             <div
-              className="p-3 text-sm text-primary-600 cursor-pointer hover:bg-slate-50 text-center border-t border-slate-200"
+              className="p-3 text-sm text-primary-brand cursor-pointer hover:bg-surface-alt text-center border-t border-color-subtle"
               onClick={(e) => { e.stopPropagation(); setCreateMode(true); setCreateForm({ name: "", email: "", countryCode: "US" }); }}
             >
               + Add new customer
@@ -182,3 +182,7 @@ export default function CustomerSelector({ value, onChange, onCustomerChange, pl
     </div>
   );
 }
+
+
+
+

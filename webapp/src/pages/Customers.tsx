@@ -190,10 +190,10 @@ export default function Customers() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Customers</h1>
-           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+           <h1 className="text-2xl font-bold text-inverse">Customers</h1>
+           <p className="text-sm text-secondary text-tertiary mt-1">
             {total} customers •{" "}
-            <span className="text-slate-900 font-medium">
+            <span className="text-primary font-medium">
               {totalOutstanding > 0
                 ? formatCurrency(totalOutstanding.toString(), "USD")
                 : formatCurrency(0, "USD")}
@@ -235,7 +235,7 @@ export default function Customers() {
         </div>
       </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+          <div className="bg-surface rounded-xl border border-color-subtle border-color p-4">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="md:col-span-2">
                 <input
@@ -243,14 +243,14 @@ export default function Customers() {
                   placeholder="Search customers by name, email, or company..."
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
                 <select
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -261,7 +261,7 @@ export default function Customers() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {SORT_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -270,12 +270,12 @@ export default function Customers() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <label className="flex items-center gap-2 text-sm text-secondary text-secondary">
                     <input
                       type="checkbox"
                       checked={includeArchived}
                       onChange={(e) => setIncludeArchived(e.target.checked)}
-                      className="rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500"
+                      className="rounded border-input-border border-input-border text-primary-brand focus:ring-primary"
                     />
                     Show archived
                   </label>
@@ -283,7 +283,7 @@ export default function Customers() {
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as any)}
-                  className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="asc">Ascending</option>
                   <option value="desc">Descending</option>
@@ -293,8 +293,8 @@ export default function Customers() {
           </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="p-3 status-error-bg border status-error-border rounded-lg">
+          <p className="text-sm status-error-text">{error}</p>
         </div>
       )}
 
@@ -314,10 +314,10 @@ export default function Customers() {
       )}
 
       {loading && customers.length === 0 ? (
-        <div className="text-center py-20 text-slate-500">Loading customers...</div>
+        <div className="text-center py-20 text-secondary">Loading customers...</div>
       ) : effectiveRows.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-          <p className="mt-4 text-slate-500">
+        <div className="text-center py-16 bg-surface rounded-xl border border-color-subtle">
+          <p className="mt-4 text-secondary">
             {search || statusFilter !== "all" ? "No matching customers found" : "No customers yet"}
           </p>
           <Button
@@ -332,17 +332,17 @@ export default function Customers() {
         </div>
       ) : (
         <>
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="bg-surface rounded-xl border border-color-subtle border-color overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Customer</th>
-                  <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Contact</th>
-                  <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Invoices</th>
-                  <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Outstanding</th>
-                  <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Last Invoice</th>
-                  <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Status</th>
-                  <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Actions</th>
+                <tr className="border-b border-color-subtle border-color">
+                  <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Customer</th>
+                  <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Contact</th>
+                  <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Invoices</th>
+                  <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Outstanding</th>
+                  <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Last Invoice</th>
+                  <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Status</th>
+                  <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -351,49 +351,49 @@ export default function Customers() {
                   return (
                      <tr
                        key={c.id}
-                       className={`border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                         hasBalance ? "border-l-2 border-l-red-400 bg-red-50/20" : ""
+                       className={`border-b border-color-subtle border-color last:border-b-0 hover:bg-surface-alt hover:bg-hover ${
+                         hasBalance ? "border-l-2 border-l-red-400 status-error-bg/20" : ""
                        }`}
                      >
                       <td className="py-3 px-4">
                         <button
                           type="button"
                           onClick={() => setQuickViewCustomer(c)}
-                          className="text-left text-sm font-medium text-slate-900 hover:text-primary-600"
+                          className="text-left text-sm font-medium text-primary hover:text-primary-brand"
                           aria-label={`Quick view ${c.name}`}
                         >
                           {c.name}
                         </button>
                         {c.companyName && (
-                          <p className="text-xs text-slate-500">{c.companyName}</p>
+                          <p className="text-xs text-secondary">{c.companyName}</p>
                         )}
                         {!c.companyName && c.mostRecentInvoiceDate && (
-                          <p className="text-xs text-slate-400">
+                          <p className="text-xs text-tertiary">
                             Last activity: {formatDate(c.mostRecentInvoiceDate)}
                           </p>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-sm text-slate-600">
+                      <td className="py-3 px-4 text-sm text-secondary">
                         {getCustomerPrimaryContact(c) ? (
                           <span className="break-all">{getCustomerPrimaryContact(c)}</span>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-tertiary">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center text-sm text-slate-900">
+                      <td className="py-3 px-4 text-center text-sm text-primary">
                         {c.invoiceCount ?? 0}
                       </td>
                       <td className="py-3 px-4 text-right">
                         {hasBalance ? (
-                          <span className="text-sm font-medium text-red-600">
+                          <span className="text-sm font-medium status-error-text">
                             {formatCurrency(c.totalOutstanding || "0", c.defaultCurrency || "USD")}
                           </span>
                         ) : (
-                          <span className="text-sm text-slate-400">— paid</span>
+                          <span className="text-sm text-tertiary">— paid</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right text-sm text-slate-600">
-                        {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-slate-400">—</span>}
+                      <td className="py-3 px-4 text-right text-sm text-secondary">
+                        {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-tertiary">—</span>}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <CustomerStatusBadge status={c.status} />
@@ -422,7 +422,7 @@ export default function Customers() {
                                onClick={() => handleCreateInvoice(c)}
                                disabled={creatingInvoiceFor === c.id}
                                title="Create invoice for this customer"
-                               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                               className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand"
                              >
                                {creatingInvoiceFor === c.id ? "..." : ""}
                              </Button>
@@ -434,7 +434,7 @@ export default function Customers() {
                                icon={<RefreshCw className="w-3.5 h-3.5" />}
                                onClick={() => handleRestore(c)}
                                title="Restore customer"
-                               className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                               className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand"
                              />
                            ) : (
                              <Button
@@ -443,7 +443,7 @@ export default function Customers() {
                                icon={<Archive className="w-3.5 h-3.5" />}
                                onClick={() => handleArchive(c)}
                                title="Archive customer"
-                               className="text-red-600 hover:text-red-700"
+                               className="status-error-text hover:status-error-text"
                              />
                            )}
                          </div>
@@ -457,7 +457,7 @@ export default function Customers() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-secondary text-tertiary">
                 Page {currentPage} of {totalPages} • {total} customers
               </p>
               <div className="flex gap-2">
@@ -500,3 +500,10 @@ export default function Customers() {
     </div>
   );
 }
+
+
+
+
+
+
+

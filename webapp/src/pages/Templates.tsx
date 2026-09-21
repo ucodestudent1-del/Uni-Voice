@@ -95,9 +95,9 @@ export default function Templates() {
   }
 
   const LIFECYCLE_BADGE = {
-    draft: { bg: "bg-amber-100", text: "text-amber-800", label: "Draft" },
-    published: { bg: "bg-green-100", text: "text-green-800", label: "Live" },
-    archived: { bg: "bg-slate-100", text: "text-slate-800", label: "Archived" },
+    draft: { bg: "status-warning-bg", text: "status-warning-text", label: "Draft" },
+    published: { bg: "status-success-bg", text: "status-success-text", label: "Live" },
+    archived: { bg: "bg-surface-alt", text: "text-primary", label: "Archived" },
   };
 
   const DOCUMENT_TYPE_LABEL: Record<string, string> = {
@@ -107,15 +107,15 @@ export default function Templates() {
   };
 
   if (loading) {
-    return <div className="text-center py-20 text-slate-500">Loading templates...</div>;
+    return <div className="text-center py-20 text-secondary">Loading templates...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Templates</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <h1 className="text-2xl font-bold text-inverse">Templates</h1>
+          <p className="mt-1 text-sm text-secondary text-tertiary">
             Choose a preset to get started or customize an existing template.
           </p>
         </div>
@@ -136,7 +136,7 @@ export default function Templates() {
             setDocumentTypeFilter(e.target.value);
             loadTemplates(e.target.value);
           }}
-          className="text-xs border border-slate-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="text-xs border border-input-border rounded px-2 py-1 bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value="">All document types</option>
           <option value="invoice">Invoice</option>
@@ -146,8 +146,8 @@ export default function Templates() {
       </div>
 
       {templates.length === 0 && !showPresetGallery && (
-        <div className="text-center py-16 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-          <p className="text-slate-400 dark:text-slate-500 mb-4">No templates yet</p>
+        <div className="text-center py-16 bg-surface-alt dark:bg-surface-alt rounded-xl border border-color-subtle border-color">
+          <p className="text-tertiary text-tertiary mb-4">No templates yet</p>
         <Button
           variant="primary"
           size="md"
@@ -167,7 +167,7 @@ export default function Templates() {
             return (
               <div
                 key={t.id}
-                className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group transition-shadow hover:shadow-md"
+                className="bg-surface rounded-xl border border-color-subtle shadow-sm overflow-hidden group transition-shadow hover:shadow-md"
               >
                 <div className="relative">
                   <div className="h-40 overflow-hidden">
@@ -180,7 +180,7 @@ export default function Templates() {
                   </div>
                   <div className="absolute top-2 right-2 flex gap-1.5">
                     {isDefault && (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary-100 text-primary-800">
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary-bg text-primary-brand">
                         Default
                       </span>
                     )}
@@ -191,20 +191,20 @@ export default function Templates() {
                 </div>
 
                 <div className="p-4">
-                  <h3 className="font-semibold text-slate-900">{t.name}</h3>
-                  {t.description && <p className="mt-1 text-sm text-slate-500 line-clamp-2">{t.description}</p>}
+                  <h3 className="font-semibold text-primary">{t.name}</h3>
+                  {t.description && <p className="mt-1 text-sm text-secondary line-clamp-2">{t.description}</p>}
                   {t.industry && (
-                    <span className="mt-2 inline-block text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                    <span className="mt-2 inline-block text-xs bg-surface-alt text-secondary px-2 py-0.5 rounded">
                       {t.industry}
                     </span>
                   )}
                   {t.documentType && (
-                    <span className="mt-2 inline-block text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                    <span className="mt-2 inline-block text-xs status-info-bg status-info-text px-2 py-0.5 rounded">
                       {DOCUMENT_TYPE_LABEL[t.documentType] ?? t.documentType}
                     </span>
                   )}
 
-                   <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                   <div className="mt-4 flex items-center justify-between text-xs text-secondary">
                      <span>Updated {new Date(t.updatedAt).toLocaleDateString()}</span>
                       <div className="flex items-center gap-1">
                         {t.lifecycle === "draft" && (
@@ -258,7 +258,7 @@ export default function Templates() {
                     <div className="mt-2">
                       <Link
                         to={`/app/templates/${t.id}/edit`}
-                        className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                        className="text-xs font-medium text-primary-brand hover:text-primary-brand"
                       >
                         Edit template →
                       </Link>
@@ -272,12 +272,12 @@ export default function Templates() {
 
         {showPresetGallery && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] overflow-y-auto">
-              <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900">Choose a starting template</h2>
+            <div className="bg-surface rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] overflow-y-auto">
+              <div className="p-6 border-b border-color-subtle flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-primary">Choose a starting template</h2>
                 <button
                   onClick={() => setShowPresetGallery(false)}
-                  className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                  className="text-tertiary hover:text-secondary text-tertiary dark:hover:text-tertiary"
                 >
                   ✕
                 </button>
@@ -291,3 +291,9 @@ export default function Templates() {
     </div>
   );
 }
+
+
+
+
+
+

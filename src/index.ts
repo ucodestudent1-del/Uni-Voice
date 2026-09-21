@@ -2150,9 +2150,49 @@ app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res
   res.status(201).json({ ok: true });
 });
 
-// ============================================================================
-// TAX RATES
-// ============================================================================
+// Global payments list (all payments for the business, paginated)
+app.get("/api/payments", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+  const status = req.query.status as string | undefined;
+  const provider = req.query.provider as string | undefined;
+  const search = (req.query.search as string | undefined) || undefined;
+
+  const where: string[] = ["p.business_id = $1"];
+  const vals: any[] = [req.user!.businessId];
+  let i = 2;
+  if (status) { where.push(`p.status = $${i++}`); vals.push(status); }
+  if (provider) { where.push(`p.provider = $${i++}`); vals.push(provider); }
+  if (search) {
+    where.push(`(i.invoice_number ILIKE $${i} OR p.provider_payment_id ILIKE $${i})`);
+    vals.push(`%${search}%`);
+    i++;
+  }
+
+  const listRes = await query(
+    `SELECT p.id, p.invoice_id, p.amount, p.currency, p.status, p.method, p.provider,
+            p.provider_payment_id, p.paid_at, p.idempotency_key, p.created_at, p.updated_at,
+            i.invoice_number, i.customer_name, i.customer_email
+     FROM payments p
+     JOIN invoices i ON i.id = p.invoice_id
+     WHERE ${where.join(" AND ")}
+     ORDER BY p.created_at DESC
+     LIMIT $${i++} OFFSET $${i++}`,
+    [...vals, limit, offset]
+  );
+
+  const countRes = await query(
+    `SELECT COUNT(*)::int AS total
+     FROM payments p
+     JOIN invoices i ON i.id = p.invoice_id
+     WHERE ${where.join(" AND ")}`,
+    vals
+  );
+
+  res.json({ payments: listRes.rows, total: countRes.rows[0]?.total ?? 0, limit, offset });
+});
+
 app.get("/api/tax-rates", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await query(

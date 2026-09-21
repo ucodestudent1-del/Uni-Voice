@@ -1,3 +1,7 @@
+import { forwardRef } from "react";
+import { cn } from "../lib/utils";
+import InvoiceStatus from "./primitives/InvoiceStatus";
+
 interface InvoiceStatusBadgeProps {
   status: string;
   isOverdue?: boolean;
@@ -5,26 +9,32 @@ interface InvoiceStatusBadgeProps {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-slate-100 text-slate-800" },
-  sent: { label: "Sent", className: "bg-blue-100 text-blue-800" },
-  viewed: { label: "Viewed", className: "bg-indigo-100 text-indigo-800" },
-  partially_paid: { label: "Partially Paid", className: "bg-yellow-100 text-yellow-800" },
-  paid: { label: "Paid", className: "bg-green-100 text-green-800" },
-  overdue: { label: "Overdue", className: "bg-red-100 text-red-800" },
-  cancelled: { label: "Cancelled", className: "bg-slate-100 text-slate-800" },
-  void: { label: "Void", className: "bg-slate-100 text-slate-800" },
+  draft: { label: "Draft", className: "status-warning-bg status-warning-text" },
+  sent: { label: "Sent", className: "status-info-bg status-info-text" },
+  viewed: { label: "Viewed", className: "status-info-bg status-info-text" },
+  partially_paid: { label: "Partially Paid", className: "status-warning-bg status-warning-text" },
+  paid: { label: "Paid", className: "status-success-bg status-success-text" },
+  overdue: { label: "Overdue", className: "status-error-bg status-error-text" },
+  cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text" },
+  void: { label: "Void", className: "status-tertiary-bg status-tertiary-text" },
 };
 
-export default function InvoiceStatusBadge({ status, isOverdue, className }: InvoiceStatusBadgeProps) {
-  const config = statusConfig[status] ?? statusConfig.draft;
-  const effectiveStatus = isOverdue && status !== "paid" ? "overdue" : status;
-  const effectiveConfig = statusConfig[effectiveStatus] ?? config;
+export const statusConfigExport = statusConfig;
 
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${effectiveConfig.className} ${className}`}
-    >
-      {effectiveConfig.label}
-    </span>
-  );
-}
+const InvoiceStatusBadgeInner = forwardRef<HTMLSpanElement, InvoiceStatusBadgeProps>(
+  function InvoiceStatusBadge({ status, isOverdue, className }, ref) {
+    return (
+      <InvoiceStatus
+        ref={ref}
+        status={status}
+        isOverdue={isOverdue}
+        showIcon={false}
+        className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", className)}
+      />
+    );
+  }
+);
+
+InvoiceStatusBadgeInner.displayName = "InvoiceStatusBadge";
+
+export default InvoiceStatusBadgeInner;

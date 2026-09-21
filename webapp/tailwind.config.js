@@ -1,7 +1,7 @@
 import { type Config } from "tailwindcss";
 
 export default {
-  darkMode: "class",
+  darkMode: ['class', '[data-theme="dark"]'],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
@@ -38,6 +38,10 @@ export default {
           500: "#ec4899",
           600: "#db2777",
         },
+        /* Semantic ring colors mapped to CSS variables */
+        "ring-primary": "rgb(var(--color-primary))",
+        "ring-focus": "rgb(var(--color-focus-ring))",
+        "ring-error": "rgb(var(--color-error))",
       },
       fontFamily: {
         sans: ["-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "Helvetica", "Arial", "sans-serif"],

@@ -26,12 +26,12 @@ export default function AuthCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="text-center">
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-4">{error}</div>
+          <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text mb-4">{error}</div>
           <button
             onClick={() => navigate("/login")}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
             Back to Login
           </button>
@@ -41,8 +41,11 @@ export default function AuthCallback() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="text-center text-slate-600">Completing sign in…</div>
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <div className="text-center text-secondary">Completing sign in…</div>
     </div>
   );
 }
+
+
+

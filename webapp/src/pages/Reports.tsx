@@ -30,12 +30,12 @@ export default function Reports() {
     }
   }
 
-  if (loading) return <div className="text-center py-20 text-slate-500">Loading reports...</div>;
+  if (loading) return <div className="text-center py-20 text-secondary">Loading reports...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Reports</h1>
+        <h1 className="text-2xl font-bold text-inverse">Reports</h1>
         <Button
           variant="primary"
           size="md"
@@ -55,7 +55,7 @@ export default function Reports() {
         </Button>
       </div>
 
-      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex gap-2 border-b border-color-subtle border-color">
         <Button
           variant={activeTab === "revenue" ? "primary" : "ghost"}
           size="sm"
@@ -81,12 +81,12 @@ export default function Reports() {
       </div>
 
       {activeTab === "revenue" && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Revenue by Status</h3>
+        <div className="bg-surface rounded-xl border border-color-subtle border-color p-6">
+          <h3 className="text-lg font-semibold text-inverse mb-4">Revenue by Status</h3>
           {revenue.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 dark:text-slate-400">No revenue data yet</p>
+              <FileText className="w-12 h-12 text-tertiary dark:text-secondary mx-auto mb-3" />
+              <p className="text-sm text-secondary text-tertiary">No revenue data yet</p>
               <Button
                 variant="primary"
                 size="md"
@@ -101,19 +101,19 @@ export default function Reports() {
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase py-2">Status</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Count</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Total</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Paid</th>
+                  <th className="text-left text-xs font-medium text-secondary uppercase py-2">Status</th>
+                  <th className="text-right text-xs font-medium text-secondary uppercase py-2">Count</th>
+                  <th className="text-right text-xs font-medium text-secondary uppercase py-2">Total</th>
+                  <th className="text-right text-xs font-medium text-secondary uppercase py-2">Paid</th>
                 </tr>
               </thead>
               <tbody>
                 {revenue.map((r) => (
-                  <tr key={r.status} className="border-t border-slate-100">
-                    <td className="py-2 text-sm text-slate-900">{r.status}</td>
-                    <td className="py-2 text-right text-sm text-slate-600">{r.count}</td>
-                    <td className="py-2 text-right text-sm text-slate-900">{formatCurrency(r.total_amount ?? 0, "USD")}</td>
-                    <td className="py-2 text-right text-sm text-slate-900">{formatCurrency(r.paid_amount ?? 0, "USD")}</td>
+                  <tr key={r.status} className="border-t border-color-subtle">
+                    <td className="py-2 text-sm text-primary">{r.status}</td>
+                    <td className="py-2 text-right text-sm text-secondary">{r.count}</td>
+                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.total_amount ?? 0, "USD")}</td>
+                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.paid_amount ?? 0, "USD")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -123,12 +123,12 @@ export default function Reports() {
       )}
 
       {activeTab === "tax" && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Tax Summary (Last 12 Months)</h3>
+        <div className="bg-surface rounded-xl border border-color-subtle border-color p-6">
+          <h3 className="text-lg font-semibold text-inverse mb-4">Tax Summary (Last 12 Months)</h3>
           {taxSummary.length === 0 ? (
             <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 dark:text-slate-400">No tax data yet</p>
+              <FileText className="w-12 h-12 text-tertiary dark:text-secondary mx-auto mb-3" />
+              <p className="text-sm text-secondary text-tertiary">No tax data yet</p>
               <Button
                 variant="primary"
                 size="md"
@@ -143,15 +143,15 @@ export default function Reports() {
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="text-left text-xs font-medium text-slate-500 uppercase py-2">Month</th>
-                  <th className="text-right text-xs font-medium text-slate-500 uppercase py-2">Tax Collected</th>
+                  <th className="text-left text-xs font-medium text-secondary uppercase py-2">Month</th>
+                  <th className="text-right text-xs font-medium text-secondary uppercase py-2">Tax Collected</th>
                 </tr>
               </thead>
               <tbody>
                 {taxSummary.map((r) => (
-                  <tr key={r.month} className="border-t border-slate-100">
-                    <td className="py-2 text-sm text-slate-900">{r.month}</td>
-                    <td className="py-2 text-right text-sm text-slate-900">{formatCurrency(r.tax_total ?? 0, "USD")}</td>
+                  <tr key={r.month} className="border-t border-color-subtle">
+                    <td className="py-2 text-sm text-primary">{r.month}</td>
+                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.tax_total ?? 0, "USD")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -162,3 +162,8 @@ export default function Reports() {
     </div>
   );
 }
+
+
+
+
+

@@ -115,20 +115,20 @@ function registerTextComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Content</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Content</label>
             <textarea
               value={component.props.content}
               onChange={(e) => onChange({ content: e.target.value }, {})}
               rows={3}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Format</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Format</label>
             <select
               value={component.props.format || "plain"}
               onChange={(e) => onChange({ format: e.target.value as any }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="plain">Plain text</option>
               <option value="markdown">Markdown</option>
@@ -137,26 +137,26 @@ function registerTextComponent() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Font Size</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Font Size</label>
               <input
                 type="number"
                 value={component.style.fontSize || 14}
                 onChange={(e) => onChange({}, { fontSize: parseInt(e.target.value) || 14 })}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Color</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Color</label>
               <input
                 type="color"
                 value={component.style.color || "#333333"}
                 onChange={(e) => onChange({}, { color: e.target.value })}
-                className="w-full h-9 border border-slate-300 rounded-lg cursor-pointer"
+                className="w-full h-9 border border-input-border rounded-lg cursor-pointer"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Alignment</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Alignment</label>
             <div className="flex gap-2">
               {(["left", "center", "right", "justify"] as const).map((align) => (
                 <button
@@ -164,8 +164,8 @@ function registerTextComponent() {
                   onClick={() => onChange({}, { textAlign: align })}
                   className={`px-3 py-1 text-xs rounded ${
                     component.style.textAlign === align
-                      ? "bg-primary-100 text-primary-700"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "bg-primary-bg text-primary-brand"
+                      : "bg-surface-alt text-secondary hover:bg-surface-alt"
                   }`}
                 >
                   {align}
@@ -211,7 +211,7 @@ function registerImageComponent() {
       const { src, alt, fit = "contain" } = component.props;
       if (!src) {
         return (
-          <div className="border border-slate-200 rounded-lg bg-slate-50 text-center py-6 text-sm text-slate-400">
+          <div className="border border-color-subtle rounded-lg bg-surface-alt text-center py-6 text-sm text-tertiary">
             No image selected
           </div>
         );
@@ -234,30 +234,30 @@ function registerImageComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Image URL</label>
             <input
               type="url"
               value={component.props.src || ""}
               onChange={(e) => onChange({ src: e.target.value }, {})}
               placeholder="https://example.com/logo.png"
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Alt Text</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Alt Text</label>
             <input
               type="text"
               value={component.props.alt || ""}
               onChange={(e) => onChange({ alt: e.target.value }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Fit</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Fit</label>
             <select
               value={component.props.fit || "contain"}
               onChange={(e) => onChange({ fit: e.target.value as any }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="contain">Contain</option>
               <option value="cover">Cover</option>
@@ -284,7 +284,7 @@ function registerImageComponent() {
       const { src, alt = "Logo" } = component.props;
       if (!src) {
         return (
-          <div className="border border-slate-200 rounded-lg bg-slate-50 text-center py-4 text-sm text-slate-400">
+          <div className="border border-color-subtle rounded-lg bg-surface-alt text-center py-4 text-sm text-tertiary">
             No logo selected
           </div>
         );
@@ -346,18 +346,18 @@ function registerCustomerInfoComponent() {
       const { showName, showCompany, showEmail, showAddress, showPhone, label } = component.props;
       return (
         <div style={{ ...component.style }}>
-          {label && <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{label}</h3>}
+          {label && <h3 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2">{label}</h3>}
           {customer && (
             <div className="space-y-1">
-              {showName && customer.name && <p className="font-semibold text-slate-900">{customer.name}</p>}
-              {showCompany && customer.company_name && <p className="text-sm text-slate-600">{customer.company_name}</p>}
-              {showEmail && customer.email && <p className="text-sm text-slate-500">{customer.email}</p>}
-              {showAddress && customer.address && <p className="text-sm text-slate-500 whitespace-pre-line">{customer.address}</p>}
-              {showPhone && customer.phone && <p className="text-sm text-slate-500">{customer.phone}</p>}
+              {showName && customer.name && <p className="font-semibold text-primary">{customer.name}</p>}
+              {showCompany && customer.company_name && <p className="text-sm text-secondary">{customer.company_name}</p>}
+              {showEmail && customer.email && <p className="text-sm text-secondary">{customer.email}</p>}
+              {showAddress && customer.address && <p className="text-sm text-secondary whitespace-pre-line">{customer.address}</p>}
+              {showPhone && customer.phone && <p className="text-sm text-secondary">{customer.phone}</p>}
             </div>
           )}
           {!customer && (
-            <p className="text-sm text-slate-400">No customer selected</p>
+            <p className="text-sm text-tertiary">No customer selected</p>
           )}
         </div>
       );
@@ -366,13 +366,13 @@ function registerCustomerInfoComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
               placeholder="e.g. Bill To"
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -381,7 +381,7 @@ function registerCustomerInfoComponent() {
                 type="checkbox"
                 checked={component.props.showName}
                 onChange={(e) => onChange({ showName: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Name
             </label>
@@ -390,7 +390,7 @@ function registerCustomerInfoComponent() {
                 type="checkbox"
                 checked={component.props.showCompany}
                 onChange={(e) => onChange({ showCompany: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Company
             </label>
@@ -399,7 +399,7 @@ function registerCustomerInfoComponent() {
                 type="checkbox"
                 checked={component.props.showEmail}
                 onChange={(e) => onChange({ showEmail: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Email
             </label>
@@ -408,7 +408,7 @@ function registerCustomerInfoComponent() {
                 type="checkbox"
                 checked={component.props.showAddress}
                 onChange={(e) => onChange({ showAddress: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Address
             </label>
@@ -417,7 +417,7 @@ function registerCustomerInfoComponent() {
                 type="checkbox"
                 checked={component.props.showPhone}
                 onChange={(e) => onChange({ showPhone: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Phone
             </label>
@@ -459,7 +459,7 @@ function registerInvoiceNumberComponent() {
       const { prefix = "#", label } = component.props;
       return (
         <div style={{ ...component.style }}>
-          {label && <span className="text-xs text-slate-500">{label}</span>}
+          {label && <span className="text-xs text-secondary">{label}</span>}
           <span>{prefix}{invoice?.invoiceNumber || "—"}</span>
         </div>
       );
@@ -468,32 +468,32 @@ function registerInvoiceNumberComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Prefix</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Prefix</label>
             <input
               type="text"
               value={component.props.prefix || ""}
               onChange={(e) => onChange({ prefix: e.target.value || undefined }, {})}
               placeholder="e.g. #"
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
               placeholder="e.g. Invoice"
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Font Size</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Font Size</label>
             <input
               type="number"
               value={component.style.fontSize || 14}
               onChange={(e) => onChange({}, { fontSize: parseInt(e.target.value) || 14 })}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -548,7 +548,7 @@ function registerDateComponent() {
       }
       return (
         <div style={{ ...component.style }}>
-          {label && <span className="text-xs text-slate-500">{label}</span>}
+          {label && <span className="text-xs text-secondary">{label}</span>}
           <span>{value}</span>
         </div>
       );
@@ -557,11 +557,11 @@ function registerDateComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Date Type</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Date Type</label>
             <select
               value={component.props.dateType || "issue"}
               onChange={(e) => onChange({ dateType: e.target.value as any }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="issue">Issue Date</option>
               <option value="due">Due Date</option>
@@ -570,22 +570,22 @@ function registerDateComponent() {
           </div>
           {component.props.dateType === "custom" && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Custom Value</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Custom Value</label>
               <input
                 type="text"
                 value={component.props.customValue || ""}
                 onChange={(e) => onChange({ customValue: e.target.value }, {})}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -663,11 +663,11 @@ function registerLineItemsComponent() {
           <table className="w-full border-collapse">
             {showHeader && (
               <thead>
-                <tr className="border-b border-slate-200">
+                <tr className="border-b border-color-subtle">
                   {columns.filter((c) => c.visible).map((col) => (
                     <th
                       key={col.key}
-                      className="text-left text-xs font-semibold text-slate-500 uppercase py-3"
+                      className="text-left text-xs font-semibold text-secondary uppercase py-3"
                       style={{ textAlign: col.align || "left", width: col.width }}
                     >
                       {col.label}
@@ -678,7 +678,7 @@ function registerLineItemsComponent() {
             )}
             <tbody>
               {items.map((item: any, i: number) => (
-                <tr key={item.id || i} className="border-b border-slate-100">
+                <tr key={item.id || i} className="border-b border-color-subtle">
                   {columns.filter((c) => c.visible).map((col) => {
                     let value: React.ReactNode = "";
                     switch (col.key) {
@@ -708,14 +708,14 @@ function registerLineItemsComponent() {
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={columns.filter((c) => c.visible).length} className="py-8 text-center text-sm text-slate-400">
+                  <td colSpan={columns.filter((c) => c.visible).length} className="py-8 text-center text-sm text-tertiary">
                     {component.props.emptyStateMessage || "No items"}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-          {!allowMultiPage && <div className="text-xs text-slate-400 mt-2">Table constrained to current page</div>}
+          {!allowMultiPage && <div className="text-xs text-tertiary mt-2">Table constrained to current page</div>}
         </div>
       );
     },
@@ -723,12 +723,12 @@ function registerLineItemsComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -737,7 +737,7 @@ function registerLineItemsComponent() {
                 type="checkbox"
                 checked={component.props.showHeader}
                 onChange={(e) => onChange({ showHeader: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Show Header
             </label>
@@ -746,13 +746,13 @@ function registerLineItemsComponent() {
                 type="checkbox"
                 checked={component.props.allowMultiPage}
                 onChange={(e) => onChange({ allowMultiPage: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Allow Multi-Page
             </label>
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Columns</label>
+            <label className="block text-sm font-medium text-secondary">Columns</label>
             {component.props.columns.map((col, idx) => (
               <div key={idx} className="flex items-center gap-2 text-sm">
                 <input
@@ -763,7 +763,7 @@ function registerLineItemsComponent() {
                     cols[idx] = { ...cols[idx], label: e.target.value };
                     onChange({ columns: cols }, {});
                   }}
-                  className="flex-1 text-xs border border-slate-300 rounded-lg px-2 py-1"
+                  className="flex-1 text-xs border border-input-border rounded-lg px-2 py-1"
                 />
                 <label className="flex items-center gap-1 text-xs">
                   <input
@@ -774,7 +774,7 @@ function registerLineItemsComponent() {
                       cols[idx] = { ...cols[idx], visible: e.target.checked };
                       onChange({ columns: cols }, {});
                     }}
-                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-input-border text-primary-brand focus:ring-primary"
                   />
                   Visible
                 </label>
@@ -817,8 +817,8 @@ function registerSubtotalComponent() {
       const currency = ctx.currency || component.props.currency;
       return (
         <div style={{ ...component.style }}>
-          <span className="text-slate-600">{component.props.label || "Subtotal"}</span>
-          <span className="font-medium text-slate-900">
+          <span className="text-secondary">{component.props.label || "Subtotal"}</span>
+          <span className="font-medium text-primary">
             {ctx.calculations?.formatCurrency(value, currency)}
           </span>
         </div>
@@ -828,21 +828,21 @@ function registerSubtotalComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -882,8 +882,8 @@ function registerTaxComponent() {
       const currency = ctx.currency || component.props.currency;
       return (
         <div style={{ ...component.style }}>
-          <span className="text-slate-600">{component.props.label || "Tax"}</span>
-          <span className="font-medium text-slate-900">
+          <span className="text-secondary">{component.props.label || "Tax"}</span>
+          <span className="font-medium text-primary">
             {ctx.calculations?.formatCurrency(value, currency)}
           </span>
         </div>
@@ -893,21 +893,21 @@ function registerTaxComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -915,7 +915,7 @@ function registerTaxComponent() {
               type="checkbox"
               checked={component.props.showBreakdown}
               onChange={(e) => onChange({ showBreakdown: e.target.checked }, {})}
-              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-input-border text-primary-brand focus:ring-primary"
             />
             Show Tax Breakdown
           </label>
@@ -955,8 +955,8 @@ function registerDiscountComponent() {
       const currency = ctx.currency || component.props.currency;
       return (
         <div style={{ ...component.style }}>
-          <span className="text-slate-600">{component.props.label || "Discount"}</span>
-          <span className="font-medium text-slate-900">
+          <span className="text-secondary">{component.props.label || "Discount"}</span>
+          <span className="font-medium text-primary">
             -{ctx.calculations?.formatCurrency(value, currency)}
           </span>
         </div>
@@ -966,21 +966,21 @@ function registerDiscountComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1017,8 +1017,8 @@ function registerPaymentTermsComponent() {
     render: (component, ctx) => {
       return (
         <div style={{ ...component.style }}>
-          {component.props.label && <span className="text-xs text-slate-500">{component.props.label}</span>}
-          <p className="text-sm text-slate-700 whitespace-pre-line">{component.props.content}</p>
+          {component.props.label && <span className="text-xs text-secondary">{component.props.label}</span>}
+          <p className="text-sm text-secondary whitespace-pre-line">{component.props.content}</p>
         </div>
       );
     },
@@ -1026,21 +1026,21 @@ function registerPaymentTermsComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Content</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Content</label>
             <textarea
               value={component.props.content || ""}
               onChange={(e) => onChange({ content: e.target.value }, {})}
               rows={3}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1079,10 +1079,10 @@ function registerSignatureComponent() {
     render: (component) => {
       return (
         <div style={{ ...component.style }}>
-          {component.props.label && <p className="text-xs text-slate-500 mb-1">{component.props.label}</p>}
-          <p className="text-sm text-slate-700">{component.props.placeholder || "__________________________"}</p>
-          {component.props.showDate && <p className="text-xs text-slate-500 mt-1">Date: ______________</p>}
-          {component.props.showName && <p className="text-xs text-slate-500 mt-1">Name: ______________</p>}
+          {component.props.label && <p className="text-xs text-secondary mb-1">{component.props.label}</p>}
+          <p className="text-sm text-secondary">{component.props.placeholder || "__________________________"}</p>
+          {component.props.showDate && <p className="text-xs text-secondary mt-1">Date: ______________</p>}
+          {component.props.showName && <p className="text-xs text-secondary mt-1">Name: ______________</p>}
         </div>
       );
     },
@@ -1090,21 +1090,21 @@ function registerSignatureComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Placeholder</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Placeholder</label>
             <input
               type="text"
               value={component.props.placeholder || ""}
               onChange={(e) => onChange({ placeholder: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -1113,7 +1113,7 @@ function registerSignatureComponent() {
                 type="checkbox"
                 checked={component.props.showDate}
                 onChange={(e) => onChange({ showDate: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Show Date
             </label>
@@ -1122,7 +1122,7 @@ function registerSignatureComponent() {
                 type="checkbox"
                 checked={component.props.showName}
                 onChange={(e) => onChange({ showName: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Show Name
             </label>
@@ -1164,8 +1164,8 @@ function registerCustomFieldComponent() {
     render: (component) => {
       return (
         <div style={{ ...component.style }}>
-          <span className="text-slate-600">{component.props.label}</span>
-          <span className="font-medium text-slate-900">{component.props.value}</span>
+          <span className="text-secondary">{component.props.label}</span>
+          <span className="font-medium text-primary">{component.props.value}</span>
         </div>
       );
     },
@@ -1173,30 +1173,30 @@ function registerCustomFieldComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label}
               onChange={(e) => onChange({ label: e.target.value }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Value</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Value</label>
             <input
               type="text"
               value={component.props.value}
               onChange={(e) => onChange({ value: e.target.value }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Key</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Key</label>
             <input
               type="text"
               value={component.props.key}
               onChange={(e) => onChange({ key: e.target.value }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1233,8 +1233,8 @@ function registerNotesComponent() {
     render: (component) => {
       return (
         <div style={{ ...component.style }}>
-          {component.props.label && <p className="text-xs font-semibold text-slate-500 uppercase mb-1">{component.props.label}</p>}
-          <p className="text-sm text-slate-700 whitespace-pre-line">{component.props.content}</p>
+          {component.props.label && <p className="text-xs font-semibold text-secondary uppercase mb-1">{component.props.label}</p>}
+          <p className="text-sm text-secondary whitespace-pre-line">{component.props.content}</p>
         </div>
       );
     },
@@ -1242,21 +1242,21 @@ function registerNotesComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Content</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Content</label>
             <textarea
               value={component.props.content || ""}
               onChange={(e) => onChange({ content: e.target.value }, {})}
               rows={3}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1293,8 +1293,8 @@ function registerTermsComponent() {
     render: (component) => {
       return (
         <div style={{ ...component.style }}>
-          {component.props.label && <p className="text-xs font-semibold text-slate-500 uppercase mb-1">{component.props.label}</p>}
-          <p className="text-xs text-slate-500 whitespace-pre-line">{component.props.content}</p>
+          {component.props.label && <p className="text-xs font-semibold text-secondary uppercase mb-1">{component.props.label}</p>}
+          <p className="text-xs text-secondary whitespace-pre-line">{component.props.content}</p>
         </div>
       );
     },
@@ -1302,21 +1302,21 @@ function registerTermsComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Content</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Content</label>
             <textarea
               value={component.props.content || ""}
               onChange={(e) => onChange({ content: e.target.value }, {})}
               rows={3}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1353,8 +1353,8 @@ function registerPaymentInstructionsComponent() {
     render: (component) => {
       return (
         <div style={{ ...component.style }}>
-          {component.props.label && <p className="text-xs font-semibold text-slate-500 uppercase mb-1">{component.props.label}</p>}
-          <p className="text-sm text-slate-700 whitespace-pre-line">{component.props.content}</p>
+          {component.props.label && <p className="text-xs font-semibold text-secondary uppercase mb-1">{component.props.label}</p>}
+          <p className="text-sm text-secondary whitespace-pre-line">{component.props.content}</p>
         </div>
       );
     },
@@ -1362,21 +1362,21 @@ function registerPaymentInstructionsComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Content</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Content</label>
             <textarea
               value={component.props.content || ""}
               onChange={(e) => onChange({ content: e.target.value }, {})}
               rows={3}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1418,12 +1418,12 @@ function registerFeesComponent() {
       return (
         <div style={{ ...component.style }}>
           {component.props.showHeader && (
-            <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">{component.props.label || "Fees"}</h4>
+            <h4 className="text-xs font-semibold text-secondary uppercase mb-2">{component.props.label || "Fees"}</h4>
           )}
           {fees.map((fee: any, i: number) => (
             <div key={i} className="flex justify-between py-1">
-              <span className="text-sm text-slate-600">{fee.description}</span>
-              <span className="text-sm font-medium text-slate-900">
+              <span className="text-sm text-secondary">{fee.description}</span>
+              <span className="text-sm font-medium text-primary">
                 {ctx.calculations?.formatCurrency(fee.amount, currency)}
               </span>
             </div>
@@ -1435,21 +1435,21 @@ function registerFeesComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -1457,7 +1457,7 @@ function registerFeesComponent() {
               type="checkbox"
               checked={component.props.showHeader}
               onChange={(e) => onChange({ showHeader: e.target.checked }, {})}
-              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-input-border text-primary-brand focus:ring-primary"
             />
             Show Header
           </label>
@@ -1497,8 +1497,8 @@ function registerTotalComponent() {
       const currency = ctx.currency || component.props.currency;
       return (
         <div style={{ ...component.style }}>
-          <span className="text-lg font-semibold text-slate-900">{component.props.label || "Total"}</span>
-          <span className="text-xl font-bold text-slate-900">
+          <span className="text-lg font-semibold text-primary">{component.props.label || "Total"}</span>
+          <span className="text-xl font-bold text-primary">
             {ctx.calculations?.formatCurrency(value, currency)}
           </span>
         </div>
@@ -1508,21 +1508,21 @@ function registerTotalComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1561,8 +1561,8 @@ function registerAmountDueComponent() {
       const currency = ctx.currency || component.props.currency;
       return (
         <div style={{ ...component.style }}>
-          <span className="text-lg font-semibold text-slate-900">{component.props.label || "Amount Due"}</span>
-          <span className="text-xl font-bold text-primary-700">
+          <span className="text-lg font-semibold text-primary">{component.props.label || "Amount Due"}</span>
+          <span className="text-xl font-bold text-primary-brand">
             {ctx.calculations?.formatCurrency(value, currency)}
           </span>
         </div>
@@ -1572,21 +1572,21 @@ function registerAmountDueComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1638,20 +1638,20 @@ function registerBusinessInfoComponent() {
       const { showName, showEmail, showPhone, showWebsite, showAddress, showLogo, label } = component.props;
       return (
         <div style={{ ...component.style }}>
-          {label && <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{label}</h3>}
+          {label && <h3 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2">{label}</h3>}
           {business && (
             <div className="space-y-1">
               {showLogo && business.logo_url && (
                 <img src={business.logo_url} alt={business.name} className="h-12 w-auto mb-2" />
               )}
-              {showName && business.name && <p className="text-xl font-bold text-slate-900">{business.name}</p>}
-              {showEmail && business.email && <p className="text-sm text-slate-500">{business.email}</p>}
-              {showPhone && business.phone && <p className="text-sm text-slate-500">{business.phone}</p>}
-              {showWebsite && business.website && <p className="text-sm text-slate-500">{business.website}</p>}
-              {showAddress && business.address && <p className="text-sm text-slate-500 whitespace-pre-line">{business.address}</p>}
+              {showName && business.name && <p className="text-xl font-bold text-primary">{business.name}</p>}
+              {showEmail && business.email && <p className="text-sm text-secondary">{business.email}</p>}
+              {showPhone && business.phone && <p className="text-sm text-secondary">{business.phone}</p>}
+              {showWebsite && business.website && <p className="text-sm text-secondary">{business.website}</p>}
+              {showAddress && business.address && <p className="text-sm text-secondary whitespace-pre-line">{business.address}</p>}
             </div>
           )}
-          {!business && <p className="text-sm text-slate-400">No business set</p>}
+          {!business && <p className="text-sm text-tertiary">No business set</p>}
         </div>
       );
     },
@@ -1659,12 +1659,12 @@ function registerBusinessInfoComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -1673,7 +1673,7 @@ function registerBusinessInfoComponent() {
                 type="checkbox"
                 checked={component.props.showName}
                 onChange={(e) => onChange({ showName: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Name
             </label>
@@ -1682,7 +1682,7 @@ function registerBusinessInfoComponent() {
                 type="checkbox"
                 checked={component.props.showEmail}
                 onChange={(e) => onChange({ showEmail: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Email
             </label>
@@ -1691,7 +1691,7 @@ function registerBusinessInfoComponent() {
                 type="checkbox"
                 checked={component.props.showPhone}
                 onChange={(e) => onChange({ showPhone: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Phone
             </label>
@@ -1700,7 +1700,7 @@ function registerBusinessInfoComponent() {
                 type="checkbox"
                 checked={component.props.showWebsite}
                 onChange={(e) => onChange({ showWebsite: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Website
             </label>
@@ -1709,7 +1709,7 @@ function registerBusinessInfoComponent() {
                 type="checkbox"
                 checked={component.props.showAddress}
                 onChange={(e) => onChange({ showAddress: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Address
             </label>
@@ -1718,7 +1718,7 @@ function registerBusinessInfoComponent() {
                 type="checkbox"
                 checked={component.props.showLogo}
                 onChange={(e) => onChange({ showLogo: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Logo
             </label>
@@ -1761,12 +1761,12 @@ function registerSpacerComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Height (px)</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Height (px)</label>
             <input
               type="number"
               value={component.props.height || 16}
               onChange={(e) => onChange({ height: parseInt(e.target.value) || 16 }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -1819,29 +1819,29 @@ function registerDividerComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Thickness (px)</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Thickness (px)</label>
             <input
               type="number"
               value={component.props.thickness || 1}
               onChange={(e) => onChange({ thickness: parseInt(e.target.value) || 1 }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Color</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Color</label>
             <input
               type="color"
               value={component.props.color || "#e0e0e0"}
               onChange={(e) => onChange({ color: e.target.value }, {})}
-              className="w-full h-9 border border-slate-300 rounded-lg cursor-pointer"
+              className="w-full h-9 border border-input-border rounded-lg cursor-pointer"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Style</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Style</label>
             <select
               value={component.props.style || "solid"}
               onChange={(e) => onChange({ style: e.target.value as any }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="solid">Solid</option>
               <option value="dashed">Dashed</option>
@@ -1896,12 +1896,12 @@ function registerSectionComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Name</label>
             <input
               type="text"
               value={component.props.name}
               onChange={(e) => onChange({ name: e.target.value }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -1909,7 +1909,7 @@ function registerSectionComponent() {
               type="checkbox"
               checked={component.props.fullWidth}
               onChange={(e) => onChange({ fullWidth: e.target.checked }, {})}
-              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-input-border text-primary-brand focus:ring-primary"
             />
             Full Width
           </label>
@@ -1964,33 +1964,33 @@ function registerRowComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Name</label>
             <input
               type="text"
               value={component.props.name}
               onChange={(e) => onChange({ name: e.target.value }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Columns</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Columns</label>
             <input
               type="number"
               min={1}
               max={4}
               value={component.props.columns}
               onChange={(e) => onChange({ columns: parseInt(e.target.value) || 2 }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Gap (px)</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Gap (px)</label>
             <input
               type="number"
               min={0}
               value={typeof component.props.columnGap === "number" ? component.props.columnGap : 16}
               onChange={(e) => onChange({ columnGap: parseInt(e.target.value) || 16 }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -2042,23 +2042,23 @@ function registerColumnComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Name</label>
             <input
               type="text"
               value={component.props.name}
               onChange={(e) => onChange({ name: e.target.value }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Span</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Span</label>
             <input
               type="number"
               min={1}
               max={12}
               value={component.props.span || 1}
               onChange={(e) => onChange({ span: parseInt(e.target.value) || 1 }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -2122,34 +2122,34 @@ function registerDepositComponent() {
       
       return (
         <div style={{ ...component.style }}>
-          {label && <h4 className="text-sm font-semibold text-slate-700">{label}</h4>}
+          {label && <h4 className="text-sm font-semibold text-secondary">{label}</h4>}
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <span className="text-slate-500">Type:</span>
+              <span className="text-secondary">Type:</span>
               <span className="ml-2 font-medium capitalize">{depositType === "none" ? "No deposit" : depositType}</span>
             </div>
             {depositType !== "none" && (
               <>
                 <div>
-                  <span className="text-slate-500">Value:</span>
+                  <span className="text-secondary">Value:</span>
                   <span className="ml-2 font-medium">
                     {depositType === "percentage" ? `${depositValue}%` : formatCurrency(depositValue)}
                   </span>
                 </div>
                 {depositDueDate && (
                   <div className="col-span-2">
-                    <span className="text-slate-500">Due:</span>
+                    <span className="text-secondary">Due:</span>
                     <span className="ml-2 font-medium">{new Date(depositDueDate).toLocaleDateString()}</span>
                   </div>
                 )}
                 {showDepositDue && (
-                  <div className="col-span-2 text-primary-700 font-semibold">
+                  <div className="col-span-2 text-primary-brand font-semibold">
                     <span>Deposit Due: </span>
                     <span>{formatCurrency(depositDue)}</span>
                   </div>
                 )}
                 {showDepositPaid && (
-                  <div className="col-span-2 text-green-700 font-semibold">
+                  <div className="col-span-2 status-success-text font-semibold">
                     <span>Deposit Paid: </span>
                     <span>{formatCurrency(depositPaid)}</span>
                   </div>
@@ -2164,29 +2164,29 @@ function registerDepositComponent() {
       return (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Label</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Label</label>
             <input
               type="text"
               value={component.props.label || ""}
               onChange={(e) => onChange({ label: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
             <input
               type="text"
               value={component.props.currency || "USD"}
               onChange={(e) => onChange({ currency: e.target.value.toUpperCase() }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deposit Type</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Deposit Type</label>
             <select
               value={component.props.depositType || "none"}
               onChange={(e) => onChange({ depositType: e.target.value as "fixed" | "percentage" | "none" }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="none">None</option>
               <option value="fixed">Fixed Amount</option>
@@ -2195,7 +2195,7 @@ function registerDepositComponent() {
           </div>
           {(component.props.depositType === "fixed" || component.props.depositType === "percentage") && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-secondary mb-1">
                 {component.props.depositType === "percentage" ? "Percentage (%)" : "Fixed Amount"}
               </label>
               <input
@@ -2204,17 +2204,17 @@ function registerDepositComponent() {
                 min="0"
                 value={component.props.depositValue || "0"}
                 onChange={(e) => onChange({ depositValue: e.target.value || "0" }, {})}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deposit Due Date (optional)</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Deposit Due Date (optional)</label>
             <input
               type="date"
               value={component.props.depositDueDate || ""}
               onChange={(e) => onChange({ depositDueDate: e.target.value || undefined }, {})}
-              className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -2223,7 +2223,7 @@ function registerDepositComponent() {
                 type="checkbox"
                 checked={component.props.showDepositDue}
                 onChange={(e) => onChange({ showDepositDue: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Show Deposit Due
             </label>
@@ -2232,7 +2232,7 @@ function registerDepositComponent() {
                 type="checkbox"
                 checked={component.props.showDepositPaid}
                 onChange={(e) => onChange({ showDepositPaid: e.target.checked }, {})}
-                className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-input-border text-primary-brand focus:ring-primary"
               />
               Show Deposit Paid
             </label>
@@ -2243,4 +2243,8 @@ function registerDepositComponent() {
   };
   registerComponent(def);
 }
+
+
+
+
 

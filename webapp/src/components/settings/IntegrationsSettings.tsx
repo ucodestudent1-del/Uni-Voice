@@ -118,8 +118,8 @@ export default function IntegrationsSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Integrations</h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <h2 className="text-lg font-semibold text-primary">Integrations</h2>
+        <p className="text-sm text-secondary mt-1">
           Connect your business to accounting, payment, CRM, and automation services.
         </p>
       </div>
@@ -128,27 +128,27 @@ export default function IntegrationsSettings() {
         const catItems = items.filter((i) => i.category === cat);
         if (catItems.length === 0) return null;
         return (
-          <div key={cat} className="rounded-xl border border-slate-200 bg-white p-6">
-            <h3 className="text-md font-semibold text-slate-900 mb-4">{categoryLabels[cat]}</h3>
+          <div key={cat} className="rounded-xl border border-color-subtle bg-surface p-6">
+            <h3 className="text-md font-semibold text-primary mb-4">{categoryLabels[cat]}</h3>
             <div className="space-y-4">
               {catItems.map((item) => (
-                <div key={item.id} className="flex items-start justify-between py-3 border-b border-slate-100 last:border-0">
+                <div key={item.id} className="flex items-start justify-between py-3 border-b border-color-subtle last:border-0">
                   <div className="flex items-start gap-4">
                     <span className="text-2xl">{item.icon}</span>
                     <div>
-                      <h4 className="font-medium text-slate-900">{item.name}</h4>
-                      <p className="text-sm text-slate-600">{item.description}</p>
+                      <h4 className="font-medium text-primary">{item.name}</h4>
+                      <p className="text-sm text-secondary">{item.description}</p>
                     </div>
                   </div>
                   {item.connected ? (
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium status-success-bg status-success-text">
                       Connected
                     </span>
                   ) : (
                     <button
                       onClick={() => connect(item.id)}
                       disabled={connecting === item.id}
-                      className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                      className="rounded-lg border border-input-border px-3 py-1.5 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
                     >
                       {connecting === item.id ? "Connecting…" : "Connect"}
                     </button>
@@ -162,3 +162,7 @@ export default function IntegrationsSettings() {
     </div>
   );
 }
+
+
+
+

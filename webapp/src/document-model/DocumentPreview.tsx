@@ -26,7 +26,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   const ctx = createRenderContext(document, business, customer, invoice, calculations, currency, locale, false);
 
   return (
-    <div className={`bg-white p-8 ${className}`}>
+    <div className={`bg-surface p-8 ${className}`}>
       {renderDocumentTree(document, ctx, {
         isEditing: false,
         selectedComponentId: null,

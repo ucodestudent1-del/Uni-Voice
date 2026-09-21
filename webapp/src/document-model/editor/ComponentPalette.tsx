@@ -45,12 +45,12 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({ paletteDragg
   const categories = getCategories();
 
   return (
-    <div className="w-64 bg-slate-50 border-r border-slate-200 p-4 overflow-y-auto">
-      <h2 className="text-sm font-semibold text-slate-700 mb-4">Components</h2>
+    <div className="w-64 bg-surface-alt border-r border-color-subtle p-4 overflow-y-auto">
+      <h2 className="text-sm font-semibold text-secondary mb-4">Components</h2>
       <div className="space-y-4">
         {categories.map((category) => (
           <div key={category.id}>
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            <h3 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2">
               {category.label}
             </h3>
             <div className="space-y-1">
@@ -81,16 +81,16 @@ const PaletteItemCard: React.FC<PaletteItemCardProps> = ({ item, paletteDraggabl
       data-palette-id={paletteDraggableId}
       className="
         flex items-center gap-3 p-2 rounded-lg
-        bg-white border border-slate-200
-        hover:border-primary-300 hover:bg-primary-50
+        bg-surface border border-color-subtle
+        hover:border-primary-300 hover:bg-primary-bg
         cursor-grab
         transition-all duration-150
       "
     >
       <span className="text-lg">{getComponentIcon(item.type)}</span>
       <div className="flex-1">
-        <div className="text-sm font-medium text-slate-900">{item.label}</div>
-        <div className="text-xs text-slate-500">{item.description}</div>
+        <div className="text-sm font-medium text-primary">{item.label}</div>
+        <div className="text-xs text-secondary">{item.description}</div>
       </div>
     </div>
   );
@@ -128,3 +128,7 @@ function getComponentIcon(type: ComponentType): React.ReactNode {
 }
 
 export default ComponentPalette;
+
+
+
+

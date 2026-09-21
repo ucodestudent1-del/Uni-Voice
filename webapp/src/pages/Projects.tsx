@@ -158,7 +158,7 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Projects</h1>
+         <h1 className="text-2xl font-bold text-inverse">Projects</h1>
         <Button
           variant="primary"
           size="md"
@@ -170,8 +170,8 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="p-3 status-error-bg border status-error-border rounded-lg">
+          <p className="text-sm status-error-text">{error}</p>
         </div>
       )}
 
@@ -182,10 +182,10 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects..."
-            className="w-full rounded-lg border border-slate-300 pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-input-border pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -203,18 +203,18 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {STATUS_FILTERS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
-          <label className="flex items-center gap-1.5 text-sm text-slate-600">
+          <label className="flex items-center gap-1.5 text-sm text-secondary">
             <input
               type="checkbox"
               checked={showArchived}
               onChange={(e) => setShowArchived(e.target.checked)}
-              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+              className="rounded border-input-border text-primary-brand focus:ring-primary"
             />
             Show archived
           </label>
@@ -224,14 +224,14 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-100 rounded-lg animate-pulse" />
+            <div key={i} className="h-24 bg-surface-alt rounded-lg animate-pulse" />
           ))}
         </div>
       ) : (
         <div className="overflow-x-auto">
           {projects.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-slate-500 dark:text-slate-400 mb-4">No projects found</p>
+              <p className="text-secondary text-tertiary mb-4">No projects found</p>
               <Button
                 variant="primary"
                 size="md"
@@ -243,13 +243,13 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
             </div>
           ) : (
             <table className="w-full text-left">
-              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+              <thead className="bg-surface-alt dark:bg-surface-alt border-b border-color-subtle border-color">
                 <tr>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Project</th>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Status</th>
+                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Project</th>
+                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Customer</th>
+                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Status</th>
                   <th
-                    className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase cursor-pointer hover:bg-surface-alt hover:bg-hover"
                     onClick={() => handleSort("due_date")}
                   >
                     Due Date
@@ -257,27 +257,27 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
                       <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>
                     )}
                   </th>
-                  <th className="px-4 py-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Tags</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Tags</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-secondary text-tertiary uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <tr key={project.id} className="hover:bg-surface-alt hover:bg-hover">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-slate-900 dark:text-slate-100">{project.name}</p>
+                      <p className="font-medium text-inverse">{project.name}</p>
                       {project.description && (
-                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{project.description}</p>
+                        <p className="text-sm text-secondary text-tertiary line-clamp-1">{project.description}</p>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-slate-900 dark:text-slate-100">{project.customer?.name || project.customer_name || "-"}</p>
+                      <p className="text-sm text-inverse">{project.customer?.name || project.customer_name || "-"}</p>
                     </td>
                     <td className="px-4 py-3">
                       <ProjectStatusBadge status={project.status} />
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-slate-900 dark:text-slate-100">
+                      <p className="text-sm text-inverse">
                         {project.due_date ? formatDate(project.due_date) : "-"}
                       </p>
                     </td>
@@ -296,7 +296,7 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
                           </span>
                         ))}
                         {(project.tags || []).length > 3 && (
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-secondary">
                             +{(project.tags || []).length - 3}
                           </span>
                         )}
@@ -339,3 +339,8 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
     </div>
   );
 }
+
+
+
+
+

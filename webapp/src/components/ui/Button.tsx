@@ -1,6 +1,6 @@
 import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "link";
 type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -16,13 +16,15 @@ const baseClasses =
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm",
+    "bg-primary-action text-on-primary hover:bg-primary-hover focus:ring-primary",
   secondary:
-    "border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-500",
+    "border border-input-border text-secondary hover:bg-hover focus:ring-primary",
   danger:
-    "border border-red-300 text-red-700 hover:bg-red-50 focus:ring-red-500",
+    "border border-error-border text-error-text bg-error-bg hover:bg-error-bg focus:ring-error",
   ghost:
-    "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-400",
+    "text-secondary hover:text-primary hover:bg-hover focus:ring-primary",
+  link:
+    "text-primary-brand hover:text-primary hover:underline bg-transparent focus:ring-primary",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -66,3 +68,5 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
+
+export const buttonSizeClasses = sizeClasses;

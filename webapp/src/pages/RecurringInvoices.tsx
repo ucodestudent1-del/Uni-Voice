@@ -183,34 +183,34 @@ export default function RecurringInvoices() {
 
   const hasActiveFilters = searchTerm || statusFilter !== "all" || customerFilter;
 
-  if (loading && recurringInvoices.length === 0) return <div className="text-center py-20 text-slate-500">Loading recurring invoices...</div>;
+  if (loading && recurringInvoices.length === 0) return <div className="text-center py-20 text-secondary">Loading recurring invoices...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Recurring Invoices</h1>
-          <p className="text-sm text-slate-600 mt-1">{total} schedules total</p>
+          <h1 className="text-2xl font-bold text-primary">Recurring Invoices</h1>
+          <p className="text-sm text-secondary mt-1">{total} schedules total</p>
         </div>
         <FeatureGate feature="invoices.recurring" requiredPlan="pro" fallback={
           <UpgradePrompt feature="Recurring Invoices" requiredPlan="pro" />
         }>
           <button
             onClick={() => { setEditingRecurring(null); setShowCreateDialog(true); }}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
             New Schedule
           </button>
         </FeatureGate>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="bg-surface rounded-xl border border-color-subtle p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">Filters</h3>
+          <h3 className="text-lg font-semibold text-primary">Filters</h3>
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="text-sm font-medium text-secondary hover:text-primary"
             >
               Clear All
             </button>
@@ -219,21 +219,21 @@ export default function RecurringInvoices() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Search</label>
+            <label className="block text-xs font-medium text-secondary mb-1">Search</label>
             <input
               type="text"
               placeholder="Name, customer..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
+            <label className="block text-xs font-medium text-secondary mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -241,11 +241,11 @@ export default function RecurringInvoices() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Customer</label>
+            <label className="block text-xs font-medium text-secondary mb-1">Customer</label>
             <select
               value={customerFilter}
               onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Customers</option>
               {customers.map((c) => (
@@ -257,48 +257,48 @@ export default function RecurringInvoices() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="p-3 status-error-bg border status-error-border rounded-lg">
+          <p className="text-sm status-error-text">{error}</p>
         </div>
       )}
 
       {actionMessage && (
         <div className={`rounded-lg border px-3 py-2 text-sm ${
           actionMessage.type === "success"
-            ? "border-green-200 bg-green-50 text-green-800"
+            ? "status-success-border status-success-bg status-success-text"
             : actionMessage.type === "error"
-            ? "border-red-200 bg-red-50 text-red-800"
-            : "border-blue-200 bg-blue-50 text-blue-800"
+            ? "status-error-border status-error-bg status-error-text"
+            : "status-info-border status-info-bg status-info-text"
         }`}>
           {actionMessage.text}
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-surface rounded-xl border border-color-subtle overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Schedule</th>
-              <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Customer</th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Frequency</th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Next Generation</th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">End Date</th>
-              <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Amount</th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Auto-Send</th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Status</th>
-              <th className="text-center text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
+            <tr className="border-b border-color-subtle bg-surface-alt">
+              <th className="text-left text-xs font-medium text-secondary uppercase py-3 px-4">Schedule</th>
+              <th className="text-left text-xs font-medium text-secondary uppercase py-3 px-4">Customer</th>
+              <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4">Frequency</th>
+              <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4">Next Generation</th>
+              <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4">End Date</th>
+              <th className="text-right text-xs font-medium text-secondary uppercase py-3 px-4">Amount</th>
+              <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4">Auto-Send</th>
+              <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4">Status</th>
+              <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedInvoices.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-slate-500">
+                <td colSpan={9} className="py-16 text-center text-secondary">
                   {hasActiveFilters ? "No schedules match your filters" : "No recurring invoices yet"}
                   {!hasActiveFilters && (
                     <FeatureGate feature="invoices.recurring" requiredPlan="pro" fallback={null}>
                       <button
                         onClick={() => { setEditingRecurring(null); setShowCreateDialog(true); }}
-                        className="ml-2 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                        className="ml-2 inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
                       >
                         Create your first schedule
                       </button>
@@ -312,35 +312,35 @@ export default function RecurringInvoices() {
                 const isEnded = r.end_date && new Date(r.end_date) <= now;
                 const status = !r.is_active ? "paused" : isEnded ? "ended" : "active";
                 const statusLabel = { active: "Active", paused: "Paused", ended: "Ended" }[status];
-                const statusColor = { active: "bg-green-100 text-green-800", paused: "bg-amber-100 text-amber-800", ended: "bg-slate-100 text-slate-800" }[status];
+                const statusColor = { active: "status-success-bg status-success-text", paused: "status-warning-bg status-warning-text", ended: "bg-surface-alt text-primary" }[status];
 
                 return (
-                  <tr key={r.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                  <tr key={r.id} className="border-b border-color-subtle last:border-b-0 hover:bg-surface-alt">
                     <td className="py-3 px-4">
                       <div className="flex flex-col">
-                        <Link to={`/app/recurring-invoices/${r.id}`} className="text-sm font-medium text-slate-900 hover:text-primary-600">
+                        <Link to={`/app/recurring-invoices/${r.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
                           {r.name}
                         </Link>
-                        <span className="text-xs text-slate-500">{r.frequency} • every {r.interval_count}</span>
+                        <span className="text-xs text-secondary">{r.frequency} • every {r.interval_count}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
+                    <td className="py-3 px-4 text-sm text-secondary">
                       {r.customer_name || "—"}
                     </td>
-                    <td className="py-3 px-4 text-center text-sm text-slate-600 capitalize">
+                    <td className="py-3 px-4 text-center text-sm text-secondary capitalize">
                       {r.frequency} ({r.interval_count})
                     </td>
-                    <td className="py-3 px-4 text-center text-sm text-slate-600">
+                    <td className="py-3 px-4 text-center text-sm text-secondary">
                       {r.next_generation_at ? new Date(r.next_generation_at).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3 px-4 text-center text-sm text-slate-600">
+                    <td className="py-3 px-4 text-center text-sm text-secondary">
                       {r.end_date ? new Date(r.end_date).toLocaleDateString() : "Never"}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">
+                    <td className="py-3 px-4 text-right text-sm font-medium text-primary">
                       {formatCurrency(r.total || "0", r.currency)}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${r.auto_send ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-800"}`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${r.auto_send ? "status-success-bg status-success-text" : "bg-surface-alt text-primary"}`}>
                         {r.auto_send ? "On" : "Off"}
                       </span>
                     </td>
@@ -353,7 +353,7 @@ export default function RecurringInvoices() {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => setEditingRecurring(r)}
-                          className="text-xs text-slate-600 hover:text-slate-900"
+                          className="text-xs text-secondary hover:text-primary"
                           title="Edit"
                         >
                           Edit
@@ -361,7 +361,7 @@ export default function RecurringInvoices() {
                         {status === "active" && (
                           <button
                             onClick={() => handlePause(r.id)}
-                            className="text-xs text-amber-600 hover:text-amber-700"
+                            className="text-xs status-warning-text hover:text-warning-text"
                             title="Pause"
                           >
                             Pause
@@ -370,7 +370,7 @@ export default function RecurringInvoices() {
                         {status === "paused" && (
                           <button
                             onClick={() => handleResume(r.id)}
-                            className="text-xs text-green-600 hover:text-green-700"
+                            className="text-xs status-success-text hover:status-success-text"
                             title="Resume"
                           >
                             Resume
@@ -378,7 +378,7 @@ export default function RecurringInvoices() {
                         )}
                         <button
                           onClick={() => handleDelete(r.id)}
-                          className="text-xs text-red-600 hover:text-red-700"
+                          className="text-xs status-error-text hover:status-error-text"
                           title="Delete"
                         >
                           Delete
@@ -393,15 +393,15 @@ export default function RecurringInvoices() {
         </table>
 
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-between">
-            <p className="text-sm text-slate-600">
+          <div className="px-4 py-3 border-t border-color-subtle flex items-center justify-between">
+            <p className="text-sm text-secondary">
               Page {page} of {totalPages} • {total} schedules
             </p>
             <div className="flex items-center gap-2">
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="rounded-lg border border-input-border px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>{size} per page</option>
@@ -410,14 +410,14 @@ export default function RecurringInvoices() {
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-input-border px-3 py-1 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
               >
                 Previous
               </button>
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-input-border px-3 py-1 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
               >
                 Next
               </button>
@@ -532,21 +532,21 @@ function RecurringInvoiceDialog({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-color-subtle">
+          <h3 className="text-lg font-semibold text-primary">
             {initialData ? "Edit Recurring Invoice" : "Create Recurring Invoice"}
           </h3>
-          <p className="text-sm text-slate-500 mt-1">Configure the recurring schedule</p>
+          <p className="text-sm text-secondary mt-1">Configure the recurring schedule</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Customer *</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Customer *</label>
               <select
                 value={formData.customerId}
                 onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               >
                 <option value="">Select customer</option>
@@ -556,22 +556,22 @@ function RecurringInvoiceDialog({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Name *</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 required
                 placeholder="e.g. Monthly Retainer"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Frequency *</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Frequency *</label>
               <select
                 value={formData.frequency}
                 onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {FREQUENCY_OPTIONS.map((f) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
@@ -579,41 +579,41 @@ function RecurringInvoiceDialog({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Interval Count</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Interval Count</label>
               <input
                 type="number"
                 min="1"
                 max="12"
                 value={formData.intervalCount}
                 onChange={(e) => setFormData({ ...formData, intervalCount: Number(e.target.value) })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Next Generation Date *</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Next Generation Date *</label>
               <input
                 type="date"
                 value={formData.nextGenerationAt}
                 onChange={(e) => setFormData({ ...formData, nextGenerationAt: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">End Date (optional)</label>
+              <label className="block text-sm font-medium text-secondary mb-1">End Date (optional)</label>
               <input
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
               <select
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
@@ -626,65 +626,65 @@ function RecurringInvoiceDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Auto-Send Generated Invoices</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Auto-Send Generated Invoices</label>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={formData.autoSend}
                   onChange={(e) => setFormData({ ...formData, autoSend: e.target.checked })}
-                  className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-input-border text-primary-brand focus:ring-primary"
                 />
-                <span className="text-sm text-slate-700">Automatically email generated invoices to customer</span>
+                <span className="text-sm text-secondary">Automatically email generated invoices to customer</span>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Active</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Active</label>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-input-border text-primary-brand focus:ring-primary"
                 />
-                <span className="text-sm text-slate-700">Schedule is active</span>
+                <span className="text-sm text-secondary">Schedule is active</span>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Notes for generated invoices..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Terms</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Terms</label>
             <textarea
               value={formData.terms}
               onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
               rows={2}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Payment terms for generated invoices..."
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-color-subtle">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg"
+              className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading || !formData.customerId || !formData.name}
-              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover disabled:opacity-50"
             >
               {isLoading ? "Saving..." : initialData ? "Save Changes" : "Create Schedule"}
             </button>
@@ -694,3 +694,7 @@ function RecurringInvoiceDialog({
     </div>
   );
 }
+
+
+
+

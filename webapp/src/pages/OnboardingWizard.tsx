@@ -10,19 +10,19 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
   return {
     welcome: (
       <div className="text-center py-6">
-        <h2 className="text-xl font-semibold text-slate-900 mb-2">Welcome aboard!</h2>
-        <p className="text-slate-600">Let's get your business set up in just a few steps.</p>
+        <h2 className="text-xl font-semibold text-primary mb-2">Welcome aboard!</h2>
+        <p className="text-secondary">Let's get your business set up in just a few steps.</p>
       </div>
     ),
     business: (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-slate-900">Tell us about your business</h2>
-        <p className="text-slate-600">
+        <h2 className="text-xl font-semibold text-primary">Tell us about your business</h2>
+        <p className="text-secondary">
           You can update your business details in Settings at any time.
         </p>
         <button
           onClick={() => navigate("/app/settings")}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="px-4 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
         >
           Open Business Profile
         </button>
@@ -30,13 +30,13 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
     ),
     customer: (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-slate-900">Add your first customer</h2>
-        <p className="text-slate-600">
+        <h2 className="text-xl font-semibold text-primary">Add your first customer</h2>
+        <p className="text-secondary">
           Customers help you create invoices faster and track who owes what.
         </p>
         <button
           onClick={() => navigate("/app/customers")}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="px-4 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
         >
           Add Customer
         </button>
@@ -44,13 +44,13 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
     ),
     product: (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-slate-900">Add a product or service</h2>
-        <p className="text-slate-600">
+        <h2 className="text-xl font-semibold text-primary">Add a product or service</h2>
+        <p className="text-secondary">
           Save line items so you can add them to invoices quickly.
         </p>
         <button
           onClick={() => navigate("/app/products")}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="px-4 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
         >
           Add Product/Service
         </button>
@@ -58,13 +58,13 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
     ),
     invoice: (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-slate-900">Create your first invoice</h2>
-        <p className="text-slate-600">
+        <h2 className="text-xl font-semibold text-primary">Create your first invoice</h2>
+        <p className="text-secondary">
           Send your first invoice to a customer to start tracking income.
         </p>
         <button
           onClick={() => navigate("/app/invoices/new")}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="px-4 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
         >
           New Invoice
         </button>
@@ -72,16 +72,16 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
     ),
     complete: (
       <div className="text-center py-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-green-500 text-2xl">✓</span>
+        <div className="w-16 h-16 status-success-bg rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="status-success-text text-2xl">✓</span>
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">You're all set!</h2>
-        <p className="text-slate-600 mb-6">
+        <h2 className="text-2xl font-bold text-primary mb-2">You're all set!</h2>
+        <p className="text-secondary mb-6">
           Your business is fully configured. Let's start creating invoices.
         </p>
         <button
           onClick={() => window.location.assign("/app")}
-          className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+          className="px-6 py-3 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors font-medium"
         >
           Go to Dashboard
         </button>
@@ -165,10 +165,10 @@ export default function OnboardingWizard() {
 
   if (!progress) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-surface-alt">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="text-slate-500 mt-2">Loading onboarding...</p>
+          <p className="text-secondary mt-2">Loading onboarding...</p>
         </div>
       </div>
     );
@@ -181,17 +181,17 @@ export default function OnboardingWizard() {
   const isLastStep = progress.currentStep === "complete";
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="min-h-screen bg-surface-alt py-8">
       <div className="max-w-3xl mx-auto px-4">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Getting Started</h1>
-          <p className="text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-primary">Getting Started</h1>
+          <p className="text-secondary mt-1">
             Step {progress.completedSteps + 1} of {progress.totalSteps}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow p-6 md:p-8 mb-8">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">{currentTitle}</h2>
+        <div className="bg-surface rounded-xl shadow p-6 md:p-8 mb-8">
+          <h2 className="text-xl font-semibold text-primary mb-4">{currentTitle}</h2>
           {stepContent}
         </div>
 
@@ -201,7 +201,7 @@ export default function OnboardingWizard() {
           <button
             onClick={handleSkip}
             disabled={isCompleting}
-            className="px-4 py-2 text-slate-600 hover:text-slate-900"
+            className="px-4 py-2 text-secondary hover:text-primary"
           >
             Skip Onboarding
           </button>
@@ -210,7 +210,7 @@ export default function OnboardingWizard() {
               <button
                 onClick={handleFinish}
                 disabled={isCompleting}
-                className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+                className="px-4 py-2 border border-input-border rounded-lg hover:bg-surface-alt transition-colors disabled:opacity-50"
               >
                 {isCompleting ? "Saving..." : "Skip Step"}
               </button>
@@ -218,7 +218,7 @@ export default function OnboardingWizard() {
             <button
               onClick={handleComplete}
               disabled={isCompleting}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+              className="px-6 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
             >
               {isLastStep
                 ? "Go to Dashboard"
@@ -232,3 +232,8 @@ export default function OnboardingWizard() {
     </div>
   );
 }
+
+
+
+
+

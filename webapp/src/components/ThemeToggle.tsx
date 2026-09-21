@@ -17,15 +17,15 @@ export default function ThemeToggle() {
   }[theme];
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 p-1">
+    <div className="flex items-center gap-1 rounded-lg bg-surface-alt text-tertiary p-1">
       <button
         type="button"
         onClick={() => setTheme("light")}
         aria-label="Light mode"
         className={`rounded-md p-1.5 text-sm transition-all ${
           resolvedTheme === "light" && theme === "light"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow"
-            : "hover:text-slate-900 dark:hover:text-slate-100"
+            ? "bg-surface text-primary shadow"
+            : "hover:text-primary"
         }`}
         title="Light"
       >
@@ -37,8 +37,8 @@ export default function ThemeToggle() {
         aria-label="Dark mode"
         className={`rounded-md p-1.5 text-sm transition-all ${
           resolvedTheme === "dark" && theme === "dark"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow"
-            : "hover:text-slate-900 dark:hover:text-slate-100"
+            ? "bg-surface text-primary shadow"
+            : "hover:text-primary"
         }`}
         title="Dark"
       >
@@ -50,8 +50,8 @@ export default function ThemeToggle() {
         aria-label="System mode"
         className={`rounded-md p-1.5 text-sm transition-all ${
           theme === "system"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow"
-            : "hover:text-slate-900 dark:hover:text-slate-100"
+            ? "bg-surface text-primary shadow"
+            : "hover:text-primary"
         }`}
         title="System"
       >

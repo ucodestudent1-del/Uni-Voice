@@ -125,11 +125,11 @@ const PaletteItemCard: React.FC<{ type: ComponentType; label: string; descriptio
       {...listeners}
       className="
         flex items-center gap-3 p-2 rounded-lg
-        bg-white border border-slate-200
-        hover:border-primary-300 hover:bg-primary-50
+        bg-surface border border-color-subtle
+        hover:border-primary-300 hover:bg-primary-bg
         cursor-grab active:cursor-grabbing
         transition-all duration-150
-        focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1
+        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
       "
       aria-label={`Add ${label} (${description})`}
       aria-grabbed="false"
@@ -138,8 +138,8 @@ const PaletteItemCard: React.FC<{ type: ComponentType; label: string; descriptio
     >
       <span className="text-lg">{getComponentIcon(type)}</span>
       <div className="flex-1">
-        <div className="text-sm font-medium text-slate-900">{label}</div>
-        <div className="text-xs text-slate-500">{description}</div>
+        <div className="text-sm font-medium text-primary">{label}</div>
+        <div className="text-xs text-secondary">{description}</div>
       </div>
     </div>
   );
@@ -187,12 +187,12 @@ const SortableNode: React.FC<{
 
   const nodeClassName = `
     relative border rounded-lg p-3 mb-2 transition-all cursor-grab
-    focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
     ${isSelected
-      ? "ring-2 ring-primary-500 border-primary-500 bg-primary-50"
-      : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+      ? "ring-2 ring-primary-500 border-primary-500 bg-primary-bg"
+      : "border-color-subtle hover:border-input-border hover:bg-surface-alt"
     }
-    ${isStructural ? "bg-slate-50" : "bg-white"}
+    ${isStructural ? "bg-surface-alt" : "bg-surface"}
     ${isDragging ? "opacity-50" : ""}
   `;
 
@@ -273,7 +273,7 @@ const SortableNode: React.FC<{
             }}
             aria-label="Duplicate component"
             title="Duplicate (Ctrl+D)"
-            className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500 text-xs"
+            className="w-5 h-5 flex items-center justify-center rounded bg-surface-alt text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary text-xs"
           >
             📄
           </button>
@@ -284,7 +284,7 @@ const SortableNode: React.FC<{
             }}
             aria-label="Delete component"
             title="Delete (Delete)"
-            className="w-5 h-5 flex items-center justify-center rounded bg-red-100 text-red-600 hover:bg-red-200 focus:outline-none focus:ring-1 focus:ring-red-500 text-xs"
+            className="w-5 h-5 flex items-center justify-center rounded status-error-bg status-error-text hover:bg-error-bg focus:outline-none focus:ring-1 focus:ring-error text-xs"
           >
             ✕
           </button>
@@ -321,10 +321,10 @@ const DropZone: React.FC<{
         border-2 border-dashed rounded-lg py-3 text-center text-sm
         transition-all duration-200 mb-2
         ${isValidTarget
-          ? "border-primary-300 bg-primary-50 text-primary-700"
-          : "border-slate-200 text-slate-400"
+          ? "border-primary-300 bg-primary-bg text-primary-brand"
+          : "border-color-subtle text-tertiary"
         }
-        focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1
+        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
       `}
     >
       {isValidTarget ? `Insert at index ${index}` : "Drop here"}
@@ -879,12 +879,12 @@ case "ArrowUp":
       onDragEnd={handleDragEnd}
     >
       <div className="flex h-full overflow-hidden">
-        <div className="w-64 bg-slate-50 border-r border-slate-200 p-4 overflow-y-auto">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">Components</h2>
+        <div className="w-64 bg-surface-alt border-r border-color-subtle p-4 overflow-y-auto">
+          <h2 className="text-sm font-semibold text-secondary mb-4">Components</h2>
           <div className="space-y-4">
             {categories.map((category) => (
               <div key={category.id}>
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <h3 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2">
                   {category.label}
                 </h3>
                 <div className="space-y-1">
@@ -907,9 +907,9 @@ case "ArrowUp":
           onClick={closeContextMenu}
           ref={canvasRef}
         >
-          <div className="p-6 bg-slate-50 h-full">
+          <div className="p-6 bg-surface-alt h-full">
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 min-h-[600px] relative">
+              <div className="bg-surface border border-color-subtle rounded-xl shadow-sm p-8 min-h-[600px] relative">
                 {alignmentGuides.length > 0 && (
                   <>
                     {alignmentGuides
@@ -917,7 +917,7 @@ case "ArrowUp":
                       .map((guide, i) => (
                         <div
                           key={`vguide-${i}`}
-                          className="absolute h-full w-px bg-blue-500/50 pointer-events-none"
+                          className="absolute h-full w-px status-info-text/50 pointer-events-none"
                           style={{ left: guide.position }}
                         />
                       ))}
@@ -926,7 +926,7 @@ case "ArrowUp":
                       .map((guide, i) => (
                         <div
                           key={`hguide-${i}`}
-                          className="absolute w-full h-px bg-blue-500/50 pointer-events-none"
+                          className="absolute w-full h-px status-info-text/50 pointer-events-none"
                           style={{ top: guide.position }}
                         />
                       ))}
@@ -954,7 +954,7 @@ case "ArrowUp":
 
         {contextMenu && (
           <div
-            className="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"
+            className="fixed z-50 bg-surface border border-color-subtle rounded-lg shadow-lg py-1 min-w-[160px]"
             style={{ left: contextMenu.x, top: contextMenu.y }}
             role="menu"
             aria-label="Component context menu"
@@ -964,7 +964,7 @@ case "ArrowUp":
                 handleDuplicate(contextMenu.componentId);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary"
             >
               Duplicate
             </button>
@@ -973,7 +973,7 @@ case "ArrowUp":
                 handleDelete(contextMenu.componentId);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500"
+              className="w-full text-left px-3 py-2 text-sm status-error-text hover:status-error-bg focus:outline-none focus:ring-1 focus:ring-error"
             >
               Delete
             </button>
@@ -983,17 +983,17 @@ case "ArrowUp":
         <DragOverlay>
           {activeDrag && (
             <div
-              className="bg-white border border-slate-200 rounded-lg shadow-lg p-3 opacity-90"
+              className="bg-surface border border-color-subtle rounded-lg shadow-lg p-3 opacity-90"
               style={{
                 transform: snapDelta.x !== 0 || snapDelta.y !== 0
                   ? `translate(${snapDelta.x}px, ${snapDelta.y}px)`
                   : undefined,
               }}
             >
-              <div className="text-sm font-medium text-slate-700">
+              <div className="text-sm font-medium text-secondary">
                 {activeDrag.componentType || "Component"}
               </div>
-              <div className="text-xs text-slate-500 mt-1">
+              <div className="text-xs text-secondary mt-1">
                 {activeDrag.operation === "create" ? "Drag to canvas" : "Dragging..."}
               </div>
             </div>
@@ -1005,3 +1005,7 @@ case "ArrowUp":
 };
 
 export default DocumentEditor;
+
+
+
+

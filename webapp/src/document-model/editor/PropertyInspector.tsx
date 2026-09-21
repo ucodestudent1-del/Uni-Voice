@@ -33,9 +33,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
 }) => {
   if (!component) {
     return (
-      <div className="w-80 bg-white border-l border-slate-200 p-4 overflow-y-auto">
-        <h3 className="text-sm font-semibold text-slate-500 mb-4">Properties</h3>
-        <p className="text-sm text-slate-400">Select a component to edit its properties.</p>
+      <div className="w-80 bg-surface border-l border-color-subtle p-4 overflow-y-auto">
+        <h3 className="text-sm font-semibold text-secondary mb-4">Properties</h3>
+        <p className="text-sm text-tertiary">Select a component to edit its properties.</p>
       </div>
     );
   }
@@ -43,8 +43,8 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
   const def = getComponentDefinition(component.type);
   if (!def) {
     return (
-      <div className="w-80 bg-white border-l border-slate-200 p-4 overflow-y-auto">
-        <p className="text-sm text-slate-500">Component definition not found.</p>
+      <div className="w-80 bg-surface border-l border-color-subtle p-4 overflow-y-auto">
+        <p className="text-sm text-secondary">Component definition not found.</p>
       </div>
     );
   }
@@ -66,9 +66,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
   };
 
   return (
-    <div className="w-80 bg-white border-l border-slate-200 p-4 overflow-y-auto">
+    <div className="w-80 bg-surface border-l border-color-subtle p-4 overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider">
           {component.type} Properties
         </h3>
         <div className="flex gap-1">
@@ -77,10 +77,10 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
             aria-label={component.visible === false ? "Show component" : "Hide component"}
             aria-pressed={component.visible !== false}
             title={component.visible === false ? "Show component" : "Hide component"}
-            className={`p-1 rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 ${
+            className={`p-1 rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 ${
               component.visible === false
-                ? "bg-amber-100 text-amber-700"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "status-warning-bg text-warning-text"
+                : "bg-surface-alt text-secondary hover:bg-surface-alt"
             }`}
           >
             {component.visible === false ? "hidden" : "visible"}
@@ -89,7 +89,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
             onClick={() => onDuplicate(component.id)}
             aria-label="Duplicate component"
             title="Duplicate (Ctrl+D)"
-            className="p-1 rounded text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+            className="p-1 rounded text-xs bg-surface-alt text-secondary hover:bg-surface-alt focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
           >
             📄
           </button>
@@ -97,7 +97,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
             onClick={() => onDelete(component.id)}
             aria-label="Delete component"
             title="Delete (Delete)"
-            className="p-1 rounded text-xs bg-red-100 text-red-600 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+            className="p-1 rounded text-xs status-error-bg status-error-text hover:bg-error-bg focus:outline-none focus:ring-2 focus:ring-error focus:ring-offset-1"
           >
             ✕
           </button>
@@ -105,46 +105,46 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
       </div>
 
       <div className="mb-4">
-        <label className="block text-xs font-medium text-slate-500 uppercase mb-1">
+        <label className="block text-xs font-medium text-secondary uppercase mb-1">
           Component ID
         </label>
-        <p className="text-xs text-slate-400 break-all">{component.id}</p>
+        <p className="text-xs text-tertiary break-all">{component.id}</p>
       </div>
 
-      <div className="border-b border-slate-200 mb-4">
+      <div className="border-b border-color-subtle mb-4">
         {def.inspector(component, handlePropsChange, inspectorContext)}
       </div>
 
-      <div className="border-b border-slate-200 mb-4">
-        <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Style</h4>
+      <div className="border-b border-color-subtle mb-4">
+        <h4 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-3">Style</h4>
 
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="prop-font-size" className="block text-xs font-medium text-slate-600 mb-1">Font Size</label>
+              <label htmlFor="prop-font-size" className="block text-xs font-medium text-secondary mb-1">Font Size</label>
               <input
                 id="prop-font-size"
                 type="number"
                 value={component.style.fontSize || ""}
                 onChange={(e) => handleStyleChange({ fontSize: e.target.value ? parseInt(e.target.value) : undefined })}
                 placeholder="14"
-                className="w-full text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full text-sm border border-input-border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
-              <label htmlFor="prop-color" className="block text-xs font-medium text-slate-600 mb-1">Color</label>
+              <label htmlFor="prop-color" className="block text-xs font-medium text-secondary mb-1">Color</label>
               <input
                 id="prop-color"
                 type="color"
                 value={component.style.color || "#000000"}
                 onChange={(e) => handleStyleChange({ color: e.target.value })}
-                className="w-full h-8 border border-slate-300 rounded-lg cursor-pointer p-0 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full h-8 border border-input-border rounded-lg cursor-pointer p-0 focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="prop-font-weight" className="block text-xs font-medium text-slate-600 mb-1">Font Weight</label>
+            <label htmlFor="prop-font-weight" className="block text-xs font-medium text-secondary mb-1">Font Weight</label>
             <select
               id="prop-font-weight"
               value={component.style.fontWeight || "normal"}
@@ -152,7 +152,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 const v = e.target.value;
                 handleStyleChange({ fontWeight: v === "normal" ? "normal" : parseInt(v) });
               }}
-              className="w-full text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="normal">Normal</option>
               <option value="300">Light</option>
@@ -165,7 +165,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
           </div>
 
           <div>
-            <label htmlFor="prop-text-align" className="block text-xs font-medium text-slate-600 mb-1">Text Align</label>
+            <label htmlFor="prop-text-align" className="block text-xs font-medium text-secondary mb-1">Text Align</label>
             <div className="flex gap-1">
               {(["left", "center", "right", "justify"] as const).map((align) => (
                 <button
@@ -173,10 +173,10 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                   id={`prop-text-align-${align}`}
                   aria-label={`Align text to ${align}`}
                   onClick={() => handleStyleChange({ textAlign: align })}
-                  className={`flex-1 py-1 text-xs rounded focus:outline-none focus:ring-1 focus:ring-primary-500 ${
+                  className={`flex-1 py-1 text-xs rounded focus:outline-none focus:ring-1 focus:ring-primary ${
                     component.style.textAlign === align
-                      ? "bg-primary-100 text-primary-700"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      ? "bg-primary-bg text-primary-brand"
+                      : "bg-surface-alt text-secondary hover:bg-surface-alt"
                   }`}
                 >
                   {align}
@@ -186,26 +186,26 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
           </div>
 
           <div>
-            <label htmlFor="prop-padding" className="block text-xs font-medium text-slate-600 mb-1">Padding</label>
+            <label htmlFor="prop-padding" className="block text-xs font-medium text-secondary mb-1">Padding</label>
             <input
               id="prop-padding"
               type="text"
               value={component.style.padding || ""}
               onChange={(e) => handleStyleChange({ padding: e.target.value || undefined })}
               placeholder="e.g. 8px or 8px 16px"
-              className="w-full text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label htmlFor="prop-margin" className="block text-xs font-medium text-slate-600 mb-1">Margin</label>
+            <label htmlFor="prop-margin" className="block text-xs font-medium text-secondary mb-1">Margin</label>
             <input
               id="prop-margin"
               type="text"
               value={component.style.margin || ""}
               onChange={(e) => handleStyleChange({ margin: e.target.value || undefined })}
               placeholder="e.g. 8px or 8px 16px"
-              className="w-full text-sm border border-slate-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-full text-sm border border-input-border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
@@ -215,3 +215,9 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
 };
 
 export default PropertyInspector;
+
+
+
+
+
+

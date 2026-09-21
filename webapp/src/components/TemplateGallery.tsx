@@ -35,25 +35,25 @@ const PresetCard: React.FC<{
       onClick={onClick}
       className={`
         group relative flex flex-col text-left rounded-xl border-2 p-4
-        transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
-        ${isSelected ? "border-primary-600 bg-primary-50" : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"}
+        transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary
+        ${isSelected ? "border-primary-600 bg-primary-bg" : "border-color-subtle bg-surface hover:border-input-border hover:shadow-md"}
       `}
     >
       <div className="mb-2 flex items-center gap-2">
         <span
-          className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 text-slate-600 group-hover:bg-slate-200"
+          className="flex h-6 w-6 items-center justify-center rounded-lg bg-surface-alt text-secondary group-hover:bg-surface-alt"
           aria-hidden="true"
         >
           {preset.metadata.category === "blank" ? "◇" : preset.metadata.category === "default" ? "★" : "◼"}
         </span>
-        <span className="text-sm font-medium text-slate-500">
+        <span className="text-sm font-medium text-secondary">
           {CATEGORY_LABELS[preset.metadata.category]}
         </span>
       </div>
-      <h3 className="text-base font-semibold text-slate-900">{preset.metadata.name}</h3>
-      <p className="mt-1 text-sm text-slate-500 flex-1">{preset.metadata.description}</p>
+      <h3 className="text-base font-semibold text-primary">{preset.metadata.name}</h3>
+      <p className="mt-1 text-sm text-secondary flex-1">{preset.metadata.description}</p>
       {preset.metadata.industry && (
-        <span className="mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-slate-100 text-slate-600">
+        <span className="mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-surface-alt text-secondary">
           {preset.metadata.industry}
         </span>
       )}
@@ -98,13 +98,13 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="flex max-h-[80vh] w-full max-w-4xl flex-col gap-4 overflow-hidden rounded-xl bg-slate-50 p-6 shadow-2xl">
+      <div className="flex max-h-[80vh] w-full max-w-4xl flex-col gap-4 overflow-hidden rounded-xl bg-surface-alt p-6 shadow-2xl">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">Template Gallery</h2>
+          <h2 className="text-xl font-semibold text-primary">Template Gallery</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="rounded-lg p-2 text-secondary hover:bg-surface-alt hover:text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label="Close template gallery"
           >
             <span aria-hidden="true">&times;</span>
@@ -116,14 +116,14 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
           placeholder="Search templates..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
         <div className="overflow-y-auto">
           <div className="space-y-6">
             {visibleCategories.map((category) => (
               <div key={category}>
-                <h3 className="mb-2 text-sm font-medium text-slate-600">
+                <h3 className="mb-2 text-sm font-medium text-secondary">
                   {CATEGORY_LABELS[category]}
                 </h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -141,11 +141,11 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+        <div className="flex justify-end gap-3 border-t border-color-subtle pt-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
           >
             Cancel
           </button>
@@ -155,7 +155,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
               onSelect("professional");
               onClose();
             }}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             Use Professional
           </button>
@@ -167,3 +167,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
 
 export { BLANK_PRESET, PROFESSIONAL_PRESET, INDUSTRY_PRESETS, getPresetTemplate };
 export default TemplateGallery;
+
+
+
+

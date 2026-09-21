@@ -67,39 +67,39 @@ export default function ProjectNotesTab({ projectId, onNotesChanged }: ProjectNo
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="p-3 status-error-bg border status-error-border rounded-lg">
+          <p className="text-sm status-error-text">{error}</p>
         </div>
       )}
 
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-700">Project Notes</h3>
+        <h3 className="text-sm font-medium text-secondary">Project Notes</h3>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+          className="rounded-lg bg-primary-action px-3 py-1.5 text-sm font-medium text-on-primary hover:bg-primary-hover"
         >
           + Add Note
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="space-y-3 p-4 border border-slate-200 rounded-lg bg-slate-50">
+        <form onSubmit={handleSubmit} className="space-y-3 p-4 border border-color-subtle rounded-lg bg-surface-alt">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title (optional)</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Title (optional)</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Brief title for this note..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Note *</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Note *</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Add a note about this project..."
               rows={4}
               required
@@ -109,14 +109,14 @@ export default function ProjectNotesTab({ projectId, onNotesChanged }: ProjectNo
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-input-border px-3 py-1.5 text-sm text-secondary hover:bg-surface-alt"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !content.trim()}
-              className="rounded-lg bg-primary-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+              className="rounded-lg bg-primary-action px-4 py-1.5 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
             >
               {submitting ? "Saving..." : "Save Note"}
             </button>
@@ -126,29 +126,29 @@ export default function ProjectNotesTab({ projectId, onNotesChanged }: ProjectNo
 
       {loading ? (
         <div className="space-y-2">
-          <div className="h-16 bg-slate-100 rounded-lg animate-pulse" />
-          <div className="h-16 bg-slate-100 rounded-lg animate-pulse" />
+          <div className="h-16 bg-surface-alt rounded-lg animate-pulse" />
+          <div className="h-16 bg-surface-alt rounded-lg animate-pulse" />
         </div>
       ) : notes.length === 0 ? (
-        <p className="text-sm text-slate-500">No notes yet.</p>
+        <p className="text-sm text-secondary">No notes yet.</p>
       ) : (
         <div className="space-y-3">
           {notes.map((note) => (
-            <div key={note.id} className="border border-slate-200 rounded-lg p-4 bg-white">
+            <div key={note.id} className="border border-color-subtle rounded-lg p-4 bg-surface">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   {note.title && (
-                    <h4 className="font-medium text-slate-900">{note.title}</h4>
+                    <h4 className="font-medium text-primary">{note.title}</h4>
                   )}
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{note.content}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm text-secondary whitespace-pre-wrap">{note.content}</p>
+                  <p className="text-xs text-secondary">
                     {formatDate(note.created_at)}
                     {note.user_id && " · by team member"}
                   </p>
                 </div>
                 <button
                   onClick={() => handleDelete(note)}
-                  className="text-xs text-red-600 hover:text-red-700"
+                  className="text-xs status-error-text hover:status-error-text"
                   title="Delete note"
                 >
                   Delete
@@ -161,3 +161,7 @@ export default function ProjectNotesTab({ projectId, onNotesChanged }: ProjectNo
     </div>
   );
 }
+
+
+
+

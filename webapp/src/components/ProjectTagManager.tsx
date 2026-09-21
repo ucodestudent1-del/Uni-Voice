@@ -89,12 +89,12 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-slate-700">Project Tags</h4>
+        <h4 className="text-sm font-medium text-secondary">Project Tags</h4>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setShowAddDialog(!showAddDialog)}
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            className="text-sm text-primary-brand hover:text-primary-brand font-medium"
           >
             {showAddDialog ? "Cancel" : "Add Tag"}
           </button>
@@ -103,7 +103,7 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
 
       <div className="flex flex-wrap gap-2">
         {projectTags.length === 0 ? (
-          <span className="text-sm text-slate-500">No tags assigned</span>
+          <span className="text-sm text-secondary">No tags assigned</span>
         ) : (
           projectTags.map((t) => (
             <span
@@ -126,17 +126,17 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
       </div>
 
       {showAddDialog && (
-        <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+        <div className="border border-color-subtle rounded-lg p-3 bg-surface-alt">
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Create New Tag</label>
+              <label className="block text-xs font-medium text-secondary mb-1">Create New Tag</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={newTagName}
                   onChange={(e) => setNewTagName(e.target.value)}
                   placeholder="Tag name"
-                  className="flex-1 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="flex-1 rounded-lg border border-input-border px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <input
                   type="color"
@@ -148,7 +148,7 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
                   type="button"
                   onClick={handleAddNew}
                   disabled={!newTagName.trim() || loading}
-                  className="text-sm text-primary-600 hover:text-primary-700 disabled:opacity-50"
+                  className="text-sm text-primary-brand hover:text-primary-brand disabled:opacity-50"
                 >
                   Add
                 </button>
@@ -157,7 +157,7 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
 
             {availableTags.length > 0 && (
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Existing Tags</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Existing Tags</label>
                 <div className="flex flex-wrap gap-2">
                   {availableTags.map((t) => (
                     <button
@@ -180,3 +180,7 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
     </div>
   );
 }
+
+
+
+

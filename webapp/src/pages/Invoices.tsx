@@ -14,9 +14,12 @@ import {
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
-import { Plus, FileText, Send, Copy } from "lucide-react";
+import { Plus, FileText, Send, Copy, Search } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
+import InvoiceStatus, { isOverdueStatus } from "../components/primitives/InvoiceStatus";
+import PageHeader from "../components/primitives/PageHeader";
+import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
 import type { ApiInvoice, ApiCustomer, ApiInvoiceListItem } from "../types/api";
 
@@ -246,42 +249,23 @@ export default function Invoices() {
 
   const getPaymentStateColor = (state: string) => {
     const colors: Record<string, string> = {
-      unpaid: "bg-red-100 text-red-800",
-      partial: "bg-yellow-100 text-yellow-800",
-      paid: "bg-green-100 text-green-800",
-      deposit_due: "bg-orange-100 text-orange-800",
+      unpaid: "status-error-bg status-error-text",
+      partial: "status-warning-bg status-warning-text",
+      paid: "status-success-bg status-success-text",
+      deposit_due: "status-warning-bg status-warning-text",
     };
     return colors[state] || colors.unpaid;
   };
 
-  if (loading && invoices.length === 0) return <div className="text-center py-20 text-slate-500 dark:text-slate-400">Loading invoices...</div>;
+  if (loading && invoices.length === 0) return <div className="text-center py-20 text-secondary text-tertiary">Loading invoices…</div>;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Invoices</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{total} invoices total</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleExportCsv}
-            title="Export CSV"
-            className="hidden sm:inline-flex"
-          >
-            CSV
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleExportJson}
-            title="Export JSON"
-            className="hidden sm:inline-flex"
-          >
-            JSON
-          </Button>
+      <PageHeader
+        title="Invoices"
+        breadcrumbs={[{ label: "Home", to: "/app" }, { label: "Invoices" }]}
+        description={`${total} invoice${total !== 1 ? "s" : ""} total`}
+        primaryAction={
           <Button
             variant="primary"
             size="md"
@@ -290,23 +274,45 @@ export default function Invoices() {
           >
             New Invoice
           </Button>
-        </div>
-      </div>
+        }
+        secondaryActions={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportCsv}
+              title="Export CSV"
+              className="hidden sm:inline-flex"
+            >
+              CSV
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportJson}
+              title="Export JSON"
+              className="hidden sm:inline-flex"
+            >
+              JSON
+            </Button>
+          </>
+        }
+      />
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+      <div className="bg-surface rounded-xl border border-color-subtle border-color p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filters</h3>
+          <h3 className="text-lg font-semibold text-inverse">Filters</h3>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-600 dark:text-primary-400" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"}`}
+              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-brand text-primary-brand" : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
             >
               {showAdvancedFilters ? "Hide" : "Show"} Advanced
             </button>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                className="text-sm font-medium text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"
               >
                 Clear All
               </button>
@@ -316,21 +322,21 @@ export default function Invoices() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Search</label>
+            <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Search</label>
             <input
               type="text"
               placeholder="Invoice #, customer name, email..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Status</label>
+            <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s} value={s}>{s === "partially_paid" ? "Partially Paid" : s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -338,11 +344,11 @@ export default function Invoices() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Payment State</label>
+            <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Payment State</label>
             <select
               value={paymentStateFilter}
               onChange={(e) => { setPaymentStateFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {PAYMENT_STATE_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -352,13 +358,13 @@ export default function Invoices() {
         </div>
 
         {showAdvancedFilters && (
-          <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+          <div className="mt-4 border-t border-color-subtle border-color pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Customer</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Customer</label>
               <select
                 value={customerFilter}
                 onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All Customers</option>
                 {customers.map((c) => (
@@ -367,17 +373,17 @@ export default function Invoices() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Currency</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Currency</label>
               <input
                 type="text"
                 placeholder="USD, EUR, etc."
                 value={currencyFilter}
                 onChange={(e) => { setCurrencyFilter(e.target.value.toUpperCase()); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Min Amount</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Min Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -385,11 +391,11 @@ export default function Invoices() {
                 placeholder="0.00"
                 value={minAmount}
                 onChange={(e) => { setMinAmount(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Max Amount</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Max Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -397,43 +403,43 @@ export default function Invoices() {
                 placeholder="999999.99"
                 value={maxAmount}
                 onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Issue Date From</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Issue Date From</label>
               <input
                 type="date"
                 value={issueDateFrom}
                 onChange={(e) => { setIssueDateFrom(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Issue Date To</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Issue Date To</label>
               <input
                 type="date"
                 value={issueDateTo}
                 onChange={(e) => { setIssueDateTo(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Due Date From</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Due Date From</label>
               <input
                 type="date"
                 value={dueDateFrom}
                 onChange={(e) => { setDueDateFrom(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Due Date To</label>
+              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Due Date To</label>
               <input
                 type="date"
                 value={dueDateTo}
                 onChange={(e) => { setDueDateTo(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -441,60 +447,60 @@ export default function Invoices() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        <div className="p-3 status-error-bg dark:bg-error-bg border status-error-border dark:status-error-border rounded-lg">
+          <p className="text-sm status-error-text dark:status-error-text">{error}</p>
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bg-surface rounded-xl border border-color-subtle border-color overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-              <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+            <tr className="border-b border-color-subtle border-color bg-surface-alt dark:bg-surface-alt">
+              <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
                 onClick={() => handleSort("invoice_number")}>
                 Invoice
                 {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+              <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
                 onClick={() => handleSort("customer_name")}>
                 Customer
                 {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">
+              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">
                 Payment State
               </th>
-              <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+              <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
                 onClick={() => handleSort("total")}>
                 Total
                 {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+              <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
                 onClick={() => handleSort("amount_due")}>
                 Amount Due
                 {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+              <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
                 onClick={() => handleSort("due_date")}>
                 Due Date
                 {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
                 onClick={() => handleSort("issue_date")}>
                 Issue Date
                 {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
                 onClick={() => handleSort("status")}>
                 Status
                 {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Actions</th>
+              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {invoices.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-slate-500 dark:text-slate-400">
+                <td colSpan={9} className="py-16 text-center text-secondary text-tertiary">
                   {hasActiveFilters ? "No invoices match your filters" : "No invoices yet"}
                   {!hasActiveFilters && (
                     <Button
@@ -513,42 +519,42 @@ export default function Invoices() {
               invoices.map((inv) => {
                 const paymentState = getPaymentState(inv);
                 return (
-                  <tr key={inv.id} className="border-b border-slate-100 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <tr key={inv.id} className="border-b border-color-subtle border-color last:border-b-0 hover:bg-surface-alt hover:bg-hover">
                     <td className="py-3 px-4">
                       <div className="flex flex-col">
-                        <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-slate-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400">
+                        <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-inverse hover:text-primary-brand dark:hover:text-primary-brand">
                           {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
                         </Link>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-secondary text-tertiary">
                           {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="py-3 px-4 text-sm text-secondary text-tertiary">
                       {inv.customer_name || "—"}
-                      {inv.customer_email && <span className="text-xs text-slate-400 dark:text-slate-500 block">{inv.customer_email}</span>}
+                      {inv.customer_email && <span className="text-xs text-tertiary text-tertiary block">{inv.customer_email}</span>}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getPaymentStateColor(paymentState)}`}>
                         {getPaymentStateLabel(paymentState)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <td className="py-3 px-4 text-right text-sm font-medium text-inverse">
                       {formatCurrency(inv.total, inv.currency)}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <td className="py-3 px-4 text-right text-sm font-medium text-inverse">
                       {Number(inv.amount_due || 0) > 0
                         ? formatCurrency(inv.amount_due, inv.currency)
-                        : <span className="text-green-600 dark:text-green-400">Paid</span>}
+                        : <span className="status-success-text dark:status-success-text">Paid</span>}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-slate-600 dark:text-slate-400">
+                    <td className="py-3 px-4 text-right text-sm text-secondary text-tertiary">
                       {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3 px-4 text-center text-sm text-slate-600 dark:text-slate-400">
+                    <td className="py-3 px-4 text-center text-sm text-secondary text-tertiary">
                       {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <InvoiceStatusBadge status={inv.status} />
+                      <InvoiceStatus status={inv.status} isOverdue={isOverdueStatus(inv.status, inv.due_date)} showIcon />
                     </td>
                      <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-2">
@@ -579,7 +585,7 @@ export default function Invoices() {
                             icon={<FileText className="w-3.5 h-3.5" />}
                             onClick={() => handleFinalize(inv.id)}
                             title="Finalize"
-                            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                            className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand"
                           />
                         )}
                       </div>
@@ -592,15 +598,15 @@ export default function Invoices() {
         </table>
 
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="px-4 py-3 border-t border-color-subtle border-color flex items-center justify-between">
+            <p className="text-sm text-secondary text-tertiary">
               Page {page} of {totalPages} • {total} invoices
             </p>
             <div className="flex items-center gap-2">
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-1 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>{size} per page</option>
@@ -631,3 +637,10 @@ export default function Invoices() {
     </div>
   );
 }
+
+
+
+
+
+
+

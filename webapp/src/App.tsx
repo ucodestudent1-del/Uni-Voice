@@ -19,20 +19,21 @@ import TemplateEditorPage from "./pages/TemplateEditorPage";
 import Settings from "./pages/Settings";
 import PublicInvoice from "./pages/PublicInvoice";
 import Reports from "./pages/Reports";
+import Payments from "./pages/Payments";
 import Expenses from "./pages/Expenses";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">Loading...</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-screen text-secondary">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function OnboardedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, onboarding } = useAuth();
-  if (isLoading || (isAuthenticated && onboarding === null)) return <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">Loading...</div>;
+  if (isLoading || (isAuthenticated && onboarding === null)) return <div className="flex items-center justify-center h-screen text-secondary">Loading...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (onboarding && !onboarding.isComplete) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
@@ -40,7 +41,7 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-slate-600 dark:text-slate-400">Loading...</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-screen text-secondary">Loading...</div>;
   if (isAuthenticated) return <Navigate to="/app" replace />;
   return <>{children}</>;
 }
@@ -67,7 +68,8 @@ export default function App() {
         <Route path="invoices/:id/edit" element={<InvoiceEditorPage />} />
           <Route path="customers" element={<Customers />} />
           <Route path="customers/:id" element={<CustomerDetail />} />
-        <Route path="products" element={<Products />} />
+         <Route path="products" element={<Products />} />
+         <Route path="payments" element={<Payments />} />
          <Route path="templates" element={<Templates />} />
          <Route path="templates/new" element={<TemplateEditorPage />} />
          <Route path="templates/:id/edit" element={<TemplateEditorPage />} />

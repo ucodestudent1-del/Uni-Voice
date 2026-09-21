@@ -10,28 +10,28 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
 
   if (loading) {
     return (
-      <div className={`rounded-xl border border-slate-200 bg-white p-6 ${compact ? "" : "text-center"}`}>
-        <p className="text-sm text-slate-500">Loading plan...</p>
+      <div className={`rounded-xl border border-color-subtle bg-surface p-6 ${compact ? "" : "text-center"}`}>
+        <p className="text-sm text-secondary">Loading plan...</p>
       </div>
     );
   }
 
   if (!plan) {
     return (
-      <div className={`rounded-xl border border-slate-200 bg-white p-6 ${compact ? "text-center" : ""}`}>
+      <div className={`rounded-xl border border-color-subtle bg-surface p-6 ${compact ? "text-center" : ""}`}>
         <div className={`flex items-center ${compact ? "justify-center flex-col" : "gap-4"}`}>
-           <div className="rounded-full bg-slate-100 p-3">
-             <span className="text-slate-600 text-xl">★</span>
+           <div className="rounded-full bg-surface-alt p-3">
+             <span className="text-secondary text-xl">★</span>
            </div>
           <div className={compact ? "text-center" : ""}>
-            <p className="text-lg font-semibold text-slate-900">Free Plan</p>
-            <p className="text-sm text-slate-500">You are on the free plan</p>
+            <p className="text-lg font-semibold text-primary">Free Plan</p>
+            <p className="text-sm text-secondary">You are on the free plan</p>
           </div>
         </div>
         {onUpgrade && (
           <button
             onClick={onUpgrade}
-            className="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="mt-4 w-full rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
             Upgrade to Pro
           </button>
@@ -45,17 +45,17 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
   const isBusiness = plan.code === "business";
 
   const statusColor =
-    subscription?.status === "active" ? "bg-green-100 text-green-800" :
-    subscription?.status === "trialing" ? "bg-blue-100 text-blue-800" :
-    subscription?.status === "past_due" ? "bg-amber-100 text-amber-800" :
-    subscription?.status === "cancelled" ? "bg-red-100 text-red-800" :
-    "bg-slate-100 text-slate-800";
+    subscription?.status === "active" ? "status-success-bg status-success-text" :
+    subscription?.status === "trialing" ? "status-info-bg status-info-text" :
+    subscription?.status === "past_due" ? "status-warning-bg status-warning-text" :
+    subscription?.status === "cancelled" ? "status-error-bg status-error-text" :
+    "bg-surface-alt text-primary";
 
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white p-6 ${compact ? "text-center" : ""}`}>
+    <div className={`rounded-xl border border-color-subtle bg-surface p-6 ${compact ? "text-center" : ""}`}>
       {!compact && (
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">Current Plan</h3>
+          <h3 className="text-lg font-semibold text-primary">Current Plan</h3>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColor}`}>
             {subscription?.status ?? "free"}
           </span>
@@ -63,26 +63,26 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
       )}
 
       <div className={`flex items-center ${compact ? "justify-center flex-col" : "gap-4"}`}>
-        <div className={`rounded-full ${isFree ? "bg-slate-100" : isPro ? "bg-primary-100" : "bg-accent-100"} p-3`}>
+        <div className={`rounded-full ${isFree ? "bg-surface-alt" : isPro ? "bg-primary-bg" : "bg-info-bg"} p-3`}>
           {plan.code === "free" ? "★" : plan.code === "pro" ? "★" : "★"}
         </div>
           <div>
             <p className={`font-bold ${compact ? "text-center" : ""}`}>
-              <span className="text-2xl text-slate-900">${plan.price || 0}</span>
-              {!isFree && <span className="text-slate-500">/month</span>}
+              <span className="text-2xl text-primary">${plan.price || 0}</span>
+              {!isFree && <span className="text-secondary">/month</span>}
             </p>
-            <p className={`text-sm text-slate-600 ${compact ? "text-center" : ""}`}>{plan.name}</p>
+            <p className={`text-sm text-secondary ${compact ? "text-center" : ""}`}>{plan.name}</p>
           </div>
       </div>
 
       {!compact && (
-        <p className="mt-3 text-sm text-slate-600">{plan.description}</p>
+        <p className="mt-3 text-sm text-secondary">{plan.description}</p>
       )}
 
       {isFree && onUpgrade && (
         <button
           onClick={onUpgrade}
-          className="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          className="mt-4 w-full rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
         >
           Upgrade to Pro
         </button>
@@ -90,3 +90,7 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
     </div>
   );
 }
+
+
+
+

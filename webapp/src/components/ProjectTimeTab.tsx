@@ -92,18 +92,18 @@ function TimeEntryForm({ projectId, onClose, onSaved, editingEntry = null }: Tim
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="p-3 status-error-bg border status-error-border rounded-lg">
+          <p className="text-sm status-error-text">{error}</p>
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Description *</label>
+        <label className="block text-sm font-medium text-secondary mb-1">Description *</label>
         <input
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           placeholder="What did you work on?"
           required
         />
@@ -111,22 +111,22 @@ function TimeEntryForm({ projectId, onClose, onSaved, editingEntry = null }: Tim
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Duration (minutes)</label>
+          <label className="block text-sm font-medium text-secondary mb-1">Duration (minutes)</label>
           <input
             type="number"
             value={durationMinutes}
             onChange={(e) => setDurationMinutes(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="e.g. 90"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Rate</label>
+          <label className="block text-sm font-medium text-secondary mb-1">Rate</label>
           <input
             type="number"
             value={billableRate}
             onChange={(e) => setBillableRate(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="e.g. 75"
             step="0.01"
           />
@@ -135,21 +135,21 @@ function TimeEntryForm({ projectId, onClose, onSaved, editingEntry = null }: Tim
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Start time</label>
+          <label className="block text-sm font-medium text-secondary mb-1">Start time</label>
           <input
             type="datetime-local"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">End time</label>
+          <label className="block text-sm font-medium text-secondary mb-1">End time</label>
           <input
             type="datetime-local"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
@@ -160,15 +160,15 @@ function TimeEntryForm({ projectId, onClose, onSaved, editingEntry = null }: Tim
           id="billable"
           checked={billable}
           onChange={(e) => setBillable(e.target.checked)}
-          className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+          className="rounded border-input-border text-primary-brand focus:ring-primary"
         />
-        <label htmlFor="billable" className="text-sm text-slate-700">
+        <label htmlFor="billable" className="text-sm text-secondary">
           Billable
         </label>
         <button
           type="button"
           onClick={handleTimerMode}
-          className="ml-auto text-xs text-slate-500 hover:text-slate-700 underline"
+          className="ml-auto text-xs text-secondary hover:text-secondary underline"
         >
           Use current time
         </button>
@@ -178,14 +178,14 @@ function TimeEntryForm({ projectId, onClose, onSaved, editingEntry = null }: Tim
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+          className="rounded-lg border border-input-border px-3 py-1.5 text-sm text-secondary hover:bg-surface-alt"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-primary-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          className="rounded-lg bg-primary-action px-4 py-1.5 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
         >
           {loading ? "Saving..." : editingEntry ? "Update" : "Save"}
         </button>
@@ -285,34 +285,34 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="p-3 status-error-bg border status-error-border rounded-lg">
+          <p className="text-sm status-error-text">{error}</p>
         </div>
       )}
 
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-            <p className="text-xs text-slate-500 uppercase">Billable Hours</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
+          <div className="border border-color-subtle rounded-lg p-3 bg-surface-alt">
+            <p className="text-xs text-secondary uppercase">Billable Hours</p>
+            <p className="mt-1 text-lg font-semibold text-primary">
               {formatDuration(summary.billable_minutes)}
             </p>
           </div>
-          <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-            <p className="text-xs text-slate-500 uppercase">Unbilled Billable</p>
-            <p className="mt-1 text-lg font-semibold text-amber-600">
+          <div className="border border-color-subtle rounded-lg p-3 bg-surface-alt">
+            <p className="text-xs text-secondary uppercase">Unbilled Billable</p>
+            <p className="mt-1 text-lg font-semibold status-warning-text">
               {formatDuration(summary.unbilled_billable_minutes)}
             </p>
           </div>
-          <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-            <p className="text-xs text-slate-500 uppercase">Unbilled Amount</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
+          <div className="border border-color-subtle rounded-lg p-3 bg-surface-alt">
+            <p className="text-xs text-secondary uppercase">Unbilled Amount</p>
+            <p className="mt-1 text-lg font-semibold text-primary">
               {formatCurrency(summary.unbilled_billable_amount, currency)}
             </p>
           </div>
-          <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-            <p className="text-xs text-slate-500 uppercase">Total Billable</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
+          <div className="border border-color-subtle rounded-lg p-3 bg-surface-alt">
+            <p className="text-xs text-secondary uppercase">Total Billable</p>
+            <p className="mt-1 text-lg font-semibold text-primary">
               {formatCurrency(summary.total_billable_amount, currency)}
             </p>
           </div>
@@ -326,14 +326,14 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
               setEditingEntry(null);
               setShowForm(true);
             }}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
             + Log Time
           </button>
           {!runningTimerId && (
             <button
               onClick={handleStartTimer}
-              className="rounded-lg border border-green-300 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+              className="rounded-lg border status-success-border px-4 py-2 text-sm font-medium status-success-text hover:status-success-bg"
             >
               Start Timer
             </button>
@@ -343,8 +343,8 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
 
       {showForm && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          <div className="bg-surface rounded-lg shadow-xl w-full max-w-lg mx-4 p-6">
+            <h2 className="text-lg font-semibold text-primary mb-4">
               {editingEntry ? "Edit Time Entry" : "Log Time Entry"}
             </h2>
             <TimeEntryForm
@@ -363,60 +363,60 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
       {loading ? (
         <div className="space-y-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 bg-slate-100 rounded-lg animate-pulse" />
+            <div key={i} className="h-16 bg-surface-alt rounded-lg animate-pulse" />
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <p className="text-sm text-slate-500">No time entries logged yet.</p>
+        <p className="text-sm text-secondary">No time entries logged yet.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-surface-alt border-b border-color-subtle">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Description</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Duration</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Rate</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Amount</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-secondary uppercase">Date</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-secondary uppercase">Description</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-secondary uppercase">Duration</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-secondary uppercase">Rate</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-secondary uppercase">Amount</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-secondary uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-slate-50">
-                  <td className="px-3 py-2 text-sm text-slate-600">
+                <tr key={entry.id} className="hover:bg-surface-alt">
+                  <td className="px-3 py-2 text-sm text-secondary">
                     {formatDate(entry.start_time ?? entry.created_at)}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${
-                        entry.billable ? "bg-green-500" : "bg-slate-400"
+                        entry.billable ? "status-success-text" : "bg-surface-alt400"
                       }`} />
-                      <span className="text-sm text-slate-900">{entry.description}</span>
+                      <span className="text-sm text-primary">{entry.description}</span>
                       {entry.is_invoiced && (
-                        <span className="text-xs text-slate-400">(Invoiced)</span>
+                        <span className="text-xs text-tertiary">(Invoiced)</span>
                       )}
                       {runningTimerId === entry.id && (
-                        <span className="text-xs text-green-600 font-medium">● Running</span>
+                        <span className="text-xs status-success-text font-medium">● Running</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-right text-sm text-slate-900">
+                  <td className="px-3 py-2 text-right text-sm text-primary">
                     {entry.duration_minutes
                       ? formatDuration(entry.duration_minutes)
                       : "0h 0m"}
                   </td>
-                  <td className="px-3 py-2 text-right text-sm text-slate-900">
+                  <td className="px-3 py-2 text-right text-sm text-primary">
                     {entry.billable ? formatCurrency(entry.billable_rate, currency) : "-"}
                   </td>
-                  <td className="px-3 py-2 text-right text-sm text-slate-900">
+                  <td className="px-3 py-2 text-right text-sm text-primary">
                     {entry.billable ? formatCurrency(entry.billable_amount, currency) : "-"}
                   </td>
                   <td className="px-3 py-2 text-right">
                     {runningTimerId === entry.id ? (
                       <button
                         onClick={() => handleStopTimer(entry.id)}
-                        className="text-xs text-green-600 hover:text-green-700"
+                        className="text-xs status-success-text hover:status-success-text"
                       >
                         Stop
                       </button>
@@ -424,14 +424,14 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleEdit(entry)}
-                          className="text-xs text-slate-600 hover:text-slate-900"
+                          className="text-xs text-secondary hover:text-primary"
                         >
                           Edit
                         </button>
                         {!entry.is_invoiced && (
                           <button
                             onClick={() => handleDelete(entry)}
-                            className="text-xs text-red-600 hover:text-red-700"
+                            className="text-xs status-error-text hover:status-error-text"
                           >
                             Delete
                           </button>
@@ -448,3 +448,8 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
     </div>
   );
 }
+
+
+
+
+

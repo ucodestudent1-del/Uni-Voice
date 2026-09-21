@@ -111,89 +111,89 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-y-auto py-8">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 my-8">
-        <div className="p-6 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-3xl mx-4 my-8">
+        <div className="p-6 border-b border-color-subtle">
+          <h3 className="text-lg font-semibold text-primary">
             {isEditing ? "Edit Customer" : "Add Customer"}
           </h3>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="p-3 status-error-bg border status-error-border rounded-lg">
+              <p className="text-sm status-error-text">{error}</p>
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Name *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Email</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Company</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Company</label>
               <input
                 type="text"
                 value={formData.companyName}
                 onChange={(e) => handleChange("companyName", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Phone</label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Tax ID</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Tax ID</label>
             <input
               type="text"
               value={formData.taxId}
               onChange={(e) => handleChange("taxId", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Payment Terms (Days)</label> Net
+              <label className="block text-sm font-medium text-secondary mb-1">Payment Terms (Days)</label> Net
               <input
                 type="number"
                 min="0"
                 step="1"
                 value={formData.paymentTerms ?? ""}
                 onChange={(e) => handleChange("paymentTerms", e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="e.g. 30"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Default Currency</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Default Currency</label>
               <select
                 value={formData.defaultCurrency || ""}
                 onChange={(e) => handleChange("defaultCurrency", e.target.value || undefined)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">Default</option>
                 <option value="USD">USD</option>
@@ -208,8 +208,8 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
             </div>
           </div>
 
-          <fieldset className="border border-slate-200 rounded-lg p-4">
-            <legend className="text-sm font-medium text-slate-700 px-1">Address</legend>
+          <fieldset className="border border-color-subtle rounded-lg p-4">
+            <legend className="text-sm font-medium text-secondary px-1">Address</legend>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <input
@@ -217,7 +217,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="Street address"
                   value={formData.addressLine1}
                   onChange={(e) => handleChange("addressLine1", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -226,7 +226,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="Street address 2"
                   value={formData.addressLine2}
                   onChange={(e) => handleChange("addressLine2", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -235,7 +235,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="City"
                   value={formData.city}
                   onChange={(e) => handleChange("city", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -244,7 +244,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="State / Region"
                   value={formData.stateOrRegion}
                   onChange={(e) => handleChange("stateOrRegion", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
@@ -253,14 +253,14 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="Postal code"
                   value={formData.postalCode}
                   onChange={(e) => handleChange("postalCode", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
               <div>
                 <select
                   value={formData.countryCode}
                   onChange={(e) => handleChange("countryCode", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   {COUNTRIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -271,18 +271,18 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
           </fieldset>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Notes</label>
             <textarea
               rows={3}
               value={formData.notes}
               onChange={(e) => handleChange("notes", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Additional notes for this customer..."
             />
           </div>
         </form>
 
-        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+        <div className="p-6 border-t border-color-subtle flex justify-end gap-3">
           <Button
             variant="secondary"
             size="md"
@@ -304,3 +304,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
     </div>
   );
 }
+
+
+
+

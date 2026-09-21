@@ -73,85 +73,85 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
   const cur = invoice.currency;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-8 max-w-3xl mx-auto font-[system-ui,-apple-system,BlinkMacSystemFont,Segoe_UI,Roboto,Helvetica,Arial,sans-serif]">
+    <div className="bg-surface border border-color rounded-xl shadow-lg p-8 max-w-3xl mx-auto font-[system-ui,-apple-system,BlinkMacSystemFont,Segoe_UI,Roboto,Helvetica,Arial,sans-serif]">
       <div className="flex justify-between items-start mb-8">
         <div>
           {invoice.businessLogo ? (
             <img src={invoice.businessLogo} alt={invoice.businessName} className="h-12 w-auto" />
           ) : (
-            <h2 className="text-2xl font-bold text-slate-900">{invoice.businessName || "InvoiceFlow"}</h2>
+            <h2 className="text-2xl font-bold text-primary">{invoice.businessName || "InvoiceFlow"}</h2>
           )}
-          {invoice.businessEmail && <p className="text-sm text-slate-500 mt-1">{invoice.businessEmail}</p>}
-          {invoice.businessPhone && <p className="text-sm text-slate-500">{invoice.businessPhone}</p>}
-          {invoice.businessWebsite && <p className="text-sm text-slate-500">{invoice.businessWebsite}</p>}
-          {invoice.businessAddress && <p className="text-sm text-slate-500 whitespace-pre-line">{invoice.businessAddress}</p>}
+          {invoice.businessEmail && <p className="text-sm text-tertiary mt-1">{invoice.businessEmail}</p>}
+          {invoice.businessPhone && <p className="text-sm text-tertiary">{invoice.businessPhone}</p>}
+          {invoice.businessWebsite && <p className="text-sm text-tertiary">{invoice.businessWebsite}</p>}
+          {invoice.businessAddress && <p className="text-sm text-tertiary whitespace-pre-line">{invoice.businessAddress}</p>}
         </div>
         <div className="text-right">
           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-            invoice.status === "paid" ? "bg-green-100 text-green-800" :
-            invoice.status === "sent" ? "bg-blue-100 text-blue-800" :
-            invoice.status === "overdue" ? "bg-red-100 text-red-800" :
-            invoice.status === "draft" ? "bg-slate-100 text-slate-800" :
-            "bg-yellow-100 text-yellow-800"
+            invoice.status === "paid" ? "status-success-bg status-success-text" :
+            invoice.status === "sent" ? "status-info-bg status-info-text" :
+            invoice.status === "overdue" ? "status-error-bg status-error-text" :
+            invoice.status === "draft" ? "status-tertiary-bg status-tertiary-text" :
+            "status-warning-bg status-warning-text"
           }`}>
             {invoice.status}
           </span>
           {invoice.invoiceNumber && (
-            <p className="mt-2 text-lg font-semibold text-slate-900">#{invoice.invoiceNumber}</p>
+            <p className="mt-2 text-lg font-semibold text-primary">#{invoice.invoiceNumber}</p>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-8 mb-8">
         <div>
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Bill To</h3>
+          <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-2">Bill To</h3>
           {invoice.customerName ? (
             <>
-              <p className="font-semibold text-slate-900">{invoice.customerName}</p>
-              {invoice.customerCompanyName && <p className="text-sm text-slate-600">{invoice.customerCompanyName}</p>}
-              {invoice.customerEmail && <p className="text-sm text-slate-500">{invoice.customerEmail}</p>}
-              {invoice.customerAddress && <p className="text-sm text-slate-500 whitespace-pre-line">{invoice.customerAddress}</p>}
+              <p className="font-semibold text-primary">{invoice.customerName}</p>
+              {invoice.customerCompanyName && <p className="text-sm text-secondary">{invoice.customerCompanyName}</p>}
+              {invoice.customerEmail && <p className="text-sm text-tertiary">{invoice.customerEmail}</p>}
+              {invoice.customerAddress && <p className="text-sm text-tertiary whitespace-pre-line">{invoice.customerAddress}</p>}
             </>
           ) : (
-            <p className="text-sm text-slate-400">No customer selected</p>
+            <p className="text-sm text-tertiary">No customer selected</p>
           )}
         </div>
         <div className="text-right">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Invoice Details</h3>
-          {invoice.issueDate && <p className="text-sm text-slate-600">Issue date: <span className="text-slate-900">{invoice.issueDate}</span></p>}
-          {invoice.dueDate && <p className="text-sm text-slate-600">Due date: <span className="text-slate-900">{invoice.dueDate}</span></p>}
-          <p className="text-sm text-slate-600">Currency: <span className="text-slate-900">{cur}</span></p>
+          <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-2">Invoice Details</h3>
+          {invoice.issueDate && <p className="text-sm text-secondary">Issue date: <span className="text-primary">{invoice.issueDate}</span></p>}
+          {invoice.dueDate && <p className="text-sm text-secondary">Due date: <span className="text-primary">{invoice.dueDate}</span></p>}
+          <p className="text-sm text-secondary">Currency: <span className="text-primary">{cur}</span></p>
         </div>
       </div>
 
       <table className="w-full border-collapse mb-6">
         <thead>
-          <tr className="border-b border-slate-200">
-            <th className="text-left text-xs font-semibold text-slate-500 uppercase py-3">#</th>
-            <th className="text-left text-xs font-semibold text-slate-500 uppercase py-3">Description</th>
-            <th className="text-right text-xs font-semibold text-slate-500 uppercase py-3">Qty</th>
-            <th className="text-right text-xs font-semibold text-slate-500 uppercase py-3">Rate</th>
-            <th className="text-right text-xs font-semibold text-slate-500 uppercase py-3">Tax</th>
-            <th className="text-right text-xs font-semibold text-slate-500 uppercase py-3">Amount</th>
+          <tr className="border-b border-color">
+            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3">#</th>
+            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3">Description</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Qty</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Rate</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Tax</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Amount</th>
           </tr>
         </thead>
         <tbody>
           {invoice.items.map((item, i) => {
             const lineTotal = computeLineTotal(item, cur);
             return (
-              <tr key={i} className="border-b border-slate-100">
-                <td className="py-3 text-sm text-slate-500">{i + 1}</td>
-                <td className="py-3 text-sm text-slate-900">{item.description || "—"}</td>
-                <td className="py-3 text-right text-sm text-slate-600">{item.quantity} {item.unit}</td>
-                <td className="py-3 text-right text-sm text-slate-600">{fmt(item.unitPrice, cur)}</td>
-                <td className="py-3 text-right text-sm text-slate-600">{fmtRate(item.taxRate)}</td>
-                <td className="py-3 text-right text-sm font-medium text-slate-900">{lineTotal}</td>
+              <tr key={i} className="border-b border-color-subtle">
+                <td className="py-3 text-sm text-tertiary">{i + 1}</td>
+                <td className="py-3 text-sm text-primary">{item.description || "—"}</td>
+                <td className="py-3 text-right text-sm text-secondary">{item.quantity} {item.unit}</td>
+                <td className="py-3 text-right text-sm text-secondary">{fmt(item.unitPrice, cur)}</td>
+                <td className="py-3 text-right text-sm text-secondary">{fmtRate(item.taxRate)}</td>
+                <td className="py-3 text-right text-sm font-medium text-primary">{lineTotal}</td>
               </tr>
             );
           })}
           {invoice.items.length === 0 && (
             <tr>
-              <td colSpan={6} className="py-8 text-center text-sm text-slate-400">No line items added yet</td>
+              <td colSpan={6} className="py-8 text-center text-sm text-tertiary">No line items added yet</td>
             </tr>
           )}
         </tbody>
@@ -161,9 +161,9 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
         <table className="w-full border-collapse mb-6">
           <tbody>
             {invoice.fees.map((fee, i) => (
-              <tr key={i} className="border-b border-slate-100">
-                <td colSpan={5} className="py-2 text-sm text-slate-600">{fee.description}</td>
-                <td className="py-2 text-right text-sm font-medium text-slate-900">{fmt(fee.amount, cur)}</td>
+              <tr key={i} className="border-b border-color-subtle">
+                <td colSpan={5} className="py-2 text-sm text-secondary">{fee.description}</td>
+                <td className="py-2 text-right text-sm font-medium text-primary">{fmt(fee.amount, cur)}</td>
               </tr>
             ))}
           </tbody>
@@ -174,40 +174,40 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
         <table className="w-64 border-collapse">
           <tbody>
             <tr>
-              <td className="py-2 text-sm text-slate-600">Subtotal</td>
-              <td className="py-2 text-right text-sm text-slate-900">{fmt(invoice.subtotal, cur)}</td>
+              <td className="py-2 text-sm text-secondary">Subtotal</td>
+              <td className="py-2 text-right text-sm text-primary">{fmt(invoice.subtotal, cur)}</td>
             </tr>
             {Number(invoice.discountTotal) > 0 && (
               <tr>
-                <td className="py-2 text-sm text-slate-600">Discount</td>
-                <td className="py-2 text-right text-sm text-slate-900">-{fmt(invoice.discountTotal, cur)}</td>
+                <td className="py-2 text-sm text-secondary">Discount</td>
+                <td className="py-2 text-right text-sm text-success-text">−{fmt(invoice.discountTotal, cur)}</td>
               </tr>
             )}
             {Number(invoice.taxTotal) > 0 && (
               <tr>
-                <td className="py-2 text-sm text-slate-600">Tax</td>
-                <td className="py-2 text-right text-sm text-slate-900">{fmt(invoice.taxTotal, cur)}</td>
+                <td className="py-2 text-sm text-secondary">Tax</td>
+                <td className="py-2 text-right text-sm text-primary">{fmt(invoice.taxTotal, cur)}</td>
               </tr>
             )}
             {Number(invoice.feeTotal) > 0 && (
               <tr>
-                <td className="py-2 text-sm text-slate-600">Fees</td>
-                <td className="py-2 text-right text-sm text-slate-900">{fmt(invoice.feeTotal, cur)}</td>
+                <td className="py-2 text-sm text-secondary">Fees</td>
+                <td className="py-2 text-right text-sm text-primary">{fmt(invoice.feeTotal, cur)}</td>
               </tr>
             )}
-            <tr className="border-t border-slate-200">
-              <td className="py-3 text-lg font-semibold text-slate-900">Total</td>
-              <td className="py-3 text-right text-lg font-bold text-slate-900">{fmt(invoice.total, cur)}</td>
+            <tr className="border-t border-color">
+              <td className="py-3 text-lg font-semibold text-primary">Total</td>
+              <td className="py-3 text-right text-lg font-bold text-primary">{fmt(invoice.total, cur)}</td>
             </tr>
             {Number(invoice.amountPaid) > 0 && (
               <>
                 <tr>
-                  <td className="py-2 text-sm text-slate-600">Paid</td>
-                  <td className="py-2 text-right text-sm text-slate-900">{fmt(invoice.amountPaid, cur)}</td>
+                  <td className="py-2 text-sm text-secondary">Paid</td>
+                  <td className="py-2 text-right text-sm text-primary">{fmt(invoice.amountPaid, cur)}</td>
                 </tr>
                 <tr>
-                  <td className="py-2 text-sm font-semibold text-slate-900">Amount Due</td>
-                  <td className="py-2 text-right text-lg font-bold text-primary-700">{fmt(invoice.amountDue, cur)}</td>
+                  <td className="py-2 text-sm font-semibold text-primary">Amount Due</td>
+                  <td className="py-2 text-right text-lg font-bold text-primary-brand">{fmt(invoice.amountDue, cur)}</td>
                 </tr>
               </>
             )}
@@ -215,18 +215,18 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
         </table>
       </div>
 
-      {invoice.notes && <p className="text-sm text-slate-700 mb-4 whitespace-pre-line">{invoice.notes}</p>}
-      {invoice.terms && <p className="text-xs text-slate-500 mb-4 whitespace-pre-line">{invoice.terms}</p>}
+      {invoice.notes && <p className="text-sm text-secondary mb-4 whitespace-pre-line">{invoice.notes}</p>}
+      {invoice.terms && <p className="text-xs text-tertiary mb-4 whitespace-pre-line">{invoice.terms}</p>}
       {invoice.paymentInstructions && (
-        <div className="bg-slate-50 rounded-lg p-4 mt-6">
-          <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Payment Instructions</h4>
-          <p className="text-sm text-slate-700 whitespace-pre-line">{invoice.paymentInstructions}</p>
+        <div className="bg-surface-alt rounded-lg p-4 mt-6">
+          <h4 className="text-xs font-semibold text-tertiary uppercase mb-2">Payment Instructions</h4>
+          <p className="text-sm text-secondary whitespace-pre-line">{invoice.paymentInstructions}</p>
         </div>
       )}
 
       {invoice.attachments && invoice.attachments.length > 0 && (
         <div className="mt-8">
-          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          <h4 className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-3">
             Photos &amp; Attachments
           </h4>
           <div className="grid grid-cols-3 gap-3">
@@ -236,22 +236,22 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
                   <img
                     src={a.url}
                     alt={a.name}
-                    className={`w-full h-24 object-cover rounded-lg border border-slate-200 ${
+                    className={`w-full h-24 object-cover rounded-lg border border-color ${
                       a.category === "before"
-                        ? "ring-2 ring-offset-2 ring-amber-500"
+                        ? "ring-2 ring-offset-2 ring-warning-text"
                         : a.category === "after"
-                        ? "ring-2 ring-offset-2 ring-green-500"
+                        ? "ring-2 ring-offset-2 ring-success-text"
                         : ""
                     }`}
                   />
                 ) : (
-                  <div className="flex h-24 w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
-                    <Upload className="h-6 w-6 text-slate-400" />
+                  <div className="flex h-24 w-full items-center justify-center rounded-lg border border-color bg-surface-alt">
+                    <Upload className="h-6 w-6 text-tertiary" />
                   </div>
                 )}
-                <p className="mt-1 text-xs text-slate-500 truncate">{a.name}</p>
+                <p className="mt-1 text-xs text-tertiary truncate">{a.name}</p>
                 {a.category && a.category !== "attachment" && (
-                  <span className="text-[10px] font-medium capitalize text-slate-600">
+                  <span className="text-[10px] font-medium capitalize text-secondary">
                     {a.category}
                   </span>
                 )}
@@ -262,15 +262,15 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
       )}
 
       {invoice.paymentLink && (
-        <div className="mt-10 border-t border-slate-200 pt-6 text-center">
+        <div className="mt-10 border-t border-color pt-6 text-center">
           <a
             href={invoice.paymentLink}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-md hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-action px-6 py-3 text-base font-semibold text-on-primary shadow-md hover:bg-primary-hover hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
           >
             <CreditCard className="h-5 w-5" />
             Pay {fmt(invoice.amountDue, cur)} now
           </a>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-tertiary">
             Secure online payment — no account required
           </p>
         </div>

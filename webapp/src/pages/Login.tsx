@@ -90,70 +90,70 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
+    <div className="min-h-screen bg-surface-alt">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+              <h1 className="text-3xl font-bold text-inverse">
                 {step === "two-factor" ? "Two-factor authentication" : "Sign in to your account"}
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
+              <p className="text-secondary text-tertiary mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
             </div>
 
                {step === "credentials" && (
                <form onSubmit={handleCredentialsSubmit} className="space-y-5">
                  {error && (
-                   <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+                   <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
                  )}
                  {oauthError && (
-                   <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{oauthError}</div>
+                   <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{oauthError}</div>
                  )}
                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email address</label>
+                    <label className="block text-sm font-medium text-secondary text-secondary mb-1">Email address</label>
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="you@example.com"
                     />
                  </div>
                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                    <label className="block text-sm font-medium text-secondary text-secondary mb-1">Password</label>
                     <input
                       type="password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="••••••••"
                     />
                  </div>
                  <button
                    type="submit"
                    disabled={loading}
-                   className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+                   className="w-full rounded-lg bg-primary-action px-4 py-2.5 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
                  >
                    {loading ? "Signing in..." : "Sign In"}
                  </button>
 
                     <div className="relative my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-300 dark:border-slate-600" />
+                        <div className="w-full border-t border-input-border border-input-border" />
                       </div>
                       <div className="relative flex justify-center text-sm">
-                        <span className="px-3 bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400">Or sign in with</span>
+                        <span className="px-3 bg-surface-alt text-secondary text-tertiary">Or sign in with</span>
                       </div>
                     </div>
 
                    <button
                      type="button"
                      onClick={() => (window.location.href = "/api/auth/oauth/google")}
-                     className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                     className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm font-medium text-secondary text-secondary hover:bg-surface-alt hover:bg-hover transition-colors"
                    >
-                    <span className="flex h-5 w-5 items-center justify-center rounded bg-blue-100 text-blue-600 font-bold text-xs">G</span>
+                    <span className="flex h-5 w-5 items-center justify-center rounded status-info-bg status-info-text font-bold text-xs">G</span>
                     Sign in with Google
                   </button>
                </form>
@@ -162,15 +162,15 @@ export default function Login() {
             {step === "two-factor" && (
               <form onSubmit={handleTwoFactorSubmit} className="space-y-5">
                 {error && (
-                  <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+                  <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
                 )}
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                   <label className="block text-sm font-medium text-secondary text-secondary mb-1">
                      Authentication code
                    </label>
-                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                   <p className="text-xs text-secondary text-tertiary mb-2">
                      Enter the 6-digit code from your authenticator app for{" "}
-                     <span className="font-medium text-slate-700 dark:text-slate-300">{twoFactorEmail}</span>
+                     <span className="font-medium text-secondary text-secondary">{twoFactorEmail}</span>
                      . You can also enter a recovery code.
                    </p>
                    <input
@@ -181,7 +181,7 @@ export default function Login() {
                      required
                      value={code}
                      onChange={(e) => handleCodeChange(e.target.value)}
-                     className="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                      placeholder="—— ——"
                      maxLength={7}
                    />
@@ -189,7 +189,7 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading || code.replace(/\s/g, "").length < 6}
-                  className="w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+                  className="w-full rounded-lg bg-primary-action px-4 py-2.5 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
                 >
                   {loading ? "Verifying..." : "Verify & Sign In"}
                 </button>
@@ -198,11 +198,11 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setStep("credentials")}
-                    className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                    className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"
                   >
                     ← Use a different account
                   </button>
-                  <Link to="/login" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                  <Link to="/login" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">
                     Didn't receive a code?
                   </Link>
                 </div>
@@ -210,9 +210,9 @@ export default function Login() {
             )}
 
             {step === "credentials" && (
-              <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+              <div className="mt-6 text-center text-sm text-secondary text-tertiary">
                 Don't have an account?{" "}
-                <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
+                <Link to="/register" className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand font-medium">
                   Create your account
                 </Link>
               </div>
@@ -225,7 +225,7 @@ export default function Login() {
             )}
 
             <div className="mt-4 text-center">
-              <Link to="/" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">
+              <Link to="/" className="text-sm text-secondary text-tertiary hover:text-secondary dark:hover:text-tertiary">
                 ← Back to homepage
               </Link>
             </div>
@@ -235,3 +235,10 @@ export default function Login() {
     </div>
   );
 }
+
+
+
+
+
+
+

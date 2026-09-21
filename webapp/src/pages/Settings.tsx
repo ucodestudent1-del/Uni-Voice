@@ -217,7 +217,7 @@ export default function Settings() {
         return <ThemeSettings />;
       default:
         return (
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-tertiary">
             Select a section from the sidebar to get started.
           </div>
         );
@@ -225,10 +225,10 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] min-h-0 bg-slate-50 dark:bg-slate-950">
-      <aside className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Settings</h1>
+    <div className="flex h-[calc(100vh-4rem)] min-h-0 bg-page">
+      <aside className="w-64 flex-shrink-0 border-r border-color bg-surface overflow-y-auto">
+        <div className="px-6 py-4 border-b border-color">
+          <h1 className="text-xl font-bold text-primary">Settings</h1>
         </div>
         <SettingsSidebar sections={mainSections} accountSection={accountSection} />
       </aside>

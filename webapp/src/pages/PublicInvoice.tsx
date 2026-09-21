@@ -77,16 +77,16 @@ export default function PublicInvoice() {
     };
   }, [token]);
 
-  if (loading) return <div className="text-center py-20 text-slate-500">Loading invoice...</div>;
+  if (loading) return <div className="text-center py-20 text-secondary">Loading invoice...</div>;
   if (loadError) {
     return (
-      <div className="min-h-screen bg-slate-50 py-12">
+      <div className="min-h-screen bg-surface-alt py-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-            <p className="text-sm font-medium text-red-800">{loadError}</p>
+          <div className="rounded-xl border status-error-border status-error-bg p-6 text-center">
+            <p className="text-sm font-medium status-error-text">{loadError}</p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="mt-4 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
             >
               Try again
             </button>
@@ -95,7 +95,7 @@ export default function PublicInvoice() {
       </div>
     );
   }
-  if (!invoice) return <div className="text-center py-20 text-slate-500">Invoice not found or link has expired.</div>;
+  if (!invoice) return <div className="text-center py-20 text-secondary">Invoice not found or link has expired.</div>;
 
   const paid = new Decimal(invoice.amount_paid || 0);
   const due = new Decimal(invoice.amount_due || 0);
@@ -109,14 +109,14 @@ export default function PublicInvoice() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      draft: "bg-slate-100 text-slate-800",
-      sent: "bg-blue-100 text-blue-800",
-      viewed: "bg-indigo-100 text-indigo-800",
+      draft: "bg-surface-alt text-primary",
+      sent: "status-info-bg status-info-text",
+      viewed: "status-info-bg status-info-text",
       partially_paid: "bg-yellow-100 text-yellow-800",
-      paid: "bg-green-100 text-green-800",
-      overdue: "bg-red-100 text-red-800",
-      cancelled: "bg-slate-100 text-slate-800",
-      void: "bg-slate-100 text-slate-800",
+      paid: "status-success-bg status-success-text",
+      overdue: "status-error-bg status-error-text",
+      cancelled: "bg-surface-alt text-primary",
+      void: "bg-surface-alt text-primary",
     };
     return colors[status] || colors.draft;
   };
@@ -165,22 +165,22 @@ export default function PublicInvoice() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12">
+    <div className="min-h-screen bg-surface-alt py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="border-b border-slate-200 px-8 py-6 bg-gradient-to-r from-primary-50 to-white">
+        <div className="bg-surface rounded-xl border border-color-subtle shadow-sm overflow-hidden">
+          <div className="border-b border-color-subtle px-8 py-6 bg-gradient-to-r from-primary-50 to-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 rounded-lg bg-primary-action flex items-center justify-center">
+                  <svg className="w-6 h-6 text-on-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900">
+                  <h1 className="text-xl font-bold text-primary">
                     Invoice #{invoice.invoice_number || invoice.id}
                   </h1>
-                  <p className="text-sm text-slate-500">Professional invoice from your business</p>
+                  <p className="text-sm text-secondary">Professional invoice from your business</p>
                 </div>
               </div>
               <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(invoice.status)}`}>
@@ -192,29 +192,29 @@ export default function PublicInvoice() {
           <div className="px-8 py-6" dangerouslySetInnerHTML={{ __html: html }} />
 
           {hasDeposit && (
-            <div className="border-t border-slate-200 px-8 py-6 bg-amber-50">
+            <div className="border-t border-color-subtle px-8 py-6 status-warning-bg">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-lg status-warning-bg flex items-center justify-center">
+                  <svg className="w-5 h-5 status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-amber-800">Deposit Required</h3>
-                  <p className="text-sm text-amber-600">
+                  <h3 className="text-lg font-semibold status-warning-text">Deposit Required</h3>
+                  <p className="text-sm status-warning-text">
                     This invoice requires a {depositType === "percentage" ? `${depositValue}%` : `fixed amount of ${formatCurrency(depositValue, invoice.currency)}`} deposit
                     {invoice.deposit_due_date ? ` due by ${new Date(invoice.deposit_due_date).toLocaleDateString()}` : ""}
                   </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="bg-white rounded-lg p-3">
-                  <p className="text-amber-600 font-medium">Deposit Due</p>
-                  <p className="text-2xl font-bold text-amber-800">{formatCurrency(depositDue, invoice.currency)}</p>
+                <div className="bg-surface rounded-lg p-3">
+                  <p className="status-warning-text font-medium">Deposit Due</p>
+                  <p className="text-2xl font-bold status-warning-text">{formatCurrency(depositDue, invoice.currency)}</p>
                 </div>
-                <div className="bg-white rounded-lg p-3">
-                  <p className="text-green-600 font-medium">Deposit Paid</p>
-                  <p className="text-2xl font-bold text-green-800">{formatCurrency(depositPaid, invoice.currency)}</p>
+                <div className="bg-surface rounded-lg p-3">
+                  <p className="status-success-text font-medium">Deposit Paid</p>
+                  <p className="text-2xl font-bold status-success-text">{formatCurrency(depositPaid, invoice.currency)}</p>
                 </div>
               </div>
               {!isFullyPaid && depositDue.gt(0) && !showDepositPayment && (
@@ -223,7 +223,7 @@ export default function PublicInvoice() {
                     setPayAmount(depositDue.toFixed(2));
                     setShowDepositPayment(true);
                   }}
-                  className="mt-4 w-full sm:w-auto rounded-lg bg-amber-600 px-6 py-3 text-sm font-medium text-white hover:bg-amber-700"
+                  className="mt-4 w-full sm:w-auto rounded-lg bg-primary-action px-6 py-3 text-sm font-medium text-on-primary hover:bg-primary-action-hover"
                 >
                   Pay Deposit Now
                 </button>
@@ -232,19 +232,19 @@ export default function PublicInvoice() {
           )}
 
           {!isFullyPaid && due.gt(0) && (
-            <div className="border-t border-slate-200 px-8 py-6">
+            <div className="border-t border-color-subtle px-8 py-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="text-center sm:text-left">
-                  <p className="text-sm text-slate-600">Amount Due</p>
-                  <p className="text-3xl font-bold text-primary-700">{formatCurrency(invoice.total, invoice.currency)}</p>
+                  <p className="text-sm text-secondary">Amount Due</p>
+                  <p className="text-3xl font-bold text-primary-brand">{formatCurrency(invoice.total, invoice.currency)}</p>
                   {invoice.due_date && (
-                    <p className="text-xs text-slate-500 mt-1">Due: {new Date(invoice.due_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-secondary mt-1">Due: {new Date(invoice.due_date).toLocaleDateString()}</p>
                   )}
                 </div>
 
                 {paymentSuccess ? (
                   <div className="text-center">
-                    <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium status-success-bg status-success-text">
                       Payment Successful!
                     </span>
                   </div>
@@ -254,7 +254,7 @@ export default function PublicInvoice() {
                       setPayAmount(invoice.amount_due || invoice.total);
                       setShowDepositPayment(false);
                     }}
-                    className="rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700"
+                    className="rounded-lg bg-primary-action px-6 py-3 text-sm font-medium text-on-primary hover:bg-primary-hover"
                   >
                     Pay Now
                   </button>
@@ -262,11 +262,11 @@ export default function PublicInvoice() {
               </div>
 
               {(payAmount || showDepositPayment) && (
-                <div className="mt-6 border-t border-slate-200 pt-6">
+                <div className="mt-6 border-t border-color-subtle pt-6">
                   <div className="max-w-sm">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-secondary mb-2">
                       Payment Amount ({invoice.currency.toUpperCase()})
-                      {showDepositPayment && <span className="ml-2 text-xs text-amber-600">(Deposit Payment)</span>}
+                      {showDepositPayment && <span className="ml-2 text-xs status-warning-text">(Deposit Payment)</span>}
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -279,13 +279,13 @@ export default function PublicInvoice() {
                           setPayAmount(e.target.value);
                           setPaymentError(null);
                         }}
-                        className="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="flex-1 text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder={showDepositPayment ? (invoice.deposit_due || invoice.amount_due || invoice.total) : (invoice.amount_due || invoice.total)}
                       />
                       <button
                         onClick={() => handlePay(showDepositPayment)}
                         disabled={paying || payingDeposit || !payAmount || Number(payAmount) <= 0}
-                        className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+                        className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
                       >
                         {paying || payingDeposit ? "Processing..." : "Confirm"}
                       </button>
@@ -293,13 +293,13 @@ export default function PublicInvoice() {
                     <div className="flex gap-2 mt-2">
                       <button
                         onClick={() => setPayAmount(showDepositPayment ? (invoice.deposit_due || invoice.amount_due || invoice.total) : (invoice.amount_due || invoice.total))}
-                        className="text-xs text-slate-600 hover:text-slate-900"
+                        className="text-xs text-secondary hover:text-primary"
                       >
                         Pay full {showDepositPayment ? "deposit" : "amount"}
                       </button>
                       <button
                         onClick={() => { setPayAmount(""); setShowDepositPayment(false); }}
-                        className="text-xs text-slate-600 hover:text-slate-900"
+                        className="text-xs text-secondary hover:text-primary"
                       >
                         Cancel
                       </button>
@@ -307,7 +307,7 @@ export default function PublicInvoice() {
                   </div>
 
                   {paymentError && (
-                    <p className="mt-2 text-xs text-red-600">{paymentError}</p>
+                    <p className="mt-2 text-xs status-error-text">{paymentError}</p>
                   )}
                 </div>
               )}
@@ -315,18 +315,18 @@ export default function PublicInvoice() {
           )}
 
           {isFullyPaid && (
-            <div className="border-t border-slate-200 px-8 py-6 bg-green-50">
+            <div className="border-t border-color-subtle px-8 py-6 status-success-bg">
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 rounded-full status-success-bg flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium status-success-bg status-success-text">
                   Fully Paid
                 </span>
                 {invoice.paid_at && (
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-secondary mt-1">
                     Paid on {new Date(invoice.paid_at).toLocaleDateString()}
                   </p>
                 )}
@@ -334,14 +334,14 @@ export default function PublicInvoice() {
             </div>
           )}
 
-          <div className="border-t border-slate-200 px-8 py-4 flex justify-end gap-3">
+          <div className="border-t border-color-subtle px-8 py-4 flex justify-end gap-3">
             {pdfError && (
-              <div className="flex items-center gap-2 text-sm text-red-600">
+              <div className="flex items-center gap-2 text-sm status-error-text">
                 <span>{pdfError}</span>
                 <button
                   onClick={handleDownloadPdf}
                   disabled={pdfLoading}
-                  className="text-sm text-primary-600 hover:text-primary-700 underline"
+                  className="text-sm text-primary-brand hover:text-primary-brand underline"
                 >
                   Retry
                 </button>
@@ -350,7 +350,7 @@ export default function PublicInvoice() {
             <button
               onClick={handleDownloadPdf}
               disabled={pdfLoading}
-              className="text-sm text-slate-600 hover:text-slate-900 flex items-center gap-2"
+              className="text-sm text-secondary hover:text-primary flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -360,10 +360,15 @@ export default function PublicInvoice() {
           </div>
         </div>
 
-        <div className="text-center mt-8 text-sm text-slate-500">
+        <div className="text-center mt-8 text-sm text-secondary">
           <p>Powered by InvoiceFlow</p>
         </div>
       </div>
     </div>
   );
 }
+
+
+
+
+

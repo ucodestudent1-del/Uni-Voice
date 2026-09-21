@@ -49,8 +49,8 @@ function renderTree(
         <div
           className={`flex items-center gap-1.5 rounded px-1.5 py-0.75 text-sm cursor-pointer transition-colors ${
             isSelected
-              ? "bg-primary-100 text-primary-800"
-              : "text-slate-700 hover:bg-slate-100"
+              ? "bg-primary-bg text-primary-brand"
+              : "text-secondary hover:bg-surface-alt"
           }`}
           style={{ paddingLeft: `${indent + 4}px` }}
           onClick={() => onSelect(node.id)}
@@ -60,14 +60,14 @@ function renderTree(
         >
           {hasChildren && (
             <span
-              className="text-xs text-slate-400"
+              className="text-xs text-tertiary"
               aria-label={node.children.filter((c) => c.visible).length > 0 ? "expanded" : "collapsed"}
             >
               {node.children.filter((c) => c.visible).length > 0 ? "▼" : "▶"}
             </span>
           )}
           {!hasChildren && (
-            <span className="w-3 text-center text-xs text-slate-400">•</span>
+            <span className="w-3 text-center text-xs text-tertiary">•</span>
           )}
           <span
             className={`truncate ${node.visible ? "" : "opacity-50 italic"}`}
@@ -76,7 +76,7 @@ function renderTree(
             {node.label}
           </span>
           {node.type === "lineItems" && (
-            <span className="ml-auto text-xs text-slate-400">📋</span>
+            <span className="ml-auto text-xs text-tertiary">📋</span>
           )}
         </div>
         {hasChildren && renderTree(node.children, level + 1, selectedId, onSelect)}
@@ -115,13 +115,13 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
   const tree = buildNodeTree(document, null);
 
   return (
-    <div className="w-64 overflow-y-auto border-l border-slate-200 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-        <h3 className="text-xs font-medium text-slate-500 uppercase">Document Outline</h3>
+    <div className="w-64 overflow-y-auto border-l border-color-subtle bg-surface">
+      <div className="flex items-center justify-between border-b border-color-subtle px-3 py-2">
+        <h3 className="text-xs font-medium text-secondary uppercase">Document Outline</h3>
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          className="rounded p-0.5 text-tertiary hover:bg-surface-alt hover:text-secondary"
           aria-label={expanded ? "Collapse outline" : "Expand outline"}
         >
           {expanded ? "−" : "+"}
@@ -159,8 +159,8 @@ function renderTreeNode(
       <div
         className={`flex items-center gap-1.5 rounded px-1.5 py-0.75 text-sm cursor-pointer transition-colors ${
           isSelected
-            ? "bg-primary-100 text-primary-800"
-            : "text-slate-700 hover:bg-slate-100"
+            ? "bg-primary-bg text-primary-brand"
+            : "text-secondary hover:bg-surface-alt"
         }`}
         style={{ paddingLeft: `${indent + 4}px` }}
         onClick={() => onSelect(node.id)}
@@ -176,14 +176,14 @@ function renderTreeNode(
       >
         {hasChildren && (
           <span
-            className="text-xs text-slate-400"
+            className="text-xs text-tertiary"
             aria-label={node.children.filter((c) => c.visible).length > 0 ? "expanded" : "collapsed"}
           >
             {node.children.filter((c) => c.visible).length > 0 ? "▼" : "▶"}
           </span>
         )}
         {!hasChildren && (
-          <span className="w-3 text-center text-xs text-slate-400">•</span>
+          <span className="w-3 text-center text-xs text-tertiary">•</span>
         )}
         <span
           className={`truncate ${node.visible ? "" : "opacity-50 italic"}`}
@@ -192,7 +192,7 @@ function renderTreeNode(
           {node.label}
         </span>
         {isStructural && (
-          <span className="ml-auto text-xs text-slate-300" title={node.type}>
+          <span className="ml-auto text-xs text-tertiary" title={node.type}>
             {node.type === "row" ? "↔" : node.type === "column" ? "▭" : "[]"}
           </span>
         )}
@@ -205,7 +205,7 @@ function renderTreeNode(
               <button
                 type="button"
                 onClick={() => onDuplicate(node.id)}
-                className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                className="rounded p-0.5 text-tertiary hover:bg-surface-alt hover:text-secondary"
                 title="Duplicate"
                 aria-label={`Duplicate ${node.label}`}
               >
@@ -216,7 +216,7 @@ function renderTreeNode(
               <button
                 type="button"
                 onClick={() => onRemove(node.id)}
-                className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                className="rounded p-0.5 text-tertiary hover:bg-surface-alt hover:text-secondary"
                 title="Delete"
                 aria-label={`Delete ${node.label}`}
               >
@@ -243,3 +243,8 @@ function renderTreeNodeChildren(
 }
 
 export default OutlineEditor;
+
+
+
+
+

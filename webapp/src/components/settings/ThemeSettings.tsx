@@ -13,16 +13,16 @@ export default function ThemeSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Appearance</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+        <h2 className="text-lg font-semibold text-primary">Appearance</h2>
+        <p className="text-sm text-secondary mt-1">
           Choose how the application appearance is displayed.
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 space-y-4">
+      <div className="rounded-xl border border-color bg-surface p-6 space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Theme</label>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <label className="text-sm font-medium text-secondary">Theme</label>
+          <p className="text-xs text-tertiary">
             Current system preference: {resolvedTheme === "dark" ? "Dark" : "Light"}
           </p>
         </div>
@@ -38,9 +38,10 @@ export default function ThemeSettings() {
                 onClick={() => setTheme(option.value)}
                 className={`flex-1 rounded-lg border px-4 py-3 text-center text-sm font-medium transition-all ${
                   isSelected
-                    ? "border-primary-600 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-slate-900"
-                    : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
-                }`}
+                    ? "border-primary bg-primary-bg text-on-primary-strong ring-2 ring-primary ring-offset-2"
+                    : "border-color text-secondary hover:bg-hover"
+                }`
+              }
               >
                 <Icon className="mx-auto mb-1 h-5 w-5" />
                 {option.label}
@@ -49,10 +50,10 @@ export default function ThemeSettings() {
           })}
         </div>
 
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
-          Selected theme: <strong className="text-slate-700 dark:text-slate-300">{theme}</strong>
+        <p className="text-xs text-tertiary mt-4">
+          Selected theme: <strong className="text-secondary">{theme}</strong>
           {" "}
-          (resolved to <strong className="text-slate-700 dark:text-slate-300">{resolvedTheme}</strong>)
+          (resolved to <strong className="text-secondary">{resolvedTheme}</strong>)
         </p>
       </div>
     </div>

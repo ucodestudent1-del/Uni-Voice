@@ -4,9 +4,9 @@ interface CustomerStatusBadgeProps {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "bg-green-100 text-green-800" },
-  inactive: { label: "Inactive", className: "bg-slate-100 text-slate-800" },
-  archived: { label: "Archived", className: "bg-blue-100 text-blue-800" },
+  active: { label: "Active", className: "status-success-bg status-success-text" },
+  inactive: { label: "Inactive", className: "bg-surface-alt text-primary" },
+  archived: { label: "Archived", className: "status-info-bg status-info-text" },
 };
 
 export default function CustomerStatusBadge({ status, className = "" }: CustomerStatusBadgeProps) {
@@ -19,3 +19,6 @@ export default function CustomerStatusBadge({ status, className = "" }: Customer
     </span>
   );
 }
+
+
+

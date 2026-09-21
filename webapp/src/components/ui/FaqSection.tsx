@@ -32,27 +32,27 @@ export default function FaqSection({
   return (
     <Section bg="slate-50" className={className} id={id}>
       <SectionHeader title={title} subtitle={subtitle} />
-      <div className="mx-auto max-w-3xl divide-y divide-slate-200 dark:divide-slate-700 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+      <div className="mx-auto max-w-3xl divide-y divide-slate-200 dark:divide-slate-700 rounded-xl border border-color-subtle border-color bg-surface">
         {items.map((item, index) => {
           const isOpen = open === index;
           return (
-            <div key={item.question} className="border-b border-slate-200 dark:border-slate-700 last:border-0">
+            <div key={item.question} className="border-b border-color-subtle border-color last:border-0">
               <button
                 type="button"
                 onClick={() => toggle(index)}
                 aria-expanded={isOpen}
-                className="flex w-full items-center gap-3 px-5 py-4 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex w-full items-center gap-3 px-5 py-4 text-left text-secondary text-secondary hover:bg-surface-alt hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <span className="text-sm font-medium text-primary-600 dark:text-primary-400">Q{index + 1}</span>
-                <span className="flex-1 font-medium text-slate-900 dark:text-slate-100">{item.question}</span>
-                <span className={`text-sm text-slate-500 dark:text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}>▼</span>
+                <span className="text-sm font-medium text-primary-brand text-primary-brand">Q{index + 1}</span>
+                <span className="flex-1 font-medium text-inverse">{item.question}</span>
+                <span className={`text-sm text-secondary text-tertiary transition-transform ${isOpen ? "rotate-180" : ""}`}>▼</span>
               </button>
               <div
                 className="grid transition-[grid-template-rows] duration-300 ease-in-out overflow-hidden"
                 style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
               >
                 <div className="overflow-hidden">
-                  <div className="px-5 pb-4 pt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <div className="px-5 pb-4 pt-1 text-sm text-secondary text-tertiary leading-relaxed">
                     {item.answer}
                   </div>
                 </div>
@@ -64,3 +64,9 @@ export default function FaqSection({
     </Section>
   );
 }
+
+
+
+
+
+

@@ -277,8 +277,8 @@ export default function QuickInvoicePage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
-        <div className="h-72 animate-pulse rounded-xl border border-slate-200 bg-white" />
+        <div className="h-8 w-48 animate-pulse rounded bg-surface-alt" />
+        <div className="h-72 animate-pulse rounded-xl border border-color-subtle bg-surface" />
       </div>
     );
   }
@@ -286,12 +286,12 @@ export default function QuickInvoicePage() {
   if (loadError) {
     return (
       <div className="mx-auto max-w-md p-4 text-center">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <h1 className="text-lg font-semibold text-red-800">Could not start invoice</h1>
-          <p className="mt-2 text-sm text-red-700">{loadError}</p>
+        <div className="rounded-xl border status-error-border status-error-bg p-6">
+          <h1 className="text-lg font-semibold status-error-text">Could not start invoice</h1>
+          <p className="mt-2 text-sm status-error-text">{loadError}</p>
           <button
             onClick={loadDependencies}
-            className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="mt-4 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
             Try again
           </button>
@@ -303,26 +303,26 @@ export default function QuickInvoicePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-between gap-4">
-        <Link to="/app/invoices" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900">
+        <Link to="/app/invoices" className="inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-primary">
           <ArrowLeft className="h-4 w-4" />
           Invoices
         </Link>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span className={step === "details" ? "text-primary-700 font-semibold" : ""}>Details</span>
+        <div className="flex items-center gap-2 text-xs text-secondary">
+          <span className={step === "details" ? "text-primary-brand font-semibold" : ""}>Details</span>
           <span>•</span>
-          <span className={step === "review" ? "text-primary-700 font-semibold" : ""}>Review</span>
+          <span className={step === "review" ? "text-primary-brand font-semibold" : ""}>Review</span>
           <span>•</span>
-          <span className={step === "done" ? "text-primary-700 font-semibold" : ""}>Send</span>
+          <span className={step === "done" ? "text-primary-brand font-semibold" : ""}>Send</span>
         </div>
       </div>
 
       {action && (
         <div className={`rounded-lg border px-4 py-3 text-sm ${
           action.type === "error"
-            ? "border-red-200 bg-red-50 text-red-800"
+            ? "status-error-border status-error-bg status-error-text"
             : action.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-blue-200 bg-blue-50 text-blue-800"
+              ? "status-success-border status-success-bg status-success-text"
+              : "status-info-border status-info-bg status-info-text"
         }`}>
           {action.text}
         </div>
@@ -330,10 +330,10 @@ export default function QuickInvoicePage() {
 
       {step === "details" && (
         <div className="space-y-6">
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+          <section className="rounded-xl border border-color-subtle bg-surface p-4 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700">1</span>
-              <h1 className="text-xl font-bold text-slate-900">Who is this for?</h1>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-bg text-primary-brand">1</span>
+              <h1 className="text-xl font-bold text-primary">Who is this for?</h1>
             </div>
             <CustomerSelector
               value={customer?.id}
@@ -344,26 +344,26 @@ export default function QuickInvoicePage() {
               placeholder="Select or add a customer"
             />
             {customer && (
-              <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-                <span className="font-medium text-slate-900">{customer.name}</span>
+              <div className="mt-3 rounded-lg bg-surface-alt p-3 text-sm text-secondary">
+                <span className="font-medium text-primary">{customer.name}</span>
                 {customer.email && <span> • {customer.email}</span>}
                 {customer.phone && <span> • {customer.phone}</span>}
               </div>
             )}
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+          <section className="rounded-xl border border-color-subtle bg-surface p-4 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700">2</span>
-              <h2 className="text-xl font-bold text-slate-900">What did you do?</h2>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-bg text-primary-brand">2</span>
+              <h2 className="text-xl font-bold text-primary">What did you do?</h2>
             </div>
             <div className="space-y-4">
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-700">Saved service</span>
+                <span className="mb-1 block text-sm font-medium text-secondary">Saved service</span>
                 <select
                   value={serviceId}
                   onChange={(event) => setServiceId(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Custom work description</option>
                   {products.map((product) => (
@@ -374,100 +374,100 @@ export default function QuickInvoicePage() {
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-700">Work description</span>
+                <span className="mb-1 block text-sm font-medium text-secondary">Work description</span>
                 <textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   rows={3}
                   placeholder="Example: Repaired kitchen sink leak"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </label>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-slate-700">Quantity</span>
+                  <span className="mb-1 block text-sm font-medium text-secondary">Quantity</span>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={quantity}
                     onChange={(event) => setQuantity(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-slate-700">Price each</span>
+                  <span className="mb-1 block text-sm font-medium text-secondary">Price each</span>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={unitPrice}
                     onChange={(event) => setUnitPrice(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-slate-700">Tax %</span>
+                  <span className="mb-1 block text-sm font-medium text-secondary">Tax %</span>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={taxRate}
                     onChange={(event) => setTaxRate(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </label>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm text-slate-600">Total</span>
-                <span className="text-xl font-bold text-slate-900">{formatCurrency(calculation.total, currency)}</span>
+              <div className="flex items-center justify-between rounded-lg bg-surface-alt px-4 py-3">
+                <span className="text-sm text-secondary">Total</span>
+                <span className="text-xl font-bold text-primary">{formatCurrency(calculation.total, currency)}</span>
               </div>
             </div>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+          <section className="rounded-xl border border-color-subtle bg-surface p-4 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700">3</span>
-              <h2 className="text-xl font-bold text-slate-900">When is it due?</h2>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-bg text-primary-brand">3</span>
+              <h2 className="text-xl font-bold text-primary">When is it due?</h2>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1 flex items-center gap-1.5 text-sm font-medium text-slate-700"><CalendarDays className="h-4 w-4" /> Issue date</span>
+                <span className="mb-1 flex items-center gap-1.5 text-sm font-medium text-secondary"><CalendarDays className="h-4 w-4" /> Issue date</span>
                 <input
                   type="date"
                   value={issueDate}
                   onChange={(event) => setIssueDate(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </label>
               <label className="block">
-                <span className="mb-1 flex items-center gap-1.5 text-sm font-medium text-slate-700"><CalendarDays className="h-4 w-4" /> Due date</span>
+                <span className="mb-1 flex items-center gap-1.5 text-sm font-medium text-secondary"><CalendarDays className="h-4 w-4" /> Due date</span>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(event) => setDueDate(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </label>
             </div>
             <div className="mt-4 space-y-4">
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-700">Notes for the customer</span>
+                <span className="mb-1 block text-sm font-medium text-secondary">Notes for the customer</span>
                 <textarea
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
                   rows={2}
                   placeholder="Optional"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </label>
               <label className="block">
-                <span className="mb-1 block text-sm font-medium text-slate-700">How should they pay?</span>
+                <span className="mb-1 block text-sm font-medium text-secondary">How should they pay?</span>
                 <textarea
                   value={paymentInstructions}
                   onChange={(event) => setPaymentInstructions(event.target.value)}
                   rows={2}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </label>
             </div>
@@ -475,7 +475,7 @@ export default function QuickInvoicePage() {
 
           <button
             onClick={goToReview}
-            className="sticky bottom-20 left-0 right-0 mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-5 py-3.5 text-base font-semibold text-white shadow-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 sm:static sm:w-auto"
+            className="sticky bottom-20 left-0 right-0 mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-primary-action px-5 py-3.5 text-base font-semibold text-on-primary shadow-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary sm:static sm:w-auto"
           >
             Review invoice
             <ArrowLeft className="h-4 w-4 rotate-180" />
@@ -485,57 +485,57 @@ export default function QuickInvoicePage() {
 
       {step === "review" && (
         <div className="space-y-6">
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
+          <section className="rounded-xl border border-color-subtle bg-surface p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Invoice for</p>
-                <h1 className="text-xl font-bold text-slate-900">{customer?.name || "Customer"}</h1>
+                <p className="text-sm text-secondary">Invoice for</p>
+                <h1 className="text-xl font-bold text-primary">{customer?.name || "Customer"}</h1>
               </div>
-              <span className="rounded-full bg-primary-50 px-3 py-1 text-sm font-medium text-primary-700">Ready to send</span>
+              <span className="rounded-full bg-primary-bg px-3 py-1 text-sm font-medium text-primary-brand">Ready to send</span>
             </div>
             <div className="mt-6 space-y-3 text-sm">
-              <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
-                <span className="text-slate-600">{description || "Work description"}</span>
-                <span className="font-medium text-slate-900 whitespace-nowrap">{formatCurrency(calculation.total, currency)}</span>
+              <div className="flex items-start justify-between gap-4 border-b border-color-subtle pb-3">
+                <span className="text-secondary">{description || "Work description"}</span>
+                <span className="font-medium text-primary whitespace-nowrap">{formatCurrency(calculation.total, currency)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-secondary">
                 <span>Quantity</span>
                 <span>{quantity}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-secondary">
                 <span>Price</span>
                 <span>{formatCurrency(unitPrice, currency)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-secondary">
                 <span>Tax</span>
                 <span>{taxRate}%</span>
               </div>
-              <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-semibold text-slate-900">
+              <div className="flex justify-between border-t border-color-subtle pt-3 text-base font-semibold text-primary">
                 <span>Total due</span>
                 <span>{formatCurrency(calculation.total, currency)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-secondary">
                 <span>Issue date</span>
                 <span>{issueDate}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-secondary">
                 <span>Due date</span>
                 <span>{dueDate}</span>
               </div>
-              {notes && <p className="rounded-lg bg-slate-50 p-3 text-slate-700">{notes}</p>}
-              {paymentInstructions && <p className="rounded-lg bg-slate-50 p-3 text-slate-700">{paymentInstructions}</p>}
+              {notes && <p className="rounded-lg bg-surface-alt p-3 text-secondary">{notes}</p>}
+              {paymentInstructions && <p className="rounded-lg bg-surface-alt p-3 text-secondary">{paymentInstructions}</p>}
             </div>
           </section>
           <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <button
               onClick={() => setStep("details")}
-              className="rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt"
             >
               Back
             </button>
             <button
               onClick={createAndFinalize}
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-lg bg-primary-action px-4 py-3 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50"
               disabled={action?.type === "saving"}
             >
               <Check className="h-4 w-4" />
@@ -547,51 +547,51 @@ export default function QuickInvoicePage() {
 
       {step === "done" && invoiceId && (
         <div className="space-y-6">
-          <section className="rounded-xl border border-green-200 bg-green-50 p-5 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700">
+          <section className="rounded-xl border status-success-border status-success-bg p-5 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full status-success-bg status-success-text">
               <Check className="h-6 w-6" />
             </div>
-            <h1 className="mt-3 text-xl font-bold text-slate-900">Invoice is ready</h1>
-            <p className="mt-1 text-sm text-slate-600">Send it now or copy the secure payment link.</p>
+            <h1 className="mt-3 text-xl font-bold text-primary">Invoice is ready</h1>
+            <p className="mt-1 text-sm text-secondary">Send it now or copy the secure payment link.</p>
             {paymentLink && (
               <a
                 href={paymentLink}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-primary-700 ring-1 ring-primary-200 hover:bg-primary-50"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-surface px-4 py-2 text-sm font-medium text-primary-brand ring-1 ring-primary-200 hover:bg-primary-bg"
               >
                 Open payment page
               </a>
             )}
           </section>
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900">Send or share</h2>
+          <section className="rounded-xl border border-color-subtle bg-surface p-4 sm:p-6">
+            <h2 className="text-lg font-bold text-primary">Send or share</h2>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <button onClick={handleSendEmail} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <button onClick={handleSendEmail} className="flex items-center justify-center gap-2 rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt">
                 <Mail className="h-4 w-4" /> Send by email
               </button>
-              <button onClick={handleText} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <button onClick={handleText} className="flex items-center justify-center gap-2 rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt">
                 <MessageCircle className="h-4 w-4" /> Send by text
               </button>
-              <button onClick={handleShare} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              <button onClick={handleShare} className="flex items-center justify-center gap-2 rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt">
                 <Share2 className="h-4 w-4" /> Share payment link
               </button>
-              <button onClick={handleDownloadPdf} disabled={pdfLoading} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+              <button onClick={handleDownloadPdf} disabled={pdfLoading} className="flex items-center justify-center gap-2 rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50">
                 <Download className="h-4 w-4" /> {pdfLoading ? "Preparing..." : "Download PDF"}
               </button>
             </div>
             {paymentLink && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg bg-slate-50 p-3">
-                <Clipboard className="h-4 w-4 flex-shrink-0 text-slate-500" />
-                <span className="min-w-0 flex-1 truncate text-xs text-slate-600">{paymentLink}</span>
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-surface-alt p-3">
+                <Clipboard className="h-4 w-4 flex-shrink-0 text-secondary" />
+                <span className="min-w-0 flex-1 truncate text-xs text-secondary">{paymentLink}</span>
               </div>
             )}
           </section>
           <div className="flex justify-between gap-3">
-            <Link to={`/app/invoices/${invoiceId}`} className="rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <Link to={`/app/invoices/${invoiceId}`} className="rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt">
               View invoice
             </Link>
-            <button onClick={() => navigate("/app/invoices")} className="rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700">
+            <button onClick={() => navigate("/app/invoices")} className="rounded-lg bg-primary-action px-4 py-3 text-sm font-semibold text-on-primary hover:bg-primary-hover">
               Done
             </button>
           </div>
@@ -600,3 +600,8 @@ export default function QuickInvoicePage() {
     </div>
   );
 }
+
+
+
+
+

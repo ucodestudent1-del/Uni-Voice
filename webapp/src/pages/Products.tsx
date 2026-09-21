@@ -70,14 +70,14 @@ export default function Products() {
     setShowForm(true);
   }
 
-  if (loading) return <div className="text-center py-20 text-slate-500">Loading products...</div>;
+  if (loading) return <div className="text-center py-20 text-secondary">Loading products...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Products / Services</h1>
-          <p className="text-sm text-slate-600 mt-1">{products.length} products</p>
+          <h1 className="text-2xl font-bold text-primary">Products / Services</h1>
+          <p className="text-sm text-secondary mt-1">{products.length} products</p>
         </div>
         <Button
           variant="primary"
@@ -91,69 +91,69 @@ export default function Products() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4">
-            <div className="p-6 border-b border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900">
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl mx-4">
+            <div className="p-6 border-b border-color-subtle">
+              <h3 className="text-lg font-semibold text-primary">
                 {editingProduct ? "Edit Product" : "Add Product"}
               </h3>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Name *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">SKU</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">SKU</label>
                   <input
                     type="text"
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Description</label>
                   <input
                     type="text"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Unit Price</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Unit Price</label>
                   <input
                     type="number"
                     step="0.01"
                     value={formData.defaultUnitPrice}
                     onChange={(e) => setFormData({ ...formData, defaultUnitPrice: parseFloat(e.target.value) || 0 })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Default Tax Rate</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Default Tax Rate</label>
                   <input
                     type="number"
                     step="0.0001"
                     value={formData.defaultTaxRate}
                     onChange={(e) => setFormData({ ...formData, defaultTaxRate: parseFloat(e.target.value) || 0 })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  <p className="text-xs text-slate-400 mt-0.5">e.g. 0.1 for 10%</p>
+                  <p className="text-xs text-tertiary mt-0.5">e.g. 0.1 for 10%</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Unit</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Unit</label>
                   <select
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="each">Each</option>
                     <option value="hour">Hour</option>
@@ -164,11 +164,11 @@ export default function Products() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
                   <select
                     value={formData.defaultCurrency}
                     onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
@@ -180,7 +180,7 @@ export default function Products() {
                 </div>
               </div>
             </form>
-            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-color-subtle flex justify-end gap-3">
               <Button
                 variant="secondary"
                 size="md"
@@ -201,8 +201,8 @@ export default function Products() {
       )}
 
       {products.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-          <p className="mt-4 text-slate-500">No products yet</p>
+        <div className="text-center py-16 bg-surface rounded-xl border border-color-subtle">
+          <p className="mt-4 text-secondary">No products yet</p>
           <Button
             variant="primary"
             size="md"
@@ -214,27 +214,27 @@ export default function Products() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-surface rounded-xl border border-color-subtle overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200">
-                <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">Name</th>
-                <th className="text-left text-xs font-medium text-slate-500 uppercase py-3 px-4">SKU</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Price</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Tax Rate</th>
-                <th className="text-right text-xs font-medium text-slate-500 uppercase py-3 px-4">Actions</th>
+              <tr className="border-b border-color-subtle">
+                <th className="text-left text-xs font-medium text-secondary uppercase py-3 px-4">Name</th>
+                <th className="text-left text-xs font-medium text-secondary uppercase py-3 px-4">SKU</th>
+                <th className="text-right text-xs font-medium text-secondary uppercase py-3 px-4">Price</th>
+                <th className="text-right text-xs font-medium text-secondary uppercase py-3 px-4">Tax Rate</th>
+                <th className="text-right text-xs font-medium text-secondary uppercase py-3 px-4">Actions</th>
               </tr>
             </thead>
             <tbody>
               {products.map((p) => (
-                <tr key={p.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                <tr key={p.id} className="border-b border-color-subtle last:border-b-0 hover:bg-surface-alt">
                   <td className="py-3 px-4">
-                    <p className="text-sm font-medium text-slate-900">{p.name}</p>
-                    {p.description && <p className="text-xs text-slate-500">{p.description}</p>}
+                    <p className="text-sm font-medium text-primary">{p.name}</p>
+                    {p.description && <p className="text-xs text-secondary">{p.description}</p>}
                   </td>
-                  <td className="py-3 px-4 text-sm text-slate-600">{p.sku || "—"}</td>
-                  <td className="py-3 px-4 text-right text-sm font-medium text-slate-900">${parseFloat(p.default_unit_price).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-right text-sm text-slate-600">{(parseFloat(p.default_tax_rate) * 100).toFixed(0)}%</td>
+                  <td className="py-3 px-4 text-sm text-secondary">{p.sku || "—"}</td>
+                  <td className="py-3 px-4 text-right text-sm font-medium text-primary">${parseFloat(p.default_unit_price).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-right text-sm text-secondary">{(parseFloat(p.default_tax_rate) * 100).toFixed(0)}%</td>
                   <td className="py-3 px-4 text-right">
                     <Button
                       variant="ghost"
@@ -260,3 +260,7 @@ export default function Products() {
     </div>
   );
 }
+
+
+
+

@@ -9,10 +9,10 @@ export interface TemplateGalleryProps {
 }
 
 const colorMap: Record<string, { bg: string; border: string; text: string }> = {
-  slate: { bg: "bg-slate-100", border: "border-slate-300", text: "text-slate-700" },
-  primary: { bg: "bg-primary-100", border: "border-primary-500", text: "text-primary-700" },
+  slate: { bg: "bg-surface-alt", border: "border-input-border", text: "text-secondary" },
+  primary: { bg: "bg-primary-bg", border: "border-primary-500", text: "text-primary-brand" },
   teal: { bg: "bg-teal-100", border: "border-teal-500", text: "text-teal-700" },
-  amber: { bg: "bg-amber-100", border: "border-amber-500", text: "text-amber-700" },
+  amber: { bg: "status-warning-bg", border: "border-warning-border", text: "text-warning-text" },
 };
 
 export default function TemplateGallery({
@@ -37,12 +37,12 @@ export default function TemplateGallery({
               key={item.id}
               type="button"
               onClick={handleSelect(item)}
-               className={`group relative flex flex-col text-left rounded-xl border-2 bg-white dark:bg-slate-900 p-5 shadow-sm transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                isSelected ? `${colors.border} ring-2 ring-primary-500` : "border-slate-200 dark:border-slate-700"
+               className={`group relative flex flex-col text-left rounded-xl border-2 bg-surface p-5 shadow-sm transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary ${
+                isSelected ? `${colors.border} ring-2 ring-primary-500` : "border-color-subtle border-color"
               }`}
             >
               {isSelected && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-primary-600 px-2.5 py-1 text-xs font-medium text-white">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-primary-action px-2.5 py-1 text-xs font-medium text-on-primary">
                   Selected
                 </span>
               )}
@@ -50,10 +50,10 @@ export default function TemplateGallery({
                 className={`mb-4 aspect-video rounded-lg border ${colors.bg} ${colors.border} flex items-center justify-center`}
               >
                </div>
-               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{item.name}</h3>
-               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 flex-1">{item.description}</p>
-               <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                 <span className="text-green-400">✓</span>
+               <h3 className="text-lg font-semibold text-inverse">{item.name}</h3>
+               <p className="mt-1 text-sm text-secondary text-tertiary flex-1">{item.description}</p>
+               <div className="mt-4 flex items-center gap-2 text-sm text-secondary text-tertiary">
+                 <span className="status-success-text">✓</span>
                  <span>Responsive • Print-ready • Brandable</span>
                </div>
             </button>
@@ -63,3 +63,10 @@ export default function TemplateGallery({
     </div>
   );
 }
+
+
+
+
+
+
+

@@ -4,11 +4,11 @@ interface ProjectStatusBadgeProps {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  planning: { label: "Planning", className: "bg-slate-100 text-slate-800" },
-  active: { label: "Active", className: "bg-blue-100 text-blue-800" },
+  planning: { label: "Planning", className: "bg-surface-alt text-primary" },
+  active: { label: "Active", className: "status-info-bg status-info-text" },
   on_hold: { label: "On Hold", className: "bg-yellow-100 text-yellow-800" },
-  completed: { label: "Completed", className: "bg-green-100 text-green-800" },
-  archived: { label: "Archived", className: "bg-slate-100 text-slate-600" },
+  completed: { label: "Completed", className: "status-success-bg status-success-text" },
+  archived: { label: "Archived", className: "bg-surface-alt text-secondary" },
 };
 
 export default function ProjectStatusBadge({ status, className = "" }: ProjectStatusBadgeProps) {
@@ -21,3 +21,6 @@ export default function ProjectStatusBadge({ status, className = "" }: ProjectSt
     </span>
   );
 }
+
+
+

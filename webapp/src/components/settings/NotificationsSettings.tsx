@@ -52,18 +52,18 @@ export default function NotificationsSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Notifications</h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <h2 className="text-lg font-semibold text-primary">Notifications</h2>
+        <p className="text-sm text-secondary mt-1">
           Control email notifications, payment confirmations, invoice reminders, and overdue
           reminders.
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
+      <div className="rounded-xl border border-color-subtle bg-surface p-6 space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-700">Email Notifications</p>
-            <p className="text-xs text-slate-500">Enable email notifications from InvoiceFlow.</p>
+            <p className="text-sm font-medium text-secondary">Email Notifications</p>
+            <p className="text-xs text-secondary">Enable email notifications from InvoiceFlow.</p>
           </div>
           <label className="relative inline-flex h-5 w-9 items-center rounded-full">
             <input
@@ -74,11 +74,11 @@ export default function NotificationsSettings() {
             />
             <span
               className={`inline-block h-5 w-9 rounded-full transition ${
-                settings.emailNotifications ? "bg-primary-600" : "bg-slate-300"
+                settings.emailNotifications ? "bg-primary-action" : "bg-surface-alt300"
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                className={`inline-block h-4 w-4 transform rounded-full bg-surface transition ${
                   settings.emailNotifications ? "translate-x-5" : "translate-x-1"
                 }`}
               />
@@ -86,7 +86,7 @@ export default function NotificationsSettings() {
           </label>
         </div>
 
-        <div className="border-t border-slate-100 pt-4 space-y-4">
+        <div className="border-t border-color-subtle pt-4 space-y-4">
           <FormField
             label="Payment Confirmations"
             description="Send an email when a customer pays an invoice."
@@ -151,7 +151,7 @@ export default function NotificationsSettings() {
                 type="text"
                 value={settings.reminderDays}
                 onChange={(e) => update({ reminderDays: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </FormField>
           )}
@@ -162,7 +162,7 @@ export default function NotificationsSettings() {
         <SavedIndicator show={saved} />
         <button
           onClick={save}
-          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
         >
           Save Notification Settings
         </button>
@@ -191,11 +191,11 @@ function ToggleSwitch({
       />
       <span
         className={`inline-block h-5 w-9 rounded-full transition ${
-          disabled ? "bg-slate-200" : checked ? "bg-primary-600" : "bg-slate-300"
+          disabled ? "bg-surface-alt" : checked ? "bg-primary-action" : "bg-surface-alt300"
         }`}
       >
         <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+          className={`inline-block h-4 w-4 transform rounded-full bg-surface transition ${
             checked ? "translate-x-5" : "translate-x-1"
           }`}
         />
@@ -203,3 +203,8 @@ function ToggleSwitch({
     </label>
   );
 }
+
+
+
+
+

@@ -183,7 +183,7 @@ export default function Expenses() {
     <FeatureGate feature="expenses.tracking" requiredPlan="business">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Expenses</h1>
+          <h1 className="text-2xl font-bold text-primary">Expenses</h1>
           <Button
             variant="primary"
             size="md"
@@ -199,26 +199,26 @@ export default function Expenses() {
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+          <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
         )}
 
         {summary && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(summary.total_amount, currency)}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Expenses</p>
+            <div className="bg-surface rounded-xl border border-color-subtle border-color p-4 text-center">
+              <p className="text-2xl font-bold text-inverse">{formatCurrency(summary.total_amount, currency)}</p>
+              <p className="text-sm text-secondary text-tertiary">Total Expenses</p>
             </div>
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{summary.count}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Expenses</p>
+            <div className="bg-surface rounded-xl border border-color-subtle border-color p-4 text-center">
+              <p className="text-2xl font-bold text-inverse">{summary.count}</p>
+              <p className="text-sm text-secondary text-tertiary">Expenses</p>
             </div>
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(summary.billable_amount, currency)}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Billable</p>
+            <div className="bg-surface rounded-xl border border-color-subtle border-color p-4 text-center">
+              <p className="text-2xl font-bold text-inverse">{formatCurrency(summary.billable_amount, currency)}</p>
+              <p className="text-sm text-secondary text-tertiary">Billable</p>
             </div>
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4 text-center">
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(summary.reimbursed_amount, currency)}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Reimbursed</p>
+            <div className="bg-surface rounded-xl border border-color-subtle border-color p-4 text-center">
+              <p className="text-2xl font-bold text-inverse">{formatCurrency(summary.reimbursed_amount, currency)}</p>
+              <p className="text-sm text-secondary text-tertiary">Reimbursed</p>
             </div>
           </div>
         )}
@@ -230,14 +230,14 @@ export default function Expenses() {
               placeholder="Search expenses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">All Categories</option>
               {CATEGORY_OPTIONS.map((o) => (
@@ -250,7 +250,7 @@ export default function Expenses() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
@@ -258,46 +258,46 @@ export default function Expenses() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
 
         {showForm && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-y-auto py-8">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 my-8">
-              <div className="p-6 border-b border-slate-200">
-                <h3 className="text-lg font-semibold text-slate-900">
+            <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl mx-4 my-8">
+              <div className="p-6 border-b border-color-subtle">
+                <h3 className="text-lg font-semibold text-primary">
                   {editingId ? "Edit Expense" : "Add Expense"}
                 </h3>
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Description</label>
                   <textarea
                     value={formData.description ?? ""}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={3}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+                    <label className="block text-sm font-medium text-secondary mb-1">Amount</label>
                     <input
                       type="number"
                       step="0.01"
                       value={formData.amount ?? ""}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-secondary mb-1">Category</label>
                     <select
                       value={formData.category ?? "other"}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       {CATEGORY_OPTIONS.map((o) => (
                         <option key={o.value} value={o.value}>{o.label}</option>
@@ -307,41 +307,41 @@ export default function Expenses() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                    <label className="block text-sm font-medium text-secondary mb-1">Date</label>
                     <input
                       type="date"
                       value={formData.expense_date?.slice(0, 10) ?? ""}
                       onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
+                    <label className="block text-sm font-medium text-secondary mb-1">Payment Method</label>
                     <input
                       type="text"
                       value={formData.payment_method ?? "cash"}
                       onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Receipt URL</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Receipt URL</label>
                   <input
                     type="url"
                     value={formData.receipt_url ?? ""}
                     onChange={(e) => setFormData({ ...formData, receipt_url: e.target.value || null })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="https://..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-secondary mb-1">Notes</label>
                   <textarea
                     value={formData.notes ?? ""}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value || null })}
                     rows={2}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="flex gap-4">
@@ -350,9 +350,9 @@ export default function Expenses() {
                       type="checkbox"
                       checked={formData.is_billable ?? false}
                       onChange={(e) => setFormData({ ...formData, is_billable: e.target.checked })}
-                      className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      className="rounded border-input-border text-primary-brand focus:ring-primary"
                     />
-                    <span className="text-sm text-slate-700">Billable</span>
+                    <span className="text-sm text-secondary">Billable</span>
                   </label>
                   {editingId && (
                     <label className="flex items-center gap-2">
@@ -360,14 +360,14 @@ export default function Expenses() {
                         type="checkbox"
                         checked={formData.is_reimbursed ?? false}
                         onChange={(e) => setFormData({ ...formData, is_reimbursed: e.target.checked })}
-                        className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                        className="rounded border-input-border text-primary-brand focus:ring-primary"
                       />
-                      <span className="text-sm text-slate-700">Reimbursed</span>
+                      <span className="text-sm text-secondary">Reimbursed</span>
                     </label>
                   )}
                 </div>
               </form>
-            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+            <div className="p-6 border-t border-color-subtle flex justify-end gap-3">
               <Button
                 variant="secondary"
                 size="md"
@@ -392,30 +392,30 @@ export default function Expenses() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-surface rounded-xl border border-color-subtle border-color overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Date</th>
-                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Description</th>
-                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Category</th>
-                <th className="text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Amount</th>
-                <th className="text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Payment</th>
-                <th className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase py-3 px-4">Actions</th>
+              <tr className="border-b border-color-subtle border-color">
+                <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Date</th>
+                <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Description</th>
+                <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Category</th>
+                <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Amount</th>
+                <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Payment</th>
+                <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-slate-400 dark:text-slate-500">Loading…</td>
+                  <td colSpan={6} className="py-8 text-center text-sm text-tertiary text-tertiary">Loading…</td>
                 </tr>
               ) : expenses.map((exp) => (
-                <tr key={exp.id} className="border-b border-slate-100 dark:border-slate-800 last:border-b-0">
-                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{exp.expense_date}</td>
-                  <td className="py-3 px-4 text-sm text-slate-900 dark:text-slate-100">{exp.description}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{EXPENSE_CATEGORIES[exp.category] ?? exp.category}</td>
-                  <td className="py-3 px-4 text-right text-sm font-medium text-slate-900 dark:text-slate-100">{formatCurrency(exp.amount, exp.currency)}</td>
-                  <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{exp.payment_method}</td>
+                <tr key={exp.id} className="border-b border-color-subtle border-color last:border-b-0">
+                  <td className="py-3 px-4 text-sm text-secondary text-tertiary">{exp.expense_date}</td>
+                  <td className="py-3 px-4 text-sm text-inverse">{exp.description}</td>
+                  <td className="py-3 px-4 text-sm text-secondary text-tertiary">{EXPENSE_CATEGORIES[exp.category] ?? exp.category}</td>
+                  <td className="py-3 px-4 text-right text-sm font-medium text-inverse">{formatCurrency(exp.amount, exp.currency)}</td>
+                  <td className="py-3 px-4 text-sm text-secondary text-tertiary">{exp.payment_method}</td>
                     <td className="py-3 px-4 text-center">
                       <Button
                         variant="ghost"
@@ -437,7 +437,7 @@ export default function Expenses() {
               {!loading && expenses.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
-                    <p className="text-slate-500 dark:text-slate-400 mb-4">No expenses yet</p>
+                    <p className="text-secondary text-tertiary mb-4">No expenses yet</p>
                     <Button
                       variant="primary"
                       size="md"
@@ -458,7 +458,7 @@ export default function Expenses() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex justify-between items-center text-sm text-slate-600 dark:text-slate-400">
+          <div className="flex justify-between items-center text-sm text-secondary text-tertiary">
             <span>Showing {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} of {total}</span>
             <div className="flex gap-2">
               <Button
@@ -486,4 +486,10 @@ export default function Expenses() {
     </FeatureGate>
   );
 }
+
+
+
+
+
+
 

@@ -184,12 +184,12 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
         border-l-2 transition-all duration-150
         motion-reduce:transition-none
         ${isSelected
-          ? "bg-primary-100 border-primary-500"
+          ? "bg-primary-bg border-primary-500"
           : isFocused
-          ? "bg-slate-100 border-slate-400"
-          : "border-transparent hover:bg-slate-100"
+          ? "bg-surface-alt border-color-subtle"
+          : "border-transparent hover:bg-surface-alt"
         }
-        focus:outline-none focus:ring-1 focus:ring-primary-500 focus:ring-offset-1
+        focus:outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1
       `}
       aria-selected={isSelected}
       aria-expanded={hasChildren ? expanded : undefined}
@@ -210,7 +210,7 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
             onToggleExpand(node.id);
           }}
           aria-label={expanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
-          className="w-4 h-4 flex items-center justify-center text-slate-500 hover:text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary-500 rounded"
+          className="w-4 h-4 flex items-center justify-center text-secondary hover:text-secondary focus:outline-none focus:ring-1 focus:ring-primary rounded"
         >
           {expanded ? "▼" : "▶"}
         </button>
@@ -223,9 +223,9 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
       </span>
 
       <div className="flex-1 flex items-center gap-2">
-        <span className="font-medium text-slate-900">{node.name}</span>
+        <span className="font-medium text-primary">{node.name}</span>
         <span
-          className="text-xs text-slate-400 font-mono"
+          className="text-xs text-tertiary font-mono"
           aria-label="Component ID"
           title={node.id}
         >
@@ -242,10 +242,10 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
         aria-label={node.visible ? "Hide component" : "Show component"}
         aria-pressed={!node.visible}
         title={node.visible ? "Hide component" : "Show component"}
-        className={`w-5 h-5 flex items-center justify-center rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary-500 ${
+        className={`w-5 h-5 flex items-center justify-center rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary ${
           node.visible
-            ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+            ? "bg-surface-alt text-secondary hover:bg-surface-alt"
+            : "status-warning-bg text-warning-text hover:status-warning-bg"
         }`}
       >
         {node.visible ? "👁" : "🚫"}
@@ -260,7 +260,7 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
           }}
           aria-label="Move up"
           title="Move up (Ctrl+↑)"
-          className="w-5 h-5 flex items-center justify-center rounded text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-5 h-5 flex items-center justify-center rounded text-xs bg-surface-alt text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary"
         >
           ↑
         </button>
@@ -272,7 +272,7 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
           }}
           aria-label="Move down"
           title="Move down (Ctrl+↓)"
-          className="w-5 h-5 flex items-center justify-center rounded text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-5 h-5 flex items-center justify-center rounded text-xs bg-surface-alt text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary"
         >
           ↓
         </button>
@@ -284,7 +284,7 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
           }}
           aria-label="Duplicate"
           title="Duplicate (Ctrl+D)"
-          className="w-5 h-5 flex items-center justify-center rounded text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-5 h-5 flex items-center justify-center rounded text-xs bg-surface-alt text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary"
         >
           📄
         </button>
@@ -296,7 +296,7 @@ const OutlineNode: React.FC<OutlineNodeProps> = ({
           }}
           aria-label="Delete"
           title="Delete (Delete)"
-          className="w-5 h-5 flex items-center justify-center rounded text-xs bg-red-100 text-red-600 hover:bg-red-200 focus:outline-none focus:ring-1 focus:ring-red-500"
+          className="w-5 h-5 flex items-center justify-center rounded text-xs status-error-bg status-error-text hover:bg-error-bg focus:outline-none focus:ring-1 focus:ring-error"
         >
           ✕
         </button>
@@ -566,7 +566,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
 
   if (!tree) {
     return (
-      <div className="p-4 text-sm text-slate-500" role="tree">
+      <div className="p-4 text-sm text-secondary" role="tree">
         No components found.
       </div>
     );
@@ -637,7 +637,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
 
       <DragOverlay>
         {activeDragId && (
-          <div className="bg-white border border-slate-200 rounded-lg shadow-lg px-3 py-2 opacity-90">
+          <div className="bg-surface border border-color-subtle rounded-lg shadow-lg px-3 py-2 opacity-90">
             <span>{getComponentIcon(activeDragId.replace("outline-node-", "") as ComponentType)}</span>
             <span className="ml-2 text-sm">{activeDragId.replace("outline-node-", "")}</span>
           </div>
@@ -646,7 +646,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
 
       {contextMenu && (
         <div
-          className="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"
+          className="fixed z-50 bg-surface border border-color-subtle rounded-lg shadow-lg py-1 min-w-[160px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
           role="menu"
           aria-label="Component context menu"
@@ -657,7 +657,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
               onDuplicate(contextMenu.componentId);
               closeContextMenu();
             }}
-            className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary"
           >
             Duplicate
           </button>
@@ -667,7 +667,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
               onDelete(contextMenu.componentId);
               closeContextMenu();
             }}
-            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="w-full text-left px-3 py-2 text-sm status-error-text hover:status-error-bg focus:outline-none focus:ring-1 focus:ring-error"
           >
             Delete
           </button>
@@ -678,3 +678,9 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
 };
 
 export default OutlineEditor;
+
+
+
+
+
+

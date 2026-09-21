@@ -54,49 +54,49 @@ export default function TemplateSelector({ value, onChange, placeholder = "Selec
   return (
     <div ref={containerRef} className="relative">
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-slate-300 rounded-lg bg-white cursor-pointer focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500"
+        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500"
         onClick={() => { setOpen(!open); setShowCreate(false); }}
       >
-        <span className="text-sm text-slate-900 truncate">
+        <span className="text-sm text-primary truncate">
           {selected ? selected.name : (value ? `Template (${value.slice(0, 8)})` : placeholder)}
         </span>
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full bg-surface border border-color-subtle rounded-lg shadow-lg max-h-80 overflow-y-auto">
           {loading ? (
-            <div className="p-3 text-sm text-slate-500">Loading templates...</div>
+            <div className="p-3 text-sm text-secondary">Loading templates...</div>
           ) : (
             <>
               {templates.map((t) => (
                 <div
                   key={t.id}
-                  className={`p-3 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors ${
-                    value === t.id ? "bg-primary-50" : "hover:bg-slate-50"
+                  className={`p-3 cursor-pointer border-b border-color-subtle last:border-b-0 transition-colors ${
+                    value === t.id ? "bg-primary-bg" : "hover:bg-surface-alt"
                   }`}
                   onClick={() => {
                     onChange(t.id);
                     setOpen(false);
                   }}
                 >
-                  <p className="font-medium text-sm text-slate-900">{t.name}</p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="font-medium text-sm text-primary">{t.name}</p>
+                  <p className="text-xs text-secondary mt-1">
                     {templatePreviews[t.name.toLowerCase()] ?? "Custom template"}
                   </p>
                   {t.is_default && (
-                    <span className="inline-block mt-1 text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                    <span className="inline-block mt-1 text-xs bg-surface-alt text-secondary px-2 py-0.5 rounded-full">
                       Default
                     </span>
                   )}
                 </div>
               ))}
               {templates.length === 0 && (
-                <div className="p-3 text-sm text-slate-400 text-center">
+                <div className="p-3 text-sm text-tertiary text-center">
                   No templates found. Create one to get started.
                 </div>
               )}
               <div
-                className="p-3 text-sm text-primary-600 cursor-pointer hover:bg-primary-50 text-center border-t border-slate-200"
+                className="p-3 text-sm text-primary-brand cursor-pointer hover:bg-primary-bg text-center border-t border-color-subtle"
                 onClick={() => setShowCreate(true)}
               >
                 + Create new template
@@ -108,3 +108,7 @@ export default function TemplateSelector({ value, onChange, placeholder = "Selec
     </div>
   );
 }
+
+
+
+

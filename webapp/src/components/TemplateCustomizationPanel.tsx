@@ -27,8 +27,8 @@ function CollapseSection({ title, defaultOpen = true, children }: SectionProps) 
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between py-2 text-left"
       >
-        <span className="text-sm font-semibold text-slate-700">{title}</span>
-        <span className="text-slate-400 text-xs">{open ? "−" : "+"}</span>
+        <span className="text-sm font-semibold text-secondary">{title}</span>
+        <span className="text-tertiary text-xs">{open ? "−" : "+"}</span>
       </button>
       {open && children}
     </div>
@@ -101,23 +101,23 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-5 space-y-1 divide-y divide-slate-100">
+      <div className="p-5 space-y-1 divide-y divide-color-subtle">
         <CollapseSection title="Brand" defaultOpen={false}>
           <div className="px-4 pb-3 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Primary Color</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Primary Color</label>
               <div className="flex gap-2">
                 <input
                   type="color"
                   value={doc.settings.defaultColor}
                   onChange={(e) => handleSettingChange({ defaultColor: e.target.value })}
-                  className="w-11 h-9 rounded-lg border border-slate-300 cursor-pointer p-0.5"
+                  className="w-11 h-9 rounded-lg border border-input-border cursor-pointer p-0.5"
                 />
                 <input
                   type="text"
                   value={doc.settings.defaultColor}
                   onChange={(e) => handleSettingChange({ defaultColor: e.target.value })}
-                  className="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex-1 text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>
@@ -129,20 +129,20 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
                     type="checkbox"
                     checked={Boolean((businessInfo.props as Record<string, unknown>).showLogo)}
                     onChange={(e) => handleProps(businessInfo, { showLogo: e.target.checked })}
-                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-input-border text-primary-brand focus:ring-primary"
                   />
                   Show Logo
                 </label>
 
                 {businessInfo && (businessInfo.props as Record<string, unknown>).showLogo && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">Logo URL</label>
+                    <label className="block text-xs font-medium text-secondary mb-1">Logo URL</label>
                     <input
                       type="url"
                       value={businessLogoUrl ?? ""}
                       onChange={(e) => onLogoUrlChange?.(e.target.value)}
                       placeholder="https://..."
-                      className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 )}
@@ -154,11 +154,11 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
         <CollapseSection title="Typography" defaultOpen={false}>
           <div className="px-4 pb-3 space-y-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Font Family</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Font Family</label>
               <select
                 value={doc.settings.defaultFont}
                 onChange={(e) => handleSettingChange({ defaultFont: e.target.value })}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {FONT_OPTIONS.map((f) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
@@ -166,7 +166,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Font Size ({doc.settings.defaultFontSize}px)</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Font Size ({doc.settings.defaultFontSize}px)</label>
               <input
                 type="range"
                 min="8"
@@ -182,11 +182,11 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
         <CollapseSection title="Page Setup" defaultOpen={false}>
           <div className="px-4 pb-3 space-y-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Page Size</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Page Size</label>
               <select
                 value={doc.settings.pageSize}
                 onChange={(e) => handleSettingChange({ pageSize: e.target.value as any })}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {PAGE_SIZE_OPTIONS.map((p) => (
                   <option key={p.value} value={p.value}>{p.label}</option>
@@ -194,11 +194,11 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Orientation</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Orientation</label>
               <select
                 value={doc.settings.orientation}
                 onChange={(e) => handleSettingChange({ orientation: e.target.value as any })}
-                className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="portrait">Portrait</option>
                 <option value="landscape">Landscape</option>
@@ -206,7 +206,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Top ({doc.settings.margins.top}px)</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Top ({doc.settings.margins.top}px)</label>
                 <input
                   type="range"
                   min="0"
@@ -217,7 +217,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Bottom ({doc.settings.margins.bottom}px)</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Bottom ({doc.settings.margins.bottom}px)</label>
                 <input
                   type="range"
                   min="0"
@@ -228,7 +228,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Left ({doc.settings.margins.left}px)</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Left ({doc.settings.margins.left}px)</label>
                 <input
                   type="range"
                   min="0"
@@ -239,7 +239,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Right ({doc.settings.margins.right}px)</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Right ({doc.settings.margins.right}px)</label>
                 <input
                   type="range"
                   min="0"
@@ -262,7 +262,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
                     type="checkbox"
                     checked={Boolean((businessInfo.props as Record<string, unknown>)[f.key])}
                     onChange={(e) => handleProps(businessInfo, { [f.key]: e.target.checked })}
-                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-input-border text-primary-brand focus:ring-primary"
                   />
                   {f.label}
                 </label>
@@ -280,7 +280,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
                     type="checkbox"
                     checked={Boolean((customerInfo.props as Record<string, unknown>)[f.key])}
                     onChange={(e) => handleProps(customerInfo, { [f.key]: e.target.checked })}
-                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-input-border text-primary-brand focus:ring-primary"
                   />
                   {f.label}
                 </label>
@@ -293,19 +293,19 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
           <div className="px-4 pb-3 space-y-3">
             {paymentTerms ? (
               <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">Terms Content</label>
+                <label className="block text-xs font-medium text-secondary mb-1">Terms Content</label>
                 <input
                   type="text"
                   value={String((paymentTerms.props as { content?: string }).content || "Net 30")}
                   onChange={(e) => handleProps(paymentTerms, { content: e.target.value })}
-                  className="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             ) : (
               <button
                 type="button"
                 onClick={handleAddComponent("paymentTerms", doc.rootSectionId, { content: "Net 30", label: "Payment Terms" })}
-                className="text-xs text-primary-600 hover:text-primary-700"
+                className="text-xs text-primary-brand hover:text-primary-brand"
               >
                 + Add Payment Terms
               </button>
@@ -318,21 +318,21 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
             {notesComp ? (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Label</label>
+                  <label className="block text-xs font-medium text-secondary mb-1">Label</label>
                   <input
                     type="text"
                     value={String((notesComp.props as { label?: string }).label || "Notes")}
                     onChange={(e) => handleProps(notesComp, { label: e.target.value || undefined })}
-                    className="w-full text-xs border border-slate-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full text-xs border border-input-border rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Content</label>
+                  <label className="block text-xs font-medium text-secondary mb-1">Content</label>
                   <textarea
                     value={String((notesComp.props as { content?: string }).content || "")}
                     onChange={(e) => handleProps(notesComp, { content: e.target.value })}
                     rows={3}
-                    className="w-full text-xs border border-slate-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full text-xs border border-input-border rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </>
@@ -340,7 +340,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
               <button
                 type="button"
                 onClick={handleAddComponent("notes", doc.rootSectionId, { content: "Thank you for your business!", label: "Notes" })}
-                className="text-xs text-primary-600 hover:text-primary-700"
+                className="text-xs text-primary-brand hover:text-primary-brand"
               >
                 + Add Notes Section
               </button>
@@ -353,21 +353,21 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
             {termsComp ? (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Label</label>
+                  <label className="block text-xs font-medium text-secondary mb-1">Label</label>
                   <input
                     type="text"
                     value={String((termsComp.props as { label?: string }).label || "Terms")}
                     onChange={(e) => handleProps(termsComp, { label: e.target.value || undefined })}
-                    className="w-full text-xs border border-slate-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full text-xs border border-input-border rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Content</label>
+                  <label className="block text-xs font-medium text-secondary mb-1">Content</label>
                   <textarea
                     value={String((termsComp.props as { content?: string }).content || "")}
                     onChange={(e) => handleProps(termsComp, { content: e.target.value })}
                     rows={3}
-                    className="w-full text-xs border border-slate-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full text-xs border border-input-border rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
               </>
@@ -375,7 +375,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
               <button
                 type="button"
                 onClick={handleAddComponent("terms", doc.rootSectionId, { content: "Payment due within 30 days.", label: "Terms" })}
-                className="text-xs text-primary-600 hover:text-primary-700"
+                className="text-xs text-primary-brand hover:text-primary-brand"
               >
                 + Add Terms Section
               </button>
@@ -388,3 +388,6 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
 };
 
 export default TemplateCustomizationPanel;
+
+
+

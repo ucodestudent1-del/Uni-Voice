@@ -420,6 +420,12 @@ export interface ApiPayment {
   updated_at: string;
 }
 
+export interface ApiPaymentWithInvoice extends ApiPayment {
+  invoice_number?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+}
+
 export interface ApiInvoiceEvent {
   id: string;
   invoice_id: string;

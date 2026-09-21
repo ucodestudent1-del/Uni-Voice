@@ -23,11 +23,11 @@ export function ValidationPanel({ issues, hasErrors, hasWarnings, className, onF
   if (issues.length === 0) {
     return (
       <div
-        className={`flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700 ${className ?? ""}`}
+        className={`flex items-center gap-2 rounded-lg status-success-bg border status-success-border px-3 py-2 text-sm status-success-text ${className ?? ""}`}
         role="status"
         aria-live="polite"
       >
-        <span className="text-green-600">✓</span>
+        <span className="status-success-text">✓</span>
         <span>All checks passed</span>
       </div>
     );
@@ -35,7 +35,7 @@ export function ValidationPanel({ issues, hasErrors, hasWarnings, className, onF
 
   return (
     <div
-      className={`rounded-lg border border-slate-200 bg-white ${className ?? ""}`}
+      className={`rounded-lg border border-color-subtle bg-surface ${className ?? ""}`}
       role="alert"
       aria-live="polite"
     >
@@ -47,26 +47,26 @@ export function ValidationPanel({ issues, hasErrors, hasWarnings, className, onF
       >
         <div className="flex items-center gap-2">
           {hasErrors ? (
-            <span className="text-red-600">✕</span>
+            <span className="status-error-text">✕</span>
           ) : (
-            <span className="text-amber-500">⚠</span>
+            <span className="status-warning-text">⚠</span>
           )}
-          <span className="text-sm font-medium text-slate-900">
+          <span className="text-sm font-medium text-primary">
             {hasErrors ? "Issues require attention" : "Suggestions to improve your invoice"}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {errorCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+            <span className="inline-flex items-center rounded-full status-error-bg px-2 py-0.5 text-xs font-medium status-error-text">
               {errorCount} error{errorCount !== 1 ? "s" : ""}
             </span>
           )}
           {warningCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+            <span className="inline-flex items-center rounded-full status-warning-bg px-2 py-0.5 text-xs font-medium status-warning-text">
               {warningCount} warning{warningCount !== 1 ? "s" : ""}
             </span>
           )}
-          <span className={`text-sm text-slate-400 transition-transform ${expanded ? "rotate-180" : ""}`}>▼</span>
+          <span className={`text-sm text-tertiary transition-transform ${expanded ? "rotate-180" : ""}`}>▼</span>
         </div>
       </button>
 
@@ -77,27 +77,27 @@ export function ValidationPanel({ issues, hasErrors, hasWarnings, className, onF
               key={`${issue.code}-${i}`}
               className={`flex items-start gap-2 rounded-md border px-2.5 py-2 text-sm ${
                 issue.severity === "error"
-                  ? "border-red-200 bg-red-50"
-                  : "border-amber-200 bg-amber-50"
+                  ? "status-error-border status-error-bg"
+                  : "status-warning-border status-warning-bg"
               }`}
             >
               <span className="mt-0.25 flex-shrink-0 text-base" aria-hidden="true">
                 {issue.severity === "error" ? (
-                  <span className="text-red-600">✕</span>
+                  <span className="status-error-text">✕</span>
                 ) : (
-                  <span className="text-amber-500">⚠</span>
+                  <span className="status-warning-text">⚠</span>
                 )}
               </span>
               <div className="flex-1">
-                <p className="text-slate-900">{issue.message}</p>
+                <p className="text-primary">{issue.message}</p>
                 {issue.field && (
-                  <p className="text-xs text-slate-500">Field: {issue.field}</p>
+                  <p className="text-xs text-secondary">Field: {issue.field}</p>
                 )}
                 {issue.fix && onFix && (
                   <button
                     type="button"
                     onClick={() => onFix(issue)}
-                    className="mt-1 text-xs font-medium text-slate-600 underline hover:text-slate-800"
+                    className="mt-1 text-xs font-medium text-secondary underline hover:text-primary"
                   >
                     Fix: {issue.fix}
                   </button>
@@ -112,3 +112,8 @@ export function ValidationPanel({ issues, hasErrors, hasWarnings, className, onF
 }
 
 export default ValidationPanel;
+
+
+
+
+

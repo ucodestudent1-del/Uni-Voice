@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 interface StatusBadgeProps {
   status: string;
   isOverdue?: boolean;
@@ -5,14 +7,14 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-slate-100 text-slate-800" },
-  sent: { label: "Sent", className: "bg-blue-100 text-blue-800" },
-  viewed: { label: "Viewed", className: "bg-indigo-100 text-indigo-800" },
-  partially_paid: { label: "Partially Paid", className: "bg-amber-100 text-amber-800" },
-  paid: { label: "Paid", className: "bg-green-100 text-green-800" },
-  overdue: { label: "Overdue", className: "bg-red-100 text-red-800" },
-  cancelled: { label: "Cancelled", className: "bg-slate-100 text-slate-500" },
-  void: { label: "Void", className: "bg-slate-100 text-slate-500" },
+  draft: { label: "Draft", className: "status-warning-bg status-warning-text" },
+  sent: { label: "Sent", className: "status-info-bg status-info-text" },
+  viewed: { label: "Viewed", className: "status-info-bg status-info-text" },
+  partially_paid: { label: "Partially Paid", className: "status-warning-bg status-warning-text" },
+  paid: { label: "Paid", className: "status-success-bg status-success-text" },
+  overdue: { label: "Overdue", className: "status-error-bg status-error-text" },
+  cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text" },
+  void: { label: "Void", className: "status-tertiary-bg status-tertiary-text" },
 };
 
 export default function StatusBadge({ status, isOverdue, className }: StatusBadgeProps) {

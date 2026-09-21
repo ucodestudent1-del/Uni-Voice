@@ -118,7 +118,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
 
   if (step === "loading") {
     return (
-      <div className="flex items-center gap-3 text-slate-600">
+      <div className="flex items-center gap-3 text-secondary">
         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -132,39 +132,39 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
     <div className={`space-y-6 ${className ?? ""}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Two-Factor Authentication</h2>
-          <p className="text-sm text-slate-600 mt-1">
+          <h2 className="text-lg font-semibold text-primary">Two-Factor Authentication</h2>
+          <p className="text-sm text-secondary mt-1">
             {status?.enabled
               ? "Extra security is enabled on your account."
               : "Add an extra layer of security to your account."}
           </p>
         </div>
         {status?.enabled ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">
+          <span className="inline-flex items-center gap-1.5 rounded-full status-success-bg px-2.5 py-1 text-xs font-medium status-success-text">
             ✓ Enabled
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-alt px-2.5 py-1 text-xs font-medium text-secondary">
             Disabled
           </span>
         )}
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
       )}
 
       {!status?.enabled && step === "disabled" && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-          <h3 className="font-semibold text-slate-900">Secure your account with an authenticator app</h3>
-          <p className="mt-1 text-sm text-slate-600">
+        <div className="rounded-xl border border-color-subtle bg-surface-alt p-6">
+          <h3 className="font-semibold text-primary">Secure your account with an authenticator app</h3>
+          <p className="mt-1 text-sm text-secondary">
             Scan the QR code below or enter the secret key in your authenticator app (Google
             Authenticator, Authy, Microsoft Authenticator, etc.), then verify with the code shown.
           </p>
           <button
             onClick={startSetup}
             disabled={saving}
-            className="mt-4 inline-flex items-center rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+            className="mt-4 inline-flex items-center rounded-lg bg-primary-action px-4 py-2.5 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
           >
             {saving ? "Setting up…" : "Enable Two-Factor Authentication"}
           </button>
@@ -172,19 +172,19 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
       )}
 
       {step === "pending" && setupResult && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <h3 className="font-semibold text-slate-900">Add to your authenticator app</h3>
-          <p className="mt-1 text-sm text-slate-600">
+        <div className="rounded-xl border border-color-subtle bg-surface p-6">
+          <h3 className="font-semibold text-primary">Add to your authenticator app</h3>
+          <p className="mt-1 text-sm text-secondary">
             Open your authenticator app and create a new account using the secret below, or paste
             the otpauth URI.
           </p>
 
-          <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-4 break-all font-mono text-xs text-slate-800">
+          <div className="mt-4 rounded-lg bg-surface-alt border border-color-subtle p-4 break-all font-mono text-xs text-primary">
             {setupResult.otpauthUri}
             <button
               type="button"
               onClick={() => copy(setupResult.otpauthUri)}
-              className="ml-2 inline-flex items-center gap-1 rounded-md bg-slate-200 px-1.5 py-0.5 text-xs text-slate-700 hover:bg-slate-300"
+              className="ml-2 inline-flex items-center gap-1 rounded-md bg-surface-alt px-1.5 py-0.5 text-xs text-secondary hover:bg-surface-alt300"
               title="Copy otpauth URI"
             >
                 {copied ? "Copied" : "Copy URI"}
@@ -192,15 +192,15 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Secret key</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Secret key</label>
             <div className="flex items-center gap-2">
-              <code className="block flex-1 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-mono text-base tracking-wider break-all">
+              <code className="block flex-1 rounded-lg bg-surface-alt border border-color-subtle px-3 py-2 font-mono text-base tracking-wider break-all">
                 {setupResult.secret}
               </code>
               <button
                 type="button"
                 onClick={() => copy(setupResult.secret)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                className="rounded-lg border border-input-border px-3 py-2 text-sm text-secondary hover:bg-surface-alt"
                 title="Copy secret"
               >
                 {copied ? "Copied" : "Copy"}
@@ -209,7 +209,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
           </div>
 
           <div className="mt-6">
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-secondary mb-1">
               Verification code
             </label>
             <input
@@ -218,7 +218,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
               autoComplete="one-time-password"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-center text-2xl font-mono tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-4 py-2.5 text-center text-2xl font-mono tracking-[0.3em] focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="—— ——"
             />
           </div>
@@ -226,14 +226,14 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
           <div className="mt-6 flex gap-3">
             <button
               onClick={() => setStep("disabled")}
-              className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              className="flex-1 rounded-lg border border-input-border px-4 py-2.5 text-sm font-medium text-secondary hover:bg-surface-alt"
             >
               Cancel
             </button>
             <button
               onClick={confirmEnable}
               disabled={saving}
-              className="flex-1 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+              className="flex-1 rounded-lg bg-primary-action px-4 py-2.5 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
             >
               {saving ? "Enabling…" : "Verify & Enable"}
             </button>
@@ -246,10 +246,10 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
       )}
 
       {status?.enabled && step === "enabled" && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <h3 className="font-semibold text-slate-900">Recovery codes</h3>
+        <div className="rounded-xl border border-color-subtle bg-surface p-6">
+          <h3 className="font-semibold text-primary">Recovery codes</h3>
           {recovery && (
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-secondary">
               {recovery.remaining} of {recovery.total} recovery codes remaining. Each code can be used once
               if you lose access to your authenticator.
             </p>
@@ -258,7 +258,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
             <button
               onClick={handleRegenerate}
               disabled={saving}
-              className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+              className="rounded-lg border border-input-border px-4 py-2.5 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
             >
               {saving ? "Generating…" : "Regenerate recovery codes"}
             </button>
@@ -266,7 +266,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
           <button
             onClick={handleDisable}
             disabled={saving}
-            className="mt-6 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+            className="mt-6 rounded-lg border status-error-border px-4 py-2.5 text-sm font-medium status-error-text hover:status-error-bg disabled:opacity-50"
           >
             {saving ? "Disabling…" : "Disable two-factor authentication"}
           </button>
@@ -285,21 +285,21 @@ function RecoveryCodesDisplay({ codes, onCopy }: { codes: string[]; onCopy: (tex
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-slate-700">Save these recovery codes</label>
+        <label className="block text-sm font-medium text-secondary">Save these recovery codes</label>
         <button
           type="button"
           onClick={() => onCopy(all)}
-          className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+          className="inline-flex items-center gap-1 text-sm text-primary-brand hover:text-primary-brand"
         >
           Copy all
         </button>
       </div>
-      <p className="mt-1 text-xs text-amber-700">
+      <p className="mt-1 text-xs text-warning-text">
         Store these in a safe place. You'll need them if you lose access to your authenticator.
       </p>
       <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {codes.map((c) => (
-          <code key={c} className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 font-mono text-center text-slate-800">
+          <code key={c} className="rounded-lg bg-surface-alt border border-color-subtle px-3 py-2 font-mono text-center text-primary">
             {c}
           </code>
         ))}
@@ -307,3 +307,8 @@ function RecoveryCodesDisplay({ codes, onCopy }: { codes: string[]; onCopy: (tex
     </div>
   );
 }
+
+
+
+
+

@@ -28,13 +28,13 @@ export default function FeaturesSection({
           return (
             <div
               key={feature.title}
-              className={`flex flex-col gap-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 md:p-8 ${
+              className={`flex flex-col gap-8 rounded-xl border border-color-subtle border-color bg-surface p-6 md:p-8 ${
                 reverse ? "md:flex-row-reverse" : "md:flex-row"
               }`}
             >
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{feature.title}</h3>
-                <p className="mt-2 text-slate-600 dark:text-slate-400">{feature.description}</p>
+                <h3 className="text-xl font-semibold text-inverse">{feature.title}</h3>
+                <p className="mt-2 text-secondary text-tertiary">{feature.description}</p>
               </div>
             </div>
           );
@@ -43,3 +43,8 @@ export default function FeaturesSection({
     </Section>
   );
 }
+
+
+
+
+

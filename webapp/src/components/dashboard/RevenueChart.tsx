@@ -14,11 +14,6 @@ import type { ApiVolumeTrend } from "../../types/api";
 
 type Timeframe = "30" | "90" | "365";
 
-const palette = {
-  revenue: "#0284c7",
-  payments: "#16a34a",
-};
-
 function formatCurrencyCompact(value: number, currency: string): string {
   try {
     return new Intl.NumberFormat("en-US", {
@@ -75,10 +70,10 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
   }, [data]);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+    <div className="bg-surface rounded-xl border border-color p-5">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Revenue & Payment Trends</h3>
-        <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <h3 className="text-sm font-semibold text-primary">Revenue & Payment Trends</h3>
+        <div className="inline-flex rounded-lg border border-color overflow-hidden">
           {([
             { key: "30", label: "30 Days" },
             { key: "90", label: "90 Days" },
@@ -89,8 +84,8 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
               onClick={() => setTimeframe(t.key)}
               className={`px-3 py-1 text-xs font-medium transition-colors ${
                 timeframe === t.key
-                  ? "bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                  ? "bg-primary-bg text-on-primary"
+                  : "text-tertiary hover:text-primary"
               }`}
             >
               {t.label}
@@ -100,15 +95,15 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
       </div>
 
       {loading ? (
-        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
-          <p className="text-sm text-slate-400 dark:text-slate-500">Loading trends...</p>
+        <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
+          <p className="text-sm text-tertiary">Loading trends...</p>
         </div>
       ) : error ? (
-        <div className="h-64 flex flex-col items-center justify-center gap-3 border border-dashed border-red-300 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <div className="h-64 flex flex-col items-center justify-center gap-3 border border-dashed border-error-border rounded-lg">
+          <p className="text-sm text-error-text">{error}</p>
           <button
             onClick={() => setRetryKey((key) => key + 1)}
-            className="rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white hover:bg-primary-700"
+            className="rounded-lg bg-primary-action px-3 py-2 text-xs font-medium text-on-primary hover:bg-primary-hover"
           >
             Try again
           </button>
@@ -119,24 +114,24 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={palette.revenue} stopOpacity={0.15} />
-                  <stop offset="95%" stopColor={palette.revenue} stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--chart-revenue)" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="var(--chart-revenue)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="colorPayments" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={palette.payments} stopOpacity={0.15} />
-                  <stop offset="95%" stopColor={palette.payments} stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--chart-payments)" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="var(--chart-payments)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200 dark:stroke-slate-700" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-color-subtle" />
               <XAxis
                 dataKey="period"
-                tick={{ fontSize: 12, fill: "var(--chart-text)" }}
+                tick={{ fontSize: 12, fill: "rgb(var(--chart-text))" }}
                 tickLine={false}
-                axisLine={{ stroke: "var(--chart-border)" }}
+                axisLine={{ stroke: "rgb(var(--chart-border))" }}
                 minTickGap={30}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: "var(--chart-text)" }}
+                tick={{ fontSize: 12, fill: "rgb(var(--chart-text))" }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(v: number) => formatCurrencyCompact(v, currency)}
@@ -144,18 +139,18 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
               />
               <Tooltip
                 contentStyle={{
-                  background: "var(--color-surface)",
+                  background: "rgb(var(--color-surface))",
                   border: "none",
                   borderRadius: "8px",
-                  color: "var(--color-text)",
+                  color: "rgb(var(--color-text))",
                   fontSize: "12px",
                   padding: "8px 12px",
                 }}
                 formatter={(value) => [formatCurrencyCompact(Number(value) ?? 0, currency), ""]}
-                labelStyle={{ color: "var(--chart-text-secondary)", marginBottom: "4px" }}
+                labelStyle={{ color: "rgb(var(--chart-text-secondary))", marginBottom: "4px" }}
               />
               <Legend
-                wrapperStyle={{ fontSize: "12px", paddingTop: "8px", color: "var(--chart-text-secondary)" }}
+                wrapperStyle={{ fontSize: "12px", paddingTop: "8px", color: "rgb(var(--chart-text-secondary))" }}
                 iconType="circle"
                 iconSize={8}
                 verticalAlign="top"
@@ -164,7 +159,7 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke={palette.revenue}
+                stroke="var(--chart-revenue)"
                 strokeWidth={2}
                 fill="url(#colorRevenue)"
                 name="Revenue"
@@ -174,7 +169,7 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
               <Area
                 type="monotone"
                 dataKey="payments"
-                stroke={palette.payments}
+                stroke="var(--chart-payments)"
                 strokeWidth={2}
                 fill="url(#colorPayments)"
                 name="Payments"
@@ -185,8 +180,8 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="h-64 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-600 rounded-lg">
-          <p className="text-sm text-slate-400 dark:text-slate-500">No data available</p>
+        <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
+          <p className="text-sm text-tertiary">No data available</p>
         </div>
       )}
     </div>

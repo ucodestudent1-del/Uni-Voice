@@ -1,52 +1,301 @@
 @import "tailwindcss";
 
 @layer base {
+  /* ——————————————————————————————————————
+   * Semantic Design Tokens
+   * — Architecture: semantic tokens map to visual-layer values.
+   *   Components consume ONLY semantic tokens (via `var(--color-*)`).
+   *   Adding/changing a theme = change the values below per [data-theme].
+   * —————————————————————————————————————— */
+
+  /* ================ Light Theme (default) ================ */
   :root {
-    --color-bg: 255 255 255;
-    --color-bg-alt: 248 252 255;
-    --color-surface: 255 255 255;
-    --color-border: 226 232 240;
-    --color-text: 15  23 42;
-    --color-text-secondary: 100 116 139;
-    --color-text-tertiary: 148 163 184;
-    --color-nav-bg: 255 255 255;
-    --color-nav-border: 226 232 240;
-    --color-shadow: 0 0 0 / 0.06;
-    --color-popover: 255 255 255;
-    --chart-text: #64748b;
-    --chart-text-secondary: #94a3b8;
-    --chart-border: #e2e8f0;
-    --chart-grid: #f1f5f9;
+    /* —— Color-scheme for native controls —— */
+    color-scheme: light;
+
+    /* —— Page background —— */
+    --color-page-bg: 248 250 252;        /* slate-100  */
+    --color-page-bg-alt: 255 255 255;    /* white      */
+
+    /* —— Surfaces —— */
+    --color-surface: 255 255 255;        /* white            */
+    --color-surface-alt: 248 252 255;    /* slate-50 / sky   */
+    --color-surface-elevation: 255 255 255; /* white w/ shadow  */
+
+    /* —— Borders & dividers —— */
+    --color-border: 226 232 240;         /* slate-200 */
+    --color-border-strong: 203 213 225;  /* slate-300 */
+    --color-border-subtle: 241 245 249;  /* slate-100 */
+
+    /* —— Text —— */
+    --color-text: 15 23 42;             /* slate-900      */
+    --color-text-secondary: 100 116 139;/* slate-500      */
+    --color-text-tertiary: 160 174 192; /* slate-400      */
+    --color-text-inverse: 255 255 255;  /* white          */
+    --color-text-disabled: 160 174 192; /* slate-400      */
+
+    /* —— Interactive states —— */
+    --color-hover: 241 245 249;         /* slate-100 (hover surface) */
+    --color-hover-text: 2 13 42;        /* slate-950 hover text    */
+    --color-active: 226 232 240;         /* slate-200 (active surface) */
+
+    /* —— Input fields —— */
+    --color-input-bg: 255 255 255;       /* white        */
+    --color-input-border: 203 213 225;   /* slate-300    */
+    --color-input-focus-ring: 37 99 232; /* blue-600     */
+    --color-input-placeholder: 160 174 192; /* slate-400  */
+    --color-input-disabled: 241 245 249; /* slate-100    */
+
+    /* —— Primary / brand —— */
+    --color-primary: 37 99 232;           /* blue-600          */
+    --color-primary-hover: 29 78 216;     /* blue-700          */
+    --color-primary-active: 30 62 180;    /* blue-800          */
+    --color-primary-bg: 219 233 255;      /* blue-100          */
+    --color-primary-bg-strong: 191 219 254; /* blue-50       */
+    --color-primary-text: 30 62 180;      /* blue-800          */
+    --color-primary-text-strong: 29 78 216; /* blue-700       */
+    --color-primary-ring: 37 99 232;     /* blue-600          */
+    --color-primary-ring-offset: 255 255 255;
+
+    /* —— Focus indicator —— */
+    --color-focus-ring: 37 99 232;        /* blue-600 */
+    --color-focus-ring-offset: 255 255 255;
+
+    /* —— Shadows —— */
+    --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    --color-shadow-strong: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.06);
+    --color-overlay: 15 23 42 / 0.6;
+
+    /* —— Status colors —— */
+    --color-success: 34 197 94;          /* green-500  */
+    --color-success-bg: 220 252 231;     /* green-50   */
+    --color-success-text: 21 128 61;     /* green-800  */
+    --color-success-border: 187 247 208; /* green-200  */
+
+    --color-warning: 245 158 11;         /* amber-500  */
+    --color-warning-bg: 255 247 225;     /* amber-50   */
+    --color-warning-text: 189 100 3;     /* amber-700  */
+    --color-warning-border: 253 224 153; /* amber-200  */
+
+    --color-error: 239 68 68;           /* red-500    */
+    --color-error-bg: 254 232 232;       /* red-50     */
+    --color-error-text: 185 28 28;       /* red-800    */
+    --color-error-border: 254 202 202;  /* red-300    */
+
+    --color-info: 59 130 246;            /* blue-500   */
+    --color-info-bg: 219 233 255;       /* blue-50    */
+    --color-info-text: 30 62 180;        /* blue-800   */
+    --color-info-border: 191 219 254;   /* blue-200   */
+
+    /* —— Chart colors —— */
+    --chart-text: 100 116 139;           /* slate-500   */
+    --chart-text-secondary: 160 174 192; /* slate-400   */
+    --chart-border: 226 232 240;         /* slate-200   */
+    --chart-grid: 241 245 249;           /* slate-100   */
+    --chart-surface: 255 255 255;        /* white       */
+
+    --chart-revenue: 37 99 232;          /* blue-600    */
+    --chart-payments: 22 163 74;         /* emerald-600 */
   }
 
-  .dark {
-    --color-bg: 15 23 42;
-    --color-bg-alt: 17 24 39;
-    --color-surface: 24 35 54;
-    --color-border: 44 49 61;
-    --color-text: 253 255 252;
-    --color-text-secondary: 194 201 213;
-    --color-text-tertiary: 148 163 184;
-    --color-nav-bg: 17 24 39;
-    --color-nav-border: 44 49 61;
-    --color-shadow: 0 0 0 / 0.3;
-    --color-popover: 24 35 54;
-    --chart-text: #cbd5e1;
-    --chart-text-secondary: #94a3b8;
-    --chart-border: #2c313d;
-    --chart-grid: #1e293b;
+  /* ================ Dark Theme ================ */
+  [data-theme="dark"] {
+    color-scheme: dark;
+
+    /* —— Page background —— */
+    --color-page-bg: 3 7 18;            /* near-black      */
+    --color-page-bg-alt: 15 23 42;      /* slate-900       */
+
+    /* —— Surfaces —— */
+    --color-surface: 24 35 54;          /* darker slate    */
+    --color-surface-alt: 31 41 59;      /* slate-800       */
+    --color-surface-elevation: 24 35 54; /* matches surface w/ shadow */
+
+    /* —— Borders & dividers —— */
+    --color-border: 44 49 61;           /* slate-700 dark variant */
+    --color-border-strong: 71 86 106;   /* slate-700 light-ish  */
+    --color-border-subtle: 33 45 66;    /* slate-800 dark-ish    */
+
+    /* —— Text —— */
+    --color-text: 253 255 252;          /* near-white     */
+    --color-text-secondary: 194 201 213;/* slate-400    */
+    --color-text-tertiary: 148 163 184; /* slate-500    */
+    --color-text-inverse: 15 23 42;     /* slate-900    */
+    --color-text-disabled: 148 163 184; /* slate-500    */
+
+    /* —— Interactive states —— */
+    --color-hover: 38 45 62;            /* slate-800      */
+    --color-hover-text: 253 255 252;    /* near-white      */
+    --color-active: 60 68 86;           /* slate-700      */
+
+    /* —— Input fields —— */
+    --color-input-bg: 24 35 54;         /* slate-800      */
+    --color-input-border: 71 86 106;    /* slate-700      */
+    --color-input-focus-ring: 96 165 250;/* blue-400      */
+    --color-input-placeholder: 148 163 184; /* slate-500 */
+    --color-input-disabled: 38 45 62;   /* slate-800      */
+
+    /* —— Primary / brand —— */
+    --color-primary: 96 165 250;        /* blue-400         */
+    --color-primary-hover: 126 185 255; /* blue-300         */
+    --color-primary-active: 153 193 255;/* blue-200         */
+    --color-primary-bg: 29 58 103;      /* blue-900/950     */
+    --color-primary-bg-strong: 23 41 76;/* blue-900          */
+    --color-primary-text: 191 219 254;  /* blue-200          */
+    --color-primary-text-strong: 147 197 253; /* blue-300 */
+    --color-primary-ring: 96 165 250;  /* blue-400          */
+    --color-primary-ring-offset: 15 23 42;
+
+    /* —— Focus indicator —— */
+    --color-focus-ring: 96 165 250;     /* blue-400 */
+    --color-focus-ring-offset: 15 23 42;
+
+    /* —— Shadows —— */
+    --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+    --color-shadow-strong: 0 10px 15px -3px rgb(0 0 0 / 0.30), 0 4px 6px -4px rgb(0 0 0 / 0.20);
+    --color-overlay: 0 0 0 / 0.6;
+
+    /* —— Status colors —— */
+    --color-success: 74 222 128;         /* green-400    */
+    --color-success-bg: 20 74 38;        /* green-900    */
+    --color-success-text: 132 204 171;   /* green-300    */
+    --color-success-border: 21 99 47;    /* green-700    */
+
+    --color-warning: 251 191 21;         /* amber-400    */
+    --color-warning-bg: 75 34 12;        /* amber-900    */
+    --color-warning-text: 252 211 77;    /* amber-300    */
+    --color-warning-border: 116 41 24;   /* amber-800    */
+
+    --color-error: 248 113 113;          /* red-400      */
+    --color-error-bg: 79 36 38;          /* red-900      */
+    --color-error-text: 252 186 186;     /* red-300      */
+    --color-error-border: 153 56 60;     /* red-800      */
+
+    --color-info: 96 165 250;            /* blue-400    */
+    --color-info-bg: 29 58 103;          /* blue-900    */
+    --color-info-text: 191 219 254;      /* blue-200    */
+    --color-info-border: 62 90 153;      /* blue-800    */
+
+    /* —— Chart colors —— */
+    --chart-text: 194 201 213;           /* slate-400      */
+    --chart-text-secondary: 148 163 184; /* slate-500      */
+    --chart-border: 52 64 89;            /* slate-700      */
+    --chart-grid: 30 41 59;             /* slate-800       */
+    --chart-surface: 24 35 54;          /* slate-800       */
+
+    --chart-revenue: 96 165 250;        /* blue-400       */
+    --chart-payments: 74 222 128;       /* green-400      */
   }
 
+  /* ================ HTML element defaults ================ */
   html {
     color-scheme: light;
   }
 
-  .dark html {
+  [data-theme="dark"] html {
     color-scheme: dark;
   }
 
   body {
-    background-color: rgb(var(--color-bg));
+    background-color: rgb(var(--color-page-bg));
     color: rgb(var(--color-text));
+  }
+
+  /* ================ Semantic utility classes ================ */
+
+  /* Backgrounds */
+  .bg-page { background-color: rgb(var(--color-page-bg)); }
+  .bg-page-alt { background-color: rgb(var(--color-page-bg-alt)); }
+  .bg-surface { background-color: rgb(var(--color-surface)); }
+  .bg-surface-alt { background-color: rgb(var(--color-surface-alt)); }
+  .bg-surface-elevated {
+    background-color: rgb(var(--color-surface-elevation));
+    box-shadow: var(--color-shadow);
+  }
+
+  /* Text colors */
+  .text-primary { color: rgb(var(--color-text)); }
+  .text-secondary { color: rgb(var(--color-text-secondary)); }
+  .text-tertiary { color: rgb(var(--color-text-tertiary)); }
+  .text-inverse { color: rgb(var(--color-text-inverse)); }
+  .text-disabled { color: rgb(var(--color-text-disabled)); }
+  .text-on-primary { color: rgb(var(--color-text-inverse)); }
+  .text-on-primary-strong { color: rgb(var(--color-primary-text-strong)); }
+  .text-primary-brand { color: rgb(var(--color-primary)); }
+  .text-primary-hover { color: rgb(var(--color-primary-hover)); }
+
+  /* Border colors */
+  .border-color { border-color: rgb(var(--color-border)); }
+  .border-color-strong { border-color: rgb(var(--color-border-strong)); }
+  .border-color-subtle { border-color: rgb(var(--color-border-subtle)); }
+
+  /* Interactive states */
+  .bg-hover { background-color: rgb(var(--color-hover)); }
+  .hover-bg-hover:hover {
+    background-color: rgb(var(--color-hover));
+  }
+
+  /* Input fields */
+  .bg-input { background-color: rgb(var(--color-input-bg)); }
+  .border-input { border-color: rgb(var(--color-input-border)); }
+  .placeholder-input {
+    &::placeholder { color: rgb(var(--color-input-placeholder)); }
+  }
+  .bg-input-disabled { background-color: rgb(var(--color-input-disabled)); }
+
+  /* Focus indicator */
+  .focus-ring {
+    outline: 2px solid transparent;
+    box-shadow:
+      0 0 0 2px rgb(var(--color-focus-ring-offset)) padding-box,
+      0 0 0 4px rgb(var(--color-focus-ring));
+    border-radius: 0.375rem;
+  }
+  .focus-ring-primary {
+    outline: 2px solid transparent;
+    box-shadow:
+      0 0 0 2px rgb(var(--color-primary-ring-offset)) padding-box,
+      0 0 0 4px rgb(var(--color-primary));
+    border-radius: 0.375rem;
+  }
+
+  /* Primary actions */
+  .bg-primary-action { background-color: rgb(var(--color-primary)); }
+  .hover-bg-primary-action:hover { background-color: rgb(var(--color-primary-hover)); }
+
+  /* Status badges - success */
+  .status-success-bg { background-color: rgb(var(--color-success-bg)); }
+  .status-success-text { color: rgb(var(--color-success-text)); }
+  .status-success-border { border-color: rgb(var(--color-success-border)); }
+
+  /* Status badges - warning */
+  .status-warning-bg { background-color: rgb(var(--color-warning-bg)); }
+  .status-warning-text { color: rgb(var(--color-warning-text)); }
+  .status-warning-border { border-color: rgb(var(--color-warning-border)); }
+
+  /* Status badges - error/danger */
+  .status-error-bg { background-color: rgb(var(--color-error-bg)); }
+  .status-error-text { color: rgb(var(--color-error-text)); }
+  .status-error-border { border-color: rgb(var(--color-error-border)); }
+
+  /* Status badges - info */
+  .status-info-bg { background-color: rgb(var(--color-info-bg)); }
+  .status-info-text { color: rgb(var(--color-info-text)); }
+  .status-info-border { border-color: rgb(var(--color-info-border)); }
+
+  /* Status badges - tertiary (draft, void, etc.) */
+  .status-tertiary-bg { background-color: rgb(var(--color-surface-alt)); }
+  .status-tertiary-text { color: rgb(var(--color-text-secondary)); }
+
+   /* Disabled states */
+  .disabled-state {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  .font-tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }

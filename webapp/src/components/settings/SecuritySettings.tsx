@@ -72,56 +72,56 @@ export default function SecuritySettings() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Security</h2>
-        <p className="text-sm text-slate-600 mt-1">
+        <h2 className="text-lg font-semibold text-primary">Security</h2>
+        <p className="text-sm text-secondary mt-1">
           Manage password, two-factor authentication, and active sessions.
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="text-md font-semibold text-slate-900 mb-4">Password</h3>
-        <p className="text-sm text-slate-600 mb-4">
+      <div className="rounded-xl border border-color-subtle bg-surface p-6">
+        <h3 className="text-md font-semibold text-primary mb-4">Password</h3>
+        <p className="text-sm text-secondary mb-4">
           Change your password. Choose a strong, unique password you haven't used elsewhere.
         </p>
 
         {passwordError && (
-          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-4">{passwordError}</div>
+          <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text mb-4">{passwordError}</div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Current Password</label>
             <input
               type="password"
               value={passwordForm.currentPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div />
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-secondary mb-1">New Password</label>
             <input
               type="password"
               value={passwordForm.newPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+            <label className="block text-sm font-medium text-secondary mb-1">Confirm New Password</label>
             <input
               type="password"
               value={passwordForm.confirmPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between">
           {passwordSaved && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium status-success-text">
               <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8.5 8.5a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
@@ -131,39 +131,39 @@ export default function SecuritySettings() {
           <button
             onClick={changeUserPassword}
             disabled={passwordSaving}
-            className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
           >
             {passwordSaving ? "Changing…" : "Change Password"}
           </button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="text-md font-semibold text-slate-900 mb-1">Two-Factor Authentication</h3>
-        <p className="text-sm text-slate-600 mb-4">Add an extra layer of security to your account.</p>
+      <div className="rounded-xl border border-color-subtle bg-surface p-6">
+        <h3 className="text-md font-semibold text-primary mb-1">Two-Factor Authentication</h3>
+        <p className="text-sm text-secondary mb-4">Add an extra layer of security to your account.</p>
         <TwoFactorManager />
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="text-md font-semibold text-slate-900">Active Sessions</h3>
-        <p className="text-sm text-slate-500 mt-1 mb-4">Devices currently signed in to your account.</p>
+      <div className="rounded-xl border border-color-subtle bg-surface p-6">
+        <h3 className="text-md font-semibold text-primary">Active Sessions</h3>
+        <p className="text-sm text-secondary mt-1 mb-4">Devices currently signed in to your account.</p>
 
         {loadingSessions ? (
-          <div className="text-sm text-slate-500">Loading sessions…</div>
+          <div className="text-sm text-secondary">Loading sessions…</div>
         ) : activeSessions.length === 0 ? (
-          <div className="text-sm text-slate-500">No recent sessions found.</div>
+          <div className="text-sm text-secondary">No recent sessions found.</div>
         ) : (
           <div className="space-y-3">
             {activeSessions.map((s) => (
-              <div key={s.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+              <div key={s.id} className="flex items-center justify-between py-3 border-b border-color-subtle last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{s.user_agent ?? "Unknown device"}</p>
-                  <p className="text-xs text-slate-500">{s.ip_address ?? "—"} · {s.created_at ? new Date(s.created_at).toLocaleString() : "—"}</p>
+                  <p className="text-sm font-medium text-primary">{s.user_agent ?? "Unknown device"}</p>
+                  <p className="text-xs text-secondary">{s.ip_address ?? "—"} · {s.created_at ? new Date(s.created_at).toLocaleString() : "—"}</p>
                 </div>
                 <button
                   onClick={() => revokeSession(s.id)}
                   disabled={revoking === s.id}
-                  className="text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
+                  className="text-xs font-medium status-error-text hover:status-error-text disabled:opacity-50"
                 >
                   {revoking === s.id ? "Revoking…" : "Revoke"}
                 </button>
@@ -173,9 +173,9 @@ export default function SecuritySettings() {
         )}
       </div>
 
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-        <h3 className="text-md font-semibold text-red-900 mb-3">Danger Zone</h3>
-        <p className="text-sm text-slate-600 mb-4">
+      <div className="rounded-xl border status-error-border status-error-bg p-6">
+        <h3 className="text-md font-semibold status-error-text mb-3">Danger Zone</h3>
+        <p className="text-sm text-secondary mb-4">
           Actions in this section are irreversible. Proceed with caution.
         </p>
         <button
@@ -188,7 +188,7 @@ export default function SecuritySettings() {
               return;
             alert("Account deletion is not available during the current subscription period. Please cancel your subscription first.");
           }}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+          className="rounded-lg status-error-text px-4 py-2 text-sm font-medium text-on-primary hover:status-error-text"
         >
           Delete Account
         </button>
@@ -196,3 +196,8 @@ export default function SecuritySettings() {
     </div>
   );
 }
+
+
+
+
+

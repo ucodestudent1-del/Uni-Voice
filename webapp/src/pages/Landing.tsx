@@ -12,20 +12,20 @@ export default function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen bg-surface-alt text-inverse">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center justify-between h-16 py-4">
-          <div className="text-xl font-bold text-slate-900 dark:text-slate-100">InvoiceFlow</div>
+          <div className="text-xl font-bold text-inverse">InvoiceFlow</div>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="#templates" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Templates</Link>
-            <Link to="#features" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Features</Link>
-            <Link to="#faq" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">FAQ</Link>
-            <button onClick={() => navigate("/login")} className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+            <Link to="#templates" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Templates</Link>
+            <Link to="#features" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Features</Link>
+            <Link to="#faq" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">FAQ</Link>
+            <button onClick={() => navigate("/login")} className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">
               Login
             </button>
             <button
               onClick={() => navigate("/register")}
-              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="inline-flex items-center rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
             >
               Create Free Invoice
             </button>
@@ -34,7 +34,7 @@ export default function Landing() {
             <ThemeToggle />
             <button
               onClick={() => navigate("/register")}
-              className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="inline-flex items-center rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
             >
               Get Started
             </button>
@@ -46,26 +46,26 @@ export default function Landing() {
       <Section className="pt-12 pb-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <h1 className="text-4xl font-bold text-slate-900 sm:text-5xl leading-tight">
+            <h1 className="text-4xl font-bold text-primary sm:text-5xl leading-tight">
               Professional invoices without the accounting headache
             </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-lg">
+            <p className="text-lg text-secondary text-tertiary max-w-lg">
               Create, send, and track invoices in seconds. Free plan includes everything you need to get started.
               Upgrade to Pro for automation that saves you hours every month.
             </p>
             <div className="flex items-center gap-4 pt-2">
               <button
                 onClick={() => navigate("/register")}
-                className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 text-base font-medium text-white hover:bg-primary-700 shadow-lg hover:shadow-xl transition-shadow"
+                className="inline-flex items-center rounded-lg bg-primary-action px-6 py-3 text-base font-medium text-on-primary hover:bg-primary-hover shadow-lg hover:shadow-xl transition-shadow"
               >
                 Create Free Invoice
               </button>
-              <span className="text-sm text-slate-500 dark:text-slate-400">No credit card required · Cancel anytime</span>
+              <span className="text-sm text-secondary text-tertiary">No credit card required · Cancel anytime</span>
             </div>
           </div>
           <div className="relative">
-            <div className="absolute -inset-4 bg-primary-100/50 blur-3xl rounded-full" />
-            <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl">
+            <div className="absolute -inset-4 bg-primary-bg/50 blur-3xl rounded-full" />
+            <div className="relative bg-surface border border-color-subtle border-color rounded-2xl shadow-xl">
               <InvoicePreviewHero />
             </div>
           </div>
@@ -120,30 +120,30 @@ export default function Landing() {
       {/* Final CTA */}
       <Section className="py-20">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+          <h2 className="text-3xl font-bold text-inverse mb-4">
             {isAuthenticated ? "Continue to your dashboard" : "Ready to get started?"}
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-lg mx-auto">
+          <p className="text-secondary text-tertiary mb-8 max-w-lg mx-auto">
             {isAuthenticated
               ? "Go to your dashboard to manage invoices."
               : "Join over 10,000 businesses using InvoiceFlow to get paid faster."}
           </p>
           <button
             onClick={() => (isAuthenticated ? navigate("/app") : navigate("/register"))}
-            className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 text-base font-medium text-white hover:bg-primary-700 shadow-lg hover:shadow-xl transition-shadow"
+            className="inline-flex items-center rounded-lg bg-primary-action px-6 py-3 text-base font-medium text-on-primary hover:bg-primary-hover shadow-lg hover:shadow-xl transition-shadow"
           >
             {isAuthenticated ? "Go to Dashboard" : "Create Your Free Invoice"}
           </button>
         </div>
       </Section>
 
-      <footer className="border-t border-slate-200 dark:border-slate-700 py-8">
+      <footer className="border-t border-color-subtle border-color py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <p className="text-slate-500 dark:text-slate-400">© 2026 InvoiceFlow. All rights reserved.</p>
+            <p className="text-secondary text-tertiary">© 2026 InvoiceFlow. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link to="/privacy" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Privacy</Link>
-              <Link to="/terms" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">Terms</Link>
+              <Link to="/privacy" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Privacy</Link>
+              <Link to="/terms" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Terms</Link>
             </div>
           </div>
         </div>
@@ -159,16 +159,16 @@ function StepCard({ step, title, description }: {
 }) {
   return (
     <div className="flex text-center flex-col">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-400">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-bg dark:bg-primary-bg-strong text-primary-brand text-primary-brand">
         <span className="text-2xl font-bold">{step}</span>
       </div>
       <div className="flex items-center justify-center gap-2 mb-2">
-        <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2.5 py-0.5 rounded-full">
+        <span className="text-xs font-medium text-primary-brand bg-primary-bg px-2.5 py-0.5 rounded-full">
           Step {step}
         </span>
       </div>
-        <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-      <p className="text-slate-600 dark:text-slate-400">{description}</p>
+        <h3 className="text-xl font-semibold text-inverse">{title}</h3>
+      <p className="text-secondary text-tertiary">{description}</p>
     </div>
   );
 }
@@ -178,10 +178,10 @@ function InvoicePreviewHero() {
     <div className="p-6 min-w-[320px]">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h2 className="font-bold text-slate-900">INVOICE #INV-2026-0001</h2>
-          <p className="text-sm text-slate-500">Due: Sep 30, 2026</p>
+          <h2 className="font-bold text-primary">INVOICE #INV-2026-0001</h2>
+          <p className="text-sm text-secondary">Due: Sep 30, 2026</p>
         </div>
-        <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-800">
+        <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-medium bg-surface-alt text-primary">
           Draft
         </span>
       </div>
@@ -210,13 +210,19 @@ function InvoicePreviewHero() {
         </tbody>
       </table>
       <div className="mt-4 space-y-1 text-right text-sm">
-        <p className="text-slate-600">Subtotal <span className="text-slate-900 font-medium">$5,075.00</span></p>
-        <p className="text-slate-600">Tax (10%) <span className="text-slate-900 font-medium">$507.50</span></p>
-        <p className="text-lg font-bold text-slate-900">Total <span>$5,582.50</span></p>
+        <p className="text-secondary">Subtotal <span className="text-primary font-medium">$5,075.00</span></p>
+        <p className="text-secondary">Tax (10%) <span className="text-primary font-medium">$507.50</span></p>
+        <p className="text-lg font-bold text-primary">Total <span>$5,582.50</span></p>
       </div>
       <div className="mt-4 pt-4 border-t text-center">
-        <p className="text-xs text-slate-400">Acme Design Studio · 555-0123 · hello@acme.design</p>
+        <p className="text-xs text-tertiary">Acme Design Studio · 555-0123 · hello@acme.design</p>
       </div>
     </div>
   );
 }
+
+
+
+
+
+
