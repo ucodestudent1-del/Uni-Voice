@@ -55,6 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   }, []);
 
+  function safeRemoveToken() {
+    try {
+      localStorage.removeItem("token");
+    } catch {
+      // ignore localStorage errors (e.g., private browsing, quota exceeded)
+    }
+  }
+
+  function safeSetToken(token: string) {
+    try {
+      localStorage.setItem("token", token);
+    } catch {
+      // ignore localStorage errors
+    }
+  }
+
   useEffect(() => {
     async function validate() {
       if (!token) {
@@ -66,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
         setOnboarding(data.onboarding ?? null);
       } catch {
-        localStorage.removeItem("token");
+        safeRemoveToken();
         setToken(null);
         setUser(null);
         setOnboarding(null);
@@ -77,13 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   const login = (newToken: string, newUser: User) => {
-    localStorage.setItem("token", newToken);
+    safeSetToken(newToken);
     setToken(newToken);
     setUser(newUser);
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    safeRemoveToken();
     setToken(null);
     setUser(null);
     setOnboarding(null);

@@ -207,10 +207,11 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
   try {
-    const sub = await subscriptionRepository.findSubscriptionByBusinessId(req.user!.businessId!);
+    const businessId = req.user.businessId;
+    const sub = businessId ? await subscriptionRepository.findSubscriptionByBusinessId(businessId) : null;
     const plan = sub ? await subscriptionService.getPlanById(sub.planId) : null;
-    const twoFactor = await twoFactorService.getStatus(req.user!.id);
-    const onboarding = await onboardingService.getProgress(req.user!.businessId!);
+    const twoFactor = await twoFactorService.getStatus(req.user.id);
+    const onboarding = businessId ? await onboardingService.getProgress(businessId) : null;
     res.json({ user: req.user, subscription: sub, plan, twoFactor, onboarding });
   } catch (err) {
     handleAuthError(err, res);
