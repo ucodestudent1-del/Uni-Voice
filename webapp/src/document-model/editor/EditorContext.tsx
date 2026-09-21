@@ -75,6 +75,9 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pendingSaveRef = useRef(false);
   const lastSavedVersionRef = useRef(initialDocument.version);
+  const documentRef = useRef(initialDocument);
+  const dirtyRef = useRef(false);
+  const isAutosaveEnabledRef = useRef(false);
 
   React.useEffect(() => {
     initializeRegistry();
@@ -87,6 +90,18 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    documentRef.current = document;
+  }, [document]);
+
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
+  useEffect(() => {
+    isAutosaveEnabledRef.current = isAutosaveEnabled;
+  }, [isAutosaveEnabled]);
 
   const pushToHistory = useCallback((newDoc: InvoiceDocument) => {
     setHistory((prev) => {
@@ -198,27 +213,27 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
 
   const markSaved = useCallback(() => {
     setDirty(false);
-    lastSavedVersionRef.current = document.version;
-  }, [document.version]);
+    lastSavedVersionRef.current = documentRef.current.version;
+  }, []);
 
   const saveDocument = useCallback(() => {
-    onDocumentChange?.(document);
+    onDocumentChange?.(documentRef.current);
     markSaved();
-  }, [document, onDocumentChange, markSaved]);
+  }, [onDocumentChange, markSaved]);
 
   const debouncedSave = useCallback(() => {
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
     }
     autosaveTimerRef.current = setTimeout(() => {
-      if (dirty && isAutosaveEnabled) {
+      if (dirtyRef.current && isAutosaveEnabledRef.current) {
         pendingSaveRef.current = true;
-        onDocumentChange?.(document);
+        onDocumentChange?.(documentRef.current);
         markSaved();
         pendingSaveRef.current = false;
       }
     }, autosaveDelayMs);
-  }, [dirty, isAutosaveEnabled, autosaveDelayMs, document, onDocumentChange, markSaved]);
+  }, [autosaveDelayMs, onDocumentChange, markSaved]);
 
   useEffect(() => {
     if (dirty && isAutosaveEnabled) {
@@ -229,7 +244,7 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
         clearTimeout(autosaveTimerRef.current);
       }
     };
-  }, [dirty, isAutosaveEnabled, debouncedSave]);
+  }, [dirty, isAutosaveEnabled]);
 
   const enableAutosave = useCallback((enabled: boolean, delayMs?: number) => {
     setIsAutosaveEnabled(enabled);
