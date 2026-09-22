@@ -30,16 +30,18 @@ export default function Layout() {
     { name: "Invoices", to: "/app/invoices" },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
+    { name: "Quotes", to: "/app/quotes", requiredPlan: "business" as any },
     { name: "Payments", to: "/app/payments" },
-    { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" },
-    { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "business" },
-    { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" },
-    { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "business" },
+    { name: "Receipts", to: "/app/receipts", requiredPlan: "business" as any },
+    { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" as any },
+    { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "business" as any },
+    { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" as any },
+    { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "business" as any },
     { name: "Plans", to: "/app/plans" },
     { name: "Settings", to: "/app/settings" },
   ];
 
-  const tierOrder = { free: 0, pro: 1, business: 2 };
+  const tierOrder = { free: 0, pro: 1, scale: 2, business: 3 };
   const currentTier = plan ? tierOrder[plan.code as keyof typeof tierOrder] ?? 0 : 0;
 
   return (

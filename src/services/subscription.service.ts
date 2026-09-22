@@ -2,7 +2,7 @@ import { subscriptionRepository } from "../repositories/subscription.repo.js";
 import type { PlanCode, Plan, BusinessSubscription, EntitlementCheck } from "../domain/subscription.js";
 import { rowToDate } from "../repositories/helpers.js";
 
-const TIER_HIERARCHY: Record<PlanCode, number> = { free: 0, pro: 1, business: 2 };
+const TIER_HIERARCHY: Record<PlanCode, number> = { free: 0, pro: 1, scale: 2, business: 3 };
 
 export interface SubscriptionContext {
   businessId: string;
@@ -18,7 +18,8 @@ export class SubscriptionService {
     const plans = [
       { code: "free" as PlanCode, name: "Free", description: "Make professional invoices", price: 0, sortOrder: 0 },
       { code: "pro" as PlanCode, name: "Pro", description: "Automate your invoicing", price: 19, sortOrder: 1 },
-      { code: "business" as PlanCode, name: "Business", description: "Manage your billing and financial workflow", price: 49, sortOrder: 2 },
+      { code: "scale" as PlanCode, name: "Scale", description: "Growth tools and automation", price: 30, sortOrder: 2 },
+      { code: "business" as PlanCode, name: "Business", description: "Manage your billing and financial workflow", price: 49, sortOrder: 3 },
     ];
 
     for (const p of plans) {
@@ -58,7 +59,7 @@ export class SubscriptionService {
       { code: "quotes.create", name: "Create Quotes/Estimates", category: "quotes", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "quotes.convert", name: "Convert Quote to Invoice", category: "quotes", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "purchase_orders.create", name: "Purchase Orders", category: "purchase_orders", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
-      { code: "receipts.create", name: "Receipts", category: "receipts", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+      { code: "receipts.create", name: "Receipts", category: "receipts", isPremium: true, requiresPlan: "scale" as PlanCode, metadata: {} },
       { code: "credit_notes.create", name: "Credit Notes / Refunds", category: "credit_notes", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "statements.customer", name: "Customer Statements", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "reports.revenue", name: "Revenue Dashboard", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
@@ -89,10 +90,7 @@ export class SubscriptionService {
     ];
 
     for (const f of featureFlags) {
-      const existing = await subscriptionRepository.findFeatureFlagByCode(f.code);
-      if (!existing) {
-        await subscriptionRepository.createFeatureFlag(f);
-      }
+      await subscriptionRepository.upsertFeatureFlag(f);
     }
   }
 

@@ -97,6 +97,28 @@ export class SubscriptionRepository {
     return this.rowToFeatureFlag(res.rows[0]);
   }
 
+  async upsertFeatureFlag(input: { code: string; name: string; description?: string | null; category?: string; isPremium?: boolean; requiresPlan?: PlanCode; metadata?: Record<string, unknown> }): Promise<FeatureFlag> {
+    const res = await query(
+      `INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT (code) DO UPDATE
+       SET name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           category = EXCLUDED.category,
+           is_premium = EXCLUDED.is_premium,
+           requires_plan = EXCLUDED.requires_plan,
+           metadata = EXCLUDED.metadata
+       WHERE feature_flags.is_premium IS DISTINCT FROM EXCLUDED.is_premium
+          OR feature_flags.requires_plan IS DISTINCT FROM EXCLUDED.requires_plan
+          OR feature_flags.category IS DISTINCT FROM EXCLUDED.category
+          OR feature_flags.name IS DISTINCT FROM EXCLUDED.name
+          OR feature_flags.metadata IS DISTINCT FROM EXCLUDED.metadata
+       RETURNING *`,
+      [input.code, input.name, input.description, input.category ?? "general", input.isPremium ?? false, input.requiresPlan ?? null, JSON.stringify(input.metadata ?? {})]
+    );
+    return this.rowToFeatureFlag(res.rows[0]);
+  }
+
   async findFeatureFlagByCode(code: string): Promise<FeatureFlag | null> {
     const res = await query("SELECT * FROM feature_flags WHERE code = $1", [code]);
     if (!res.rows.length) return null;

@@ -14,12 +14,15 @@ import {
   payInvoicePublic,
   recordPublicView,
   recordDepositPayment,
+  generateInvoiceReceipt,
+  getReceiptPdf,
 } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
 import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
 import InvoiceStatus, { isOverdueStatus } from "../components/primitives/InvoiceStatus";
 import { ConfirmationDialog } from "../components/primitives/ConfirmationDialog";
+import StripePaymentElement from "../components/StripePaymentElement";
 
 export default function InvoiceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +36,7 @@ export default function InvoiceDetail() {
   const [showVoidDialog, setShowVoidDialog] = useState(false);
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [payAmount, setPayAmount] = useState<string>("");
+  const [paymentIntent, setPaymentIntent] = useState<ApiPaymentIntent | null>(null);
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
 
@@ -143,34 +147,61 @@ export default function InvoiceDetail() {
     }
   }
 
+  async function handleGenerateReceipt() {
+    if (!id) return;
+    try {
+      const result = await generateInvoiceReceipt(id);
+      const receiptId = result.receiptId ?? result.id;
+      if (!receiptId) {
+        setActionMessage("Receipt generated but no ID returned");
+        return;
+      }
+      const blob = await getReceiptPdf(receiptId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `receipt-${invoice?.invoice_number ?? id}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setActionMessage("Receipt generated and downloaded!");
+    } catch (err: any) {
+      setActionMessage(err.response?.data?.error || "Failed to generate receipt");
+    }
+  }
+
   async function handleRecordPayment() {
     if (!id || !payAmount) return;
     try {
       const intent: ApiPaymentIntent = await createPaymentIntent(id);
-      const amountDecimal = new Decimal(payAmount);
-      if (intent.provider === "stripe" && intent.clientSecret) {
-        const { loadStripe } = await import("@stripe/stripe-js");
-        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "");
-        if (stripe) {
-          const { error } = await stripe.confirmCardPayment(intent.clientSecret, {
-            payment_method: {
-              card: { token: "tok_visa" } as any,
-            },
-          });
-          if (error) throw new Error(error.message);
-        }
-      } else {
-        await payInvoicePublic(invoice?.public_token as string, {
-          amount: Number(amountDecimal.toNumber()),
-          provider: "stub",
-        });
-      }
-      setActionMessage("Payment recorded successfully!");
-      setShowPayDialog(false);
-      setPayAmount("");
-      loadInvoice();
+      setPaymentIntent(intent);
     } catch (err: any) {
-      setActionMessage(err.message || err.response?.data?.error || "Failed to record payment");
+      setActionMessage(err.response?.data?.error || "Failed to create payment intent");
+    }
+  }
+
+  async function handlePaymentSuccess() {
+    setActionMessage("Payment recorded successfully!");
+    setShowPayDialog(false);
+    setPayAmount("");
+    setPaymentIntent(null);
+    loadInvoice();
+  }
+
+  async function handlePaymentError(errorMsg: string) {
+    setActionMessage(errorMsg);
+  }
+
+  async function handleStubPayment() {
+    if (!invoice?.public_token || !payAmount) return;
+    try {
+      const amountDecimal = new Decimal(payAmount);
+      await payInvoicePublic(invoice.public_token, {
+        amount: Number(amountDecimal.toNumber()),
+        provider: "stub",
+      });
+      handlePaymentSuccess();
+    } catch (err: any) {
+      setActionMessage(err.response?.data?.error || "Failed to record payment");
     }
   }
 
@@ -227,6 +258,14 @@ export default function InvoiceDetail() {
           >
             Download PDF
           </button>
+          {invoice.status === "paid" && (
+            <button
+              onClick={handleGenerateReceipt}
+              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
+            >
+              Generate Receipt
+            </button>
+          )}
           {canSendReminder && (
             <button
               onClick={handleSendReminder}
@@ -395,8 +434,11 @@ export default function InvoiceDetail() {
           amountDue={amountDue}
           payAmount={payAmount}
           onAmountChange={setPayAmount}
-          onConfirm={handleRecordPayment}
-          onCancel={() => setShowPayDialog(false)}
+          paymentIntent={paymentIntent}
+          onCreatePaymentIntent={handleRecordPayment}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentError={handlePaymentError}
+          onCancel={() => { setShowPayDialog(false); setPaymentIntent(null); }}
         />
       )}
 
@@ -450,16 +492,50 @@ function TimelineItem({ event }: { event: ApiInvoiceEvent }) {
 }
 
 function PaymentDialog({
-  invoice, amountDue, payAmount, onAmountChange, onConfirm, onCancel
+  invoice, amountDue, payAmount, onAmountChange, paymentIntent, onCreatePaymentIntent, onPaymentSuccess, onPaymentError, onCancel
 }: {
   invoice: ApiInvoice;
   amountDue: Decimal;
   payAmount: string;
   onAmountChange: (value: string) => void;
-  onConfirm: () => void;
+  paymentIntent: ApiPaymentIntent | null;
+  onCreatePaymentIntent: () => void;
+  onPaymentSuccess: () => void;
+  onPaymentError: (error: string) => void;
   onCancel: () => void;
 }) {
   const isFull = new Decimal(payAmount || 0).eq(amountDue);
+  const isStripeAvailable = paymentIntent?.provider === "stripe" && !!paymentIntent?.clientSecret;
+
+  if (paymentIntent && isStripeAvailable) {
+    return (
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg mx-4">
+          <div className="p-6 border-b border-color-subtle">
+            <h3 className="text-lg font-semibold text-primary">Pay Invoice #{invoice.invoice_number || invoice.id.slice(0, 8)}</h3>
+            <p className="text-sm text-secondary mt-1">
+              Amount: {formatCurrency(payAmount || amountDue, invoice.currency)}
+            </p>
+          </div>
+          <div className="p-6 space-y-4">
+            <StripePaymentElement
+              clientSecret={paymentIntent.clientSecret}
+              onPaymentSuccess={onPaymentSuccess}
+              onPaymentError={onPaymentError}
+            />
+          </div>
+          <div className="p-6 border-t border-color-subtle flex justify-end">
+            <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isCreatingIntent = paymentIntent && !isStripeAvailable;
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
@@ -493,13 +569,22 @@ function PaymentDialog({
           <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg">
             Cancel
           </button>
-          <button
-            onClick={onConfirm}
-            disabled={!payAmount || Number(payAmount) <= 0}
-            className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover disabled:opacity-50"
-          >
-            Record Payment
-          </button>
+          {!paymentIntent ? (
+            <button
+              onClick={onCreatePaymentIntent}
+              disabled={!payAmount || Number(payAmount) <= 0}
+              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover disabled:opacity-50"
+            >
+              Pay with Card
+            </button>
+          ) : (
+            <button
+              onClick={onPaymentSuccess}
+              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover"
+            >
+              Complete Stub Payment
+            </button>
+          )}
         </div>
       </div>
     </div>

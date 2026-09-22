@@ -1,4 +1,4 @@
-export type PlanCode = "free" | "pro" | "business";
+export type PlanCode = "free" | "pro" | "scale" | "business";
 export type SubscriptionStatus = "active" | "trialing" | "past_due" | "cancelled" | "expired";
 
 export interface Plan {

@@ -26,9 +26,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [onboarding, setOnboarding] = useState<OnboardingProgress | null>(null);
+
+  useEffect(() => {
+    try {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken) {
+        setToken(storedToken);
+      } else {
+        setIsLoading(false);
+      }
+    } catch {
+      setToken(null);
+      setIsLoading(false);
+    }
+  }, []);
 
   async function loadOnboarding() {
     try {
@@ -72,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    let cancelled = false;
     async function validate() {
       if (!token) {
         setIsLoading(false);
@@ -79,17 +94,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       try {
         const data = await getMe();
-        setUser(data.user);
-        setOnboarding(data.onboarding ?? null);
+        if (!cancelled) {
+          setUser(data.user);
+          setOnboarding(data.onboarding ?? null);
+        }
       } catch {
-        safeRemoveToken();
-        setToken(null);
-        setUser(null);
-        setOnboarding(null);
+        if (!cancelled) {
+          safeRemoveToken();
+          setToken(null);
+          setUser(null);
+          setOnboarding(null);
+        }
       }
-      setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
     }
     validate();
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   const login = (newToken: string, newUser: User) => {

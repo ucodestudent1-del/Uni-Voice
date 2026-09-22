@@ -247,6 +247,11 @@ export async function payInvoicePublic(token: string, data: { amount: number; pr
   return res.data;
 }
 
+export async function createPaymentIntentPublic(token: string) {
+  const res = await api.post(`/public/invoices/${token}/payment-intent`);
+  return res.data;
+}
+
 export interface CustomerSearchParams {
   limit?: number;
   offset?: number;
@@ -357,11 +362,6 @@ export async function getBusiness() {
 
 export async function updateBusiness(data: any) {
   const res = await api.patch("/businesses/current", data);
-  return res.data;
-}
-
-export async function getQuotes() {
-  const res = await api.get("/quotes");
   return res.data;
 }
 
@@ -1204,4 +1204,255 @@ export function buildExpenseSearchParams(params: ExpenseSearchParams): Record<st
   if (params.sortBy !== undefined) result.sortBy = params.sortBy;
   if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
   return result;
+}
+
+// ============================================================================
+// RECEIPTS
+// ============================================================================
+
+export interface ReceiptSearchParams {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  provider?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export interface ApiReceipt {
+  id: string;
+  invoice_id: string;
+  business_id: string;
+  payment_id?: string | null;
+  receipt_number?: string | null;
+  amount: string;
+  currency: string;
+  status: string;
+  provider: string;
+  provider_receipt_url?: string | null;
+  sent_to?: string | null;
+  issued_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  invoice_number?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+}
+
+export async function getReceipts(params?: ReceiptSearchParams): Promise<{ receipts: ApiReceipt[]; total: number; limit: number; offset: number }> {
+  const res = await api.get("/receipts", { params });
+  return res.data;
+}
+
+export async function getReceiptById(id: string): Promise<{ receipt: ApiReceipt }> {
+  const res = await api.get(`/receipts/${id}`);
+  return res.data;
+}
+
+export async function getReceiptPdf(id: string) {
+  const res = await api.get(`/receipts/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function generateInvoiceReceipt(invoiceId: string, data?: { sentTo?: string; provider?: string }) {
+  const res = await api.post(`/invoices/${invoiceId}/receipts`, data ?? {});
+  return res.data;
+}
+
+// ============================================================================
+// QUOTE DETAIL
+// ============================================================================
+
+export interface ApiQuoteItem {
+  id: string;
+  description: string;
+  quantity: string;
+  unit: string;
+  unit_price: string;
+  discount: string;
+  discount_type: "fixed" | "percentage";
+  tax_rate: string;
+  tax_amount: string;
+  line_subtotal: string;
+  line_total: string;
+  is_tax_inclusive: boolean;
+  product_id?: string | null;
+  sort_order: number;
+}
+
+export interface ApiQuoteFee {
+  id: string;
+  description: string;
+  amount: string;
+  tax_rate: string;
+  tax_amount: string;
+  sort_order: number;
+}
+
+export interface ApiQuote {
+  id: string;
+  business_id: string;
+  customer_id?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  quote_number?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  expiry_date?: string | null;
+  currency: string;
+  subtotal: string;
+  discount_total: string;
+  tax_total: string;
+  fee_total: string;
+  total: string;
+  amount_paid: string;
+  amount_due: string;
+  notes?: string | null;
+  terms?: string | null;
+  template_id?: string | null;
+  payment_instructions?: string | null;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  viewed_at?: string | null;
+  accepted_at?: string | null;
+  rejected_at?: string | null;
+  converted_invoice_id?: string | null;
+  public_token?: string | null;
+  public_token_expires_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  items: ApiQuoteItem[];
+  fees: ApiQuoteFee[];
+}
+
+export interface ApiQuoteListItem {
+  id: string;
+  quote_number?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_id?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  expiry_date?: string | null;
+  currency: string;
+  total: string;
+  amount_paid: string;
+  amount_due: string;
+  is_finalized: boolean;
+  sent_at?: string | null;
+  viewed_at?: string | null;
+  accepted_at?: string | null;
+  converted_invoice_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuoteSearchParams {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  customerId?: string;
+  search?: string;
+  currency?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export async function getQuotes(params?: QuoteSearchParams): Promise<{ quotes: ApiQuoteListItem[]; total: number; limit: number; offset: number }> {
+  const res = await api.get("/quotes", { params });
+  return res.data;
+}
+
+export async function getQuoteById(id: string): Promise<{ quote: ApiQuote }> {
+  const res = await api.get(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function updateQuote(id: string, data: any) {
+  const res = await api.patch(`/quotes/${id}`, data);
+  return res.data;
+}
+
+export async function sendQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/send`);
+  return res.data;
+}
+
+export async function getQuotePdf(id: string) {
+  const res = await api.get(`/quotes/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function deleteQuote(id: string) {
+  const res = await api.delete(`/quotes/${id}`);
+  return res.data;
+}
+
+// ============================================================================
+// TEAM / RBAC
+// ============================================================================
+
+export type TeamRole = "owner" | "admin" | "member" | "viewer";
+
+export interface ApiTeamMember {
+  id: string;
+  business_id: string;
+  user_id: string;
+  email?: string | null;
+  name?: string | null;
+  role: TeamRole;
+  status: "active" | "pending" | "invited";
+  invited_by?: string | null;
+  invited_at?: string | null;
+  accepted_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getTeam(): Promise<{ team: ApiTeamMember[] }> {
+  const res = await api.get("/businesses/current/team");
+  return res.data;
+}
+
+export async function inviteTeamMember(data: {
+  email: string;
+  role: TeamRole;
+  message?: string;
+}): Promise<{ member: ApiTeamMember }> {
+  const res = await api.post("/businesses/current/team", { ...data, action: "invite" });
+  return res.data;
+}
+
+export async function updateTeamMember(memberId: string, data: { role?: TeamRole }): Promise<{ member: ApiTeamMember }> {
+  const res = await api.patch(`/businesses/current/team/${memberId}`, data);
+  return res.data;
+}
+
+export async function removeTeamMember(memberId: string): Promise<{ removed: boolean }> {
+  const res = await api.delete(`/businesses/current/team/${memberId}`);
+  return res.data;
+}
+
+export async function resendTeamInvite(memberId: string): Promise<{ member: ApiTeamMember }> {
+  const res = await api.post(`/businesses/current/team/${memberId}/resend`);
+  return res.data;
+}
+
+// ============================================================================
+// STRIPE CONFIG (typed)
+// ============================================================================
+
+export interface StripeConfig {
+  publishableKey: string | null;
+}
+
+export async function getStripeConfigTyped(): Promise<StripeConfig> {
+  const res = await api.get("/stripe/config");
+  return res.data;
 }

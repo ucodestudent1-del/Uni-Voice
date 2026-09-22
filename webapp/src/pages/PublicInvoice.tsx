@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getPublicInvoice, recordPublicView, payInvoicePublic, getPublicInvoicePdf } from "../api/client";
+import {
+  getPublicInvoice,
+  recordPublicView,
+  payInvoicePublic,
+  getPublicInvoicePdf,
+  createPaymentIntentPublic,
+  getStripeConfig,
+} from "../api/client";
 import { formatCurrency } from "../utils/format";
 import { Decimal } from "decimal.js";
+import { loadStripe } from "@stripe/stripe-js";
+import type { Stripe, StripeElements } from "@stripe/stripe-js";
 
 interface PublicInvoiceData {
   id: string;
@@ -41,6 +50,11 @@ export default function PublicInvoice() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [payingDeposit, setPayingDeposit] = useState(false);
   const [showDepositPayment, setShowDepositPayment] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [stripe, setStripe] = useState<Stripe | null>(null);
+  const [stripeElements, setStripeElements] = useState<StripeElements | null>(null);
+  const [paymentElementReady, setPaymentElementReady] = useState(false);
+  const [stripeAvailable, setStripeAvailable] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -126,22 +140,85 @@ export default function PublicInvoice() {
     if (isDeposit) setPayingDeposit(true);
     else setPaying(true);
     setPaymentError(null);
+
     try {
-      await payInvoicePublic(token, {
-        amount: Number(payAmount),
-        provider: "stub",
-      });
-      setPaymentSuccess(true);
-      if (invoice) {
-        setInvoice({ ...invoice, amount_paid: new Decimal(invoice.amount_paid || 0).plus(payAmount).toFixed(2) });
+      const intent = await createPaymentIntentPublic(token);
+
+      if (intent.provider === "stripe" && intent.clientSecret) {
+        const config = await getStripeConfig();
+        if (config?.publishableKey) {
+          const s = await loadStripe(config.publishableKey);
+          if (s) {
+            setStripe(s);
+            const els = s.elements({
+              clientSecret: intent.clientSecret,
+              appearance: { theme: "stripe" },
+            });
+            const paymentElement = els.create("payment", { layout: "tabs" });
+            paymentElement.mount("#public-payment-element");
+            setStripeElements(els);
+            setClientSecret(intent.clientSecret);
+            setStripeAvailable(true);
+            setPaymentElementReady(true);
+            return;
+          }
+        }
+        setPaymentError("Stripe is not configured. Please try again later.");
+      } else {
+        await payInvoicePublic(token, {
+          amount: Number(payAmount),
+          provider: intent.provider ?? "stub",
+        });
+        setPaymentSuccess(true);
+        if (invoice) {
+          setInvoice({ ...invoice, amount_paid: new Decimal(invoice.amount_paid || 0).plus(payAmount).toFixed(2) });
+        }
+        setPayAmount("");
+        if (isDeposit) setShowDepositPayment(false);
       }
-      setPayAmount("");
-      if (isDeposit) setShowDepositPayment(false);
     } catch (err: any) {
       setPaymentError(err.response?.data?.error || err.message || "Payment failed");
     } finally {
       setPaying(false);
       setPayingDeposit(false);
+    }
+  }
+
+  async function handleConfirmStripePayment() {
+    if (!stripe || !stripeElements || !payAmount) return;
+    setPaying(true);
+    setPaymentError(null);
+    try {
+      const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
+        elements: stripeElements,
+        confirmParams: {
+          return_url: window.location.href,
+        },
+        redirect: "if_required",
+      });
+
+      if (stripeError) {
+        setPaymentError(stripeError.message || "Payment failed");
+        return;
+      }
+
+      if (paymentIntent && paymentIntent.status === "succeeded") {
+        setPaymentSuccess(true);
+        if (invoice) {
+          setInvoice({ ...invoice, amount_paid: new Decimal(invoice.amount_paid || 0).plus(payAmount).toFixed(2) });
+        }
+        setPayAmount("");
+        setShowDepositPayment(false);
+      }
+    } catch (err: any) {
+      setPaymentError(err.message || "Payment failed");
+    } finally {
+      setPaying(false);
+      setStripe(null);
+      setStripeElements(null);
+      setClientSecret(null);
+      setPaymentElementReady(false);
+      setStripeAvailable(false);
     }
   }
 
@@ -261,7 +338,7 @@ export default function PublicInvoice() {
                 )}
               </div>
 
-              {(payAmount || showDepositPayment) && (
+              {(payAmount || showDepositPayment) && !stripeAvailable && (
                 <div className="mt-6 border-t border-color-subtle pt-6">
                   <div className="max-w-sm">
                     <label className="block text-sm font-medium text-secondary mb-2">
@@ -306,6 +383,41 @@ export default function PublicInvoice() {
                     </div>
                   </div>
 
+                  {paymentError && (
+                    <p className="mt-2 text-xs status-error-text">{paymentError}</p>
+                  )}
+                </div>
+              )}
+
+              {stripeAvailable && paymentElementReady && (
+                <div className="mt-6 border-t border-color-subtle pt-6">
+                  <div className="max-w-lg">
+                    <label className="block text-sm font-medium text-secondary mb-2">
+                      Secure Card Payment ({invoice.currency.toUpperCase()})
+                    </label>
+                    <div id="public-payment-element" className="w-full min-h-[160px] mb-3" />
+                    <button
+                      onClick={handleConfirmStripePayment}
+                      disabled={paying}
+                      className="w-full rounded-lg bg-primary-action px-4 py-2.5 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
+                    >
+                      {paying ? "Processing..." : `Pay ${formatCurrency(payAmount || invoice.amount_due || invoice.total, invoice.currency)}`}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setStripe(null);
+                        setStripeElements(null);
+                        setClientSecret(null);
+                        setPaymentElementReady(false);
+                        setStripeAvailable(false);
+                        setPayAmount("");
+                        setShowDepositPayment(false);
+                      }}
+                      className="w-full mt-2 text-xs text-secondary hover:text-primary"
+                    >
+                      Cancel Payment
+                    </button>
+                  </div>
                   {paymentError && (
                     <p className="mt-2 text-xs status-error-text">{paymentError}</p>
                   )}

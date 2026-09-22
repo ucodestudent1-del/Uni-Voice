@@ -12,6 +12,9 @@ import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { recurringService } from "./services/recurring-service.js";
+import { quoteService } from "./services/quote-service.js";
+import { receiptService } from "./services/receipt-service.js";
 import { customerService } from "./services/customer-service.js";
 import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
@@ -20,6 +23,7 @@ import { productRepository } from "./repositories/product.repo.js";
 import { productServiceRepository } from "./repositories/product-service.repo.js";
 import { productServiceService } from "./services/product-service/product-service.js";
 import { invoiceRepository, type InvoiceListOptions, type InvoiceListItem } from "./repositories/invoice.repo.js";
+import { receiptRepository } from "./repositories/receipt.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { documentTemplateRepository } from "./repositories/document-template.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
@@ -27,6 +31,7 @@ import { onboardingRepository } from "./repositories/onboarding.repo.js";
 import { onboardingService } from "./services/onboarding.service.js";
 import { logger } from "./utils/logger.js";
 import { stripeService } from "./services/payments/stripe-service.js";
+import { invoicePaymentService } from "./services/payments/invoice-payment-service.js";
 import {
   DocumentTemplateInputSchema,
   DocumentTemplateUpdateSchema,
@@ -1048,37 +1053,117 @@ app.post("/api/invoices/:id/duplicate", requireAuth, requireEntitlement("invoice
 // ============================================================================
 app.get("/api/quotes", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await query("SELECT * FROM quotes WHERE business_id = $1 ORDER BY created_at DESC LIMIT 200", [req.user!.businessId]);
-  res.json({ quotes: result.rows });
+  const result = await quoteService.list(req.user!.businessId, {
+    status: req.query.status as string | undefined,
+    customerId: req.query.customerId as string | undefined,
+    search: req.query.search as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+  });
+  res.json({ quotes: result.data, total: result.total, limit: result.limit, offset: result.offset });
 });
 
 app.post("/api/quotes", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
-  await query(
-    `INSERT INTO quotes (id, business_id, customer_id, currency, issue_date, due_date, notes, terms, created_at, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9)`,
-    [id, req.user!.businessId, req.body.customerId, req.body.currency ?? "USD", req.body.issueDate?.toISOString(), req.body.dueDate?.toISOString(), req.body.notes, req.body.terms, now]
-  );
-  res.status(201).json({ quoteId: id });
+  const quoteId = await quoteService.create(req.body, req.user!.businessId, req.user.id);
+  res.status(201).json({ quoteId });
+});
+
+app.get("/api/quotes/:id", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const quote = await quoteService.findById(req.user!.businessId, req.params.id);
+  res.json({ quote });
+});
+
+app.patch("/api/quotes/:id", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await quoteService.update(req.user!.businessId, req.params.id, req.body);
+  res.json({ ok: true });
+});
+
+app.post("/api/quotes/:id/finalize", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const number = await quoteService.finalize(req.user!.businessId, req.params.id, req.user.id);
+  res.json({ ok: true, quoteNumber: number });
+});
+
+app.post("/api/quotes/:id/send", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await quoteService.send(req.user!.businessId, req.params.id, req.user.id);
+  res.json({ sent: true });
+});
+
+app.get("/api/quotes/:id/pdf", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const pdf = await quoteService.generatePdf(req.user!.businessId, req.params.id);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=quote-${req.params.id}.pdf`);
+  res.send(pdf);
 });
 
 app.post("/api/quotes/:id/convert", requireAuth, requireEntitlement("quotes.convert"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const quoteResult = await query("SELECT * FROM quotes WHERE id = $1 AND business_id = $2", [req.params.id, req.user!.businessId]);
-  if (!quoteResult.rows.length) return res.status(404).json({ error: "Quote not found" });
+  const result = await quoteService.convertToInvoice(req.user!.businessId, req.params.id, req.user.id);
+  res.status(201).json({ invoiceId: result.invoiceId, quoteNumber: result.quoteNumber });
+});
 
-  const quote = quoteResult.rows[0];
-  const invoiceId = await invoiceService.createDraft({
-    customerId: quote.customer_id,
-    currency: quote.currency,
-    notes: quote.notes,
-    terms: quote.terms,
-  }, req.user!.businessId, req.user.id);
+app.delete("/api/quotes/:id", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await quoteService.delete(req.user!.businessId, req.params.id);
+  res.status(204).send();
+});
 
-  await query("UPDATE quotes SET converted_invoice_id = $1, status = 'accepted', updated_at = NOW() WHERE id = $2", [invoiceId, req.params.id]);
-  res.status(201).json({ invoiceId });
+// ============================================================================
+// RECEIPTS (Business tier)
+// ============================================================================
+app.get("/api/receipts", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await receiptService.listResponse(req.user!.businessId, {
+    status: req.query.status as string | undefined,
+    invoiceId: req.query.invoiceId as string | undefined,
+    paymentId: req.query.paymentId as string | undefined,
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    search: req.query.search as string | undefined,
+    provider: req.query.provider as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+  });
+  res.json(result);
+});
+
+app.get("/api/receipts/:id", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const receipt = await receiptService.getResponse(req.user!.businessId, req.params.id);
+  res.json({ receipt });
+});
+
+app.get("/api/receipts/:id/pdf", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const receipt = await receiptService.getById(req.user!.businessId, req.params.id);
+  const pdf = receipt.pdf ?? await receiptService.generatePdf(receipt.id);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=receipt-${receipt.receiptNumber ?? receipt.id}.pdf`);
+  res.send(pdf);
+});
+
+app.post("/api/receipts/:id/email", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const receipt = await receiptService.getById(req.user!.businessId, req.params.id);
+  const result = await receiptService.sendReceiptEmail(receipt.id, {
+    email: req.body.email,
+    name: req.body.name,
+  });
+  res.json({ ok: true, ...result });
+});
+
+app.post("/api/invoices/:id/receipts", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
+  const payment = await receiptRepository.getPayment(invoice.id, req.user!.businessId);
+  if (!payment) return res.status(404).json({ error: "No payment found for invoice" });
+  const receipt = await receiptService.issueReceipt(req.user!.businessId, invoice.id, payment);
+  res.status(201).json({ receiptId: receipt.id, receiptNumber: receipt.receiptNumber });
 });
 
 // ============================================================================
@@ -2127,8 +2212,108 @@ app.patch("/api/businesses/current/settings/reminders", requireAuth, async (req:
 });
 
 // ============================================================================
-// TAX RATES CRUD
+// TEAM & RBAC (Business tier)
 // ============================================================================
+app.get("/api/businesses/current/team", requireAuth, requireEntitlement("business.multiple"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const team = (await query(
+    `SELECT bu.id, bu.business_id, bu.user_id, bu.role, bu.invited_email, bu.status, bu.invited_by, bu.invited_at, bu.accepted_at, bu.created_at, bu.updated_at,
+            u.name, u.email
+     FROM business_users bu LEFT JOIN users u ON u.id = bu.user_id
+     WHERE bu.business_id = $1 ORDER BY bu.created_at DESC`,
+    [req.user!.businessId]
+  )).rows.map((r: any) => ({
+    id: r.id,
+    business_id: r.business_id,
+    user_id: r.user_id,
+    email: r.email ?? r.invited_email,
+    name: r.name ?? null,
+    role: r.role,
+    status: r.status,
+    invited_by: r.invited_by,
+    invited_at: r.invited_at,
+    accepted_at: r.accepted_at,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  }));
+  res.json({ team });
+});
+
+app.post("/api/businesses/current/team", requireAuth, requireEntitlement("business.multiple"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { email, role, message } = req.body;
+  if (!email || !role) return res.status(400).json({ error: "email and role are required" });
+  const allowedRoles = ["owner", "admin", "member", "viewer"];
+  if (!allowedRoles.includes(role)) return res.status(400).json({ error: "Invalid role" });
+
+  const existing = await query(
+    `SELECT id FROM business_users WHERE business_id = $1 AND (invited_email = $2 OR user_id IN (SELECT id FROM users WHERE email = $2)) LIMIT 1`,
+    [req.user!.businessId, email]
+  );
+  if (existing.rows.length) {
+    return res.status(409).json({ error: "User already invited to this business" });
+  }
+
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const invRes = await query(
+    `INSERT INTO business_users (business_id, user_id, invited_email, role, status, invited_by, invited_at)
+     VALUES ($1, NULL, $2, $3, 'invited', $4, NOW())
+     RETURNING id`,
+    [req.user!.businessId, email, role, req.user!.id]
+  );
+  await query(
+    `INSERT INTO business_invitations (business_id, email, role, status, token, invited_by, expires_at)
+     VALUES ($1, $2, $3, 'pending', $4, $5, $6)`,
+    [req.user!.businessId, email, role, token, req.user!.id, expiresAt]
+  );
+  void message;
+  res.status(201).json({ memberId: invRes.rows[0].id, inviteToken: token });
+});
+
+app.patch("/api/businesses/current/team/:memberId", requireAuth, requireEntitlement("business.multiple"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { role } = req.body;
+  if (role && !["owner", "admin", "member", "viewer"].includes(role)) {
+    return res.status(400).json({ error: "Invalid role" });
+  }
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  let i = 1;
+  if (role) { sets.push(`role = $${i++}`); vals.push(role); }
+  if (!sets.length) return res.status(400).json({ error: "No valid fields to update" });
+  vals.push(req.params.memberId, req.user!.businessId);
+  const result = await query(
+    `UPDATE business_users SET ${sets.join(", ")}, updated_at = NOW()
+     WHERE id = $${i++} AND business_id = $${i++} RETURNING id`,
+    vals
+  );
+  if (!result.rows.length) return res.status(404).json({ error: "Team member not found" });
+  res.json({ ok: true });
+});
+
+app.post("/api/businesses/current/team/:memberId/resend", requireAuth, requireEntitlement("business.multiple"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const member = await query(
+    `SELECT invited_email, role FROM business_users WHERE id = $1 AND business_id = $2`,
+    [req.params.memberId, req.user!.businessId]
+  );
+  if (!member.rows.length) return res.status(404).json({ error: "Team member not found" });
+  res.json({ ok: true, message: `Invite resent to ${member.rows[0].invited_email}` });
+});
+
+app.delete("/api/businesses/current/team/:memberId", requireAuth, requireEntitlement("business.multiple"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    `DELETE FROM business_users WHERE id = $1 AND business_id = $2 RETURNING id`,
+    [req.params.memberId, req.user!.businessId]
+  );
+  if (!result.rows.length) return res.status(404).json({ error: "Team member not found" });
+  res.json({ removed: true });
+});
+
+// ============================================================================
+// INVOICE PAYMENTS
 // ============================================================================
 app.get("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
@@ -2369,6 +2554,14 @@ async function handleStripeEvent(event: any): Promise<void> {
       break;
     }
     default:
+      if (event.type.startsWith("payment_intent.") || event.type.startsWith("charge.")) {
+        try {
+          await invoicePaymentService.reconcileStripeEvent(event);
+        } catch (e) {
+          logger.error({ err: e, eventType: event.type, eventId: event.id }, "Failed to reconcile Stripe payment event");
+        }
+        return;
+      }
       logger.info(`Unhandled Stripe event type: ${event.type}`);
   }
 }
@@ -2421,6 +2614,7 @@ async function start() {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
     subscriptionService.ensureDefaults().catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
     processOverdueJob();
+    processRecurringJob();
   });
 }
 
@@ -2438,6 +2632,17 @@ function processOverdueJob() {
   
   overdueJobRunning = false;
   setTimeout(processOverdueJob, 15 * 60 * 1000);
+}
+
+let recurringJobRunning = false;
+function processRecurringJob() {
+  if (recurringJobRunning) return;
+  recurringJobRunning = true;
+  recurringService.processDue().then((result) => {
+    if (result.generated > 0) logger.info(`Generated ${result.generated} recurring invoices`);
+  }).catch((e) => logger.error({ err: e }, "Recurring generation failed"));
+  recurringJobRunning = false;
+  setTimeout(processRecurringJob, 15 * 60 * 1000);
 }
 
 if (!isTest) {

@@ -487,6 +487,147 @@ export class InvoiceService {
     }
   }
 
+  async recordProviderPayment(
+    businessId: string,
+    invoiceId: string,
+    amount: string | number,
+    currency: string,
+    provider = "stripe",
+    providerPaymentId?: string,
+    idempotencyKey?: string
+  ): Promise<{ paymentId: string; status: string }> {
+    if (new Decimal(amount).isNegative()) throw new BusinessLogicError("Payment amount must be >= 0");
+    const invoice = await invoiceRepository.findById(businessId, invoiceId);
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+      if (idempotencyKey) {
+        const existing = await client.query(`SELECT id, status FROM payments WHERE idempotency_key = $1`, [idempotencyKey]);
+        if (existing.rows.length) {
+          await client.query("ROLLBACK");
+          logger.info(`Provider payment already recorded (idempotent) for invoice ${invoiceId}, payment ${existing.rows[0].id}`);
+          return { paymentId: existing.rows[0].id, status: existing.rows[0].status };
+        }
+      }
+      const paymentId = crypto.randomUUID();
+      await client.query(
+        `INSERT INTO payments (id, invoice_id, business_id, provider, provider_payment_id, amount, currency, status, paid_at, idempotency_key, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'succeeded',NOW(),$8,NOW(),NOW())`,
+        [paymentId, invoiceId, businessId, provider, providerPaymentId, amount, currency, idempotencyKey ?? null]
+      );
+      const updateRes = await client.query(
+        `UPDATE invoices SET amount_paid = amount_paid + $1, amount_due = GREATEST(amount_due - $1, 0), updated_at = NOW()
+         WHERE id = $2 AND business_id = $3 RETURNING amount_due, amount_paid`,
+        [amount, invoiceId, businessId]
+      );
+      if (!updateRes.rows.length) throw new NotFoundError(`Invoice ${invoiceId} not found`);
+      const updatedRow = updateRes.rows[0];
+      const newStatus = invoiceStateMachine.statusAfterPayment(invoice.status, updatedRow.amount_due, updatedRow.amount_paid);
+      if (newStatus !== invoice.status) invoiceStateMachine.transition(invoice.status, newStatus);
+      await invoiceRepository.setStatus(invoiceId, newStatus, { paidAt: newStatus === "paid" ? new Date() : undefined });
+      await invoiceRepository.recordEvent(invoiceId, {
+        eventType: newStatus === "paid" ? "paid" : "partially_paid",
+        actorType: "payment",
+        metadata: { amount, provider, providerPaymentId, newStatus },
+      });
+      if (invoice.projectId) {
+        await projectRepository.recordPayment(invoice.projectId, new Decimal(amount));
+      }
+      await client.query("COMMIT");
+      logger.info(`Provider payment recorded: invoice ${invoiceId} payment ${paymentId} amount ${amount} ${currency}`);
+      return { paymentId, status: "succeeded" };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async refundPayment(
+    businessId: string,
+    invoiceId: string,
+    paymentId: string,
+    amount: string | number,
+    currency: string,
+    provider = "stripe",
+    providerRefundId?: string,
+    idempotencyKey?: string
+  ): Promise<{ status: string }> {
+    const invoice = await invoiceRepository.findById(businessId, invoiceId);
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+      if (idempotencyKey) {
+        const existingRefund = await client.query(
+          `SELECT id FROM payment_events WHERE idempotency_key = $1`,
+          [idempotencyKey]
+        );
+        if (existingRefund.rows.length) {
+          await client.query("ROLLBACK");
+          logger.info(`Refund already processed (idempotent) for payment ${paymentId}`);
+          return { status: "already_processed" };
+        }
+      }
+
+      const payRes = await client.query(
+        `SELECT id, amount, status, idempotency_key FROM payments WHERE id = $1 AND invoice_id = $2 AND business_id = $3`,
+        [paymentId, invoiceId, businessId]
+      );
+      if (!payRes.rows.length) throw new NotFoundError(`Payment ${paymentId} not found`);
+      const payment = payRes.rows[0];
+      const paymentAmount = new Decimal(payment.amount);
+      const refundAmount = new Decimal(amount);
+
+      if (refundAmount.gt(paymentAmount)) {
+        throw new BusinessLogicError("Refund amount cannot exceed payment amount");
+      }
+
+      const newPaymentStatus = refundAmount.eq(paymentAmount) ? "refunded" : "partially_refunded";
+      await client.query(
+        `UPDATE payments SET status = $1, updated_at = NOW() WHERE id = $2`,
+        [newPaymentStatus, paymentId]
+      );
+
+      await client.query(
+        `INSERT INTO payment_events (payment_id, event_type, status, amount, metadata, created_at)
+         VALUES ($1, 'payment_refunded', $2, $3, $4, NOW())`,
+        [paymentId, newPaymentStatus, amount, JSON.stringify({ provider, providerRefundId, idempotencyKey })]
+      );
+
+      const newAmountDue = new Decimal(invoice.amountDue).plus(refundAmount);
+      await client.query(
+        `UPDATE invoices SET amount_due = amount_due + $1, updated_at = NOW()
+         WHERE id = $2 AND business_id = $3`,
+        [amount, invoiceId, businessId]
+      );
+
+      const newInvoiceStatus = invoiceStateMachine.statusAfterPayment(
+        invoice.status,
+        newAmountDue.toFixed(6),
+        String(invoice.amountPaid)
+      );
+      if (newInvoiceStatus !== invoice.status) {
+        invoiceStateMachine.transition(invoice.status, newInvoiceStatus);
+      }
+      await invoiceRepository.setStatus(invoiceId, newInvoiceStatus, {});
+      await invoiceRepository.recordEvent(invoiceId, {
+        eventType: "payment_refunded",
+        actorType: "payment",
+        metadata: { amount: refundAmount.toString(), provider, providerRefundId, newPaymentStatus },
+      });
+
+      await client.query("COMMIT");
+      logger.info(`Refund processed: payment ${paymentId} invoice ${invoiceId} amount ${amount} ${currency}`);
+      return { status: newPaymentStatus };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
   async cancel(businessId: string, id: string, userId?: string, reason?: string): Promise<void> {
     const invoice = await invoiceRepository.findById(businessId, id);
     if (!invoiceStateMachine.isCancellable(invoice.status)) {

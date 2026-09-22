@@ -21,7 +21,7 @@ export default function FeatureGate({ feature, requiredPlan, children, fallback 
     return <>{children}</>;
   }
 
-  const tierOrder = { free: 0, pro: 1, business: 2 };
+  const tierOrder = { free: 0, pro: 1, scale: 2, business: 3 };
   const currentTier = tierOrder[plan.code as keyof typeof tierOrder] ?? 0;
   const requiredTier = featureFlag.requires_plan ? tierOrder[featureFlag.requires_plan as keyof typeof tierOrder] ?? 2 : 0;
 

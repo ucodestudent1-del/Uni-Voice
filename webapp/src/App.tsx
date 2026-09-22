@@ -23,6 +23,9 @@ import Payments from "./pages/Payments";
 import Expenses from "./pages/Expenses";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
+import Receipts from "./pages/Receipts";
+import Quotes from "./pages/Quotes";
+import QuoteDetail from "./pages/QuoteDetail";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -73,10 +76,14 @@ export default function App() {
          <Route path="templates" element={<Templates />} />
          <Route path="templates/new" element={<TemplateEditorPage />} />
          <Route path="templates/:id/edit" element={<TemplateEditorPage />} />
-          <Route path="expenses" element={<Expenses />} />
-          <Route path="projects" element={<Projects />} />
-          <Route path="projects/:id" element={<ProjectDetail />} />
-          <Route path="reports" element={<Reports />} />
+         <Route path="expenses" element={<Expenses />} />
+         <Route path="projects" element={<Projects />} />
+         <Route path="projects/:id" element={<ProjectDetail />} />
+         <Route path="quotes" element={<Quotes />} />
+         <Route path="quotes/new" element={<QuoteDetail />} />
+         <Route path="quotes/:id" element={<QuoteDetail />} />
+         <Route path="reports" element={<Reports />} />
+         <Route path="receipts" element={<Receipts />} />
           <Route path="settings">
            <Route index element={<Navigate to="/app/settings/business" replace />} />
            <Route path=":section" element={<Settings />} />

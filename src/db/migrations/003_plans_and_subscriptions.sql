@@ -3,10 +3,10 @@
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Subscription plans (Free / Pro / Business)
+-- Subscription plans (Free / Pro / Scale / Business)
 -- ----------------------------------------------------------------------------
 DROP TYPE IF EXISTS subscription_plan CASCADE;
-CREATE TYPE subscription_plan AS ENUM ('free', 'pro', 'business');
+CREATE TYPE subscription_plan AS ENUM ('free', 'pro', 'scale', 'business');
 
 CREATE TABLE plans (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
