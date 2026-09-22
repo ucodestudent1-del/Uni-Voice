@@ -33,16 +33,16 @@ export default function ReportKPICards({
     if (volumeTrend.length < 2) return null;
     const current = new Decimal(volumeTrend[volumeTrend.length - 1].invoiced);
     const previous = new Decimal(volumeTrend[volumeTrend.length - 2].invoiced);
-    if (previous.isZero()) return null;
+    if (previous.isZero()) return undefined;
     const pct = current.sub(previous).div(previous).mul(100).toNumber();
     return { value: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, direction: (pct >= 0 ? "up" : "down") as "up" | "down" };
   }, [volumeTrend]);
 
   const paymentTrend = useMemo(() => {
-    if (volumeTrend.length < 2) return null;
+    if (volumeTrend.length < 2) return undefined;
     const currentPaid = new Decimal(volumeTrend[volumeTrend.length - 1].paid);
     const previousPaid = new Decimal(volumeTrend[volumeTrend.length - 2].paid);
-    if (previousPaid.isZero()) return null;
+    if (previousPaid.isZero()) return undefined;
     const pct = currentPaid.sub(previousPaid).div(previousPaid).mul(100).toNumber();
     return { value: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, direction: (pct >= 0 ? "up" : "down") as "up" | "down" };
   }, [volumeTrend]);

@@ -38,7 +38,7 @@ export default function ReportSection() {
         getVolumeTrendReport({ period: "month", months: 12 }).catch(() => ({ report: [] })),
         getPaymentMetricsReport().catch(() => ({ paymentMetrics: null })),
         getEnhancedDashboard().catch(() => ({ summary: null, agingBuckets: [], paymentMetrics: null, volumeTrend: [] })),
-        getInvoices({ limit: 50, sortBy: "created_at", sortOrder: "desc" }).catch(() => ({ invoices: [] })),
+        getInvoices({ limit: 50 }).catch(() => ({ invoices: [] })),
       ]);
 
       const trendData = (trendRes.report ?? trendRes.data ?? trendRes) as ApiVolumeTrend[];

@@ -146,8 +146,8 @@ export default function MonthlyTrendChart({ currency = "USD" }: { currency?: str
                   fontSize: "12px",
                   padding: "8px 12px",
                 }}
-                formatter={(value: number) => [
-                  formatCurrencyCompact(Number(value) ?? 0, currency),
+                formatter={(value) => [
+                  formatCurrencyCompact(Number(value ?? 0), currency),
                   "",
                 ]}
                 labelStyle={{ color: "rgb(var(--chart-text-secondary))", marginBottom: "4px" }}
