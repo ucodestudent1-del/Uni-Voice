@@ -19,6 +19,7 @@ import TemplateEditorPage from "./pages/TemplateEditorPage";
 import Settings from "./pages/Settings";
 import PublicInvoice from "./pages/PublicInvoice";
 import Reports from "./pages/Reports";
+import ReportSection from "./pages/ReportSection";
 import Payments from "./pages/Payments";
 import Expenses from "./pages/Expenses";
 import Projects from "./pages/Projects";
@@ -82,7 +83,8 @@ export default function App() {
          <Route path="quotes" element={<Quotes />} />
          <Route path="quotes/new" element={<QuoteDetail />} />
          <Route path="quotes/:id" element={<QuoteDetail />} />
-         <Route path="reports" element={<Reports />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="report" element={<ReportSection />} />
          <Route path="receipts" element={<Receipts />} />
           <Route path="settings">
            <Route index element={<Navigate to="/app/settings/business" replace />} />

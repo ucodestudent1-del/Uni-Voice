@@ -111,7 +111,7 @@ export class InvoiceService {
     };
   }
 
-  private async persistCalculationResults(invoiceId: string, invoice: RepoInvoice, res: CalculationResult): Promise<void> {
+  private async persistCalculationResults(invoiceId: string, invoice: RepoInvoice, res: CalculationResult, client?: any): Promise<void> {
     for (let i = 0; i < res.lineItems.length; i++) {
       const calc = res.lineItems[i];
       const stored = invoice.items[i];
@@ -120,7 +120,7 @@ export class InvoiceService {
         taxAmount: calc.taxAmount,
         lineSubtotal: calc.lineSubtotal,
         lineTotal: calc.lineTotal,
-      });
+      }, client);
     }
     await invoiceRepository.updateTotals(invoiceId, {
       subtotal: res.subtotal.toString(),
@@ -130,7 +130,7 @@ export class InvoiceService {
       total: res.total.toString(),
       amountPaid: res.amountPaid.toString(),
       amountDue: res.amountDue.toString(),
-    });
+    }, client);
   }
 
   private summarize(invoice: RepoInvoice, calc: CalculationResult): InvoiceSummary {
@@ -293,11 +293,11 @@ export class InvoiceService {
     try {
       await client.query("BEGIN");
       await client.query("SAVEPOINT sp1");
-      await invoiceRepository.assignNumber(businessId, id, generatedNumber);
-      await this.persistCalculationResults(id, invoice, res);
+      await invoiceRepository.assignNumber(businessId, id, generatedNumber, client);
+      await this.persistCalculationResults(id, invoice, res, client);
       const { snapshot, hash } = await snapshotService.build(invoice, businessId);
-      await invoiceRepository.createSnapshot(id, snapshot, hash);
-      await invoiceRepository.finalize(businessId, id, { finalizedAt: new Date() });
+      await invoiceRepository.createSnapshot(id, snapshot, hash, { client });
+      await invoiceRepository.finalize(businessId, id, { finalizedAt: new Date() }, client);
       await client.query("RELEASE SAVEPOINT sp1");
       await client.query("COMMIT");
     } catch (e) {
@@ -469,12 +469,12 @@ export class InvoiceService {
       const updatedRow = updateRes.rows[0];
       const newStatus = invoiceStateMachine.statusAfterPayment(invoice.status, updatedRow.amount_due, updatedRow.amount_paid);
       if (newStatus !== invoice.status) invoiceStateMachine.transition(invoice.status, newStatus);
-      await invoiceRepository.setStatus(id, newStatus, { paidAt: newStatus === "paid" ? new Date() : undefined });
+      await invoiceRepository.setStatus(id, newStatus, { paidAt: newStatus === "paid" ? new Date() : undefined }, client);
       await invoiceRepository.recordEvent(id, {
         eventType: newStatus === "paid" ? "paid" : "partially_paid",
         actorType: "payment",
         metadata: { amount, provider, newStatus },
-      });
+      }, client);
       if (invoice.projectId) {
         await projectRepository.recordPayment(invoice.projectId, new Decimal(amount));
       }
@@ -524,12 +524,12 @@ export class InvoiceService {
       const updatedRow = updateRes.rows[0];
       const newStatus = invoiceStateMachine.statusAfterPayment(invoice.status, updatedRow.amount_due, updatedRow.amount_paid);
       if (newStatus !== invoice.status) invoiceStateMachine.transition(invoice.status, newStatus);
-      await invoiceRepository.setStatus(invoiceId, newStatus, { paidAt: newStatus === "paid" ? new Date() : undefined });
+      await invoiceRepository.setStatus(invoiceId, newStatus, { paidAt: newStatus === "paid" ? new Date() : undefined }, client);
       await invoiceRepository.recordEvent(invoiceId, {
         eventType: newStatus === "paid" ? "paid" : "partially_paid",
         actorType: "payment",
         metadata: { amount, provider, providerPaymentId, newStatus },
-      });
+      }, client);
       if (invoice.projectId) {
         await projectRepository.recordPayment(invoice.projectId, new Decimal(amount));
       }
@@ -610,12 +610,12 @@ export class InvoiceService {
       if (newInvoiceStatus !== invoice.status) {
         invoiceStateMachine.transition(invoice.status, newInvoiceStatus);
       }
-      await invoiceRepository.setStatus(invoiceId, newInvoiceStatus, {});
+      await invoiceRepository.setStatus(invoiceId, newInvoiceStatus, {}, client);
       await invoiceRepository.recordEvent(invoiceId, {
         eventType: "payment_refunded",
         actorType: "payment",
         metadata: { amount: refundAmount.toString(), provider, providerRefundId, newPaymentStatus },
-      });
+      }, client);
 
       await client.query("COMMIT");
       logger.info(`Refund processed: payment ${paymentId} invoice ${invoiceId} amount ${amount} ${currency}`);

@@ -2359,20 +2359,21 @@ app.get("/api/payments", requireAuth, async (req: AuthRequest, res) => {
   const listRes = await query(
     `SELECT p.id, p.invoice_id, p.amount, p.currency, p.status, p.method, p.provider,
             p.provider_payment_id, p.paid_at, p.idempotency_key, p.created_at, p.updated_at,
-            i.invoice_number, i.customer_name, i.customer_email
-     FROM payments p
-     JOIN invoices i ON i.id = p.invoice_id
-     WHERE ${where.join(" AND ")}
-     ORDER BY p.created_at DESC
-     LIMIT $${i++} OFFSET $${i++}`,
+            i.invoice_number, c.name as customer_name, c.email as customer_email
+      FROM payments p
+      JOIN invoices i ON i.id = p.invoice_id
+      LEFT JOIN customers c ON c.id = i.customer_id
+      WHERE ${where.join(" AND ")}
+      ORDER BY p.created_at DESC
+      LIMIT $${i++} OFFSET $${i++}`,
     [...vals, limit, offset]
   );
 
   const countRes = await query(
     `SELECT COUNT(*)::int AS total
-     FROM payments p
-     JOIN invoices i ON i.id = p.invoice_id
-     WHERE ${where.join(" AND ")}`,
+      FROM payments p
+      JOIN invoices i ON i.id = p.invoice_id
+      WHERE ${where.join(" AND ")}`,
     vals
   );
 

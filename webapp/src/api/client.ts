@@ -1384,6 +1384,11 @@ export async function sendQuote(id: string) {
   return res.data;
 }
 
+export async function finalizeQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/finalize`);
+  return res.data;
+}
+
 export async function getQuotePdf(id: string) {
   const res = await api.get(`/quotes/${id}/pdf`, { responseType: "blob" });
   return res.data;

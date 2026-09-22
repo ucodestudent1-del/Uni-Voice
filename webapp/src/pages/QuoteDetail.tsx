@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getQuoteById,
-  updateQuote,
   sendQuote,
   getQuotePdf,
   convertQuote,
@@ -11,6 +10,7 @@ import {
 import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
 import { Download, Send, Copy, ArrowLeft } from "lucide-react";
+import QuoteBuilder from "../components/QuoteBuilder/QuoteBuilder";
 
 export default function QuoteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -86,19 +86,7 @@ export default function QuoteDetail() {
   }
 
   if (isNew) {
-    return (
-      <div className="p-6">
-        <h2 className="text-lg font-semibold text-primary">New Quote</h2>
-        <p className="text-sm text-secondary mt-2">
-          Quote builder is under construction. Use the API or contact support to create quotes for now.
-        </p>
-        <Link to="/app/quotes">
-          <Button variant="secondary" size="sm" className="mt-4">
-            Back to Quotes
-          </Button>
-        </Link>
-      </div>
-    );
+    return <QuoteBuilder quoteId={null} />;
   }
 
   if (loading) {

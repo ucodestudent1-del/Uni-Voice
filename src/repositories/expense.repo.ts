@@ -273,7 +273,8 @@ export class ExpenseRepository {
          COALESCE(SUM(CASE WHEN is_billable THEN amount ELSE 0 END), 0) as billable_amount,
          COALESCE(SUM(CASE WHEN is_reimbursed THEN amount ELSE 0 END), 0) as reimbursed_amount,
          COALESCE(SUM(CASE WHEN is_billable AND NOT is_reimbursed THEN amount ELSE 0 END), 0) as non_reimbursed_billable,
-         COUNT(*) as count
+         COUNT(*) as count,
+         MAX(currency) as currency
        FROM expenses
        WHERE ${conditions.join(" AND ")}`,
       vals
@@ -286,7 +287,7 @@ export class ExpenseRepository {
       reimbursedAmount: new Decimal(r.reimbursed_amount ?? 0).toFixed(2),
       nonReimbursedBillable: new Decimal(r.non_reimbursed_billable ?? 0).toFixed(2),
       count: Number(r.count ?? 0),
-       currency: "USD" as const,
+      currency: (r.currency as Expense["currency"]) ?? "USD",
       periodStart: opts.dateFrom ? new Date(opts.dateFrom) : null,
       periodEnd: opts.dateTo ? new Date(opts.dateTo) : null,
     };

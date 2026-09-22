@@ -2,7 +2,7 @@ import { Decimal } from "decimal.js";
 import { query, getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
 import { NotFoundError, BusinessLogicError } from "../domain/errors.js";
-import { receiptRepository, type ReceiptRow } from "../repositories/receipt.repo.js";
+import { receiptRepository, type ReceiptRow, type ReceiptFilter } from "../repositories/receipt.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
 import { buildTemplateData, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals } from "../services/templates/template-renderer.js";
 import type { CurrencyCode } from "../domain/value-objects/currency.js";
@@ -241,8 +241,19 @@ export class ReceiptService {
   }
 
   async listResponse(businessId: string, filter: Record<string, unknown>): Promise<{ receipts: Record<string, unknown>[]; total: number; limit: number; offset: number }> {
-    const listResult = await this.findMany(businessId, filter);
-    const receipts = await Promise.all(listResult.data.map((r) => this.getResponse(businessId, r.id)));
+    const limit = Math.min(Math.max(Number(filter.limit ?? 50), 1), 200);
+    const offset = Math.max(Number(filter.offset ?? 0), 0);
+    const receiptFilter: ReceiptFilter = {
+      status: filter.status as string | undefined,
+      invoiceId: filter.invoiceId as string | undefined,
+      paymentId: filter.paymentId as string | undefined,
+      dateFrom: filter.dateFrom as string | undefined,
+      dateTo: filter.dateTo as string | undefined,
+      limit, offset,
+    };
+    const listResult = await receiptRepository.findMany(businessId, receiptFilter);
+    const rows = await receiptRepository.findManyWithDetails(businessId, receiptFilter);
+    const receipts = rows.map((r) => this.toApiRow(r));
     return {
       receipts,
       total: listResult.total,

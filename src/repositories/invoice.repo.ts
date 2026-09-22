@@ -274,8 +274,9 @@ export class InvoiceRepository {
     return this.rowToModel(res.rows[0]);
   }
 
-  async updateTotals(invoiceId: string, totals: InvoiceTotals): Promise<void> {
-    await query(
+  async updateTotals(invoiceId: string, totals: InvoiceTotals, client?: any): Promise<void> {
+    const exec = client ?? query;
+    await exec(
       `UPDATE invoices SET subtotal = $2, discount_total = $3, tax_total = $4, fee_total = $5,
        total = $6, amount_paid = $7, amount_due = $8, updated_at = NOW()
        WHERE id = $1`,
@@ -312,16 +313,18 @@ export class InvoiceRepository {
     return { ...invoice, items: itemRes.rows.map((r) => this.itemRowToModel(r)), fees: feeRes.rows.map((r) => this.feeRowToModel(r)) };
   }
 
-  async assignNumber(businessId: string, invoiceId: string, invoiceNumber: string): Promise<void> {
-    const res = await query(
+  async assignNumber(businessId: string, invoiceId: string, invoiceNumber: string, client?: any): Promise<void> {
+    const exec = client ?? query;
+    const res = await exec(
       `UPDATE invoices SET invoice_number = $1 WHERE id = $2 AND business_id = $3 RETURNING id`,
       [invoiceNumber, invoiceId, businessId]
     );
     if (!res.rows.length) throw new NotFoundError(`Invoice ${invoiceId} not found`);
   }
 
-  async finalize(businessId: string, invoiceId: string, opts: { finalizedAt: Date }): Promise<void> {
-    const res = await query(
+  async finalize(businessId: string, invoiceId: string, opts: { finalizedAt: Date }, client?: any): Promise<void> {
+    const exec = client ?? query;
+    const res = await exec(
       `UPDATE invoices SET is_finalized = TRUE, finalized_at = $1, updated_at = NOW()
        WHERE id = $2 AND business_id = $3 RETURNING id`,
       [opts.finalizedAt.toISOString(), invoiceId, businessId]
@@ -329,7 +332,7 @@ export class InvoiceRepository {
     if (!res.rows.length) throw new NotFoundError(`Invoice ${invoiceId} not found`);
   }
 
-  async setStatus(invoiceId: string, status: string, fields?: Record<string, unknown>): Promise<void> {
+  async setStatus(invoiceId: string, status: string, fields?: Record<string, unknown>, client?: any): Promise<void> {
     const ALLOWED_COLUMNS: Record<string, string> = {
       sentAt: "sent_at", viewedAt: "viewed_at", paidAt: "paid_at", cancelledAt: "cancelled_at",
     };
@@ -345,11 +348,13 @@ export class InvoiceRepository {
       }
     }
     set.push(`updated_at = NOW()`);
-    await query(`UPDATE invoices SET ${set.join(", ")} WHERE id = $1`, vals);
+    const exec = client ?? query;
+    await exec(`UPDATE invoices SET ${set.join(", ")} WHERE id = $1`, vals);
   }
 
-  async recordEvent(invoiceId: string, event: { eventType: string; actorId?: string; actorType?: string; metadata?: Record<string, unknown>; createdAt?: Date }): Promise<InvoiceEvent> {
-    const res = await query(
+  async recordEvent(invoiceId: string, event: { eventType: string; actorId?: string; actorType?: string; metadata?: Record<string, unknown>; createdAt?: Date }, client?: any): Promise<InvoiceEvent> {
+    const exec = client ?? query;
+    const res = await exec(
       `INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata, created_at)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [invoiceId, event.eventType, event.actorId, event.actorType, event.metadata ?? {}, event.createdAt?.toISOString() ?? new Date().toISOString()]
@@ -739,9 +744,11 @@ export class InvoiceRepository {
     pdfStored?: boolean;
     pdfHash?: string;
     createdBy?: string;
+    client?: any;
   }): Promise<InvoiceSnapshot> {
     const revision = opts?.revision ?? 1;
-    const res = await query(
+    const exec = opts?.client ?? query;
+    const res = await exec(
       `INSERT INTO invoice_snapshots (invoice_id, snapshot, snapshot_hash, revision, template_id, template_schema_version, template_revision, rendered_html, pdf_stored, pdf_hash, created_at, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11) RETURNING *`,
       [invoiceId, JSON.stringify(snapshot), hash, revision, opts?.templateId ?? null, opts?.templateSchemaVersion ?? 1, opts?.templateRevision ?? 1, opts?.renderedHtml ?? null, opts?.pdfStored ?? false, opts?.pdfHash ?? null, opts?.createdBy ?? null]
@@ -814,8 +821,9 @@ export class InvoiceRepository {
     taxAmount: Decimal.Value;
     lineSubtotal: Decimal.Value;
     lineTotal: Decimal.Value;
-  }): Promise<void> {
-    await query(
+  }, client?: any): Promise<void> {
+    const exec = client ?? query;
+    await exec(
       `UPDATE invoice_items SET tax_amount = $1, line_subtotal = $2, line_total = $3
        WHERE id = $4 AND invoice_id = $5`,
       [fields.taxAmount, fields.lineSubtotal, fields.lineTotal, itemId, invoiceId]
