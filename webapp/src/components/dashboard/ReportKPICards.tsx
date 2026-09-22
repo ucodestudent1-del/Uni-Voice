@@ -30,7 +30,7 @@ export default function ReportKPICards({
   paidThisMonth,
 }: ReportKPICardsProps) {
   const revenueTrend = useMemo(() => {
-    if (volumeTrend.length < 2) return null;
+    if (volumeTrend.length < 2) return undefined;
     const current = new Decimal(volumeTrend[volumeTrend.length - 1].invoiced);
     const previous = new Decimal(volumeTrend[volumeTrend.length - 2].invoiced);
     if (previous.isZero()) return undefined;
