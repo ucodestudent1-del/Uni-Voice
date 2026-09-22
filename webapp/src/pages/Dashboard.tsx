@@ -89,6 +89,26 @@ export default function Dashboard() {
     }
   }
 
+  const overdueInvoices = useMemo(() => {
+    const items = dashboard?.requiringAttention ?? [];
+    return items.filter((inv) =>
+      isOverdueStatus(inv.status, inv.due_date)
+    );
+  }, [dashboard?.requiringAttention]);
+
+  const needsAttention = useMemo(() => {
+    const items = dashboard?.requiringAttention ?? [];
+    return items
+      .filter((inv) => !isOverdueStatus(inv.status, inv.due_date))
+      .sort((a, b) => {
+        const aOverdue = isOverdueStatus(a.status, a.due_date);
+        const bOverdue = isOverdueStatus(b.status, b.due_date);
+        if (aOverdue && !bOverdue) return -1;
+        if (!aOverdue && bOverdue) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+  }, [dashboard?.requiringAttention]);
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-8">
@@ -154,26 +174,6 @@ export default function Dashboard() {
       color: "var(--color-text-secondary)",
     },
   ];
-
-  const overdueInvoices = useMemo(() => {
-    const items = dashboard?.requiringAttention ?? [];
-    return items.filter((inv) =>
-      isOverdueStatus(inv.status, inv.due_date)
-    );
-  }, [dashboard?.requiringAttention]);
-
-  const needsAttention = useMemo(() => {
-    const items = dashboard?.requiringAttention ?? [];
-    return items
-      .filter((inv) => !isOverdueStatus(inv.status, inv.due_date))
-      .sort((a, b) => {
-        const aOverdue = isOverdueStatus(a.status, a.due_date);
-        const bOverdue = isOverdueStatus(b.status, b.due_date);
-        if (aOverdue && !bOverdue) return -1;
-        if (!aOverdue && bOverdue) return 1;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-  }, [dashboard?.requiringAttention]);
 
   const needsAttentionCount = overdueInvoices.length + needsAttention.length + summary.draftCount;
 
