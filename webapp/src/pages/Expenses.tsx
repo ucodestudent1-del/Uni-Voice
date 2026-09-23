@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
-import { getExpenses, createExpense, updateExpense, deleteExpense, getExpenseSummary, type ExpenseSearchParams } from "../api/client";
+import { getExpensesWithSummary, createExpense, updateExpense, deleteExpense, type ExpenseSearchParams } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import { formatCurrency } from "../utils/format";
 import type { ApiExpense, ApiExpenseSummary } from "../types/api";
@@ -68,13 +68,14 @@ export default function Expenses() {
     [pageSize, page, searchTerm, categoryFilter, dateFrom, dateTo]
   );
 
-  const loadExpenses = useCallback(async () => {
+  const loadExpensesWithSummary = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getExpenses(params);
+      const data = await getExpensesWithSummary(params);
       setExpenses(data.expenses ?? []);
       setTotal(data.total ?? 0);
+      setSummary(data.summary ?? null);
     } catch (err: any) {
       if (err.response?.status === 403) {
         setError("Expense tracking requires a Business plan. Please upgrade to continue.");
@@ -83,30 +84,15 @@ export default function Expenses() {
       }
       setExpenses([]);
       setTotal(0);
+      setSummary(null);
     } finally {
       setLoading(false);
     }
   }, [params]);
 
-  const loadSummary = useCallback(async () => {
-    try {
-      const dateParams: Record<string, string> = {};
-      if (dateFrom) dateParams.dateFrom = dateFrom;
-      if (dateTo) dateParams.dateTo = dateTo;
-      const data = await getExpenseSummary(dateParams);
-      setSummary(data.summary ?? null);
-    } catch {
-      setSummary(null);
-    }
-  }, [dateFrom, dateTo]);
-
   useEffect(() => {
-    loadExpenses();
-  }, [loadExpenses]);
-
-  useEffect(() => {
-    loadSummary();
-  }, [loadSummary]);
+    loadExpensesWithSummary();
+  }, [loadExpensesWithSummary]);
 
   const totalAmount = summary?.total_amount ?? expenses.reduce((sum, e) => sum + parseFloat(e.amount || "0"), 0);
   const currency = summary?.currency ?? "USD";
@@ -176,7 +162,7 @@ export default function Expenses() {
       setShowForm(false);
       setEditingId(null);
       setFormData({});
-      loadSummary();
+      loadExpensesWithSummary();
     } catch (err: any) {
       if (err.response?.status === 403) {
         setError("Expense tracking requires a Business plan.");

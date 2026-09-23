@@ -191,18 +191,14 @@ export class CustomerRepository {
       : "";
 
     const dataRes = await query(
-      `SELECT ${selectCols} FROM customers c ${joinClause}
+      `SELECT ${selectCols}, COUNT(*) OVER() AS total_count FROM customers c ${joinClause}
        WHERE ${conditions.join(" AND ")}
        ORDER BY ${sortCol} ${sortDirection}, c.created_at DESC
        LIMIT $${i++} OFFSET $${i}`,
       [...vals, limit, offset]
     );
 
-    const countRes = await query(
-      `SELECT COUNT(*) as total FROM customers c
-       WHERE ${conditions.join(" AND ")}`,
-      vals
-    );
+    const total = dataRes.rows.length ? Number(dataRes.rows[0]?.total_count ?? 0) : 0;
 
     const data = dataRes.rows.map((r) => {
       const customer = this.rowToModel(r);
@@ -213,8 +209,6 @@ export class CustomerRepository {
       }
       return customer;
     });
-
-    const total = Number(countRes.rows[0]?.total ?? 0);
 
     return { data, total, limit, offset };
   }

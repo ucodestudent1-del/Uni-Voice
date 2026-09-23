@@ -2035,6 +2035,26 @@ app.get(
   }
 );
 
+app.get(
+  "/api/expenses/with-summary",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = ExpenseSearchSchema.parse({
+        ...req.query,
+        limit: req.query.limit ?? 50,
+        offset: req.query.offset ?? 0,
+      });
+      const result = await expenseService.listWithSummary(req.user!.businessId, parsed);
+      res.json({ expenses: result.expenses, total: result.total, limit: result.limit, offset: result.offset, summary: result.summary });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // ============================================================================
 // NUMBER SEQUENCES (invoice numbering config)
 // ============================================================================

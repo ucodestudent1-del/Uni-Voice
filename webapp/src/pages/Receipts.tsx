@@ -87,6 +87,36 @@ export default function Receipts() {
     loadReceipts();
   }, [loadReceipts]);
 
+  const handleDownloadPdf = useCallback(async (receiptId: string) => {
+    try {
+      const blob = await getReceiptPdf(receiptId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `receipt-${receiptId.slice(0, 8)}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to download receipt PDF");
+    }
+  }, [setError]);
+
+  const handleViewReceipt = useCallback(async (receiptId: string) => {
+    try {
+      const { receipt } = await getReceiptById(receiptId);
+      const url = window.URL.createObjectURL(
+        new Blob([JSON.stringify(receipt, null, 2)], { type: "application/json" })
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `receipt-${receipt.id.slice(0, 8)}.json`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to load receipt");
+    }
+  }, [setError]);
+
   const columns = useMemo<ColumnDef<ApiReceipt>[]>(
     () => [
       {
@@ -193,38 +223,8 @@ export default function Receipts() {
         align: "center",
       },
     ],
-    []
+    [handleViewReceipt, handleDownloadPdf]
   );
-
-  async function handleDownloadPdf(receiptId: string) {
-    try {
-      const blob = await getReceiptPdf(receiptId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `receipt-${receiptId.slice(0, 8)}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to download receipt PDF");
-    }
-  }
-
-  async function handleViewReceipt(receiptId: string) {
-    try {
-      const { receipt } = await getReceiptById(receiptId);
-      const url = window.URL.createObjectURL(
-        new Blob([JSON.stringify(receipt, null, 2)], { type: "application/json" })
-      );
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `receipt-${receipt.id.slice(0, 8)}.json`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to load receipt");
-    }
-  }
 
   async function handleExportCsv() {
     try {

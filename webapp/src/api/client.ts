@@ -1206,6 +1206,26 @@ export function buildExpenseSearchParams(params: ExpenseSearchParams): Record<st
   return result;
 }
 
+export async function getExpensesWithSummary(params?: {
+  limit?: number;
+  offset?: number;
+  customerId?: string;
+  projectId?: string;
+  category?: string;
+  isBillable?: boolean;
+  isReimbursed?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number; summary: ApiExpenseSummary }> {
+  const res = await api.get("/expenses/with-summary", { params });
+  return res.data;
+}
+
 // ============================================================================
 // RECEIPTS
 // ============================================================================

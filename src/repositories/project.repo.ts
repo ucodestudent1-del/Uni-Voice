@@ -252,14 +252,11 @@ export class ProjectRepository {
 
     const dataRes = await query(
       `SELECT p.*, c.name as customer_name, c.email as customer_email,
-               COUNT(DISTINCT pt.tag_id) AS tag_count,
-               COUNT(DISTINCT ptm.user_id) AS team_member_count
+              (SELECT COUNT(*) FROM project_taggings pt WHERE pt.project_id = p.id) AS tag_count,
+              (SELECT COUNT(*) FROM project_team_members ptm WHERE ptm.project_id = p.id) AS team_member_count
        FROM projects p
        LEFT JOIN customers c ON c.id = p.customer_id
-       LEFT JOIN project_taggings pt ON pt.project_id = p.id
-       LEFT JOIN project_team_members ptm ON ptm.project_id = p.id
        WHERE ${conditions.join(" AND ")}
-       GROUP BY p.id, c.name, c.email
        ORDER BY ${sortCol} ${sortDirection}, p.created_at DESC
        LIMIT $${i++} OFFSET $${i}`,
       [...vals, limit, offset]

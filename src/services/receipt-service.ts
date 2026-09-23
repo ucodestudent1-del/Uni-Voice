@@ -249,6 +249,8 @@ export class ReceiptService {
       paymentId: filter.paymentId as string | undefined,
       dateFrom: filter.dateFrom as string | undefined,
       dateTo: filter.dateTo as string | undefined,
+      provider: filter.provider as string | undefined,
+      search: filter.search as string | undefined,
       limit, offset,
     };
     const result = await receiptRepository.findManyWithDetailsAndCount(businessId, receiptFilter);

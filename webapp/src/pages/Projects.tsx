@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import {
   getProjects,
@@ -41,7 +41,7 @@ const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"created_at" | "due_date" | "name">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const loadProjects = async (searchParams: ProjectSearchParams = {}) => {
+  const loadProjects = useCallback(async (searchParams: ProjectSearchParams = {}) => {
     setLoading(true);
     setError(null);
     try {
@@ -52,22 +52,22 @@ const [search, setSearch] = useState("");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const debouncedLoadProjects = useDebouncedCallback((params: ProjectSearchParams) => {
+    loadProjects(params);
+  }, 300);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      const params = buildProjectSearchParams({
-        search,
-        status: statusFilter || undefined,
-        includeArchived: showArchived,
-        sortBy,
-        sortOrder,
-      });
-      loadProjects(params);
-    }, 300);
-
-    return () => clearTimeout(handler);
-  }, [search, statusFilter, showArchived, sortBy, sortOrder]);
+    const params = buildProjectSearchParams({
+      search,
+      status: statusFilter || undefined,
+      includeArchived: showArchived,
+      sortBy,
+      sortOrder,
+    });
+    debouncedLoadProjects(params);
+  }, [search, statusFilter, showArchived, sortBy, sortOrder, debouncedLoadProjects]);
 
   const handleCreate = () => {
     setEditingProject(null);

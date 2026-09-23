@@ -59,6 +59,23 @@ export class ExpenseService {
   async getSummary(businessId: string, opts: ExpenseSearchInput): Promise<ExpenseSummary> {
     return this.repo.getSummary(businessId, opts);
   }
+
+  async listWithSummary(
+    businessId: string,
+    opts: ExpenseSearchInput
+  ): Promise<{ expenses: Expense[]; total: number; limit: number; offset: number; summary: ExpenseSummary }> {
+    const [result, summary] = await Promise.all([
+      this.list(businessId, opts),
+      this.getSummary(businessId, opts),
+    ]);
+    return {
+      expenses: result.data,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+      summary,
+    };
+  }
 }
 
 export const expenseService = new ExpenseService();

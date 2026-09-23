@@ -445,17 +445,17 @@ export class InvoiceRepository {
     const direction = opts.sortOrder === "asc" ? "ASC" : "DESC";
     const from = `FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id WHERE ${conditions.join(" AND ")}`;
     const dataRes = await query(
-      `SELECT i.*, c.name AS customer_name, c.email AS customer_email ${from}
+      `SELECT i.*, c.name AS customer_name, c.email AS customer_email, COUNT(*) OVER() AS total_count ${from}
        ORDER BY ${sortColumn} ${direction}, i.created_at DESC LIMIT $${i++} OFFSET $${i++}`,
       [...vals, limit, offset]
     );
-    const countRes = await query(`SELECT COUNT(*)::int AS total ${from}`, vals);
+    const total = dataRes.rows.length ? Number(dataRes.rows[0]?.total_count ?? 0) : 0;
     return {
       data: dataRes.rows.map((r) => {
         const model = this.rowToModel(r);
         return { ...model, customer_name: r.customer_name ?? null, customer_email: r.customer_email ?? null };
       }),
-      total: Number(countRes.rows[0]?.total ?? 0),
+      total,
       limit,
       offset,
     };

@@ -9,6 +9,8 @@ export interface ReceiptFilter {
   paymentId?: string;
   dateFrom?: string;
   dateTo?: string;
+  provider?: string;
+  search?: string;
   limit?: number;
   offset?: number;
 }
@@ -141,6 +143,13 @@ export class ReceiptRepository {
     if (filter.paymentId) { conditions.push(`r.payment_id = $${i++}`); vals.push(filter.paymentId); }
     if (filter.dateFrom) { conditions.push(`r.issued_at >= $${i++}`); vals.push(filter.dateFrom); }
     if (filter.dateTo) { conditions.push(`r.issued_at <= $${i++}`); vals.push(filter.dateTo); }
+    if (filter.provider) { conditions.push(`(r.metadata->>'provider') = $${i++}`); vals.push(filter.provider); }
+    if (filter.search) {
+      const term = `%${filter.search}%`;
+      conditions.push(`(r.receipt_number ILIKE $${i} OR i.invoice_number ILIKE $${i} OR c.name ILIKE $${i})`);
+      vals.push(term, term, term);
+      i++;
+    }
 
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
@@ -156,7 +165,7 @@ export class ReceiptRepository {
        WHERE ${conditions.join(" AND ")}
        ORDER BY r.created_at DESC
        LIMIT $${i++} OFFSET $${i++}`,
-      [...vals, limit, offset]
+       [...vals, limit, offset]
     );
     return res.rows;
   }
@@ -174,6 +183,13 @@ export class ReceiptRepository {
     if (filter.paymentId) { conditions.push(`r.payment_id = $${i++}`); vals.push(filter.paymentId); }
     if (filter.dateFrom) { conditions.push(`r.issued_at >= $${i++}`); vals.push(filter.dateFrom); }
     if (filter.dateTo) { conditions.push(`r.issued_at <= $${i++}`); vals.push(filter.dateTo); }
+    if (filter.provider) { conditions.push(`(r.metadata->>'provider') = $${i++}`); vals.push(filter.provider); }
+    if (filter.search) {
+      const term = `%${filter.search}%`;
+      conditions.push(`(r.receipt_number ILIKE $${i} OR i.invoice_number ILIKE $${i} OR c.name ILIKE $${i})`);
+      vals.push(term, term, term);
+      i++;
+    }
 
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);

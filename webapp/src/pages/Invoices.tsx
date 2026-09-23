@@ -89,17 +89,20 @@ const [searchTerm, setSearchTerm] = useState("");
   };
 
   const loadCustomers = useCallback(async () => {
+    if (customers.length > 0) return;
     try {
       const data = await getCustomers({ limit: 500, enrich: false });
       setCustomers(data.data ?? []);
     } catch {
       setCustomers([]);
     }
-  }, []);
+  }, [customers.length]);
 
   useEffect(() => {
-    loadCustomers();
-  }, [loadCustomers]);
+    if (showAdvancedFilters) {
+      loadCustomers();
+    }
+  }, [showAdvancedFilters, loadCustomers]);
 
   const currentParams: InvoiceSearchParams = useMemo(() => ({
     limit: pageSize,

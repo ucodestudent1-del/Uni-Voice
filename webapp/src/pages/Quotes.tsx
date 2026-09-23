@@ -79,6 +79,46 @@ export default function Quotes() {
     loadQuotes();
   }, [loadQuotes]);
 
+  const handleDownloadPdf = useCallback(async (id: string) => {
+    try {
+      const blob = await getQuotePdf(id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `quote-${id.slice(0, 8)}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to download quote PDF");
+    }
+  }, [setError]);
+
+  const handleView = useCallback((id: string) => {
+    navigate(`/app/quotes/${id}`);
+  }, [navigate]);
+
+  const handleConvert = useCallback(async (id: string) => {
+    if (!window.confirm("Convert this quote to an invoice?")) return;
+    try {
+      const result = await convertQuote(id);
+      setActionMessage(`Quote converted to invoice #${result.invoiceId?.slice(0, 8)}`);
+      loadQuotes();
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to convert quote");
+    }
+  }, [loadQuotes, setActionMessage, setError]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    if (!window.confirm("Delete this quote? This cannot be undone.")) return;
+    try {
+      await deleteQuote(id);
+      setActionMessage("Quote deleted");
+      loadQuotes();
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to delete quote");
+    }
+  }, [loadQuotes, setActionMessage, setError]);
+
   const columns = useMemo<ColumnDef<ApiQuoteListItem>[]>(
     () => [
       {
@@ -192,48 +232,8 @@ export default function Quotes() {
         align: "center",
       },
     ],
-    []
+    [handleView, handleConvert, handleDownloadPdf, handleDelete]
   );
-
-  async function handleDownloadPdf(id: string) {
-    try {
-      const blob = await getQuotePdf(id);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `quote-${id.slice(0, 8)}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to download quote PDF");
-    }
-  }
-
-  function handleView(id: string) {
-    navigate(`/app/quotes/${id}`);
-  }
-
-  async function handleConvert(id: string) {
-    if (!window.confirm("Convert this quote to an invoice?")) return;
-    try {
-      const result = await convertQuote(id);
-      setActionMessage(`Quote converted to invoice #${result.invoiceId?.slice(0, 8)}`);
-      loadQuotes();
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to convert quote");
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!window.confirm("Delete this quote? This cannot be undone.")) return;
-    try {
-      await deleteQuote(id);
-      setActionMessage("Quote deleted");
-      loadQuotes();
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to delete quote");
-    }
-  }
 
   const hasActiveFilters = searchTerm || statusFilter !== "all";
 

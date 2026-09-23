@@ -5,15 +5,15 @@ import { useRef } from "react";
  * until `delay` ms have elapsed since the last time the debounced function
  * was invoked.
  */
-export function useDebouncedCallback(
-  fn: (value: string) => void,
+export function useDebouncedCallback<T = string>(
+  fn: (value: T) => void,
   delay: number
-): (value: string) => void {
+): (value: T) => void {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fnRef = useRef(fn);
   fnRef.current = fn;
 
-  return (value: string) => {
+  return (value: T) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
