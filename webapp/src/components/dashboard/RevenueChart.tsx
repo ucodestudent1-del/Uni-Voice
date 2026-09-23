@@ -14,14 +14,23 @@ import type { ApiVolumeTrend } from "../../types/api";
 
 type Timeframe = "30" | "90" | "365";
 
+// Cache Intl.NumberFormat instances per currency to avoid constructing a
+// new formatter on every render/tooltip call.
+const compactFormatterCache = new Map<string, Intl.NumberFormat>();
+
 function formatCurrencyCompact(value: number, currency: string): string {
   try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(value);
+    let formatter = compactFormatterCache.get(currency);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        notation: "compact",
+        maximumFractionDigits: 1,
+      });
+      compactFormatterCache.set(currency, formatter);
+    }
+    return formatter.format(value);
   } catch {
     return `$${value}`;
   }

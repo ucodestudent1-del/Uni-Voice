@@ -5,6 +5,7 @@ import {
   type FeeInput,
   type InvoiceCalculationInput,
   type LineItemInput,
+  type CalculationResult,
 } from "../utils/calculation";
 import { SUPPORTED_CURRENCIES, type CurrencyCode } from "../utils/currency";
 
@@ -74,7 +75,7 @@ function toDate(value: string | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function validateInvoice(data: ValidationInput): ValidationIssue[] {
+export function validateInvoice(data: ValidationInput, predefinedCalc?: CalculationResult): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const items = data.items || [];
   const normalizedCurrency = (data.currency ?? "").toUpperCase();
@@ -211,23 +212,28 @@ export function validateInvoice(data: ValidationInput): ValidationIssue[] {
   }
 
   if (currencyValid && items.length > 0) {
-    issues.push(...checkCalculations(data, normalizedCurrency));
+    issues.push(...checkCalculations(data, normalizedCurrency, predefinedCalc));
   }
 
   return issues;
 }
 
-function checkCalculations(data: ValidationInput, currency: string): ValidationIssue[] {
+function checkCalculations(data: ValidationInput, currency: string, predefinedCalc?: CalculationResult): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   try {
-    const calcInput: InvoiceCalculationInput = {
-      currency: currency as CurrencyCode,
-      lineItems: itemsToLineInputs(data.items),
-      fees: data.fees && data.fees.length > 0 ? data.fees.map(toFeeInput) : undefined,
-    };
+    let result: CalculationResult;
+    if (predefinedCalc) {
+      result = predefinedCalc;
+    } else {
+      const calcInput: InvoiceCalculationInput = {
+        currency: currency as CurrencyCode,
+        lineItems: itemsToLineInputs(data.items),
+        fees: data.fees && data.fees.length > 0 ? data.fees.map(toFeeInput) : undefined,
+      };
 
-    const result = calculationEngine.calculate(calcInput);
+      result = calculationEngine.calculate(calcInput);
+    }
 
     if (result.total.isNegative()) {
       issues.push({
@@ -275,12 +281,15 @@ function toFeeInput(fee: ValidatableFee): FeeInput {
   };
 }
 
-export function useInvoiceValidation(data: ValidationInput | null | undefined): InvoiceValidationState {
+export function useInvoiceValidation(
+  data: ValidationInput | null | undefined,
+  predefinedCalc?: CalculationResult
+): InvoiceValidationState {
   return useMemo(() => {
     if (!data) {
       return EMPTY_VALIDATION_STATE;
     }
-    const issues = validateInvoice(data);
+    const issues = validateInvoice(data, predefinedCalc);
     const hasErrors = issues.some((i) => i.severity === "error");
     const hasWarnings = issues.some((i) => i.severity === "warning");
     return {
@@ -291,7 +300,7 @@ export function useInvoiceValidation(data: ValidationInput | null | undefined): 
       hasWarnings,
       isDirty: issues.length > 0,
     };
-  }, [data]);
+  }, [data, predefinedCalc]);
 }
 
 export const validateInvoiceSync = validateInvoice;

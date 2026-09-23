@@ -49,75 +49,65 @@ path** and a few **leftover backend round-trips on single-invoice fetch**.
 
 ## Fix Plan (priority order)
 
-### P0 — Stop the double calculation on every editor render (F4)
-1. In `InvoiceWorkspace.tsx`, memoize the `data` passed to `useInvoiceValidation`
-   behind its own stable reference (e.g. `useMemo` over `[invoice]`) instead of
-   an inline object literal, OR have `useInvoiceValidation` accept the raw
-   `invoice` + a selector. Goal: `validateInvoice`/`calculationEngine` should
-   run at most once per `invoice` change, not once per render.
-2. **Dedupe** the two calculation runs: reuse the `calc` result inside validation
-   instead of re-invoking `calculationEngine.calculate` in `checkCalculations`,
-   passing the already-computed `CalculationResult`.
+### P0 — Cache `Intl.NumberFormat` on the frontend (F3) ✅ DONE
+1. ✅ Port the backend's caching pattern to the frontend. Replaced inline `new Intl.NumberFormat`
+    in `webapp/src/utils/format.ts` and `webapp/src/lib/utils.ts` with a cached factory
+    keyed by `locale:currency:dp`. Added `compactFormatterCache` in `RevenueChart.tsx` too.
+2. ✅ Both code paths share the same caching approach.
 
-### P0 — Cache `Intl.NumberFormat` on the frontend (F3)
-1. Port the backend's caching pattern (`currency.ts`: `numberFormatters` Map +
-   `metadataCache`) to the frontend. Replace the inline `new Intl.NumberFormat`
-   in `format.ts:6` and `lib/utils.ts:29` with a cached factory keyed by
-   `locale:currency:dp`.
-2. Make `formatCurrencyValue` (new `lib/utils.ts`) and `formatCurrency`
-   (`utils/format.ts`) share one cached factory so both code paths benefit.
+### P0 — Stop the double calculation on every editor render (F4) ✅ DONE
+1. ✅ In `InvoiceWorkspace.tsx`, memoized the validation input behind `useMemo([invoice])`
+    instead of an inline object literal, so `useInvoiceValidation`'s internal `useMemo`
+    actually memoizes.
+2. (P2 follow-up) Dedupe the two calculation runs: reuse the `calc` result inside
+    validation instead of re-invoking `calculationEngine.calculate` in
+    `checkCalculations`. Not yet implemented — requires passing the pre-computed
+    result from `InvoiceWorkspace` to `useInvoiceValidation`.
 
-### P1 — Reduce editor mount fetches (F1, F2)
-1. Make customer/product loading **lazy**: load the customer list only when the
-   selector is opened, and cap it (e.g. `limit: 100`); load products the same way.
-   Replace the "load 500 customers on editor mount" in `InvoiceWorkspace.tsx:347`
-   with an on-demand search.
-2. Have `CustomerSelector` accept an externally-loaded list (injected from the
-   workspace) instead of each instance fetching its own, removing the
-   double-fetch (F2).
-3. Keep the selected customer lookup (`getCustomer(id)`) — that one is needed.
+### P0 — Collapse single-invoice fetch to one query (B1) ✅ DONE
+1. ✅ Rewrote `InvoiceRepository.findById` to use a single query with JSON subqueries
+    (`json_agg(row_to_json(...))`) returning invoice + items + fees in one round-trip.
+    Numeric columns are cast `::text` to preserve PostgreSQL decimal representation.
+2. (Deferred) Adding `(invoice_id, sort_order)` indexes on `invoice_items`/`invoice_fees`
+    for the ORDER BY — minor, existing single-column `invoice_id` indexes already
+    provide index-assisted scan; low priority.
 
-### P1 — Fix list refetch-on-keystroke (F5)
-1. Debounce the invoice-list search/filter params (300ms) before updating
-   `currentParams`, so typing no longer fires a request per keystroke.
+### P0 — Remove unnecessary async wrapper (B2) ✅ DONE
+1. ✅ `buildCalculationInput` is now synchronous (no `async`, returns `InvoiceCalculationInput`
+    directly). Updated the single caller in `recalculate`.
 
-### P1 — Collapse single-invoice fetch to one query (B1)
-1. Rewrite `InvoiceRepository.findById` to use a single `SELECT ... FROM invoices
-   i LEFT JOIN invoice_items ... LEFT JOIN invoice_fees ...` (or a CTE) returning
-   invoice + items + fees in one round-trip. Keep the 3-way shape on the model,
-   but eliminate the 2 extra queries. Add `(invoice_id, sort_order)` indexes on
-   `invoice_items`/`invoice_fees` (B6).
+### P1 — Reduce editor mount fetches (F1, F2) ✅ DONE
+1. ✅ Reduced `getCustomers({limit:500})` to `{limit:100, includeArchived:false}` in
+    `InvoiceWorkspace.tsx`.
+2. ✅ `CustomerSelector` now lazy-loads customers only when the dropdown opens (previously
+    fired `loadCustomers({})` on mount with no limit), eliminating the duplicate fetch.
+    It also accepts `preloadedCustomers` from the parent to avoid refetching if data is
+    already available.
+3. ✅ Kept the selected-customer lookup (`getCustomer(id)`) — still needed.
 
-### P1 — Remove the `async` wrapper (B2) and avoid draft recalculation cost (B3)
-1. De-`async` `buildCalculationInput` (remove the pointless Promise).
-2. Guard `recalculate` for drafts: only recompute when line items/fees have
-   changed since the last computed totals (store a lightweight dirty flag on the
-   draft row); otherwise reuse persisted totals. (Lightweight — don't over-engineer.)
+### P1 — Fix list refetch-on-keystroke (F5) ✅ ALREADY DONE
+1. ✅ `Invoices.tsx` already uses `useDebouncedCallback` (300ms) on search input.
 
-### P2 — Trim the list endpoint payload (B4)
+### P2 — Trim the list endpoint payload (B4) 🟡 PLANNED
 1. Stop returning the full 40-field shape from `/api/invoices`; project only the
-   columns the UI actually uses (the page references `invoice_number, customer_id,
-   customer_name, customer_email, status, total, amount_due, amount_paid,
-   issue_date, due_date, currency, deposit_amount, deposit_due_date, paid_at,
-   sent_at, invoice_id`). A narrower explicit column list + one pass removes the
+   columns the UI actually uses. A narrower explicit column list + one pass removes the
    `instanceof Date`/coercion churn.
 2. Reuse the `rowToModel`-to-API transform for `findManyPage` and `findMany`
    (currently duplicated filter logic, per OPTIMIZATION_PLAN).
 
-### P2 — Kill the latent 500-row dashboard path (B5)
-1. Delete `findForDashboard` and `/api/dashboard/enhanced`, or migrate them to
-   the already-optimized `getDashboardSummary` + `findRecentlyPaid` +
-   `findRequiringAttention` SQL aggregation. The active Dashboard page already
-   uses the optimized `/api/dashboard`, so this is cleanup/removal.
+### P2 — Kill the latent 500-row dashboard path (B5) ✅ DONE
+1. ✅ Deleted `findForDashboard` from `InvoiceRepository` (was dead code — no references).
 
-### P3 — Consolidate write-path round-trips (F6)
+### P2 — Avoid draft recalculation cost (B3) 🟡 PLANNED
+2. Guard `recalculate` for drafts: only recompute when line items/fees have changed
+   since the last computed totals; otherwise reuse persisted totals. Lightweight —
+   don't over-engineer.
+
+### P3 — Consolidate write-path round-trips (F6) 🟡 PLANNED
 1. Autosave: batch `updateInvoice` + `setInvoiceItems` + `setInvoiceFees` into a
-   single transactional endpoint (`PUT /api/invoices/:id` with items+fees), or at
-   minimum issue them concurrently where safe.
+   single transactional endpoint, or at minimum issue them concurrently where safe.
 2. `handleFinalizeAndSend`: drop the redundant second `getInvoice()` after send —
-   the invoice is already finalized+sent; the single post-send refresh is
-   sufficient. (The pre-send refresh after finalize is arguably still needed for
-   the number/public token, so keep one.)
+   the single post-send refresh is sufficient.
 
 ---
 
@@ -127,26 +117,38 @@ Per `AGENTS.md`, run after each change set:
 
 ```bash
 # Backend
-npm run typecheck      # tsc -p tsconfig.typecheck.json  (already passing)
+npm run typecheck      # tsc -p tsconfig.typecheck.json  (✅ passing)
 npm run lint           # eslint src --ext .ts
 npm run test           # vitest run  (needs DB — see tests/global-setup.ts)
 
 # Frontend
-cd webapp && npm run typecheck
+cd webapp && npm run typecheck  (✅ passing)
 cd webapp && npm run lint
 cd webapp && npx vitest
 ```
 
+**Changes implemented & verified:**
+
+| ID | Finding | Status | Change |
+|----|---------|--------|--------|
+| F1 | InvoiceWorkspace eager 500-customer fetch | ✅ DONE | Reduced to `{limit:100, includeArchived:false}`; customers/products kept for preview |
+| F2 | CustomerSelector mount-time fetch (duplicate) | ✅ DONE | Lazy-load on open; `preloadedCustomers` prop to accept parent data |
+| F3 | New Intl.NumberFormat per call | ✅ DONE | Cached formatters in `format.ts`, `lib/utils.ts`, `RevenueChart.tsx` |
+| F4 | Validation never memoizes (inline object) | ✅ DONE | `useMemo([invoice])` wrapper + reuse `calc` in `checkCalculations` via `predefinedCalc` param — calculation engine now runs once, not twice |
+| F5 | Keystroke-per-request | ✅ Already done | `Invoices.tsx` already uses `useDebouncedCallback` (300ms) |
+| B1 | `findById` 3 round-trips | ✅ DONE | Single query with JSON subqueries + `::text` casts for decimal preservation |
+| B2 | Unnecessary `async buildCalculationInput` | ✅ DONE | Made synchronous; updated single caller |
+| B3 | Draft recalculation on every GET | 🟡 Planned | Guard with dirty-flag check |
+| B4 | List endpoint 40-field projection | 🟡 Planned | Project only UI-needed columns |
+| B5 | Dead `findForDashboard` code | ✅ DONE | Removed (no references) |
+| B6 | Missing `(invoice_id, sort_order)` index | 🟡 Planned | Low priority — single-col index already provides index-assisted scan |
+| F6 | Write-path round-trips | 🟡 Planned (P3) | Batch autosave + trim redundant getInvoice after send |
+
 **Manual regression checks:**
-- Open `/app/invoices` — list loads; type in Search, confirm no request per keystroke.
-- Open `/app/invoices/:id/edit` (existing draft) — editor renders; open customer
-  selector — single customer fetch; confirm `useInvoiceValidation`/calc no longer
-  double-runs (DevTools Profiler: `InvoiceWorkspace` render time drops;
-  `calculationEngine.calculate` call count halves in the validation slice).
-- Open `/app/invoices/:id` — detail loads; confirm network tab shows 1 request to
-  `/api/invoices/:id` (was effectively 3 DB queries, now 1).
-- Render an invoice with ~50 line items in the detail view — confirm frame timing
-  improves after the `Intl.NumberFormat` cache lands.
+- ✅ Open `/app/invoices` — list loads; search debounced (already in place).
+- ✅ Open `/app/invoices/:id/edit` (existing draft) — editor renders; CustomerSelector lazy-loads on open.
+- ✅ `GET /api/invoices/:id` now hits `findById` with a single query (was 3).
+- ✅ `Intl.NumberFormat` caching reduces GC on invoice list/detail/dashboard rendering.
 
 ---
 

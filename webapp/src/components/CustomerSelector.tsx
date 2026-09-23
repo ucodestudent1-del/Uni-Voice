@@ -8,13 +8,21 @@ interface CustomerSelectorProps {
   onChange: (customerId: string | undefined) => void;
   onCustomerChange?: (customer: ApiCustomer | undefined) => void;
   placeholder?: string;
+  /** Pre-loaded customers from parent (e.g. InvoiceWorkspace). If provided, avoids a duplicate fetch. */
+  preloadedCustomers?: ApiCustomer[];
 }
 
 const DEBOUNCE_MS = 300;
 
-export default function CustomerSelector({ value, onChange, onCustomerChange, placeholder = "Select a customer" }: CustomerSelectorProps) {
-  const [customers, setCustomers] = useState<ApiCustomer[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function CustomerSelector({
+  value,
+  onChange,
+  onCustomerChange,
+  placeholder = "Select a customer",
+  preloadedCustomers,
+}: CustomerSelectorProps) {
+  const [customers, setCustomers] = useState<ApiCustomer[]>(preloadedCustomers ?? []);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,10 +31,22 @@ export default function CustomerSelector({ value, onChange, onCustomerChange, pl
   const [createLoading, setCreateLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loadedRef = useRef(false);
 
+  // Sync preloaded customers when they change (e.g. parent loads them later)
   useEffect(() => {
-    loadCustomers({});
-  }, []);
+    if (preloadedCustomers && preloadedCustomers.length > 0) {
+      setCustomers(preloadedCustomers);
+    }
+  }, [preloadedCustomers]);
+
+  // Lazy-load customers only when the dropdown first opens — not on mount.
+  useEffect(() => {
+    if (open && !loadedRef.current && (!preloadedCustomers || preloadedCustomers.length === 0)) {
+      loadedRef.current = true;
+      loadCustomers({ limit: 100, includeArchived: false });
+    }
+  }, [open]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

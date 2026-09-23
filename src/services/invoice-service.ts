@@ -88,7 +88,7 @@ export interface InvoiceSummary {
 }
 
 export class InvoiceService {
-  private async buildCalculationInput(invoice: RepoInvoice): Promise<InvoiceCalculationInput> {
+  private buildCalculationInput(invoice: RepoInvoice): InvoiceCalculationInput {
     const lineItems = invoice.items.map((it) => {
       const discount =
         it.discount && !new Decimal(it.discount).isZero()
@@ -236,7 +236,7 @@ export class InvoiceService {
   }
 
   async recalculate(invoice: RepoInvoice): Promise<CalculationResult> {
-    const calcInput = await this.buildCalculationInput(invoice);
+    const calcInput = this.buildCalculationInput(invoice);
     return calculationEngine.calculate(calcInput);
   }
 

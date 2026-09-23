@@ -44,7 +44,7 @@ import {
   type LineItemInput,
 } from "../utils/calculation";
 import { formatCurrency, formatDate, parseDecimal } from "../utils/format";
-import { useInvoiceValidation } from "../hooks/useInvoiceValidation";
+import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
 import CustomerSelector from "./CustomerSelector";
 import InvoicePreview, {
@@ -299,55 +299,67 @@ export default function InvoiceWorkspace() {
     invoiceId: string | null;
     isNew: boolean;
   }>({ invoice, invoiceId, isNew });
-  latestRef.current = { invoice, invoiceId, isNew };
+   latestRef.current = { invoice, invoiceId, isNew };
 
-  const validation = useInvoiceValidation(
-    invoice
-      ? {
-          customerId: invoice.customerId,
-          customer: invoice.customer ?? undefined,
-          currency: invoice.currency,
-          issueDate: invoice.issueDate ?? undefined,
-          dueDate: invoice.dueDate ?? undefined,
-          items: invoice.items.map((it) => ({
-            description: it.description,
-            quantity: it.quantity,
-            unit: it.unit,
-            unitPrice: it.unitPrice,
-            discount: it.discount,
-            discountType: it.discountType,
-            taxRate: it.taxRate,
-            isTaxInclusive: it.isTaxInclusive,
-          })),
-          fees: invoice.fees.map((f) => ({
-            description: f.description,
-            amount: f.amount,
-            taxRate: f.taxRate,
-          })),
-          notes: invoice.notes,
-          terms: invoice.terms,
-          paymentInstructions: invoice.paymentInstructions,
-        }
-      : null
-  );
+   const calc = useMemo(() => {
+     if (!invoice) return null;
+     try {
+       return calculationEngine.calculate(buildCalcInput(invoice));
+     } catch {
+       return null;
+     }
+   }, [invoice]);
 
-  const calc = useMemo(() => {
-    if (!invoice) return null;
-    try {
-      return calculationEngine.calculate(buildCalcInput(invoice));
-    } catch {
-      return null;
-    }
-  }, [invoice]);
+   // Memoize the validation input so useInvoiceValidation's internal useMemo
+   // actually skips re-computation. The inline object literal would create a new
+   // reference on every render, defeating the memo and causing the calculation
+   // engine to run on every render.
+   const validationInput = useMemo<ValidationInput | null>(
+     () =>
+       invoice
+         ? {
+             customerId: invoice.customerId,
+             customer: invoice.customer ?? undefined,
+             currency: invoice.currency,
+             issueDate: invoice.issueDate ?? undefined,
+             dueDate: invoice.dueDate ?? undefined,
+             items: invoice.items.map((it) => ({
+               description: it.description,
+               quantity: it.quantity,
+               unit: it.unit,
+               unitPrice: it.unitPrice,
+               discount: it.discount,
+               discountType: it.discountType,
+               taxRate: it.taxRate,
+               isTaxInclusive: it.isTaxInclusive,
+             })),
+             fees: invoice.fees.map((f) => ({
+               description: f.description,
+               amount: f.amount,
+               taxRate: f.taxRate,
+             })),
+             notes: invoice.notes,
+             terms: invoice.terms,
+             paymentInstructions: invoice.paymentInstructions,
+           }
+         : null,
+     [invoice]
+   );
 
-  useEffect(() => {
+   const validation = useInvoiceValidation(validationInput, calc ?? undefined);
+
+   useEffect(() => {
     let cancelled = false;
     async function loadContext() {
       try {
+        // Only fetch business + settings eagerly; these are needed for new-invoice
+        // defaults (currency, notes, terms, tax rate) and the live preview.
+        // Customers and products are deferred to avoid blocking the editor load —
+        // CustomerSelector lazy-loads on open and can accept preloaded data.
         const [bizRes, settingsRes, customersRes, productsRes] = await Promise.allSettled([
           getBusiness().catch(() => null),
           getBusinessSettings().catch(() => ({ settings: {} })),
-          getCustomers({ limit: 500 }).catch(() => ({ data: [] })),
+          getCustomers({ limit: 100, includeArchived: false }).catch(() => ({ data: [] })),
           getProducts({ limit: 200 }).catch(() => ({ products: [] })),
         ]);
         if (cancelled) return;
@@ -905,7 +917,7 @@ export default function InvoiceWorkspace() {
     <main className="flex flex-1 overflow-hidden">
       <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
         <div className="flex-shrink-0 border-b border-color bg-surface">
-          <CustomerHeaderSection invoice={invoice} onField={handleField} />
+          <CustomerHeaderSection invoice={invoice} onField={handleField} customers={customers} />
           <TotalsCard invoice={invoice} calc={calc} onField={handleField} />
         </div>
         <div className="overflow-y-auto px-8 py-6">
@@ -1141,9 +1153,11 @@ function WorkspaceHeader({
 function CustomerHeaderSection({
   invoice,
   onField,
+  customers,
 }: {
   invoice: WorkspaceInvoiceData;
   onField: (field: keyof WorkspaceInvoiceData, value: any) => void;
+  customers: ApiCustomer[];
 }) {
   return (
     <div className="flex flex-wrap items-end gap-4 p-6">
@@ -1155,6 +1169,7 @@ function CustomerHeaderSection({
             onChange={(cid) => onField("customerId", cid)}
             onCustomerChange={(c) => onField("customer", c ?? null)}
             placeholder="Select a customer"
+            preloadedCustomers={customers}
           />
         </div>
       </div>

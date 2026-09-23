@@ -285,32 +285,99 @@ export class InvoiceRepository {
   }
 
   async findById(businessId: string, id: string): Promise<InvoiceWithDetails> {
-    const invRes = await query(`SELECT * FROM invoices WHERE id = $1 AND business_id = $2`, [id, businessId]);
-    if (!invRes.rows.length) throw new NotFoundError(`Invoice ${id} not found`);
-    const invoice = this.rowToModel(invRes.rows[0]);
-    const [itemRes, feeRes] = await Promise.all([
-      query(`SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`, [id]),
-      query(`SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`, [id]),
-    ]);
-    return { ...invoice, items: itemRes.rows.map((r) => this.itemRowToModel(r)), fees: feeRes.rows.map((r) => this.feeRowToModel(r)) };
+    // Use a single query with JSON subqueries instead of 3 separate round-trips.
+    // Numeric columns are cast to ::text so row_to_json preserves the PostgreSQL
+    // decimal representation (trailing zeros) instead of coercing to JSON numbers.
+    const res = await query(
+      `SELECT i.*,
+              COALESCE((SELECT json_agg(row_to_json(items)) FROM (
+                SELECT id, invoice_id, product_id, description,
+                       quantity::text AS quantity, unit, unit_price::text AS unit_price,
+                       discount::text AS discount, discount_type, tax_rate::text AS tax_rate,
+                       tax_amount::text AS tax_amount, line_subtotal::text AS line_subtotal,
+                       line_total::text AS line_total, sort_order, is_tax_inclusive, created_at,
+                       catalog_name, catalog_sku, catalog_tax_category,
+                       catalog_unit_price::text AS catalog_unit_price, catalog_tax_rate::text AS catalog_tax_rate
+                  FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order
+              ) items), '[]'::json) AS items_json,
+              COALESCE((SELECT json_agg(row_to_json(fees)) FROM (
+                SELECT id, invoice_id, description,
+                       amount::text AS amount, tax_rate::text AS tax_rate,
+                       tax_amount::text AS tax_amount, sort_order, created_at
+                  FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order
+              ) fees), '[]'::json) AS fees_json
+       FROM invoices i
+       WHERE i.id = $1 AND i.business_id = $2`,
+      [id, businessId]
+    );
+    if (!res.rows.length) throw new NotFoundError(`Invoice ${id} not found`);
+    const r = res.rows[0];
+    const invoice = this.rowToModel(r);
+
+    // The pg driver parses JSON columns to objects; handle string fallback too.
+    const itemsJson: unknown[] = Array.isArray(r.items_json)
+      ? r.items_json
+      : typeof r.items_json === "string" && r.items_json[0] === "["
+        ? JSON.parse(r.items_json)
+        : [];
+    const feesJson: unknown[] = Array.isArray(r.fees_json)
+      ? r.fees_json
+      : typeof r.fees_json === "string" && r.fees_json[0] === "["
+        ? JSON.parse(r.fees_json)
+        : [];
+
+    return {
+      ...invoice,
+      items: (itemsJson as Record<string, unknown>[]).map((item) => this.itemRowToModel(item)),
+      fees: (feesJson as Record<string, unknown>[]).map((fee) => this.feeRowToModel(fee)),
+    };
   }
 
   async findByPublicToken(businessId?: string, token?: string): Promise<InvoiceWithDetails> {
-    let res;
-    if (businessId && token) {
-      res = await query(`SELECT * FROM invoices WHERE public_token = $1 AND business_id = $2`, [token, businessId]);
-    } else if (token) {
-      res = await query(`SELECT * FROM invoices WHERE public_token = $1`, [token]);
-    } else {
-      throw new NotFoundError("Invoice not found");
-    }
+    const where = businessId ? "WHERE public_token = $1 AND business_id = $2" : "WHERE public_token = $1";
+    const params = businessId ? [token, businessId] : [token];
+    const res = await query(
+      `SELECT i.*,
+              COALESCE((SELECT json_agg(row_to_json(items)) FROM (
+                SELECT id, invoice_id, product_id, description,
+                       quantity::text AS quantity, unit, unit_price::text AS unit_price,
+                       discount::text AS discount, discount_type, tax_rate::text AS tax_rate,
+                       tax_amount::text AS tax_amount, line_subtotal::text AS line_subtotal,
+                       line_total::text AS line_total, sort_order, is_tax_inclusive, created_at,
+                       catalog_name, catalog_sku, catalog_tax_category,
+                       catalog_unit_price::text AS catalog_unit_price, catalog_tax_rate::text AS catalog_tax_rate
+                  FROM invoice_items WHERE invoice_id = i.id ORDER BY sort_order
+              ) items), '[]'::json) AS items_json,
+              COALESCE((SELECT json_agg(row_to_json(fees)) FROM (
+                SELECT id, invoice_id, description,
+                       amount::text AS amount, tax_rate::text AS tax_rate,
+                       tax_amount::text AS tax_amount, sort_order, created_at
+                  FROM invoice_fees WHERE invoice_id = i.id ORDER BY sort_order
+              ) fees), '[]'::json) AS fees_json
+       FROM invoices i
+       ${where}`,
+      params
+    );
     if (!res.rows.length) throw new NotFoundError("Invoice not found");
-    const invoice = this.rowToModel(res.rows[0]);
-    const [itemRes, feeRes] = await Promise.all([
-      query(`SELECT * FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]),
-      query(`SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`, [invoice.id]),
-    ]);
-    return { ...invoice, items: itemRes.rows.map((r) => this.itemRowToModel(r)), fees: feeRes.rows.map((r) => this.feeRowToModel(r)) };
+    const r = res.rows[0];
+    const invoice = this.rowToModel(r);
+
+    const itemsJson: unknown[] = Array.isArray(r.items_json)
+      ? r.items_json
+      : typeof r.items_json === "string" && r.items_json[0] === "["
+        ? JSON.parse(r.items_json)
+        : [];
+    const feesJson: unknown[] = Array.isArray(r.fees_json)
+      ? r.fees_json
+      : typeof r.fees_json === "string" && r.fees_json[0] === "["
+        ? JSON.parse(r.fees_json)
+        : [];
+
+    return {
+      ...invoice,
+      items: (itemsJson as Record<string, unknown>[]).map((item) => this.itemRowToModel(item)),
+      fees: (feesJson as Record<string, unknown>[]).map((fee) => this.feeRowToModel(fee)),
+    };
   }
 
   async assignNumber(businessId: string, invoiceId: string, invoiceNumber: string, client?: any): Promise<void> {
@@ -483,19 +550,6 @@ export class InvoiceRepository {
        ORDER BY i.created_at DESC
        LIMIT $${i++} OFFSET $${i++}`,
       [...vals, limit, offset]
-    );
-    return res.rows;
-  }
-
-  async findForDashboard(businessId: string): Promise<any[]> {
-    const res = await query(
-      `SELECT i.*, c.name as customer_name, c.email as customer_email
-       FROM invoices i
-       LEFT JOIN customers c ON c.id = i.customer_id
-       WHERE i.business_id = $1
-       ORDER BY i.created_at DESC
-       LIMIT 500`,
-      [businessId]
     );
     return res.rows;
   }
