@@ -39,7 +39,7 @@ export default function Expenses() {
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState<ApiExpenseSummary | null>(null);
 
-const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");

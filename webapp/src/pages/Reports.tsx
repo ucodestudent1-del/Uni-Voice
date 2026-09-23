@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Download, FileText } from "lucide-react";
 import { getRevenueReport, getTaxSummaryReport } from "../api/client";
 import { formatCurrency } from "../utils/format";
@@ -8,29 +8,51 @@ export default function Reports() {
   const [activeTab, setActiveTab] = useState<"revenue" | "tax">("revenue");
   const [revenue, setRevenue] = useState<any[]>([]);
   const [taxSummary, setTaxSummary] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [revenueLoaded, setRevenueLoaded] = useState(false);
+  const [taxLoaded, setTaxLoaded] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
+  const loadRevenue = useCallback(async () => {
+    if (revenueLoaded) return;
     try {
-      const [revData, taxData] = await Promise.all([
-        getRevenueReport().catch(() => ({ report: [] })),
-        getTaxSummaryReport().catch(() => ({ report: [] })),
-      ]);
-      setRevenue(revData.report ?? []);
-      setTaxSummary(taxData.report ?? []);
+      const data = await getRevenueReport().catch(() => ({ report: [] }));
+      setRevenue(data.report ?? []);
     } catch {
       setRevenue([]);
+    } finally {
+      setRevenueLoaded(true);
+    }
+  }, [revenueLoaded]);
+
+  const loadTaxSummary = useCallback(async () => {
+    if (taxLoaded) return;
+    try {
+      const data = await getTaxSummaryReport().catch(() => ({ report: [] }));
+      setTaxSummary(data.report ?? []);
+    } catch {
       setTaxSummary([]);
     } finally {
-      setLoading(false);
+      setTaxLoaded(true);
     }
-  }
+  }, [taxLoaded]);
 
-  if (loading) return <div className="text-center py-20 text-secondary">Loading reports...</div>;
+  // Only load the report for the active tab; the other tab is loaded
+  // lazily when the user switches to it. This halves the initial data
+  // fetched on page load.
+  useEffect(() => {
+    if (activeTab === "revenue") {
+      loadRevenue();
+    } else {
+      loadTaxSummary();
+    }
+  }, [activeTab, loadRevenue, loadTaxSummary]);
+
+  const isLoading = activeTab === "revenue" ? !revenueLoaded : !taxLoaded;
+  const data = activeTab === "revenue" ? revenue : taxSummary;
+  const isEmpty = data.length === 0;
+
+  if (isLoading && isEmpty) {
+    return <div className="text-center py-20 text-secondary">Loading reports...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -83,7 +105,7 @@ export default function Reports() {
       {activeTab === "revenue" && (
         <div className="bg-surface rounded-xl border border-color-subtle border-color p-6">
           <h3 className="text-lg font-semibold text-inverse mb-4">Revenue by Status</h3>
-          {revenue.length === 0 ? (
+          {isEmpty ? (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 text-tertiary dark:text-secondary mx-auto mb-3" />
               <p className="text-sm text-secondary text-tertiary">No revenue data yet</p>
@@ -125,7 +147,7 @@ export default function Reports() {
       {activeTab === "tax" && (
         <div className="bg-surface rounded-xl border border-color-subtle border-color p-6">
           <h3 className="text-lg font-semibold text-inverse mb-4">Tax Summary (Last 12 Months)</h3>
-          {taxSummary.length === 0 ? (
+          {isEmpty ? (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 text-tertiary dark:text-secondary mx-auto mb-3" />
               <p className="text-sm text-secondary text-tertiary">No tax data yet</p>
@@ -162,8 +184,3 @@ export default function Reports() {
     </div>
   );
 }
-
-
-
-
-
