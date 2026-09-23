@@ -28,11 +28,11 @@
     --color-border-subtle: 241 245 249;  /* slate-100 */
 
     /* —— Text —— */
-    --color-text: 15 23 42;             /* slate-900      */
-    --color-text-secondary: 100 116 139;/* slate-500      */
-    --color-text-tertiary: 160 174 192; /* slate-400      */
-    --color-text-inverse: 255 255 255;  /* white          */
-    --color-text-disabled: 160 174 192; /* slate-400      */
+    --color-text: 0 0 0;                /* black          */
+    --color-text-secondary: 0 0 0;      /* black          */
+    --color-text-tertiary: 0 0 0;       /* black          */
+    --color-text-inverse: 0 0 0;        /* black          */
+    --color-text-disabled: 0 0 0;       /* black          */
 
     /* —— Interactive states —— */
     --color-hover: 241 245 249;         /* slate-100 (hover surface) */
@@ -88,8 +88,8 @@
     --color-info-border: 191 219 254;   /* blue-200   */
 
     /* —— Chart colors —— */
-    --chart-text: 100 116 139;           /* slate-500   */
-    --chart-text-secondary: 160 174 192; /* slate-400   */
+    --chart-text: 0 0 0;                /* black        */
+    --chart-text-secondary: 0 0 0;      /* black        */
     --chart-border: 226 232 240;         /* slate-200   */
     --chart-grid: 241 245 249;           /* slate-100   */
     --chart-surface: 255 255 255;        /* white       */
@@ -117,11 +117,11 @@
     --color-border-subtle: 33 45 66;    /* slate-800 dark-ish    */
 
     /* —— Text —— */
-    --color-text: 253 255 252;          /* near-white     */
-    --color-text-secondary: 194 201 213;/* slate-400    */
-    --color-text-tertiary: 148 163 184; /* slate-500    */
-    --color-text-inverse: 15 23 42;     /* slate-900    */
-    --color-text-disabled: 148 163 184; /* slate-500    */
+    --color-text: 255 255 255;          /* white          */
+    --color-text-secondary: 255 255 255;/* white          */
+    --color-text-tertiary: 255 255 255; /* white          */
+    --color-text-inverse: 255 255 255;  /* white          */
+    --color-text-disabled: 255 255 255; /* white          */
 
     /* —— Interactive states —— */
     --color-hover: 38 45 62;            /* slate-800      */
@@ -177,8 +177,8 @@
     --color-info-border: 62 90 153;      /* blue-800    */
 
     /* —— Chart colors —— */
-    --chart-text: 194 201 213;           /* slate-400      */
-    --chart-text-secondary: 148 163 184; /* slate-500      */
+    --chart-text: 255 255 255;           /* white        */
+    --chart-text-secondary: 255 255 255; /* white        */
     --chart-border: 52 64 89;            /* slate-700      */
     --chart-grid: 30 41 59;             /* slate-800       */
     --chart-surface: 24 35 54;          /* slate-800       */
