@@ -199,6 +199,7 @@
   body {
     background-color: rgb(var(--color-page-bg));
     color: rgb(var(--color-text));
+    font-size: 12pt;
   }
 
   /* ================ Semantic utility classes ================ */
