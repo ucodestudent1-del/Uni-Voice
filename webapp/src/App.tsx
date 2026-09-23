@@ -22,6 +22,8 @@ import Payments from "./pages/Payments";
 import ProjectDetail from "./pages/ProjectDetail";
 import QuoteDetail from "./pages/QuoteDetail";
 import ReportSection from "./pages/ReportSection";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 // Lazy-loaded pages — these are only fetched when the user navigates to them.
 // This keeps the initial JS bundle small and avoids loading code for sections
@@ -64,6 +66,10 @@ export default function App() {
       <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
       <Route path="/auth/callback" element={<PublicOnly><AuthCallback /></PublicOnly>} />
       <Route path="/invoice/:token" element={<PublicInvoice />} />
+
+      {/* Legal pages (public) */}
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
 
       {/* Onboarding */}
       <Route path="/onboarding" element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />

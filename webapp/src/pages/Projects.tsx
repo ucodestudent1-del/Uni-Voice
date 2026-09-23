@@ -35,12 +35,11 @@ export default function Projects({ customers }: ProjectsProps) {  const [project
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState<ApiProject | null>(null);
-  const [search, setSearch] = useState("");
+const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [sortBy, setSortBy] = useState<"created_at" | "due_date" | "name">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const loadProjects = async (searchParams: ProjectSearchParams = {}) => {
     setLoading(true);

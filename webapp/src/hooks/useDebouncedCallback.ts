@@ -1,36 +1,27 @@
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 
 /**
  * Returns a debounced version of the callback that delays invoking `fn`
  * until `delay` ms have elapsed since the last time the debounced function
  * was invoked.
- *
- * The returned function is stable across renders (same identity) and the
- * latest closure values are always used, so it is safe to pass as an
- * effect dependency or event handler.
  */
-export function useDebouncedCallback<T extends (...args: unknown[]) => unknown>(
-  fn: T,
+export function useDebouncedCallback(
+  fn: (value: string) => void,
   delay: number
-): (...args: Parameters<T>) => void {
+): (value: string) => void {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fnRef = useRef(fn);
-
-  // Always keep the latest callback in the ref so stale closures are avoided.
   fnRef.current = fn;
 
-  return useCallback(
-    (...args: Parameters<T>) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
-        timeoutRef.current = null;
-        fnRef.current(...args);
-      }, delay);
-    },
-    [delay]
-  );
+  return (value: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
+      fnRef.current(value);
+    }, delay);
+  };
 }
 
 export default useDebouncedCallback;
