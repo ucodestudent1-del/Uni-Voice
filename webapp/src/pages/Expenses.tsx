@@ -6,6 +6,7 @@ import FeatureGate from "../components/FeatureGate";
 import { formatCurrency } from "../utils/format";
 import type { ApiExpense, ApiExpenseSummary } from "../types/api";
 import { Button } from "../components/ui/Button";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const CATEGORY_OPTIONS = [
   { value: "supplies", label: "Supplies" },
@@ -38,12 +39,22 @@ export default function Expenses() {
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState<ApiExpenseSummary | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
+const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
+
+  // Debounce search so we don't fire an API request on every keystroke.
+  const debouncedSetSearchTerm = useDebouncedCallback((value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  }, 300);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSetSearchTerm(e.target.value);
+  };
 
   const params: ExpenseSearchParams = useMemo(
     () => ({
@@ -225,11 +236,11 @@ export default function Expenses() {
 
         <div className="flex gap-4 items-end">
           <div className="flex-1">
-            <input
+<input
               type="text"
               placeholder="Search expenses..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>

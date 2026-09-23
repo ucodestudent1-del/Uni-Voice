@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import {
   getProjects,
@@ -16,6 +16,7 @@ import ProjectForm from "../components/ProjectForm";
 import ProjectTagManager from "../components/ProjectTagManager";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 interface ProjectsProps {
   customers?: ApiCustomer[];

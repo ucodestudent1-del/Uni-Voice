@@ -174,17 +174,16 @@ export class ExpenseRepository {
     const sortDir = sortOrder === "desc" ? "DESC" : "ASC";
 
     const dataRes = await query(
-      `SELECT * FROM expenses
-       WHERE ${conditions.join(" AND ")}
-       ORDER BY ${sortCol} ${sortDir}, created_at DESC
-       LIMIT $${i++} OFFSET $${i}`,
+      `SELECT *, COUNT(*) OVER() AS total_count
+       FROM expenses
+        WHERE ${conditions.join(" AND ")}
+        ORDER BY ${sortCol} ${sortDir}, created_at DESC
+        LIMIT $${i++} OFFSET $${i}`,
       [...vals, limit, offset]
     );
 
-    const countRes = await query(`SELECT COUNT(*) as total FROM expenses WHERE ${conditions.join(" AND ")}`, vals);
-
+    const total = dataRes.rows.length ? Number(dataRes.rows[0]?.total_count ?? 0) : 0;
     const data = dataRes.rows.map((r) => this.rowToModel(r));
-    const total = Number(countRes.rows[0]?.total ?? 0);
     return { data, total, limit, offset };
   }
 

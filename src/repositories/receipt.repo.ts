@@ -117,18 +117,15 @@ export class ReceiptRepository {
     const offset = Math.max(filter.offset ?? 0, 0);
 
     const dataRes = await query(
-      `SELECT * FROM receipts WHERE ${conditions.join(" AND ")}
+      `SELECT *, COUNT(*) OVER() AS total_count FROM receipts WHERE ${conditions.join(" AND ")}
        ORDER BY created_at DESC LIMIT $${i++} OFFSET $${i++}`,
       [...vals, limit, offset]
     );
-    const countRes = await query(
-      `SELECT COUNT(*)::int AS total FROM receipts WHERE ${conditions.join(" AND ")}`,
-      vals
-    );
+    const total = dataRes.rows.length ? Number(dataRes.rows[0]?.total_count ?? 0) : 0;
 
     return {
       data: dataRes.rows.map((r) => this.rowToModel(r)),
-      total: Number(countRes.rows[0]?.total ?? 0),
+      total,
       limit,
       offset,
     };

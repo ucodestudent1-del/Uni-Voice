@@ -21,6 +21,7 @@ import InvoiceStatus, { isOverdueStatus } from "../components/primitives/Invoice
 import PageHeader from "../components/primitives/PageHeader";
 import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 import type { ApiInvoice, ApiCustomer, ApiInvoiceListItem } from "../types/api";
 
 const STATUS_FILTERS = [
@@ -58,7 +59,7 @@ export default function Invoices() {
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
+const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentStateFilter, setPaymentStateFilter] = useState("all");
   const [customerFilter, setCustomerFilter] = useState("");
@@ -75,6 +76,17 @@ export default function Invoices() {
   const [pageSize, setPageSize] = useState(50);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Debounce the search term so we don't fire an API request on every keystroke.
+  const debouncedSetSearchTerm = useDebouncedCallback((value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  }, 300);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    debouncedSetSearchTerm(value);
+  };
 
   const loadCustomers = useCallback(async () => {
     try {
@@ -321,13 +333,13 @@ export default function Invoices() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="lg:col-span-2">
+<div className="lg:col-span-2">
             <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Search</label>
             <input
               type="text"
               placeholder="Invoice #, customer name, email..."
               value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+              onChange={handleSearchChange}
               className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>

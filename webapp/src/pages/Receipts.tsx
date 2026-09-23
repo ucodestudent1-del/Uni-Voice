@@ -14,6 +14,8 @@ import { Download, Search, Eye, ExternalLink } from "lucide-react";
 import PageHeader from "../components/primitives/PageHeader";
 import { DataTable, type ColumnDef } from "../components/primitives/DataTable";
 import PaymentStatus from "../components/primitives/PaymentStatus";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const STATUS_FILTERS = [
   { value: "all", label: "All Statuses" },
@@ -42,6 +44,16 @@ export default function Receipts() {
   const [dateTo, setDateTo] = useState("");
   const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
+
+  // Debounce search so we don't fire an API request on every keystroke.
+  const debouncedSetSearchTerm = useDebouncedCallback((value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  }, 300);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSetSearchTerm(e.target.value);
+  };
 
   const currentParams: ReceiptSearchParams = useMemo(
     () => ({
@@ -310,7 +322,7 @@ export default function Receipts() {
                 type="text"
                 placeholder="Receipt #, invoice #, customer name..."
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                onChange={handleSearchChange}
                 className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 pl-10 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>

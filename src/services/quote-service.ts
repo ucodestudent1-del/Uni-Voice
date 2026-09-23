@@ -366,19 +366,20 @@ export class QuoteService {
     if (filter.search) { conditions.push(`(quote_number ILIKE $${i} OR customer_id IS NULL)`); vals.push(`%${filter.search}%`); i++; }
     const limit = Math.min(Math.max(filter.limit as number ?? 50, 1), 200);
     const offset = Math.max(filter.offset as number ?? 0, 0);
+
+    // Use COUNT(*) OVER() to get the total in the same query, avoiding a
+    // second round-trip to the database.
     const dataRes = await query(
-      `SELECT q.*, c.name as customer_name, c.email as customer_email
+      `SELECT q.*, c.name as customer_name, c.email as customer_email,
+              COUNT(*) OVER() AS total_count
        FROM quotes q LEFT JOIN customers c ON c.id = q.customer_id
        WHERE ${conditions.join(" AND ")} ORDER BY q.created_at DESC LIMIT $${i++} OFFSET $${i++}`,
       [...vals, limit, offset]
     );
-    const countRes = await query(
-      `SELECT COUNT(*)::int AS total FROM quotes WHERE ${conditions.join(" AND ")}`,
-      vals
-    );
+    const total = dataRes.rows.length ? Number(dataRes.rows[0]?.total_count ?? 0) : 0;
     return {
       data: dataRes.rows.map(this.listRowToModel),
-      total: Number(countRes.rows[0]?.total ?? 0),
+      total,
       limit,
       offset,
     };
