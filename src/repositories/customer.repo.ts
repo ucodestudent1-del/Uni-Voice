@@ -371,6 +371,41 @@ export class CustomerRepository {
     return Number(res.rows[0]?.count ?? 0);
   }
 
+  async getInvoiceFinancialSummary(
+    businessId: string,
+    customerId: string
+  ): Promise<{
+    totalInvoiceCount: number;
+    finalizedInvoiceCount: number;
+    totalBilled: string;
+    totalPaid: string;
+    totalOutstanding: string;
+    totalOverdue: string;
+  }> {
+    const now = new Date();
+    const res = await query(
+      `SELECT
+         COUNT(*)::int AS total_invoice_count,
+         COUNT(CASE WHEN is_finalized = TRUE THEN 1 END) AS finalized_invoice_count,
+         COALESCE(SUM(total), 0) AS total_billed,
+         COALESCE(SUM(amount_paid), 0) AS total_paid,
+         COALESCE(SUM(CASE WHEN amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_outstanding,
+         COALESCE(SUM(CASE WHEN (status = 'overdue' OR (due_date < $2 AND amount_due > 0)) AND amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_overdue
+       FROM invoices
+       WHERE business_id = $1 AND customer_id = $3`,
+      [businessId, now.toISOString(), customerId]
+    );
+    const row = res.rows[0];
+    return {
+      totalInvoiceCount: Number(row.total_invoice_count ?? 0),
+      finalizedInvoiceCount: Number(row.finalized_invoice_count ?? 0),
+      totalBilled: String(row.total_billed ?? "0"),
+      totalPaid: String(row.total_paid ?? "0"),
+      totalOutstanding: String(row.total_outstanding ?? "0"),
+      totalOverdue: String(row.total_overdue ?? "0"),
+    };
+  }
+
   async findInvoicesByCustomer(
     businessId: string,
     customerId: string,

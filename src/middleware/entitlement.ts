@@ -17,7 +17,8 @@ export function requireEntitlement(featureCode: string) {
     }
 
     const businessId = req.user.businessId;
-    const check = await subscriptionService.checkFeature(businessId, featureCode);
+    const context = await subscriptionService.getSubscriptionContext(businessId);
+    const check = await subscriptionService.checkFeature(businessId, featureCode, context);
 
     if (!check.allowed) {
       throw new ForbiddenError(check.reason ?? "Feature not available on current plan");
@@ -25,10 +26,10 @@ export function requireEntitlement(featureCode: string) {
 
     req.entitlement = {
       businessId,
-      planCode: (await subscriptionService.getSubscriptionContext(businessId)).plan.code,
+      planCode: context.plan.code,
     };
-    next();
-  };
+    return await next();
+  }
 }
 
 export function requireUsageLimit(featureCode: string, increment = false) {
@@ -38,7 +39,8 @@ export function requireUsageLimit(featureCode: string, increment = false) {
     }
 
     const businessId = req.user.businessId;
-    const limitCheck = await subscriptionService.checkUsageLimit(businessId, featureCode);
+    const context = await subscriptionService.getSubscriptionContext(businessId);
+    const limitCheck = await subscriptionService.checkUsageLimit(businessId, featureCode, undefined, context);
 
     if (!limitCheck.allowed) {
       throw new BusinessLogicError(
@@ -52,7 +54,7 @@ export function requireUsageLimit(featureCode: string, increment = false) {
       subscriptionService.incrementUsage(businessId, featureCode);
     }
 
-    next();
+    return await next();
   };
 }
 

@@ -51,6 +51,12 @@ export class SubscriptionRepository {
     return this.rowToPlan(res.rows[0]);
   }
 
+  async findPlanById(planId: string): Promise<Plan | null> {
+    const res = await query("SELECT * FROM plans WHERE id = $1", [planId]);
+    if (!res.rows.length) return null;
+    return this.rowToPlan(res.rows[0]);
+  }
+
   async listPlans(): Promise<Plan[]> {
     const res = await query("SELECT * FROM plans ORDER BY sort_order, code");
     return res.rows.map((r) => this.rowToPlan(r));
@@ -177,6 +183,52 @@ export class SubscriptionRepository {
     const res = await query("SELECT * FROM business_subscriptions WHERE business_id = $1", [businessId]);
     if (!res.rows.length) return null;
     return this.rowToSubscription(res.rows[0]);
+  }
+
+  async findSubscriptionWithPlan(businessId: string): Promise<{ subscription: BusinessSubscription; plan: Plan } | null> {
+    const res = await query(
+      `SELECT s.id AS sub_id, s.business_id AS sub_business_id, s.plan_id AS sub_plan_id,
+              s.status AS sub_status, s.billing_cycle AS sub_billing_cycle,
+              s.current_period_start AS sub_current_period_start,
+              s.current_period_end AS sub_current_period_end,
+              s.trial_ends_at AS sub_trial_ends_at,
+              s.cancelled_at AS sub_cancelled_at,
+              s.stripe_subscription_id AS sub_stripe_subscription_id,
+              s.metadata AS sub_metadata,
+              s.created_at AS sub_created_at, s.updated_at AS sub_updated_at,
+              p.id AS plan_id, p.code AS plan_code, p.name AS plan_name,
+              p.description AS plan_description, p.price_monthly AS plan_price_monthly,
+              p.currency AS plan_currency, p.is_active AS plan_is_active,
+              p.sort_order AS plan_sort_order, p.created_at AS plan_created_at,
+              p.updated_at AS plan_updated_at
+       FROM business_subscriptions s
+       JOIN plans p ON p.id = s.plan_id
+       WHERE s.business_id = $1`,
+      [businessId]
+    );
+    if (!res.rows.length) return null;
+    const r = res.rows[0];
+    const plan: Plan = {
+      id: r.plan_id as string,
+      code: r.plan_code as Plan["code"],
+      name: r.plan_name as string,
+      description: r.plan_description as string | null,
+      price: Number(r.plan_price_monthly),
+      currency: r.plan_currency as string,
+      isActive: Boolean(r.plan_is_active),
+      sortOrder: Number(r.plan_sort_order),
+      createdAt: rowToDate(r.plan_created_at)!,
+      updatedAt: rowToDate(r.plan_updated_at)!,
+    };
+    const subRow: Record<string, unknown> = {
+      id: r.sub_id, business_id: r.sub_business_id, plan_id: r.sub_plan_id,
+      status: r.sub_status, billing_cycle: r.sub_billing_cycle,
+      current_period_start: r.sub_current_period_start, current_period_end: r.sub_current_period_end,
+      trial_ends_at: r.sub_trial_ends_at, cancelled_at: r.sub_cancelled_at,
+      stripe_subscription_id: r.sub_stripe_subscription_id, metadata: r.sub_metadata,
+      created_at: r.sub_created_at, updated_at: r.sub_updated_at,
+    };
+    return { subscription: this.rowToSubscription(subRow), plan };
   }
 
   async updateSubscription(subscriptionId: string, input: Partial<SubscriptionInput>): Promise<BusinessSubscription> {

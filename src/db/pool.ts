@@ -1,6 +1,7 @@
 import pkg from "pg";
 import { env, isTest } from "../config/index.js";
 import { AsyncLocalStorage } from "async_hooks";
+import { logger } from "../utils/logger.js";
 
 const { Pool } = pkg;
 
@@ -23,6 +24,7 @@ pool.on("error", (err) => {
 interface RequestContext {
   queryCount: number;
   slowQueries: { text: string; ms: number }[];
+  subscriptionContextCache?: Map<string, unknown>;
 }
 
 const requestStore = new AsyncLocalStorage<RequestContext>();
@@ -31,9 +33,16 @@ export function getRequestContext(): RequestContext | undefined {
   return requestStore.getStore();
 }
 
-export function runWithRequestContext<T>(fn: (() => Promise<T>) | (() => T)): Promise<T | undefined> {
+export async function runWithRequestContext<T>(fn: (() => Promise<T>) | (() => T)): Promise<T | undefined> {
   const ctx: RequestContext = { queryCount: 0, slowQueries: [] };
-  return requestStore.run(ctx, () => Promise.resolve().then(fn));
+  try {
+    return await requestStore.run(ctx, async () => {
+      return await Promise.resolve(fn());
+    });
+  } catch (e) {
+    logger.error({ err: e }, "Error in request context");
+    throw e;
+  }
 }
 
 const SLOW_QUERY_THRESHOLD = 500;

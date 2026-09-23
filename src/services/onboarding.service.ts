@@ -1,6 +1,7 @@
 import { onboardingRepository } from "../repositories/onboarding.repo.js";
 import type { OnboardingStepRecord, OnboardingProgress } from "../domain/onboarding.js";
 import { ONBOARDING_STEPS } from "../domain/onboarding.js";
+import { logger } from "../utils/logger.js";
 
 export class OnboardingService {
   async ensureSteps(businessId: string): Promise<void> {
@@ -40,7 +41,11 @@ export class OnboardingService {
 
     const next = this.getNextStep(step);
     if (next && next !== "complete") {
-      await onboardingRepository.updateStepStatus(businessId, next, "in_progress").catch(() => {});
+      try {
+        await onboardingRepository.updateStepStatus(businessId, next, "in_progress");
+      } catch (e) {
+        logger.warn({ err: e }, "Failed to mark next onboarding step as in_progress");
+      }
     }
 
     return updated;

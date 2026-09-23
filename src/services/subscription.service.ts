@@ -1,6 +1,7 @@
 import { subscriptionRepository } from "../repositories/subscription.repo.js";
 import type { PlanCode, Plan, BusinessSubscription, EntitlementCheck } from "../domain/subscription.js";
 import { rowToDate } from "../repositories/helpers.js";
+import { getRequestContext } from "../db/pool.js";
 
 const TIER_HIERARCHY: Record<PlanCode, number> = { free: 0, pro: 1, scale: 2, business: 3 };
 
@@ -95,11 +96,15 @@ export class SubscriptionService {
   }
 
   async getSubscriptionContext(businessId: string): Promise<SubscriptionContext> {
-    let sub = await subscriptionRepository.findSubscriptionByBusinessId(businessId);
-    if (!sub) {
+    const ctx = getRequestContext();
+    const cached = ctx?.subscriptionContextCache?.get(businessId) as SubscriptionContext | undefined;
+    if (cached) return cached;
+
+    let result = await subscriptionRepository.findSubscriptionWithPlan(businessId);
+    if (!result) {
       const freePlan = await this.getPlan("free");
       if (!freePlan) throw new Error("Default plans not initialized");
-      sub = await subscriptionRepository.createSubscription({
+      const created = await subscriptionRepository.createSubscription({
         businessId,
         planId: freePlan.id,
         status: "active",
@@ -107,19 +112,24 @@ export class SubscriptionService {
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
-      if (!sub) {
+      if (!created) {
         // A concurrent request created the subscription; fetch the existing one.
-        sub = await subscriptionRepository.findSubscriptionByBusinessId(businessId);
+        result = await subscriptionRepository.findSubscriptionWithPlan(businessId);
+      } else {
+        result = { subscription: created, plan: freePlan };
       }
     }
-    if (!sub) throw new Error("Failed to create or retrieve subscription");
-    const plan = await this.getPlanById(sub.planId);
-    if (!plan) throw new Error(`Plan ${sub.planId} not found for subscription ${sub.id}`);
-    return { businessId, plan, subscription: sub };
+    if (!result) throw new Error("Failed to create or retrieve subscription");
+    const context: SubscriptionContext = { businessId, plan: result.plan, subscription: result.subscription };
+    if (ctx) {
+      if (!ctx.subscriptionContextCache) ctx.subscriptionContextCache = new Map();
+      ctx.subscriptionContextCache.set(businessId, context);
+    }
+    return context;
   }
 
-  async checkFeature(businessId: string, featureCode: string): Promise<EntitlementCheck> {
-    const ctx = await this.getSubscriptionContext(businessId);
+  async checkFeature(businessId: string, featureCode: string, context?: SubscriptionContext): Promise<EntitlementCheck> {
+    const ctx = context ?? await this.getSubscriptionContext(businessId);
     const planLevel = TIER_HIERARCHY[ctx.plan.code];
 
     const flag = await subscriptionRepository.findFeatureFlagByCode(featureCode);
@@ -148,8 +158,8 @@ export class SubscriptionService {
     return { featureCode, allowed: true };
   }
 
-  async checkUsageLimit(businessId: string, featureCode: string, periodStart?: Date): Promise<EntitlementCheck> {
-    await this.getSubscriptionContext(businessId);
+  async checkUsageLimit(businessId: string, featureCode: string, periodStart?: Date, context?: SubscriptionContext): Promise<EntitlementCheck> {
+    if (!context) await this.getSubscriptionContext(businessId);
     const now = new Date();
     const start = periodStart ?? new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -224,8 +234,10 @@ export class SubscriptionService {
   }
 
   async getPlanById(planId: string): Promise<Plan | null> {
-    const plans = await subscriptionRepository.listPlans();
-    return plans.find(p => p.id === planId) ?? null;
+    if (this.planCache.has(planId)) return this.planCache.get(planId)!;
+    const plan = await subscriptionRepository.findPlanById(planId);
+    if (plan) this.planCache.set(planId, plan);
+    return plan;
   }
 
   private rowToPlan(r: Record<string, unknown>): Plan {

@@ -5,6 +5,7 @@ import { invoiceStateMachine } from "../services/state-machine/invoice-state-mac
 import { invoiceNumberService } from "../services/numbering/service.js";
 import { snapshotService } from "../services/snapshot/snapshot-service.js";
 import { templateRenderer, buildTemplateData, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals } from "../services/templates/template-renderer.js";
+import { renderDefaultTerms } from "../services/terms.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService, type InvoiceEmailData } from "../services/email/email-service.js";
 import { invoiceRepository } from "../repositories/invoice.repo.js";
@@ -162,8 +163,14 @@ export class InvoiceService {
       throw new BusinessLogicError("due_date must be on or after issue_date");
     }
 
+    const defaults = await this.resolveDefaultTerms(businessId);
+    const resolvedTerms = input.terms ?? defaults.terms;
+    const resolvedNotes = input.notes ?? defaults.notes;
+
     const invoiceId = await invoiceRepository.createDraft(businessId, {
       ...input,
+      terms: resolvedTerms,
+      notes: resolvedNotes,
       items: itemsWithSnapshot,
       currency: input.currency ?? "USD",
       createdBy: userId,
@@ -172,6 +179,15 @@ export class InvoiceService {
       eventType: "created", actorId: userId, actorType: userId ? "user" : "system",
     });
     return invoiceId;
+  }
+
+  private async resolveDefaultTerms(businessId: string): Promise<{ terms: string; notes: string | null }> {
+    const bizSettings = await businessRepository.getDefaultTerms(businessId);
+    const defaultTerms = renderDefaultTerms().plainText;
+    return {
+      terms: bizSettings.defaultTerms && bizSettings.defaultTerms.trim() ? bizSettings.defaultTerms : defaultTerms,
+      notes: bizSettings.defaultNotes ?? null,
+    };
   }
 
   private async applyProductSnapshots(businessId: string, items: DraftLineItem[] | undefined): Promise<DraftLineItem[] | undefined> {

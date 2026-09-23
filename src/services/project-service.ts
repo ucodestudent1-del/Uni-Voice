@@ -101,20 +101,7 @@ export class ProjectService {
   }
 
   async getSummary(businessId: string, id: string): Promise<ProjectSummary> {
-    const project = await this.repo.findById(businessId, id);
-    let customer: Customer | null = null;
-    if (project.customerId) {
-      try {
-        customer = await this.customerRepo.findById(businessId, project.customerId);
-      } catch {
-        customer = null;
-      }
-    }
-    const tags = await this.repo.findTags(project.id, businessId);
-    const teamMembers = await this.repo.findTeamMembers(project.id, businessId);
-    const financialSummary = await this.repo.getFinancialSummary(businessId, id);
-
-    return { project, customer, tags, teamMembers, financialSummary };
+    return this.repo.findSummary(businessId, id);
   }
 
   async update(

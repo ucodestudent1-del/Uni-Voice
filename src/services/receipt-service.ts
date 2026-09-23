@@ -251,14 +251,13 @@ export class ReceiptService {
       dateTo: filter.dateTo as string | undefined,
       limit, offset,
     };
-    const listResult = await receiptRepository.findMany(businessId, receiptFilter);
-    const rows = await receiptRepository.findManyWithDetails(businessId, receiptFilter);
-    const receipts = rows.map((r) => this.toApiRow(r));
+    const result = await receiptRepository.findManyWithDetailsAndCount(businessId, receiptFilter);
+    const receipts = result.data.map((r) => this.toApiRow(r));
     return {
       receipts,
-      total: listResult.total,
-      limit: listResult.limit,
-      offset: listResult.offset,
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
     };
   }
 

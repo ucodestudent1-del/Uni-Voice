@@ -164,6 +164,47 @@ export class ReceiptRepository {
     return res.rows;
   }
 
+  async findManyWithDetailsAndCount(
+    businessId: string,
+    filter: ReceiptFilter
+  ): Promise<{ data: Record<string, unknown>[]; total: number; limit: number; offset: number }> {
+    const conditions: string[] = ["r.business_id = $1"];
+    const vals: unknown[] = [businessId];
+    let i = 2;
+
+    if (filter.status) { conditions.push(`r.status = $${i++}`); vals.push(filter.status); }
+    if (filter.invoiceId) { conditions.push(`r.invoice_id = $${i++}`); vals.push(filter.invoiceId); }
+    if (filter.paymentId) { conditions.push(`r.payment_id = $${i++}`); vals.push(filter.paymentId); }
+    if (filter.dateFrom) { conditions.push(`r.issued_at >= $${i++}`); vals.push(filter.dateFrom); }
+    if (filter.dateTo) { conditions.push(`r.issued_at <= $${i++}`); vals.push(filter.dateTo); }
+
+    const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
+    const offset = Math.max(filter.offset ?? 0, 0);
+
+    const res = await query(
+      `SELECT r.*, i.invoice_number, i.currency,
+              i.customer_id, c.name as customer_name, c.email as customer_email,
+              b.name as business_name,
+              COUNT(*) OVER() AS total_count
+       FROM receipts r
+       JOIN invoices i ON i.id = r.invoice_id
+       JOIN businesses b ON b.id = r.business_id
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE ${conditions.join(" AND ")}
+       ORDER BY r.created_at DESC
+       LIMIT $${i++} OFFSET $${i++}`,
+      [...vals, limit, offset]
+    );
+
+    const total = res.rows.length ? Number(res.rows[0]?.total_count ?? 0) : 0;
+    const data = res.rows.map((row) => {
+      const { total_count: _tc, ...rest } = row;
+      return rest;
+    });
+
+    return { data, total, limit, offset };
+  }
+
   async setStatus(id: string, status: string, opts?: { emailLogId?: string | null }): Promise<void> {
     const sets: string[] = [`status = $2`];
     const vals: unknown[] = [id, status];

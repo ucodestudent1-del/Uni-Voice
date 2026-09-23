@@ -5,8 +5,6 @@ import { CustomerRepository } from "../repositories/customer.repo.js";
 import { NotFoundError, ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
 import type { CustomerCreateInput, CustomerUpdateInput, CustomerSearchQuery } from "../domain/schemas/customer.js";
 import type { PagedResult } from "../repositories/helpers.js";
-import { TERMINAL_STATUSES } from "../services/state-machine/invoice-state-machine.js";
-import { query } from "../db/pool.js";
 
 export interface CustomerSummary {
   customer: Customer;
@@ -234,45 +232,18 @@ export class CustomerService {
 
   async getSummary(businessId: string, id: string): Promise<CustomerSummary> {
     const customer = await this.repo.findById(businessId, id);
-    const { data: invoices, total } = await this.repo.findInvoicesByCustomer(businessId, id, { limit: 1000 });
-
-    let totalBilled = 0;
-    let totalPaid = 0;
-    let totalOverdue = 0;
-
-    const now = new Date();
-
-    for (const inv of invoices) {
-      totalBilled += parseFloat(inv.total);
-      totalPaid += parseFloat(inv.amountPaid);
-
-      // Overdue = open invoices (not paid, not void/cancelled) past due with balance outstanding
-      if (!TERMINAL_STATUSES.includes(inv.status as any) && inv.status !== "overdue") {
-        const amountDue = parseFloat(inv.amountDue);
-        const isPastDue = inv.dueDate && now >= new Date(inv.dueDate);
-        if (amountDue > 0 && isPastDue) {
-          totalOverdue += amountDue;
-        }
-      }
-      if (inv.status === "overdue") {
-        const amountDue = parseFloat(inv.amountDue);
-        if (amountDue > 0) {
-          totalOverdue += amountDue;
-        }
-      }
-    }
-
-    const finalizedCount = invoices.filter((i) => i.finalizedAt !== null).length;
+    const financial = await this.repo.getInvoiceFinancialSummary(businessId, id);
+    const { data: invoices } = await this.repo.findInvoicesByCustomer(businessId, id, { limit: 20 });
 
     return {
       customer,
       invoices,
-      totalInvoiceCount: total,
-      finalizedInvoiceCount: finalizedCount,
-      totalBilled: totalBilled.toFixed(2),
-      totalPaid: totalPaid.toFixed(2),
-      totalOutstanding: (totalBilled - totalPaid).toFixed(2),
-      totalOverdue: totalOverdue.toFixed(2),
+      totalInvoiceCount: financial.totalInvoiceCount,
+      finalizedInvoiceCount: financial.finalizedInvoiceCount,
+      totalBilled: financial.totalBilled,
+      totalPaid: financial.totalPaid,
+      totalOutstanding: financial.totalOutstanding,
+      totalOverdue: financial.totalOverdue,
     };
   }
 

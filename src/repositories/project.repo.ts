@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { query } from "../db/pool.js";
-import type { Project, ProjectTag, ProjectTeamMember, ProjectEvent, ProjectStatus } from "../domain/models/index.js";
+import type { Project, ProjectTag, ProjectTeamMember, ProjectEvent, ProjectStatus, Customer, CustomerStatus } from "../domain/models/index.js";
 import { NotFoundError, ConflictError, BusinessLogicError } from "../domain/errors.js";
 import { rowToDate } from "./helpers.js";
 import type { PagedResult } from "./helpers.js";
@@ -104,6 +104,102 @@ export class ProjectRepository {
     return this.rowToModel(res.rows[0]);
   }
 
+  async findSummary(businessId: string, id: string): Promise<{
+    project: Project;
+    customer: Customer | null;
+    tags: ProjectTag[];
+    teamMembers: ProjectTeamMember[];
+    financialSummary: ProjectFinancialSummary;
+  }> {
+    const res = await query(
+      `SELECT
+         p.*,
+         c.id AS cust_id, c.business_id AS cust_business_id, c.name AS cust_name,
+         c.company_name AS cust_company_name, c.email AS cust_email, c.phone AS cust_phone,
+         c.tax_id AS cust_tax_id, c.address_line_1 AS cust_address_line_1,
+         c.address_line_2 AS cust_address_line_2, c.city AS cust_city,
+         c.state_or_region AS cust_state_or_region, c.postal_code AS cust_postal_code,
+         c.country_code AS cust_country_code, c.default_currency AS cust_default_currency,
+         c.notes AS cust_notes, c.status AS cust_status, c.payment_terms AS cust_payment_terms,
+         c.tax_identifiers AS cust_tax_identifiers, c.billing_address_id AS cust_billing_address_id,
+         c.shipping_address_id AS cust_shipping_address_id, c.archived_at AS cust_archived_at,
+         c.archived_by AS cust_archived_by, c.updated_by AS cust_updated_by,
+         c.version AS cust_version, c.created_at AS cust_created_at, c.updated_at AS cust_updated_at,
+         (SELECT COALESCE(json_agg(row_to_json(t)) FILTER (WHERE t.id IS NOT NULL), '[]'::json)
+          FROM project_tags t
+          JOIN project_taggings pt ON pt.tag_id = t.id
+          WHERE pt.project_id = p.id AND t.business_id = p.business_id) AS tags_json,
+         (SELECT COALESCE(json_agg(row_to_json(ptm)) FILTER (WHERE ptm.id IS NOT NULL), '[]'::json)
+          FROM project_team_members ptm
+          WHERE ptm.project_id = p.id AND ptm.business_id = p.business_id) AS team_members_json
+       FROM projects p
+       LEFT JOIN customers c ON c.id = p.customer_id
+       WHERE p.id = $1 AND p.business_id = $2`,
+      [id, businessId]
+    );
+    if (!res.rows.length) throw new NotFoundError(`Project ${id} not found`);
+
+    const r = res.rows[0];
+    const project = this.rowToModel(r);
+
+    let customer: Customer | null = null;
+    if (r.cust_id) {
+      customer = {
+        id: r.cust_id as string,
+        businessId: r.cust_business_id as string,
+        name: r.cust_name as string,
+        companyName: r.cust_company_name as string | null,
+        email: r.cust_email as string | null,
+        phone: r.cust_phone as string | null,
+        taxId: r.cust_tax_id as string | null,
+        address: {
+          addressLine1: (r.cust_address_line_1 as string | null) ?? "",
+          addressLine2: r.cust_address_line_2 as string | null,
+          city: (r.cust_city as string | null) ?? "",
+          stateOrRegion: (r.cust_state_or_region as string | null) ?? "",
+          postalCode: (r.cust_postal_code as string | null) ?? "",
+          countryCode: (r.cust_country_code as string | null) ?? "US",
+          taxId: r.cust_tax_id as string | null,
+        },
+        countryCode: r.cust_country_code as string | null,
+        defaultCurrency: (r.cust_default_currency as string | null) as Customer["defaultCurrency"],
+        notes: r.cust_notes as string | null,
+        status: (r.cust_status as CustomerStatus) ?? "active",
+        paymentTerms: r.cust_payment_terms ? Number(r.cust_payment_terms) : null,
+        taxIdentifiers: [],
+        billingAddressId: r.cust_billing_address_id as string | null,
+        shippingAddressId: r.cust_shipping_address_id as string | null,
+        archivedAt: rowToDate(r.cust_archived_at),
+        archivedBy: r.cust_archived_by as string | null,
+        updatedBy: r.cust_updated_by as string | null,
+        version: Number(r.cust_version ?? 1),
+        createdAt: rowToDate(r.cust_created_at)!,
+        updatedAt: rowToDate(r.cust_updated_at)!,
+      };
+    }
+
+    const tags: ProjectTag[] = (r.tags_json as string | null) ? ((r.tags_json as string).length ? JSON.parse(r.tags_json as string).map((t: Record<string, unknown>) => this.tagRowToModel(t)) : []) : [];
+    const teamMembers: ProjectTeamMember[] = (r.team_members_json as string | null) ? ((r.team_members_json as string).length ? JSON.parse(r.team_members_json as string).map((t: Record<string, unknown>) => this.teamMemberRowToModel(t)) : []) : [];
+
+    const budget = new Decimal(project.budget);
+    const amountInvoiced = new Decimal(project.amountInvoiced);
+    const amountPaid = new Decimal(project.amountPaid);
+    const remainingBillable = new Decimal(project.remainingBillable);
+    const outstanding = amountInvoiced.minus(amountPaid);
+    const budgetUtilization = budget.isZero() ? new Decimal(0) : amountInvoiced.dividedBy(budget).times(100);
+
+    const financialSummary: ProjectFinancialSummary = {
+      budget: budget.toFixed(2),
+      amountInvoiced: amountInvoiced.toFixed(2),
+      amountPaid: amountPaid.toFixed(2),
+      remainingBillable: remainingBillable.toFixed(2),
+      outstanding: outstanding.toFixed(2),
+      budgetUtilization: budgetUtilization.toFixed(2),
+    };
+
+    return { project, customer, tags, teamMembers, financialSummary };
+  }
+
   async findWithDetails(businessId: string, id: string): Promise<Project & { tags: ProjectTag[]; teamMembers: ProjectTeamMember[] }> {
     const project = await this.findById(businessId, id);
     const tags = await this.findTags(project.id, businessId);
@@ -156,11 +252,14 @@ export class ProjectRepository {
 
     const dataRes = await query(
       `SELECT p.*, c.name as customer_name, c.email as customer_email,
-              COALESCE((SELECT COUNT(*) FROM project_taggings WHERE project_id = p.id), 0) as tag_count,
-              COALESCE((SELECT COUNT(*) FROM project_team_members WHERE project_id = p.id), 0) as team_member_count
+               COUNT(DISTINCT pt.tag_id) AS tag_count,
+               COUNT(DISTINCT ptm.user_id) AS team_member_count
        FROM projects p
        LEFT JOIN customers c ON c.id = p.customer_id
+       LEFT JOIN project_taggings pt ON pt.project_id = p.id
+       LEFT JOIN project_team_members ptm ON ptm.project_id = p.id
        WHERE ${conditions.join(" AND ")}
+       GROUP BY p.id, c.name, c.email
        ORDER BY ${sortCol} ${sortDirection}, p.created_at DESC
        LIMIT $${i++} OFFSET $${i}`,
       [...vals, limit, offset]

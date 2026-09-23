@@ -201,15 +201,37 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     </table>
   </div>
 
-  {{#if invoice.paymentInstructions}}
-  <div class="footer">
-    <h3 style="font-size:13px">Payment instructions</h3>
-    <p>{{{invoice.paymentInstructions}}}</p>
-  </div>
-  {{/if}}
-  {{#if invoice.terms}}<p class="muted">{{{invoice.terms}}}</p>{{/if}}
+   {{#if invoice.paymentInstructions}}
+   <div class="footer">
+     <h3 style="font-size:13px">Payment instructions</h3>
+     <p>{{{invoice.paymentInstructions}}}</p>
+   </div>
+   {{/if}}
+   {{#if invoice.terms}}
+   <div class="footer" style="margin-top:24px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#666;">Terms &amp; Conditions</h3>
+     <div class="terms-content">{{{nl2br invoice.terms}}}</div>
+   </div>
+   {{/if}}
+   <div class="footer" style="margin-top:24px; border-top:1px solid #e0e0e0; padding-top:12px;">
+     <p class="muted">Invoice #{invoice.invoiceNumber}. All rights reserved.</p>
+   </div>
 </body>
 </html>`;
+
+Handlebars.registerHelper("add", (a: number, b: number) => a + b);
+
+Handlebars.registerHelper("nl2br", (str: string | null | undefined): string => {
+  if (!str) return "";
+  const escaped = str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const paragraphs = escaped.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+  return paragraphs
+    .map((p) => `<p>${p.trim().replace(/\n/g, "<br>")}</p>`)
+    .join("");
+});
 
 Handlebars.registerHelper("add", (a: number, b: number) => a + b);
 

@@ -77,7 +77,6 @@ import {
   ExpenseSearchSchema,
 } from "./domain/schemas/expense.js";
 import bcrypt from "bcrypt";
-import { Decimal } from "decimal.js";
 
 const app = express();
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
@@ -112,7 +111,7 @@ app.use((req, res, next) => {
   };
   res.on("finish", done);
   res.on("close", done);
-  runWithRequestContext(() => next());
+  runWithRequestContext(() => next()).catch(() => {});
 });
 
 function getCookie(header: string | undefined, name: string): string | null {
@@ -1239,124 +1238,37 @@ app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) 
 // ============================================================================
 app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const invoices = await invoiceRepository.findForDashboard(req.user!.businessId);
+  const businessId = req.user!.businessId;
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const agingBuckets = [
-    { bucket: "current" as const, count: 0, amount: "0" },
-    { bucket: "1-30" as const, count: 0, amount: "0" },
-    { bucket: "31-60" as const, count: 0, amount: "0" },
-    { bucket: "61-90" as const, count: 0, amount: "0" },
-    { bucket: "90+" as const, count: 0, amount: "0" },
-  ];
-  let totalInvoiced = new Decimal(0);
-  let totalPaid = new Decimal(0);
-  let totalOutstanding = new Decimal(0);
-  let totalOverdue = new Decimal(0);
-  let totalPaidThisMonth = new Decimal(0);
-  let count = 0;
-  let paidInvoiceCount = 0;
-  let totalPaymentDays = 0;
-
-  for (const inv of invoices) {
-    const total = new Decimal(inv.total || 0);
-    const amountPaid = new Decimal(inv.amount_paid || 0);
-    const amountDue = new Decimal(inv.amount_due || 0);
-    totalInvoiced = totalInvoiced.plus(total);
-    totalPaid = totalPaid.plus(amountPaid);
-    
-    if (inv.paid_at && new Date(inv.paid_at) >= monthStart) {
-      totalPaidThisMonth = totalPaidThisMonth.plus(amountPaid);
-    }
-
-    if (amountDue.gt(0)) {
-      totalOutstanding = totalOutstanding.plus(amountDue);
-      const dueDate = inv.due_date ? new Date(inv.due_date) : null;
-      const createdDate = inv.created_at ? new Date(inv.created_at) : now;
-      const referenceDate = dueDate ?? createdDate;
-      const daysOverdue = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (daysOverdue > 90) {
-        agingBuckets[4].count++;
-        agingBuckets[4].amount = new Decimal(agingBuckets[4].amount).plus(amountDue).toString();
-      } else if (daysOverdue > 60) {
-        agingBuckets[3].count++;
-        agingBuckets[3].amount = new Decimal(agingBuckets[3].amount).plus(amountDue).toString();
-      } else if (daysOverdue > 30) {
-        agingBuckets[2].count++;
-        agingBuckets[2].amount = new Decimal(agingBuckets[2].amount).plus(amountDue).toString();
-      } else if (daysOverdue >= 0) {
-        agingBuckets[1].count++;
-        agingBuckets[1].amount = new Decimal(agingBuckets[1].amount).plus(amountDue).toString();
-      } else {
-        agingBuckets[0].count++;
-        agingBuckets[0].amount = new Decimal(agingBuckets[0].amount).plus(amountDue).toString();
-      }
-      
-      if (daysOverdue > 0) {
-        totalOverdue = totalOverdue.plus(amountDue);
-      }
-    }
-    
-    if (inv.status === "paid" && inv.paid_at && inv.created_at) {
-      const paidAt = new Date(inv.paid_at);
-      const createdAt = new Date(inv.created_at);
-      const paymentDays = Math.floor((paidAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-      if (paymentDays >= 0) {
-        totalPaymentDays += paymentDays;
-        paidInvoiceCount++;
-      }
-    }
-    
-    count++;
-  }
-
-  const volumeTrend = invoices
-    .filter((i) => i.created_at)
-    .reduce<{ period: string; invoiced: string; paid: string; count: number }[]>((acc, inv) => {
-      const date = new Date(inv.created_at);
-      const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const existing = acc.find((a) => a.period === period);
-      if (existing) {
-        existing.invoiced = new Decimal(existing.invoiced).plus(inv.total || 0).toString();
-        existing.paid = new Decimal(existing.paid).plus(inv.amount_paid || 0).toString();
-        existing.count++;
-      } else {
-        acc.push({
-          period,
-          invoiced: String(inv.total || 0),
-          paid: String(inv.amount_paid || 0),
-          count: 1,
-        });
-      }
-      return acc;
-    }, [])
-    .sort((a, b) => a.period.localeCompare(b.period));
-
-  const averagePaymentTimeDays = paidInvoiceCount > 0 ? Math.round(totalPaymentDays / paidInvoiceCount) : 0;
-  const collectionRate = totalInvoiced.gt(0) ? Math.round((totalPaid.div(totalInvoiced).toNumber() * 100)) : 0;
+  const [summary, agingBuckets, volumeTrend, paymentMetrics] = await Promise.all([
+    invoiceRepository.getDashboardSummary(businessId),
+    invoiceRepository.getAgingBuckets(businessId, now),
+    invoiceRepository.getVolumeTrend(businessId, 1),
+    invoiceRepository.getPaymentMetrics(businessId, monthStart),
+  ]);
 
   res.json({
     summary: {
-      totalOutstanding: totalOutstanding.toString(),
-      totalOverdue: totalOverdue.toString(),
-      totalPaidThisMonth: totalPaidThisMonth.toString(),
-      totalRevenue: totalInvoiced.toString(),
-      draftCount: invoices.filter((i) => i.status === "draft").length,
-      overdueCount: invoices.filter((i) => i.status === "overdue").length,
-      sentCount: invoices.filter((i) => i.status === "sent").length,
-      paidCount: invoices.filter((i) => i.status === "paid").length,
-      totalInvoices: count,
+      totalOutstanding: summary.totalOutstanding,
+      totalOverdue: summary.totalOverdue,
+      totalPaidThisMonth: summary.totalPaidThisMonth,
+      totalRevenue: summary.totalRevenue,
+      draftCount: summary.draftCount,
+      overdueCount: summary.overdueCount,
+      sentCount: summary.sentCount,
+      paidCount: summary.paidCount,
+      totalInvoices: summary.totalInvoices,
     },
     agingBuckets,
     paymentMetrics: {
-      averagePaymentTimeDays,
-      collectionRate,
-      totalInvoiced: totalInvoiced.toString(),
-      totalPaid: totalPaid.toString(),
-      totalOutstanding: totalOutstanding.toString(),
-      totalOverdue: totalOverdue.toString(),
+      averagePaymentTimeDays: paymentMetrics.averagePaymentTimeDays,
+      collectionRate: paymentMetrics.collectionRate,
+      totalInvoiced: paymentMetrics.totalInvoiced,
+      totalPaid: paymentMetrics.totalPaid,
+      totalOutstanding: paymentMetrics.totalOutstanding,
+      totalOverdue: paymentMetrics.totalOverdue,
     },
     volumeTrend,
   });

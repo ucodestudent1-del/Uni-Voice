@@ -124,6 +124,21 @@ export class BusinessRepository {
     };
   }
 
+  async getDefaultTerms(businessId: string): Promise<{ defaultTerms: string | null; defaultNotes: string | null }> {
+    const res = await query(
+      `SELECT default_terms, default_notes FROM business_settings WHERE business_id = $1`,
+      [businessId]
+    );
+    if (!res.rows.length) {
+      return { defaultTerms: null, defaultNotes: null };
+    }
+    const row = res.rows[0];
+    return {
+      defaultTerms: (row.default_terms as string | null) ?? null,
+      defaultNotes: (row.default_notes as string | null) ?? null,
+    };
+  }
+
   async getReminderSettings(businessId: string): Promise<{
     enabled: boolean;
     beforeDue: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;

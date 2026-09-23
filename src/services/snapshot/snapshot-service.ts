@@ -6,6 +6,7 @@ import { businessRepository } from "../../repositories/business.repo.js";
 import { customerRepository } from "../../repositories/customer.repo.js";
 import { templateRepository } from "../../repositories/template.repo.js";
 import { templateRenderer, type InvoiceTemplateData, buildTemplateData } from "../../services/templates/template-renderer.js";
+import { logger } from "../../utils/logger.js";
 
 export interface SnapshotResult {
   snapshot: Record<string, unknown>;
@@ -201,8 +202,14 @@ export class SnapshotService {
     };
   }
 
-  verify(currentHash: string, invoice: InvoiceWithDetails, businessId: string): Promise<boolean> {
-    return this.build(invoice, businessId).then((data) => data.hash === currentHash);
+  async verify(currentHash: string, invoice: InvoiceWithDetails, businessId: string): Promise<boolean> {
+    try {
+      const data = await this.build(invoice, businessId);
+      return data.hash === currentHash;
+    } catch (e) {
+      logger.error({ err: e }, "Snapshot verification failed");
+      return false;
+    }
   }
 }
 

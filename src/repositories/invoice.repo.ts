@@ -500,6 +500,139 @@ export class InvoiceRepository {
     return res.rows;
   }
 
+  async getAgingBuckets(businessId: string, now: Date): Promise<Array<{
+    bucket: string;
+    count: number;
+    amount: string;
+  }>> {
+    const res = await query(
+      `SELECT
+         bucket,
+         COUNT(*)::int AS count,
+         COALESCE(SUM(amount_due), 0) AS amount
+       FROM (
+         SELECT
+           i.amount_due,
+           CASE
+             WHEN i.due_date IS NULL THEN 'current'
+             WHEN EXTRACT(EPOCH FROM ($1::timestamptz - i.due_date)) / 86400 <= 0 THEN 'current'
+             WHEN EXTRACT(EPOCH FROM ($1::timestamptz - i.due_date)) / 86400 <= 30 THEN '1-30'
+             WHEN EXTRACT(EPOCH FROM ($1::timestamptz - i.due_date)) / 86400 <= 60 THEN '31-60'
+             WHEN EXTRACT(EPOCH FROM ($1::timestamptz - i.due_date)) / 86400 <= 90 THEN '61-90'
+             ELSE '90+'
+           END AS bucket
+         FROM invoices i
+         WHERE i.business_id = $2
+           AND i.amount_due > 0
+           AND i.status NOT IN ('draft', 'cancelled', 'void')
+       ) sub
+       GROUP BY bucket
+       ORDER BY
+         CASE bucket
+           WHEN 'current' THEN 0
+           WHEN '1-30' THEN 1
+           WHEN '31-60' THEN 2
+           WHEN '61-90' THEN 3
+           WHEN '90+' THEN 4
+         END`,
+      [now.toISOString(), businessId]
+    );
+
+    const buckets: Array<{ bucket: string; count: number; amount: string }> = [
+      { bucket: "current", count: 0, amount: "0" },
+      { bucket: "1-30", count: 0, amount: "0" },
+      { bucket: "31-60", count: 0, amount: "0" },
+      { bucket: "61-90", count: 0, amount: "0" },
+      { bucket: "90+", count: 0, amount: "0" },
+    ];
+    for (const row of res.rows) {
+      const idx = buckets.findIndex((b) => b.bucket === row.bucket);
+      if (idx >= 0) {
+        buckets[idx].count = Number(row.count ?? 0);
+        buckets[idx].amount = String(row.amount ?? "0");
+      }
+    }
+    return buckets;
+  }
+
+  async getVolumeTrend(businessId: string, months: number): Promise<Array<{
+    period: string;
+    invoiced: string;
+    paid: string;
+    count: number;
+  }>> {
+    const cutoff = new Date();
+    cutoff.setDate(1);
+    cutoff.setMonth(cutoff.getMonth() - months + 1);
+    cutoff.setHours(0, 0, 0, 0);
+
+    const res = await query(
+      `SELECT
+         TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
+         COUNT(*)::int AS count,
+         COALESCE(SUM(i.total), 0) AS invoiced,
+         COALESCE(SUM(i.amount_paid), 0) AS paid
+       FROM invoices i
+       WHERE i.business_id = $1
+         AND (i.issue_date IS NULL OR i.issue_date >= $2 OR i.created_at >= $2)
+       GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
+       ORDER BY period ASC`,
+      [businessId, cutoff.toISOString()]
+    );
+
+    return res.rows.map((r) => ({
+      period: r.period as string,
+      invoiced: String(r.invoiced ?? "0"),
+      paid: String(r.paid ?? "0"),
+      count: Number(r.count ?? 0),
+    }));
+  }
+
+  async getPaymentMetrics(businessId: string, monthStart: Date): Promise<{
+    totalInvoiced: string;
+    totalPaid: string;
+    totalOutstanding: string;
+    totalOverdue: string;
+    averagePaymentTimeDays: number;
+    collectionRate: number;
+    paidInvoiceCount: number;
+  }> {
+    const res = await query(
+      `SELECT
+         COALESCE(SUM(total), 0) AS total_invoiced,
+         COALESCE(SUM(amount_paid), 0) AS total_paid,
+         COALESCE(SUM(CASE WHEN amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_outstanding,
+         COALESCE(SUM(CASE WHEN (status = 'overdue' OR (due_date < NOW() AND amount_due > 0)) AND amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_overdue,
+         COUNT(CASE WHEN status = 'paid' AND paid_at IS NOT NULL AND created_at IS NOT NULL THEN 1 END) AS paid_invoice_count,
+         COALESCE(SUM(CASE WHEN status = 'paid' AND paid_at IS NOT NULL AND created_at IS NOT NULL
+              THEN EXTRACT(EPOCH FROM (paid_at - created_at)) / 86400 ELSE 0 END), 0) AS total_payment_days
+       FROM invoices
+       WHERE business_id = $1`,
+      [businessId]
+    );
+
+    const row = res.rows[0];
+    const totalInvoiced = String(row.total_invoiced ?? "0");
+    const totalPaid = String(row.total_paid ?? "0");
+    const totalOutstanding = String(row.total_outstanding ?? "0");
+    const totalOverdue = String(row.total_overdue ?? "0");
+    const paidInvoiceCount = Number(row.paid_invoice_count ?? 0);
+    const totalPaymentDays = Number(row.total_payment_days ?? 0);
+    const averagePaymentTimeDays = paidInvoiceCount > 0 ? Math.round(totalPaymentDays / paidInvoiceCount) : 0;
+    const totalInvoicedNum = Number(totalInvoiced);
+    const collectionRate = totalInvoicedNum > 0 ? Math.round((Number(totalPaid) / totalInvoicedNum) * 100) : 0;
+
+    return {
+      totalInvoiced,
+      totalPaid,
+      totalOutstanding,
+      totalOverdue,
+      averagePaymentTimeDays,
+      collectionRate,
+      paidInvoiceCount,
+    };
+  }
+
   async getDashboardSummary(businessId: string): Promise<{
     totalOutstanding: string;
     totalOverdue: string;
