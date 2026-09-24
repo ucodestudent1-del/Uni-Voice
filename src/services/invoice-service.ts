@@ -20,8 +20,27 @@ import { logger } from "../utils/logger.js";
 import { getClient, query } from "../db/pool.js";
 import { env } from "../config/index.js";
 import { invalidateReportsCache } from "./reports-cache.js";
+import { TtlCache } from "../utils/ttl-cache.js";
 
 export type RepoInvoice = Awaited<ReturnType<typeof invoiceRepository.findById>>;
+
+const invoiceDetailCache = new TtlCache<{
+  invoice: RepoInvoice;
+  totals: { subtotal: string; discountTotal: string; taxTotal: string; feeTotal: string; total: string; amountPaid: string; amountDue: string };
+}>(60 * 1000);
+
+function invalidateInvoiceDetailCache(businessId: string, id?: string): void {
+  if (id) {
+    invoiceDetailCache.delete(`${businessId}:${id}`);
+  } else {
+    const cache = (invoiceDetailCache as any).cache as Map<string, unknown>;
+    for (const key of Array.from(cache.keys())) {
+      if (key.startsWith(`${businessId}:`)) {
+        cache.delete(key);
+      }
+    }
+  }
+}
 
 export interface CreateInvoiceDraftInput {
   customerId?: string | null;
@@ -216,24 +235,65 @@ export class InvoiceService {
   async getInvoice(businessId: string, id: string): Promise<InvoiceSummary> {
     const invoice = await invoiceRepository.findById(businessId, id);
     if (invoice.isFinalized) {
-      return {
-        invoiceId: invoice.id,
-        invoice,
-        items: invoice.items,
-        fees: invoice.fees,
-        totals: {
-          subtotal: String(invoice.subtotal ?? 0),
-          discountTotal: String(invoice.discountTotal ?? 0),
-          taxTotal: String(invoice.taxTotal ?? 0),
-          feeTotal: String(invoice.feeTotal ?? 0),
-          total: String(invoice.total ?? 0),
-          amountPaid: String(invoice.amountPaid ?? 0),
-          amountDue: String(invoice.amountDue ?? 0),
-        },
+      const cached = invoiceDetailCache.get(`${businessId}:${id}`);
+      if (cached) {
+        return {
+          invoiceId: invoice.id,
+          invoice,
+          items: invoice.items,
+          fees: invoice.fees,
+          totals: cached.totals,
+        };
+      }
+      const totals = {
+        subtotal: String(invoice.subtotal ?? 0),
+        discountTotal: String(invoice.discountTotal ?? 0),
+        taxTotal: String(invoice.taxTotal ?? 0),
+        feeTotal: String(invoice.feeTotal ?? 0),
+        total: String(invoice.total ?? 0),
+        amountPaid: String(invoice.amountPaid ?? 0),
+        amountDue: String(invoice.amountDue ?? 0),
       };
+      invoiceDetailCache.set(`${businessId}:${id}`, { invoice, totals });
+      return { invoiceId: invoice.id, invoice, items: invoice.items, fees: invoice.fees, totals };
     }
-    const calc = await this.recalculate(invoice);
-    return this.summarize(invoice, calc);
+    // Only recalculate for drafts when line items or fees have changed since
+    // the last persisted totals. Compare the current sum of line totals + fees
+    // against the stored total; if they match, the totals are already current.
+    const needsRecalc = await this.invoiceTotalsStale(invoice);
+    if (needsRecalc) {
+      const calc = await this.recalculate(invoice);
+      return this.summarize(invoice, calc);
+    }
+    return {
+      invoiceId: invoice.id,
+      invoice,
+      items: invoice.items,
+      fees: invoice.fees,
+      totals: {
+        subtotal: String(invoice.subtotal ?? 0),
+        discountTotal: String(invoice.discountTotal ?? 0),
+        taxTotal: String(invoice.taxTotal ?? 0),
+        feeTotal: String(invoice.feeTotal ?? 0),
+        total: String(invoice.total ?? 0),
+        amountPaid: String(invoice.amountPaid ?? 0),
+        amountDue: String(invoice.amountDue ?? 0),
+      },
+    };
+  }
+
+  private async invoiceTotalsStale(invoice: RepoInvoice): Promise<boolean> {
+    const itemsTotal = invoice.items.reduce(
+      (sum, it) => sum.plus(new Decimal(it.lineTotal ?? 0)),
+      new Decimal(0)
+    );
+    const feesTotal = invoice.fees.reduce(
+      (sum, f) => sum.plus(new Decimal(f.amount ?? 0)),
+      new Decimal(0)
+    );
+    const computedTotal = itemsTotal.plus(feesTotal);
+    const storedTotal = new Decimal(invoice.total ?? 0);
+    return !computedTotal.eq(storedTotal);
   }
 
   async recalculate(invoice: RepoInvoice): Promise<CalculationResult> {
@@ -333,6 +393,7 @@ export class InvoiceService {
     }
     logger.info(`Invoice ${id} finalized as ${invoice.invoiceNumber ?? generatedNumber}`);
     invalidateReportsCache(businessId);
+    invalidateInvoiceDetailCache(businessId, id);
     return { invoiceNumber: invoice.invoiceNumber ?? generatedNumber };
   }
 
@@ -504,6 +565,7 @@ export class InvoiceService {
       client.release();
     }
     invalidateReportsCache(businessId);
+    invalidateInvoiceDetailCache(businessId, id);
   }
 
   async recordProviderPayment(
@@ -554,6 +616,7 @@ export class InvoiceService {
       }
       await client.query("COMMIT");
       invalidateReportsCache(businessId);
+      invalidateInvoiceDetailCache(businessId, invoiceId);
       logger.info(`Provider payment recorded: invoice ${invoiceId} payment ${paymentId} amount ${amount} ${currency}`);
       return { paymentId, status: "succeeded" };
     } catch (e) {
@@ -639,6 +702,7 @@ export class InvoiceService {
 
       await client.query("COMMIT");
       invalidateReportsCache(businessId);
+      invalidateInvoiceDetailCache(businessId, invoiceId);
       logger.info(`Refund processed: payment ${paymentId} invoice ${invoiceId} amount ${amount} ${currency}`);
       return { status: newPaymentStatus };
     } catch (e) {

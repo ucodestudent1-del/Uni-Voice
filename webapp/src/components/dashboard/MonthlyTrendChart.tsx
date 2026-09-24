@@ -27,7 +27,10 @@ function formatCurrencyCompact(value: number, currency: string): string {
   }
 }
 
-export default function MonthlyTrendChart({ currency = "USD" }: { currency?: string }) {
+export default function MonthlyTrendChart({
+  currency = "USD",
+  volumeTrend: preloadedData,
+}: { currency?: string; volumeTrend?: ApiVolumeTrend[] }) {
   const [timeframe, setTimeframe] = useState<Period>("90");
   const [data, setData] = useState<ApiVolumeTrend[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +38,11 @@ export default function MonthlyTrendChart({ currency = "USD" }: { currency?: str
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
+    if (preloadedData) {
+      setData(preloadedData);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -58,7 +66,7 @@ export default function MonthlyTrendChart({ currency = "USD" }: { currency?: str
     return () => {
       cancelled = true;
     };
-  }, [timeframe, retryKey]);
+  }, [timeframe, retryKey, preloadedData]);
 
   const chartData = useMemo(() => {
     if (!data || !Array.isArray(data)) return [];

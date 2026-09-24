@@ -118,10 +118,16 @@ export class ReceiptRepository {
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
 
+    // Project explicit columns (excluding the pdf BLOB) to avoid transferring
+    // large binary data over the wire for list views.
     const dataRes = await query(
-      `SELECT *, COUNT(*) OVER() AS total_count FROM receipts WHERE ${conditions.join(" AND ")}
-       ORDER BY created_at DESC LIMIT $${i++} OFFSET $${i++}`,
-      [...vals, limit, offset]
+      `SELECT id, business_id, invoice_id, payment_id, receipt_number, amount, currency,
+              payment_method, payment_purpose, status, issued_at, email_log_id,
+              idempotency_key, metadata, created_at, updated_at,
+              COUNT(*) OVER() AS total_count
+       FROM receipts WHERE ${conditions.join(" AND ")}
+        ORDER BY created_at DESC LIMIT $${i++} OFFSET $${i++}`,
+       [...vals, limit, offset]
     );
     const total = dataRes.rows.length ? Number(dataRes.rows[0]?.total_count ?? 0) : 0;
 
@@ -194,19 +200,23 @@ export class ReceiptRepository {
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
 
+    // Project explicit columns (excluding the pdf BLOB) to avoid transferring
+    // large binary data over the wire for list views.
     const res = await query(
-      `SELECT r.*, i.invoice_number, i.currency,
-              i.customer_id, c.name as customer_name, c.email as customer_email,
+      `SELECT r.id, r.business_id, r.invoice_id, r.payment_id, r.receipt_number, r.amount, i.currency,
+              r.payment_method, r.payment_purpose, r.status, r.issued_at, r.email_log_id,
+              r.idempotency_key, r.metadata, r.created_at, r.updated_at,
+              i.invoice_number, i.customer_id, c.name as customer_name, c.email as customer_email,
               b.name as business_name,
               COUNT(*) OVER() AS total_count
-       FROM receipts r
-       JOIN invoices i ON i.id = r.invoice_id
-       JOIN businesses b ON b.id = r.business_id
-       LEFT JOIN customers c ON c.id = i.customer_id
-       WHERE ${conditions.join(" AND ")}
-       ORDER BY r.created_at DESC
-       LIMIT $${i++} OFFSET $${i++}`,
-      [...vals, limit, offset]
+        FROM receipts r
+        JOIN invoices i ON i.id = r.invoice_id
+        JOIN businesses b ON b.id = r.business_id
+        LEFT JOIN customers c ON c.id = i.customer_id
+        WHERE ${conditions.join(" AND ")}
+        ORDER BY r.created_at DESC
+        LIMIT $${i++} OFFSET $${i++}`,
+       [...vals, limit, offset]
     );
 
     const total = res.rows.length ? Number(res.rows[0]?.total_count ?? 0) : 0;

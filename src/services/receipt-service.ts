@@ -139,6 +139,8 @@ const RECEIPT_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const compiledReceiptTemplate = Handlebars.compile(RECEIPT_TEMPLATE, { noEscape: true });
+
 export interface ReceiptTemplateData {
   business: { name: string; email?: string | null; phone?: string | null; address?: Record<string, unknown> | null };
   receipt: {
@@ -281,15 +283,22 @@ export class ReceiptService {
   }
 
   async generatePdf(receiptId: string): Promise<Buffer> {
+    const { pdf, receiptNumber } = await this.generatePdfWithMeta(receiptId);
+    return pdf;
+  }
+
+  async generatePdfWithMeta(receiptId: string): Promise<{ pdf: Buffer; receiptNumber: string }> {
     const client = await query(
-      `SELECT r.*, i.invoice_number, i.status as invoice_status, i.currency, i.amount_paid, i.amount_due,
+      `SELECT r.id, r.receipt_number, r.amount, r.currency, r.status, r.issued_at,
+              r.payment_method, r.metadata,
+              i.invoice_number, i.status as invoice_status, i.currency as invoice_currency, i.amount_paid, i.amount_due,
               b.name as business_name, b.email as business_email, b.phone as business_phone,
               b.address_line_1, b.address_line_2, b.city, b.state_or_region, b.postal_code, b.country_code
-       FROM receipts r
-       JOIN invoices i ON i.id = r.invoice_id
-       JOIN businesses b ON b.id = r.business_id
-       WHERE r.id = $1`,
-      [receiptId]
+        FROM receipts r
+        JOIN invoices i ON i.id = r.invoice_id
+        JOIN businesses b ON b.id = r.business_id
+        WHERE r.id = $1`,
+       [receiptId]
     );
     if (!client.rows.length) throw new NotFoundError(`Receipt ${receiptId} not found`);
 
@@ -305,7 +314,7 @@ export class ReceiptService {
       receipt: {
         receiptNumber: r.receipt_number as string,
         amount: r.amount as Decimal.Value,
-        currency: r.currency as string,
+         currency: (r.currency as string) ?? (r.invoice_currency as string) ?? "USD",
         status: r.status as string,
         issuedAt: r.issued_at ? new Date(r.issued_at as string).toISOString().slice(0, 10) : null,
         paymentMethod: r.payment_method as string | null,
@@ -319,12 +328,11 @@ export class ReceiptService {
     const html = this.renderReceipt(data);
     const pdf = await pdfService.generatePdfFromHtml(html, this.toInvoiceTemplateData(r, data));
     await receiptRepository.storePdf(receiptId, pdf);
-    return pdf;
+    return { pdf, receiptNumber: r.receipt_number as string };
   }
 
   private renderReceipt(data: ReceiptTemplateData): string {
-    const compiled = Handlebars.compile(RECEIPT_TEMPLATE, { noEscape: true });
-    return compiled(data);
+    return compiledReceiptTemplate(data);
   }
 
   private toInvoiceTemplateData(r: Record<string, unknown>, receiptData: ReceiptTemplateData): InvoiceTemplateData {

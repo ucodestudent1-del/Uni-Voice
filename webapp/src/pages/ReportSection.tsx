@@ -2,9 +2,14 @@ import { useEffect, useState, useMemo } from "react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { Decimal } from "decimal.js";
 import { AlertCircle, Download, RefreshCw } from "lucide-react";
-import { getVolumeTrendReport, getPaymentMetricsReport, getEnhancedDashboard, getInvoices } from "../api/client";
+import { getEnhancedDashboard, getInvoices } from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
-import type { ApiVolumeTrend, ApiPaymentMetrics, ApiInvoiceListItem } from "../types/api";
+import type {
+  ApiVolumeTrend,
+  ApiPaymentMetrics,
+  ApiAgingBucket,
+  ApiInvoiceListItem,
+} from "../types/api";
 import ReportKPICards from "../components/dashboard/ReportKPICards";
 import MonthlyTrendChart from "../components/dashboard/MonthlyTrendChart";
 import PaymentStatusPie from "../components/dashboard/PaymentStatusPie";
@@ -14,8 +19,20 @@ import ReportInsights from "../components/dashboard/ReportInsights";
 interface ReportState {
   volumeTrend: ApiVolumeTrend[];
   paymentMetrics: ApiPaymentMetrics | null;
-  dashboardSummary: { totalOutstanding: string; totalOverdue: string; totalPaidThisMonth: string; totalRevenue: string } | null;
+  agingBuckets: ApiAgingBucket[];
+  dashboardSummary: {
+    totalOutstanding: string;
+    totalOverdue: string;
+    totalPaidThisMonth: string;
+    totalRevenue: string;
+    draftCount: number;
+    overdueCount: number;
+    sentCount: number;
+    paidCount: number;
+    totalInvoices: number;
+  } | null;
   invoices: ApiInvoiceListItem[];
+  currency: string;
 }
 
 export default function ReportSection() {
@@ -34,23 +51,34 @@ export default function ReportSection() {
     setLoading(true);
     setError(null);
     try {
-      const [trendRes, metricsRes, dashRes, invoicesRes] = await Promise.all([
-        getVolumeTrendReport({ period: "month", months: 12 }).catch(() => ({ report: [] })),
-        getPaymentMetricsReport().catch(() => ({ paymentMetrics: null })),
-        getEnhancedDashboard().catch(() => ({ summary: null, agingBuckets: [], paymentMetrics: null, volumeTrend: [] })),
+      const [dashRes, invoicesRes] = await Promise.all([
+        getEnhancedDashboard().catch(() => ({
+          summary: null,
+          agingBuckets: [],
+          paymentMetrics: null,
+          volumeTrend: [],
+        })),
         getInvoices({ limit: 50 }).catch(() => ({ invoices: [] })),
       ]);
 
-      const trendData = (trendRes.report ?? trendRes.data ?? trendRes) as ApiVolumeTrend[];
-      const metrics = (metricsRes.paymentMetrics ?? metricsRes) as ApiPaymentMetrics | null;
-      const dashSummary = dashRes.summary ?? dashRes;
-      const invoices = (invoicesRes.invoices ?? invoicesRes.data ?? invoicesRes) as ApiInvoiceListItem[];
+      const dash = dashRes as any;
+      const trendData = Array.isArray(dash.volumeTrend)
+        ? dash.volumeTrend
+        : Array.isArray((dashRes as any).report)
+          ? (dashRes as any).report
+          : [];
+      const metrics = (dash.paymentMetrics ?? null) as ApiPaymentMetrics | null;
+      const agingBuckets = Array.isArray(dash.agingBuckets) ? dash.agingBuckets : [];
+      const dashSummary = dash.summary ?? null;
+      const invoices = Array.isArray(invoicesRes.invoices) ? invoicesRes.invoices : [];
 
       setData({
-        volumeTrend: Array.isArray(trendData) ? trendData : [],
+        volumeTrend: trendData,
         paymentMetrics: metrics,
+        agingBuckets,
         dashboardSummary: dashSummary,
-        invoices: Array.isArray(invoices) ? invoices : [],
+        invoices,
+        currency: dash.summary?.currency ?? "USD",
       });
     } catch (err: any) {
       setError(err.response?.data?.error || "Could not load report data");
@@ -62,16 +90,11 @@ export default function ReportSection() {
   const kpis = useMemo(() => {
     if (!data) return null;
 
-    const totalRevenue = data.volumeTrend.reduce(
-      (sum, d) => sum.plus(new Decimal(d.invoiced)),
-      new Decimal(0)
-    );
+    const totalRevenue = data.dashboardSummary
+      ? new Decimal(data.dashboardSummary.totalRevenue)
+      : new Decimal(0);
 
-    const outstanding = data.dashboardSummary?.totalOutstanding
-      ? new Decimal(data.dashboardSummary.totalOutstanding)
-      : data.paymentMetrics
-        ? new Decimal(data.paymentMetrics.totalOutstanding)
-        : new Decimal(0);
+    const outstanding = new Decimal(data.dashboardSummary?.totalOutstanding ?? "0");
 
     const avgDays = data.paymentMetrics?.averagePaymentTimeDays ?? null;
 
@@ -183,7 +206,7 @@ export default function ReportSection() {
 
       {kpis && (
         <ReportKPICards
-          currency="USD"
+          currency={data.currency}
           totalRevenue={kpis.totalRevenue.toFixed(2)}
           totalOutstanding={kpis.outstanding.toFixed(2)}
           avgPaymentDays={kpis.avgDays}
@@ -195,7 +218,7 @@ export default function ReportSection() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <MonthlyTrendChart currency="USD" />
+          <MonthlyTrendChart currency={data.currency} volumeTrend={data.volumeTrend} />
         </div>
         <div>
           <PaymentStatusPie data={paymentStatusData} />
@@ -207,7 +230,7 @@ export default function ReportSection() {
           <ReportTransactions invoices={data.invoices} title="Recent Transactions" limit={10} />
         </div>
         <div>
-          <ReportInsights invoices={data.invoices} />
+          <ReportInsights invoices={data.invoices} currency={data.currency} />
         </div>
       </div>
     </div>
@@ -219,14 +242,14 @@ function computeChurnRate(invoices: ApiInvoiceListItem[]): number | null {
   const customerSet = new Set<string>();
   const churnedSet = new Set<string>();
   invoices.forEach((inv) => {
-    const customerId = inv.customer_email || inv.customer_name || inv.id;
+    const customerId = inv.customer_id || inv.id;
     customerSet.add(customerId);
     if (inv.status === "cancelled" || inv.status === "void") {
       churnedSet.add(customerId);
     }
   });
   if (customerSet.size === 0) return null;
-  return Math.round((churnedSet.size / customerSet.size) * 100 * 10) / 10;
+  return Math.round((churnedSet.size / customerSet.size) * 1000) / 10;
 }
 
 function generateCSV(data: ReportState | null): string {

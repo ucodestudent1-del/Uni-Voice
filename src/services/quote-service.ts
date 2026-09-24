@@ -3,8 +3,6 @@ import { query } from "../db/pool.js";
 import { getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
 import { NotFoundError, BusinessLogicError } from "../domain/errors.js";
-import { calculationEngine } from "../domain/calculation.js";
-import type { InvoiceCalculationInput } from "../domain/calculation.js";
 import type { NumberSequenceConfig } from "../services/numbering/service.js";
 import { businessRepository } from "../repositories/business.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
@@ -328,33 +326,35 @@ export class QuoteService {
   }
 
   async findById(businessId: string, id: string): Promise<QuoteWithDetails> {
+    // Single query with JSON subqueries instead of 3 sequential round-trips.
+    // Numeric columns are cast to ::text to preserve PostgreSQL decimal representation.
     const res = await query(
-      `SELECT q.*, c.name as customer_name, c.email as customer_email
-       FROM quotes q LEFT JOIN customers c ON c.id = q.customer_id
+      `SELECT q.*, c.name as customer_name, c.email as customer_email,
+             COALESCE((SELECT json_agg(row_to_json(items)) FROM (
+               SELECT id, quote_id, product_id, description,
+                      quantity::text AS quantity, unit, unit_price::text AS unit_price,
+                      discount::text AS discount, discount_type, tax_rate::text AS tax_rate,
+                      tax_amount::text AS tax_amount, line_subtotal::text AS line_subtotal,
+                      line_total::text AS line_total, sort_order, is_tax_inclusive, created_at
+               FROM quote_items WHERE quote_id = $1 ORDER BY sort_order, created_at
+             ) items), '[]'::json) AS items_json,
+             COALESCE((SELECT json_agg(row_to_json(fees)) FROM (
+               SELECT id, quote_id, description,
+                      amount::text AS amount, tax_rate::text AS tax_rate,
+                      tax_amount::text AS tax_amount, sort_order, created_at
+               FROM quote_fees WHERE quote_id = $1 ORDER BY sort_order, created_at
+             ) fees), '[]'::json) AS fees_json
+       FROM quotes q
+       LEFT JOIN customers c ON c.id = q.customer_id
        WHERE q.id = $1 AND q.business_id = $2`,
       [id, businessId]
     );
     if (!res.rows.length) throw new NotFoundError(`Quote ${id} not found`);
-    const row = res.rows[0];
-    const items = await this.getItems(id);
-    const fees = await this.getFees(id);
-    return { ...this.rowToModel(row), items, fees };
-  }
+    const r = res.rows[0];
 
-  private async getItems(quoteId: string): Promise<QuoteItemRow[]> {
-    const res = await query(
-      `SELECT * FROM quote_items WHERE quote_id = $1 ORDER BY sort_order, created_at`,
-      [quoteId]
-    );
-    return res.rows.map(this.itemRowToModel);
-  }
-
-  private async getFees(quoteId: string): Promise<QuoteFeeRow[]> {
-    const res = await query(
-      `SELECT * FROM quote_fees WHERE quote_id = $1 ORDER BY sort_order, created_at`,
-      [quoteId]
-    );
-    return res.rows.map(this.feeRowToModel);
+    const items: QuoteItemRow[] = (r.items_json ? JSON.parse(r.items_json as string) : []).map(this.itemRowToModel);
+    const fees: QuoteFeeRow[] = (r.fees_json ? JSON.parse(r.fees_json as string) : []).map(this.feeRowToModel);
+    return { ...this.rowToModel(r), items, fees };
   }
 
   async list(businessId: string, filter: Record<string, unknown>): Promise<{ data: QuoteRow[]; total: number; limit: number; offset: number }> {
@@ -411,26 +411,26 @@ export class QuoteService {
     return token;
   }
 
-  async finalize(businessId: string, id: string, userId?: string): Promise<string> {
-    const quote = await this.findById(businessId, id);
+  async finalize(businessId: string, id: string, userId?: string, existingQuote?: QuoteWithDetails): Promise<string> {
+    const quote = existingQuote ?? await this.findById(businessId, id);
     if (quote.isFinalized) return quote.quoteNumber ?? "";
     if (!quote.customerId) throw new BusinessLogicError("Cannot finalize a quote without a customer");
-    if (!quote.quoteNumber) {
-      const number = await this.generateNumber(businessId, id);
-      quote.quoteNumber = number;
+    let number = quote.quoteNumber;
+    if (!number) {
+      number = await this.generateNumber(businessId, id);
     }
     await query(
       `UPDATE quotes SET is_finalized = TRUE, finalized_at = NOW(), status = 'sent', updated_at = NOW()
-       WHERE id = $1 AND business_id = $2`,
+        WHERE id = $1 AND business_id = $2`,
       [id, businessId]
     );
-    return quote.quoteNumber;
+    return number;
   }
 
   async convertToInvoice(businessId: string, id: string, userId?: string): Promise<{ invoiceId: string; quoteNumber: string }> {
     const quote = await this.findById(businessId, id);
     if (!quote.isFinalized) {
-      await this.finalize(businessId, id, userId);
+      await this.finalize(businessId, id, userId, quote);
     }
 
     const invoiceId = await invoiceService.createDraft({
@@ -508,8 +508,6 @@ export class QuoteService {
   }
 
   private async renderQuoteHtml(quote: QuoteWithDetails, business: any, customer: any): Promise<string> {
-    const calcInput = this.toCalculationInput(quote);
-    const calc = calculationEngine.calculate(calcInput);
     const totals: TemplateTotals = {
       subtotal: new Decimal(quote.subtotal),
       discountTotal: new Decimal(quote.discountTotal),
@@ -519,7 +517,6 @@ export class QuoteService {
       amountPaid: new Decimal(quote.amountPaid),
       amountDue: new Decimal(quote.amountDue),
     };
-    void calc;
     const businessData = {
       id: business.id,
       name: business.name,
@@ -588,23 +585,6 @@ export class QuoteService {
       { htmlTemplate: undefined }
     );
     return templateRenderer.render(templateData);
-  }
-
-  private toCalculationInput(quote: QuoteWithDetails): InvoiceCalculationInput {
-    return {
-      currency: quote.currency as CurrencyCode,
-      lineItems: quote.items.map((it) => ({
-        description: it.description,
-        quantity: it.quantity,
-        unit: it.unit,
-        unitPrice: it.unitPrice,
-        discount: it.discount ? { type: it.discountType, value: it.discount } : undefined,
-        taxRate: it.taxRate,
-        isTaxInclusive: it.isTaxInclusive,
-      })),
-      fees: quote.fees.map((f) => ({ description: f.description, amount: f.amount, taxRate: f.taxRate })),
-      amountPaid: quote.amountPaid,
-    };
   }
 
   async delete(businessId: string, id: string): Promise<void> {

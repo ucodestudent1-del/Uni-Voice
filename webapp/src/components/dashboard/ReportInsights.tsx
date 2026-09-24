@@ -8,6 +8,7 @@ import type { ApiInvoiceListItem } from "../../types/api";
 interface ReportInsightsProps {
   invoices: ApiInvoiceListItem[];
   overdueThresholdDays?: number;
+  currency?: string;
 }
 
 interface InsightGroup {
@@ -19,7 +20,7 @@ interface InsightGroup {
   icon: React.ReactNode;
 }
 
-export default function ReportInsights({ invoices, overdueThresholdDays = 30 }: ReportInsightsProps) {
+export default function ReportInsights({ invoices, overdueThresholdDays = 30, currency = "USD" }: ReportInsightsProps) {
   const insights = useMemo(() => {
     const now = new Date();
     const critical: ApiInvoiceListItem[] = [];
@@ -113,7 +114,7 @@ export default function ReportInsights({ invoices, overdueThresholdDays = 30 }: 
           </div>
           {totalOverdue.gt(0) && (
             <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-error-bg text-error-text">
-              {formatCurrencyValue(totalOverdue.toFixed(2), "USD")} at risk
+              {formatCurrencyValue(totalOverdue.toFixed(2), currency)} at risk
             </span>
           )}
         </div>
@@ -139,7 +140,7 @@ export default function ReportInsights({ invoices, overdueThresholdDays = 30 }: 
                   </span>
                   <span className="text-xs text-tertiary">
                     {group.count} invoice{group.count !== 1 ? "s" : ""} ·{" "}
-                    {formatCurrencyValue(group.totalAmount || "0", "USD")}
+                    {formatCurrencyValue(group.totalAmount || "0", currency)}
                   </span>
                 </div>
               </div>

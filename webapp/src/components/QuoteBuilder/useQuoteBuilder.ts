@@ -82,8 +82,8 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
     try {
       const [bizRes, custRes, prodRes] = await Promise.allSettled([
         getBusiness(),
-        getCustomers({ limit: 500 }),
-        getProducts({ limit: 200 }),
+        getCustomers({ limit: 100, includeArchived: false }).catch(() => ({ data: [] })),
+        getProducts({ limit: 200 }).catch(() => ({ products: [] })),
       ]);
       if (bizRes.status === "fulfilled" && bizRes.value) {
         const b = bizRes.value as ApiBusiness & {

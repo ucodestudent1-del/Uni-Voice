@@ -1146,10 +1146,16 @@ app.get("/api/receipts/:id", requireAuth, requireEntitlement("receipts.create"),
 
 app.get("/api/receipts/:id/pdf", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const receipt = await receiptService.getById(req.user!.businessId, req.params.id);
-  const pdf = receipt.pdf ?? await receiptService.generatePdf(receipt.id);
+  const cached = await receiptRepository.findById(req.user!.businessId, req.params.id);
+  if (cached.pdf) {
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=receipt-${cached.receiptNumber ?? req.params.id}.pdf`);
+    res.send(cached.pdf);
+    return;
+  }
+  const { pdf, receiptNumber } = await receiptService.generatePdfWithMeta(cached.id);
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=receipt-${receipt.receiptNumber ?? receipt.id}.pdf`);
+  res.setHeader("Content-Disposition", `attachment; filename=receipt-${receiptNumber ?? req.params.id}.pdf`);
   res.send(pdf);
 });
 

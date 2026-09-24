@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Download, FileText } from "lucide-react";
-import { getRevenueReport, getTaxSummaryReport } from "../api/client";
+import { getRevenueReport, getTaxSummaryReport, getBusiness } from "../api/client";
 import { formatCurrency } from "../utils/format";
 import { Button } from "../components/ui/Button";
 
@@ -10,11 +10,16 @@ export default function Reports() {
   const [taxSummary, setTaxSummary] = useState<any[]>([]);
   const [revenueLoaded, setRevenueLoaded] = useState(false);
   const [taxLoaded, setTaxLoaded] = useState(false);
+  const [currency, setCurrency] = useState("USD");
 
   const loadRevenue = useCallback(async () => {
     if (revenueLoaded) return;
     try {
-      const data = await getRevenueReport().catch(() => ({ report: [] }));
+      const [bizRes, data] = await Promise.all([
+        getBusiness().catch(() => null),
+        getRevenueReport().catch(() => ({ report: [] })),
+      ]);
+      if (bizRes) setCurrency((bizRes as any).business?.default_currency ?? "USD");
       setRevenue(data.report ?? []);
     } catch {
       setRevenue([]);
@@ -134,8 +139,8 @@ export default function Reports() {
                   <tr key={r.status} className="border-t border-color-subtle">
                     <td className="py-2 text-sm text-primary">{r.status}</td>
                     <td className="py-2 text-right text-sm text-secondary">{r.count}</td>
-                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.total_amount ?? 0, "USD")}</td>
-                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.paid_amount ?? 0, "USD")}</td>
+                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.total_amount ?? 0, currency)}</td>
+                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.paid_amount ?? 0, currency)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -173,7 +178,7 @@ export default function Reports() {
                 {taxSummary.map((r) => (
                   <tr key={r.month} className="border-t border-color-subtle">
                     <td className="py-2 text-sm text-primary">{r.month}</td>
-                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.tax_total ?? 0, "USD")}</td>
+                    <td className="py-2 text-right text-sm text-primary">{formatCurrency(r.tax_total ?? 0, currency)}</td>
                   </tr>
                 ))}
               </tbody>
