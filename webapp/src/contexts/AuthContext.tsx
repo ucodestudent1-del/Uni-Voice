@@ -20,7 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   onboarding: OnboardingProgress | null;
   completeStep: (step: string) => Promise<OnboardingProgress>;
-  skipOnboarding: () => Promise<void>;
+  skipOnboarding: () => Promise<OnboardingProgress>;
   refreshOnboarding: () => Promise<void>;
 }
 
