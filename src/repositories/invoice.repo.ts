@@ -1,4 +1,5 @@
 import { Decimal } from "decimal.js";
+import { createHash } from "node:crypto";
 import { getClient, query } from "../db/pool.js";
 import type { Invoice, InvoiceLineItem, InvoiceFee, InvoiceSnapshot, InvoiceEvent } from "../domain/models/index.js";
 import { NotFoundError, ConflictError } from "../domain/errors.js";
@@ -609,7 +610,7 @@ export class InvoiceRepository {
     return buckets;
   }
 
-  async getVolumeTrend(businessId: string, months: number): Promise<Array<{
+async getVolumeTrend(businessId: string, months: number): Promise<Array<{
     period: string;
     invoiced: string;
     paid: string;
@@ -620,26 +621,66 @@ export class InvoiceRepository {
     cutoff.setMonth(cutoff.getMonth() - months + 1);
     cutoff.setHours(0, 0, 0, 0);
 
+    // The original query used a single WHERE clause with an OR condition
+    //   (issue_date IS NULL OR issue_date >= $2 OR created_at >= $2)
+    // which prevents the planner from using any index on issue_date/created_at.
+    // We rewrite it as a UNION ALL of three mutually-exclusive conditions, each
+    // of which can use an index:
+    //   1. issue_date >= cutoff  (uses idx_invoices_business_issue)
+    //   2. issue_date IS NULL    (uses idx_invoices_business_issue, NULLs included)
+    //   3. issue_date < cutoff AND created_at >= cutoff (uses idx_invoices_business_created)
     const res = await query(
       `SELECT
-         TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
-         COUNT(*)::int AS count,
-         COALESCE(SUM(i.total), 0) AS invoiced,
-         COALESCE(SUM(i.amount_paid), 0) AS paid
-       FROM invoices i
-       WHERE i.business_id = $1
-         AND (i.issue_date IS NULL OR i.issue_date >= $2 OR i.created_at >= $2)
-       GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
-       ORDER BY period ASC`,
+          TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(i.total), 0) AS invoiced,
+          COALESCE(SUM(i.amount_paid), 0) AS paid
+        FROM invoices i
+        WHERE i.business_id = $1 AND i.issue_date >= $2
+        GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
+        UNION ALL
+        SELECT
+          TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(i.total), 0) AS invoiced,
+          COALESCE(SUM(i.amount_paid), 0) AS paid
+        FROM invoices i
+        WHERE i.business_id = $1 AND i.issue_date IS NULL
+        GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
+        UNION ALL
+        SELECT
+          TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(i.total), 0) AS invoiced,
+          COALESCE(SUM(i.amount_paid), 0) AS paid
+        FROM invoices i
+        WHERE i.business_id = $1 AND i.issue_date < $2 AND i.created_at >= $2
+        GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
+        ORDER BY period ASC`,
       [businessId, cutoff.toISOString()]
     );
 
-    return res.rows.map((r) => ({
-      period: r.period as string,
-      invoiced: String(r.invoiced ?? "0"),
-      paid: String(r.paid ?? "0"),
-      count: Number(r.count ?? 0),
-    }));
+    // Merge rows with the same period (UNION ALL can produce duplicates when
+    // an invoice matches more than one branch — though the three branches are
+    // mutually exclusive in practice, we merge defensively).
+    const merged = new Map<string, { period: string; invoiced: string; paid: string; count: number }>();
+    for (const row of res.rows) {
+      const existing = merged.get(row.period);
+      if (existing) {
+        existing.count += Number(row.count ?? 0);
+        existing.invoiced = String(new Decimal(existing.invoiced).plus(new Decimal(row.invoiced ?? "0")));
+        existing.paid = String(new Decimal(existing.paid).plus(new Decimal(row.paid ?? "0")));
+      } else {
+        merged.set(row.period, {
+          period: row.period as string,
+          invoiced: String(row.invoiced ?? "0"),
+          paid: String(row.paid ?? "0"),
+          count: Number(row.count ?? 0),
+        });
+      }
+    }
+
+    return Array.from(merged.values()).sort((a, b) => a.period.localeCompare(b.period));
   }
 
   async getPaymentMetrics(businessId: string, monthStart: Date): Promise<{
@@ -1017,7 +1058,76 @@ export class InvoiceRepository {
     );
   }
 
-   private rowToModel(r: Record<string, unknown>): Invoice {
+   /**
+   * Fetches the cached PDF for an invoice if it exists and is still valid.
+   * Returns null when no cache is present or the hash does not match the
+   * current invoice state (meaning the invoice was modified after the PDF
+   * was generated and the cache must be regenerated).
+   */
+  async getPdfCache(invoiceId: string, expectedHash: string): Promise<Buffer | null> {
+    const res = await query(
+      `SELECT pdf_cache, pdf_cache_hash FROM invoices WHERE id = $1 AND pdf_cache IS NOT NULL`,
+      [invoiceId]
+    );
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    if (row.pdf_cache_hash !== expectedHash) return null;
+    return row.pdf_cache as Buffer;
+  }
+
+  async storePdfCache(invoiceId: string, pdf: Buffer, hash: string): Promise<void> {
+    await query(
+      `UPDATE invoices SET pdf_cache = $1, pdf_cache_hash = $2, pdf_cached_at = NOW() WHERE id = $3`,
+      [pdf, hash, invoiceId]
+    );
+  }
+
+  async clearPdfCache(invoiceId: string): Promise<void> {
+    await query(
+      `UPDATE invoices SET pdf_cache = NULL, pdf_cache_hash = NULL, pdf_cached_at = NULL WHERE id = $1`,
+      [invoiceId]
+    );
+  }
+
+  /**
+   * Computes a deterministic hash of the invoice's current state so that a
+   * cached PDF can be reused only when the invoice has not changed.
+   */
+  computePdfCacheHash(invoice: InvoiceWithDetails): string {
+    const parts = [
+      invoice.id,
+      invoice.version,
+      invoice.invoiceNumber,
+      invoice.status,
+      invoice.issueDate instanceof Date ? invoice.issueDate.toISOString() : invoice.issueDate,
+      invoice.dueDate instanceof Date ? invoice.dueDate.toISOString() : invoice.dueDate,
+      invoice.currency,
+      invoice.exchangeRate,
+      invoice.subtotal,
+      invoice.discountTotal,
+      invoice.taxTotal,
+      invoice.feeTotal,
+      invoice.total,
+      invoice.amountPaid,
+      invoice.amountDue,
+      invoice.notes,
+      invoice.terms,
+      invoice.templateId,
+      invoice.templateSchemaVersion,
+      invoice.templateRevision,
+      invoice.paymentInstructions,
+      invoice.depositAmount,
+      invoice.depositType,
+      invoice.depositDueDate instanceof Date ? invoice.depositDueDate.toISOString() : invoice.depositDueDate,
+      invoice.depositPaymentPurpose,
+      invoice.creditApplied,
+      JSON.stringify(invoice.items),
+      JSON.stringify(invoice.fees),
+    ];
+    return createHash("sha256").update(parts.join("|")).digest("hex");
+  }
+
+  private rowToModel(r: Record<string, unknown>): Invoice {
     return {
       id: r.id as string, businessId: r.business_id as string, customerId: r.customer_id as string | null,
       projectId: r.project_id as string | null,

@@ -282,12 +282,20 @@ export class ReceiptService {
     });
   }
 
-  async generatePdf(receiptId: string): Promise<Buffer> {
+async generatePdf(receiptId: string): Promise<Buffer> {
     const { pdf, receiptNumber } = await this.generatePdfWithMeta(receiptId);
     return pdf;
   }
 
   async generatePdfWithMeta(receiptId: string): Promise<{ pdf: Buffer; receiptNumber: string }> {
+    // Check the cached PDF first — receipts are immutable once issued, so the
+    // cache is always valid until the receipt is explicitly cleared.
+    const cached = await receiptRepository.getPdfCache(receiptId);
+    if (cached) {
+      logger.info(`PDF cache hit for receipt ${receiptId}`);
+      return { pdf: cached.pdf, receiptNumber: cached.receiptNumber };
+    }
+
     const client = await query(
       `SELECT r.id, r.receipt_number, r.amount, r.currency, r.status, r.issued_at,
               r.payment_method, r.metadata,

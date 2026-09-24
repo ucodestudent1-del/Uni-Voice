@@ -1,4 +1,5 @@
 import { Decimal } from "decimal.js";
+import { createHash } from "node:crypto";
 import { query } from "../db/pool.js";
 import { getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
@@ -499,12 +500,66 @@ export class QuoteService {
     logger.info(`Quote ${number} sent to ${customerEmail}`);
   }
 
-  async generatePdf(businessId: string, id: string): Promise<Buffer> {
+async generatePdf(businessId: string, id: string): Promise<Buffer> {
     const quote = await this.findById(businessId, id);
+
+    // Check the cached PDF first — if the quote state hash matches, we can
+    // return the stored buffer without re-running puppeteer.
+    const cacheHash = this.computePdfCacheHash(quote);
+    const cached = await this.getPdfCache(id, cacheHash);
+    if (cached) {
+      logger.info(`PDF cache hit for quote ${id}`);
+      return cached;
+    }
+
     const business = await businessRepository.findById(businessId);
     const customer = quote.customerId ? await customerRepository.findById(businessId, quote.customerId) : null;
     const html = await this.renderQuoteHtml(quote, business, customer);
-    return pdfService.generatePdfFromHtml(html, { htmlTemplate: undefined } as any);
+    const pdf = await pdfService.generatePdfFromHtml(html, { htmlTemplate: undefined } as any);
+    await this.storePdfCache(id, pdf, cacheHash);
+    return pdf;
+  }
+
+  private computePdfCacheHash(quote: QuoteWithDetails): string {
+    const parts = [
+      quote.id,
+      quote.quoteNumber,
+      quote.status,
+      quote.issueDate instanceof Date ? quote.issueDate.toISOString() : quote.issueDate,
+      quote.dueDate instanceof Date ? quote.dueDate.toISOString() : quote.dueDate,
+      quote.expiryDate instanceof Date ? quote.expiryDate.toISOString() : quote.expiryDate,
+      quote.currency,
+      quote.subtotal,
+      quote.discountTotal,
+      quote.taxTotal,
+      quote.feeTotal,
+      quote.total,
+      quote.amountPaid,
+      quote.amountDue,
+      quote.notes,
+      quote.terms,
+      JSON.stringify(quote.items),
+      JSON.stringify(quote.fees),
+    ];
+    return createHash("sha256").update(parts.join("|")).digest("hex");
+  }
+
+  private async getPdfCache(quoteId: string, expectedHash: string): Promise<Buffer | null> {
+    const res = await query(
+      `SELECT pdf_cache, pdf_cache_hash FROM quotes WHERE id = $1 AND pdf_cache IS NOT NULL`,
+      [quoteId]
+    );
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    if (row.pdf_cache_hash !== expectedHash) return null;
+    return row.pdf_cache as Buffer;
+  }
+
+  private async storePdfCache(quoteId: string, pdf: Buffer, hash: string): Promise<void> {
+    await query(
+      `UPDATE quotes SET pdf_cache = $1, pdf_cache_hash = $2, pdf_cached_at = NOW() WHERE id = $3`,
+      [pdf, hash, quoteId]
+    );
   }
 
   private async renderQuoteHtml(quote: QuoteWithDetails, business: any, customer: any): Promise<string> {

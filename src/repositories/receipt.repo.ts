@@ -243,7 +243,16 @@ export class ReceiptRepository {
   }
 
   async storePdf(id: string, pdf: Buffer): Promise<void> {
-    await query(`UPDATE receipts SET pdf = $1, updated_at = NOW() WHERE id = $2`, [pdf, id]);
+    await query(`UPDATE receipts SET pdf = $1, pdf_cache = $1, pdf_cached_at = NOW() WHERE id = $2`, [pdf, id]);
+  }
+
+  async getPdfCache(receiptId: string): Promise<{ pdf: Buffer; receiptNumber: string } | null> {
+    const res = await query(
+      `SELECT pdf_cache, receipt_number FROM receipts WHERE id = $1 AND pdf_cache IS NOT NULL`,
+      [receiptId]
+    );
+    if (!res.rows.length) return null;
+    return { pdf: res.rows[0].pdf_cache as Buffer, receiptNumber: res.rows[0].receipt_number as string };
   }
 
   async getPayment(invoiceId: string, businessId: string): Promise<Payment | null> {

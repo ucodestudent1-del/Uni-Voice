@@ -324,6 +324,7 @@ export class InvoiceService {
       deposit_due_date: input.depositDueDate instanceof Date ? input.depositDueDate.toISOString() : input.depositDueDate,
       deposit_payment_purpose: input.depositPaymentPurpose,
     });
+    await invoiceRepository.clearPdfCache(id);
     await invoiceRepository.recordEvent(id, {
       eventType: "updated", actorId: userId, actorType: userId ? "user" : "system",
       metadata: { fields: Object.keys(input) },
@@ -394,6 +395,7 @@ export class InvoiceService {
     logger.info(`Invoice ${id} finalized as ${invoice.invoiceNumber ?? generatedNumber}`);
     invalidateReportsCache(businessId);
     invalidateInvoiceDetailCache(businessId, id);
+    await invoiceRepository.clearPdfCache(id);
     return { invoiceNumber: invoice.invoiceNumber ?? generatedNumber };
   }
 
@@ -1033,13 +1035,18 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     upcoming: any[];
     moneyIn: { total: string; count: number; currency: string };
   }> {
-    const [summary, recentlyPaidRows, requiringAttentionRows] = await Promise.all([
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Run all independent queries in parallel to avoid sequential round-trips.
+    const [summary, recentlyPaidRows, requiringAttentionRows, upcomingRows, moneyInTotal, business] = await Promise.all([
       invoiceRepository.getDashboardSummary(businessId),
       invoiceRepository.findRecentlyPaid(businessId, 10),
-      invoiceRepository.findRequiringAttention(businessId, new Date(), 10),
+      invoiceRepository.findRequiringAttention(businessId, now, 10),
+      invoiceRepository.findUpcomingInvoices(businessId, 7),
+      invoiceRepository.sumPaidSince(businessId, weekAgo),
+      businessRepository.findById(businessId),
     ]);
-
-    const now = new Date();
 
     const recentlyPaid = recentlyPaidRows.map((i) => ({
       id: i.id,
@@ -1063,8 +1070,7 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
       status: i.status,
     }));
 
-    // Cash-flow: invoices due within the next 7 days (open + outstanding).
-    const upcoming = (await invoiceRepository.findUpcomingInvoices(businessId, 7)).map((i) => ({
+    const upcoming = upcomingRows.map((i) => ({
       id: i.id,
       invoiceNumber: i.invoice_number,
       customerName: i.customer_name,
@@ -1075,16 +1081,11 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
       status: i.status,
     }));
 
-    // Cash-flow: money collected in the last 7 days.
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const moneyInTotal = await invoiceRepository.sumPaidSince(businessId, weekAgo);
     const paidInLastWeek = recentlyPaid.filter((i) => {
       const paidAt = i.paidAt ? new Date(i.paidAt) : new Date(0);
       return paidAt >= weekAgo && new Decimal(i.amountPaid || 0).gt(0);
     });
 
-    // Get business default currency
-    const business = await businessRepository.findById(businessId);
     const businessCurrency = business.defaultCurrency || "USD";
 
     return {
@@ -1126,8 +1127,20 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     const invoice = await invoiceRepository.findById(businessId, id);
     const snapshot = await invoiceRepository.getSnapshot(invoice.id);
     const templateData = this.buildSnapshotTemplateData(invoice, snapshot);
+
+    // Check the cached PDF first — if the invoice state hash matches, we can
+    // return the stored buffer without re-running puppeteer.
+    const cacheHash = invoiceRepository.computePdfCacheHash(invoice);
+    const cached = await invoiceRepository.getPdfCache(id, cacheHash);
+    if (cached) {
+      logger.info(`PDF cache hit for invoice ${id}`);
+      return cached;
+    }
+
     const html = templateRenderer.render(templateData);
-    return pdfService.generatePdfFromHtml(html, templateData);
+    const pdf = await pdfService.generatePdfFromHtml(html, templateData);
+    await invoiceRepository.storePdfCache(id, pdf, cacheHash);
+    return pdf;
   }
 }
 

@@ -179,6 +179,9 @@ export interface Invoice {
   updatedAt: Date;
   createdBy?: string | null;
   updatedBy?: string | null;
+  pdfCache?: Buffer | null;
+  pdfCacheHash?: string | null;
+  pdfCachedAt?: Date | null;
 }
 
 export interface InvoiceSnapshot {
