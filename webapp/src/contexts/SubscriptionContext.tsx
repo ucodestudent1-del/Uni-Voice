@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { getSubscription, getPlans, upgradeSubscription, downgradeSubscription, getFeatures } from "../api/client";
 import { useAuth } from "./AuthContext";
 
@@ -9,6 +9,39 @@ interface Plan {
   description?: string;
   price: number;
   features?: any[];
+}
+
+interface SubscriptionCache {
+  plan: Plan | null;
+  subscription: any;
+  features: any[];
+  timestamp: number;
+}
+
+const CACHE_TTL = 60 * 1000;
+const subscriptionCache = new Map<string, SubscriptionCache>();
+
+function getCachedSubscription(businessId?: string): SubscriptionCache | null {
+  if (!businessId) return null;
+  const cached = subscriptionCache.get(businessId);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp > CACHE_TTL) {
+    subscriptionCache.delete(businessId);
+    return null;
+  }
+  return cached;
+}
+
+function setCachedSubscription(businessId: string, data: SubscriptionCache): void {
+  subscriptionCache.set(businessId, data);
+}
+
+export function clearSubscriptionCache(businessId?: string): void {
+  if (businessId) {
+    subscriptionCache.delete(businessId);
+  } else {
+    subscriptionCache.clear();
+  }
 }
 
 interface SubscriptionContextType {
@@ -29,22 +62,50 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [features, setFeatures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, businessId } = useAuth();
+  const isInitialLoad = useRef(true);
 
   async function refresh() {
+    if (!businessId) {
+      setPlan(null);
+      setSubscription(null);
+      setFeatures([]);
+      setLoading(false);
+      return;
+    }
+
+    const cached = getCachedSubscription(businessId);
+    if (cached) {
+      setPlan(cached.plan);
+      setSubscription(cached.subscription);
+      setFeatures(cached.features);
+      setLoading(false);
+      return;
+    }
+
     try {
       const [subData, plansData, featuresData] = await Promise.all([
         getSubscription().catch(() => null),
         getPlans().catch(() => ({ plans: [] })),
         getFeatures().catch(() => ({ features: [], premium: [] })),
       ]);
-      setSubscription(subData?.subscription ?? null);
-      setPlan(subData?.plan ?? null);
-      setFeatures(featuresData?.features ?? []);
+      const planData = subData?.plan ?? null;
+      const subData_ = subData?.subscription ?? null;
+      const featureData = featuresData?.features ?? [];
+      setSubscription(subData_);
+      setPlan(planData);
+      setFeatures(featureData);
+      setCachedSubscription(businessId, {
+        plan: planData,
+        subscription: subData_,
+        features: featureData,
+        timestamp: Date.now(),
+      });
     } catch {
       // ignore
     } finally {
       setLoading(false);
+      isInitialLoad.current = false;
     }
   }
 
@@ -52,10 +113,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (authLoading) return;
     if (!isAuthenticated) {
       setLoading(false);
+      isInitialLoad.current = false;
       return;
     }
-    refresh();
-  }, [isAuthenticated, authLoading]);
+    if (isInitialLoad.current || !businessId) {
+      isInitialLoad.current = false;
+      void refresh();
+    }
+  }, [isAuthenticated, authLoading, businessId]);
 
   const upgrade = async (planCode: string) => {
     const data = await upgradeSubscription(planCode);
@@ -65,7 +130,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   };
 
   const downgrade = async (planCode: string) => {
-    const data = await downgradeSubscription(planCode);
+    await downgradeSubscription(planCode);
+    clearSubscriptionCache(businessId);
     await refresh();
   };
 

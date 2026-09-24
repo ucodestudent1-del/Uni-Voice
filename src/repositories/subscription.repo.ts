@@ -1,6 +1,15 @@
 import { query } from "../db/pool.js";
 import type { Plan, FeatureFlag, BusinessSubscription, UsageQuota, SubscriptionEvent, PlanCode, SubscriptionStatus } from "../domain/subscription.js";
 import { rowToDate } from "./helpers.js";
+import { TtlCache } from "../utils/ttl-cache.js";
+
+const featureFlagListCache = new TtlCache<FeatureFlag[]>(30 * 1000);
+const premiumFeatureFlagCache = new TtlCache<FeatureFlag[]>(30 * 1000);
+
+export function invalidateFeatureFlagLists(): void {
+  featureFlagListCache.clear();
+  premiumFeatureFlagCache.clear();
+}
 
 export interface PlanInput {
   code: PlanCode;
@@ -132,16 +141,24 @@ export class SubscriptionRepository {
   }
 
   async listFeatureFlags(): Promise<FeatureFlag[]> {
+    const cached = featureFlagListCache.get("all");
+    if (cached) return cached;
     const res = await query("SELECT * FROM feature_flags ORDER BY category, code");
-    return res.rows.map((r) => this.rowToFeatureFlag(r));
+    const result = res.rows.map((r) => this.rowToFeatureFlag(r));
+    featureFlagListCache.set("all", result);
+    return result;
   }
 
   async listPremiumFeatureFlags(planCode: PlanCode): Promise<FeatureFlag[]> {
+    const cached = premiumFeatureFlagCache.get(planCode);
+    if (cached) return cached;
     const res = await query(
       `SELECT * FROM feature_flags WHERE is_premium = TRUE AND (requires_plan IS NULL OR requires_plan <= $1::subscription_plan) ORDER BY category, code`,
       [planCode]
     );
-    return res.rows.map((r) => this.rowToFeatureFlag(r));
+    const result = res.rows.map((r) => this.rowToFeatureFlag(r));
+    premiumFeatureFlagCache.set(planCode, result);
+    return result;
   }
 
   private rowToFeatureFlag(r: Record<string, unknown>): FeatureFlag {

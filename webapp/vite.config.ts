@@ -22,4 +22,30 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunk(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react") || id.includes("react-dom") || id.includes("react-router-dom")) {
+              return "react-vendor";
+            }
+            if (id.includes("recharts") || id.includes("d3-")) {
+              return "charts";
+            }
+            if (id.includes("lucide-react")) {
+              return "icons";
+            }
+            return "vendor";
+          }
+        },
+      },
+    },
+    sourcemap: true,
+    assetsInlineLimit: 4096,
+    assetsHash: true,
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "axios", "react-router-dom"],
+  },
 });

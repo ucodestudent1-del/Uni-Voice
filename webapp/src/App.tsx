@@ -8,7 +8,6 @@ import Register from "./pages/Register";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import OnboardingWizard from "./pages/OnboardingWizard";
-import InvoiceDetail from "./pages/InvoiceDetail";
 import InvoiceEditorPage from "./pages/InvoiceEditorPage";
 import QuickInvoicePage from "./pages/QuickInvoicePage";
 import Customers from "./pages/Customers";
@@ -29,6 +28,7 @@ import Terms from "./pages/Terms";
 // This keeps the initial JS bundle small and avoids loading code for sections
 // the user never visits.
 const Invoices = lazy(() => import("./pages/Invoices"));
+const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const Expenses = lazy(() => import("./pages/Expenses"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Quotes = lazy(() => import("./pages/Quotes"));
@@ -78,9 +78,9 @@ export default function App() {
       <Route path="/app" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="invoices" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Invoices /></Suspense>} />
-        <Route path="invoices/new" element={<QuickInvoicePage />} />
-        <Route path="invoices/:id" element={<InvoiceDetail />} />
-        <Route path="invoices/:id/edit" element={<InvoiceEditorPage />} />
+        <Route path="invoices/new" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><QuickInvoicePage /></Suspense>} />
+        <Route path="invoices/:id" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><InvoiceDetail /></Suspense>} />
+        <Route path="invoices/:id/edit" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><InvoiceEditorPage /></Suspense>} />
           <Route path="customers" element={<Customers />} />
           <Route path="customers/:id" element={<CustomerDetail />} />
           <Route path="products" element={<Products />} />

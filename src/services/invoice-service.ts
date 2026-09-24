@@ -29,6 +29,8 @@ const invoiceDetailCache = new TtlCache<{
   totals: { subtotal: string; discountTotal: string; taxTotal: string; feeTotal: string; total: string; amountPaid: string; amountDue: string };
 }>(60 * 1000);
 
+const dashboardCache = new TtlCache<any>(60 * 1000);
+
 function invalidateInvoiceDetailCache(businessId: string, id?: string): void {
   if (id) {
     invoiceDetailCache.delete(`${businessId}:${id}`);
@@ -1035,6 +1037,9 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     upcoming: any[];
     moneyIn: { total: string; count: number; currency: string };
   }> {
+    const cached = dashboardCache.get(businessId);
+    if (cached) return cached;
+
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -1088,7 +1093,7 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
 
     const businessCurrency = business.defaultCurrency || "USD";
 
-    return {
+    const result = {
       summary: {
         totalOutstanding: new Decimal(summary.totalOutstanding).toFixed(2),
         totalOverdue: new Decimal(summary.totalOverdue).toFixed(2),
@@ -1109,6 +1114,13 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
         currency: businessCurrency,
       },
     };
+    dashboardCache.set(businessId, result);
+    return result;
+  }
+
+  invalidateDashboardCache(businessId: string): void {
+    dashboardCache.delete(businessId);
+    invalidateReportsCache(businessId);
   }
 
   async getPublicInvoice(token: string): Promise<{ invoice: RepoInvoice; html: string; pdfUrl: string }> {

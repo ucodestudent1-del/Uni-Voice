@@ -952,7 +952,7 @@ app.put("/api/invoices/:id/fees", requireAuth, async (req: AuthRequest, res) => 
 app.post("/api/invoices/:id/finalize", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await invoiceService.finalize(req.user!.businessId, req.params.id, req.user.id);
-  invalidateReportsCache(req.user!.businessId);
+  invoiceService.invalidateDashboardCache(req.user!.businessId);
   res.json(result);
 });
 
@@ -2290,15 +2290,15 @@ app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res
   const { amount, provider = "stub", providerPaymentId, idempotencyKey } = req.body;
   if (!amount) return res.status(400).json({ error: "amount required" });
    await invoiceService.recordPayment(
-    req.user!.businessId,
-    req.params.id,
-    amount,
-    provider,
-    providerPaymentId,
-    idempotencyKey
-  );
-  invalidateReportsCache(req.user!.businessId);
-  res.status(201).json({ ok: true });
+     req.user!.businessId,
+     req.params.id,
+     amount,
+     provider,
+     providerPaymentId,
+     idempotencyKey
+   );
+   invoiceService.invalidateDashboardCache(req.user!.businessId);
+   res.status(201).json({ ok: true });
 });
 
 // Global payments list (all payments for the business, paginated)

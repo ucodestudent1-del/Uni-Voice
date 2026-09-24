@@ -1,7 +1,9 @@
 import { subscriptionRepository } from "../repositories/subscription.repo.js";
-import type { PlanCode, Plan, BusinessSubscription, EntitlementCheck } from "../domain/subscription.js";
+import type { PlanCode, Plan, BusinessSubscription, EntitlementCheck, FeatureFlag } from "../domain/subscription.js";
 import { rowToDate } from "../repositories/helpers.js";
 import { getRequestContext } from "../db/pool.js";
+import { featureFlagCache, invalidateFeatureFlagCache, clearFeatureFlagCache } from "./feature-flag-cache.js";
+import { invalidateReportsCache } from "./reports-cache.js";
 
 const TIER_HIERARCHY: Record<PlanCode, number> = { free: 0, pro: 1, scale: 2, business: 3 };
 
@@ -16,6 +18,7 @@ export class SubscriptionService {
 
   async ensureDefaults(): Promise<void> {
     this.planCache.clear();
+    clearFeatureFlagCache();
     const plans = [
       { code: "free" as PlanCode, name: "Free", description: "Make professional invoices", price: 0, sortOrder: 0 },
       { code: "pro" as PlanCode, name: "Pro", description: "Automate your invoicing", price: 19, sortOrder: 1 },
@@ -132,7 +135,15 @@ export class SubscriptionService {
     const ctx = context ?? await this.getSubscriptionContext(businessId);
     const planLevel = TIER_HIERARCHY[ctx.plan.code];
 
-    const flag = await subscriptionRepository.findFeatureFlagByCode(featureCode);
+    let flag: FeatureFlag | null;
+    const cached = featureFlagCache.get(featureCode);
+    if (cached !== undefined) {
+      flag = cached;
+    } else {
+      flag = await subscriptionRepository.findFeatureFlagByCode(featureCode);
+      featureFlagCache.set(featureCode, flag);
+    }
+
     if (!flag) {
       return { featureCode, allowed: true, reason: "Feature not registered; defaulting to allowed" };
     }
@@ -211,7 +222,10 @@ export class SubscriptionService {
       throw new Error(`Cannot downgrade from ${ctx.plan.code} to ${targetPlanCode} via this endpoint`);
     }
 
-    return subscriptionRepository.changePlan(businessId, targetPlan.id, ctx.plan.code, targetPlanCode);
+    const result = await subscriptionRepository.changePlan(businessId, targetPlan.id, ctx.plan.code, targetPlanCode);
+    clearFeatureFlagCache();
+    invalidateReportsCache(businessId);
+    return result;
   }
 
   async downgradeBusiness(businessId: string, targetPlanCode: PlanCode): Promise<BusinessSubscription> {
@@ -223,7 +237,10 @@ export class SubscriptionService {
       throw new Error(`Cannot upgrade from ${ctx.plan.code} to ${targetPlanCode} via this endpoint`);
     }
 
-    return subscriptionRepository.changePlan(businessId, targetPlan.id, ctx.plan.code, targetPlanCode);
+    const result = await subscriptionRepository.changePlan(businessId, targetPlan.id, ctx.plan.code, targetPlanCode);
+    clearFeatureFlagCache();
+    invalidateReportsCache(businessId);
+    return result;
   }
 
   async getPlan(code: PlanCode): Promise<Plan | null> {
@@ -238,6 +255,14 @@ export class SubscriptionService {
     const plan = await subscriptionRepository.findPlanById(planId);
     if (plan) this.planCache.set(planId, plan);
     return plan;
+  }
+
+  invalidateFeatureFlagCache(featureCode?: string): void {
+    if (featureCode) {
+      invalidateFeatureFlagCache(featureCode);
+    } else {
+      clearFeatureFlagCache();
+    }
   }
 
   private rowToPlan(r: Record<string, unknown>): Plan {

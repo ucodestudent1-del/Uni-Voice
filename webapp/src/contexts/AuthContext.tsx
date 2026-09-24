@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { getMe, login as apiLogin, register as apiRegister, verifyTwoFactor as verifyTwoFactorApi, getOnboarding, completeOnboardingStep, finishOnboarding as finishOnboardingApi } from "../api/client";
 import type { OnboardingProgress } from "../types/api";
+import { clearSubscriptionCache } from "./SubscriptionContext";
 
 interface User {
   id: string;
@@ -10,6 +11,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  businessId: string | undefined;
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
@@ -18,7 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   onboarding: OnboardingProgress | null;
   completeStep: (step: string) => Promise<OnboardingProgress>;
-  skipOnboarding: () => Promise<OnboardingProgress>;
+  skipOnboarding: () => Promise<void>;
   refreshOnboarding: () => Promise<void>;
 }
 
@@ -125,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
     setOnboarding(null);
+    clearSubscriptionCache();
   };
 
   const verifyTwoFactor = async (email: string, code: string) => {
@@ -133,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
+    <AuthContext.Provider value={{ user, businessId: user?.businessId, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
       {children}
     </AuthContext.Provider>
   );
