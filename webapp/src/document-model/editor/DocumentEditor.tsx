@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, ReactNode } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo, ReactNode } from "react";
 import {
   DndContext,
   closestCenter,
@@ -105,7 +105,7 @@ export function getComponentIcon(type: ComponentType): React.ReactNode {
   return icons[type] ?? "•";
 }
 
-const PaletteItemCard: React.FC<{ type: ComponentType; label: string; description: string }> = ({ type, label, description }) => {
+const PaletteItemCard = React.memo(({ type, label, description }: { type: ComponentType; label: string; description: string }) => {
   const dragId = `palette-${type}`;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: dragId,
@@ -143,7 +143,8 @@ const PaletteItemCard: React.FC<{ type: ComponentType; label: string; descriptio
       </div>
     </div>
   );
-};
+});
+PaletteItemCard.displayName = "PaletteItemCard";
 
 function parseDropZoneId(dropZoneId: string): { parentId: ParentId; index: number } | null {
   const match = dropZoneId.match(/^dropzone-(.+)-(\d+)$/);
@@ -151,7 +152,8 @@ function parseDropZoneId(dropZoneId: string): { parentId: ParentId; index: numbe
   return { parentId: match[1] as ParentId, index: parseInt(match[2], 10) };
 }
 
-const SortableNode: React.FC<{
+const SortableNode = React.memo(
+  ({ componentId, doc, isSelected, onSelect, onContextMenu, onDuplicate, onDelete, renderContext }: {
   componentId: ComponentId;
   doc: InvoiceDocument;
   isSelected: boolean;
@@ -160,7 +162,7 @@ const SortableNode: React.FC<{
   onDuplicate: (id: ComponentId) => void;
   onDelete: (id: ComponentId) => void;
   renderContext: RenderContext;
-}> = ({ componentId, doc, isSelected, onSelect, onContextMenu, onDuplicate, onDelete, renderContext }) => {
+}) => {
   const {
     attributes,
     listeners,
@@ -292,7 +294,8 @@ const SortableNode: React.FC<{
       )}
     </div>
   );
-};
+});
+SortableNode.displayName = "SortableNode";
 
 const DropZone: React.FC<{
   id: string;
@@ -300,7 +303,7 @@ const DropZone: React.FC<{
   parentId: ParentId;
   index: number;
   activeDrag: ActiveDrag | null;
-}> = ({ id, doc, parentId, index, activeDrag }) => {
+}> = React.memo(({ id, doc, parentId, index, activeDrag }) => {
   const validation = activeDrag ? canDropComponent(doc, activeDrag.componentType!, parentId) : { success: false };
   const canReceive = activeDrag?.operation === "create" ||
     (activeDrag?.operation === "reorder" && activeDrag.componentId !== null);
@@ -330,7 +333,8 @@ const DropZone: React.FC<{
       {isValidTarget ? `Insert at index ${index}` : "Drop here"}
     </div>
   );
-};
+});
+DropZone.displayName = "DropZone";
 
 function renderComponentTree(
   doc: InvoiceDocument,
@@ -727,7 +731,7 @@ case "ArrowUp":
     return () => window.document.removeEventListener("keydown", handleKeyDown);
   }, [selectedComponentId, onDelete, onDuplicate]);
 
-  const renderContext: RenderContext = {
+  const renderContext: RenderContext = useMemo(() => ({
     document: doc,
     business,
     customer,
@@ -738,7 +742,7 @@ case "ArrowUp":
     isEditing: true,
     selectedComponentId: selectedComponentId ?? null,
     onSelect,
-   };
+  }), [doc, business, customer, invoice, calculations, currency, locale, selectedComponentId, onSelect]);
 
    const handleDragStart = useCallback((event: DragStartEvent) => {
     const activeId = event.active.id as string;

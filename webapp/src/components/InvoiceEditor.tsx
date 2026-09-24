@@ -257,43 +257,47 @@ function InvoiceEditorContent() {
     }
   }, [dirty]);
 
-  const calcResult = (() => {
+  const calculationInput = useMemo<InvoiceCalculationInput | null>(() => {
+    if (!editorData) return null;
+    const items = editorData.items || [];
+    const fees = editorData.fees || [];
+
+    const lineItems: LineItemInput[] = items.map((it) => ({
+      description: it.description,
+      quantity: it.quantity,
+      unit: it.unit || "each",
+      unitPrice: it.unitPrice,
+      discount: it.discount && Number(it.discount) > 0
+        ? { type: it.discountType ?? "fixed", value: it.discount }
+        : undefined,
+      taxRate: it.taxRate ?? "0",
+      isTaxInclusive: it.isTaxInclusive ?? false,
+    }));
+    const feeInputs: FeeInput[] = fees.map((f) => ({
+      description: f.description,
+      amount: f.amount,
+      taxRate: f.taxRate ?? "0",
+    }));
+
+    return {
+      currency: (editorData.currency || "USD") as any,
+      lineItems,
+      fees: feeInputs.length ? feeInputs : undefined,
+      invoiceDiscount: (editorData.discountType && editorData.discountValue && Number(editorData.discountValue) > 0)
+        ? { type: editorData.discountType, value: editorData.discountValue }
+        : undefined,
+      amountPaid: editorData.amountPaid,
+    };
+  }, [editorData]);
+
+  const calcResult = useMemo(() => {
+    if (!calculationInput) return null;
     try {
-      const items = editorData?.items || [];
-      const fees = editorData?.fees || [];
-
-      const lineItems: LineItemInput[] = items.map((it) => ({
-        description: it.description,
-        quantity: it.quantity,
-        unit: it.unit || "each",
-        unitPrice: it.unitPrice,
-        discount: it.discount && Number(it.discount) > 0
-          ? { type: it.discountType ?? "fixed", value: it.discount }
-          : undefined,
-        taxRate: it.taxRate ?? "0",
-        isTaxInclusive: it.isTaxInclusive ?? false,
-      }));
-      const feeInputs: FeeInput[] = fees.map((f) => ({
-        description: f.description,
-        amount: f.amount,
-        taxRate: f.taxRate ?? "0",
-      }));
-
-      const input: InvoiceCalculationInput = {
-        currency: (editorData?.currency || "USD") as any,
-        lineItems,
-        fees: feeInputs.length ? feeInputs : undefined,
-        invoiceDiscount: (editorData?.discountType && editorData?.discountValue && Number(editorData.discountValue) > 0)
-          ? { type: editorData.discountType, value: editorData.discountValue }
-          : undefined,
-        amountPaid: editorData?.amountPaid,
-      };
-
-      return calculationEngine.calculate(input);
+      return calculationEngine.calculate(calculationInput);
     } catch {
       return null;
     }
-  })();
+  }, [calculationInput]);
 
   const totals = calcResult ? {
     subtotal: formatCurrency(calcResult.subtotal, editorData?.currency || "USD"),
@@ -309,7 +313,7 @@ function InvoiceEditorContent() {
     hasPaid: !calcResult.amountPaid.isZero(),
   } : null;
 
-  const calculations = calcResult
+  const calculations = useMemo(() => calcResult
     ? {
         subtotal: calcResult.subtotal.toFixed(),
         discountTotal: calcResult.discountTotal.toFixed(),
@@ -338,9 +342,26 @@ function InvoiceEditorContent() {
           taxAmount: f.taxAmount.toFixed(),
         })),
       }
-    : null;
+    : null, [calcResult]);
 
-  const renderContext: RenderContext = {
+  const validationInput = useMemo(() => editorData
+    ? {
+        customerId: editorData.customerId,
+        customer: editorData.customer,
+        currency: editorData.currency,
+        issueDate: editorData.issueDate,
+        dueDate: editorData.dueDate,
+        items: editorData.items || [],
+        fees: editorData.fees,
+        notes: editorData.notes,
+        terms: editorData.terms,
+        paymentInstructions: editorData.paymentInstructions,
+      }
+    : null, [editorData]);
+
+  const validation = useInvoiceValidation(validationInput, calcResult ?? undefined);
+
+  const renderContext: RenderContext = useMemo(() => ({
     document: doc,
     business: business || undefined,
     customer: editorData?.customer,
@@ -361,20 +382,7 @@ function InvoiceEditorContent() {
     isEditing: true,
     selectedComponentId: selectedComponentId,
     onSelect,
-  };
-
-  const validation = useInvoiceValidation({
-    customerId: editorData?.customerId,
-    customer: editorData?.customer,
-    currency: editorData?.currency,
-    issueDate: editorData?.issueDate,
-    dueDate: editorData?.dueDate,
-    items: editorData?.items || [],
-    fees: editorData?.fees,
-    notes: editorData?.notes,
-    terms: editorData?.terms,
-    paymentInstructions: editorData?.paymentInstructions,
-  });
+  }), [doc, business, editorData, calculations, selectedComponentId, onSelect]);
 
   const allValidationIssues = useMemo(() => {
     const merged = [...validation.issues, ...apiValidationIssues];

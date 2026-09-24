@@ -11,7 +11,7 @@ import { calculationEngine, type LineItemInput, type FeeInput, type InvoiceCalcu
 import { SUPPORTED_CURRENCIES, type CurrencyCode } from "../../utils/currency";
 import { analytics } from "../../lib/analytics";
 import type { ApiCustomer, ApiProduct, ApiBusiness } from "../../types/api";
-import { useInvoiceValidation } from "../../hooks/useInvoiceValidation";
+import { useInvoiceValidation, type ValidationInput } from "../../hooks/useInvoiceValidation";
 import type {
   QuoteBuilderData,
   BuilderLineItem,
@@ -282,36 +282,6 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
     }
   }
 
-  const validation = useInvoiceValidation(
-    data.customerId || data.customer
-      ? {
-          customerId: data.customerId ?? undefined,
-          customer: data.customer ?? undefined,
-          currency: data.currency,
-          issueDate: data.issueDate || undefined,
-          dueDate: data.dueDate || undefined,
-          items: data.items.map(it => ({
-            description: it.description,
-            quantity: it.quantity,
-            unit: it.unit,
-            unitPrice: it.unitPrice,
-            discount: it.discount && Number(it.discount) > 0 ? it.discount : undefined,
-            discountType: it.discountType,
-            taxRate: it.taxRate || "0",
-            isTaxInclusive: it.isTaxInclusive ?? false,
-          })),
-          fees: data.fees.length > 0 ? data.fees.map(f => ({
-            description: f.description,
-            amount: f.amount,
-            taxRate: f.taxRate || "0",
-          })) : undefined,
-          notes: data.notes || undefined,
-          terms: data.terms || undefined,
-          paymentInstructions: data.paymentInstructions || undefined,
-        }
-      : null
-  );
-
   const calcResult = useMemo(() => {
     try {
       const lineItems: LineItemInput[] = data.items.map(it => ({
@@ -352,6 +322,37 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
       return null;
     }
   }, [data.items, data.fees, data.discount, data.currency]);
+
+  const validationInput = useMemo<ValidationInput | null>(() => {
+    if (!data.customerId && !data.customer) return null;
+    return {
+      customerId: data.customerId ?? undefined,
+      customer: data.customer ?? undefined,
+      currency: data.currency,
+      issueDate: data.issueDate || undefined,
+      dueDate: data.dueDate || undefined,
+      items: data.items.map(it => ({
+        description: it.description,
+        quantity: it.quantity,
+        unit: it.unit,
+        unitPrice: it.unitPrice,
+        discount: it.discount && Number(it.discount) > 0 ? it.discount : undefined,
+        discountType: it.discountType,
+        taxRate: it.taxRate || "0",
+        isTaxInclusive: it.isTaxInclusive ?? false,
+      })),
+      fees: data.fees.length > 0 ? data.fees.map(f => ({
+        description: f.description,
+        amount: f.amount,
+        taxRate: f.taxRate || "0",
+      })) : undefined,
+      notes: data.notes || undefined,
+      terms: data.terms || undefined,
+      paymentInstructions: data.paymentInstructions || undefined,
+    };
+  }, [data]);
+
+  const validation = useInvoiceValidation(validationInput, calcResult ?? undefined);
 
   const totals = useMemo(() => {
     if (!calcResult) return null;

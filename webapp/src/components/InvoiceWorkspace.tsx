@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
@@ -1073,7 +1073,7 @@ export default function InvoiceWorkspace() {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function WorkspaceHeader({
+const WorkspaceHeader = React.memo(function WorkspaceHeader({
   isNew,
   invoiceId,
   invoiceNumber,
@@ -1148,9 +1148,9 @@ function WorkspaceHeader({
       </div>
     </header>
   );
-}
+});
 
-function CustomerHeaderSection({
+const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
   invoice,
   onField,
   customers,
@@ -1233,9 +1233,9 @@ function CustomerHeaderSection({
       </div>
     </div>
   );
-}
+});
 
-function TotalsCard({
+const TotalsCard = React.memo(function TotalsCard({
   invoice,
   calc,
   onField,
@@ -1294,9 +1294,9 @@ function TotalsCard({
       </div>
     </div>
   );
-}
+});
 
-function SavedServicesBar({
+const SavedServicesBar = React.memo(function SavedServicesBar({
   products,
   onSelect,
 }: {
@@ -1321,9 +1321,9 @@ function SavedServicesBar({
       </div>
     </div>
   );
-}
+});
 
-function LineItemsTable({
+const LineItemsTable = React.memo(function LineItemsTable({
   invoice,
   calc,
   onItemChange,
@@ -1484,9 +1484,9 @@ function LineItemsTable({
       </div>
     </div>
   );
-}
+});
 
-function FeesSection({
+const FeesSection = React.memo(function FeesSection({
   fees,
   onChange,
 }: {
@@ -1561,9 +1561,9 @@ function FeesSection({
       </button>
     </div>
   );
-}
+});
 
-function NotesSection({
+const NotesSection = React.memo(function NotesSection({
   invoice,
   onField,
   onFiles,
@@ -1638,9 +1638,9 @@ function NotesSection({
       />
     </div>
   );
-}
+});
 
-function PhotoUploadSection({
+const PhotoUploadSection = React.memo(function PhotoUploadSection({
   label,
   items,
   onFiles,
@@ -1702,9 +1702,9 @@ function PhotoUploadSection({
       )}
     </div>
   );
-}
+});
 
-function ValidationBanner({ issues }: { issues: ReturnType<typeof useInvoiceValidation>["issues"] }) {
+const ValidationBanner = React.memo(function ValidationBanner({ issues }: { issues: ReturnType<typeof useInvoiceValidation>["issues"] }) {
   if (!issues.length) return null;
   return (
     <div className="mb-4 rounded-lg border border-error-border bg-error-bg p-3 text-sm text-error-text">
@@ -1724,9 +1724,9 @@ function ValidationBanner({ issues }: { issues: ReturnType<typeof useInvoiceVali
       </ul>
     </div>
   );
-}
+});
 
-function ActionFooter({
+const ActionFooter = React.memo(function ActionFooter({
   isNew,
   hasInvoiceId,
   saveState,
@@ -1793,9 +1793,9 @@ function ActionFooter({
       </button>
     </footer>
   );
-}
+});
 
-function ReviewAndSendDialog({
+const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
   invoice,
   invoiceId,
   calc,
@@ -1970,9 +1970,9 @@ function ReviewAndSendDialog({
       </div>
     </div>
   );
-}
+});
 
-function PreviewDialog({
+const PreviewDialog = React.memo(function PreviewDialog({
   invoice,
   onClose,
   onDownloadPdf,
@@ -2009,4 +2009,4 @@ function PreviewDialog({
       </div>
     </div>
   );
-}
+});

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { InvoiceDocument } from "./types";
 import { renderDocumentTree, createRenderContext } from "./renderer";
 
@@ -23,7 +23,10 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   locale,
   className = "",
 }) => {
-  const ctx = createRenderContext(document, business, customer, invoice, calculations, currency, locale, false);
+  const ctx = useMemo(
+    () => createRenderContext(document, business, customer, invoice, calculations, currency, locale, false),
+    [document, business, customer, invoice, calculations, currency, locale]
+  );
 
   return (
     <div className={`bg-surface p-8 ${className}`}>

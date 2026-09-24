@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { Decimal } from "decimal.js";
 import { CreditCard, Upload } from "lucide-react";
 import { formatCurrency } from "../utils/format";
@@ -69,7 +70,7 @@ function fmtRate(v: string | number | undefined): string {
   return rate.mul(100).toFixed(2) + "%";
 }
 
-export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice }) {
+export default React.memo(function InvoicePreview({ invoice }: { invoice: PreviewInvoice }) {
   const cur = invoice.currency;
 
   return (
@@ -277,7 +278,7 @@ export default function InvoicePreview({ invoice }: { invoice: PreviewInvoice })
       )}
     </div>
   );
-}
+});
 
 function computeLineTotal(item: PreviewLineItem, currency: string): string {
   const qty = new Decimal(item.quantity || 1);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   findComponentDeep,
   getChildren,
@@ -112,7 +112,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
     return null;
   }
 
-  const tree = buildNodeTree(document, null);
+  const tree = useMemo(() => buildNodeTree(document, null), [document]);
 
   return (
     <div className="w-64 overflow-y-auto border-l border-color-subtle bg-surface">
