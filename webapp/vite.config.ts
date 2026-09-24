@@ -25,11 +25,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunk(id) {
+        manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("react") || id.includes("react-dom") || id.includes("react-router-dom")) {
-              return "react-vendor";
-            }
             if (id.includes("recharts") || id.includes("d3-")) {
               return "charts";
             }
@@ -44,6 +41,7 @@ export default defineConfig({
     sourcemap: true,
     assetsInlineLimit: 4096,
     assetsHash: true,
+    chunkSizeWarningLimit: 2000,
   },
   optimizeDeps: {
     include: ["react", "react-dom", "axios", "react-router-dom"],

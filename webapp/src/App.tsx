@@ -8,8 +8,6 @@ import Register from "./pages/Register";
 import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import OnboardingWizard from "./pages/OnboardingWizard";
-import InvoiceEditorPage from "./pages/InvoiceEditorPage";
-import QuickInvoicePage from "./pages/QuickInvoicePage";
 import Customers from "./pages/Customers";
 import CustomerDetail from "./pages/CustomerDetail";
 import Products from "./pages/Products";
@@ -29,6 +27,8 @@ import Terms from "./pages/Terms";
 // the user never visits.
 const Invoices = lazy(() => import("./pages/Invoices"));
 const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
+const InvoiceEditorPage = lazy(() => import("./pages/InvoiceEditorPage"));
+const QuickInvoicePage = lazy(() => import("./pages/QuickInvoicePage"));
 const Expenses = lazy(() => import("./pages/Expenses"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Quotes = lazy(() => import("./pages/Quotes"));
@@ -81,13 +81,14 @@ export default function App() {
         <Route path="invoices/new" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><QuickInvoicePage /></Suspense>} />
         <Route path="invoices/:id" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><InvoiceDetail /></Suspense>} />
         <Route path="invoices/:id/edit" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><InvoiceEditorPage /></Suspense>} />
-          <Route path="customers" element={<Customers />} />
-          <Route path="customers/:id" element={<CustomerDetail />} />
-          <Route path="products" element={<Products />} />
-          <Route path="payments" element={<Payments />} />
-          <Route path="templates" element={<Templates />} />
-          <Route path="templates/new" element={<TemplateEditorPage />} />
-          <Route path="templates/:id/edit" element={<TemplateEditorPage />} />
+
+        <Route path="customers" element={<Customers />} />
+        <Route path="customers/:id" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><CustomerDetail /></Suspense>} />
+        <Route path="products" element={<Products />} />
+        <Route path="payments" element={<Payments />} />
+        <Route path="templates" element={<Templates />} />
+        <Route path="templates/new" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><TemplateEditorPage /></Suspense>} />
+        <Route path="templates/:id/edit" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><TemplateEditorPage /></Suspense>} />
           <Route path="expenses" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Expenses /></Suspense>} />
           <Route path="projects" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Projects /></Suspense>} />
           <Route path="projects/:id" element={<ProjectDetail />} />
