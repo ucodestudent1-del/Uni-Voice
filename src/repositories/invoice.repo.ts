@@ -275,7 +275,7 @@ export class InvoiceRepository {
   }
 
   async updateTotals(invoiceId: string, totals: InvoiceTotals, client?: any): Promise<void> {
-    const exec = client ?? query;
+    const exec = client ? client.query.bind(client) : query;
     await exec(
       `UPDATE invoices SET subtotal = $2, discount_total = $3, tax_total = $4, fee_total = $5,
        total = $6, amount_paid = $7, amount_due = $8, updated_at = NOW()
@@ -381,7 +381,7 @@ export class InvoiceRepository {
   }
 
   async assignNumber(businessId: string, invoiceId: string, invoiceNumber: string, client?: any): Promise<void> {
-    const exec = client ?? query;
+    const exec = client ? client.query.bind(client) : query;
     const res = await exec(
       `UPDATE invoices SET invoice_number = $1 WHERE id = $2 AND business_id = $3 RETURNING id`,
       [invoiceNumber, invoiceId, businessId]
@@ -390,7 +390,7 @@ export class InvoiceRepository {
   }
 
   async finalize(businessId: string, invoiceId: string, opts: { finalizedAt: Date }, client?: any): Promise<void> {
-    const exec = client ?? query;
+    const exec = client ? client.query.bind(client) : query;
     const res = await exec(
       `UPDATE invoices SET is_finalized = TRUE, finalized_at = $1, updated_at = NOW()
        WHERE id = $2 AND business_id = $3 RETURNING id`,
@@ -415,12 +415,12 @@ export class InvoiceRepository {
       }
     }
     set.push(`updated_at = NOW()`);
-    const exec = client ?? query;
+    const exec = client ? client.query.bind(client) : query;
     await exec(`UPDATE invoices SET ${set.join(", ")} WHERE id = $1`, vals);
   }
 
   async recordEvent(invoiceId: string, event: { eventType: string; actorId?: string; actorType?: string; metadata?: Record<string, unknown>; createdAt?: Date }, client?: any): Promise<InvoiceEvent> {
-    const exec = client ?? query;
+    const exec = client ? client.query.bind(client) : query;
     const res = await exec(
       `INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata, created_at)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
@@ -934,7 +934,7 @@ export class InvoiceRepository {
     client?: any;
   }): Promise<InvoiceSnapshot> {
     const revision = opts?.revision ?? 1;
-    const exec = opts?.client ?? query;
+    const exec = opts?.client ? opts.client.query.bind(opts.client) : query;
     const res = await exec(
       `INSERT INTO invoice_snapshots (invoice_id, snapshot, snapshot_hash, revision, template_id, template_schema_version, template_revision, rendered_html, pdf_stored, pdf_hash, created_at, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11) RETURNING *`,
@@ -1009,7 +1009,7 @@ export class InvoiceRepository {
     lineSubtotal: Decimal.Value;
     lineTotal: Decimal.Value;
   }, client?: any): Promise<void> {
-    const exec = client ?? query;
+    const exec = client ? client.query.bind(client) : query;
     await exec(
       `UPDATE invoice_items SET tax_amount = $1, line_subtotal = $2, line_total = $3
        WHERE id = $4 AND invoice_id = $5`,

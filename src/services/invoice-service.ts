@@ -19,6 +19,7 @@ import { invoiceValidationService } from "../services/validation/invoice-validat
 import { logger } from "../utils/logger.js";
 import { getClient, query } from "../db/pool.js";
 import { env } from "../config/index.js";
+import { invalidateReportsCache } from "./reports-cache.js";
 
 export type RepoInvoice = Awaited<ReturnType<typeof invoiceRepository.findById>>;
 
@@ -118,9 +119,9 @@ export class InvoiceService {
       const stored = invoice.items[i];
       if (!stored) continue;
       await invoiceRepository.updateLineItemComputed(invoiceId, stored.id, {
-        taxAmount: calc.taxAmount,
-        lineSubtotal: calc.lineSubtotal,
-        lineTotal: calc.lineTotal,
+        taxAmount: calc.taxAmount.toString(),
+        lineSubtotal: calc.lineSubtotal.toString(),
+        lineTotal: calc.lineTotal.toString(),
       }, client);
     }
     await invoiceRepository.updateTotals(invoiceId, {
@@ -331,6 +332,7 @@ export class InvoiceService {
       await projectRepository.recordInvoiceCreated(invoice.projectId, invoice.total);
     }
     logger.info(`Invoice ${id} finalized as ${invoice.invoiceNumber ?? generatedNumber}`);
+    invalidateReportsCache(businessId);
     return { invoiceNumber: invoice.invoiceNumber ?? generatedNumber };
   }
 
@@ -501,6 +503,7 @@ export class InvoiceService {
     } finally {
       client.release();
     }
+    invalidateReportsCache(businessId);
   }
 
   async recordProviderPayment(
@@ -550,6 +553,7 @@ export class InvoiceService {
         await projectRepository.recordPayment(invoice.projectId, new Decimal(amount));
       }
       await client.query("COMMIT");
+      invalidateReportsCache(businessId);
       logger.info(`Provider payment recorded: invoice ${invoiceId} payment ${paymentId} amount ${amount} ${currency}`);
       return { paymentId, status: "succeeded" };
     } catch (e) {
@@ -634,6 +638,7 @@ export class InvoiceService {
       }, client);
 
       await client.query("COMMIT");
+      invalidateReportsCache(businessId);
       logger.info(`Refund processed: payment ${paymentId} invoice ${invoiceId} amount ${amount} ${currency}`);
       return { status: newPaymentStatus };
     } catch (e) {
@@ -653,6 +658,7 @@ export class InvoiceService {
     await invoiceRepository.setStatus(id, "cancelled", { cancelledAt: new Date() });
     await invoiceRepository.update(businessId, id, { cancelled_reason: reason });
     await invoiceRepository.recordEvent(id, { eventType: "cancelled", actorId: userId, metadata: { reason } });
+    invalidateReportsCache(businessId);
   }
 
   async void(businessId: string, id: string, userId?: string, reason?: string): Promise<void> {
@@ -664,6 +670,7 @@ export class InvoiceService {
     await invoiceRepository.setStatus(id, "void", { cancelledAt: new Date() });
     await invoiceRepository.update(businessId, id, { cancelled_reason: reason });
     await invoiceRepository.recordEvent(id, { eventType: "voided", actorId: userId, metadata: { reason } });
+    invalidateReportsCache(businessId);
   }
 
   async sendReminder(businessId: string, id: string, userId?: string): Promise<{ sent: boolean }> {

@@ -102,6 +102,27 @@ function fmtRate(v: Decimal.Value | undefined): string {
 
 const templateCache = new Map<string, HandlebarsTemplateDelegate<any>>();
 
+Handlebars.registerHelper("add", (a: number, b: number) => a + b);
+
+Handlebars.registerHelper("nl2br", (str: string | null | undefined): string => {
+  if (!str) return "";
+  const escaped = str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const paragraphs = escaped.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+  return paragraphs
+    .map((p) => `<p>${p.trim().replace(/\n/g, "<br>")}</p>`)
+    .join("");
+});
+
+Handlebars.registerHelper("formatMoney", function (v: Decimal.Value, options: any): string {
+  const currency = options?.data?.root?.invoice?.currency ?? "USD";
+  return fmt(v, currency as CurrencyCode);
+});
+
+Handlebars.registerHelper("formatRate", fmtRate);
+
 function compileTemplate(templateHtml: string): HandlebarsTemplateDelegate<any> {
   let compiled = templateCache.get(templateHtml);
   if (!compiled) {
@@ -140,7 +161,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
       <h2 style="margin:0; font-size: 22px;">{{invoice.invoiceNumber}}</h2>
       {{#if invoice.notes}}<p class="muted">{{{invoice.notes}}}</p>{{/if}}
     </div>
-    {{#if business.logoUrl}}<img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}">{{{{/if}}
+     {{#if business.logoUrl}}<img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}">{{/if}}
     <div style="text-align:right">
       {{#if business.logoUrl}}{{else}}<h2 style="margin:0">{{business.name}}</h2>{{/if}}
       <p class="muted">{{business.email}}</p>
@@ -219,21 +240,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-Handlebars.registerHelper("add", (a: number, b: number) => a + b);
-
-Handlebars.registerHelper("nl2br", (str: string | null | undefined): string => {
-  if (!str) return "";
-  const escaped = str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  const paragraphs = escaped.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
-  return paragraphs
-    .map((p) => `<p>${p.trim().replace(/\n/g, "<br>")}</p>`)
-    .join("");
-});
-
-Handlebars.registerHelper("add", (a: number, b: number) => a + b);
+templateCache.set(DEFAULT_INVOICE_TEMPLATE, Handlebars.compile(DEFAULT_INVOICE_TEMPLATE, { noEscape: true }));
 
 export class TemplateRenderer {
   private defaultTemplate: string;
@@ -243,15 +250,15 @@ export class TemplateRenderer {
   }
 
   build(data: InvoiceTemplateData): any {
-    return compileTemplate(data.config?.htmlTemplate as string | undefined ?? this.defaultTemplate);
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultTemplate);
   }
 
   render(data: InvoiceTemplateData, templateHtml?: string): string {
-    const template = compileTemplate(templateHtml ?? data.config?.htmlTemplate as string | undefined ?? this.defaultTemplate);
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultTemplate
+    );
     return template({
       ...data,
-      formatMoney: (v: Decimal.Value) => fmt(v, data.invoice.currency),
-      formatRate: fmtRate,
       meta: getCurrencyMetadata(data.invoice.currency),
       appBaseUrl: env.APP_PUBLIC_BASE_URL,
     });

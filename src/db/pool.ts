@@ -9,7 +9,7 @@ const connectionString = isTest && env.DATABASE_URL_TEST ? env.DATABASE_URL_TEST
 
 export const pool = new Pool({
   connectionString,
-  max: isTest ? 1 : 20,
+  max: isTest ? 5 : 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });

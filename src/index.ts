@@ -1,4 +1,5 @@
 import express from "express";
+import compression from "compression";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -9,6 +10,7 @@ import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import { requireAuth, optionalAuth, AuthRequest, generateToken } from "./middleware/auth.js";
 import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.js";
+import { reportsCache, invalidateReportsCache } from "./services/reports-cache.js";
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
@@ -82,6 +84,7 @@ const app = express();
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
 
 app.use(helmet());
+app.use(compression());
 app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -949,6 +952,7 @@ app.put("/api/invoices/:id/fees", requireAuth, async (req: AuthRequest, res) => 
 app.post("/api/invoices/:id/finalize", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await invoiceService.finalize(req.user!.businessId, req.params.id, req.user.id);
+  invalidateReportsCache(req.user!.businessId);
   res.json(result);
 });
 
@@ -967,7 +971,8 @@ app.post("/api/invoices/:id/send-reminder", requireAuth, requireEntitlement("rem
 app.post("/api/invoices/:id/cancel", requireAuth, requireEntitlement("invoices.cancel"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const { reason } = req.body;
-  await invoiceService.cancel(req.user!.businessId, req.params.id, req.user.id, reason);
+   await invoiceService.cancel(req.user!.businessId, req.params.id, req.user.id, reason);
+  invalidateReportsCache(req.user!.businessId);
   res.json({ ok: true });
 });
 
@@ -975,6 +980,7 @@ app.post("/api/invoices/:id/void", requireAuth, requireEntitlement("invoices.voi
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const { reason } = req.body;
   await invoiceService.void(req.user!.businessId, req.params.id, req.user.id, reason);
+  invalidateReportsCache(req.user!.businessId);
   res.json({ ok: true });
 });
 
@@ -1103,6 +1109,7 @@ app.get("/api/quotes/:id/pdf", requireAuth, requireEntitlement("quotes.create"),
 app.post("/api/quotes/:id/convert", requireAuth, requireEntitlement("quotes.convert"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await quoteService.convertToInvoice(req.user!.businessId, req.params.id, req.user.id);
+  invalidateReportsCache(req.user!.businessId);
   res.status(201).json({ invoiceId: result.invoiceId, quoteNumber: result.quoteNumber });
 });
 
@@ -1193,43 +1200,57 @@ app.post("/api/recurring", requireAuth, requireEntitlement("invoices.recurring")
 // ============================================================================
 app.get("/api/reports/revenue", requireAuth, requireEntitlement("reports.revenue"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cacheKey = `revenue:${req.user!.businessId}`;
+  const cached = reportsCache.get(cacheKey);
+  if (cached) return res.json(cached);
   const result = await query(
     `SELECT status, COUNT(*) as count, SUM(total) as total_amount, SUM(amount_paid) as paid_amount
      FROM invoices WHERE business_id = $1 GROUP BY status ORDER BY status`,
     [req.user!.businessId]
   );
-  res.json({ report: result.rows });
+  const response = { report: result.rows };
+  reportsCache.set(cacheKey, response);
+  res.json(response);
 });
 
 app.get("/api/reports/tax-summary", requireAuth, requireEntitlement("reports.tax_summary"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cacheKey = `tax-summary:${req.user!.businessId}`;
+  const cached = reportsCache.get(cacheKey);
+  if (cached) return res.json(cached);
   const result = await query(
     `SELECT DATE_TRUNC('month', created_at) as month, SUM(tax_total) as tax_total
      FROM invoices WHERE business_id = $1 AND is_finalized = TRUE GROUP BY month ORDER BY month DESC LIMIT 12`,
     [req.user!.businessId]
   );
-  res.json({ report: result.rows });
+  const response = { report: result.rows };
+  reportsCache.set(cacheKey, response);
+  res.json(response);
 });
 
 app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const monthsParam = Number(req.query.months ?? 1);
   const months = Number.isInteger(monthsParam) && monthsParam > 0 && monthsParam <= 24 ? monthsParam : 1;
+  const cacheKey = `volume-trend:${req.user!.businessId}:${months}`;
+  const cached = reportsCache.get(cacheKey);
+  if (cached) return res.json(cached);
   const now = new Date();
   const cutoff = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
   const result = await query(
     `SELECT
-      TO_CHAR(date_trunc('month', COALESCE(issue_date, created_at)), 'YYYY-MM') as period,
-      COUNT(*) as count,
-      COALESCE(SUM(total), 0) as invoiced,
-      COALESCE(SUM(amount_paid), 0) as paid
-     FROM invoices
-     WHERE business_id = $1
-       AND (issue_date IS NULL OR issue_date >= $2 OR created_at >= $2)
-     GROUP BY date_trunc('month', COALESCE(issue_date, created_at))
-     ORDER BY period ASC`,
+       TO_CHAR(date_trunc('month', COALESCE(issue_date, created_at)), 'YYYY-MM') as period,
+       COUNT(*) as count,
+       COALESCE(SUM(total), 0) as invoiced,
+       COALESCE(SUM(amount_paid), 0) as paid
+      FROM invoices
+      WHERE business_id = $1
+        AND (issue_date IS NULL OR issue_date >= $2 OR created_at >= $2)
+      GROUP BY date_trunc('month', COALESCE(issue_date, created_at))
+      ORDER BY period ASC`,
     [req.user!.businessId, cutoff.toISOString()]
   );
+  reportsCache.set(cacheKey, result.rows);
   res.json(result.rows);
 });
 
@@ -1238,6 +1259,9 @@ app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) 
 // ============================================================================
 app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cacheKey = `dashboard:${req.user!.businessId}`;
+  const cached = reportsCache.get(cacheKey);
+  if (cached) return res.json(cached);
   const businessId = req.user!.businessId;
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -1249,7 +1273,7 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
     invoiceRepository.getPaymentMetrics(businessId, monthStart),
   ]);
 
-  res.json({
+  const response = {
     summary: {
       totalOutstanding: summary.totalOutstanding,
       totalOverdue: summary.totalOverdue,
@@ -1271,7 +1295,9 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
       totalOverdue: paymentMetrics.totalOverdue,
     },
     volumeTrend,
-  });
+  };
+  reportsCache.set(cacheKey, response);
+  res.json(response);
 });
 
 // ============================================================================
@@ -2257,7 +2283,7 @@ app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const { amount, provider = "stub", providerPaymentId, idempotencyKey } = req.body;
   if (!amount) return res.status(400).json({ error: "amount required" });
-  await invoiceService.recordPayment(
+   await invoiceService.recordPayment(
     req.user!.businessId,
     req.params.id,
     amount,
@@ -2265,6 +2291,7 @@ app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res
     providerPaymentId,
     idempotencyKey
   );
+  invalidateReportsCache(req.user!.businessId);
   res.status(201).json({ ok: true });
 });
 
@@ -2389,6 +2416,8 @@ app.post("/api/public/invoices/:token/pay", optionalAuth, async (req: AuthReques
   if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Valid amount required" });
   try {
     await invoiceService.recordPublicPayment(req.params.token, amount, provider, idempotencyKey);
+    const invoice = await invoiceRepository.findByPublicToken(undefined, req.params.token);
+    invalidateReportsCache(invoice.businessId);
     res.status(201).json({ ok: true });
   } catch (err: any) {
     if (err.statusCode) {
