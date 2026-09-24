@@ -1,7 +1,6 @@
-interface ProjectStatusBadgeProps {
-  status: "planning" | "active" | "on_hold" | "completed" | "archived";
-  className?: string;
-}
+import type { ProjectStatusBadgeProps } from "@/types/components";
+
+export { ProjectStatusBadgeProps };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   planning: { label: "Planning", className: "bg-surface-alt text-primary" },
@@ -21,6 +20,3 @@ export default function ProjectStatusBadge({ status, className = "" }: ProjectSt
     </span>
   );
 }
-
-
-

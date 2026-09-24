@@ -13,8 +13,8 @@ import {
 import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
 import { Download, Search, Eye, Send, Copy, Trash2, Plus } from "lucide-react";
-import PageHeader from "../components/primitives/PageHeader";
-import { DataTable, type ColumnDef } from "../components/primitives/DataTable";
+import PageHeader from "../components/ui/PageHeader";
+import { DataTable, type ColumnDef } from "../components/ui/DataTable";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const STATUS_FILTERS = [

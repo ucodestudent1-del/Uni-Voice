@@ -4,7 +4,7 @@ import { formatCurrencyValue } from "../../lib/utils";
 import { formatDate } from "../../utils/format";
 import type { ApiInvoiceListItem } from "../../types/api";
 import SectionCard from "../SectionCard";
-import InvoiceStatus from "../primitives/InvoiceStatus";
+import InvoiceStatus from "../ui/InvoiceStatus";
 
 interface ReportTransactionsProps {
   invoices: ApiInvoiceListItem[];

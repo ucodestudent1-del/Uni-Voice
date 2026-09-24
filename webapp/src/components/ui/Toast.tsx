@@ -1,18 +1,9 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import type { ToastProps, ToastType } from "@/types/components";
 
-export type ToastType = "success" | "error" | "info" | "warning";
-
-export interface ToastProps {
-  id: string;
-  type?: ToastType;
-  title?: string;
-  message: string;
-  actionLabel?: string;
-  onAction?: () => void;
-  duration?: number;
-}
+export { ToastProps, ToastType };
 
 const iconMap: Record<ToastType, React.ComponentType<{ className?: string }>> = {
   success: CheckCircle,

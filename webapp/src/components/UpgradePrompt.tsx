@@ -1,11 +1,7 @@
 import { useSubscription } from "../contexts/SubscriptionContext";
+import type { UpgradePromptProps } from "@/types/components";
 
-interface UpgradePromptProps {
-  feature: string;
-  requiredPlan?: string;
-  message?: string;
-  children?: React.ReactNode;
-}
+export { UpgradePromptProps };
 
 export default function UpgradePrompt({ feature, requiredPlan, message, children }: UpgradePromptProps) {
   const { plan } = useSubscription();

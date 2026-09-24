@@ -8,8 +8,9 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
+import type { PaymentStatusType, PaymentStatusProps } from "@/types/components";
 
-export type PaymentStatusType = "paid" | "pending" | "failed" | "refunded" | "partially_paid" | "cancelled" | "requires_action";
+export { PaymentStatusType, PaymentStatusProps };
 
 interface StatusConfig {
   label: string;
@@ -35,14 +36,6 @@ const colorClasses: Record<StatusConfig["color"], string> = {
   muted: "status-tertiary-bg status-tertiary-text",
   warning: "status-warning-bg status-warning-text",
 };
-
-export interface PaymentStatusProps {
-  status: PaymentStatusType | (string & {});
-  showIcon?: boolean;
-  showLabel?: boolean;
-  size?: "sm" | "md";
-  className?: string;
-}
 
 export function getPaymentStatusConfig(status: string): StatusConfig {
   return statusConfig[(status as PaymentStatusType) ?? "pending"] ?? statusConfig.pending;

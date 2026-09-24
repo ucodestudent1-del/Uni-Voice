@@ -1,11 +1,8 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import Toast, { type ToastProps, type ToastType } from "./Toast";
+import { createContext, useContext, useState, useCallback } from "react";
+import Toast, { type ToastProps } from "./Toast";
+import type { ToastContextValue, ToastType } from "@/types/components";
 
-interface ToastContextValue {
-  addToast: (toast: Omit<ToastProps, "id">) => string;
-  removeToast: (id: string) => void;
-  toast: (message: string, options?: { type?: ToastType; title?: string; duration?: number; actionLabel?: string; onAction?: () => void }) => void;
-}
+export { ToastContextValue, ToastType };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
@@ -15,7 +12,7 @@ export function useToast(): ToastContextValue {
   return ctx;
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastProps[]>([]);
 
   const removeToast = useCallback((id: string) => {
@@ -30,7 +27,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [removeToast]);
 
   const toast = useCallback(
-    (message: string, options?: { type?: ToastType; title?: string; duration?: number; actionLabel?: string; onAction?: () => void }) => {
+    (
+      message: string,
+      options?: {
+        type?: ToastType;
+        title?: string;
+        duration?: number;
+        actionLabel?: string;
+        onAction?: () => void;
+      }
+    ) => {
       addToast({ message, ...options });
     },
     [addToast]

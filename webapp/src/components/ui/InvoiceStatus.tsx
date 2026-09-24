@@ -1,18 +1,8 @@
 import { forwardRef, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
+import type { InvoiceStatusType, InvoiceStatusProps } from "@/types/components";
 
-export type InvoiceStatusType =
-  | "draft"
-  | "sent"
-  | "viewed"
-  | "partially_paid"
-  | "paid"
-  | "overdue"
-  | "cancelled"
-  | "void"
-  | "pending"
-  | "failed"
-  | "refunded";
+export { InvoiceStatusType, InvoiceStatusProps };
 
 interface StatusConfig {
   label: string;
@@ -44,15 +34,6 @@ const colorClasses: Record<StatusConfig["color"], string> = {
   muted: "status-tertiary-bg status-tertiary-text",
   warning: "status-warning-bg status-warning-text",
 };
-
-export interface InvoiceStatusProps {
-  status: InvoiceStatusType | (string & {});
-  isOverdue?: boolean;
-  showIcon?: boolean;
-  showLabel?: boolean;
-  size?: "sm" | "md";
-  className?: string;
-}
 
 export function getStatusConfig(status: string): StatusConfig {
   return statusChart[status as InvoiceStatusType] ?? statusChart.draft;

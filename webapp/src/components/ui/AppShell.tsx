@@ -3,18 +3,9 @@ import { cn } from "@/lib/utils";
 import { Search, Bell, HelpCircle, User, LogOut, Settings as SettingsIcon, Moon, Sun, AlertCircle } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
+import type { TopBarProps, AppShellProps } from "@/types/components";
 
-export interface TopBarProps {
-  onSearchFocus?: () => void;
-  onCommandPalette?: () => void;
-  notifications?: Array<{ id: string; title: string; message: string; unread: boolean; time: string }>;
-  workspaces?: Array<{ id: string; name: string; currency: string }>;
-  currentWorkspaceId?: string;
-  onWorkspaceChange?: (id: string) => void;
-  user?: { name: string; email: string; avatar?: string };
-  onLogout?: () => void;
-  onSettings?: () => void;
-}
+export { TopBarProps, AppShellProps };
 
 export function TopBar({
   onSearchFocus,
@@ -127,14 +118,6 @@ export function TopBar({
       </div>
     </header>
   );
-}
-
-export interface AppShellProps {
-  children: ReactNode;
-  topBar?: TopBarProps;
-  sidebar?: ReactNode;
-  bottomBar?: ReactNode;
-  className?: string;
 }
 
 export function AppShell({ children, topBar, sidebar, bottomBar, className }: AppShellProps) {

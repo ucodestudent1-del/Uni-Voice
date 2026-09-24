@@ -2,29 +2,27 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import AuthCallback from "./pages/AuthCallback";
-import Dashboard from "./pages/Dashboard";
-import OnboardingWizard from "./pages/OnboardingWizard";
-import Customers from "./pages/Customers";
-import CustomerDetail from "./pages/CustomerDetail";
-import Products from "./pages/Products";
-import Templates from "./pages/Templates";
-import TemplateEditorPage from "./pages/TemplateEditorPage";
-import Settings from "./pages/Settings";
-import PublicInvoice from "./pages/PublicInvoice";
-import Payments from "./pages/Payments";
-import ProjectDetail from "./pages/ProjectDetail";
-import QuoteDetail from "./pages/QuoteDetail";
-import ReportSection from "./pages/ReportSection";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
 
-// Lazy-loaded pages — these are only fetched when the user navigates to them.
-// This keeps the initial JS bundle small and avoids loading code for sections
-// the user never visits.
+const Landing = lazy(() => import("./pages/Landing"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const OnboardingWizard = lazy(() => import("./pages/OnboardingWizard"));
+const Customers = lazy(() => import("./pages/Customers"));
+const CustomerDetail = lazy(() => import("./pages/CustomerDetail"));
+const Products = lazy(() => import("./pages/Products"));
+const Templates = lazy(() => import("./pages/Templates"));
+const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
+const Settings = lazy(() => import("./pages/Settings"));
+const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
+const Payments = lazy(() => import("./pages/Payments"));
+const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
+const ReportSection = lazy(() => import("./pages/ReportSection"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+
 const Invoices = lazy(() => import("./pages/Invoices"));
 const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const InvoiceEditorPage = lazy(() => import("./pages/InvoiceEditorPage"));
@@ -34,6 +32,10 @@ const Projects = lazy(() => import("./pages/Projects"));
 const Quotes = lazy(() => import("./pages/Quotes"));
 const Receipts = lazy(() => import("./pages/Receipts"));
 const Reports = lazy(() => import("./pages/Reports"));
+
+const Fallback = () => (
+  <div className="flex items-center justify-center h-64 text-secondary">Loading…</div>
+);
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -60,47 +62,43 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      {/* Public marketing routes */}
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-      <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
-      <Route path="/auth/callback" element={<PublicOnly><AuthCallback /></PublicOnly>} />
-      <Route path="/invoice/:token" element={<PublicInvoice />} />
+      <Route path="/" element={<Suspense fallback={<Fallback />}><Landing /></Suspense>} />
+      <Route path="/login" element={<Suspense fallback={<Fallback />}><PublicOnly><Login /></PublicOnly></Suspense>} />
+      <Route path="/register" element={<Suspense fallback={<Fallback />}><PublicOnly><Register /></PublicOnly></Suspense>} />
+      <Route path="/auth/callback" element={<Suspense fallback={<Fallback />}><PublicOnly><AuthCallback /></PublicOnly></Suspense>} />
+      <Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
 
-      {/* Legal pages (public) */}
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Suspense fallback={<Fallback />}><Privacy /></Suspense>} />
+      <Route path="/terms" element={<Suspense fallback={<Fallback />}><Terms /></Suspense>} />
 
-      {/* Onboarding */}
-      <Route path="/onboarding" element={<ProtectedRoute><OnboardingWizard /></ProtectedRoute>} />
+      <Route path="/onboarding" element={<Suspense fallback={<Fallback />}><ProtectedRoute><OnboardingWizard /></ProtectedRoute></Suspense>} />
 
-      {/* Protected application routes */}
-      <Route path="/app" element={<OnboardedRoute><Layout /></OnboardedRoute>}>
-        <Route index element={<Dashboard />} />
-        <Route path="invoices" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Invoices /></Suspense>} />
-        <Route path="invoices/new" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><QuickInvoicePage /></Suspense>} />
-        <Route path="invoices/:id" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><InvoiceDetail /></Suspense>} />
-        <Route path="invoices/:id/edit" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><InvoiceEditorPage /></Suspense>} />
+      <Route path="/app" element={<Suspense fallback={<Fallback />}><OnboardedRoute><Layout /></OnboardedRoute></Suspense>}>
+        <Route index element={<Suspense fallback={<Fallback />}><Dashboard /></Suspense>} />
+        <Route path="invoices" element={<Suspense fallback={<Fallback />}><Invoices /></Suspense>} />
+        <Route path="invoices/new" element={<Suspense fallback={<Fallback />}><QuickInvoicePage /></Suspense>} />
+        <Route path="invoices/:id" element={<Suspense fallback={<Fallback />}><InvoiceDetail /></Suspense>} />
+        <Route path="invoices/:id/edit" element={<Suspense fallback={<Fallback />}><InvoiceEditorPage /></Suspense>} />
 
-        <Route path="customers" element={<Customers />} />
-        <Route path="customers/:id" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><CustomerDetail /></Suspense>} />
-        <Route path="products" element={<Products />} />
-        <Route path="payments" element={<Payments />} />
-        <Route path="templates" element={<Templates />} />
-        <Route path="templates/new" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><TemplateEditorPage /></Suspense>} />
-        <Route path="templates/:id/edit" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><TemplateEditorPage /></Suspense>} />
-          <Route path="expenses" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Expenses /></Suspense>} />
-          <Route path="projects" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Projects /></Suspense>} />
-          <Route path="projects/:id" element={<ProjectDetail />} />
-          <Route path="quotes" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Quotes /></Suspense>} />
-          <Route path="quotes/new" element={<QuoteDetail />} />
-          <Route path="quotes/:id" element={<QuoteDetail />} />
-          <Route path="reports" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Reports /></Suspense>} />
-          <Route path="report" element={<ReportSection />} />
-          <Route path="receipts" element={<Suspense fallback={<div className="flex items-center justify-center h-64 text-secondary">Loading…</div>}><Receipts /></Suspense>} />
+        <Route path="customers" element={<Suspense fallback={<Fallback />}><Customers /></Suspense>} />
+        <Route path="customers/:id" element={<Suspense fallback={<Fallback />}><CustomerDetail /></Suspense>} />
+        <Route path="products" element={<Suspense fallback={<Fallback />}><Products /></Suspense>} />
+        <Route path="payments" element={<Suspense fallback={<Fallback />}><Payments /></Suspense>} />
+        <Route path="templates" element={<Suspense fallback={<Fallback />}><Templates /></Suspense>} />
+        <Route path="templates/new" element={<Suspense fallback={<Fallback />}><TemplateEditorPage /></Suspense>} />
+        <Route path="templates/:id/edit" element={<Suspense fallback={<Fallback />}><TemplateEditorPage /></Suspense>} />
+          <Route path="expenses" element={<Suspense fallback={<Fallback />}><Expenses /></Suspense>} />
+          <Route path="projects" element={<Suspense fallback={<Fallback />}><Projects /></Suspense>} />
+          <Route path="projects/:id" element={<Suspense fallback={<Fallback />}><ProjectDetail /></Suspense>} />
+          <Route path="quotes" element={<Suspense fallback={<Fallback />}><Quotes /></Suspense>} />
+          <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
+          <Route path="quotes/:id" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
+          <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />
+          <Route path="report" element={<Suspense fallback={<Fallback />}><ReportSection /></Suspense>} />
+          <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
           <Route path="settings">
             <Route index element={<Navigate to="/app/settings/business" replace />} />
-            <Route path=":section" element={<Settings />} />
+            <Route path=":section" element={<Suspense fallback={<Fallback />}><Settings /></Suspense>} />
           </Route>
           <Route path="security" element={<Navigate to="/app/settings/security" replace />} />
       </Route>

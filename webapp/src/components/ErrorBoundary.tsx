@@ -1,7 +1,8 @@
 import React from "react";
+import type { ReactNode } from "react";
 
 interface Props {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 interface State {
@@ -55,11 +56,3 @@ export default class ErrorBoundary extends React.Component<Props, State> {
     return this.props.children;
   }
 }
-
-
-
-
-
-
-
-

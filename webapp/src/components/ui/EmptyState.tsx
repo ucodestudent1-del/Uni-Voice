@@ -1,16 +1,8 @@
-import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import type { EmptyStateProps } from "@/types/components";
 
-export interface EmptyStateProps {
-  title?: string;
-  description?: string;
-  icon?: ReactNode;
-  actionLabel?: string;
-  onAction?: () => void;
-  className?: string;
-  variant?: "default" | "compact" | "sidebar";
-}
+export { EmptyStateProps };
 
 export default function EmptyState({
   title = "No items yet",

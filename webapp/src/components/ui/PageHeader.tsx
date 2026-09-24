@@ -2,21 +2,9 @@ import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
+import type { BreadcrumbItem, PageHeaderProps } from "@/types/components";
 
-export interface BreadcrumbItem {
-  label: string;
-  to?: string;
-}
-
-export interface PageHeaderProps {
-  title: string;
-  breadcrumbs?: BreadcrumbItem[];
-  description?: string;
-  primaryAction?: ReactNode;
-  secondaryActions?: ReactNode;
-  actions?: ReactNode;
-  className?: string;
-}
+export { BreadcrumbItem, PageHeaderProps };
 
 export default function PageHeader({
   title,

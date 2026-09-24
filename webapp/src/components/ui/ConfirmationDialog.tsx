@@ -1,25 +1,10 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { X } from "lucide-react";
+import type { ConfirmationDialogProps } from "@/types/components";
 
-export interface ConfirmationDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: (data?: Record<string, string>) => void;
-  title: string;
-  message?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  destructive?: boolean;
-  showInput?: boolean;
-  inputLabel?: string;
-  inputPlaceholder?: string;
-  inputValue?: string;
-  onInputChange?: (value: string) => void;
-  inputRequiredMatch?: string;
-  isLoading?: boolean;
-}
+export { ConfirmationDialogProps };
 
 export default function ConfirmationDialog({
   open,
@@ -42,9 +27,7 @@ export default function ConfirmationDialog({
 
   if (!open) return null;
 
-  const canConfirm = inputRequiredMatch
-    ? localInput === inputRequiredMatch
-    : true;
+  const canConfirm = inputRequiredMatch ? localInput === inputRequiredMatch : true;
 
   const handleConfirm = () => {
     const data: Record<string, string> = {};

@@ -11,9 +11,9 @@ import { formatCurrency } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
 import { Download, Search, Eye, ExternalLink } from "lucide-react";
-import PageHeader from "../components/primitives/PageHeader";
-import { DataTable, type ColumnDef } from "../components/primitives/DataTable";
-import PaymentStatus from "../components/primitives/PaymentStatus";
+import PageHeader from "../components/ui/PageHeader";
+import { DataTable, type ColumnDef } from "../components/ui/DataTable";
+import PaymentStatus from "../components/ui/PaymentStatus";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 const STATUS_FILTERS = [

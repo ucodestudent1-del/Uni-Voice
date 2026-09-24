@@ -1,32 +1,24 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import { forwardRef } from "react";
 import { Decimal } from "decimal.js";
 import { cn } from "@/lib/utils";
+import { formatMoney as formatMoneyUtil, type CurrencyCode } from "@/types/currency";
+import { formatCurrency } from "@/utils/format";
+import type { MoneyProps } from "@/types/components";
 
-export interface MoneyProps extends HTMLAttributes<HTMLSpanElement> {
-  amount: Decimal.Value | string | number;
-  currency?: string;
-  decimalPlaces?: number;
-  signed?: boolean;
-  placeholder?: string;
-}
+export { MoneyProps };
 
-function formatMoney(value: Decimal.Value | string | number, currency = "USD", decimalPlaces = 2): string {
-  const d = new Decimal(value || 0);
-  const rounded = d.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      minimumFractionDigits: decimalPlaces,
-      maximumFractionDigits: decimalPlaces,
-    }).format(Number(rounded.toNumber()));
-  } catch {
-    return `$${rounded.toFixed(decimalPlaces)}`;
+function formatValue(value: Decimal.Value, currency: string, decimalPlaces: number): string {
+  if (currency.length === 3) {
+    try {
+      return formatMoneyUtil(value, currency as CurrencyCode);
+    } catch {
+    }
   }
+  return formatCurrency(value, currency, decimalPlaces);
 }
 
-export function formatMoneyValue(value: Decimal.Value | string | number, currency?: string, decimalPlaces = 2): string {
-  return formatMoney(value, currency ?? "USD", decimalPlaces);
+export function formatMoneyValue(value: Decimal.Value, currency?: string, decimalPlaces = 2): string {
+  return formatValue(value, currency ?? "USD", decimalPlaces);
 }
 
 export const Money = forwardRef<HTMLSpanElement, MoneyProps>(function Money(
@@ -34,7 +26,7 @@ export const Money = forwardRef<HTMLSpanElement, MoneyProps>(function Money(
   ref
 ) {
   const d = new Decimal(amount || 0);
-  const formatted = formatMoney(amount, currency, decimalPlaces);
+  const formatted = formatValue(amount, currency, decimalPlaces);
   const display = placeholder !== undefined && d.isZero() ? placeholder : formatted;
   const isNegative = d.isNegative();
 

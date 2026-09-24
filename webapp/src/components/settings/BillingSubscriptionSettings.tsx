@@ -116,13 +116,13 @@ export default function BillingSubscriptionSettings() {
             </div>
             <div className="flex items-center justify-between py-2 border-b border-color-subtle">
               <span className="text-sm text-secondary">Billing Cycle</span>
-              <span className="text-sm font-medium text-primary">{subscription?.billingCycle ?? "Monthly"}</span>
+              <span className="text-sm font-medium text-primary">{subscription?.billing_cycle ?? "Monthly"}</span>
             </div>
-            {subscription?.currentPeriodStart && subscription?.currentPeriodEnd && (
+            {subscription?.current_period_start && subscription?.current_period_end && (
               <div className="flex items-center justify-between py-2 border-b border-color-subtle">
                 <span className="text-sm text-secondary">Current Period</span>
                 <span className="text-sm font-medium text-primary">
-                  {new Date(subscription.currentPeriodStart).toLocaleDateString()} — {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  {new Date(subscription.current_period_start).toLocaleDateString()} — {new Date(subscription.current_period_end).toLocaleDateString()}
                 </span>
               </div>
             )}

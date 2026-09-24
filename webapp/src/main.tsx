@@ -1,17 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import App from "./App";
+
 import { AuthProvider } from "./contexts/AuthContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { ThemeProvider, applyInitialTheme } from "./contexts/ThemeContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
+const App = React.lazy(() => import("./App"));
+
 try {
   applyInitialTheme();
 } catch {
-  // Proceed with default theme if pre-render theme application fails
 }
 
 const rootElement = document.getElementById("root");
@@ -29,6 +30,14 @@ if (!rootElement) {
   );
 }
 
+function AppLazy() {
+  return (
+    <React.Suspense fallback={<div className="flex items-center justify-center h-screen text-secondary">Loading…</div>}>
+      <App />
+    </React.Suspense>
+  );
+}
+
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -36,7 +45,7 @@ ReactDOM.createRoot(rootElement).render(
         <AuthProvider>
           <SubscriptionProvider>
             <ThemeProvider>
-              <App />
+              <AppLazy />
             </ThemeProvider>
           </SubscriptionProvider>
         </AuthProvider>

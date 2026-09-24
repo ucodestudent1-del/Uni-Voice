@@ -5,9 +5,9 @@ import { formatCurrencyValue } from "../lib/utils";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
 import { Plus, Download, RefreshCw, ExternalLink } from "lucide-react";
-import PageHeader from "../components/primitives/PageHeader";
-import { DataTable, type ColumnDef } from "../components/primitives/DataTable";
-import PaymentStatus from "../components/primitives/PaymentStatus";
+import PageHeader from "../components/ui/PageHeader";
+import { DataTable, type ColumnDef } from "../components/ui/DataTable";
+import PaymentStatus from "../components/ui/PaymentStatus";
 import { type ApiPaymentWithInvoice } from "../types/api";
 
 const STATUS_FILTERS = ["all", "succeeded", "pending", "failed", "refunded"];

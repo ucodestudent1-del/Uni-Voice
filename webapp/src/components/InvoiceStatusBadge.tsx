@@ -1,12 +1,9 @@
 import { forwardRef } from "react";
-import { cn } from "../lib/utils";
-import InvoiceStatus from "./primitives/InvoiceStatus";
+import { cn } from "@/lib/utils";
+import InvoiceStatus from "@/components/ui/InvoiceStatus";
+import type { StatusBadgeProps } from "@/types/components";
 
-interface InvoiceStatusBadgeProps {
-  status: string;
-  isOverdue?: boolean;
-  className?: string;
-}
+export { StatusBadgeProps };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   draft: { label: "Draft", className: "status-warning-bg status-warning-text" },
@@ -21,7 +18,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export const statusConfigExport = statusConfig;
 
-const InvoiceStatusBadgeInner = forwardRef<HTMLSpanElement, InvoiceStatusBadgeProps>(
+const InvoiceStatusBadgeInner = forwardRef<HTMLSpanElement, StatusBadgeProps>(
   function InvoiceStatusBadge({ status, isOverdue, className }, ref) {
     return (
       <InvoiceStatus

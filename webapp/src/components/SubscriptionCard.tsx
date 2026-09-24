@@ -1,9 +1,7 @@
 import { useSubscription } from "../contexts/SubscriptionContext";
+import type { SubscriptionCardProps } from "@/types/components";
 
-interface SubscriptionCardProps {
-  onUpgrade?: () => void;
-  compact?: boolean;
-}
+export { SubscriptionCardProps };
 
 export default function SubscriptionCard({ onUpgrade, compact = false }: SubscriptionCardProps) {
   const { plan, subscription, loading } = useSubscription();
@@ -20,9 +18,9 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
     return (
       <div className={`rounded-xl border border-color-subtle bg-surface p-6 ${compact ? "text-center" : ""}`}>
         <div className={`flex items-center ${compact ? "justify-center flex-col" : "gap-4"}`}>
-           <div className="rounded-full bg-surface-alt p-3">
-             <span className="text-secondary text-xl">★</span>
-           </div>
+          <div className="rounded-full bg-surface-alt p-3">
+            <span className="text-secondary text-xl">★</span>
+          </div>
           <div className={compact ? "text-center" : ""}>
             <p className="text-lg font-semibold text-primary">Free Plan</p>
             <p className="text-sm text-secondary">You are on the free plan</p>
@@ -66,13 +64,13 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
         <div className={`rounded-full ${isFree ? "bg-surface-alt" : isPro ? "bg-primary-bg" : "bg-info-bg"} p-3`}>
           {plan.code === "free" ? "★" : plan.code === "pro" ? "★" : "★"}
         </div>
-          <div>
-            <p className={`font-bold ${compact ? "text-center" : ""}`}>
-              <span className="text-2xl text-primary">${plan.price || 0}</span>
-              {!isFree && <span className="text-secondary">/month</span>}
-            </p>
-            <p className={`text-sm text-secondary ${compact ? "text-center" : ""}`}>{plan.name}</p>
-          </div>
+        <div>
+          <p className={`font-bold ${compact ? "text-center" : ""}`}>
+            <span className="text-2xl text-primary">${plan.price || 0}</span>
+            {!isFree && <span className="text-secondary">/month</span>}
+          </p>
+          <p className={`text-sm text-secondary ${compact ? "text-center" : ""}`}>{plan.name}</p>
+        </div>
       </div>
 
       {!compact && (
@@ -90,7 +88,3 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
     </div>
   );
 }
-
-
-
-

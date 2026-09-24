@@ -1,28 +1,21 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { getMe, login as apiLogin, register as apiRegister, verifyTwoFactor as verifyTwoFactorApi, getOnboarding, completeOnboardingStep, finishOnboarding as finishOnboardingApi } from "../api/client";
-import type { OnboardingProgress } from "../types/api";
-import { clearSubscriptionCache } from "./SubscriptionContext";
+import type {
+  User,
+  AuthContextType,
+} from "@/types/app";
+import {
+  getMe,
+  login as apiLogin,
+  register as apiRegister,
+  verifyTwoFactor as verifyTwoFactorApi,
+  getOnboarding,
+  completeOnboardingStep,
+  finishOnboarding as finishOnboardingApi,
+} from "@/api/client";
+import type { OnboardingProgress } from "@/types/api";
+import { clearSubscriptionCache } from "@/contexts/SubscriptionContext";
 
-interface User {
-  id: string;
-  businessId?: string;
-  email?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  businessId: string | undefined;
-  token: string | null;
-  login: (token: string, user: User) => void;
-  logout: () => void;
-  verifyTwoFactor: (email: string, code: string) => Promise<void>;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  onboarding: OnboardingProgress | null;
-  completeStep: (step: string) => Promise<OnboardingProgress>;
-  skipOnboarding: () => Promise<OnboardingProgress>;
-  refreshOnboarding: () => Promise<void>;
-}
+export type { User, AuthContextType };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -75,7 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.removeItem("token");
     } catch {
-      // ignore localStorage errors (e.g., private browsing, quota exceeded)
     }
   }
 
@@ -83,7 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem("token", token);
     } catch {
-      // ignore localStorage errors
     }
   }
 

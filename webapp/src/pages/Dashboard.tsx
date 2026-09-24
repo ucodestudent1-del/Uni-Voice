@@ -19,7 +19,7 @@ import RevenueChart from "../components/dashboard/RevenueChart";
 import StatusBreakdown from "../components/dashboard/StatusBreakdown";
 import { formatCurrency } from "../utils/format";
 import { Button } from "../components/ui/Button";
-import InvoiceStatus, { isOverdueStatus } from "../components/primitives/InvoiceStatus";
+import InvoiceStatus, { isOverdueStatus } from "../components/ui/InvoiceStatus";
 import { formatCurrencyValue } from "../lib/utils";
 
 interface NormalizedInvoice {

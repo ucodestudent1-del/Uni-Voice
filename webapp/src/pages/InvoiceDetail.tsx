@@ -20,8 +20,8 @@ import {
 import { formatCurrency, formatDate } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
 import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
-import InvoiceStatus, { isOverdueStatus } from "../components/primitives/InvoiceStatus";
-import { ConfirmationDialog } from "../components/primitives/ConfirmationDialog";
+import InvoiceStatus, { isOverdueStatus } from "../components/ui/InvoiceStatus";
+import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 import StripePaymentElement from "../components/StripePaymentElement";
 
 export default function InvoiceDetail() {

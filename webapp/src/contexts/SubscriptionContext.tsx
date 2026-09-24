@@ -1,22 +1,19 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
-import { getSubscription, getPlans, upgradeSubscription, downgradeSubscription, getFeatures } from "../api/client";
-import { useAuth } from "./AuthContext";
+import type {
+  Plan,
+  SubscriptionCache,
+  SubscriptionContextType,
+} from "@/types/app";
+import {
+  getSubscription,
+  getPlans,
+  upgradeSubscription,
+  downgradeSubscription,
+  getFeatures,
+} from "@/api/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface Plan {
-  id: string;
-  code: string;
-  name: string;
-  description?: string;
-  price: number;
-  features?: any[];
-}
-
-interface SubscriptionCache {
-  plan: Plan | null;
-  subscription: any;
-  features: any[];
-  timestamp: number;
-}
+export type { Plan, SubscriptionCache, SubscriptionContextType };
 
 const CACHE_TTL = 60 * 1000;
 const subscriptionCache = new Map<string, SubscriptionCache>();
@@ -44,22 +41,12 @@ export function clearSubscriptionCache(businessId?: string): void {
   }
 }
 
-interface SubscriptionContextType {
-  plan: Plan | null;
-  subscription: any;
-  features: any[];
-  loading: boolean;
-  refresh: () => Promise<void>;
-  upgrade: (planCode: string) => Promise<void>;
-  downgrade: (planCode: string) => Promise<void>;
-}
-
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<Plan | null>(null);
-  const [subscription, setSubscription] = useState<any>(null);
-  const [features, setFeatures] = useState<any[]>([]);
+  const [subscription, setSubscription] = useState<SubscriptionCache["subscription"]>(null);
+  const [features, setFeatures] = useState<SubscriptionCache["features"]>([]);
   const [loading, setLoading] = useState(true);
 
   const { isAuthenticated, isLoading: authLoading, businessId } = useAuth();
@@ -102,7 +89,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         timestamp: Date.now(),
       });
     } catch {
-      // ignore
     } finally {
       setLoading(false);
       isInitialLoad.current = false;

@@ -1,7 +1,6 @@
-interface CustomerStatusBadgeProps {
-  status: "active" | "inactive" | "archived";
-  className?: string;
-}
+import type { CustomerStatusBadgeProps } from "@/types/components";
+
+export { CustomerStatusBadgeProps };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "status-success-bg status-success-text" },
@@ -19,6 +18,3 @@ export default function CustomerStatusBadge({ status, className = "" }: Customer
     </span>
   );
 }
-
-
-

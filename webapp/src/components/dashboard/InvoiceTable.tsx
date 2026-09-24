@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { formatCurrency } from "../../utils/format";
 import type { ApiInvoiceListItem } from "../../types/api";
 import SectionCard from "../SectionCard";
-import InvoiceStatus, { isOverdueStatus } from "../primitives/InvoiceStatus";
+import InvoiceStatus, { isOverdueStatus } from "../ui/InvoiceStatus";
 import { formatCurrencyValue } from "../../lib/utils";
 
 interface InvoiceTableProps {

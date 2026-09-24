@@ -1,22 +1,19 @@
 import { ReactNode } from "react";
 import { useSubscription } from "../contexts/SubscriptionContext";
+import type { FeatureFlag } from "@/types/api";
+import type { FeatureFlagProps } from "@/types/components";
 import UpgradePrompt from "./UpgradePrompt";
 
-interface FeatureGateProps {
-  feature: string;
-  requiredPlan?: string;
-  children: ReactNode;
-  fallback?: ReactNode;
-}
+export { FeatureFlagProps };
 
-export default function FeatureGate({ feature, requiredPlan, children, fallback }: FeatureGateProps) {
+export default function FeatureGate({ feature, children, fallback }: FeatureFlagProps) {
   const { plan, features } = useSubscription();
 
   if (!plan) {
     return <>{fallback ?? null}</>;
   }
 
-  const featureFlag = features.find((f: any) => f.code === feature);
+  const featureFlag = (features as FeatureFlag[]).find((f) => f.code === feature);
   if (!featureFlag) {
     return <>{children}</>;
   }
@@ -33,7 +30,5 @@ export default function FeatureGate({ feature, requiredPlan, children, fallback 
     return <>{fallback}</>;
   }
 
-  return (
-    <UpgradePrompt feature={feature} requiredPlan={featureFlag.requires_plan} message={featureFlag.description || `Requires ${featureFlag.requires_plan} plan`} />
-  );
+  return <UpgradePrompt feature={feature} requiredPlan={featureFlag.requires_plan} message={featureFlag.description || `Requires ${featureFlag.requires_plan} plan`} />;
 }

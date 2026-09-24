@@ -1,40 +1,10 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import type { ColumnDef, DataTableProps } from "@/types/components";
 
-export interface ColumnDef<TData> {
-  header: ReactNode;
-  accessor: keyof TData | ((row: TData) => unknown);
-  cell?: (row: TData, value: unknown) => ReactNode;
-  sortable?: boolean;
-  align?: "left" | "center" | "right";
-  className?: string;
-}
-
-export interface DataTableProps<TData> extends HTMLAttributes<HTMLDivElement> {
-  columns: ColumnDef<TData>[];
-  data: TData[];
-  sortColumn?: string | null;
-  sortOrder?: "asc" | "desc";
-  onSort?: (column: string) => void;
-  totalRows?: number;
-  pageSize?: number;
-  currentPage?: number;
-  onPageChange?: (page: number) => void;
-  pageSizeOptions?: number[];
-  onPageSizeChange?: (size: number) => void;
-  isLoading?: boolean;
-  emptyMessage?: ReactNode;
-  rowKey?: keyof TData | ((row: TData) => string);
-  selectedRows?: Set<string>;
-  onSelectRow?: (id: string) => void;
-  onSelectAll?: (selected: boolean) => void;
-  selectAllChecked?: boolean;
-  selectAllIndeterminate?: boolean;
-  actions?: ReactNode;
-  rowClassName?: (row: TData) => string;
-}
+export { ColumnDef };
 
 function getCellValue<TData>(row: TData, column: ColumnDef<TData>): unknown {
   if (typeof column.accessor === "function") return column.accessor(row);
