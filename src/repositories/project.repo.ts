@@ -214,13 +214,13 @@ export class ProjectRepository {
     const sortOrder = opts.sortOrder ?? "desc";
     const includeArchived = opts.includeArchived ?? false;
 
-    const conditions: string[] = ["business_id = $1"];
+    const conditions: string[] = ["p.business_id = $1"];
     const vals: unknown[] = [businessId];
     let i = 2;
 
-    if (!includeArchived) {
-      conditions.push(`status != 'archived'`);
-    }
+     if (!includeArchived) {
+       conditions.push(`p.status != 'archived'`);
+     }
 
     if (opts.search) {
       const pattern = `%${opts.search.toLowerCase()}%`;
@@ -230,13 +230,13 @@ export class ProjectRepository {
     }
 
     if (opts.status) {
-      conditions.push(`status = $${i}`);
+      conditions.push(`p.status = $${i}`);
       vals.push(opts.status);
       i++;
     }
 
     if (opts.customerId) {
-      conditions.push(`customer_id = $${i}`);
+      conditions.push(`p.customer_id = $${i}`);
       vals.push(opts.customerId);
       i++;
     }

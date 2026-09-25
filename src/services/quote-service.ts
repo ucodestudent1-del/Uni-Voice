@@ -359,11 +359,11 @@ export class QuoteService {
   }
 
   async list(businessId: string, filter: Record<string, unknown>): Promise<{ data: QuoteRow[]; total: number; limit: number; offset: number }> {
-    const conditions: string[] = ["business_id = $1"];
+    const conditions: string[] = ["q.business_id = $1"];
     const vals: unknown[] = [businessId];
     let i = 2;
-    if (filter.status) { conditions.push(`status = $${i++}`); vals.push(filter.status); }
-    if (filter.customerId) { conditions.push(`customer_id = $${i++}`); vals.push(filter.customerId); }
+     if (filter.status) { conditions.push(`q.status = $${i++}`); vals.push(filter.status); }
+    if (filter.customerId) { conditions.push(`q.customer_id = $${i++}`); vals.push(filter.customerId); }
     if (filter.search) { conditions.push(`(quote_number ILIKE $${i} OR customer_id IS NULL)`); vals.push(`%${filter.search}%`); i++; }
     const limit = Math.min(Math.max(filter.limit as number ?? 50, 1), 200);
     const offset = Math.max(filter.offset as number ?? 0, 0);

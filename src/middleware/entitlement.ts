@@ -13,7 +13,7 @@ export interface EntitlementRequest extends AuthRequest {
 export function requireEntitlement(featureCode: string) {
   return async (req: EntitlementRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!req.user?.businessId) {
-      throw new ForbiddenError("Business context required");
+      return next(new ForbiddenError("Business context required"));
     }
 
     const businessId = req.user.businessId;
@@ -21,21 +21,21 @@ export function requireEntitlement(featureCode: string) {
     const check = await subscriptionService.checkFeature(businessId, featureCode, context);
 
     if (!check.allowed) {
-      throw new ForbiddenError(check.reason ?? "Feature not available on current plan");
+      return next(new ForbiddenError(check.reason ?? "Feature not available on current plan"));
     }
 
     req.entitlement = {
       businessId,
       planCode: context.plan.code,
     };
-    return await next();
-  }
+    next();
+  };
 }
 
 export function requireUsageLimit(featureCode: string, increment = false) {
   return async (req: EntitlementRequest, res: Response, next: NextFunction): Promise<void> => {
     if (!req.user?.businessId) {
-      throw new ForbiddenError("Business context required");
+      return next(new ForbiddenError("Business context required"));
     }
 
     const businessId = req.user.businessId;
@@ -43,18 +43,18 @@ export function requireUsageLimit(featureCode: string, increment = false) {
     const limitCheck = await subscriptionService.checkUsageLimit(businessId, featureCode, undefined, context);
 
     if (!limitCheck.allowed) {
-      throw new BusinessLogicError(
+      return next(new BusinessLogicError(
         limitCheck.reason ?? "Usage limit exceeded",
         "USAGE_LIMIT_EXCEEDED",
         { limitCount: limitCheck.limitCount, usedCount: limitCheck.usedCount }
-      );
+      ));
     }
 
     if (increment) {
       subscriptionService.incrementUsage(businessId, featureCode);
     }
 
-    return await next();
+    await next();
   };
 }
 

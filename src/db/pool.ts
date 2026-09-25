@@ -24,6 +24,7 @@ pool.on("error", (err) => {
 });
 
 interface RequestContext {
+  requestId: string;
   queryCount: number;
   slowQueries: { text: string; ms: number }[];
   subscriptionContextCache?: Map<string, unknown>;
@@ -35,8 +36,12 @@ export function getRequestContext(): RequestContext | undefined {
   return requestStore.getStore();
 }
 
-export async function runWithRequestContext<T>(fn: (() => Promise<T>) | (() => T)): Promise<T | undefined> {
-  const ctx: RequestContext = { queryCount: 0, slowQueries: [] };
+export function getRequestId(): string | undefined {
+  return requestStore.getStore()?.requestId;
+}
+
+export async function runWithRequestContext<T>(fn: (() => Promise<T>) | (() => T), requestId?: string): Promise<T | undefined> {
+  const ctx: RequestContext = { requestId: requestId ?? `req-${Date.now()}`, queryCount: 0, slowQueries: [] };
   try {
     return await requestStore.run(ctx, async () => {
       return await Promise.resolve(fn());

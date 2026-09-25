@@ -472,13 +472,13 @@ export class InvoiceRepository {
   }
 
   async findManyPage(businessId: string, opts: InvoiceListOptions = {}): Promise<PagedResult<InvoiceListItem>> {
-    const conditions: string[] = ["business_id = $1"];
-    const vals: unknown[] = [businessId];
-    let i = 2;
-    if (opts.status) { conditions.push(`status = $${i++}`); vals.push(opts.status); }
-    if (opts.customerId) { conditions.push(`customer_id = $${i++}`); vals.push(opts.customerId); }
-    if (opts.projectId) { conditions.push(`project_id = $${i++}`); vals.push(opts.projectId); }
-    if (opts.invoiceNumber) { conditions.push(`invoice_number ILIKE $${i++}`); vals.push(`%${opts.invoiceNumber}%`); }
+       const conditions: string[] = ["i.business_id = $1"];
+     const vals: unknown[] = [businessId];
+     let i = 2;
+       if (opts.status) { conditions.push(`i.status = $${i++}`); vals.push(opts.status); }
+      if (opts.customerId) { conditions.push(`i.customer_id = $${i++}`); vals.push(opts.customerId); }
+      if (opts.projectId) { conditions.push(`i.project_id = $${i++}`); vals.push(opts.projectId); }
+      if (opts.invoiceNumber) { conditions.push(`i.invoice_number ILIKE $${i++}`); vals.push(`%${opts.invoiceNumber}%`); }
     if (opts.currency) { conditions.push(`currency = $${i++}`); vals.push(opts.currency.toUpperCase()); }
     if (opts.minAmount !== undefined) { conditions.push(`total >= $${i++}`); vals.push(opts.minAmount); }
     if (opts.maxAmount !== undefined) { conditions.push(`total <= $${i++}`); vals.push(opts.maxAmount); }
@@ -529,12 +529,12 @@ export class InvoiceRepository {
     };
   }
   async findMany(businessId: string, opts: { status?: string; customerId?: string; projectId?: string; search?: string; limit?: number; offset?: number } = {}): Promise<any[]> {
-    const conditions: string[] = ["business_id = $1"];
-    const vals: unknown[] = [businessId];
-    let i = 2;
-    if (opts.status) { conditions.push(`status = $${i++}`); vals.push(opts.status); }
-    if (opts.customerId) { conditions.push(`customer_id = $${i++}`); vals.push(opts.customerId); }
-    if (opts.projectId) { conditions.push(`project_id = $${i++}`); vals.push(opts.projectId); }
+       const conditions: string[] = ["i.business_id = $1"];
+     const vals: unknown[] = [businessId];
+     let i = 2;
+      if (opts.status) { conditions.push(`i.status = $${i++}`); vals.push(opts.status); }
+      if (opts.customerId) { conditions.push(`i.customer_id = $${i++}`); vals.push(opts.customerId); }
+      if (opts.projectId) { conditions.push(`i.project_id = $${i++}`); vals.push(opts.projectId); }
     if (opts.search) {
       const term = `%${opts.search}%`;
       conditions.push(`(invoice_number ILIKE $${i} OR customer_id::text ILIKE $${i} OR c.name ILIKE $${i})`);

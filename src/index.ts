@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { env, isDev, isTest } from "./config/index.js";
 import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
@@ -17,6 +18,8 @@ import { invoiceService } from "./services/invoice-service.js";
 import { recurringService } from "./services/recurring-service.js";
 import { quoteService } from "./services/quote-service.js";
 import { receiptService } from "./services/receipt-service.js";
+
+const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
 import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
@@ -83,6 +86,30 @@ import bcrypt from "bcrypt";
 const app = express();
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
 
+// In Express 4, async route handlers/middleware that throw or reject are not
+// automatically caught and passed to the error handler. This wrapper patches
+// all Route methods to auto-catch async rejections and forward them to next().
+const HTTP_METHODS = ["get", "post", "put", "patch", "delete"] as const;
+const routeProto = Route.prototype as Record<string, (...args: any[]) => any>;
+for (const method of HTTP_METHODS) {
+  const original = routeProto[method];
+  routeProto[method] = function (this: any, path: string, ...handlers: any[]) {
+    const wrapped = handlers.map((h) => {
+      if (typeof h === "function" && h.length < 4) {
+        return (req: any, res: any, next: any) => {
+          try {
+            Promise.resolve(h(req, res, next)).catch(next);
+          } catch (err) {
+            next(err);
+          }
+        };
+      }
+      return h;
+    });
+    return original.call(this, path, ...wrapped);
+  };
+}
+
 app.use(helmet());
 app.use(compression());
 app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true }));
@@ -97,6 +124,16 @@ app.use((req, res, next) => {
   const url = req.url;
   if (!url.startsWith("/api/")) return next();
   const start = Date.now();
+  const requestId = req.headers["x-request-id"] as string | undefined ?? randomUUID();
+  res.setHeader("x-request-id", requestId);
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      logger.error({ url: req.url, method: req.method, requestId }, "Request timed out — possible unhandled async error");
+      res.status(500).json({ error: "Request timed out", code: "REQUEST_TIMEOUT" });
+    }
+  }, 20000);
+  res.on("finish", () => clearTimeout(timeout));
+  res.on("close", () => clearTimeout(timeout));
   const done = () => {
     const ms = Date.now() - start;
     const ctx = getRequestContext();
@@ -104,17 +141,22 @@ app.use((req, res, next) => {
       if (ctx.queryCount > QUERY_COUNT_LOG_THRESHOLD || ctx.slowQueries.length > 0) {
         const slowList = ctx.slowQueries.map((s) => `${s.ms}ms ${s.text}`).join("; ");
         console.warn(
-          `Request ${req.method} ${url} took ${ms}ms, ${ctx.queryCount} queries` +
+          `Request ${req.method} ${url} [${requestId}] took ${ms}ms, ${ctx.queryCount} queries` +
             (ctx.slowQueries.length ? ` (${ctx.slowQueries.length} slow: ${slowList})` : "")
         );
       }
     } else if (ms > REQUEST_DURATION_LOG_THRESHOLD_MS) {
-      console.warn(`Request ${req.method} ${url} took ${ms}ms`);
+      console.warn(`Request ${req.method} ${url} [${requestId}] took ${ms}ms`);
     }
   };
   res.on("finish", done);
   res.on("close", done);
-  runWithRequestContext(() => next()).catch(() => {});
+  runWithRequestContext(() => next(), requestId).catch((err) => {
+    logger.error({ err, requestId, url: req.url, method: req.method }, "Unhandled error in request pipeline");
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error", code: "INTERNAL_ERROR" });
+    }
+  });
 });
 
 function getCookie(header: string | undefined, name: string): string | null {
@@ -910,7 +952,7 @@ app.get("/api/invoices", requireAuth, async (req: AuthRequest, res) => {
     customer_name: inv.customer_name ?? null,
     customer_email: inv.customer_email ?? null,
   }));
-  res.json({ invoices, total: page.total, limit: page.limit, offset: page.offset });
+   res.json({ invoices, total: page.total, limit: page.limit, offset: page.offset });
 });
 
 app.post("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
@@ -1216,7 +1258,7 @@ app.get("/api/reports/revenue", requireAuth, requireEntitlement("reports.revenue
   );
   const response = { report: result.rows };
   reportsCache.set(cacheKey, response);
-  res.json(response);
+   res.json(response);
 });
 
 app.get("/api/reports/tax-summary", requireAuth, requireEntitlement("reports.tax_summary"), async (req: AuthRequest, res) => {
@@ -1231,7 +1273,7 @@ app.get("/api/reports/tax-summary", requireAuth, requireEntitlement("reports.tax
   );
   const response = { report: result.rows };
   reportsCache.set(cacheKey, response);
-  res.json(response);
+     res.json(response);
 });
 
 app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) => {
@@ -1303,7 +1345,7 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
     volumeTrend,
   };
   reportsCache.set(cacheKey, response);
-  res.json(response);
+   res.json(response);
 });
 
 // ============================================================================
@@ -1673,9 +1715,8 @@ app.get("/api/projects", requireAuth, async (req: AuthRequest, res) => {
     sortBy: parsed.sortBy,
     sortOrder: parsed.sortOrder,
   });
-  res.json({ projects: result.data, total: result.total, limit: result.limit, offset: result.offset });
+     res.json({ projects: result.data, total: result.total, limit: result.limit, offset: result.offset });
 });
-
 app.post("/api/projects", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   try {
@@ -2563,6 +2604,9 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   if (err instanceof Error && "statusCode" in err) {
     const e = err as { statusCode: number; code?: string; message: string; context?: Record<string, unknown> };
     return res.status(e.statusCode).json({ error: e.message, code: e.code, ...(e.context ? { context: e.context } : {}) });
+  }
+  if (err.name === "ZodError") {
+    return res.status(400).json({ error: "Validation failed", code: "VALIDATION_ERROR", issues: (err as any).issues });
   }
   res.status(500).json({ error: "Internal server error" });
 });
