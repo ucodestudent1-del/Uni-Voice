@@ -5,10 +5,11 @@ import { NotFoundError, BusinessLogicError } from "../domain/errors.js";
 import { receiptRepository, type ReceiptRow, type ReceiptFilter } from "../repositories/receipt.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
 import { buildTemplateData, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals } from "../services/templates/template-renderer.js";
-import type { CurrencyCode } from "../domain/value-objects/currency.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService, type InvoiceEmailData } from "../services/email/email-service.js";
+import type { CurrencyCode } from "../domain/value-objects/currency.js";
 import type { Payment } from "../domain/models/index.js";
+import { invoiceService } from "../services/invoice-service.js";
 import Handlebars from "handlebars";
 
 export interface ReceiptNumberConfig {
@@ -386,8 +387,123 @@ async generatePdf(receiptId: string): Promise<Buffer> {
         amountPaid: String(receiptData.receipt.amount),
         amountDue: "0",
       } as TemplateTotals,
-      {}
+       {}
+     );
+   }
+
+  async getDetailResponse(businessId: string, id: string): Promise<Record<string, unknown>> {
+    const result = await query(
+      `SELECT r.*, i.invoice_number, i.status as invoice_status, i.due_date as invoice_due_date,
+              i.issue_date as invoice_issue_date, i.total as invoice_total, i.subtotal as invoice_subtotal,
+              i.discount_total as invoice_discount_total, i.tax_total as invoice_tax_total,
+              i.fee_total as invoice_fee_total, i.amount_paid as invoice_amount_paid,
+              i.amount_due as invoice_amount_due, i.notes as invoice_notes,
+              i.currency as invoice_currency,
+              c.name as customer_name, c.email as customer_email,
+              b.name as business_name, b.email as business_email, b.phone as business_phone,
+              b.address_line_1, b.address_line_2, b.city, b.state_or_region, b.postal_code, b.country_code,
+              p.id as payment_id, p.amount as payment_amount, p.currency as payment_currency,
+              p.status as payment_status, p.method as payment_method, p.provider as payment_provider,
+              p.provider_payment_id as payment_provider_payment_id, p.paid_at as payment_paid_at
+       FROM receipts r
+       JOIN invoices i ON i.id = r.invoice_id
+       JOIN businesses b ON b.id = r.business_id
+       LEFT JOIN customers c ON c.id = i.customer_id
+       LEFT JOIN payments p ON p.id = r.payment_id
+       WHERE r.id = $1 AND r.business_id = $2`,
+      [id, businessId]
     );
+    if (!result.rows.length) throw new NotFoundError(`Receipt ${id} not found`);
+
+    const row = result.rows[0] as Record<string, unknown>;
+    const metadata = (row.metadata as Record<string, unknown>) ?? {};
+
+    const invoiceItemsResult = await query(
+      `SELECT description, quantity, unit, unit_price, tax_rate, tax_amount, line_total
+       FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`,
+      [row.invoice_id]
+    );
+
+    return {
+      id: row.id,
+      invoice_id: row.invoice_id,
+      business_id: row.business_id,
+      payment_id: row.payment_id,
+      receipt_number: row.receipt_number,
+      amount: row.amount,
+      currency: row.currency,
+      status: row.status,
+      provider: metadata.provider ?? "unknown",
+      provider_receipt_url: metadata.provider_receipt_url ?? null,
+      sent_to: row.email_log_id ? metadata.sent_to ?? null : null,
+      issued_at: row.issued_at,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      invoice_number: row.invoice_number,
+      invoice_status: row.invoice_status,
+      invoice_due_date: row.invoice_due_date,
+      invoice_issue_date: row.invoice_issue_date,
+      invoice_total: row.invoice_total,
+      invoice_subtotal: row.invoice_subtotal,
+      invoice_discount_total: row.invoice_discount_total,
+      invoice_tax_total: row.invoice_tax_total,
+      invoice_fee_total: row.invoice_fee_total,
+      invoice_amount_paid: row.invoice_amount_paid,
+      invoice_amount_due: row.invoice_amount_due,
+      invoice_notes: row.invoice_notes,
+      customer_name: row.customer_name ?? null,
+      customer_email: row.customer_email ?? null,
+      business_name: row.business_name,
+      business_email: row.business_email,
+      business_phone: row.business_phone,
+      payment: row.payment_id
+        ? {
+            id: row.payment_id,
+            amount: row.payment_amount,
+            currency: row.payment_currency,
+            status: row.payment_status,
+            method: row.payment_method ?? null,
+            provider: row.payment_provider,
+            provider_payment_id: row.payment_provider_payment_id ?? null,
+            paid_at: row.payment_paid_at ?? null,
+          }
+        : null,
+      items: invoiceItemsResult.rows.map((item: Record<string, unknown>) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unit: item.unit,
+        unit_price: item.unit_price,
+        tax_rate: item.tax_rate,
+        tax_amount: item.tax_amount,
+        line_total: item.line_total,
+        is_tax_inclusive: false,
+      })),
+    };
+  }
+
+  async processRefund(
+    businessId: string,
+    receiptId: string,
+    data: { amount: string; reason?: string }
+  ): Promise<{ status: string; refundId?: string }> {
+    const receipt = await receiptRepository.findById(businessId, receiptId);
+
+    if (!receipt.paymentId) {
+      throw new BusinessLogicError("Receipt has no associated payment");
+    }
+
+    const refundResult = await invoiceService.refundPayment(
+      businessId,
+      receipt.invoiceId,
+      receipt.paymentId,
+      data.amount,
+      receipt.currency,
+      "stripe",
+      undefined,
+      `receipt-refund:${receipt.id}`
+    );
+
+    return { status: refundResult.status };
   }
 
   async sendReceiptEmail(receiptId: string, recipient: { email: string; name?: string }): Promise<{ messageId: string; status: string }> {

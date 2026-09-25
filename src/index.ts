@@ -1212,6 +1212,21 @@ app.post("/api/receipts/:id/email", requireAuth, requireEntitlement("receipts.cr
   res.json({ ok: true, ...result });
 });
 
+app.get("/api/receipts/:id/detail", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const receiptDetail = await receiptService.getDetailResponse(req.user!.businessId, req.params.id);
+  res.json({ receipt: receiptDetail });
+});
+
+app.post("/api/receipts/:id/refund", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await receiptService.processRefund(req.user!.businessId, req.params.id, {
+    amount: req.body.amount,
+    reason: req.body.reason,
+  });
+  res.json(result);
+});
+
 app.post("/api/invoices/:id/receipts", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);

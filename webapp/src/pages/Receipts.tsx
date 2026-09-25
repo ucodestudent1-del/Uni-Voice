@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   getReceipts,
-  getReceiptById,
   getReceiptPdf,
   type ReceiptSearchParams,
   type ApiReceipt,
@@ -11,6 +10,7 @@ import { formatCurrency } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
 import { Download, Search, Eye, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import PageHeader from "../components/ui/PageHeader";
 import { DataTable, type ColumnDef } from "../components/ui/DataTable";
 import PaymentStatus from "../components/ui/PaymentStatus";
@@ -101,21 +101,11 @@ export default function Receipts() {
     }
   }, [setError]);
 
-  const handleViewReceipt = useCallback(async (receiptId: string) => {
-    try {
-      const { receipt } = await getReceiptById(receiptId);
-      const url = window.URL.createObjectURL(
-        new Blob([JSON.stringify(receipt, null, 2)], { type: "application/json" })
-      );
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `receipt-${receipt.id.slice(0, 8)}.json`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to load receipt");
-    }
-  }, [setError]);
+  const navigate = useNavigate();
+
+  const handleViewReceipt = useCallback((receiptId: string) => {
+    navigate(`/app/receipts/${receiptId}`);
+  }, [navigate]);
 
   const columns = useMemo<ColumnDef<ApiReceipt>[]>(
     () => [
@@ -126,10 +116,14 @@ export default function Receipts() {
           const r = row as ApiReceipt;
           return (
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-primary">
+              <Link
+                to={`/app/receipts/${r.id}`}
+                className="text-sm font-medium text-primary-brand hover:underline"
+                title="View receipt"
+              >
                 {r.receipt_number || `#${String(r.id).slice(0, 8)}`}
-              </span>
-              <span className="text-xs text-tertiary">{r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</span>
+              </Link>
+              <span className="text-xs text-tertiary">{r.issued_at ? new Date(r.issued_at).toLocaleDateString() : r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</span>
             </div>
           );
         },
@@ -143,11 +137,17 @@ export default function Receipts() {
           const r = row as ApiReceipt;
           return (
             <div className="flex flex-col">
-              <span className="text-sm text-secondary">
+              <Link
+                to={r.invoice_id ? `/app/invoices/${r.invoice_id}` : "#"}
+                className={`text-sm font-medium ${r.invoice_id ? "text-primary-brand hover:underline" : "text-secondary"}`}
+              >
                 {r.invoice_number || "—"}
-              </span>
+              </Link>
               {r.customer_name && (
                 <span className="text-xs text-tertiary">{r.customer_name}</span>
+              )}
+              {r.customer_email && (
+                <span className="text-xs text-tertiary">{r.customer_email}</span>
               )}
             </div>
           );
@@ -172,6 +172,17 @@ export default function Receipts() {
         cell: (row) => (
           <span className="text-sm text-secondary capitalize">
             {(row as ApiReceipt).provider || "—"}
+          </span>
+        ),
+        sortable: false,
+        align: "left",
+      },
+      {
+        header: "Sent To",
+        accessor: "sent_to",
+        cell: (row) => (
+          <span className="text-sm text-secondary">
+            {(row as ApiReceipt).sent_to || "—"}
           </span>
         ),
         sortable: false,

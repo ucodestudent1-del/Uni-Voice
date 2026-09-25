@@ -31,6 +31,7 @@ const Expenses = lazy(() => import("./pages/Expenses"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Quotes = lazy(() => import("./pages/Quotes"));
 const Receipts = lazy(() => import("./pages/Receipts"));
+const ReceiptDetail = lazy(() => import("./pages/ReceiptDetail"));
 const Reports = lazy(() => import("./pages/Reports"));
 
 const Fallback = () => (
@@ -96,6 +97,7 @@ export default function App() {
           <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />
           <Route path="report" element={<Suspense fallback={<Fallback />}><ReportSection /></Suspense>} />
           <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
+          <Route path="receipts/:id" element={<Suspense fallback={<Fallback />}><ReceiptDetail /></Suspense>} />
           <Route path="settings">
             <Route index element={<Navigate to="/app/settings/business" replace />} />
             <Route path=":section" element={<Suspense fallback={<Fallback />}><Settings /></Suspense>} />

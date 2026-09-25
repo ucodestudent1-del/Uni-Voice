@@ -1296,6 +1296,7 @@ export interface ApiReceipt {
   invoice_number?: string | null;
   customer_name?: string | null;
   customer_email?: string | null;
+  business_name?: string | null;
 }
 
 export async function getReceipts(params?: ReceiptSearchParams): Promise<{ receipts: ApiReceipt[]; total: number; limit: number; offset: number }> {
@@ -1313,6 +1314,75 @@ export async function getReceiptPdf(id: string) {
   return res.data;
 }
 
+export interface ApiReceiptItem {
+  description: string;
+  quantity: string;
+  unit: string;
+  unit_price: string;
+  tax_rate: string;
+  tax_amount: string;
+  line_total: string;
+  is_tax_inclusive: boolean;
+}
+
+export interface ApiReceiptPayment {
+  id: string;
+  amount: string;
+  currency: string;
+  status: string;
+  method?: string | null;
+  provider: string;
+  provider_payment_id?: string | null;
+  paid_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ApiReceiptDetail extends ApiReceipt {
+  invoice_status?: string | null;
+  invoice_due_date?: string | null;
+  invoice_issue_date?: string | null;
+  invoice_total?: string;
+  invoice_subtotal?: string;
+  invoice_discount_total?: string;
+  invoice_tax_total?: string;
+  invoice_fee_total?: string;
+  invoice_amount_paid?: string;
+  invoice_amount_due?: string;
+  invoice_notes?: string | null;
+  payment?: ApiReceiptPayment | null;
+  items?: ApiReceiptItem[];
+}
+
+export async function getReceiptDetail(id: string): Promise<{ receipt: ApiReceiptDetail }> {
+  const res = await api.get(`/receipts/${id}/detail`);
+  return res.data;
+}
+
+export async function emailReceipt(
+  receiptId: string,
+  data: {
+    email: string;
+    name?: string;
+    subject?: string;
+    message?: string;
+  }
+): Promise<{ ok: boolean; messageId: string; status: string }> {
+  const res = await api.post(`/receipts/${receiptId}/email`, data);
+  return res.data;
+}
+
+export async function refundReceipt(
+  receiptId: string,
+  data: {
+    amount: string;
+    reason?: string;
+  }
+): Promise<{ status: string; refundId?: string }> {
+  const res = await api.post(`/receipts/${receiptId}/refund`, data);
+  return res.data;
+}
+
 export async function generateInvoiceReceipt(invoiceId: string, data?: { sentTo?: string; provider?: string }) {
   const res = await api.post(`/invoices/${invoiceId}/receipts`, data ?? {});
   return res.data;
@@ -1320,7 +1390,7 @@ export async function generateInvoiceReceipt(invoiceId: string, data?: { sentTo?
 
 // ============================================================================
 // QUOTE DETAIL
-// ============================================================================
+// ==============================================================================
 
 export interface ApiQuoteItem {
   id: string;
