@@ -7,6 +7,7 @@ export function invalidateReportsCache(businessId: string): void {
   reportsCache.delete(`tax-summary:${businessId}`);
   reportsCache.delete(`volume-trend:${businessId}`);
   reportsCache.delete(`dashboard:${businessId}`);
+  invalidateReportCacheByPattern(`expenses:${businessId}:*`);
 }
 
 export function invalidateReportCacheByPattern(pattern: string): void {

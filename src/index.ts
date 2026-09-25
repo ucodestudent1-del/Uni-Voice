@@ -80,6 +80,7 @@ import {
   ExpenseCreateSchema,
   ExpenseUpdateSchema,
   ExpenseSearchSchema,
+  ExpenseBudgetSettingsSchema,
 } from "./domain/schemas/expense.js";
 import bcrypt from "bcrypt";
 
@@ -2122,6 +2123,127 @@ app.get(
       });
       const result = await expenseService.listWithSummary(req.user!.businessId, parsed);
       res.json({ expenses: result.expenses, total: result.total, limit: result.limit, offset: result.offset, summary: result.summary });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.get(
+  "/api/expenses/category-breakdown",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = ExpenseSearchSchema.parse({
+        ...req.query,
+        limit: req.query.limit ?? 50,
+        offset: req.query.offset ?? 0,
+      });
+      const breakdown = await expenseService.getCategoryBreakdown(req.user!.businessId, parsed);
+      res.json({ breakdown });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.get(
+  "/api/expenses/monthly-trend",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const months = Number(req.query.months ?? 12);
+      const parsed = ExpenseSearchSchema.parse({
+        ...req.query,
+        limit: req.query.limit ?? 50,
+        offset: req.query.offset ?? 0,
+      });
+      const trend = await expenseService.getMonthlyTrend(req.user!.businessId, months, parsed);
+      res.json({ trend });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.get(
+  "/api/businesses/current/expense-settings",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await query(
+        "SELECT * FROM expense_budget_settings WHERE business_id = $1",
+        [req.user!.businessId]
+      );
+      if (!result.rows.length) {
+        const insertRes = await query(
+          `INSERT INTO expense_budget_settings
+             (business_id, monthly_budget, monthly_budget_currency, budget_period, budget_notifications,
+              budget_warning_threshold, budget_over_threshold, created_at, updated_at)
+           VALUES ($1, '0.00', $2, 'calendar_month', true, 80, 100, NOW(), NOW())
+           RETURNING *`,
+          [req.user!.businessId, req.user!.businessId]
+        );
+        return res.json({ budget: insertRes.rows[0] });
+      }
+      res.json({ budget: result.rows[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.patch(
+  "/api/businesses/current/expense-settings",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = ExpenseBudgetSettingsSchema.parse(req.body);
+      const updates: string[] = [];
+      const vals: unknown[] = [req.user!.businessId];
+      let i = 2;
+
+      const setField = (col: string, value: unknown) => {
+        updates.push(`${col} = $${i++}`);
+        vals.push(value);
+      };
+
+      if (parsed.monthly_budget !== undefined) setField("monthly_budget", parsed.monthly_budget.toFixed(2));
+      if (parsed.monthly_budget_currency !== undefined) setField("monthly_budget_currency", parsed.monthly_budget_currency);
+      if (parsed.budget_period !== undefined) setField("budget_period", parsed.budget_period);
+      if (parsed.budget_notifications !== undefined) setField("budget_notifications", parsed.budget_notifications);
+      if (parsed.budget_warning_threshold !== undefined) setField("budget_warning_threshold", parsed.budget_warning_threshold);
+      if (parsed.budget_over_threshold !== undefined) setField("budget_over_threshold", parsed.budget_over_threshold);
+
+      if (updates.length === 0) {
+        const existing = await query(
+          "SELECT * FROM expense_budget_settings WHERE business_id = $1",
+          [req.user!.businessId]
+        );
+        return res.json({ budget: existing.rows[0] });
+      }
+
+      updates.push("updated_at = NOW()");
+
+      const upsertQuery = `
+        INSERT INTO expense_budget_settings
+          (business_id, ${updates.map((u) => u.split(" = ")[0]).join(", ")}, created_at, updated_at)
+        VALUES
+          ($1, ${updates.map((_, idx) => `$${idx + 2}`).join(", ")}, NOW(), NOW())
+        ON CONFLICT (business_id) DO UPDATE SET ${updates.join(", ")}
+        RETURNING *
+      `;
+
+      const result = await query(upsertQuery, vals);
+      res.json({ budget: result.rows[0] });
     } catch (err) {
       next(err);
     }

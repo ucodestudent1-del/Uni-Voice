@@ -117,3 +117,17 @@ export const ExpenseSummarySchema = z.object({
 });
 
 export type ExpenseSummary = z.infer<typeof ExpenseSummarySchema>;
+
+export const ExpenseBudgetSettingsSchema = z.object({
+  monthly_budget: z.preprocess(
+    (v) => (typeof v === "string" || typeof v === "number" ? Number(v) : v),
+    z.number().min(0)
+  ),
+  monthly_budget_currency: z.string().length(3).optional(),
+  budget_period: z.enum(["calendar_month", "rolling_30"]).optional(),
+  budget_notifications: z.boolean().optional(),
+  budget_warning_threshold: z.number().min(0).max(100).optional(),
+  budget_over_threshold: z.number().min(0).max(100).optional(),
+});
+
+export type ExpenseBudgetSettingsInput = z.infer<typeof ExpenseBudgetSettingsSchema>;

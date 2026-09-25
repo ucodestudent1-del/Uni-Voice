@@ -5,6 +5,20 @@ import { NotFoundError } from "../domain/errors.js";
 import type { Expense, ExpenseSummary } from "../domain/models/expense.js";
 import type { ExpenseCreateInput, ExpenseUpdateInput, ExpenseSearchInput } from "../domain/schemas/expense.js";
 import type { PagedResult } from "../repositories/helpers.js";
+import type { ExpenseCategory } from "../domain/models/expense.js";
+
+export interface ExpenseCategoryBreakdown {
+  category: ExpenseCategory;
+  total: string;
+  count: number;
+  percentage: number;
+}
+
+export interface ExpenseMonthlyTrend {
+  period: string;
+  amount: string;
+  count: number;
+}
 
 export class ExpenseService {
   constructor(private readonly repo: ExpenseRepository = expenseRepository) {}
@@ -75,6 +89,21 @@ export class ExpenseService {
       offset: result.offset,
       summary,
     };
+  }
+
+  async getCategoryBreakdown(
+    businessId: string,
+    opts: Partial<ExpenseSearchInput> = {}
+  ): Promise<ExpenseCategoryBreakdown[]> {
+    return this.repo.getCategoryBreakdown(businessId, opts);
+  }
+
+  async getMonthlyTrend(
+    businessId: string,
+    months: number = 12,
+    opts: Partial<ExpenseSearchInput> = {}
+  ): Promise<ExpenseMonthlyTrend[]> {
+    return this.repo.getMonthlyTrend(businessId, months, opts);
   }
 }
 

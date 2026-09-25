@@ -17,6 +17,9 @@ import type {
   ApiExpenseSummary,
   ExpenseSearchParams,
   ExpenseCategory,
+  ApiExpenseCategoryBreakdown,
+  ApiExpenseMonthlyTrend,
+  ApiExpenseBudgetSettings,
 } from "../types/api";
 
 export type {
@@ -24,11 +27,17 @@ export type {
   CreditNoteSearchParams,
   RecurringInvoiceCreateInput,
   RecurringInvoiceUpdateInput,
+  ApiRecurringInvoice,
+  ApiReminderConfig,
+  ApiReminderTemplate,
   ApiEnhancedDashboard,
   ApiExpense,
   ApiExpenseSummary,
   ExpenseSearchParams,
   ExpenseCategory,
+  ApiExpenseCategoryBreakdown,
+  ApiExpenseMonthlyTrend,
+  ApiExpenseBudgetSettings,
 };
 
 declare module "axios" {
@@ -1223,6 +1232,33 @@ export async function getExpensesWithSummary(params?: {
   sortOrder?: "asc" | "desc";
 }): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number; summary: ApiExpenseSummary }> {
   const res = await api.get("/expenses/with-summary", { params });
+  return res.data;
+}
+
+export async function getExpenseCategoryBreakdown(params?: {
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{ breakdown: ApiExpenseCategoryBreakdown[] }> {
+  const res = await api.get("/expenses/category-breakdown", { params });
+  return res.data;
+}
+
+export async function getExpenseMonthlyTrend(params?: {
+  months?: number;
+  dateFrom?: string;
+  dateTo?: string;
+}): Promise<{ trend: ApiExpenseMonthlyTrend[] }> {
+  const res = await api.get("/expenses/monthly-trend", { params });
+  return res.data;
+}
+
+export async function getExpenseBudgetSettings(): Promise<{ budget: ApiExpenseBudgetSettings | null }> {
+  const res = await api.get("/businesses/current/expense-settings");
+  return res.data;
+}
+
+export async function updateExpenseBudgetSettings(data: Partial<ApiExpenseBudgetSettings>): Promise<{ budget: ApiExpenseBudgetSettings }> {
+  const res = await api.patch("/businesses/current/expense-settings", data);
   return res.data;
 }
 

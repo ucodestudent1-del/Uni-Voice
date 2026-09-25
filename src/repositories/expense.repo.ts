@@ -292,6 +292,87 @@ export class ExpenseRepository {
     };
   }
 
+  async getCategoryBreakdown(
+    businessId: string,
+    opts: ExpenseSearchOpts = {}
+  ): Promise<Array<{ category: ExpenseCategory; total: string; count: number; percentage: number }>> {
+    const conditions: string[] = ["business_id = $1"];
+    const vals: unknown[] = [businessId];
+    let i = 2;
+
+    if (opts.dateFrom) {
+      conditions.push(`expense_date >= $${i++}::date`);
+      vals.push(opts.dateFrom.toISOString().split("T")[0]);
+    }
+    if (opts.dateTo) {
+      conditions.push(`expense_date <= $${i++}::date`);
+      vals.push(opts.dateTo.toISOString().split("T")[0]);
+    }
+
+    const res = await query(
+      `SELECT
+         category,
+         COALESCE(SUM(amount), 0) as total,
+         COUNT(*) as count
+       FROM expenses
+       WHERE ${conditions.join(" AND ")}
+       GROUP BY category
+       ORDER BY total DESC`,
+      vals
+    );
+
+    const grandTotal = res.rows.reduce(
+      (sum, r) => sum + Number(r.total ?? 0),
+      0
+    );
+
+    return res.rows.map((r) => ({
+      category: r.category as ExpenseCategory,
+      total: new Decimal(r.total ?? 0).toFixed(2),
+      count: Number(r.count ?? 0),
+      percentage: grandTotal > 0 ? Number(((Number(r.total ?? 0) / grandTotal) * 100).toFixed(1)) : 0,
+    }));
+  }
+
+  async getMonthlyTrend(
+    businessId: string,
+    months: number = 12,
+    opts: ExpenseSearchOpts = {}
+  ): Promise<Array<{ period: string; amount: string; count: number }>> {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
+
+    const conditions: string[] = ["business_id = $1"];
+    const vals: unknown[] = [businessId];
+    let i = 2;
+
+    const dateFrom = opts.dateFrom ?? startDate;
+    const dateTo = opts.dateTo ?? now;
+
+    conditions.push(`expense_date >= $${i++}::date`);
+    vals.push(dateFrom.toISOString().split("T")[0]);
+    conditions.push(`expense_date <= $${i++}::date`);
+    vals.push(dateTo.toISOString().split("T")[0]);
+
+    const res = await query(
+      `SELECT
+         TO_CHAR(DATE_TRUNC('month', expense_date), 'YYYY-MM') as period,
+         COALESCE(SUM(amount), 0) as total,
+         COUNT(*) as count
+       FROM expenses
+       WHERE ${conditions.join(" AND ")}
+       GROUP BY DATE_TRUNC('month', expense_date)
+       ORDER BY period ASC`,
+      vals
+    );
+
+    return res.rows.map((r) => ({
+      period: r.period as string,
+      amount: new Decimal(r.total ?? 0).toFixed(2),
+      count: Number(r.count ?? 0),
+    }));
+  }
+
   private rowToModel(r: Record<string, unknown>): Expense {
     return {
       id: r.id as string,
