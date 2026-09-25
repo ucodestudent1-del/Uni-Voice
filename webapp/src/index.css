@@ -299,4 +299,23 @@
   .font-tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Shorthand aliases for status color utilities (used across invoice & expense components) */
+  .bg-success-bg { background-color: rgb(var(--color-success-bg)); }
+  .bg-success-text { color: rgb(var(--color-success-text)); }
+  .border-success-border { border-color: rgb(var(--color-success-border)); }
+  .bg-warning-bg { background-color: rgb(var(--color-warning-bg)); }
+  .bg-warning-text { color: rgb(var(--color-warning-text)); }
+  .border-warning-border { border-color: rgb(var(--color-warning-border)); }
+  .bg-error-bg { background-color: rgb(var(--color-error-bg)); }
+  .bg-error-text { color: rgb(var(--color-error-text)); }
+  .border-error-border { border-color: rgb(var(--color-error-border)); }
+  .bg-info-bg { background-color: rgb(var(--color-info-bg)); }
+  .bg-info-text { color: rgb(var(--color-info-text)); }
+  .border-info-border { border-color: rgb(var(--color-info-border)); }
+  .hover-bg-error-bg:hover { background-color: rgb(var(--color-error-bg)); }
+  .hover-bg-success-bg:hover { background-color: rgb(var(--color-success-bg)); }
+
+  /* Primary background shorthand (used by expense & invoice components) */
+  .bg-primary-bg { background-color: rgb(var(--color-primary-bg)); }
 }

@@ -42,6 +42,9 @@ export default {
         "ring-primary": "rgb(var(--color-primary))",
         "ring-focus": "rgb(var(--color-focus-ring))",
         "ring-error": "rgb(var(--color-error))",
+        "ring-success": "rgb(var(--color-success))",
+        "ring-warning": "rgb(var(--color-warning))",
+        "ring-info": "rgb(var(--color-info))",
       },
       fontFamily: {
         sans: ["-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "Helvetica", "Arial", "sans-serif"],
