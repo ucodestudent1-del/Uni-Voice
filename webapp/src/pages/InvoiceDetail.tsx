@@ -80,11 +80,11 @@ export default function InvoiceDetail() {
   const canCancel = invoice && ["draft", "sent", "viewed"].includes(invoice.status);
   const canVoid = invoice && ["draft", "sent", "viewed", "partially_paid", "overdue"].includes(invoice.status);
 
-  const depositType = (invoice as any).deposit_type ?? "none";
-  const depositValue = (invoice as any).deposit_value ?? "0";
-  const depositDueDate = (invoice as any).deposit_due_date;
-  const depositPaid = new Decimal((invoice as any).deposit_paid ?? 0);
-  const depositDue = new Decimal((invoice as any).deposit_due ?? 0);
+  const depositType = invoice?.deposit_type ?? "none";
+  const depositValue = invoice?.deposit_value ?? "0";
+  const depositDueDate = invoice?.deposit_due_date;
+  const depositPaid = new Decimal(invoice?.deposit_paid ?? 0);
+  const depositDue = new Decimal(invoice?.deposit_due ?? 0);
   const hasDeposit = depositType !== "none" && depositDue.gt(0);
 
   async function handleSendReminder() {

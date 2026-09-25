@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { ThemeProvider, applyInitialTheme } from "./contexts/ThemeContext";
+import { ToastProvider } from "./components/ui/ToastProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
@@ -45,7 +46,9 @@ ReactDOM.createRoot(rootElement).render(
         <AuthProvider>
           <SubscriptionProvider>
             <ThemeProvider>
-              <AppLazy />
+              <ToastProvider>
+                <AppLazy />
+              </ToastProvider>
             </ThemeProvider>
           </SubscriptionProvider>
         </AuthProvider>

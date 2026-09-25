@@ -41,7 +41,7 @@ const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"created_at" | "due_date" | "name">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const loadProjects = useCallback(async (searchParams: ProjectSearchParams = {}) => {
+   const loadProjects = useCallback(async (searchParams: ProjectSearchParams = {}) => {
     setLoading(true);
     setError(null);
     try {
@@ -59,6 +59,7 @@ const [search, setSearch] = useState("");
   }, 300);
 
   useEffect(() => {
+    setLoading(true);
     const params = buildProjectSearchParams({
       search,
       status: statusFilter || undefined,

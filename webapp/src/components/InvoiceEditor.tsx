@@ -230,9 +230,9 @@ function InvoiceEditorContent() {
             taxRate: f.tax_rate,
           })),
           amountPaid: inv.amount_paid,
-          depositType: (inv as any).deposit_type ?? "none",
-          depositValue: (inv as any).deposit_value ?? "0",
-          depositDueDate: (inv as any).deposit_due_date?.split("T")[0],
+          depositType: inv.deposit_type ?? "none",
+          depositValue: inv.deposit_value ?? "0",
+          depositDueDate: inv.deposit_due_date?.split("T")[0],
         });
 
         setSaveState("saved");
