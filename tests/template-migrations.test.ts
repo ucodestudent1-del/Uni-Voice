@@ -47,7 +47,7 @@ describe("TemplateMigrationEngine", () => {
       id: "test",
       version: 1,
       name: "Test",
-      businessId: "biz_1",
+      businessId: "00000000-0000-0000-0000-000000000001",
       createdAt: "2024-01-01",
       updatedAt: "2024-01-01",
       sections: {},
@@ -71,7 +71,7 @@ describe("TemplateMigrationEngine", () => {
       doc as InvoiceTemplateDocument,
       "1.0",
       "1.1",
-      "biz_1",
+      "00000000-0000-0000-0000-000000000001",
       "template_1"
     );
 

@@ -104,8 +104,8 @@ describe("Customer API (integration)", () => {
 
     it("isolates customers per business (tenant isolation)", async () => {
       await agent.post("/api/customers").set(headers).send({ name: "Biz1 Customer" });
-      const biz2 = await createTestBusiness({ id: "biz2-biz2-biz2-biz2-biz2b2b2b" });
-      const user2 = await createTestUser({ id: "user2-id", email: "user2@test.com", businessId: biz2.id });
+      const biz2 = await createTestBusiness({ id: "00000000-0000-0000-0000-000000000002" });
+      const user2 = await createTestUser({ id: "11111111-1111-1111-1111-111111111112", email: "user2@test.com", businessId: biz2.id });
       const headers2 = authHeader(biz2.id, user2.id, user2.email);
       const res = await agent.get("/api/customers").set(headers2);
       expect(res.body.data).toHaveLength(0);
@@ -127,8 +127,8 @@ describe("Customer API (integration)", () => {
 
     it("returns 404 for customer in another business", async () => {
       const { body } = await agent.post("/api/customers").set(headers).send({ name: "Other Biz Customer" });
-      const biz2 = await createTestBusiness({ id: "biz2-again", name: "B2" });
-      const user2 = await createTestUser({ id: "user2-again", email: "user2-again@test.com", businessId: biz2.id });
+      const biz2 = await createTestBusiness({ id: "00000000-0000-0000-0000-000000000002", name: "B2" });
+      const user2 = await createTestUser({ id: "11111111-1111-1111-1111-111111111112", email: "user2-again@test.com", businessId: biz2.id });
       const headers2 = authHeader(biz2.id, user2.id, user2.email);
       const res = await agent.get(`/api/customers/${body.customer.id}`).set(headers2);
       expect(res.status).toBe(404);
@@ -243,6 +243,17 @@ describe("Customer API (integration)", () => {
         customerId,
         currency: "USD",
         notes: "Test invoice",
+        issueDate: new Date().toISOString(),
+        items: [
+          {
+            description: "Consulting",
+            quantity: "1",
+            unit: "hour",
+            unitPrice: "100.00",
+            taxRate: "0",
+            isTaxInclusive: false,
+          },
+        ],
       });
       const invoiceId = invBody.invoiceId;
 

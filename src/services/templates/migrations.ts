@@ -88,7 +88,7 @@ class TemplateMigrationEngine {
 
     for (const m of path) {
       migrated = m.migrate(migrated as unknown as InvoiceTemplateDocument) as unknown as Record<string, unknown>;
-      migrated.version = (migrated.version as number | undefined) ?? 1 + 1;
+      migrated.version = (migrated.version as number | undefined) ?? 2;
     }
 
     this.recordMigration(

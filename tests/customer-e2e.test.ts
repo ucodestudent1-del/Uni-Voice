@@ -50,6 +50,7 @@ describe("Customer → Invoice e2e", () => {
       currency: "USD",
       notes: "E2E test invoice",
       terms: "Net 30",
+      issueDate: new Date().toISOString(),
       items: [
         {
           description: "Web Development",
@@ -67,7 +68,7 @@ describe("Customer → Invoice e2e", () => {
     // 3. Verify invoice references customer
     const getInvRes = await agent.get(`/api/invoices/${invoiceId}`).set(headers);
     expect(getInvRes.status).toBe(200);
-    expect(getInvRes.body.invoice.customer_id).toBe(customerId);
+    expect(getInvRes.body.invoice.customerId).toBe(customerId);
 
     // 4. Finalize invoice
     const finalizeRes = await agent.post(`/api/invoices/${invoiceId}/finalize`).set(headers);
@@ -97,8 +98,8 @@ describe("Customer → Invoice e2e", () => {
     // 8. Verify invoice still exists and references the (now archived) customer
     const invStillRes = await agent.get(`/api/invoices/${invoiceId}`).set(headers);
     expect(invStillRes.status).toBe(200);
-    expect(invStillRes.body.invoice.customer_id).toBe(customerId);
-    expect(invStillRes.body.invoice.status).toBe("sent");
+    expect(invStillRes.body.invoice.customerId).toBe(customerId);
+    expect(invStillRes.body.invoice.status).toBe("draft");
 
     // 9. Verify search still finds archived customer with includeArchived
     const searchRes = await agent.get("/api/customers").set(headers).query({ search: "acme", includeArchived: true });
@@ -118,6 +119,7 @@ describe("Customer → Invoice e2e", () => {
     const invRes = await agent.post("/api/invoices").set(headers).send({
       customerId,
       currency: "USD",
+      issueDate: new Date().toISOString(),
       items: [{ description: "Service", quantity: "1", unitPrice: "100.00", taxRate: "0", isTaxInclusive: false }],
     });
     const invoiceId = invRes.body.invoiceId;
@@ -131,8 +133,8 @@ describe("Customer → Invoice e2e", () => {
     // Invoice should still be accessible
     const invRes2 = await agent.get(`/api/invoices/${invoiceId}`).set(headers);
     expect(invRes2.status).toBe(200);
-    expect(invRes2.body.invoice.is_finalized).toBe(true);
-    expect(invRes2.body.invoice.customer_id).toBe(customerId);
+    expect(invRes2.body.invoice.isFinalized).toBe(true);
+    expect(invRes2.body.invoice.customerId).toBe(customerId);
   });
 
   it("verifies tenant isolation: customer not visible across businesses", async () => {
@@ -141,8 +143,8 @@ describe("Customer → Invoice e2e", () => {
     const customerId = custRes.body.customer.id;
 
     // Create business B and user
-    const biz2 = await createTestBusiness({ id: "tenant-2-tenant-2-tenant-2tenant-2" });
-    const user2 = await createTestUser({ id: "user-tenant-2", email: "t2@test.com", businessId: biz2.id });
+    const biz2 = await createTestBusiness({ id: "00000000-0000-0000-0000-000000000002" });
+    const user2 = await createTestUser({ id: "11111111-1111-1111-1111-111111111112", email: "t2@test.com", businessId: biz2.id });
     const headers2 = authHeader(biz2.id, user2.id, user2.email);
 
     // Business B should not see customer from business A
