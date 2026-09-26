@@ -44,6 +44,7 @@ import {
   type LineItemInput,
 } from "../utils/calculation";
 import { formatCurrency, formatDate, parseDecimal } from "../utils/format";
+import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
 import CustomerSelector from "./CustomerSelector";
@@ -111,6 +112,8 @@ interface WorkspaceInvoiceData {
   beforePhotos: WorkspaceAttachment[];
   afterPhotos: WorkspaceAttachment[];
 }
+
+const LINE_ITEM_UNITS = ["each", "hour", "day", "week", "month", "fixed"] as const;
 
 const LINE_ITEM_TYPES: { value: LineItemType; label: string; icon: React.ComponentType<any> }[] =
   [
@@ -1341,57 +1344,42 @@ const LineItemsTable = React.memo(function LineItemsTable({
   defaultTaxRate: string;
 }) {
   const c = invoice.currency;
+  const meta = getCurrencyMetadata(c);
+  const step = meta.decimalPlaces === 0 ? "1" : "0.01";
   const lineTotals = calc?.lineItems ?? [];
 
   return (
     <div className="mb-6 overflow-x-auto rounded-xl border border-color bg-surface">
-      <table className="min-w-full border-collapse">
+      <table className="w-full table-fixed border-collapse text-sm">
         <thead>
           <tr className="bg-surface-alt text-left text-xs font-semibold text-tertiary uppercase">
-            <th className="px-3 py-2">#</th>
-            <th className="px-3 py-2">Type</th>
-            <th className="px-3 py-2">Description</th>
-            <th className="px-3 py-2 text-right">Qty</th>
-            <th className="px-3 py-2 text-right">Rate</th>
-            <th className="px-3 py-2 text-right">Tax %</th>
-            <th className="px-3 py-2 text-right">Discount</th>
-            <th className="px-3 py-2 text-right">Amount</th>
-            <th className="px-3 py-2 text-center">Actions</th>
+            <th className="w-[20%] px-4 py-3">Description</th>
+            <th className="w-[6%] px-2 py-3 text-right">Qty</th>
+            <th className="w-[8%] px-2 py-3">Unit</th>
+            <th className="w-[12%] px-2 py-3 text-right">Rate</th>
+            <th className="w-[7%] px-2 py-3">Disc.</th>
+            <th className="w-[7%] px-2 py-3">Type</th>
+            <th className="w-[7%] px-2 py-3 text-right">Tax %</th>
+            <th className="w-[5%] px-2 py-3 text-center">Inc.</th>
+            <th className="w-[12%] px-2 py-3 text-right">Total</th>
+            <th className="w-[8%] px-4 py-3 text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           {invoice.items.map((item, i) => {
-            const Icon = LINE_TYPE_ICON[item.type];
             const lineTotal = lineTotals[i]?.lineTotal ?? null;
             return (
               <tr key={item.id ?? i} className="border-t border-color-subtle">
-                <td className="px-3 py-2 text-sm text-tertiary">{i + 1}</td>
-                <td className="px-3 py-2">
-                  <select
-                    value={item.type}
-                    onChange={(e) =>
-                      onItemChange(item.id ?? String(i), { type: e.target.value as LineItemType })
-                    }
-                    className="rounded-lg border border-input-border bg-input px-2 py-1 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                    title="Line type"
-                  >
-                    {LINE_ITEM_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="px-3 py-2">
-                  <input
-                    type="text"
+                <td className="px-4 py-3">
+                  <textarea
                     value={item.description}
                     onChange={(e) => onItemChange(item.id ?? String(i), { description: e.target.value })}
                     placeholder="What did you do?"
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows={2}
+                    className="w-full min-h-[40px] resize-y rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary overflow-hidden"
                   />
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-2 py-3">
                   <input
                     type="number"
                     value={item.quantity}
@@ -1400,22 +1388,69 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     }
                     min={1}
                     step="any"
-                    className="w-16 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-2 py-3">
+                  <select
+                    value={item.unit}
+                    onChange={(e) =>
+                      onItemChange(item.id ?? String(i), { unit: e.target.value })
+                    }
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    title="Unit"
+                  >
+                    {LINE_ITEM_UNITS.map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="px-2 py-3">
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-tertiary text-xs">
+                      {meta.symbol}
+                    </span>
+                    <input
+                      type="number"
+                      value={item.unitPrice}
+                      onChange={(e) =>
+                        onItemChange(item.id ?? String(i), { unitPrice: e.target.value || "0" })
+                      }
+                      min={0}
+                      step={step}
+                      className="w-full rounded-lg border border-input-border bg-input px-6 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </td>
+                <td className="px-2 py-3">
                   <input
                     type="number"
-                    value={item.unitPrice}
+                    value={item.discount ?? ""}
                     onChange={(e) =>
-                      onItemChange(item.id ?? String(i), { unitPrice: e.target.value || "0" })
+                      onItemChange(item.id ?? String(i), { discount: e.target.value || "" })
                     }
                     min={0}
-                    step="any"
-                    className="w-20 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    step={step}
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="0.00"
                   />
                 </td>
-                <td className="px-3 py-2">
+                <td className="px-2 py-3">
+                  <select
+                    value={item.discountType ?? "fixed"}
+                    onChange={(e) =>
+                      onItemChange(item.id ?? String(i), { discountType: e.target.value as "fixed" | "percentage" })
+                    }
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    title="Discount type"
+                  >
+                    <option value="fixed">Fixed</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </td>
+                <td className="px-2 py-3">
                   <input
                     type="number"
                     value={toPercent(item.taxRate ?? defaultTaxRate)}
@@ -1425,45 +1460,45 @@ const LineItemsTable = React.memo(function LineItemsTable({
                       })
                     }
                     min={0}
-                    step="any"
-                    className="w-14 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    max={100}
+                    step="0.01"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                     title="Tax rate %"
                   />
                 </td>
-                <td className="px-3 py-2">
-                  <input
-                    type="number"
-                    value={item.discount ?? ""}
-                    onChange={(e) =>
-                      onItemChange(item.id ?? String(i), { discount: e.target.value || "" })
-                    }
-                    min={0}
-                    step="any"
-                    className="w-14 rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="0.00"
-                    title="Discount (fixed)"
-                  />
+                <td className="px-2 py-3">
+                  <div className="flex justify-center">
+                    <input
+                      type="checkbox"
+                      checked={item.isTaxInclusive ?? false}
+                      onChange={(e) =>
+                        onItemChange(item.id ?? String(i), { isTaxInclusive: e.target.checked })
+                      }
+                      className="h-4 w-4 rounded border-input-border text-primary-brand focus:ring-primary"
+                      title={item.isTaxInclusive ? "Tax-inclusive" : "Tax-exclusive"}
+                    />
+                  </div>
                 </td>
-                <td className="px-3 py-2 text-right text-sm font-medium text-primary">
+                <td className="px-2 py-3 text-right text-sm font-medium text-primary">
                   {lineTotal !== null ? fmt(lineTotal, c) : ""}
                 </td>
-                <td className="px-3 py-2 text-center">
-                  <div className="flex items-center justify-center gap-1">
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-center gap-2">
                     <button
                       type="button"
                       onClick={() => onDuplicate(item.id ?? String(i))}
                       title="Duplicate line"
-                      className="rounded p-1 text-tertiary hover-bg-hover hover:text-primary"
+                      className="rounded p-1.5 text-tertiary hover-bg-hover hover:text-primary"
                     >
-                      <FileText className="h-3.5 w-3.5" />
+                      <FileText className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => onRemove(item.id ?? String(i))}
                       title="Remove line"
-                      className="rounded p-1 text-tertiary hover:bg-error-bg hover:text-error-text"
+                      className="rounded p-1.5 text-tertiary hover:bg-error-bg hover:text-error-text"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </td>
