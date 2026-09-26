@@ -1,0 +1,47 @@
+npm notice run universal-invoice-generator@1.0.0 npx
+npm notice run vitest run tests/customer-e2e.test.ts
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/New User/Desktop/New folder[39m
+
+[12:11:40.800] [32mINFO[39m (1316): [36mDropped 69 tables (rollback)[39m
+Slow query (2758ms): 
+    CREATE TABLE IF NOT EXISTS migrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NO
+[12:11:45.597] [32mINFO[39m (1316): [36mApplied migration: 001_initial_schema.sql[39m
+[12:11:48.455] [32mINFO[39m (1316): [36mApplied migration: 002_customers_enhancements.sql[39m
+[12:11:48.583] [32mINFO[39m (1316): [36mApplied migration: 002_discounts_and_types.sql[39m
+[12:11:50.000] [32mINFO[39m (1316): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[12:11:50.534] [32mINFO[39m (1316): [36mApplied migration: 004_users.sql[39m
+[12:11:50.763] [32mINFO[39m (1316): [36mApplied migration: 005_users_2fa.sql[39m
+[12:11:50.773] [32mINFO[39m (1316): [36mApplied migration: 006_google_oauth.sql[39m
+[12:11:50.791] [32mINFO[39m (1316): [36mApplied migration: 007_onboarding.sql[39m
+[12:11:50.840] [32mINFO[39m (1316): [36mApplied migration: 008_document_composition.sql[39m
+[12:11:50.846] [32mINFO[39m (1316): [36mApplied migration: 009_document_templates.sql[39m
+[12:11:51.307] [32mINFO[39m (1316): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[12:11:51.338] [32mINFO[39m (1316): [36mApplied migration: 010_product_service_catalog.sql[39m
+[12:11:51.822] [32mINFO[39m (1316): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[12:11:52.865] [32mINFO[39m (1316): [36mApplied migration: 012_projects.sql[39m
+[12:11:52.883] [32mINFO[39m (1316): [36mApplied migration: 012_user_sessions.sql[39m
+[12:11:54.842] [32mINFO[39m (1316): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[12:11:56.505] [32mINFO[39m (1316): [36mApplied migration: 014_project_time_tracking.sql[39m
+[12:11:56.701] [32mINFO[39m (1316): [36mApplied migration: 015_document_template_type.sql[39m
+[12:11:56.760] [32mINFO[39m (1316): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[12:11:56.811] [32mINFO[39m (1316): [36mApplied migration: 017_expenses.sql[39m
+[12:11:56.914] [32mINFO[39m (1316): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[12:11:56.986] [32mINFO[39m (1316): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[12:11:57.085] [32mINFO[39m (1316): [36mApplied migration: 020_team_access.sql[39m
+[12:11:57.165] [32mINFO[39m (1316): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[12:11:57.171] [32mINFO[39m (1316): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[12:11:57.192] [32mINFO[39m (1316): [36mApplied migration: 023_quote_schema.sql[39m
+[12:11:57.703] [32mINFO[39m (1316): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[12:11:57.902] [32mINFO[39m (1316): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[12:11:58.682] [32mINFO[39m (1316): [36mApplied migration: 026_performance_indexes.sql[39m
+[12:11:59.065] [32mINFO[39m (1316): [36mApplied migration: 027_tax_report_index.sql[39m
+[12:11:59.791] [32mINFO[39m (1316): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[12:12:00.094] [32mINFO[39m (1316): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[12:12:00.189] [32mINFO[39m (1316): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[12:12:00.314] [32mINFO[39m (1316): [36mApplied migration: 031_performance_optimizations.sql[39m
+[12:12:00.451] [32mINFO[39m (1316): [36mApplied migration: 032_expense_budget_settings.sql[39m
+[12:12:00.806] [32mINFO[39m (1316): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[12:12:00.806] [32mINFO[39m (1316): [36mCompleted 36 migrations[39m

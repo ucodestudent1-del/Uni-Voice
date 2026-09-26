@@ -1,0 +1,152 @@
+
+C:\Users\New User\Desktop\New folder\src\index.ts
+    23:27   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+    27:10   warning  'customerRepository' is defined but never used  @typescript-eslint/no-unused-vars
+    55:3    warning  'CustomerSchema' is defined but never used      @typescript-eslint/no-unused-vars
+    96:64   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+    96:74   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+    99:40   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+    99:72   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   102:22   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   102:32   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   102:43   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   275:18   warning  'name' is assigned a value but never used       @typescript-eslint/no-unused-vars
+   471:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   494:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   505:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   517:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   556:31   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   612:19   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   643:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   694:65   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   964:64   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   987:82   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   993:81   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1741:64   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2371:19   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2496:15   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2610:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2627:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2639:41   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2688:99   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2760:68   warning  '_next' is defined but never used               @typescript-eslint/no-unused-vars
+  2767:105  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\repositories\customer.repo.ts
+  1:17  warning  'getClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\src\repositories\invoice-template.repo.ts
+    5:3   warning  'InvoiceTemplateUpdateSchema' is defined but never used  @typescript-eslint/no-unused-vars
+  366:13  warning  'revRes' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  683:29  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\repositories\invoice.repo.ts
+   162:37   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   189:36   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   286:73   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   392:93   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   401:95   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   411:97   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   443:171  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   461:83   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   551:170  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   706:47   warning  'monthStart' is defined but never used    @typescript-eslint/no-unused-vars
+   799:73   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   817:51   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   829:58   warning  'now' is defined but never used           @typescript-eslint/no-unused-vars
+   868:67   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   881:84   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   995:14   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1072:15   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\repositories\project-time.repo.ts
+  299:5  warning  '_invoiceId' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\src\repositories\receipt.repo.ts
+  224:28  warning  '_tc' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\src\services\customer-service.ts
+    1:25  warning  'CustomerStatus' is defined but never used       @typescript-eslint/no-unused-vars
+    3:15  warning  'Address' is defined but never used              @typescript-eslint/no-unused-vars
+    5:10  warning  'NotFoundError' is defined but never used        @typescript-eslint/no-unused-vars
+    6:57  warning  'CustomerSearchQuery' is defined but never used  @typescript-eslint/no-unused-vars
+  113:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  370:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\invoice-service.ts
+    32:37   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    38:42   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   139:117  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   345:75   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   352:61   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   451:31   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   452:31   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   453:52   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   454:46   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   472:32   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1048:25   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1050:38   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1060:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1061:25   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1062:15   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\payments\stripe-service.ts
+   94:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\pdf\pdf-service.ts
+  34:35  warning  'data' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\src\services\product-service\product-service.ts
+  89:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\project-service.ts
+  251:146  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\quote-service.ts
+  203:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  472:46  warning  'userId' is defined but never used        @typescript-eslint/no-unused-vars
+  483:91  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  518:91  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  565:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  565:83  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\receipt-service.ts
+  287:18  warning  'receiptNumber' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\src\services\reports-cache.ts
+  3:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\snapshot\snapshot-service.ts
+  8:33  warning  'InvoiceTemplateData' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\src\services\templates\migrations.ts
+  168:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\templates\structured-renderer.ts
+  131:48   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:46   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:46   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:54   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:32   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:43   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:70   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  384:163  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  391:161  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  397:116  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  404:221  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  409:141  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  478:43   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\templates\template-renderer.ts
+  103:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 111 problems (0 errors, 111 warnings)
+

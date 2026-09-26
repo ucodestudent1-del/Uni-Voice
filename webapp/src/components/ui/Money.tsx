@@ -11,7 +11,8 @@ function formatValue(value: Decimal.Value, currency: string, decimalPlaces: numb
   if (currency.length === 3) {
     try {
       return formatMoneyUtil(value, currency as CurrencyCode);
-    } catch {
+    } catch (err) {
+      console.warn("Failed to format money with currency", currency, err);
     }
   }
   return formatCurrency(value, currency, decimalPlaces);

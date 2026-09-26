@@ -2757,15 +2757,22 @@ if (!isDev) {
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  logger.error({ err }, "Unhandled error");
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const requestId = (req.headers["x-request-id"] as string | undefined) ?? "unknown";
   if (err instanceof Error && "statusCode" in err) {
     const e = err as { statusCode: number; code?: string; message: string; context?: Record<string, unknown> };
+    if (e.statusCode >= 400 && e.statusCode < 500) {
+      logger.info({ err, requestId, url: req.url, method: req.method }, "Client error");
+    } else {
+      logger.error({ err, requestId, url: req.url, method: req.method }, "Server error");
+    }
     return res.status(e.statusCode).json({ error: e.message, code: e.code, ...(e.context ? { context: e.context } : {}) });
   }
   if (err.name === "ZodError") {
+    logger.info({ err, requestId, url: req.url, method: req.method }, "Validation error");
     return res.status(400).json({ error: "Validation failed", code: "VALIDATION_ERROR", issues: (err as any).issues });
   }
+  logger.error({ err, requestId, url: req.url, method: req.method }, "Unhandled error");
   res.status(500).json({ error: "Internal server error" });
 });
 

@@ -1,9 +1,9 @@
 import { useAuth } from "../contexts/AuthContext";
 import { skipOnboardingStep } from "../api/client";
-import type { OnboardingStep, OnboardingProgress } from "../types/api";
+import type { OnboardingStep, OnboardingProgress as OnboardingProgressType } from "../types/api";
 
 interface OnboardingProgressProps {
-  progress: OnboardingProgress | null;
+  progress: OnboardingProgressType | null;
 }
 
 const STEP_TITLES: Record<string, string> = {
@@ -32,8 +32,8 @@ export default function OnboardingProgress({ progress }: OnboardingProgressProps
     try {
       await skipOnboardingStep(step);
       await refreshOnboarding();
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Failed to skip onboarding step:", err);
     }
   };
 

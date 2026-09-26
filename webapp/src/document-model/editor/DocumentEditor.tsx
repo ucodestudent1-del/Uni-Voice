@@ -452,14 +452,18 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const handleDuplicate = useCallback((componentId: ComponentId) => {
     try {
       analytics.trackEvent("component_duplicated", { componentId });
-    } catch {}
+    } catch (err) {
+      console.warn("Failed to track analytics event:", err);
+    }
     onDuplicate(componentId);
   }, [onDuplicate]);
 
   const handleDelete = useCallback((componentId: ComponentId) => {
     try {
       analytics.trackEvent("component_deleted", { componentId });
-    } catch {}
+    } catch (err) {
+      console.warn("Failed to track analytics event:", err);
+    }
     onDelete(componentId);
   }, [onDelete]);
 
@@ -805,7 +809,9 @@ case "ArrowUp":
           const componentType = activeDrag.componentType!;
           try {
             analytics.trackEvent("component_added", { componentType, parentId: targetParentId, index: targetIndex });
-          } catch {}
+          } catch (err) {
+            console.warn("Failed to track analytics event:", err);
+          }
           onInsertComponent({
             type: componentType,
             parentId: targetParentId,

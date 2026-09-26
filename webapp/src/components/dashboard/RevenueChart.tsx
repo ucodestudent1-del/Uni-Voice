@@ -155,7 +155,10 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
                   fontSize: "12px",
                   padding: "8px 12px",
                 }}
-                formatter={(value) => [formatCurrencyCompact(Number(value) ?? 0, currency), ""]}
+                formatter={(value) => {
+                  const num = Number(value);
+                  return [formatCurrencyCompact(isNaN(num) ? 0 : num, currency), ""];
+                }}
                 labelStyle={{ color: "rgb(var(--chart-text-secondary))", marginBottom: "4px" }}
               />
               <Legend

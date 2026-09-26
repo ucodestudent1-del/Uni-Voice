@@ -13,7 +13,8 @@ const App = React.lazy(() => import("./App"));
 
 try {
   applyInitialTheme();
-} catch {
+} catch (err) {
+  console.warn("Failed to apply initial theme:", err);
 }
 
 const rootElement = document.getElementById("root");

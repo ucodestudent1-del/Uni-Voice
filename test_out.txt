@@ -1,0 +1,778 @@
+npm notice run universal-invoice-generator@1.0.0 test
+npm notice run vitest run
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/New User/Desktop/New folder[39m
+
+[11:23:02.118] [32mINFO[39m (9916): [36mDropped 69 tables (rollback)[39m
+[11:23:02.763] [32mINFO[39m (9916): [36mApplied migration: 001_initial_schema.sql[39m
+[11:23:02.826] [32mINFO[39m (9916): [36mApplied migration: 002_customers_enhancements.sql[39m
+[11:23:02.890] [32mINFO[39m (9916): [36mApplied migration: 002_discounts_and_types.sql[39m
+[11:23:02.952] [32mINFO[39m (9916): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[11:23:02.965] [32mINFO[39m (9916): [36mApplied migration: 004_users.sql[39m
+[11:23:03.230] [32mINFO[39m (9916): [36mApplied migration: 005_users_2fa.sql[39m
+[11:23:03.240] [32mINFO[39m (9916): [36mApplied migration: 006_google_oauth.sql[39m
+[11:23:03.327] [32mINFO[39m (9916): [36mApplied migration: 007_onboarding.sql[39m
+[11:23:03.435] [32mINFO[39m (9916): [36mApplied migration: 008_document_composition.sql[39m
+[11:23:03.458] [32mINFO[39m (9916): [36mApplied migration: 009_document_templates.sql[39m
+[11:23:04.419] [32mINFO[39m (9916): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[11:23:04.577] [32mINFO[39m (9916): [36mApplied migration: 010_product_service_catalog.sql[39m
+[11:23:04.788] [32mINFO[39m (9916): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[11:23:04.883] [32mINFO[39m (9916): [36mApplied migration: 012_projects.sql[39m
+[11:23:04.898] [32mINFO[39m (9916): [36mApplied migration: 012_user_sessions.sql[39m
+[11:23:06.602] [32mINFO[39m (9916): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[11:23:06.799] [32mINFO[39m (9916): [36mApplied migration: 014_project_time_tracking.sql[39m
+[11:23:06.915] [32mINFO[39m (9916): [36mApplied migration: 015_document_template_type.sql[39m
+[11:23:06.922] [32mINFO[39m (9916): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[11:23:06.968] [32mINFO[39m (9916): [36mApplied migration: 017_expenses.sql[39m
+[11:23:06.983] [32mINFO[39m (9916): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[11:23:07.180] [32mINFO[39m (9916): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[11:23:07.712] [32mINFO[39m (9916): [36mApplied migration: 020_team_access.sql[39m
+[11:23:08.061] [32mINFO[39m (9916): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[11:23:08.693] [32mINFO[39m (9916): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[11:23:08.863] [32mINFO[39m (9916): [36mApplied migration: 023_quote_schema.sql[39m
+[11:23:08.930] [32mINFO[39m (9916): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[11:23:08.984] [32mINFO[39m (9916): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[11:23:09.017] [32mINFO[39m (9916): [36mApplied migration: 026_performance_indexes.sql[39m
+[11:23:09.061] [32mINFO[39m (9916): [36mApplied migration: 027_tax_report_index.sql[39m
+[11:23:09.087] [32mINFO[39m (9916): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[11:23:09.126] [32mINFO[39m (9916): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[11:23:09.186] [32mINFO[39m (9916): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[11:23:09.268] [32mINFO[39m (9916): [36mApplied migration: 031_performance_optimizations.sql[39m
+[11:23:09.340] [32mINFO[39m (9916): [36mApplied migration: 032_expense_budget_settings.sql[39m
+[11:23:09.406] [32mINFO[39m (9916): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[11:23:09.406] [32mINFO[39m (9916): [36mCompleted 36 migrations[39m
+[90mstderr[2m | tests/customer-e2e.test.ts[2m > [22m[2mCustomer → Invoice e2e[2m > [22m[2mcreates a customer, creates an invoice referencing it, finalizes, and links invoice back to customer
+[22m[39mSlow query (1270ms): TRUNCATE TABLE "expense_budget_settings", "businesses", "business_settings", "invoice_number_sequenc
+
+[90mstderr[2m | tests/customer-e2e.test.ts[2m > [22m[2mCustomer → Invoice e2e[2m > [22m[2mcreates a customer, creates an invoice referencing it, finalizes, and links invoice back to customer
+[22m[39mRequest POST /api/customers [62f45e25-9f6a-42a9-a081-8443d43c77d1] took 130ms, 13 queries
+Request POST /api/customers [62f45e25-9f6a-42a9-a081-8443d43c77d1] took 130ms, 13 queries
+
+[90mstderr[2m | tests/customer-e2e.test.ts[2m > [22m[2mCustomer → Invoice e2e[2m > [22m[2mprevents archiving a customer when it would break invoice references
+[22m[39mSlow query (1052ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[11:23:17.708] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[11:23:17.797] [32mINFO[39m (10400): [36mInvoice ae02a606-0423-46a3-b908-35513b092d22 finalized as INV-2026-000001[39m
+[90mstderr[2m | tests/customer-e2e.test.ts[2m > [22m[2mCustomer → Invoice e2e[2m > [22m[2mverifies tenant isolation: customer not visible across businesses
+[22m[39mSlow query (2025ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[11:23:20.352] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "NotFoundError",
+      "message": "Customer d1780dc9-4bf5-4f37-a822-dd3d53524122 not found",
+      "stack":
+          NotFoundError: Customer d1780dc9-4bf5-4f37-a822-dd3d53524122 not found
+              at CustomerRepository.findById (C:\Users\New User\Desktop\New folder\src\repositories\customer.repo.ts:221:33)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:706:20
+      "statusCode": 404,
+      "isOperational": true,
+      "code": "NOT_FOUND",
+      "name": "NotFoundError"
+    }
+[11:23:20.372] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "NotFoundError",
+      "message": "Customer d1780dc9-4bf5-4f37-a822-dd3d53524122 not found",
+      "stack":
+          NotFoundError: Customer d1780dc9-4bf5-4f37-a822-dd3d53524122 not found
+              at CustomerRepository.findById (C:\Users\New User\Desktop\New folder\src\repositories\customer.repo.ts:221:33)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at CustomerService.archive (C:\Users\New User\Desktop\New folder\src\services\customer-service.ts:150:22)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:725:20
+      "statusCode": 404,
+      "isOperational": true,
+      "code": "NOT_FOUND",
+      "name": "NotFoundError"
+    }
+ [31m❯[39m tests/customer-e2e.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 7645[2mms[22m[39m
+[31m   [31m×[31m Customer → Invoice e2e[2m > [22mcreates a customer, creates an invoice referencing it, finalizes, and links invoice back to customer[39m[33m 2874[2mms[22m[39m
+[31m     → expected undefined to be '58bc2e4c-a5ef-4312-878e-3df5bee63fb0' // Object.is equality[39m
+[31m   [31m×[31m Customer → Invoice e2e[2m > [22mprevents archiving a customer when it would break invoice references[39m[33m 2455[2mms[22m[39m
+[31m     → expected undefined to be true // Object.is equality[39m
+   [33m[2m✓[22m[39m Customer → Invoice e2e[2m > [22mverifies tenant isolation: customer not visible across businesses [33m 2313[2mms[22m[39m
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2mreturns 401 without auth token
+[22m[39mSlow query (1481ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[11:23:25.652] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "UnauthorizedError",
+      "message": "Missing or invalid authorization header",
+      "stack":
+          UnauthorizedError: Missing or invalid authorization header
+              at requireAuth (C:\Users\New User\Desktop\New folder\src\middleware\auth.ts:18:11)
+              at Layer.handle [as handle_request] (C:\Users\New User\Desktop\New folder\node_modules\express\lib\router\layer.js:95:5)
+              at next (C:\Users\New User\Desktop\New folder\node_modules\express\lib\router\route.js:149:13)
+              at Route.dispatch (C:\Users\New User\Desktop\New folder\node_modules\express\lib\router\route.js:119:3)
+              at Layer.handle [as handle_request] (C:\Users\New User\Desktop\New folder\node_modules\express\lib\router\layer.js:95:5)
+              at C:\Users\New User\Desktop\New folder\node_modules\express\lib\router\index.js:284:15
+              at router.process_params (C:\Users\New User\Desktop\New folder\node_modules\express\lib\router\index.js:346:12)
+              at next (C:\Users\New User\Desktop\New folder\node_modules\express\lib\router\index.js:280:10)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:157:31
+              at C:\Users\New User\Desktop\New folder\src\db\pool.ts:47:36
+      "statusCode": 401,
+      "isOperational": true,
+      "code": "UNAUTHORIZED",
+      "name": "UnauthorizedError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2mreturns empty list for new business
+[22m[39mSlow query (1006ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2mlists customers scoped to the authenticated business
+[22m[39mSlow query (1755ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2mreturns 400 without business context
+[22m[39mSlow query (1231ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2msupports search param
+[22m[39mSlow query (2638ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2msupports search param
+[22m[39mSlow query (1483ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2msupports status filter
+[22m[39mSlow query (1302ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers[2m > [22m[2msupports pagination params
+[22m[39mSlow query (1345ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers[2m > [22m[2mcreates a customer and returns 201
+[22m[39mSlow query (1351ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers[2m > [22m[2mreturns 400 when name is missing
+[22m[39mSlow query (1307ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[11:23:50.020] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "ZodError",
+      "message": "[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"name\"\n    ],\n    \"message\": \"Required\"\n  }\n]",
+      "stack":
+          ZodError: [
+            {
+              "code": "invalid_type",
+              "expected": "string",
+              "received": "undefined",
+              "path": [
+                "name"
+              ],
+              "message": "Required"
+            }
+          ]
+              at Object.get error [as error] (file:///C:/Users/New%20User/Desktop/New%20folder/node_modules/zod/v3/types.js:39:31)
+              at ZodObject.parse (file:///C:/Users/New%20User/Desktop/New%20folder/node_modules/zod/v3/types.js:114:22)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:695:43
+              at C:\Users\New User\Desktop\New folder\src\middleware\entitlement.ts:57:11
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:694:5
+      "aggregateErrors": [
+        {
+          "type": "Object",
+          "message": "Required",
+          "stack":
+              
+          "code": "invalid_type",
+          "expected": "string",
+          "received": "undefined",
+          "path": [
+            "name"
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "received": "undefined",
+          "path": [
+            "name"
+          ],
+          "message": "Required"
+        }
+      ],
+      "name": "ZodError"
+    }
+[11:23:51.047] [31mERROR[39m (10400): [36mUnhandled promise rejection — server will continue running[39m
+    err: {
+      "type": "DatabaseError",
+      "message": "deadlock detected",
+      "stack":
+          error: deadlock detected
+              at C:\Users\New User\Desktop\New folder\node_modules\pg-pool\index.js:45:11
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at query (C:\Users\New User\Desktop\New folder\src\db\pool.ts:59:15)
+              at SubscriptionRepository.incrementUsage (C:\Users\New User\Desktop\New folder\src\repositories\subscription.repo.ts:313:17)
+              at SubscriptionService.incrementUsage (C:\Users\New User\Desktop\New folder\src\services\subscription.service.ts:213:5)
+      "length": 322,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "40P01",
+      "detail": "Process 7852 waits for RowShareLock on relation 5381313 of database 16385; blocked by process 9456.\nProcess 9456 waits for AccessExclusiveLock on relation 5382289 of database 16385; blocked by process 7852.",
+      "hint": "See server log for query details.",
+      "file": "deadlock.c",
+      "line": "1138",
+      "routine": "DeadLockReport"
+    }
+[11:23:51.056] [31mERROR[39m (10400): [36mUnhandled promise rejection — server will continue running[39m
+    err: {
+      "type": "DatabaseError",
+      "message": "deadlock detected",
+      "stack":
+          error: deadlock detected
+              at C:\Users\New User\Desktop\New folder\node_modules\pg-pool\index.js:45:11
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at query (C:\Users\New User\Desktop\New folder\src\db\pool.ts:59:15)
+              at SubscriptionRepository.incrementUsage (C:\Users\New User\Desktop\New folder\src\repositories\subscription.repo.ts:313:17)
+              at SubscriptionService.incrementUsage (C:\Users\New User\Desktop\New folder\src\services\subscription.service.ts:213:5)
+      "length": 322,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "40P01",
+      "detail": "Process 7852 waits for RowShareLock on relation 5381313 of database 16385; blocked by process 9456.\nProcess 9456 waits for AccessExclusiveLock on relation 5382289 of database 16385; blocked by process 7852.",
+      "hint": "See server log for query details.",
+      "file": "deadlock.c",
+      "line": "1138",
+      "routine": "DeadLockReport"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers[2m > [22m[2mreturns 400 for invalid email
+[22m[39mSlow query (3062ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[11:23:55.002] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "ZodError",
+      "message": "[\n  {\n    \"validation\": \"email\",\n    \"code\": \"invalid_string\",\n    \"message\": \"Invalid email address\",\n    \"path\": [\n      \"email\"\n    ]\n  }\n]",
+      "stack":
+          ZodError: [
+            {
+              "validation": "email",
+              "code": "invalid_string",
+              "message": "Invalid email address",
+              "path": [
+                "email"
+              ]
+            }
+          ]
+              at Object.get error [as error] (file:///C:/Users/New%20User/Desktop/New%20folder/node_modules/zod/v3/types.js:39:31)
+              at ZodObject.parse (file:///C:/Users/New%20User/Desktop/New%20folder/node_modules/zod/v3/types.js:114:22)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:695:43
+              at C:\Users\New User\Desktop\New folder\src\middleware\entitlement.ts:57:11
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:694:5
+      "aggregateErrors": [
+        {
+          "type": "Object",
+          "message": "Invalid email address",
+          "stack":
+              
+          "validation": "email",
+          "code": "invalid_string",
+          "path": [
+            "email"
+          ]
+        }
+      ],
+      "issues": [
+        {
+          "validation": "email",
+          "code": "invalid_string",
+          "message": "Invalid email address",
+          "path": [
+            "email"
+          ]
+        }
+      ],
+      "name": "ZodError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers[2m > [22m[2misolates customers per business (tenant isolation)
+[22m[39mSlow query (2074ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers[2m > [22m[2misolates customers per business (tenant isolation)
+[22m[39mRequest POST /api/customers [63d66695-4fa2-4cd5-826f-9aa7241779d5] took 886ms, 8 queries (1 slow: 624ms INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, current_period_star)
+Request POST /api/customers [63d66695-4fa2-4cd5-826f-9aa7241779d5] took 886ms, 8 queries (1 slow: 624ms INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, current_period_star)
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id[2m > [22m[2mreturns customer by id
+[22m[39mSlow query (1846ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id[2m > [22m[2mreturns 404 for non-existent customer
+[22m[39mSlow query (1195ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[11:24:05.217] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "NotFoundError",
+      "message": "Customer 00000000-0000-0000-0000-000000000099 not found",
+      "stack":
+          NotFoundError: Customer 00000000-0000-0000-0000-000000000099 not found
+              at CustomerRepository.findById (C:\Users\New User\Desktop\New folder\src\repositories\customer.repo.ts:221:33)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:706:20
+      "statusCode": 404,
+      "isOperational": true,
+      "code": "NOT_FOUND",
+      "name": "NotFoundError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id[2m > [22m[2mreturns 404 for customer in another business
+[22m[39mSlow query (2567ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[11:24:09.849] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "NotFoundError",
+      "message": "Customer 7b5f8af1-4312-46b6-8674-be8040814e87 not found",
+      "stack":
+          NotFoundError: Customer 7b5f8af1-4312-46b6-8674-be8040814e87 not found
+              at CustomerRepository.findById (C:\Users\New User\Desktop\New folder\src\repositories\customer.repo.ts:221:33)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:706:20
+      "statusCode": 404,
+      "isOperational": true,
+      "code": "NOT_FOUND",
+      "name": "NotFoundError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPATCH /api/customers/:id[2m > [22m[2mupdates customer fields
+[22m[39mSlow query (1367ms): TRUNCATE TABLE "expense_budget_settings", "business_settings", "invoices", "businesses", "invoice_nu
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPATCH /api/customers/:id[2m > [22m[2mreturns 404 for non-existent customer
+[22m[39mSlow query (1787ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "business_tax_rates", "products", "template
+
+[11:24:15.816] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "NotFoundError",
+      "message": "Customer 00000000-0000-0000-0000-000000000099 not found",
+      "stack":
+          NotFoundError: Customer 00000000-0000-0000-0000-000000000099 not found
+              at CustomerRepository.findById (C:\Users\New User\Desktop\New folder\src\repositories\customer.repo.ts:221:33)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at CustomerService.update (C:\Users\New User\Desktop\New folder\src\services\customer-service.ts:107:22)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:713:20
+      "statusCode": 404,
+      "isOperational": true,
+      "code": "NOT_FOUND",
+      "name": "NotFoundError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mDELETE /api/customers/:id (archive)[2m > [22m[2marchives customer instead of hard-deleting
+[22m[39mSlow query (1397ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "business_tax_rates", "products", "template
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers/:id/archive[2m > [22m[2marchives a customer
+[22m[39mSlow query (1027ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "business_tax_rates", "products", "template
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers/:id/archive[2m > [22m[2mreturns 409 when already archived
+[22m[39mSlow query (3382ms): TRUNCATE TABLE "credit_note_applications", "expense_budget_settings", "business_settings", "invoices
+
+[11:24:25.531] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "ConflictError",
+      "message": "Customer f9d603a1-1873-4621-8139-0a5fd7f7e5db is already archived",
+      "stack":
+          ConflictError: Customer f9d603a1-1873-4621-8139-0a5fd7f7e5db is already archived
+              at CustomerService.archive (C:\Users\New User\Desktop\New folder\src\services\customer-service.ts:153:13)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:725:20
+      "statusCode": 409,
+      "isOperational": true,
+      "code": "CONFLICT",
+      "name": "ConflictError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers/:id/archive[2m > [22m[2mreturns 404 for non-existent customer
+[22m[39mSlow query (1358ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[11:24:27.187] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "NotFoundError",
+      "message": "Customer 00000000-0000-0000-0000-000000000099 not found",
+      "stack":
+          NotFoundError: Customer 00000000-0000-0000-0000-000000000099 not found
+              at CustomerRepository.findById (C:\Users\New User\Desktop\New folder\src\repositories\customer.repo.ts:221:33)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at CustomerService.archive (C:\Users\New User\Desktop\New folder\src\services\customer-service.ts:150:22)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:725:20
+      "statusCode": 404,
+      "isOperational": true,
+      "code": "NOT_FOUND",
+      "name": "NotFoundError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers/:id/restore[2m > [22m[2mrestores an archived customer
+[22m[39mSlow query (3915ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mPOST /api/customers/:id/restore[2m > [22m[2mreturns 409 when customer is not archived
+[22m[39mSlow query (1100ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[11:24:33.304] [31mERROR[39m (10400): [36mUnhandled error[39m
+    err: {
+      "type": "ConflictError",
+      "message": "Customer fba26897-f02e-4b25-8e32-fc6d5090a046 is not archived",
+      "stack":
+          ConflictError: Customer fba26897-f02e-4b25-8e32-fc6d5090a046 is not archived
+              at CustomerService.restore (C:\Users\New User\Desktop\New folder\src\services\customer-service.ts:170:13)
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:731:20
+      "statusCode": 409,
+      "isOperational": true,
+      "code": "CONFLICT",
+      "name": "ConflictError"
+    }
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id/invoices[2m > [22m[2mreturns empty invoice list for new customer
+[22m[39mSlow query (1670ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id/summary[2m > [22m[2mreturns customer summary with invoice stats
+[22m[39mSlow query (1230ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id/events[2m > [22m[2mreturns audit events for a customer
+[22m[39mSlow query (1525ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id/invoices with actual invoices[2m > [22m[2mreturns finalized invoices linked to the customer
+[22m[39mSlow query (3496ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/customer-api.test.ts[2m > [22m[2mCustomer API (integration)[2m > [22m[2mGET /api/customers/:id/invoices with actual invoices[2m > [22m[2mreturns finalized invoices linked to the customer
+[22m[39mRequest POST /api/invoices [9695a707-1e05-456f-9c50-c1cc1b6b32ba] took 993ms, 8 queries (1 slow: 773ms INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata, created_at)
+    )
+Request POST /api/invoices [9695a707-1e05-456f-9c50-c1cc1b6b32ba] took 993ms, 8 queries (1 slow: 773ms INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata, created_at)
+    )
+
+[11:24:45.400] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[11:24:45.495] [32mINFO[39m (10400): [36mInvoice 6f277e37-10d3-4ce9-85b7-95b46964db0e finalized as INV-2026-000001[39m
+ [32m✓[39m tests/customer-api.test.ts [2m([22m[2m26 tests[22m[2m)[22m[33m 84841[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers[2m > [22mreturns 401 without auth token [33m 4951[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers[2m > [22mreturns empty list for new business [33m 1225[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers[2m > [22mlists customers scoped to the authenticated business [33m 3567[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers[2m > [22mreturns 400 without business context [33m 2142[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers[2m > [22msupports search param [33m 5044[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers[2m > [22msupports status filter [33m 3186[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers[2m > [22msupports pagination params [33m 2493[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers[2m > [22mcreates a customer and returns 201 [33m 3949[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers[2m > [22mreturns 400 when name is missing [33m 2760[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers[2m > [22mreturns 400 for invalid email [33m 4983[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers[2m > [22misolates customers per business (tenant isolation) [33m 5230[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers/:id[2m > [22mreturns customer by id [33m 3452[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers/:id[2m > [22mreturns 404 for non-existent customer [33m 1532[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers/:id[2m > [22mreturns 404 for customer in another business [33m 4631[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPATCH /api/customers/:id[2m > [22mupdates customer fields [33m 3022[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPATCH /api/customers/:id[2m > [22mreturns 404 for non-existent customer [33m 2945[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mDELETE /api/customers/:id (archive)[2m > [22marchives customer instead of hard-deleting [33m 3439[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers/:id/archive[2m > [22marchives a customer [33m 2141[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers/:id/archive[2m > [22mreturns 409 when already archived [33m 4136[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers/:id/archive[2m > [22mreturns 404 for non-existent customer [33m 1655[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers/:id/restore[2m > [22mrestores an archived customer [33m 4202[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mPOST /api/customers/:id/restore[2m > [22mreturns 409 when customer is not archived [33m 1915[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers/:id/invoices[2m > [22mreturns empty invoice list for new customer [33m 2099[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers/:id/summary[2m > [22mreturns customer summary with invoice stats [33m 2650[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers/:id/events[2m > [22mreturns audit events for a customer [33m 2163[2mms[22m[39m
+   [33m[2m✓[22m[39m Customer API (integration)[2m > [22mGET /api/customers/:id/invoices with actual invoices[2m > [22mreturns finalized invoices linked to the customer [33m 5327[2mms[22m[39m
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mcreate / findById[2m > [22m[2mcreates a template with draft lifecycle by default
+[22m[39mSlow query (2480ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mcreate / findById[2m > [22m[2mretrieves a template by id
+[22m[39mSlow query (1705ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mcreate / findById[2m > [22m[2mthrows when template does not exist
+[22m[39mSlow query (2024ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mcreate / findById[2m > [22m[2mprevents tenant isolation (business A cannot see business B templates)
+[22m[39mSlow query (1528ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mfindMany[2m > [22m[2mlists all templates for a business
+[22m[39mSlow query (1538ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mfindMany[2m > [22m[2mfilters by lifecycle
+[22m[39mSlow query (2931ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mfindMany[2m > [22m[2mfilters by industry
+[22m[39mSlow query (1536ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mfindMany[2m > [22m[2monly returns published templates in default lookup
+[22m[39mSlow query (1846ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpublish lifecycle[2m > [22m[2mtransitions template from draft to published
+[22m[39mSlow query (1438ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpublish lifecycle[2m > [22m[2mthrows when publishing an archived template
+[22m[39mSlow query (1488ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpublish lifecycle[2m > [22m[2marchives a published template
+[22m[39mSlow query (2326ms): TRUNCATE TABLE "businesses", "invoice_number_sequences", "invoice_fees", "payment_events", "quotes",
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpublish lifecycle[2m > [22m[2mcannot archive the default template
+[22m[39mSlow query (1596ms): TRUNCATE TABLE "invoice_reminder_rules", "scheduled_emails", "credit_note_applications", "expense_bu
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpublish lifecycle[2m > [22m[2munarchives a template
+[22m[39mSlow query (1697ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mrevision management[2m > [22m[2mcreates a revision with incremented revision number
+[22m[39mSlow query (2446ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mrevision management[2m > [22m[2mlists revisions in order
+[22m[39mSlow query (1210ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mrevision management[2m > [22m[2mrestores a previous revision
+[22m[39mSlow query (1438ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mservice layer[2m > [22m[2mcreate + get template flow works
+[22m[39mSlow query (1853ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mservice layer[2m > [22m[2mpublish via service
+[22m[39mSlow query (1736ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mservice layer[2m > [22m[2marchive via service
+[22m[39mSlow query (1126ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpermissions[2m > [22m[2mrecords and retrieves permissions
+[22m[39mSlow query (1965ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpermissions[2m > [22m[2mrecords and retrieves permissions
+[22m[39mSlow query (1045ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, sort_order)
+       V
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mpermissions[2m > [22m[2mchecks permission
+[22m[39mSlow query (1204ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2musage tracking[2m > [22m[2mrecords and counts usage
+[22m[39mSlow query (1259ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2mduplicate[2m > [22m[2mcreates a copy with draft lifecycle
+[22m[39mSlow query (1271ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/invoice-template.test.ts[2m > [22m[2mInvoiceTemplateRepository (DB integration)[2m > [22m[2msetDefault[2m > [22m[2msets a template as default and clears previous defaults
+[22m[39mSlow query (1171ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+ [32m✓[39m tests/invoice-template.test.ts [2m([22m[2m24 tests[22m[2m)[22m[33m 70826[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mcreate / findById[2m > [22mcreates a template with draft lifecycle by default [33m 3809[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mcreate / findById[2m > [22mretrieves a template by id [33m 3358[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mcreate / findById[2m > [22mthrows when template does not exist [33m 3295[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mcreate / findById[2m > [22mprevents tenant isolation (business A cannot see business B templates) [33m 3607[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mfindMany[2m > [22mlists all templates for a business [33m 1747[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mfindMany[2m > [22mfilters by lifecycle [33m 3797[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mfindMany[2m > [22mfilters by industry [33m 1723[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mfindMany[2m > [22monly returns published templates in default lookup [33m 6217[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mpublish lifecycle[2m > [22mtransitions template from draft to published [33m 2260[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mpublish lifecycle[2m > [22mthrows when publishing an archived template [33m 3204[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mpublish lifecycle[2m > [22marchives a published template [33m 3617[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mpublish lifecycle[2m > [22mcannot archive the default template [33m 2532[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mpublish lifecycle[2m > [22munarchives a template [33m 2850[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mrevision management[2m > [22mcreates a revision with incremented revision number [33m 3334[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mrevision management[2m > [22mlists revisions in order [33m 2860[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mrevision management[2m > [22mrestores a previous revision [33m 2020[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mservice layer[2m > [22mcreate + get template flow works [33m 2537[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mservice layer[2m > [22mpublish via service [33m 2487[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mservice layer[2m > [22marchive via service [33m 2132[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mpermissions[2m > [22mrecords and retrieves permissions [33m 5238[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mpermissions[2m > [22mchecks permission [33m 1673[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22musage tracking[2m > [22mrecords and counts usage [33m 1454[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22mduplicate[2m > [22mcreates a copy with draft lifecycle [33m 3733[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceTemplateRepository (DB integration)[2m > [22msetDefault[2m > [22msets a template as default and clears previous defaults [33m 1341[2mms[22m[39m
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mcreate[2m > [22m[2mcreates an expense with required fields
+[22m[39mSlow query (1366ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mcreate[2m > [22m[2mthrows BusinessLogicError for negative amounts
+[22m[39mSlow query (1033ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mfindById[2m > [22m[2mthrows NotFoundError for non-existent expense
+[22m[39mSlow query (1330ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mfindById[2m > [22m[2mfinds an existing expense
+[22m[39mSlow query (1041ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mfindMany[2m > [22m[2mreturns expenses for the business
+[22m[39mSlow query (4157ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mfindMany[2m > [22m[2mfilters by category
+[22m[39mSlow query (1684ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mfindMany[2m > [22m[2msearch filters by description
+[22m[39mSlow query (1700ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mfindMany[2m > [22m[2misBillable filter works
+[22m[39mSlow query (1509ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mfindMany[2m > [22m[2msupports sorting by amount desc
+[22m[39mSlow query (1833ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mupdate[2m > [22m[2mupdates an expense
+[22m[39mSlow query (1749ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mdelete[2m > [22m[2mdeletes an expense
+[22m[39mSlow query (5036ms): TRUNCATE TABLE "businesses", "twofa_recovery_codes", "invoice_number_sequences", "users", "onboardin
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mgetCategoryBreakdown[2m > [22m[2mreturns category breakdown with totals and counts
+[22m[39mSlow query (2223ms): TRUNCATE TABLE "project_taggings", "payment_events", "quotes", "twofa_attempts", "document_template_
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mgetCategoryBreakdown[2m > [22m[2mreturns empty array when no expenses
+[22m[39mSlow query (3461ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mgetMonthlyTrend[2m > [22m[2mreturns monthly trend data
+[22m[39mSlow query (1677ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mgetMonthlyTrend[2m > [22m[2mrespects date range filters
+[22m[39mSlow query (1929ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[90mstderr[2m | tests/expense-repository.test.ts[2m > [22m[2mExpenseRepository[2m > [22m[2mgetSummary[2m > [22m[2mreturns summary with correct totals
+[22m[39mSlow query (1381ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+ [32m✓[39m tests/expense-repository.test.ts [2m([22m[2m16 tests[22m[2m)[22m[33m 40949[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mcreate[2m > [22mcreates an expense with required fields [33m 2125[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mcreate[2m > [22mthrows BusinessLogicError for negative amounts [33m 1368[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mfindById[2m > [22mthrows NotFoundError for non-existent expense [33m 2695[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mfindById[2m > [22mfinds an existing expense [33m 1233[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mfindMany[2m > [22mreturns expenses for the business [33m 4437[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mfindMany[2m > [22mfilters by category [33m 2948[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mfindMany[2m > [22msearch filters by description [33m 2058[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mfindMany[2m > [22misBillable filter works [33m 1696[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mfindMany[2m > [22msupports sorting by amount desc [33m 2286[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mupdate[2m > [22mupdates an expense [33m 1950[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mdelete[2m > [22mdeletes an expense [33m 5419[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mgetCategoryBreakdown[2m > [22mreturns category breakdown with totals and counts [33m 2919[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mgetCategoryBreakdown[2m > [22mreturns empty array when no expenses [33m 3620[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mgetMonthlyTrend[2m > [22mreturns monthly trend data [33m 1926[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mgetMonthlyTrend[2m > [22mrespects date range filters [33m 2650[2mms[22m[39m
+   [33m[2m✓[22m[39m ExpenseRepository[2m > [22mgetSummary[2m > [22mreturns summary with correct totals [33m 1618[2mms[22m[39m
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2mreports 2FA as disabled for a freshly created user
+[22m[39mSlow query (1596ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2msetup() returns a secret, otpauth URI and recovery codes
+[22m[39mSlow query (1636ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:26:43.437] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2menable() activates 2FA with a valid current TOTP code and rejects an invalid one
+[22m[39mSlow query (1205ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:26:44.829] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:26:44.840] [32mINFO[39m (10400): [36m2FA enabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:26:44.843] [32mINFO[39m (10400): [36m2FA disabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:26:44.869] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2menable() fails if no secret was provisioned
+[22m[39mSlow query (2032ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2mverifyLogin() returns a token only after a valid 2FA code
+[22m[39mSlow query (1546ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:26:50.500] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:26:50.509] [32mINFO[39m (10400): [36m2FA enabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2mverifyLogin() rejects an invalid code and records the attempt
+[22m[39mSlow query (2532ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:26:54.609] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:26:54.720] [32mINFO[39m (10400): [36m2FA enabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2mverifyLogin() is locked out after too many failed attempts
+[22m[39mSlow query (1800ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:26:56.888] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:26:56.898] [32mINFO[39m (10400): [36m2FA enabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2mverifyLogin() accepts a valid recovery code as a fallback
+[22m[39mSlow query (2098ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:26:59.317] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:26:59.326] [32mINFO[39m (10400): [36m2FA enabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2mdisable() clears the secret and recovery codes
+[22m[39mSlow query (3437ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:27:03.192] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:27:03.265] [32mINFO[39m (10400): [36m2FA enabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:27:03.317] [32mINFO[39m (10400): [36m2FA disabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/2fa-auth.test.ts[2m > [22m[2mTwoFactorService (DB integration)[2m > [22m[2mregenerateRecoveryCodes() issues a fresh set after 2FA is enabled
+[22m[39mSlow query (1502ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:27:05.036] [32mINFO[39m (10400): [36m2FA setup: generated pending secret[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[11:27:05.042] [32mINFO[39m (10400): [36m2FA enabled[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+ [32m✓[39m tests/2fa-auth.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 27441[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22mreports 2FA as disabled for a freshly created user [33m 3964[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22msetup() returns a secret, otpauth URI and recovery codes [33m 1849[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22menable() activates 2FA with a valid current TOTP code and rejects an invalid one [33m 1434[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22menable() fails if no secret was provisioned [33m 2203[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22mverifyLogin() returns a token only after a valid 2FA code [33m 3439[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22mverifyLogin() rejects an invalid code and records the attempt [33m 4339[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22mverifyLogin() is locked out after too many failed attempts [33m 2069[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22mverifyLogin() accepts a valid recovery code as a fallback [33m 2416[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22mdisable() clears the secret and recovery codes [33m 3982[2mms[22m[39m
+   [33m[2m✓[22m[39m TwoFactorService (DB integration)[2m > [22mregenerateRecoveryCodes() issues a fresh set after 2FA is enabled [33m 1745[2mms[22m[39m
+[11:27:05.065] [32mINFO[39m (10400): [36m2FA recovery codes regenerated[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/numbering.test.ts[2m > [22m[2mInvoiceNumberService[2m > [22m[2mcreates a sequence and generates INV-YYYY-000001
+[22m[39mSlow query (1806ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:27:07.494] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[90mstderr[2m | tests/numbering.test.ts[2m > [22m[2mInvoiceNumberService[2m > [22m[2mincrements atomically and never reuses a number
+[22m[39mSlow query (1558ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:27:09.397] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.401] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000002 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.403] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000003 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.405] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000004 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.407] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000005 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.409] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000006 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.493] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000007 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.505] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000008 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.515] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000009 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:09.527] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000010 for business 00000000-0000-0000-0000-000000000001[39m
+[90mstderr[2m | tests/numbering.test.ts[2m > [22m[2mInvoiceNumberService[2m > [22m[2muses configured prefix and padding
+[22m[39mSlow query (2404ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:27:12.959] [32mINFO[39m (10400): [36mGenerated invoice number EST-0001 for business 00000000-0000-0000-0000-000000000001[39m
+[90mstderr[2m | tests/numbering.test.ts[2m > [22m[2mInvoiceNumberService[2m > [22m[2misolates sequences per business
+[22m[39mSlow query (1585ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:27:15.954] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 10000000-0000-0000-0000-000000000001[39m
+[11:27:15.965] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 20000000-0000-0000-0000-000000000002[39m
+[90mstderr[2m | tests/numbering.test.ts[2m > [22m[2mInvoiceNumberService[2m > [22m[2mpersists next_number after generation
+[22m[39mSlow query (2528ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[11:27:18.811] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+ [32m✓[39m tests/numbering.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 13679[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceNumberService[2m > [22mcreates a sequence and generates INV-YYYY-000001 [33m 2360[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceNumberService[2m > [22mincrements atomically and never reuses a number [33m 2034[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceNumberService[2m > [22muses configured prefix and padding [33m 3432[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceNumberService[2m > [22misolates sequences per business [33m 3006[2mms[22m[39m
+   [33m[2m✓[22m[39m InvoiceNumberService[2m > [22mpersists next_number after generation [33m 2847[2mms[22m[39m
+[90mstderr[2m | tests/invoice-default-terms.test.ts[2m > [22m[2mInvoice default terms[2m > [22m[2mapplies business default_terms when creating a draft without explicit terms
+[22m[39mSlow query (2129ms): TRUNCATE TABLE "invoice_number_sequences", "users", "invoice_fees", "invoice_template_migrations", "
+
+[90mstderr[2m | tests/invoice-default-terms.test.ts[2m > [22m[2mInvoice default terms[2m > [22m[2muses explicit terms over business default_terms
+[22m[39mSlow query (2581ms): TRUNCATE TABLE "quote_number_sequences", "recurring_generation_runs", "payment_intents", "customer_e
+
+[90mstderr[2m | tests/invoice-default-terms.test.ts[2m > [22m[2mInvoice default terms[2m > [22m[2mfalls back to SaaS default terms when business default_terms is NULL
+[22m[39mSlow query (3287ms): TRUNCATE TABLE "document_template_revisions", "invoice_number_sequences", "users", "invoice_template
+
+[90mstderr[2m | tests/invoice-default-terms.test.ts[2m > [22m[2mInvoice default terms[2m > [22m[2mapplies business default_notes when creating a draft without explicit notes
+[22m[39mSlow query (1271ms): TRUNCATE TABLE "document_template_revisions", "invoice_number_sequences", "users", "invoice_template
+
+ [32m✓[39m tests/invoice-default-terms.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 13163[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice default terms[2m > [22mapplies business default_terms when creating a draft without explicit terms [33m 2719[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice default terms[2m > [22muses explicit terms over business default_terms [33m 5455[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice default terms[2m > [22mfalls back to SaaS default terms when business default_terms is NULL [33m 3472[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice default terms[2m > [22mapplies business default_notes when creating a draft without explicit notes [33m 1517[2mms[22m[39m
+[90mstderr[2m | tests/invoice-product-snapshot.test.ts[2m > [22m[2mInvoice product snapshot[2m > [22m[2msnapshots product data when creating a draft with productId
+[22m[39mSlow query (4592ms): TRUNCATE TABLE "document_template_revisions", "invoice_number_sequences", "users", "invoice_template
+
+[90mstderr[2m | tests/invoice-product-snapshot.test.ts[2m > [22m[2mInvoice product snapshot[2m > [22m[2msnapshots product data when setting items with productId
+[22m[39mSlow query (4365ms): TRUNCATE TABLE "document_template_revisions", "invoice_number_sequences", "users", "invoice_template
+
+[90mstderr[2m | tests/invoice-product-snapshot.test.ts[2m > [22m[2mInvoice product snapshot[2m > [22m[2muses stored snapshot values for calculation, not re-fetched product values
+[22m[39mSlow query (2802ms): TRUNCATE TABLE "document_template_revisions", "invoice_number_sequences", "users", "invoice_template
+
+[90mstderr[2m | tests/invoice-product-snapshot.test.ts[2m > [22m[2mInvoice product snapshot[2m > [22m[2mpreserves catalog fields for items without productId
+[22m[39mSlow query (2484ms): TRUNCATE TABLE "document_template_revisions", "invoice_number_sequences", "users", "invoice_template
+
+ [32m✓[39m tests/invoice-product-snapshot.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 20820[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice product snapshot[2m > [22msnapshots product data when creating a draft with productId [33m 4987[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice product snapshot[2m > [22msnapshots product data when setting items with productId [33m 4569[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice product snapshot[2m > [22muses stored snapshot values for calculation, not re-fetched product values [33m 3014[2mms[22m[39m
+   [33m[2m✓[22m[39m Invoice product snapshot[2m > [22mpreserves catalog fields for items without productId [33m 8251[2mms[22m[39m
+[90mstderr[2m | tests/reports-cache.test.ts[2m > [22m[2mReports cache (integration)[2m > [22m[2mcaches revenue report and invalidates on invoice finalize
+[22m[39mSlow query (1590ms): TRUNCATE TABLE "document_template_revisions", "invoice_number_sequences", "users", "invoice_template
+
+[11:27:55.295] [32mINFO[39m (10400): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[11:27:55.413] [32mINFO[39m (10400): [36mInvoice 56e4133b-f165-4d99-b401-2eaab462b3e6 finalized as INV-2026-000001[39m

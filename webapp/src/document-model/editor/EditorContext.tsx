@@ -194,7 +194,9 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       setDirty(newIndex !== 0);
       try {
         analytics.trackEvent("undo_performed", { documentId: prevDoc.id, version: prevDoc.version });
-      } catch {}
+      } catch (err) {
+        console.warn("Failed to track analytics event:", err);
+      }
     }
   }, [historyIndex, history]);
 
@@ -207,7 +209,9 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
       setDirty(true);
       try {
         analytics.trackEvent("redo_performed", { documentId: nextDoc.id, version: nextDoc.version });
-      } catch {}
+      } catch (err) {
+        console.warn("Failed to track analytics event:", err);
+      }
     }
   }, [historyIndex, history]);
 

@@ -30,6 +30,7 @@ import {
 } from "../types";
 
 import { z } from "zod";
+import { Decimal } from "decimal.js";
 
 export function registerAllComponents() {
   registerTextComponent();
@@ -2110,12 +2111,11 @@ function registerDepositComponent() {
       const calculations = ctx.calculations;
       const invoice = ctx.invoice;
 
-      const Decimal = require("decimal.js").Decimal;
       const depositTotal = calculations ? new Decimal(calculations.amountDue || 0).mul(
         depositType === "percentage" ? new Decimal(depositValue).div(100) : depositValue
       ).toFixed(2) : "0.00";
 
-      const depositPaid = invoice ? new Decimal(invoice.amount_paid || 0).min(depositTotal).toFixed(2) : "0.00";
+      const depositPaid = invoice ? Decimal.min(new Decimal(invoice.amount_paid || 0), depositTotal).toFixed(2) : "0.00";
       const depositDue = new Decimal(depositTotal).minus(depositPaid).toFixed(2);
 
       const formatCurrency = (val: string) => ctx.calculations?.formatCurrency(val, currency) || val;

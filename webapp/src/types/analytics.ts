@@ -42,7 +42,8 @@ export const analytics: Analytics = {
       if (eventBuffer.length > EVENT_BUFFER_SIZE) {
         eventBuffer = eventBuffer.slice(eventBuffer.length - EVENT_BUFFER_SIZE);
       }
-    } catch {
+    } catch (err) {
+      console.warn("Failed to track analytics event:", err);
     }
   },
 

@@ -630,7 +630,7 @@ export interface RecurringInvoiceCreateInput {
   autoSend?: boolean;
 }
 
-export interface RecurringInvoiceUpdateInput extends Partial<RecurringInvoiceCreateInput> {}
+export type RecurringInvoiceUpdateInput = Partial<RecurringInvoiceCreateInput>;
 
 export interface ApiReminderConfig {
   enabled: boolean;

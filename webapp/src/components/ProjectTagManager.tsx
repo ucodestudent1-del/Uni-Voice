@@ -51,7 +51,9 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
         { id: tagId, name: tagName, color: tagColor },
       ]);
       onTagsChange();
-    } catch {} finally {
+    } catch (err) {
+      console.error("Failed to add project tag:", err);
+    } finally {
       setLoading(false);
     }
   }
@@ -68,7 +70,9 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
       onTagsChange();
       setShowAddDialog(false);
       setNewTagName("");
-    } catch {} finally {
+    } catch (err) {
+      console.error("Failed to add new project tag:", err);
+    } finally {
       setLoading(false);
     }
   }
@@ -79,7 +83,9 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
       await removeProjectTag(projectId, tagId);
       setProjectTags((prev) => prev.filter((t) => t.id !== tagId));
       onTagsChange();
-    } catch {} finally {
+    } catch (err) {
+      console.error("Failed to remove project tag:", err);
+    } finally {
       setLoading(false);
     }
   }

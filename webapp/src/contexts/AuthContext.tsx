@@ -68,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.removeItem("token");
     } catch {
+      console.warn("Failed to remove token from localStorage");
     }
   }
 
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem("token", token);
     } catch {
+      console.warn("Failed to set token in localStorage");
     }
   }
 

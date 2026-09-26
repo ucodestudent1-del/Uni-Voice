@@ -178,7 +178,7 @@ function renderLineItemValue(item: Record<string, unknown>, key: string, currenc
       return String(item.service ?? "");
     case "milestone":
       return String(item.milestone ?? "");
-    default:
+    default: {
       const val = item[key];
       if (key.toLowerCase().includes("price") || key.toLowerCase().includes("amount") || key.toLowerCase().includes("total")) {
         return formatCurrency(val, currency, locale);
@@ -187,6 +187,7 @@ function renderLineItemValue(item: Record<string, unknown>, key: string, currenc
         return formatRate(val);
       }
       return String(val ?? "");
+    }
   }
 }
 

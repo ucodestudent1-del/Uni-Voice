@@ -1,0 +1,5 @@
+npm notice run invoice-generator-webapp@1.0.0 npx
+npm notice run vitest run
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/New User/Desktop/New folder/webapp[39m
+

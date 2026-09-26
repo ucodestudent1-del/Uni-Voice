@@ -55,7 +55,9 @@ export default function Templates() {
     try {
       await duplicateInvoiceTemplate(id);
       loadTemplates();
-    } catch {}
+    } catch (err) {
+      console.error("Failed to duplicate template:", err);
+    }
     setActionLoading(null);
   }
 
@@ -64,7 +66,9 @@ export default function Templates() {
     try {
       await setDefaultInvoiceTemplate(id);
       loadTemplates();
-    } catch {}
+    } catch (err) {
+      console.error("Failed to set default template:", err);
+    }
     setActionLoading(null);
   }
 
@@ -77,7 +81,9 @@ export default function Templates() {
         await archiveInvoiceTemplate(id);
       }
       loadTemplates();
-    } catch {}
+    } catch (err) {
+      console.error("Failed to update template lifecycle:", err);
+    }
     setActionLoading(null);
   }
 
@@ -87,7 +93,9 @@ export default function Templates() {
     try {
       await deleteInvoiceTemplate(id);
       setTemplates((prev) => prev.filter((t) => t.id !== id));
-    } catch {}
+    } catch (err) {
+      console.error("Failed to delete template:", err);
+    }
     setActionLoading(null);
   }
 

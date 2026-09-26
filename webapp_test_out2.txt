@@ -1,0 +1,201 @@
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/New User/Desktop/New folder/webapp[39m
+
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders a basic text component
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders business info
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders invoice number
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders hidden components as not-visible
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders totals components
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders line items table
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders divider and spacer
+ [32m✓[39m src/__tests__/template-render.test.tsx[2m > [22mTemplateRender (frontend)[2m > [22mrenders signature component
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcreateEmptyDocument[2m > [22mcreates a valid document with root section, row, and column
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcreateEmptyDocument[2m > [22msets default document settings
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22minsertComponent[2m > [22minserts a text component into a column
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22minsertComponent[2m > [22minserts a structural section at root level
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22minsertComponent[2m > [22minserts a row into a section
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22minsertComponent[2m > [22minserts a column into a row
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22minsertComponent[2m > [22mallows dropping text into section directly
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22minsertComponent[2m > [22mvalidates parent constraints - rejects section in column
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mupdateComponent[2m > [22mupdates component props
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mupdateComponent[2m > [22mupdates component style
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mupdateComponent[2m > [22mvalidates props against Zod schema
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mmoveComponent[2m > [22mmoves a component to a different parent
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mmoveComponent[2m > [22mallows moving text into section directly
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mremoveComponent[2m > [22mremoves a component and its children
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22msetDocumentSettings[2m > [22mupdates document settings
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mgetChildren[2m > [22mreturns children of a section
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mgetChildren[2m > [22mreturns children of a row
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mgetChildren[2m > [22mreturns children of a column
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mfindComponent[2m > [22mfinds a component by ID
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mfindComponent[2m > [22mreturns undefined for non-existent ID
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mfindParent[2m > [22mfinds the parent of a component
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mfindSiblings[2m > [22mfinds siblings of a component
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcanDropComponent[2m > [22mallows dropping text into column
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcanDropComponent[2m > [22mallows dropping section at root
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcanDropComponent[2m > [22mallows dropping row into section
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcanDropComponent[2m > [22mallows dropping column into row
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcanDropComponent[2m > [22mallows dropping text into section directly
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mcanDropComponent[2m > [22mrejects dropping section into column
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mvalidateComponentProps[2m > [22mvalidates text component props
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mvalidateComponentProps[2m > [22mrejects invalid text component props
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mvalidateComponentProps[2m > [22mvalidates lineItems component props
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mregistry validation[2m > [22mvalidates component props via registry
+ [32m✓[39m src/__tests__/document-model.test.ts[2m > [22mdocument-model[2m > [22mregistry validation[2m > [22mgets component definition
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mcreates a new component with a new ID
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mpreserves props from the original component
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mpreserves style from the original component
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mplaces the copy right after the original
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mdoes not modify the original component
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mplaces copy after original even with existing siblings
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mduplicates structural components with their children recursively
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22massigns new IDs to all cloned children
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mduplicateComponent[2m > [22mcan duplicate components with custom props
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindComponentDeep[2m > [22mfinds components in the components dict
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindComponentDeep[2m > [22mfinds sections
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindComponentDeep[2m > [22mfinds rows
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindComponentDeep[2m > [22mfinds columns
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindComponentDeep[2m > [22mreturns undefined for non-existent ID
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindSiblingsDeep[2m > [22mfinds siblings of a leaf component
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindSiblingsDeep[2m > [22mfinds siblings of a structural component (section)
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mfindSiblingsDeep[2m > [22mdoes not include the component itself in siblings for root section
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mremoveComponent with structural components[2m > [22mremoves a section and its children
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mremoveComponent with structural components[2m > [22mremoves a leaf component and cleans up parent children
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mOutlineEditor[2m > [22mrenders the correct tree structure
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mOutlineEditor[2m > [22mrenders root section and its children
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mOutlineEditor[2m > [22mcalls onSelect when a node is clicked
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mOutlineEditor[2m > [22mnavigates tree structure and displays component names
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mKeyboard shortcuts[2m > [22mDelete key triggers onDelete for focused component
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mKeyboard shortcuts[2m > [22mCtrl+D triggers onDuplicate for focused component
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mKeyboard shortcuts[2m > [22mCtrl+ArrowDown triggers move down when siblings exist
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mKeyboard shortcuts[2m > [22mCtrl+ArrowUp triggers move up when position allows
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mKeyboard shortcuts[2m > [22mEnter key selects the focused component
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mmoveComponent[2m > [22mmoves a component to a new index within the same parent
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mgetSiblingIndex[2m > [22mreturns the correct index of a component among siblings
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mgetComponentDefinition integration[2m > [22mreturns definition with defaultProps and defaultStyle
+ [32m✓[39m src/__tests__/editor-operations.test.ts[2m > [22meditor-operations[2m > [22mgetComponentDefinition integration[2m > [22mreturns definition for structural components
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mvalid invoice[2m > [22mreturns no issues for a complete, valid invoice
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mvalid invoice[2m > [22mdoes not flag when due date equals issue date
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mvalid invoice[2m > [22mdoes not flag when due date is after issue date
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mmissing customer[2m > [22mflags missing customer as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mmissing customer[2m > [22mflags missing customer name as warning
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mdates[2m > [22mflags missing issue date as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mdates[2m > [22mflags due date before issue date as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mline items[2m > [22mflags empty line items as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mline items[2m > [22mflags zero quantity as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mline items[2m > [22mflags negative quantity as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mline items[2m > [22mflags negative unit price as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mline items[2m > [22mflags missing description as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mcurrency[2m > [22mflags unsupported currency as error
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mcurrency[2m > [22maccepts lowercase currency code
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mpayment instructions[2m > [22mflags missing payment instructions as warning
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mpayment instructions[2m > [22mflags empty payment instructions as warning
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mcalculation check[2m > [22mflags calculation error for negative quantity (matches backend)
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mfix suggestions[2m > [22mincludes fix suggestions for error issues
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mseverity separation[2m > [22merrors make the invoice invalid
+ [32m✓[39m src/__tests__/use-invoice-validation.test.ts[2m > [22museInvoiceValidation – client-side validation[2m > [22mseverity separation[2m > [22mwarnings do not block validation
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mBLANK_PRESET[2m > [22mproduces a valid document
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mBLANK_PRESET[2m > [22mhas empty components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mBLANK_PRESET[2m > [22mhas correct metadata
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mPROFESSIONAL_PRESET[2m > [22mproduces a valid document
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mPROFESSIONAL_PRESET[2m > [22mcontains core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mhas 10 industry presets
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for construction
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for consulting
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for photography
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for freelancing
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for legal
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for landscaping
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for cleaning
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for automotive
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for retail
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mproduces a valid document for professional-services
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mconstruction has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mconsulting has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mphotography has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mfreelancing has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mlegal has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mlandscaping has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mcleaning has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mautomotive has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mretail has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mprofessional-services has core invoice components
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mconstruction has industry tag set to construction
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mconsulting has industry tag set to consulting
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mphotography has industry tag set to photography
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mfreelancing has industry tag set to freelancing
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mlegal has industry tag set to legal
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mlandscaping has industry tag set to landscaping
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mcleaning has industry tag set to cleaning
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mautomotive has industry tag set to automotive
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mretail has industry tag set to retail
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mprofessional-services has industry tag set to professional services
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mconstruction preset includes job_site and project custom fields
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mconsulting preset includes milestone select field
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mautomotive preset includes VIN custom field
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mretail preset has discount column visible
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mall presets have version and updatedAt
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mINDUSTRY_PRESETS[2m > [22mall presets have at least one row with columns
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mgetPresetTemplate[2m > [22mreturns the correct preset by key
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mgetPresetTemplate[2m > [22mreturns undefined for unknown key
+ [32m✓[39m src/__tests__/preset-templates.test.ts[2m > [22mpreset-templates[2m > [22mALL_PRESETS[2m > [22mincludes blank, professional, and 10 industry presets
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22manalytics[2m > [22mtrackEvent[2m > [22mrecords an event with properties
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22manalytics[2m > [22mtrackEvent[2m > [22mhandles events without properties
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22manalytics[2m > [22mtrackEvent[2m > [22mrespects max buffer size
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22manalytics[2m > [22mflush[2m > [22mclears the event buffer
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22manalytics[2m > [22mANALYTICS_EVENTS[2m > [22mincludes all expected event names
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22museAnalytics hook[2m > [22mexports all tracking functions
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22museAnalytics hook[2m > [22mtrackInvoiceCreated calls track with invoice_created
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22museAnalytics hook[2m > [22mtrackTemplateSelected calls track with template_selected
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22museAnalytics hook[2m > [22mtrackComponentAdded calls track with component_added
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22museAnalytics hook[2m > [22mtrackInvoiceSent calls track with invoice_sent
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22museAnalytics hook[2m > [22mtrackDraftAbandoned calls track with draft_abandoned
+ [32m✓[39m src/__tests__/analytics.test.ts[2m > [22museAnalytics hook[2m > [22mtrack handles errors gracefully
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22misInvoiceOverdue[2m > [22mreturns true for an open invoice past due with a balance
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22misInvoiceOverdue[2m > [22mreturns false for a paid invoice even if past due
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22misInvoiceOverdue[2m > [22mreturns false when amountDue is zero
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22misInvoiceOverdue[2m > [22mreturns false when there is no due date
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22misInvoiceOverdue[2m > [22mreturns false when the due date is in the future
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22misInvoiceOverdue[2m > [22mreturns false for cancelled/void invoices
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22misInvoiceOverdue[2m > [22muses current time when now is omitted
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetInvoiceDisplayStatus[2m > [22mreturns overdue for open past-due invoices
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetInvoiceDisplayStatus[2m > [22mpreserves the stored overdue status
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetInvoiceDisplayStatus[2m > [22mreturns the stored status when not overdue
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetInvoiceDisplayStatus[2m > [22mreturns paid as-is
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetCustomerPrimaryContact[2m > [22mcombines email and phone
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetCustomerPrimaryContact[2m > [22mreturns only email when no phone
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetCustomerPrimaryContact[2m > [22mreturns only phone when no email
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mgetCustomerPrimaryContact[2m > [22mreturns null when neither is present
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mcustomerHasBalance[2m > [22mreturns true when outstanding is positive
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mcustomerHasBalance[2m > [22mreturns false when outstanding is zero
+ [32m✓[39m src/__tests__/customer-utils.test.ts[2m > [22mcustomerHasBalance[2m > [22mreturns false when outstanding is undefined
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mvalidates a complete customer form
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mrequires name field
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mrejects empty name
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mrejects whitespace-only name
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mvalidates email format
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mallows empty string for email
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mrequires 2-letter country code
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mvalidates status enum
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mrejects negative payment terms
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22maccepts all valid statuses
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mtrims nothing (validation only, trimming happens in service)
+ [32m✓[39m src/__tests__/customer-validation.test.ts[2m > [22mCustomerFormSchema[2m > [22mvalidates name max length
+ [32m✓[39m src/__tests__/expense-kpi-card.test.tsx[2m > [22mExpenseKPICard[2m > [22mrenders title and formatted value
+ [32m✓[39m src/__tests__/expense-kpi-card.test.tsx[2m > [22mExpenseKPICard[2m > [22mrenders loading placeholder when isLoading is true
+ [32m✓[39m src/__tests__/expense-kpi-card.test.tsx[2m > [22mExpenseKPICard[2m > [22mshows — for zero values without trend
+ [32m✓[39m src/__tests__/expense-kpi-card.test.tsx[2m > [22mExpenseKPICard[2m > [22mrenders subtitle when provided
+ [32m✓[39m src/__tests__/expense-category-badge.test.tsx[2m > [22mExpenseCategoryBadge[2m > [22mrenders the label for a known category
+ [32m✓[39m src/__tests__/expense-category-badge.test.tsx[2m > [22mExpenseCategoryBadge[2m > [22mrenders the label for professional_fees
+ [32m✓[39m src/__tests__/expense-category-badge.test.tsx[2m > [22mExpenseCategoryBadge[2m > [22mfalls back to 'other' for an unknown category
+ [32m✓[39m src/__tests__/expense-category-badge.test.tsx[2m > [22mExpenseCategoryBadge[2m > [22mincludes the icon emoji
+ [32m✓[39m src/__tests__/expense-category-badge.test.tsx[2m > [22mExpenseCategoryBadge[2m > [22mEXPENSE_CATEGORY_OPTIONS matches the config keys
+ [32m✓[39m src/__tests__/expense-types.test.ts[2m > [22mexpense-types[2m > [22mEXPENSE_CATEGORY_CONFIG[2m > [22mhas entries for all 12 categories
+ [32m✓[39m src/__tests__/expense-types.test.ts[2m > [22mexpense-types[2m > [22mEXPENSE_CATEGORY_CONFIG[2m > [22mevery category has a label, color, and icon
+ [32m✓[39m src/__tests__/expense-types.test.ts[2m > [22mexpense-types[2m > [22mEXPENSE_CATEGORY_CONFIG[2m > [22mprovides human-readable labels
+
+[2m Test Files [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+[2m      Tests [22m [1m[32m192 passed[39m[22m[90m (192)[39m
+[2m   Start at [22m 12:22:52
+[2m   Duration [22m 66.70s[2m (transform 2.36s, setup 45.00s, collect 18.96s, tests 1.70s, environment 117.72s, prepare 7.73s)[22m
+

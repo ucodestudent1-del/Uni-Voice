@@ -88,7 +88,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         features: featureData,
         timestamp: Date.now(),
       });
-    } catch {
+    } catch (err) {
+      console.error("Failed to load subscription:", err);
     } finally {
       setLoading(false);
       isInitialLoad.current = false;

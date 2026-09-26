@@ -1,0 +1,1190 @@
+npm notice run invoice-generator-webapp@1.0.0 npx
+npm notice run eslint src --ext .ts,.tsx
+
+C:\Users\New User\Desktop\New folder\webapp\src\App.tsx
+  41:51  error  'React' is not defined  no-undef
+  48:51  error  'React' is not defined  no-undef
+  56:47  error  'React' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\__tests__\document-model.test.ts
+   5:3  warning  'ComponentType' is defined but never used     @typescript-eslint/no-unused-vars
+   6:3  warning  'makeUUID' is defined but never used          @typescript-eslint/no-unused-vars
+   7:3  warning  'AnyComponent' is defined but never used      @typescript-eslint/no-unused-vars
+   9:3  warning  'SectionComponent' is defined but never used  @typescript-eslint/no-unused-vars
+  10:3  warning  'RowComponent' is defined but never used      @typescript-eslint/no-unused-vars
+  11:3  warning  'ColumnComponent' is defined but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\__tests__\editor-operations.test.ts
+  160:13  warning  'origIdx2' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  420:20  error    'document' is not defined                      no-undef
+  420:86  error    'HTMLElement' is not defined                   no-undef
+  448:24  error    'document' is not defined                      no-undef
+  451:25  error    'document' is not defined                      no-undef
+  479:20  error    'document' is not defined                      no-undef
+  479:86  error    'HTMLElement' is not defined                   no-undef
+  515:23  error    'document' is not defined                      no-undef
+  516:23  error    'document' is not defined                      no-undef
+  517:24  error    'document' is not defined                      no-undef
+  554:27  error    'document' is not defined                      no-undef
+  586:27  error    'document' is not defined                      no-undef
+  609:13  warning  'id2' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  626:27  error    'document' is not defined                      no-undef
+  665:27  error    'document' is not defined                      no-undef
+  696:27  error    'document' is not defined                      no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\__tests__\expense-category-badge.test.tsx
+  20:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\__tests__\expense-types.test.ts
+  4:3  warning  'EXPENSE_CATEGORY_OPTIONS' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\__tests__\preset-templates.test.ts
+    1:32  warning  'beforeEach' is defined but never used           @typescript-eslint/no-unused-vars
+    3:3   warning  'createEmptyDocument' is defined but never used  @typescript-eslint/no-unused-vars
+    4:3   warning  'InvoiceDocument' is defined but never used      @typescript-eslint/no-unused-vars
+    5:3   warning  'ComponentType' is defined but never used        @typescript-eslint/no-unused-vars
+    8:3   warning  'insertComponent' is defined but never used      @typescript-eslint/no-unused-vars
+    9:3   warning  'getChildren' is defined but never used          @typescript-eslint/no-unused-vars
+  115:54  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  127:54  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  138:50  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\__tests__\template-render.test.tsx
+    4:36  warning  'InvoiceDocument' is defined but never used  @typescript-eslint/no-unused-vars
+    6:29  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+   26:33  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+   53:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  103:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  140:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  170:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  200:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  236:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  282:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  320:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  352:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\api\client.ts
+    56:17   error    'localStorage' is not defined             no-undef
+    80:7    error    'localStorage' is not defined             no-undef
+    81:7    error    'window' is not defined                   no-undef
+   174:43   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   179:55   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   184:58   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   189:56   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   280:44   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   285:56   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   335:89   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   336:32   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   352:43   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   357:55   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   372:44   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   377:41   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   392:45   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   427:44   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   432:56   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   452:52   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   462:64   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   487:51   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   572:51   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   577:63   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   637:67   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   768:43   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   773:55   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   798:115  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   798:129  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   852:64   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   872:62   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   882:59   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   920:87   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   921:32   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   943:87   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   944:32   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   978:46   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   983:58   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1013:93   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1014:32   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1199:87   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1200:32   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1503:53   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\CustomerForm.tsx
+   22:7   warning  'TAX_ID_TYPES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   68:36  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   75:65  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   84:17  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   91:34  error    'React' is not defined                             no-undef
+  103:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\CustomerImport.tsx
+  16:31  error    'HTMLInputElement' is not defined         no-undef
+  18:32  error    'React' is not defined                    no-undef
+  18:50  error    'HTMLInputElement' is not defined         no-undef
+  21:24  error    'FileReader' is not defined               no-undef
+  30:34  error    'React' is not defined                    no-undef
+  46:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\CustomerQuickView.tsx
+  29:23  error  'KeyboardEvent' is not defined  no-undef
+  32:5   error  'window' is not defined         no-undef
+  33:18  error  'window' is not defined         no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\CustomerSelector.tsx
+    4:37  warning  'CustomerFormValues' is defined but never used  @typescript-eslint/no-unused-vars
+   32:31  error    'HTMLDivElement' is not defined                 no-undef
+   52:36  error    'MouseEvent' is not defined                     no-undef
+   53:78  error    'Node' is not defined                           no-undef
+   58:5   error    'document' is not defined                       no-undef
+   59:18  error    'document' is not defined                       no-undef
+   84:34  error    'React' is not defined                          no-undef
+   92:17  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  109:19  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\DocumentTemplateGallery.tsx
+  50:28  error  'HTMLButtonElement' is not defined  no-undef
+  61:43  error  'HTMLButtonElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ErrorBoundary.tsx
+  46:32  error  'window' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\FeatureGate.tsx
+  1:10  warning  'ReactNode' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\InvoiceEditor.tsx
+    1:31   warning  'useCallback' is defined but never used                  @typescript-eslint/no-unused-vars
+   10:10   warning  'SUPPORTED_CURRENCIES' is defined but never used         @typescript-eslint/no-unused-vars
+   21:26   warning  'PALETTE_DRAGGABLE_ID_PREFIX' is defined but never used  @typescript-eslint/no-unused-vars
+   24:49   warning  'documentToInvoice' is defined but never used            @typescript-eslint/no-unused-vars
+   29:3    warning  'insertComponent' is defined but never used              @typescript-eslint/no-unused-vars
+   30:3    warning  'updateComponent' is defined but never used              @typescript-eslint/no-unused-vars
+   31:3    warning  'moveComponent' is defined but never used                @typescript-eslint/no-unused-vars
+   32:3    warning  'removeComponent' is defined but never used              @typescript-eslint/no-unused-vars
+   34:3    warning  'getChildren' is defined but never used                  @typescript-eslint/no-unused-vars
+   37:3    warning  'findParent' is defined but never used                   @typescript-eslint/no-unused-vars
+   38:3    warning  'findSiblings' is defined but never used                 @typescript-eslint/no-unused-vars
+   39:3    warning  'findSiblingsDeep' is defined but never used             @typescript-eslint/no-unused-vars
+   43:3    warning  'getAllComponentDefinitions' is defined but never used   @typescript-eslint/no-unused-vars
+   49:8    warning  'CustomerSelector' is defined but never used             @typescript-eslint/no-unused-vars
+   50:8    warning  'TaxSelector' is defined but never used                  @typescript-eslint/no-unused-vars
+   51:8    warning  'TemplateSelector' is defined but never used             @typescript-eslint/no-unused-vars
+  134:5    warning  'saveDocument' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  136:5    warning  'isAutosaveEnabled' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  141:10   warning  'products' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  243:21   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  287:51   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  306:9    warning  'totals' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  308:96   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  309:86   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  310:86   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  311:80   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  312:88   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  313:90   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  329:33   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  329:106  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  330:50   warning  'currency' is defined but never used                     @typescript-eslint/no-unused-vars
+  368:9    warning  'renderContext' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  518:19   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  530:23   error    'window' is not defined                                  no-undef
+  543:19   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  576:19   warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  587:17   error    'window' is not defined                                  no-undef
+  588:15   error    'document' is not defined                                no-undef
+  592:5    error    'window' is not defined                                  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\InvoicePreview.tsx
+  1:17  warning  'useMemo' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\InvoiceStatusBadge.tsx
+  21:44  error  'HTMLSpanElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\InvoiceWorkspace.tsx
+   121:7   warning  'LINE_ITEM_TYPES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   121:88  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   130:7   warning  'LINE_TYPE_ICON' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   130:64  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   190:32  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   225:33  error    'File' is not defined                                 no-undef
+   246:10  warning  'toPercentDisplay' is defined but never used          @typescript-eslint/no-unused-vars
+   252:10  warning  'lineTotalDisplay' is defined but never used          @typescript-eslint/no-unused-vars
+   252:59  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   254:47  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   278:59  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   497:21  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   579:19  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   592:25  error    'BeforeUnloadEvent' is not defined                    no-undef
+   598:5   error    'window' is not defined                               no-undef
+   599:18  error    'window' is not defined                               no-undef
+   602:66  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   677:39  error    'FileList' is not defined                             no-undef
+   726:11  warning  'attachments' is assigned a value but never used      @typescript-eslint/no-unused-vars
+   770:16  error    'window' is not defined                               no-undef
+   781:18  error    'window' is not defined                               no-undef
+   800:19  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   811:17  error    'document' is not defined                             no-undef
+   816:19  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   835:52  warning  'newFlag' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   883:19  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   891:5   error    'navigator' is not defined                            no-undef
+  1061:32  error    'window' is not defined                               no-undef
+  1079:25  error    'MouseEvent' is not defined                           no-undef
+  1084:7   error    'document' is not defined                             no-undef
+  1085:7   error    'document' is not defined                             no-undef
+  1087:5   error    'document' is not defined                             no-undef
+  1088:5   error    'document' is not defined                             no-undef
+  1179:55  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  1264:9   warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  1265:55  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  1356:9   warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  1623:55  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  1735:55  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  1736:20  error    'FileList' is not defined                             no-undef
+  1811:20  error    'FileList' is not defined                             no-undef
+  1889:3   warning  'isNew' is defined but never used                     @typescript-eslint/no-unused-vars
+  1959:3   warning  'invoiceId' is defined but never used                 @typescript-eslint/no-unused-vars
+  1972:9   warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  2108:50  error    'window' is not defined                               no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\Layout.tsx
+   4:10   warning  'useTheme' is defined but never used      @typescript-eslint/no-unused-vars
+  33:70   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:74   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:101  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:104  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:99   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:100  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\OnboardingProgress.tsx
+   9:7   warning  'STEP_TITLES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  27:25  error    'OnboardingProgress' is already defined           no-redeclare
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\OutlineEditor.tsx
+  23:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:10  warning  'renderTree' is defined but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ProjectForm.tsx
+    4:10  warning  'formatDate' is defined but never used                  @typescript-eslint/no-unused-vars
+   14:7   warning  'COUNTRIES' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   64:26  warning  'setCustomerSearch' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   67:20  warning  'setTagColor' is assigned a value but never used        @typescript-eslint/no-unused-vars
+   96:30  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   97:49  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  106:64  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  148:34  error    'React' is not defined                                  no-undef
+  160:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ProjectNotesTab.tsx
+  26:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:34  error    'React' is not defined                    no-undef
+  49:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:10  error    'confirm' is not defined                  no-undef
+  62:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ProjectSelector.tsx
+  18:31  error  'HTMLDivElement' is not defined  no-undef
+  21:36  error  'MouseEvent' is not defined      no-undef
+  22:78  error  'Node' is not defined            no-undef
+  26:5   error  'document' is not defined        no-undef
+  27:18  error  'document' is not defined        no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ProjectTagManager.tsx
+  32:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:13  error    Empty block statement                     no-empty
+  71:13  error    Empty block statement                     no-empty
+  82:13  error    Empty block statement                     no-empty
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ProjectTimeTab.tsx
+   46:34  error    'React' is not defined                    no-undef
+   75:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:10  error    'confirm' is not defined                  no-undef
+  253:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  280:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\QuoteBuilder\LineItemsTable.tsx
+  88:31  warning  'index' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\QuoteBuilder\QuoteBuilder.tsx
+   33:5   warning  'addFee' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   34:5   warning  'removeFee' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   71:14  warning  'err' is defined but never used                 @typescript-eslint/no-unused-vars
+   71:19  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   84:17  error    'document' is not defined                       no-undef
+   89:14  warning  'err' is defined but never used                 @typescript-eslint/no-unused-vars
+   89:19  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   97:10  error    'window' is not defined                         no-undef
+  104:14  warning  'err' is defined but never used                 @typescript-eslint/no-unused-vars
+  104:19  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\QuoteBuilder\QuoteDetailsForm.tsx
+   7:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   8:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  87:95  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\QuoteBuilder\useQuoteBuilder.ts
+   72:5   error    Definition for rule 'react-hooks/exhaustive-deps' was not found  react-hooks/exhaustive-deps
+  154:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  161:62  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  269:11  error    'window' is not defined                                          no-undef
+  279:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\StripePaymentElement.tsx
+    1:31  warning  'useRef' is defined but never used          @typescript-eslint/no-unused-vars
+   74:21  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+   89:18  warning  'processPayment' is defined but never used  @typescript-eslint/no-unused-vars
+  100:23  error    'window' is not defined                     no-undef
+  118:19  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\SubscriptionCard.tsx
+  43:9  warning  'isBusiness' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\TaxSelector.tsx
+  25:31  error  'HTMLDivElement' is not defined  no-undef
+  32:36  error  'MouseEvent' is not defined      no-undef
+  33:78  error  'Node' is not defined            no-undef
+  37:5   error  'document' is not defined        no-undef
+  38:18  error  'document' is not defined        no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\TemplateCustomizationPanel.tsx
+  188:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\TemplatePreview.tsx
+  105:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\TemplateRender.tsx
+    3:10  warning  'getChildren' is defined but never used                                         @typescript-eslint/no-unused-vars
+    7:13  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+    8:13  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+    9:12  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+   10:14  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+   11:9   warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+   12:11  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+   71:10  warning  'getNestedValue' is defined but never used                                      @typescript-eslint/no-unused-vars
+   80:10  warning  'evaluateCondition' is defined but never used                                   @typescript-eslint/no-unused-vars
+  106:3   warning  Unused eslint-disable directive (no problems were reported from 'no-new-func')
+  112:13  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  113:13  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  114:12  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  115:14  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  116:9   warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  117:11  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  120:18  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  182:7   error    Unexpected lexical declaration in case block                                    no-case-declarations
+  194:9   warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  195:8   warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  207:9   warning  'children' is assigned a value but never used                                   @typescript-eslint/no-unused-vars
+  209:48  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  221:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  229:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  237:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  266:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  298:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  311:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  330:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  371:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  383:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  395:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  407:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  419:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  431:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  443:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  455:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  467:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  479:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  491:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  508:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  520:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  527:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  540:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  561:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  589:35  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  605:52  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+  618:38  warning  Unexpected any. Specify a different type                                        @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\TemplateSelector.tsx
+  16:10  warning  'showCreate' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  17:31  error    'HTMLDivElement' is not defined                  no-undef
+  24:36  error    'MouseEvent' is not defined                      no-undef
+  25:78  error    'Node' is not defined                            no-undef
+  30:5   error    'document' is not defined                        no-undef
+  31:18  error    'document' is not defined                        no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ThemeToggle.tsx
+   7:9  warning  'icon' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  13:9  warning  'nextLabel' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\TwoFactorManager.tsx
+   37:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   54:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:10  error    'confirm' is not defined                  no-undef
+   91:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:5   error    'navigator' is not defined                no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\UpgradePrompt.tsx
+  6:41  warning  'feature' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ValidationPanel.tsx
+  12:54  warning  'hasWarnings' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\InvoiceTable.tsx
+  2:10  warning  'formatCurrency' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\PaymentStatusPie.tsx
+  45:25  warning  'segment' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\RecentActivity.tsx
+  66:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\ReportInsights.tsx
+  20:9  error  'React' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\ReportKPICards.tsx
+  30:3  warning  'paidThisMonth' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\RevenueChart.tsx
+  158:62  error  Unexpected constant nullishness on the left-hand side of a `??` expression  no-constant-binary-expression
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\StatusBadge.tsx
+  1:15  warning  'ReactNode' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\StatusBreakdown.tsx
+   9:11  warning  'StatusBreakdownProps' is defined but never used  @typescript-eslint/no-unused-vars
+  45:25  warning  'segment' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\dashboard\UpcomingPayments.tsx
+  59:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\expenses\ExpenseDataTable.tsx
+   75:19  warning  '_value' is defined but never used  @typescript-eslint/no-unused-vars
+  117:19  warning  '_value' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\expenses\ExpenseFilters.tsx
+  27:34  error  'React' is not defined              no-undef
+  27:52  error  'HTMLInputElement' is not defined   no-undef
+  31:36  error  'React' is not defined              no-undef
+  31:54  error  'HTMLSelectElement' is not defined  no-undef
+  39:36  error  'React' is not defined              no-undef
+  39:54  error  'HTMLInputElement' is not defined   no-undef
+  47:34  error  'React' is not defined              no-undef
+  47:52  error  'HTMLInputElement' is not defined   no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\expenses\ExpenseForm.tsx
+  90:34  error    'React' is not defined                    no-undef
+  97:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\expenses\ExpenseKPICard.tsx
+  17:35  error  'HTMLDivElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\BillingSubscriptionSettings.tsx
+   2:10  warning  'getSubscription' is defined but never used    @typescript-eslint/no-unused-vars
+   4:24  warning  'ApiSubscription' is defined but never used    @typescript-eslint/no-unused-vars
+   8:31  warning  'features' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  39:9   error    'window' is not defined                        no-undef
+  41:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  47:10  error    'confirm' is not defined                       no-undef
+  56:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\BusinessProfileSettings.tsx
+   76:10  warning  'business' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   78:10  warning  'saving' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  122:21  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  143:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\GeneralSettings.tsx
+  12:10  warning  'settings' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  67:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  82:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\IntegrationsSettings.tsx
+   98:29  error  'window' is not defined  no-undef
+  105:13  error  'window' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\InvoicingSettings.tsx
+   8:10  warning  'settings' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   9:46  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  92:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\NotificationsSettings.tsx
+  32:20  error  'localStorage' is not defined  no-undef
+  47:5   error  'localStorage' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\PaymentsSettings.tsx
+   8:10  warning  'settings' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  97:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\SecuritySettings.tsx
+    6:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   65:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:16  error    'confirm' is not defined                  no-undef
+  189:13  error    'alert' is not defined                    no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\TaxesSettings.tsx
+  31:12  warning  'startCreate' is defined but never used   @typescript-eslint/no-unused-vars
+  80:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  88:10  error    'confirm' is not defined                  no-undef
+  92:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\TeamPermissionsSettings.tsx
+  36:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  76:10  error    'window' is not defined                   no-undef
+  81:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  90:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\settings\TemplatesSettings.tsx
+  55:26  error  'window' is not defined  no-undef
+  87:34  error  'window' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\AppShell.tsx
+   1:15  warning  'ReactNode' is defined but never used      @typescript-eslint/no-unused-vars
+   1:26  warning  'useState' is defined but never used       @typescript-eslint/no-unused-vars
+   3:10  warning  'Search' is defined but never used         @typescript-eslint/no-unused-vars
+   3:76  warning  'Moon' is defined but never used           @typescript-eslint/no-unused-vars
+   3:82  warning  'Sun' is defined but never used            @typescript-eslint/no-unused-vars
+   3:87  warning  'AlertCircle' is defined but never used    @typescript-eslint/no-unused-vars
+  11:3   warning  'onSearchFocus' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\Button.tsx
+   6:59  error  'HTMLButtonElement' is not defined  no-undef
+  36:34  error  'HTMLButtonElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\ConfirmationDialog.tsx
+  2:10  warning  'cn' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\DataTable.tsx
+    1:27  warning  'HTMLAttributes' is defined but never used  @typescript-eslint/no-unused-vars
+   14:54  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+   40:8   error    'React' is not defined                      no-undef
+   40:18  error    'HTMLDivElement' is not defined             no-undef
+   64:40  error    'HTMLInputElement' is not defined           no-undef
+  136:38  warning  'e' is defined but never used               @typescript-eslint/no-unused-vars
+  225:86  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  226:42  error    'React' is not defined                      no-undef
+  226:52  error    'HTMLDivElement' is not defined             no-undef
+  227:6   error    'React' is not defined                      no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\InvoiceStatus.tsx
+  49:41  error  'HTMLSpanElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\Money.tsx
+  14:13  error  Empty block statement             no-empty
+  24:33  error  'HTMLSpanElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\PageHeader.tsx
+  1:15  warning  'ReactNode' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\PaymentStatus.tsx
+  44:41  error  'HTMLSpanElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\TemplateGallery.tsx
+  24:65  error  'HTMLButtonElement' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\Toast.tsx
+   8:34  error    'React' is not defined          no-undef
+  22:33  warning  'id' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\components\ui\ToastProvider.tsx
+  15:57  error  'React' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\contexts\AuthContext.tsx
+   8:12  warning  'apiLogin' is defined but never used     @typescript-eslint/no-unused-vars
+   9:15  warning  'apiRegister' is defined but never used  @typescript-eslint/no-unused-vars
+  30:27  error    'localStorage' is not defined            no-undef
+  69:7   error    'localStorage' is not defined            no-undef
+  70:13  error    Empty block statement                    no-empty
+  76:7   error    'localStorage' is not defined            no-undef
+  77:13  error    Empty block statement                    no-empty
+
+C:\Users\New User\Desktop\New folder\webapp\src\contexts\SubscriptionContext.tsx
+   74:23  warning  'plansData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   91:13  error    Empty block statement                           no-empty
+  114:7   error    'window' is not defined                         no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\contexts\ThemeContext.tsx
+  13:18  error  'localStorage' is not defined         no-undef
+  22:10  error  'window' is not defined               no-undef
+  30:16  error  'document' is not defined             no-undef
+  53:24  error  'window' is not defined               no-undef
+  54:25  error  'MediaQueryListEvent' is not defined  no-undef
+  64:5   error  'localStorage' is not defined         no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\DocumentPreview.tsx
+   7:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   8:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   9:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\converter.ts
+    3:3   warning  'AnyComponent' is defined but never used                 @typescript-eslint/no-unused-vars
+    4:3   warning  'ComponentId' is defined but never used                  @typescript-eslint/no-unused-vars
+    9:3   warning  'createComponent' is defined but never used              @typescript-eslint/no-unused-vars
+   13:27  warning  'insertComponent' is defined but never used              @typescript-eslint/no-unused-vars
+   14:10  warning  'getComponentDefinition' is defined but never used       @typescript-eslint/no-unused-vars
+   25:48  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   48:9   warning  'headerRowId' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   49:9   warning  'headerCompanyColId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   50:9   warning  'headerInvoiceColId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  151:9   warning  'totalsRowParent' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  152:9   warning  'totalsRowId' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  240:48  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  262:9   warning  'rowId' is assigned a value but never used               @typescript-eslint/no-unused-vars
+  263:9   warning  'col1' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  264:9   warning  'col2' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  340:9   warning  'totalsRowId' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  400:83  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  400:90  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\document-operations.ts
+    7:3    warning  'SectionId' is defined but never used           @typescript-eslint/no-unused-vars
+    8:3    warning  'RowId' is defined but never used               @typescript-eslint/no-unused-vars
+    9:3    warning  'ColumnId' is defined but never used            @typescript-eslint/no-unused-vars
+   16:34   warning  'getComponentSchema' is defined but never used  @typescript-eslint/no-unused-vars
+   67:10   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  272:66   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  272:72   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  273:90   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  273:103  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  398:25   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\editor\DocumentEditor.tsx
+   36:3   warning  'moveComponentTo' is defined but never used                    @typescript-eslint/no-unused-vars
+   37:3   warning  'duplicateComponent' is defined but never used                 @typescript-eslint/no-unused-vars
+   41:10  warning  'useEditor' is defined but never used                          @typescript-eslint/no-unused-vars
+   76:13  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+   77:13  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+   78:12  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+   79:17  warning  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+  423:10  warning  'resizeDirection' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  424:10  warning  'resizeStartRect' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  424:58  error    'DOMRect' is not defined                                       no-undef
+  427:28  error    'HTMLDivElement' is not defined                                no-undef
+  428:35  error    'DOMRect' is not defined                                       no-undef
+  455:13  error    Empty block statement                                          no-empty
+  462:13  error    Empty block statement                                          no-empty
+  466:9   warning  'editorDuplicateComponent' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  488:57  error    'HTMLElement' is not defined                                   no-undef
+  563:31  error    'KeyboardEvent' is not defined                                 no-undef
+  674:37  error    'EventTarget' is not defined                                   no-undef
+  675:42  error    'HTMLElement' is not defined                                   no-undef
+  684:7   error    'window' is not defined                                        no-undef
+  685:7   error    'document' is not defined                                      no-undef
+  687:9   error    'window' is not defined                                        no-undef
+  688:9   error    'document' is not defined                                      no-undef
+  694:31  error    'KeyboardEvent' is not defined                                 no-undef
+  724:37  error    'EventTarget' is not defined                                   no-undef
+  725:42  error    'HTMLElement' is not defined                                   no-undef
+  730:5   error    'window' is not defined                                        no-undef
+  731:18  error    'window' is not defined                                        no-undef
+  765:23  error    'document' is not defined                                      no-undef
+  765:69  error    'window' is not defined                                        no-undef
+  786:13  warning  'active' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+  808:19  error    Empty block statement                                          no-empty
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\editor\EditorContext.tsx
+    4:3   warning  'AnyComponent' is defined but never used              @typescript-eslint/no-unused-vars
+    6:3   warning  'ComponentType' is defined but never used             @typescript-eslint/no-unused-vars
+    7:3   warning  'ParentId' is defined but never used                  @typescript-eslint/no-unused-vars
+   20:3   warning  'UpdateComponentParams' is defined but never used     @typescript-eslint/no-unused-vars
+   23:3   warning  'DuplicateComponentParams' is defined but never used  @typescript-eslint/no-unused-vars
+   24:3   warning  'MoveComponentToParams' is defined but never used     @typescript-eslint/no-unused-vars
+   75:35  error    'NodeJS' is not defined                               no-undef
+  197:15  error    Empty block statement                                 no-empty
+  210:15  error    Empty block statement                                 no-empty
+  257:36  error    'BeforeUnloadEvent' is not defined                    no-undef
+  265:5   error    'window' is not defined                               no-undef
+  266:18  error    'window' is not defined                               no-undef
+  270:37  error    'EventTarget' is not defined                          no-undef
+  271:42  error    'HTMLElement' is not defined                          no-undef
+  276:31  error    'KeyboardEvent' is not defined                        no-undef
+  306:5   error    'window' is not defined                               no-undef
+  307:18  error    'window' is not defined                               no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\editor\OutlineEditor.tsx
+    1:51  warning  'useRef' is defined but never used                 @typescript-eslint/no-unused-vars
+   88:10  warning  'findNode' is defined but never used               @typescript-eslint/no-unused-vars
+  408:9   warning  'visibleNodes' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  495:31  error    'KeyboardEvent' is not defined                     no-undef
+  561:5   error    'document' is not defined                          no-undef
+  563:7   error    'document' is not defined                          no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\editor\PropertyInspector.tsx
+   2:37  warning  'ComponentType' is defined but never used  @typescript-eslint/no-unused-vars
+  13:13  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  14:13  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  15:13  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  21:3   warning  'componentId' is defined but never used    @typescript-eslint/no-unused-vars
+  23:3   warning  'onSelect' is defined but never used       @typescript-eslint/no-unused-vars
+  60:45  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\registry\components.tsx
+     1:29  warning  'PaletteItem' is defined but never used       @typescript-eslint/no-unused-vars
+     2:31  warning  'RenderContext' is defined but never used     @typescript-eslint/no-unused-vars
+     2:46  warning  'InspectorContext' is defined but never used  @typescript-eslint/no-unused-vars
+    83:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+    86:25  warning  'ctx' is defined but never used               @typescript-eslint/no-unused-vars
+    88:21  error    'React' is not defined                        no-undef
+   130:69  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   209:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   259:66  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   343:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   454:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   529:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   534:25  warning  'format' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   563:71  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   653:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   680:33  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   683:32  error    'React' is not defined                        no-undef
+   812:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   877:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   950:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1014:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1017:25  warning  'ctx' is defined but never used               @typescript-eslint/no-unused-vars
+  1076:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1161:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1230:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1290:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1350:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1411:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1423:27  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1492:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1556:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1633:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1753:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1801:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1843:68  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1881:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1895:38  warning  '_ctx' is defined but never used              @typescript-eslint/no-unused-vars
+  1948:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  2026:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  2105:11  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  2113:23  error    A `require()` style import is forbidden       @typescript-eslint/no-require-imports
+  2113:23  error    'require' is not defined                      no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\registry\index.ts
+   1:51   warning  'LineItemColumn' is defined but never used  @typescript-eslint/no-unused-vars
+   9:9    error    'React' is not defined                      no-undef
+  16:61   error    'React' is not defined                      no-undef
+  16:81   error    'React' is not defined                      no-undef
+  17:135  error    'React' is not defined                      no-undef
+  21:13   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  22:13   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  23:13   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  24:12   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  25:17   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  34:13   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  35:13   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  36:13   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  45:9    error    'React' is not defined                      no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\renderer.tsx
+   52:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   54:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\schemas.ts
+    4:3   warning  'StyleProps' is defined but never used    @typescript-eslint/no-unused-vars
+  501:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\templates\preset-templates.ts
+  36:7   warning  'standardLineColumns' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  36:30  warning  'currency' is assigned a value but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\document-model\types.ts
+  1:10  warning  'z' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\hooks\useInvoiceValidation.ts
+   8:3   warning  'CalculatedLineItem' is defined but never used               @typescript-eslint/no-unused-vars
+   9:3   warning  'CalculatedFee' is defined but never used                    @typescript-eslint/no-unused-vars
+  39:7   warning  'SUPPORTED_CURRENCY_SET' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  41:10  warning  'toDate' is defined but never used                           @typescript-eslint/no-unused-vars
+  47:10  warning  'checkCalculations' is defined but never used                @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\main.tsx
+  16:9   error  Empty block statement      no-empty
+  19:21  error  'document' is not defined  no-undef
+  22:3   error  'document' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\AuthCallback.tsx
+  11:18  error  'window' is not defined    no-undef
+  19:24  error  'window' is not defined    no-undef
+  19:49  error  'window' is not defined    no-undef
+  20:7   error  'window' is not defined    no-undef
+  20:39  error  'document' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\CreditNotes.tsx
+    6:3   warning  'getCreditNote' is defined but never used          @typescript-eslint/no-unused-vars
+    8:3   warning  'updateCreditNote' is defined but never used       @typescript-eslint/no-unused-vars
+   13:3   warning  'getCreditNoteEvents' is defined but never used    @typescript-eslint/no-unused-vars
+   19:8   warning  'FeatureGate' is defined but never used            @typescript-eslint/no-unused-vars
+   21:26  warning  'formatDate' is defined but never used             @typescript-eslint/no-unused-vars
+   22:10  warning  'Decimal' is defined but never used                @typescript-eslint/no-unused-vars
+   23:30  warning  'ApiCreditNoteItem' is defined but never used      @typescript-eslint/no-unused-vars
+   23:49  warning  'ApiCreditNoteListItem' is defined but never used  @typescript-eslint/no-unused-vars
+   33:7   warning  'SORT_OPTIONS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   45:11  warning  'plan' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  108:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  123:47  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  131:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  143:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  149:20  error    'window' is not defined                            no-undef
+  155:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  161:23  error    'window' is not defined                            no-undef
+  163:20  error    'window' is not defined                            no-undef
+  168:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  176:19  error    'window' is not defined                            no-undef
+  177:17  error    'document' is not defined                          no-undef
+  181:7   error    'window' is not defined                            no-undef
+  182:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  498:3   warning  'invoices' is defined but never used               @typescript-eslint/no-unused-vars
+  503:20  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  541:28  error    'React' is not defined                             no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\CustomerDetail.tsx
+   54:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   62:23  error    'confirm' is not defined                           no-undef
+   66:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   67:7   error    'alert' is not defined                             no-undef
+   76:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   77:7   error    'alert' is not defined                             no-undef
+   97:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   98:7   error    'alert' is not defined                             no-undef
+  224:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  425:9   warning  'colorClasses' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Customers.tsx
+   65:97  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   78:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:7   error    'alert' is not defined                    no-undef
+  120:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:7   error    'alert' is not defined                    no-undef
+  128:24  error    'Blob' is not defined                     no-undef
+  130:17  error    'document' is not defined                 no-undef
+  135:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:7   error    'alert' is not defined                    no-undef
+  161:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:7   error    'alert' is not defined                    no-undef
+  285:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Dashboard.tsx
+  11:3   warning  'FileText' is defined but never used           @typescript-eslint/no-unused-vars
+  13:3   warning  'Search' is defined but never used             @typescript-eslint/no-unused-vars
+  15:28  warning  'getInvoices' is defined but never used        @typescript-eslint/no-unused-vars
+  16:73  warning  'ApiInvoice' is defined but never used         @typescript-eslint/no-unused-vars
+  20:10  warning  'formatCurrency' is defined but never used     @typescript-eslint/no-unused-vars
+  67:9   warning  'navigate' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  84:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Expenses.tsx
+   37:11  warning  'plan' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   99:19  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  153:10  error    'confirm' is not defined                   no-undef
+  160:19  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  200:19  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\InvoiceDetail.tsx
+   15:3   warning  'recordPublicView' is defined but never used           @typescript-eslint/no-unused-vars
+   21:10  warning  'formatCurrencyValue' is defined but never used        @typescript-eslint/no-unused-vars
+   22:74  warning  'ApiDepositInfo' is defined but never used             @typescript-eslint/no-unused-vars
+   66:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   76:9   warning  'total' is assigned a value but never used             @typescript-eslint/no-unused-vars
+   79:9   warning  'canEdit' is assigned a value but never used           @typescript-eslint/no-unused-vars
+   96:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  108:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  120:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  130:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  139:19  error    'window' is not defined                                no-undef
+  140:17  error    'document' is not defined                              no-undef
+  144:7   error    'window' is not defined                                no-undef
+  145:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  160:19  error    'window' is not defined                                no-undef
+  161:17  error    'document' is not defined                              no-undef
+  165:7   error    'window' is not defined                                no-undef
+  167:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  177:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  194:18  warning  'handleStubPayment' is defined but never used          @typescript-eslint/no-unused-vars
+  203:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  219:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  537:9   warning  'isCreatingIntent' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Invoices.tsx
+   16:8   warning  'UpgradePrompt' is defined but never used            @typescript-eslint/no-unused-vars
+   17:38  warning  'Search' is defined but never used                   @typescript-eslint/no-unused-vars
+   19:8   warning  'InvoiceStatusBadge' is defined but never used       @typescript-eslint/no-unused-vars
+   22:10  warning  'formatCurrencyValue' is defined but never used      @typescript-eslint/no-unused-vars
+   25:40  warning  'ApiInvoiceListItem' is defined but never used       @typescript-eslint/no-unused-vars
+   39:7   warning  'SORT_OPTIONS' is assigned a value but never used    @typescript-eslint/no-unused-vars
+   54:11  warning  'plan' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   78:10  warning  'showExportMenu' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   86:34  error    'React' is not defined                               no-undef
+   86:52  error    'HTMLInputElement' is not defined                    no-undef
+  132:19  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  155:19  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  156:7   error    'alert' is not defined                               no-undef
+  164:19  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  165:7   error    'alert' is not defined                               no-undef
+  172:7   error    'alert' is not defined                               no-undef
+  174:19  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  175:7   error    'alert' is not defined                               no-undef
+  182:19  error    'window' is not defined                              no-undef
+  183:17  error    'document' is not defined                            no-undef
+  187:7   error    'window' is not defined                              no-undef
+  189:19  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  190:7   error    'alert' is not defined                               no-undef
+  197:19  error    'window' is not defined                              no-undef
+  198:17  error    'document' is not defined                            no-undef
+  202:7   error    'window' is not defined                              no-undef
+  204:19  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  205:7   error    'alert' is not defined                               no-undef
+  244:11  warning  'due' is assigned a value but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Login.tsx
+   20:31  error    'HTMLInputElement' is not defined         no-undef
+   23:40  error    'window' is not defined                   no-undef
+   27:7   error    'window' is not defined                   no-undef
+   27:39  error    'document' is not defined                 no-undef
+   37:45  error    'React' is not defined                    no-undef
+   51:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:43  error    'React' is not defined                    no-undef
+   69:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:38  error    'Event' is not defined                    no-undef
+   88:68  error    'React' is not defined                    no-undef
+  153:38  error    'window' is not defined                   no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\OnboardingWizard.tsx
+   9:88  error  'JSX' is not defined     no-undef
+  83:26  error  'window' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Payments.tsx
+   7:10  warning  'Plus' is defined but never used          @typescript-eslint/no-unused-vars
+   7:26  warning  'RefreshCw' is defined but never used     @typescript-eslint/no-unused-vars
+  38:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Products.tsx
+  32:34  error    'React' is not defined                    no-undef
+  44:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:7   error    'alert' is not defined                    no-undef
+  50:10  error    'confirm' is not defined                  no-undef
+  54:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:7   error    'alert' is not defined                    no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\ProjectDetail.tsx
+   11:3   warning  'getProjectFinancialSummary' is defined but never used  @typescript-eslint/no-unused-vars
+   13:3   warning  'addProjectTag' is defined but never used               @typescript-eslint/no-unused-vars
+   14:3   warning  'removeProjectTag' is defined but never used            @typescript-eslint/no-unused-vars
+   15:8   warning  'ProjectSearchParams' is defined but never used         @typescript-eslint/no-unused-vars
+   18:27  warning  'ApiProjectTag' is defined but never used               @typescript-eslint/no-unused-vars
+   18:78  warning  'ApiProjectFinancialSummary' is defined but never used  @typescript-eslint/no-unused-vars
+   52:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   72:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   82:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   89:10  error    'confirm' is not defined                                no-undef
+   93:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  103:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Projects.tsx
+    9:3   warning  'updateProject' is defined but never used                @typescript-eslint/no-unused-vars
+   16:8   warning  'ProjectTagManager' is defined but never used            @typescript-eslint/no-unused-vars
+   50:19  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  100:9   warning  'handleArchive' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  114:19  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  119:9   warning  'handleStatusChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  129:19  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  135:10  error    'confirm' is not defined                                 no-undef
+  145:19  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\PublicInvoice.tsx
+   57:10  warning  'clientSecret' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  106:30  error    'window' is not defined                            no-undef
+  187:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  203:23  error    'window' is not defined                            no-undef
+  221:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  239:19  error    'window' is not defined                            no-undef
+  240:17  error    'document' is not defined                          no-undef
+  244:7   error    'window' is not defined                            no-undef
+  245:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\QuickInvoicePage.tsx
+   44:13  error    'window' is not defined                   no-undef
+   83:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  190:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  211:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:16  error    'navigator' is not defined                no-undef
+  223:15  error    'navigator' is not defined                no-undef
+  225:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:13  error    'navigator' is not defined                no-undef
+  244:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:16  error    'navigator' is not defined                no-undef
+  254:5   error    'window' is not defined                   no-undef
+  263:19  error    'window' is not defined                   no-undef
+  264:22  error    'document' is not defined                 no-undef
+  268:7   error    'window' is not defined                   no-undef
+  270:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\QuoteDetail.tsx
+  29:5   error    Definition for rule 'react-hooks/exhaustive-deps' was not found  react-hooks/exhaustive-deps
+  38:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  52:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  61:10  error    'window' is not defined                                          no-undef
+  66:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  77:19  error    'window' is not defined                                          no-undef
+  78:17  error    'document' is not defined                                        no-undef
+  82:7   error    'window' is not defined                                          no-undef
+  83:19  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Quotes.tsx
+    5:3   warning  'getQuoteById' is defined but never used  @typescript-eslint/no-unused-vars
+    8:3   warning  'sendQuote' is defined but never used     @typescript-eslint/no-unused-vars
+   15:33  warning  'Send' is defined but never used          @typescript-eslint/no-unused-vars
+   48:34  error    'React' is not defined                    no-undef
+   48:52  error    'HTMLInputElement' is not defined         no-undef
+   69:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:19  error    'window' is not defined                   no-undef
+   86:17  error    'document' is not defined                 no-undef
+   90:7   error    'window' is not defined                   no-undef
+   91:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:10  error    'window' is not defined                   no-undef
+  106:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:10  error    'window' is not defined                   no-undef
+  117:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\ReceiptDetail.tsx
+   73:19  error  'window' is not defined     no-undef
+   74:17  error  'document' is not defined   no-undef
+   79:7   error  'window' is not defined     no-undef
+   92:13  error  'navigator' is not defined  no-undef
+  108:5   error  'window' is not defined     no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Receipts.tsx
+    9:10  warning  'formatCurrency' is defined but never used  @typescript-eslint/no-unused-vars
+   53:34  error    'React' is not defined                      no-undef
+   53:52  error    'HTMLInputElement' is not defined           no-undef
+   77:19  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+   93:19  error    'window' is not defined                     no-undef
+   94:17  error    'document' is not defined                   no-undef
+   98:7   error    'window' is not defined                     no-undef
+   99:19  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  258:24  error    'Blob' is not defined                       no-undef
+  259:19  error    'window' is not defined                     no-undef
+  260:17  error    'document' is not defined                   no-undef
+  264:7   error    'window' is not defined                     no-undef
+  265:19  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  273:24  error    'Blob' is not defined                       no-undef
+  274:19  error    'window' is not defined                     no-undef
+  275:17  error    'document' is not defined                   no-undef
+  279:7   error    'window' is not defined                     no-undef
+  280:19  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\RecurringInvoices.tsx
+    1:44  warning  'useMemo' is defined but never used              @typescript-eslint/no-unused-vars
+    6:3   warning  'getRecurringInvoice' is defined but never used  @typescript-eslint/no-unused-vars
+   12:3   warning  'getInvoices' is defined but never used          @typescript-eslint/no-unused-vars
+   19:8   warning  'InvoiceStatusBadge' is defined but never used   @typescript-eslint/no-unused-vars
+   20:26  warning  'formatDate' is defined but never used           @typescript-eslint/no-unused-vars
+   21:36  warning  'ApiInvoiceListItem' is defined but never used   @typescript-eslint/no-unused-vars
+   41:11  warning  'plan' is assigned a value but never used        @typescript-eslint/no-unused-vars
+   42:9   warning  'navigate' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  100:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  123:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  136:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  146:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  156:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  162:10  error    'window' is not defined                          no-undef
+  167:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  520:28  error    'React' is not defined                           no-undef
+  573:90  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Register.tsx
+  45:41  error    'React' is not defined                    no-undef
+  59:42  error    'React' is not defined                    no-undef
+  71:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\ReminderAutomation.tsx
+   13:10   warning  'formatDate' is defined but never used                       @typescript-eslint/no-unused-vars
+   31:11   warning  'plan' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+   84:19   warning  Unexpected any. Specify a different type                     @typescript-eslint/no-explicit-any
+   91:112  warning  Unexpected any. Specify a different type                     @typescript-eslint/no-explicit-any
+  153:19   warning  Unexpected any. Specify a different type                     @typescript-eslint/no-explicit-any
+  159:10   error    'window' is not defined                                      no-undef
+  164:19   warning  Unexpected any. Specify a different type                     @typescript-eslint/no-explicit-any
+  177:14   warning  'err' is defined but never used                              @typescript-eslint/no-unused-vars
+  177:19   warning  Unexpected any. Specify a different type                     @typescript-eslint/no-explicit-any
+  184:9    warning  'hasReminderEntitlement' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  184:53   warning  Unexpected any. Specify a different type                     @typescript-eslint/no-explicit-any
+  342:67   warning  Unexpected any. Specify a different type                     @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\ReportSection.tsx
+    6:10  warning  'formatCurrencyValue' is defined but never used  @typescript-eslint/no-unused-vars
+   64:31  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   67:37  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   68:25  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   83:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  191:32  error    'Blob' is not defined                            no-undef
+  193:25  error    'document' is not defined                        no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Reports.tsx
+   9:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:30  error    'Blob' is not defined                     no-undef
+  74:23  error    'document' is not defined                 no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Settings.tsx
+   34:25  error  'React' is not defined  no-undef
+   42:26  error  'React' is not defined  no-undef
+   51:27  error  'React' is not defined  no-undef
+   59:26  error  'React' is not defined  no-undef
+   67:23  error  'React' is not defined  no-undef
+   76:31  error  'React' is not defined  no-undef
+   84:27  error  'React' is not defined  no-undef
+   91:22  error  'React' is not defined  no-undef
+  101:30  error  'React' is not defined  no-undef
+  110:26  error  'React' is not defined  no-undef
+  118:25  error  'React' is not defined  no-undef
+  127:25  error  'React' is not defined  no-undef
+  136:23  error  'React' is not defined  no-undef
+  178:29  error  'React' is not defined  no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\TemplateEditorPage.tsx
+   52:28  warning  'setTemplateIndustry' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   60:5   error    Definition for rule 'react-hooks/exhaustive-deps' was not found  react-hooks/exhaustive-deps
+  103:22  warning  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  170:10  error    'confirm' is not defined                                         no-undef
+  404:33  error    'window' is not defined                                          no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\pages\Templates.tsx
+  19:11  warning  'PresetChoiceState' is defined but never used  @typescript-eslint/no-unused-vars
+  58:13  error    Empty block statement                          no-empty
+  67:13  error    Empty block statement                          no-empty
+  80:13  error    Empty block statement                          no-empty
+  85:10  error    'confirm' is not defined                       no-undef
+  90:13  error    Empty block statement                          no-empty
+
+C:\Users\New User\Desktop\New folder\webapp\src\types\analytics.ts
+  45:13  error  Empty block statement  no-empty
+
+C:\Users\New User\Desktop\New folder\webapp\src\types\api.ts
+  633:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\New User\Desktop\New folder\webapp\src\types\components.ts
+  17:59  error  'HTMLButtonElement' is not defined  no-undef
+  25:52  error  'HTMLSpanElement' is not defined    no-undef
+  42:63  error  'HTMLDivElement' is not defined     no-undef
+
+C:\Users\New User\Desktop\New folder\webapp\src\types\validation.ts
+  6:15  warning  'CalculatedLineItem' is defined but never used  @typescript-eslint/no-unused-vars
+  6:35  warning  'CalculatedFee' is defined but never used       @typescript-eslint/no-unused-vars
+
+✖ 930 problems (332 errors, 598 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

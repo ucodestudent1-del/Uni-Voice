@@ -436,7 +436,8 @@ export default function InvoiceWorkspace() {
           } else {
             try {
               cust = (await getCustomer(inv.customer_id)).customer ?? null;
-            } catch {
+            } catch (err) {
+              console.warn("Failed to fetch customer:", err);
               cust = null;
             }
           }
