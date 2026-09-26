@@ -536,14 +536,14 @@ app.post("/api/onboarding/complete", requireAuth, async (req: AuthRequest, res) 
 // ============================================================================
 app.get("/api/plans", async (_req, res) => {
   const plans = await subscriptionRepository.listPlans();
-  res.json({ plans });
+  res.json(camelToSnake({ plans }));
 });
 
 app.get("/api/subscription/current", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const ctx = await subscriptionService.getSubscriptionContext(req.user!.businessId);
   const plan = await subscriptionService.getPlanById(ctx.subscription.planId);
-  res.json({ subscription: ctx.subscription, plan });
+  res.json(camelToSnake({ subscription: ctx.subscription, plan }));
 });
 
 app.post("/api/subscription/upgrade", requireAuth, async (req: AuthRequest, res) => {
@@ -579,7 +579,7 @@ app.post("/api/subscription/downgrade", requireAuth, async (req: AuthRequest, re
 
   const sub = await subscriptionService.downgradeBusiness(req.user!.businessId, planCode);
   const plan = await subscriptionService.getPlanById(sub.planId);
-  res.json({ subscription: sub, plan });
+  res.json(camelToSnake({ subscription: sub, plan }));
 });
 
 app.post("/api/subscription/cancel", requireAuth, async (req: AuthRequest, res) => {
@@ -602,7 +602,7 @@ app.post("/api/subscription/cancel", requireAuth, async (req: AuthRequest, res) 
     req.user!.businessId, updated.id, "subscription_cancelled", ctx.plan.code, "free"
   );
   const plan = freePlan ?? ctx.plan;
-  res.json({ subscription: updated, plan });
+  res.json(camelToSnake({ subscription: updated, plan }));
 });
 
 app.get("/api/subscription/invoices", requireAuth, async (req: AuthRequest, res) => {
@@ -1389,8 +1389,8 @@ app.get("/api/features", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const ctx = await subscriptionService.getSubscriptionContext(req.user!.businessId);
   const flags = await subscriptionRepository.listPremiumFeatureFlags(ctx.plan.code);
-  const allFlags = await subscriptionRepository.listFeatureFlags();
-  res.json({ plan: ctx.plan.code, features: allFlags, premium: flags });
+   const allFlags = await subscriptionRepository.listFeatureFlags();
+   res.json(camelToSnake({ plan: ctx.plan.code, features: allFlags, premium: flags }));
 });
 
 // ============================================================================
@@ -1732,7 +1732,7 @@ app.get("/api/projects", requireAuth, async (req: AuthRequest, res) => {
     sortBy: parsed.sortBy,
     sortOrder: parsed.sortOrder,
   });
-     res.json({ projects: result.data, total: result.total, limit: result.limit, offset: result.offset });
+      res.json(camelToSnake({ projects: result.data, total: result.total, limit: result.limit, offset: result.offset }));
 });
 app.post("/api/projects", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
@@ -1741,8 +1741,8 @@ app.post("/api/projects", requireAuth, async (req: AuthRequest, res, next) => {
       const parsed = ProjectCreateSchema.parse(req.body);
       const businessId = req.user?.businessId;
       if (!businessId) return res.status(400).json({ error: "No business context" });
-      const project = await projectService.create(parsed, businessId, req.user!.id);
-      res.status(201).json({ project });
+    const project = await projectService.create(parsed, businessId, req.user!.id);
+       res.status(201).json(camelToSnake({ project }));
     });
   } catch (err) {
     next(err);
@@ -1752,21 +1752,21 @@ app.post("/api/projects", requireAuth, async (req: AuthRequest, res, next) => {
 app.get("/api/projects/search", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const search = req.query.q as string | undefined;
-  const projects = await projectService.searchForSelection(req.user!.businessId, search);
-  res.json({ projects });
+    const projects = await projectService.searchForSelection(req.user!.businessId, search);
+   res.json(camelToSnake({ projects }));
 });
 
 app.get("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const summary = await projectService.getSummary(req.user!.businessId, req.params.id);
-  res.json({ project: summary.project, customer: summary.customer, tags: summary.tags, teamMembers: summary.teamMembers, financialSummary: summary.financialSummary });
+   const summary = await projectService.getSummary(req.user!.businessId, req.params.id);
+   res.json(camelToSnake({ project: summary.project, customer: summary.customer, tags: summary.tags, teamMembers: summary.teamMembers, financialSummary: summary.financialSummary }));
 });
 
 app.patch("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const parsed = ProjectUpdateSchema.parse(req.body);
   const project = await projectService.update(req.user!.businessId, req.params.id, parsed, req.user!.id);
-  res.json({ project });
+  res.json(camelToSnake({ project }));
 });
 
 app.post("/api/projects/:id/status", requireAuth, async (req: AuthRequest, res) => {
@@ -1774,19 +1774,19 @@ app.post("/api/projects/:id/status", requireAuth, async (req: AuthRequest, res) 
   const { status } = req.body;
   if (!status) return res.status(400).json({ error: "status required" });
   const project = await projectService.updateStatus(req.user!.businessId, req.params.id, status, req.user!.id);
-  res.json({ project });
+  res.json(camelToSnake({ project }));
 });
 
 app.post("/api/projects/:id/archive", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const project = await projectService.archive(req.user!.businessId, req.params.id, req.user!.id);
-  res.json({ project });
+  res.json(camelToSnake({ project }));
 });
 
 app.post("/api/projects/:id/restore", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const project = await projectService.restore(req.user!.businessId, req.params.id, req.user!.id);
-  res.json({ project });
+  res.json(camelToSnake({ project }));
 });
 
 app.delete("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
@@ -1798,7 +1798,7 @@ app.delete("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
 app.post("/api/projects/:id/invoice", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await projectService.createInvoiceFromProject(req.user!.businessId, req.params.id, req.body, req.user!.id);
-  res.status(201).json(result);
+  res.status(201).json(camelToSnake(result));
 });
 
 app.get("/api/projects/:id/invoices", requireAuth, async (req: AuthRequest, res) => {
@@ -1807,27 +1807,27 @@ app.get("/api/projects/:id/invoices", requireAuth, async (req: AuthRequest, res)
   const offset = Number(req.query.offset ?? 0);
   const status = req.query.status as string | undefined;
   const result = await projectService.getInvoices(req.user!.businessId, req.params.id, { limit, offset, status });
-  res.json({ invoices: result.data, total: result.total, limit, offset });
+  res.json(camelToSnake({ invoices: result.data, total: result.total, limit, offset }));
 });
 
 app.get("/api/projects/:id/financial-summary", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const summary = await projectService.getFinancialSummary(req.user!.businessId, req.params.id);
-  res.json({ summary });
+  res.json(camelToSnake({ summary }));
 });
 
 app.get("/api/projects/:id/events", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const limit = Math.min(Number(req.query.limit ?? 100), 500);
   const events = await projectService.getEvents(req.user!.businessId, req.params.id, limit);
-  res.json({ events });
+  res.json(camelToSnake({ events }));
 });
 
 // Project tags
 app.get("/api/projects/tags", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const tags = await projectService.getTagsByBusiness(req.user!.businessId);
-  res.json({ tags });
+  res.json(camelToSnake({ tags }));
 });
 
 app.post("/api/projects/:id/tags", requireAuth, async (req: AuthRequest, res) => {
@@ -1835,7 +1835,7 @@ app.post("/api/projects/:id/tags", requireAuth, async (req: AuthRequest, res) =>
   const { name, color } = req.body;
   if (!name) return res.status(400).json({ error: "tag name required" });
   const tag = await projectService.addTag(req.user!.businessId, req.params.id, name, color);
-  res.status(201).json({ tag });
+  res.status(201).json(camelToSnake({ tag }));
 });
 
 app.delete("/api/projects/:id/tags/:tagId", requireAuth, async (req: AuthRequest, res) => {
@@ -1848,7 +1848,7 @@ app.delete("/api/projects/:id/tags/:tagId", requireAuth, async (req: AuthRequest
 app.get("/api/projects/:id/team", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const members = await projectService.getTeamMembers(req.user!.businessId, req.params.id);
-  res.json({ members });
+  res.json(camelToSnake({ members }));
 });
 
 app.post("/api/projects/:id/team", requireAuth, async (req: AuthRequest, res) => {
@@ -1856,7 +1856,7 @@ app.post("/api/projects/:id/team", requireAuth, async (req: AuthRequest, res) =>
   const { userId, role } = req.body;
   if (!userId) return res.status(400).json({ error: "userId required" });
   const member = await projectService.addTeamMember(req.user!.businessId, req.params.id, userId, role, req.user!.id);
-  res.status(201).json({ member });
+  res.status(201).json(camelToSnake({ member }));
 });
 
 app.delete("/api/projects/:id/team/:userId", requireAuth, async (req: AuthRequest, res) => {
@@ -1879,7 +1879,7 @@ app.post("/api/projects/:projectId/time-entries", requireAuth, async (req: AuthR
       parsed,
       req.user!.id
     );
-    res.status(201).json({ entry });
+    res.status(201).json(camelToSnake({ entry }));
   } catch (err) {
     next(err);
   }
@@ -1898,7 +1898,7 @@ app.get("/api/projects/:projectId/time-entries", requireAuth, async (req: AuthRe
       req.params.projectId,
       parsed
     );
-    res.json({ entries: result.data, total: result.total, limit: result.limit, offset: result.offset });
+    res.json(camelToSnake({ entries: result.data, total: result.total, limit: result.limit, offset: result.offset }));
   } catch (err) {
     next(err);
   }
@@ -1913,7 +1913,7 @@ app.patch("/api/time-entries/:id", requireAuth, async (req: AuthRequest, res, ne
       req.params.id,
       parsed
     );
-    res.json({ entry });
+    res.json(camelToSnake({ entry }));
   } catch (err) {
     next(err);
   }
@@ -2035,8 +2035,8 @@ app.get(
         limit: req.query.limit ?? 50,
         offset: req.query.offset ?? 0,
       });
-      const result = await expenseService.list(req.user!.businessId, parsed);
-      res.json({ expenses: result.data, total: result.total, limit: result.limit, offset: result.offset });
+       const result = await expenseService.list(req.user!.businessId, parsed);
+       res.json(camelToSnake({ expenses: result.data, total: result.total, limit: result.limit, offset: result.offset }));
     } catch (err) {
       next(err);
     }
@@ -2051,8 +2051,8 @@ app.post(
     if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
     try {
       const parsed = ExpenseCreateSchema.parse(req.body);
-      const expense = await expenseService.create(req.user!.businessId, parsed, req.user!.id);
-      res.status(201).json({ expense });
+       const expense = await expenseService.create(req.user!.businessId, parsed, req.user!.id);
+       res.status(201).json(camelToSnake({ expense }));
     } catch (err) {
       next(err);
     }
@@ -2066,8 +2066,8 @@ app.get(
   async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
     try {
-      const expense = await expenseService.getById(req.user!.businessId, req.params.id);
-      res.json({ expense });
+       const expense = await expenseService.getById(req.user!.businessId, req.params.id);
+      res.json(camelToSnake({ expense }));
     } catch (err) {
       next(err);
     }
@@ -2083,7 +2083,7 @@ app.patch(
     try {
       const parsed = ExpenseUpdateSchema.parse(req.body);
       const expense = await expenseService.update(req.user!.businessId, req.params.id, parsed);
-      res.json({ expense });
+      res.json(camelToSnake({ expense }));
     } catch (err) {
       next(err);
     }
@@ -2118,7 +2118,7 @@ app.get(
         offset: req.query.offset ?? 0,
       });
       const summary = await expenseService.getSummary(req.user!.businessId, parsed);
-      res.json({ summary });
+      res.json(camelToSnake({ summary }));
     } catch (err) {
       next(err);
     }
@@ -2138,7 +2138,7 @@ app.get(
         offset: req.query.offset ?? 0,
       });
       const result = await expenseService.listWithSummary(req.user!.businessId, parsed);
-      res.json({ expenses: result.expenses, total: result.total, limit: result.limit, offset: result.offset, summary: result.summary });
+      res.json(camelToSnake({ expenses: result.expenses, total: result.total, limit: result.limit, offset: result.offset, summary: result.summary }));
     } catch (err) {
       next(err);
     }
