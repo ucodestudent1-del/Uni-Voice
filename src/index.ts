@@ -83,6 +83,7 @@ import {
   ExpenseBudgetSettingsSchema,
 } from "./domain/schemas/expense.js";
 import bcrypt from "bcrypt";
+import { camelToSnake } from "./utils/case-conversion.js";
 
 const app = express();
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
@@ -971,7 +972,7 @@ app.post("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
 app.get("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const summary = await invoiceService.getInvoice(req.user!.businessId, req.params.id);
-  res.json(summary);
+  res.json(camelToSnake(summary));
 });
 
 app.patch("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
@@ -1044,7 +1045,7 @@ app.post("/api/invoices/:id/pdf", requireAuth, async (req: AuthRequest, res) => 
 app.get("/api/invoices/:id/events", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const events = await invoiceRepository.getEvents(req.params.id, req.user!.businessId);
-  res.json({ events });
+  res.json({ events: camelToSnake(events) });
 });
 
 app.delete("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {

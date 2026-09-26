@@ -476,7 +476,7 @@ function SummaryCard({ title, value, subtitle }: { title: string; value: string;
 }
 
 function TimelineItem({ event }: { event: ApiInvoiceEvent }) {
-  const label = event.event_type.replace(/_/g, " ");
+  const label = (event.event_type ?? "").replace(/_/g, " ");
   const actor = event.actor_type === "customer" ? "Customer" : event.actor_type === "payment" ? "Payment" : event.actor_type === "system" ? "System" : "User";
   return (
     <div className="flex gap-3">
