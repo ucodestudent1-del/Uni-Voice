@@ -90,7 +90,7 @@ export default function PaymentsSettings() {
         reminders_enabled: form.remindersEnabled,
         overdue_reminder_days: form.overdueReminderDays,
         late_fee_type: form.lateFeeType,
-        late_fee_value: form.lateFeeValue,
+        late_fee_value: form.lateFeeValue || "0",
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
