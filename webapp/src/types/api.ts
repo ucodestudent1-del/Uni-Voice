@@ -25,6 +25,8 @@ export interface ApiBusinessSettings {
   payment_provider_config?: Record<string, unknown>;
   reminders_enabled: boolean;
   overdue_reminder_days: number;
+  late_fee_type?: "none" | "fixed" | "percentage" | null;
+  late_fee_value?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -168,6 +170,11 @@ export interface ApiInvoice {
   deposit_due_date?: string | null;
   deposit_paid?: string | null;
   deposit_due?: string | null;
+  deposit_payment_purpose?: string | null;
+  late_fee_type?: "none" | "fixed" | "percentage" | null;
+  late_fee_value?: string | null;
+  late_fee_applied?: boolean | null;
+  late_fee_applied_amount?: string | null;
   notes?: string | null;
   terms?: string | null;
   template_id?: string | null;

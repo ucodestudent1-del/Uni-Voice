@@ -104,6 +104,9 @@ interface WorkspaceInvoiceData {
   depositType?: "none" | "fixed" | "percentage";
   depositValue?: string | null;
   depositDueDate?: string | null;
+  depositPaymentPurpose?: string | null;
+  lateFeeType?: "none" | "fixed" | "percentage";
+  lateFeeValue?: string | null;
   templateId?: string | null;
   status: string;
   isFinalized: boolean;
@@ -403,6 +406,9 @@ export default function InvoiceWorkspace() {
       depositType: "none",
       depositValue: "0",
       depositDueDate: null,
+      depositPaymentPurpose: null,
+      lateFeeType: "none",
+      lateFeeValue: "0",
       templateId: null,
       status: "draft",
       isFinalized: false,
@@ -466,8 +472,11 @@ export default function InvoiceWorkspace() {
           taxRate: settings.default_tax_rate ?? "0",
           amountPaid: inv.amount_paid ?? "0",
           depositType: inv.deposit_type ?? "none",
-           depositValue: inv.deposit_value ?? "0",
+          depositValue: inv.deposit_value ?? "0",
           depositDueDate: inv.deposit_due_date ?? null,
+          depositPaymentPurpose: inv.deposit_payment_purpose ?? null,
+          lateFeeType: inv.late_fee_type ?? "none",
+          lateFeeValue: inv.late_fee_value ?? "0",
           templateId: inv.template_id ?? null,
           status: inv.status,
           isFinalized: inv.is_finalized ?? false,
@@ -533,6 +542,9 @@ export default function InvoiceWorkspace() {
         depositType: cur.depositType || "none",
         depositAmount: cur.depositValue || "0",
         depositDueDate: cur.depositDueDate,
+        depositPaymentPurpose: cur.depositPaymentPurpose,
+        lateFeeType: cur.lateFeeType || "none",
+        lateFeeValue: cur.lateFeeValue || "0",
       };
       const apiItems = cur.items.map(toApiItem);
       const apiFees = cur.fees;
@@ -959,6 +971,11 @@ export default function InvoiceWorkspace() {
           <FeesSection
             fees={invoice.fees}
             onChange={(fees) => updateData({ fees })}
+          />
+
+          <PaymentConfigurationSection
+            invoice={invoice}
+            onField={handleField}
           />
 
           <NotesSection
@@ -1594,6 +1611,113 @@ const FeesSection = React.memo(function FeesSection({
         <Plus className="h-3.5 w-3.5" />
         Add another fee
       </button>
+    </div>
+  );
+});
+
+const PaymentConfigurationSection = React.memo(function PaymentConfigurationSection({
+  invoice,
+  onField,
+}: {
+  invoice: WorkspaceInvoiceData;
+  onField: (field: keyof WorkspaceInvoiceData, value: any) => void;
+}) {
+  const depositType = invoice.depositType ?? "none";
+  const depositValue = invoice.depositValue ?? "0";
+  const lateFeeType = invoice.lateFeeType ?? "none";
+  const lateFeeValue = invoice.lateFeeValue ?? "0";
+
+  return (
+    <div className="mb-6 rounded-xl border border-color bg-surface p-5">
+      <h3 className="text-sm font-semibold text-secondary uppercase mb-4">Payment Configuration</h3>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-secondary mb-1">Deposit</label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <select
+              value={depositType}
+              onChange={(e) => {
+                onField("depositType", e.target.value);
+                onField("depositValue", e.target.value === "none" ? "0" : depositValue);
+              }}
+              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="none">No deposit</option>
+              <option value="fixed">Fixed amount</option>
+              <option value="percentage">Percentage</option>
+            </select>
+            {depositType !== "none" && (
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={depositValue}
+                  onChange={(e) => onField("depositValue", e.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
+                  {depositType === "percentage" ? "%" : invoice.currency}
+                </span>
+              </div>
+            )}
+            <input
+              type="date"
+              value={invoice.depositDueDate?.split("T")[0] ?? ""}
+              onChange={(e) => onField("depositDueDate", e.target.value || null)}
+              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          {depositType !== "none" && (
+            <input
+              type="text"
+              value={invoice.depositPaymentPurpose ?? ""}
+              onChange={(e) => onField("depositPaymentPurpose", e.target.value || null)}
+              placeholder="Payment purpose (e.g. 'Booking deposit')"
+              className="mt-2 w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          )}
+        </div>
+
+        <div className="border-t border-color pt-4">
+          <label className="block text-sm font-medium text-secondary mb-1">Late Fee</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <select
+              value={lateFeeType}
+              onChange={(e) => {
+                onField("lateFeeType", e.target.value);
+                onField("lateFeeValue", e.target.value === "none" ? "0" : lateFeeValue);
+              }}
+              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="none">No late fee</option>
+              <option value="fixed">Fixed amount</option>
+              <option value="percentage">Percentage of total</option>
+            </select>
+            {lateFeeType !== "none" && (
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={lateFeeValue}
+                  onChange={(e) => onField("lateFeeValue", e.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
+                  {lateFeeType === "percentage" ? "%" : invoice.currency}
+                </span>
+              </div>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-tertiary">
+            Applied automatically when the invoice becomes overdue and online payments are available.
+          </p>
+        </div>
+      </div>
     </div>
   );
 });

@@ -45,6 +45,8 @@ export interface CreateInvoiceInput {
   depositType?: "none" | "fixed" | "percentage";
   depositDueDate?: Date | string | null;
   depositPaymentPurpose?: string | null;
+  lateFeeType?: "none" | "fixed" | "percentage";
+  lateFeeValue?: string | number;
   items?: InvoiceItemInput[];
   fees?: InvoiceFeeInput[];
   createdBy?: string;
@@ -112,7 +114,9 @@ const INVOICE_ALLOWED_COLUMNS = new Set([
   "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
   "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
   "amount_paid", "amount_due", "credit_applied", "deposit_amount", "deposit_type",
-  "deposit_due_date", "deposit_payment_purpose", "notes", "terms", "template_id", "public_token",
+  "deposit_due_date", "deposit_payment_purpose", "late_fee_type", "late_fee_value",
+  "late_fee_applied", "late_fee_applied_amount",
+  "notes", "terms", "template_id", "public_token",
   "public_token_expires_at", "payment_instructions", "is_finalized", "finalized_at",
   "sent_at", "viewed_at", "paid_at", "cancelled_at", "cancelled_reason", "created_by", "updated_by",
 ]);
@@ -127,8 +131,9 @@ export class InvoiceRepository {
       await client.query(
         `INSERT INTO invoices (id, business_id, customer_id, project_id, currency, issue_date, due_date, notes, terms,
           template_id, payment_instructions, deposit_amount, deposit_type, deposit_due_date, deposit_payment_purpose,
+          late_fee_type, late_fee_value, late_fee_applied, late_fee_applied_amount,
           created_at, updated_at, created_by, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$16,$17,$17)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$20,$21,$21)`,
         [
           id, businessId, input.customerId, input.projectId, input.currency,
           input.issueDate instanceof Date ? input.issueDate.toISOString() : input.issueDate,
@@ -136,7 +141,10 @@ export class InvoiceRepository {
           input.notes, input.terms, input.templateId, input.paymentInstructions,
           input.depositAmount ?? 0, input.depositType ?? "none",
           input.depositDueDate instanceof Date ? input.depositDueDate.toISOString() : input.depositDueDate,
-          input.depositPaymentPurpose, now, input.createdBy,
+          input.depositPaymentPurpose,
+          input.lateFeeType ?? "none", input.lateFeeValue ?? 0,
+          false, 0,
+          now, input.createdBy,
         ]
       );
       await this.insertItems(client, id, input.items, now);
@@ -418,6 +426,18 @@ export class InvoiceRepository {
     set.push(`updated_at = NOW()`);
     const exec = client ? client.query.bind(client) : query;
     await exec(`UPDATE invoices SET ${set.join(", ")} WHERE id = $1`, vals);
+  }
+
+  async applyLateFee(invoiceId: string, businessId: string, appliedAmount: string): Promise<void> {
+    await query(
+      `UPDATE invoices
+       SET late_fee_applied = TRUE,
+           late_fee_applied_amount = $1,
+           amount_due = amount_due + $1,
+           updated_at = NOW()
+       WHERE id = $2 AND business_id = $3`,
+      [appliedAmount, invoiceId, businessId]
+    );
   }
 
   async recordEvent(invoiceId: string, event: { eventType: string; actorId?: string; actorType?: string; metadata?: Record<string, unknown>; createdAt?: Date }, client?: any): Promise<InvoiceEvent> {
@@ -1121,6 +1141,10 @@ async getVolumeTrend(businessId: string, months: number): Promise<Array<{
       invoice.depositDueDate instanceof Date ? invoice.depositDueDate.toISOString() : invoice.depositDueDate,
       invoice.depositPaymentPurpose,
       invoice.creditApplied,
+      invoice.lateFeeType,
+      invoice.lateFeeValue,
+      invoice.lateFeeApplied,
+      invoice.lateFeeAppliedAmount,
       JSON.stringify(invoice.items),
       JSON.stringify(invoice.fees),
     ];
@@ -1152,6 +1176,10 @@ async getVolumeTrend(businessId: string, months: number): Promise<Array<{
       depositDueDate: rowToDate(r.deposit_due_date),
       depositPaymentPurpose: r.deposit_payment_purpose as string | null ?? null,
       creditApplied: r.credit_applied as string ?? "0",
+      lateFeeType: (r.late_fee_type as "none" | "fixed" | "percentage") ?? "none",
+      lateFeeValue: r.late_fee_value as string ?? "0",
+      lateFeeApplied: Boolean(r.late_fee_applied),
+      lateFeeAppliedAmount: r.late_fee_applied_amount as string ?? "0",
     };
   }
 

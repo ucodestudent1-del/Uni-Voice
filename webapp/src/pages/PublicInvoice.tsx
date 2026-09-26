@@ -34,6 +34,10 @@ interface PublicInvoiceData {
   deposit_due_date?: string | null;
   deposit_paid?: string | null;
   deposit_due?: string | null;
+  late_fee_type?: string | null;
+  late_fee_value?: string | null;
+  late_fee_applied?: boolean | null;
+  late_fee_applied_amount?: string | null;
 }
 
 export default function PublicInvoice() {
@@ -114,23 +118,27 @@ export default function PublicInvoice() {
   const paid = new Decimal(invoice.amount_paid || 0);
   const due = new Decimal(invoice.amount_due || 0);
   const isFullyPaid = paid.gte(new Decimal(invoice.total || 0));
-  
+
   const depositType = invoice.deposit_type || "none";
   const depositValue = invoice.deposit_value || "0";
   const depositPaid = new Decimal(invoice.deposit_paid || "0");
   const depositDue = new Decimal(invoice.deposit_due || "0");
   const hasDeposit = depositType !== "none" && depositDue.gt(0);
 
+  const lateFeeApplied = invoice.late_fee_applied === true;
+  const lateFeeAppliedAmount = new Decimal(invoice.late_fee_applied_amount || "0");
+  const hasLateFee = lateFeeApplied && lateFeeAppliedAmount.gt(0);
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      draft: "bg-surface-alt text-primary",
+      draft: "bg-surface-alt text-tertiary",
       sent: "status-info-bg status-info-text",
       viewed: "status-info-bg status-info-text",
-      partially_paid: "bg-yellow-100 text-yellow-800",
+      partially_paid: "status-warning-bg status-warning-text",
       paid: "status-success-bg status-success-text",
       overdue: "status-error-bg status-error-text",
-      cancelled: "bg-surface-alt text-primary",
-      void: "bg-surface-alt text-primary",
+      cancelled: "bg-surface-alt text-tertiary",
+      void: "bg-surface-alt text-tertiary",
     };
     return colors[status] || colors.draft;
   };
@@ -313,9 +321,25 @@ export default function PublicInvoice() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="text-center sm:text-left">
                   <p className="text-sm text-secondary">Amount Due</p>
-                  <p className="text-3xl font-bold text-primary-brand">{formatCurrency(invoice.total, invoice.currency)}</p>
+                  <p className="text-3xl font-bold text-primary-brand">{formatCurrency(due, invoice.currency)}</p>
                   {invoice.due_date && (
-                    <p className="text-xs text-secondary mt-1">Due: {new Date(invoice.due_date).toLocaleDateString()}</p>
+                    <p className="text-xs text-secondary mt-1">
+                      Due: {new Date(invoice.due_date).toLocaleDateString()}
+                      {new Date() > new Date(invoice.due_date) && (
+                        <span className="ml-2 status-error-text font-medium">(Overdue)</span>
+                      )}
+                    </p>
+                  )}
+                  {hasLateFee && (
+                    <div className="mt-2 text-xs text-secondary">
+                      <div className="flex items-center gap-1 status-error-text">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Late fee applied: {formatCurrency(lateFeeAppliedAmount, invoice.currency)}
+                      </div>
+                    </div>
                   )}
                 </div>
 

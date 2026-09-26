@@ -100,6 +100,8 @@ interface EditorInvoiceData {
   depositType?: "fixed" | "percentage" | "none";
   depositValue?: string;
   depositDueDate?: string;
+  lateFeeType?: "none" | "fixed" | "percentage";
+  lateFeeValue?: string;
 }
 
 const DEFAULT_DOCUMENT = (businessId: string): InvoiceDocument => {
@@ -233,6 +235,8 @@ function InvoiceEditorContent() {
           depositType: inv.deposit_type ?? "none",
           depositValue: inv.deposit_value ?? "0",
           depositDueDate: inv.deposit_due_date?.split("T")[0],
+          lateFeeType: inv.late_fee_type ?? "none",
+          lateFeeValue: inv.late_fee_value ?? "0",
         });
 
         setSaveState("saved");
@@ -449,8 +453,10 @@ function InvoiceEditorContent() {
           paymentInstructions: editorData?.paymentInstructions,
           templateId: editorData?.templateId,
           depositType: editorData?.depositType || "none",
-          depositValue: editorData?.depositValue || "0",
+          depositAmount: editorData?.depositValue || "0",
           depositDueDate: editorData?.depositDueDate,
+          lateFeeType: editorData?.lateFeeType || "none",
+          lateFeeValue: editorData?.lateFeeValue || "0",
           items: (editorData?.items || []).map((it) => ({
             description: it.description,
             quantity: it.quantity,
@@ -482,8 +488,10 @@ function InvoiceEditorContent() {
           paymentInstructions: editorData?.paymentInstructions,
           templateId: editorData?.templateId,
           depositType: editorData?.depositType || "none",
-          depositValue: editorData?.depositValue || "0",
+          depositAmount: editorData?.depositValue || "0",
           depositDueDate: editorData?.depositDueDate,
+          lateFeeType: editorData?.lateFeeType || "none",
+          lateFeeValue: editorData?.lateFeeValue || "0",
         });
         await setInvoiceItems(id!, (editorData?.items || []).map((it) => ({
           id: it.id,

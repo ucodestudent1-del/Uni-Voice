@@ -158,8 +158,12 @@ export interface Invoice {
   depositType: "none" | "fixed" | "percentage";
   depositDueDate?: Date | null;
   depositPaymentPurpose?: string | null;
-  creditApplied: Decimal.Value;
-  notes?: string | null;
+   creditApplied: Decimal.Value;
+   lateFeeType: "none" | "fixed" | "percentage";
+   lateFeeValue: Decimal.Value;
+   lateFeeApplied: boolean;
+   lateFeeAppliedAmount: Decimal.Value;
+   notes?: string | null;
   terms?: string | null;
   templateId?: string | null;
   templateSchemaVersion?: string | null;

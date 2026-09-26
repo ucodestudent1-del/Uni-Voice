@@ -58,6 +58,8 @@ export interface CreateInvoiceDraftInput {
   depositType?: "none" | "fixed" | "percentage";
   depositDueDate?: Date | string | null;
   depositPaymentPurpose?: string | null;
+  lateFeeType?: "none" | "fixed" | "percentage";
+  lateFeeValue?: string | number;
   items?: DraftLineItem[];
   fees?: DraftFee[];
 }
@@ -325,6 +327,8 @@ export class InvoiceService {
       deposit_type: input.depositType,
       deposit_due_date: input.depositDueDate instanceof Date ? input.depositDueDate.toISOString() : input.depositDueDate,
       deposit_payment_purpose: input.depositPaymentPurpose,
+      late_fee_type: input.lateFeeType,
+      late_fee_value: input.lateFeeValue,
     });
     await invoiceRepository.clearPdfCache(id);
     await invoiceRepository.recordEvent(id, {
@@ -991,11 +995,13 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     const invoice = await invoiceRepository.findById(businessId, id);
     if (!invoice.isFinalized) throw new BusinessLogicError("Cannot create payment intent for a draft invoice");
 
-    const amountDue = new Decimal(invoice.amountDue);
+    let amountDue = new Decimal(invoice.amountDue);
     if (amountDue.lte(0)) throw new BusinessLogicError("Invoice is already fully paid");
 
     const settings = await businessRepository.getSettings(businessId);
     const provider = settings.paymentProvider ?? env.PAYMENT_PROVIDER;
+
+    amountDue = await this.applyLateFeeIfNeeded(invoice, amountDue);
 
     if (provider === "stripe" && env.STRIPE_SECRET_KEY) {
       const stripe = await this.getStripe();
@@ -1018,6 +1024,25 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
       [id, businessId, Number(amountDue), invoice.currency]
     );
     return { clientSecret: null, provider };
+  }
+
+  private async applyLateFeeIfNeeded(invoice: RepoInvoice, amountDue: Decimal): Promise<Decimal> {
+    if (invoice.lateFeeType === "none" || invoice.lateFeeApplied) return amountDue;
+    if (invoice.dueDate && new Date() > new Date(invoice.dueDate)) {
+      const feeValue = new Decimal(invoice.lateFeeValue ?? 0);
+      let lateFee: Decimal;
+      if (invoice.lateFeeType === "percentage") {
+        lateFee = new Decimal(invoice.total ?? 0).mul(feeValue).div(100);
+      } else {
+        lateFee = feeValue;
+      }
+      if (lateFee.gt(0)) {
+        const rounded = lateFee.toFixed(2, Decimal.ROUND_HALF_UP);
+        await invoiceRepository.applyLateFee(invoice.id, invoice.businessId, rounded);
+        return amountDue.plus(rounded);
+      }
+    }
+    return amountDue;
   }
 
   private stripeClient: any = null;

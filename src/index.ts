@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { Decimal } from "decimal.js";
 import { env, isDev, isTest } from "./config/index.js";
 import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
@@ -2295,11 +2296,11 @@ app.get("/api/businesses/current/settings", requireAuth, async (req: AuthRequest
   const result = await query(
     `SELECT business_id, default_currency, default_tax_rate, default_terms, default_notes,
      time_zone, locale, pdf_template_id, payment_provider, payment_provider_config,
-     reminders_enabled, overdue_reminder_days, reminders_before_due, reminders_after_due,
+     reminders_enabled, overdue_reminder_days, late_fee_type, late_fee_value,
      created_at, updated_at
      FROM business_settings WHERE business_id = $1`,
-    [req.user!.businessId]
-  );
+     [req.user!.businessId]
+   );
   if (!result.rows.length) {
     return res.status(404).json({ error: "Business settings not found" });
   }
@@ -2312,6 +2313,7 @@ app.patch("/api/businesses/current/settings", requireAuth, async (req: AuthReque
     "default_currency", "default_tax_rate", "default_terms", "default_notes",
     "time_zone", "locale", "pdf_template_id", "payment_provider",
     "payment_provider_config", "reminders_enabled", "overdue_reminder_days",
+    "late_fee_type", "late_fee_value",
   ];
   const updates: string[] = [];
   const values: unknown[] = [req.user!.businessId];
@@ -2327,8 +2329,9 @@ app.patch("/api/businesses/current/settings", requireAuth, async (req: AuthReque
     `UPDATE business_settings SET ${updates.join(", ")}
      WHERE business_id = $1 RETURNING business_id, default_currency, default_tax_rate,
      default_terms, default_notes, time_zone, locale, pdf_template_id, payment_provider,
-     payment_provider_config, reminders_enabled, overdue_reminder_days, created_at, updated_at`,
-    values
+     payment_provider_config, reminders_enabled, overdue_reminder_days, late_fee_type, late_fee_value,
+     created_at, updated_at`,
+     values
   );
   res.json({ settings: result.rows[0] });
 });
@@ -2609,6 +2612,23 @@ app.post("/api/public/invoices/:token/pay", optionalAuth, async (req: AuthReques
       res.status(err.statusCode).json({ error: err.message, code: err.code });
     } else {
       res.status(400).json({ error: err.message || "Payment failed" });
+    }
+  }
+});
+
+app.post("/api/public/invoices/:token/payment-intent", optionalAuth, async (req: AuthRequest, res) => {
+  try {
+    const invoice = await invoiceRepository.findByPublicToken(undefined, req.params.token);
+    if (!invoice.isFinalized) return res.status(400).json({ error: "Invoice is not finalized" });
+    const amountDue = new Decimal(invoice.amountDue ?? invoice.total ?? 0);
+    if (amountDue.lte(0)) return res.status(400).json({ error: "Invoice is already fully paid" });
+    const result = await invoiceService.createPaymentIntent(invoice.businessId, invoice.id);
+    res.json(result);
+  } catch (err: any) {
+    if (err.statusCode) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+    } else {
+      res.status(400).json({ error: err.message || "Could not create payment intent" });
     }
   }
 });
