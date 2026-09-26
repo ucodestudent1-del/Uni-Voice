@@ -1,8 +1,8 @@
 export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
-<html lang="\{{invoice.language}}">
+<html lang="{{invoice.language}}">
 <head>
   <meta charset="utf-8">
-  <title>Invoice \{{invoice.invoiceNumber}}</title>
+  <title>Invoice {{invoice.invoiceNumber}}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 32px; color: #222; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
@@ -21,7 +21,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   <div class="header">
     <div>
       <h1 style="margin:0 0 4px;">Invoice</h1>
-      <h2 style="margin:0; font-size: 22px;">\{{invoice.invoiceNumber}}</h2>
+      <h2 style="margin:0; font-size: 22px;">{{invoice.invoiceNumber}}</h2>
       {{#if invoice.notes}}<p class="muted">{{{invoice.notes}}}</p>{{/if}}
     </div>
     <div style="text-align:right">

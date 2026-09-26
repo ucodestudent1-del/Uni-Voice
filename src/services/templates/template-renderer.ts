@@ -100,7 +100,7 @@ function fmtRate(v: Decimal.Value | undefined): string {
   return `${new Decimal(v).mul(100).toFixed(2)}%`;
 }
 
-const templateCache = new Map<string, HandlebarsTemplateDelegate<any>>();
+const templateCache = new Map<string, Handlebars.TemplateDelegate<any>>();
 
 Handlebars.registerHelper("add", (a: number, b: number) => a + b);
 
@@ -123,7 +123,7 @@ Handlebars.registerHelper("formatMoney", function (v: Decimal.Value, options: an
 
 Handlebars.registerHelper("formatRate", fmtRate);
 
-function compileTemplate(templateHtml: string): HandlebarsTemplateDelegate<any> {
+function compileTemplate(templateHtml: string): Handlebars.TemplateDelegate<any> {
   let compiled = templateCache.get(templateHtml);
   if (!compiled) {
     compiled = Handlebars.compile(templateHtml, { noEscape: true });

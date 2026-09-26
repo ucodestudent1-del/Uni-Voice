@@ -7,7 +7,6 @@ import {
   deleteInvoiceTemplate,
   publishInvoiceTemplate,
   archiveInvoiceTemplate,
-  unarchiveInvoiceTemplate,
   getBusiness,
 } from "../api/client";
 import { Plus, Trash2, Archive, Copy, MousePointerClick, Settings2 } from "lucide-react";
@@ -76,8 +75,6 @@ export default function Templates() {
         await publishInvoiceTemplate(id);
       } else if (current === "published") {
         await archiveInvoiceTemplate(id);
-      } else if (current === "archived") {
-        await unarchiveInvoiceTemplate(id);
       }
       loadTemplates();
     } catch {}
