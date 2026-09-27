@@ -4,6 +4,7 @@ import { Decimal } from "decimal.js";
 import { AlertCircle, Download, RefreshCw } from "lucide-react";
 import { getEnhancedDashboard, getInvoices } from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
+import EmptyState from "@/components/ui/EmptyState";
 import type {
   ApiVolumeTrend,
   ApiPaymentMetrics,
@@ -167,9 +168,7 @@ export default function ReportSection() {
 
   if (!data) {
     return (
-      <div className="rounded-xl border border-color bg-surface p-6 text-center">
-        <p className="text-sm text-secondary">No data available</p>
-      </div>
+      <EmptyState title="No report data available" description="Generate invoices and payments to see financial reports" className="p-6" />
     );
   }
 

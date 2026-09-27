@@ -18,7 +18,7 @@ describe("CustomerService", () => {
       const customer = await customerService.create(
         { name: "Acme Corp", email: "acme@example.com", companyName: "Acme Inc" },
         businessId,
-        "user-1"
+        "11111111-1111-1111-1111-111111111111"
       );
       expect(customer.id).toBeTruthy();
       expect(customer.businessId).toBe(businessId);
@@ -58,7 +58,7 @@ describe("CustomerService", () => {
 
     it("creates tax identifiers when provided", async () => {
       const customer = await customerService.create(
-        { name: "Intl Co", taxId: "DE123456789", taxIdentifiers: [{ type: "VAT", value: "VAT123" }] },
+        { name: "Intl Co", taxIdentifiers: [{ type: "VAT", value: "VAT123" }] },
         businessId
       );
       expect(customer.taxIdentifiers).toHaveLength(1);
@@ -83,7 +83,7 @@ describe("CustomerService", () => {
     });
 
     it("throws NotFoundError for customer in another business", async () => {
-      const biz2 = await createTestBusiness({ id: "b2-b2-b2-b2-b2b2b2b2b2b2" });
+      const biz2 = await createTestBusiness({ id: "00000000-0000-0000-0000-000000000002" });
       const id = await createTestCustomer(biz2.id, "Cross Biz");
       await expect(
         customerService.getById(businessId, id)
@@ -98,17 +98,17 @@ describe("CustomerService", () => {
         businessId,
         id,
         { name: "New Name", email: "new@example.com" },
-        "user-1"
+        "11111111-1111-1111-1111-111111111111"
       );
       expect(customer.name).toBe("New Name");
       expect(customer.email).toBe("new@example.com");
-      expect(customer.updatedBy).toBe("user-1");
+      expect(customer.updatedBy).toBe("11111111-1111-1111-1111-111111111111");
       expect(customer.version).toBe(2);
     });
 
     it("throws BusinessLogicError when updating archived customer", async () => {
       const id = await createTestCustomer(businessId);
-      await customerService.archive(businessId, id, "user-1");
+      await customerService.archive(businessId, id, "11111111-1111-1111-1111-111111111111");
       await expect(
         customerService.update(businessId, id, { name: "Updated" })
       ).rejects.toThrow(BusinessLogicError);
@@ -124,10 +124,10 @@ describe("CustomerService", () => {
   describe("archive", () => {
     it("archives an active customer", async () => {
       const id = await createTestCustomer(businessId);
-      const customer = await customerService.archive(businessId, id, "user-1");
+      const customer = await customerService.archive(businessId, id, "11111111-1111-1111-1111-111111111111");
       expect(customer.status).toBe("archived");
       expect(customer.archivedAt).toBeTruthy();
-      expect(customer.archivedBy).toBe("user-1");
+      expect(customer.archivedBy).toBe("11111111-1111-1111-1111-111111111111");
     });
 
     it("throws ConflictError when archiving already-archived customer", async () => {
@@ -154,7 +154,7 @@ describe("CustomerService", () => {
     it("restores an archived customer", async () => {
       const id = await createTestCustomer(businessId);
       await customerService.archive(businessId, id);
-      const customer = await customerService.restore(businessId, id, "user-1");
+      const customer = await customerService.restore(businessId, id, "11111111-1111-1111-1111-111111111111");
       expect(customer.status).toBe("active");
       expect(customer.archivedAt).toBeNull();
       expect(customer.archivedBy).toBeNull();
@@ -173,10 +173,10 @@ describe("CustomerService", () => {
       await expect(customerService.getById(businessId, id)).rejects.toThrow(NotFoundError);
     });
 
-    it("throws BusinessLogicError when deleting archived customer", async () => {
+    it("throws ConflictError when deleting archived customer", async () => {
       const id = await createTestCustomer(businessId);
       await customerService.archive(businessId, id);
-      await expect(customerService.delete(businessId, id)).rejects.toThrow(BusinessLogicError);
+      await expect(customerService.delete(businessId, id)).rejects.toThrow(ConflictError);
     });
   });
 

@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
+  FileText,
+  AlertCircle,
+  Check,
+  Download,
+} from "lucide-react";
+import {
   getPublicInvoice,
   recordPublicView,
   payInvoicePublic,
@@ -12,6 +18,7 @@ import { formatCurrency } from "../utils/format";
 import { Decimal } from "decimal.js";
 import { loadStripe } from "@stripe/stripe-js";
 import type { Stripe, StripeElements } from "@stripe/stripe-js";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface PublicInvoiceData {
   id: string;
@@ -95,25 +102,21 @@ export default function PublicInvoice() {
     };
   }, [token]);
 
-  if (loading) return <div className="text-center py-20 text-secondary">Loading invoice...</div>;
+if (loading) return <EmptyState variant="loading" title="Loading invoice..." className="min-h-screen py-20" />;
   if (loadError) {
     return (
-      <div className="min-h-screen bg-surface-alt py-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-          <div className="rounded-xl border status-error-border status-error-bg p-6 text-center">
-            <p className="text-sm font-medium status-error-text">{loadError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-            >
-              Try again
-            </button>
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        variant="error"
+        title="Could not load invoice"
+        description={loadError}
+        actionLabel="Try again"
+        onAction={() => window.location.reload()}
+        icon={<AlertCircle className="w-8 h-8" />}
+        className="min-h-screen bg-surface-alt py-12"
+      />
     );
   }
-  if (!invoice) return <div className="text-center py-20 text-secondary">Invoice not found or link has expired.</div>;
+  if (!invoice) return <EmptyState title="Invoice not found" description="This invoice link may have expired or is invalid." className="text-center py-20" />;
 
   const paid = new Decimal(invoice.amount_paid || 0);
   const due = new Decimal(invoice.amount_due || 0);
@@ -256,10 +259,8 @@ export default function PublicInvoice() {
           <div className="border-b border-color-subtle px-8 py-6 bg-gradient-to-r from-primary-50 to-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary-action flex items-center justify-center">
-                  <svg className="w-6 h-6 text-on-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+<div className="w-10 h-10 rounded-lg bg-primary-action flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-on-primary" />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-primary">
@@ -279,10 +280,8 @@ export default function PublicInvoice() {
           {hasDeposit && (
             <div className="border-t border-color-subtle px-8 py-6 status-warning-bg">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-lg status-warning-bg flex items-center justify-center">
-                  <svg className="w-5 h-5 status-warning-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+<div className="w-8 h-8 rounded-lg status-warning-bg flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 status-warning-text" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold status-warning-text">Deposit Required</h3>
@@ -308,7 +307,7 @@ export default function PublicInvoice() {
                     setPayAmount(depositDue.toFixed(2));
                     setShowDepositPayment(true);
                   }}
-                  className="mt-4 w-full sm:w-auto rounded-lg bg-primary-action px-6 py-3 text-sm font-medium text-on-primary hover:bg-primary-action-hover"
+                  className="mt-4 w-full sm:w-auto rounded-lg bg-primary-action px-6 py-3 text-sm font-medium text-on-primary hover-bg-primary-action"
                 >
                   Pay Deposit Now
                 </button>
@@ -333,10 +332,7 @@ export default function PublicInvoice() {
                   {hasLateFee && (
                     <div className="mt-2 text-xs text-secondary">
                       <div className="flex items-center gap-1 status-error-text">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <AlertCircle className="w-3 h-3" />
                         Late fee applied: {formatCurrency(lateFeeAppliedAmount, invoice.currency)}
                       </div>
                     </div>
@@ -453,11 +449,9 @@ export default function PublicInvoice() {
           {isFullyPaid && (
             <div className="border-t border-color-subtle px-8 py-6 status-success-bg">
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full status-success-bg flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 status-success-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+<div className="w-16 h-16 rounded-full status-success-bg flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 status-success-text" />
+              </div>
                 <span className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium status-success-bg status-success-text">
                   Fully Paid
                 </span>
@@ -483,14 +477,12 @@ export default function PublicInvoice() {
                 </button>
               </div>
             )}
-            <button
+<button
               onClick={handleDownloadPdf}
               disabled={pdfLoading}
               className="text-sm text-secondary hover:text-primary flex items-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
+              <Download className="w-4 h-4" />
               {pdfLoading ? "Preparing..." : "Download PDF"}
             </button>
           </div>

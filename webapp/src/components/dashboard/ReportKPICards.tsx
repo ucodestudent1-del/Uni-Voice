@@ -6,8 +6,7 @@ import {
   Clock,
   ArrowUpRight,
 } from "lucide-react";
-import KPICard from "../KPICard";
-import { formatCurrencyValue } from "../../lib/utils";
+import { KPICard } from "@/components/ui";
 import type { ApiVolumeTrend } from "../../types/api";
 
 interface ReportKPICardsProps {
@@ -51,7 +50,8 @@ export default function ReportKPICards({
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       <KPICard
         title="Total Revenue"
-        value={formatCurrencyValue(totalRevenue, currency)}
+        value={totalRevenue}
+        currency={currency}
         subtitle="Gross revenue earned"
         icon={<DollarSign className="w-5 h-5" />}
         iconBackground="bg-success-bg text-success-text"
@@ -59,7 +59,8 @@ export default function ReportKPICards({
       />
       <KPICard
         title="Outstanding Receivables"
-        value={formatCurrencyValue(totalOutstanding, currency)}
+        value={totalOutstanding}
+        currency={currency}
         subtitle="Unpaid invoices total"
         icon={<ArrowUpRight className="w-5 h-5" />}
         iconBackground="bg-warning-bg text-warning-text"

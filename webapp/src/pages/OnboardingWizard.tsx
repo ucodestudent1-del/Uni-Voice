@@ -167,7 +167,7 @@ export default function OnboardingWizard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-alt">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="text-secondary mt-2">Loading onboarding...</p>
         </div>
       </div>

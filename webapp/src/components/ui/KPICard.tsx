@@ -1,9 +1,9 @@
 import { forwardRef } from "react";
-import { Decimal } from "decimal.js";
 import type { ReactNode } from "react";
+import { Decimal } from "decimal.js";
 import { formatCurrencyValue } from "@/lib/utils";
 
-export interface ExpenseKPICardProps {
+export interface KPICardProps {
   title: string;
   value: string | number;
   subtitle?: string;
@@ -14,8 +14,8 @@ export interface ExpenseKPICardProps {
   isLoading?: boolean;
 }
 
-const ExpenseKPICard = forwardRef<HTMLDivElement, ExpenseKPICardProps>(
-  function ExpenseKPICard(
+export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
+  function KPICard(
     { title, value, subtitle, icon, iconBackground, currency = "USD", trend, isLoading = false },
     ref
   ) {
@@ -72,4 +72,6 @@ const ExpenseKPICard = forwardRef<HTMLDivElement, ExpenseKPICardProps>(
   }
 );
 
-export default ExpenseKPICard;
+KPICard.displayName = "KPICard";
+
+export default KPICard;

@@ -15,19 +15,19 @@ export default function BottomTabBar() {
     { name: "Payments", to: "/app/payments", icon: Receipt },
   ];
 
-  return (
+return (
     <>
       {/* Floating primary action */}
       <Link
         to="/app/invoices/new"
         aria-label="New invoice"
-        className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center justify-center w-14 h-14 rounded-full bg-primary-action text-on-primary shadow-xl hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+        className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center justify-center w-14 h-14 rounded-full bg-primary-action text-on-primary shadow-xl hover-bg-primary-action focus-ring-primary transition-colors"
       >
         <Plus className="w-6 h-6" />
       </Link>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 md:hidden bg-surface/95 dark:bg-surface/95 border-t border-color-subtle border-color shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
+        className="fixed inset-x-0 bottom-0 z-40 md:hidden bg-surface border-t border-color-subtle border-color shadow-sm backdrop-blur-sm"
         aria-label="Mobile navigation"
       >
         <div className="flex items-center justify-around h-16 pb-[env(safe-area-inset-bottom,0px)]">
@@ -48,9 +48,9 @@ export default function BottomTabBar() {
                 const Icon = item.icon;
                 return (
                   <>
-                    <span
+<span
                       className={`rounded-lg w-10 h-10 flex items-center justify-center mb-0.5 ${
-                        isActive ? "bg-primary-bg dark:bg-primary-bg-strong text-primary-brand" : "text-tertiary text-tertiary"
+                        isActive ? "bg-primary-bg text-primary-brand" : "text-tertiary"
                       }`}
                     >
                       <Icon className="w-5 h-5" />

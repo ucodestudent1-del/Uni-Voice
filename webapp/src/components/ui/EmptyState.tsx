@@ -1,8 +1,11 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import type { EmptyStateProps } from "@/types/components";
 
 export { EmptyStateProps };
+
+type EmptyStateVariant = "default" | "compact" | "sidebar" | "loading" | "error";
 
 export default function EmptyState({
   title = "No items yet",
@@ -12,7 +15,7 @@ export default function EmptyState({
   onAction,
   className,
   variant = "default",
-}: EmptyStateProps) {
+}: EmptyStateProps & { variant?: EmptyStateVariant }) {
   const inner = (
     <div className="flex flex-col items-center justify-center py-10 text-center">
       {icon && <div className="mb-4 text-tertiary">{icon}</div>}
@@ -48,6 +51,32 @@ export default function EmptyState({
         <p className="text-sm text-tertiary">{title}</p>
         {onAction && (
           <Button variant="link" size="sm" className="mt-2" onClick={onAction}>
+            {actionLabel}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  if (variant === "loading") {
+    return (
+      <div className={cn("flex flex-col items-center justify-center py-10 text-center", className)}>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-4" />
+        <p className="text-sm text-tertiary">{title || "Loading..."}</p>
+        {description && <p className="mt-2 max-w-sm text-sm text-tertiary">{description}</p>}
+      </div>
+    );
+  }
+
+  if (variant === "error") {
+    return (
+      <div className={cn("flex flex-col items-center justify-center py-10 text-center", className)}>
+        {icon && <div className="mb-4 text-error-text">{icon}</div>}
+        <h3 className="text-lg font-medium text-error-text">{title}</h3>
+        {description && <p className="mt-2 max-w-sm text-sm text-tertiary">{description}</p>}
+        {onAction && (
+          <Button variant="primary" size="md" className="mt-4" onClick={onAction}>
+            <RefreshCw className="w-4 h-4 mr-2" />
             {actionLabel}
           </Button>
         )}

@@ -63,3 +63,45 @@ Frontend  →  API Layer  →  Invoice Service  →  Calculation Engine
 2. Invoice numbers are **atomic** (DB-level) and unique per business.
 3. **Backend is authoritative** for all calculations.
 4. **Tenant isolation** enforced at every DB query.
+
+# UI Quality Standards
+
+The application must have a consistent, polished, production-quality UI.
+
+Before creating a new UI pattern, look for an existing shared component or design token.
+
+Avoid one-off styling when a shared component/token can solve the problem.
+
+All pages must handle:
+- normal data
+- empty data
+- zero values
+- loading
+- errors
+- long text
+- missing/null values
+- mobile layouts
+
+Empty states must look intentional and polished rather than appearing broken or unfinished.
+
+Maintain consistent:
+- typography
+- spacing
+- colors
+- borders
+- radii
+- shadows
+- button styles
+- form controls
+- tables
+- badges
+- page headers
+- cards
+
+Fix problems at the shared-component/design-system level whenever possible.
+
+Do not introduce unnecessary visual effects or redesign the product without a clear reason.
+
+Preserve business logic and existing functionality while improving the UI.
+
+Before considering a UI task complete, inspect related screens for the same underlying problem and fix them consistently.

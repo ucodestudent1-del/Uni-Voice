@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import ExpenseKPICard from "@/components/expenses/ExpenseKPICard";
+import { KPICard } from "@/components/ui";
 import { DollarSign } from "lucide-react";
 
-describe("ExpenseKPICard", () => {
+describe("KPICard", () => {
   it("renders title and formatted value", () => {
     render(
-      <ExpenseKPICard
+      <KPICard
         title="Total Expenses"
         value="1234.56"
         currency="USD"
@@ -20,7 +20,7 @@ describe("ExpenseKPICard", () => {
 
   it("renders loading placeholder when isLoading is true", () => {
     const { container } = render(
-      <ExpenseKPICard
+      <KPICard
         title="Total"
         value="0"
         currency="USD"
@@ -35,7 +35,7 @@ describe("ExpenseKPICard", () => {
 
   it("shows — for zero values without trend", () => {
     render(
-      <ExpenseKPICard
+      <KPICard
         title="Zero"
         value="0"
         currency="USD"
@@ -48,7 +48,7 @@ describe("ExpenseKPICard", () => {
 
   it("renders subtitle when provided", () => {
     render(
-      <ExpenseKPICard
+      <KPICard
         title="Billed"
         value="500.00"
         subtitle="12 items"

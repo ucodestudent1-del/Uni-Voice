@@ -1,22 +1,17 @@
-import type { ProjectStatusBadgeProps } from "@/types/components";
+import { StatusBadge, projectStatusConfig, type StatusBadgeProps } from "@/components/ui/StatusBadge";
 
-export { ProjectStatusBadgeProps };
+export { StatusBadgeProps as ProjectStatusBadgeProps };
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  planning: { label: "Planning", className: "bg-surface-alt text-primary" },
-  active: { label: "Active", className: "status-info-bg status-info-text" },
-  on_hold: { label: "On Hold", className: "bg-yellow-100 text-yellow-800" },
-  completed: { label: "Completed", className: "status-success-bg status-success-text" },
-  archived: { label: "Archived", className: "bg-surface-alt text-secondary" },
-};
-
-export default function ProjectStatusBadge({ status, className = "" }: ProjectStatusBadgeProps) {
-  const config = statusConfig[status] ?? statusConfig.planning;
+export default function ProjectStatusBadge({ status, className = "", ...props }: StatusBadgeProps) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className} ${className}`}
-    >
-      {config.label}
-    </span>
+    <StatusBadge
+      status={status}
+      config={projectStatusConfig}
+      showIcon={false}
+      showLabel={true}
+      size="md"
+      className={className}
+      {...props}
+    />
   );
 }

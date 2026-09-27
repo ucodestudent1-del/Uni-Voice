@@ -22,6 +22,8 @@ import {
 } from "../api/client";
 import CustomerSelector from "../components/CustomerSelector";
 import { formatCurrency } from "../utils/format";
+import EmptyState from "@/components/ui/EmptyState";
+import { FileText, AlertCircle } from "lucide-react";
 import type { ApiBusiness, ApiCustomer, ApiProduct } from "../types/api";
 
 type FlowStep = "details" | "review" | "done";
@@ -274,29 +276,23 @@ export default function QuickInvoicePage() {
     }
   }
 
-  if (loading) {
+if (loading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-surface-alt" />
-        <div className="h-72 animate-pulse rounded-xl border border-color-subtle bg-surface" />
-      </div>
+      <EmptyState variant="loading" title="Setting up invoice..." description="Loading your business and product data" className="mx-auto max-w-3xl p-4 sm:p-6" />
     );
   }
 
   if (loadError) {
     return (
-      <div className="mx-auto max-w-md p-4 text-center">
-        <div className="rounded-xl border status-error-border status-error-bg p-6">
-          <h1 className="text-lg font-semibold status-error-text">Could not start invoice</h1>
-          <p className="mt-2 text-sm status-error-text">{loadError}</p>
-          <button
-            onClick={loadDependencies}
-            className="mt-4 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
+      <EmptyState
+        variant="error"
+        title="Could not start invoice"
+        description={loadError}
+        actionLabel="Try again"
+        onAction={loadDependencies}
+        icon={<AlertCircle className="w-8 h-8" />}
+        className="mx-auto max-w-md p-4"
+      />
     );
   }
 
@@ -363,7 +359,7 @@ export default function QuickInvoicePage() {
                 <select
                   value={serviceId}
                   onChange={(event) => setServiceId(event.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                 >
                   <option value="">Custom work description</option>
                   {products.map((product) => (
@@ -380,7 +376,7 @@ export default function QuickInvoicePage() {
                   onChange={(event) => setDescription(event.target.value)}
                   rows={3}
                   placeholder="Example: Repaired kitchen sink leak"
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                 />
               </label>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -392,7 +388,7 @@ export default function QuickInvoicePage() {
                     step="0.01"
                     value={quantity}
                     onChange={(event) => setQuantity(event.target.value)}
-                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                   />
                 </label>
                 <label className="block">
@@ -403,7 +399,7 @@ export default function QuickInvoicePage() {
                     step="0.01"
                     value={unitPrice}
                     onChange={(event) => setUnitPrice(event.target.value)}
-                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                   />
                 </label>
                 <label className="block">
@@ -414,7 +410,7 @@ export default function QuickInvoicePage() {
                     step="0.01"
                     value={taxRate}
                     onChange={(event) => setTaxRate(event.target.value)}
-                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                   />
                 </label>
               </div>
@@ -437,7 +433,7 @@ export default function QuickInvoicePage() {
                   type="date"
                   value={issueDate}
                   onChange={(event) => setIssueDate(event.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                 />
               </label>
               <label className="block">
@@ -446,7 +442,7 @@ export default function QuickInvoicePage() {
                   type="date"
                   value={dueDate}
                   onChange={(event) => setDueDate(event.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                 />
               </label>
             </div>
@@ -458,7 +454,7 @@ export default function QuickInvoicePage() {
                   onChange={(event) => setNotes(event.target.value)}
                   rows={2}
                   placeholder="Optional"
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                 />
               </label>
               <label className="block">
@@ -467,15 +463,15 @@ export default function QuickInvoicePage() {
                   value={paymentInstructions}
                   onChange={(event) => setPaymentInstructions(event.target.value)}
                   rows={2}
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
                 />
               </label>
             </div>
           </section>
 
-          <button
+<button
             onClick={goToReview}
-            className="sticky bottom-20 left-0 right-0 mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-primary-action px-5 py-3.5 text-base font-semibold text-on-primary shadow-md hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary sm:static sm:w-auto"
+            className="sticky bottom-20 left-0 right-0 mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-primary-action px-5 py-3.5 text-base font-semibold text-on-primary shadow-md hover:bg-primary-hover focus-ring-primary sm:static sm:w-auto"
           >
             Review invoice
             <ArrowLeft className="h-4 w-4 rotate-180" />

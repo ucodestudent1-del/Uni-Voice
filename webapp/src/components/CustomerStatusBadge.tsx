@@ -1,20 +1,17 @@
-import type { CustomerStatusBadgeProps } from "@/types/components";
+import { StatusBadge, customerStatusConfig, type StatusBadgeProps } from "@/components/ui/StatusBadge";
 
-export { CustomerStatusBadgeProps };
+export { StatusBadgeProps as CustomerStatusBadgeProps };
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "status-success-bg status-success-text" },
-  inactive: { label: "Inactive", className: "bg-surface-alt text-primary" },
-  archived: { label: "Archived", className: "status-info-bg status-info-text" },
-};
-
-export default function CustomerStatusBadge({ status, className = "" }: CustomerStatusBadgeProps) {
-  const config = statusConfig[status] ?? statusConfig.active;
+export default function CustomerStatusBadge({ status, className = "", ...props }: StatusBadgeProps) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className} ${className}`}
-    >
-      {config.label}
-    </span>
+    <StatusBadge
+      status={status}
+      config={customerStatusConfig}
+      showIcon={false}
+      showLabel={true}
+      size="md"
+      className={className}
+      {...props}
+    />
   );
 }

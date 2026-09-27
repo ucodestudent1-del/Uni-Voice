@@ -28,11 +28,11 @@
     --color-border-subtle: 241 245 249;  /* slate-100 */
 
     /* —— Text —— */
-    --color-text: 0 0 0;                /* black          */
-    --color-text-secondary: 0 0 0;      /* black          */
-    --color-text-tertiary: 0 0 0;       /* black          */
-    --color-text-inverse: 0 0 0;        /* black          */
-    --color-text-disabled: 0 0 0;       /* black          */
+    --color-text: 15 23 42;             /* slate-900      */
+    --color-text-secondary: 71 85 105;  /* slate-600      */
+    --color-text-tertiary: 148 163 184; /* slate-500      */
+    --color-text-inverse: 255 255 255;  /* white          */
+    --color-text-disabled: 148 163 184; /* slate-500      */
 
     /* —— Interactive states —— */
     --color-hover: 241 245 249;         /* slate-100 (hover surface) */
@@ -118,10 +118,10 @@
 
     /* —— Text —— */
     --color-text: 255 255 255;          /* white          */
-    --color-text-secondary: 255 255 255;/* white          */
-    --color-text-tertiary: 255 255 255; /* white          */
-    --color-text-inverse: 255 255 255;  /* white          */
-    --color-text-disabled: 255 255 255; /* white          */
+    --color-text-secondary: 203 213 225;/* slate-300      */
+    --color-text-tertiary: 148 163 184; /* slate-500      */
+    --color-text-inverse: 15 23 42;     /* slate-900      */
+    --color-text-disabled: 148 163 184; /* slate-500      */
 
     /* —— Interactive states —— */
     --color-hover: 38 45 62;            /* slate-800      */
@@ -235,6 +235,11 @@
   .hover-bg-hover:hover {
     background-color: rgb(var(--color-hover));
   }
+  .hover-bg-primary-action:hover { background-color: rgb(var(--color-primary-hover)); }
+
+  /* Tailwind-compatible hover utilities */
+  .hover\:bg-primary-hover:hover { background-color: rgb(var(--color-primary-hover)); }
+  .hover\:bg-primary-action-hover:hover { background-color: rgb(var(--color-primary-hover)); }
 
   /* Input fields */
   .bg-input { background-color: rgb(var(--color-input-bg)); }
@@ -262,7 +267,6 @@
 
   /* Primary actions */
   .bg-primary-action { background-color: rgb(var(--color-primary)); }
-  .hover-bg-primary-action:hover { background-color: rgb(var(--color-primary-hover)); }
 
   /* Status badges - success */
   .status-success-bg { background-color: rgb(var(--color-success-bg)); }

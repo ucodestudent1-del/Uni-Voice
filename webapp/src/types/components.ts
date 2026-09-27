@@ -115,7 +115,7 @@ export interface EmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   className?: string;
-  variant?: "default" | "compact" | "sidebar";
+  variant?: "default" | "compact" | "sidebar" | "loading" | "error";
 }
 
 export interface TopBarProps {
@@ -175,7 +175,16 @@ export interface StatusBadgeProps {
   isOverdue?: boolean;
   size?: "sm" | "md";
   showIcon?: boolean;
+  showLabel?: boolean;
   className?: string;
+  config?: ReturnType<typeof import("@/components/ui/StatusBadge").createStatusBadgeConfig>;
+}
+
+export interface StatusConfig {
+  label: string;
+  className: string;
+  description?: string;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 export interface CustomerStatusBadgeProps {

@@ -1,31 +1,23 @@
-import type { ReactNode } from "react";
+import { StatusBadge as SharedStatusBadge, invoiceStatusConfig, type StatusBadgeProps as SharedStatusBadgeProps } from "@/components/ui/StatusBadge";
 
-interface StatusBadgeProps {
-  status: string;
-  isOverdue?: boolean;
-  className?: string;
-}
+export interface StatusBadgeProps extends SharedStatusBadgeProps {}
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "status-warning-bg status-warning-text" },
-  sent: { label: "Sent", className: "status-info-bg status-info-text" },
-  viewed: { label: "Viewed", className: "status-info-bg status-info-text" },
-  partially_paid: { label: "Partially Paid", className: "status-warning-bg status-warning-text" },
-  paid: { label: "Paid", className: "status-success-bg status-success-text" },
-  overdue: { label: "Overdue", className: "status-error-bg status-error-text" },
-  cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text" },
-  void: { label: "Void", className: "status-tertiary-bg status-tertiary-text" },
-};
+export const statusConfig = invoiceStatusConfig.configs;
 
 export default function StatusBadge({ status, isOverdue, className }: StatusBadgeProps) {
-  const config = statusConfig[status] ?? statusConfig.draft;
-  const effectiveStatus = isOverdue && status !== "paid" ? "overdue" : status;
-  const effectiveConfig = statusConfig[effectiveStatus] ?? config;
-  const baseClasses = `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${effectiveConfig.className}`;
-  return className ? <span className={`${baseClasses} ${className}`}>{effectiveConfig.label}</span> : <span className={baseClasses}>{effectiveConfig.label}</span>;
+  return (
+    <SharedStatusBadge
+      status={status}
+      isOverdue={isOverdue}
+      config={invoiceStatusConfig}
+      showIcon={false}
+      showLabel={true}
+      size="md"
+      className={className}
+    />
+  );
 }
 
-export { statusConfig };
 export function statusColors(status: string): string {
-  return statusConfig[status]?.className ?? statusConfig.draft.className;
+  return invoiceStatusConfig.getConfig(status).className;
 }

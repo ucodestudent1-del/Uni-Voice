@@ -23,7 +23,7 @@ import { useToast } from "../components/ui/ToastProvider";
 import type { ApiExpense, ApiExpenseSummary } from "../types/api";
 import type { ApiExpenseCategoryBreakdown, ApiExpenseMonthlyTrend, ApiExpenseBudgetSettings } from "../types/expenses";
 import {
-  ExpenseKPICard,
+  KPICard as ExpenseKPICard,
   ExpenseCategoryChart,
   ExpenseTrendChart,
   BudgetProgress,

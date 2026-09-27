@@ -9,6 +9,7 @@ import {
   FileText,
   Layers,
   Link2,
+  LayoutDashboard,
   Mail,
   Package,
   Plus,
@@ -47,6 +48,7 @@ import { formatCurrency, formatDate, parseDecimal } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
+import EmptyState from "@/components/ui/EmptyState";
 import CustomerSelector from "./CustomerSelector";
 import InvoicePreview, {
   type PreviewAttachment,
@@ -297,6 +299,7 @@ export default function InvoiceWorkspace() {
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewWidth, setPreviewWidth] = useState(560);
+  const [previewMobileOpen, setPreviewMobileOpen] = useState(false);
 
   const analytics = useAnalytics();
 
@@ -931,6 +934,18 @@ export default function InvoiceWorkspace() {
     )}
 
     <main className="flex flex-1 overflow-hidden">
+      {/* Mobile preview toggle */}
+      <div className="lg:hidden border-b border-color bg-surface px-4 py-2">
+        <button
+          type="button"
+          onClick={() => setPreviewMobileOpen(!previewMobileOpen)}
+          className="flex items-center justify-center gap-2 w-full rounded-lg border border-color bg-surface px-4 py-2 text-sm font-medium text-primary hover:bg-surface-alt"
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          {previewMobileOpen ? "Hide Preview" : "Show Preview"}
+        </button>
+      </div>
+
       <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
         <div className="flex-shrink-0 border-b border-color bg-surface">
           <CustomerHeaderSection invoice={invoice} onField={handleField} customers={customers} />
@@ -941,18 +956,14 @@ export default function InvoiceWorkspace() {
             <ValidationBanner issues={validation.issues} />
           )}
           {invoice.items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-color bg-surface py-12">
-              <FileText className="h-10 w-10 text-tertiary" />
-              <p className="mt-3 text-sm text-tertiary">No line items yet.</p>
-              <button
-                type="button"
-                onClick={() => addItem("service")}
-                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover"
-              >
-                <Plus className="h-4 w-4" />
-                Add line item
-              </button>
-            </div>
+            <EmptyState
+              title="No line items yet"
+              description="Add your first line item to get started"
+              icon={<FileText className="h-10 w-10" />}
+              actionLabel="Add line item"
+              onAction={() => addItem("service")}
+              className="py-12"
+            />
           ) : (
             <LineItemsTable
               invoice={invoice}
@@ -991,15 +1002,17 @@ export default function InvoiceWorkspace() {
         </div>
       </aside>
 
+      {/* Resize handle - only show on lg+ when preview is visible */}
       <div
         onMouseDown={startResize}
-        className="flex-shrink-0 cursor-col-resize hover:bg-primary/20"
+        className="hidden lg:flex lg:flex-shrink-0 cursor-col-resize hover:bg-primary/20"
         style={{ width: "8px" }}
         aria-label="Resize preview"
       />
 
+      {/* Preview sidebar - responsive */}
       <aside
-        className="flex flex-col overflow-y-auto bg-surface-alt"
+        className={`${previewMobileOpen ? "block" : "hidden"} lg:flex lg:flex-col lg:overflow-y-auto bg-surface-alt`}
         style={{ width: `${previewWidth}px`, minWidth: "320px" }}
       >
         <div className="border-b border-color bg-surface px-6 py-3 text-center text-xs text-tertiary">
@@ -1203,7 +1216,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           onChange={(e) => onField("invoiceNumber", e.target.value || null)}
           placeholder="Auto-assigned"
           disabled={invoice.isFinalized}
-          className="mt-1 w-36 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          className="mt-1 w-36 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary disabled:opacity-50"
         />
       </div>
 
@@ -1213,7 +1226,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           type="date"
           value={invoice.issueDate ?? ""}
           onChange={(e) => onField("issueDate", e.target.value || null)}
-          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
         />
       </div>
 
@@ -1223,7 +1236,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           type="date"
           value={invoice.dueDate ?? ""}
           onChange={(e) => onField("dueDate", e.target.value || null)}
-          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
         />
       </div>
 
@@ -1232,7 +1245,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
         <select
           value={invoice.currency}
           onChange={(e) => onField("currency", e.target.value)}
-          className="mt-1 w-28 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          className="mt-1 w-28 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
         >
           {["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CNY"].map((c) => (
             <option key={c} value={c}>
@@ -1249,7 +1262,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           value={toPercent(invoice.taxRate ?? "0")}
           onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
           placeholder="e.g. 8.5"
-          className="mt-1 w-24 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          className="mt-1 w-24 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
         />
       </div>
     </div>
@@ -1307,7 +1320,7 @@ const TotalsCard = React.memo(function TotalsCard({
             type="number"
             value={invoice.amountPaid ?? "0"}
             onChange={(e) => onField("amountPaid", e.target.value || null)}
-            className="w-28 rounded-lg border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-28 rounded-lg border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus-ring-primary"
           />
         </div>
         <div className="pt-1 text-secondary">Balance due</div>
@@ -1394,7 +1407,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) => onItemChange(item.id ?? String(i), { description: e.target.value })}
                     placeholder="What did you do?"
                     rows={2}
-                    className="w-full min-h-[40px] resize-y rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary overflow-hidden"
+                    className="w-full min-h-[40px] resize-y rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary placeholder-tertiary focus-ring-primary overflow-hidden"
                   />
                 </td>
                 <td className="px-2 py-3">
@@ -1406,7 +1419,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     }
                     min={1}
                     step="any"
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus-ring-primary"
                   />
                 </td>
                 <td className="px-2 py-3">
@@ -1415,7 +1428,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) =>
                       onItemChange(item.id ?? String(i), { unit: e.target.value })
                     }
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus-ring-primary"
                     title="Unit"
                   >
                     {LINE_ITEM_UNITS.map((u) => (
@@ -1438,7 +1451,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                       }
                       min={0}
                       step={step}
-                      className="w-full rounded-lg border border-input-border bg-input px-6 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full rounded-lg border border-input-border bg-input px-6 py-1.5 text-right text-sm text-primary focus-ring-primary"
                     />
                   </div>
                 </td>
@@ -1451,7 +1464,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     }
                     min={0}
                     step={step}
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary placeholder-tertiary focus-ring-primary"
                     placeholder="0.00"
                   />
                 </td>
@@ -1461,7 +1474,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) =>
                       onItemChange(item.id ?? String(i), { discountType: e.target.value as "fixed" | "percentage" })
                     }
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus-ring-primary"
                     title="Discount type"
                   >
                     <option value="fixed">Fixed</option>
@@ -1480,7 +1493,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     min={0}
                     max={100}
                     step="0.01"
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus-ring-primary"
                     title="Tax rate %"
                   />
                 </td>
@@ -1585,14 +1598,14 @@ const FeesSection = React.memo(function FeesSection({
             value={fee.description}
             onChange={(e) => updateFee(i, { description: e.target.value })}
             placeholder="Description"
-            className="flex-1 rounded border border-input-border bg-input px-2 py-1 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 rounded border border-input-border bg-input px-2 py-1 text-sm text-primary placeholder-tertiary focus-ring-primary"
           />
           <input
             type="number"
             value={fee.amount}
             onChange={(e) => updateFee(i, { amount: e.target.value || "0" })}
             placeholder="0.00"
-            className="w-24 rounded border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-24 rounded border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus-ring-primary"
           />
           <button
             type="button"
@@ -1642,7 +1655,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                 onField("depositType", e.target.value);
                 onField("depositValue", e.target.value === "none" ? "0" : depositValue);
               }}
-              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
             >
               <option value="none">No deposit</option>
               <option value="fixed">Fixed amount</option>
@@ -1657,7 +1670,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                   value={depositValue}
                   onChange={(e) => onField("depositValue", e.target.value)}
                   placeholder="0.00"
-                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus-ring-primary"
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
                   {depositType === "percentage" ? "%" : invoice.currency}
@@ -1668,7 +1681,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
               type="date"
               value={invoice.depositDueDate?.split("T")[0] ?? ""}
               onChange={(e) => onField("depositDueDate", e.target.value || null)}
-              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
             />
           </div>
           {depositType !== "none" && (
@@ -1677,7 +1690,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
               value={invoice.depositPaymentPurpose ?? ""}
               onChange={(e) => onField("depositPaymentPurpose", e.target.value || null)}
               placeholder="Payment purpose (e.g. 'Booking deposit')"
-              className="mt-2 w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="mt-2 w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
             />
           )}
         </div>
@@ -1691,7 +1704,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                 onField("lateFeeType", e.target.value);
                 onField("lateFeeValue", e.target.value === "none" ? "0" : lateFeeValue);
               }}
-              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
             >
               <option value="none">No late fee</option>
               <option value="fixed">Fixed amount</option>
@@ -1706,7 +1719,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                   value={lateFeeValue}
                   onChange={(e) => onField("lateFeeValue", e.target.value)}
                   placeholder="0.00"
-                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus-ring-primary"
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
                   {lateFeeType === "percentage" ? "%" : invoice.currency}
@@ -1749,7 +1762,7 @@ const NotesSection = React.memo(function NotesSection({
           onChange={(e) => onField("notes", e.target.value || null)}
           rows={3}
           placeholder="Add a note for the customer…"
-          className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+          className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
         />
       </div>
 
@@ -1761,7 +1774,7 @@ const NotesSection = React.memo(function NotesSection({
             onChange={(e) => onField("paymentInstructions", e.target.value || null)}
             rows={3}
             placeholder="Bank transfer, PayPal, etc.…"
-            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
           />
         </div>
 
@@ -1772,7 +1785,7 @@ const NotesSection = React.memo(function NotesSection({
             onChange={(e) => onField("terms", e.target.value || null)}
             rows={3}
             placeholder="Payment terms (e.g. Net 30)…"
-            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
           />
         </div>
       </div>

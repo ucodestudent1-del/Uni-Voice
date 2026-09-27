@@ -11,6 +11,8 @@ import {
 } from "recharts";
 import { getVolumeTrendReport } from "../../api/client";
 import type { ApiVolumeTrend } from "../../types/api";
+import EmptyState from "@/components/ui/EmptyState";
+import { BarChart3 } from "lucide-react";
 
 type Timeframe = "30" | "90" | "365";
 
@@ -192,9 +194,7 @@ export default function RevenueChart({ currency = "USD" }: { currency?: string }
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-          <p className="text-sm text-tertiary">No data available</p>
-        </div>
+        <EmptyState title="No revenue data" description="Revenue chart will appear after you create and send invoices" icon={<BarChart3 className="h-10 w-10" />} className="h-64" />
       )}
     </div>
   );

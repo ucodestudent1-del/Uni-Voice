@@ -1,4 +1,4 @@
-export { default as ExpenseKPICard, type ExpenseKPICardProps } from "./ExpenseKPICard";
+export { default as KPICard, type KPICardProps } from "@/components/ui/KPICard";
 export { default as ExpenseCategoryBadge, type ExpenseCategoryBadgeProps, EXPENSE_CATEGORY_CONFIG, EXPENSE_CATEGORY_OPTIONS } from "./ExpenseCategoryBadge";
 export { default as ExpenseCategoryChart } from "./ExpenseCategoryChart";
 export { default as ExpenseTrendChart } from "./ExpenseTrendChart";

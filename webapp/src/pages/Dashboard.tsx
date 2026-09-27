@@ -14,13 +14,13 @@ import {
 } from "lucide-react";
 import { getDashboardData, getInvoices } from "../api/client";
 import type { ApiDashboardData, ApiInvoiceListItem, ApiUpcomingInvoice, ApiInvoice } from "../types/api";
-import KPICard from "../components/KPICard";
+import { KPICard } from "@/components/ui";
 import RevenueChart from "../components/dashboard/RevenueChart";
 import StatusBreakdown from "../components/dashboard/StatusBreakdown";
 import { formatCurrency } from "../utils/format";
+import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
 import InvoiceStatus, { isOverdueStatus } from "../components/ui/InvoiceStatus";
-import { formatCurrencyValue } from "../lib/utils";
 
 interface NormalizedInvoice {
   id: string;
@@ -160,7 +160,7 @@ export default function Dashboard() {
   const upcomingTotal = upcoming.reduce(
     (sum, invoice) => sum.plus(invoice.amountDue || 0),
     new Decimal(0)
-  );
+  ).toFixed(2);
   const requiringAttention = dashboard?.requiringAttention ?? [];
 
   const statusData = [
@@ -200,35 +200,40 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
         <KPICard
           title="Total Outstanding"
-          value={formatCurrencyValue(summary.totalOutstanding, currency)}
+          value={summary.totalOutstanding}
+          currency={currency}
           subtitle={`${(summary.draftCount + summary.sentCount + summary.overdueCount)} unpaid invoices`}
           icon={<DollarSign className="w-5 h-5" />}
           iconBackground="bg-info-bg text-info-text"
         />
         <KPICard
           title="Overdue"
-          value={formatCurrencyValue(summary.totalOverdue, currency)}
+          value={summary.totalOverdue}
+          currency={currency}
           subtitle={`${summary.overdueCount} overdue invoices`}
           icon={<AlertTriangle className="w-5 h-5" />}
           iconBackground="bg-error-bg text-error-text"
         />
         <KPICard
           title="Paid This Month"
-          value={formatCurrencyValue(summary.totalPaidThisMonth, currency)}
+          value={summary.totalPaidThisMonth}
+          currency={currency}
           subtitle={`${summary.paidCount} paid invoices`}
           icon={<CheckCircle className="w-5 h-5" />}
           iconBackground="bg-success-bg text-success-text"
         />
         <KPICard
           title="Revenue This Month"
-          value={formatCurrencyValue(summary.totalRevenue, currency)}
+          value={summary.totalRevenue}
+          currency={currency}
           subtitle="Total revenue earned"
           icon={<DollarSign className="w-5 h-5" />}
           iconBackground="status-warning-bg status-warning-text"
         />
         <KPICard
           title="Due Next 7 Days"
-          value={formatCurrencyValue(upcomingTotal, currency)}
+          value={upcomingTotal}
+          currency={currency}
           subtitle={`${upcoming.length} invoices due`}
           icon={<CalendarDays className="w-5 h-5" />}
           iconBackground="bg-warning-bg text-warning-text"

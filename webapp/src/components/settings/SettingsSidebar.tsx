@@ -26,7 +26,7 @@ export default function SettingsSidebar({ sections, accountSection }: SettingsSi
                       `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                         isActive
                           ? "bg-primary-bg text-on-primary"
-                          : "text-secondary hover-bg-hover hover:text-primary"
+                          : "text-secondary hover:bg-hover hover:text-primary"
                       }`
                     }
                   >
