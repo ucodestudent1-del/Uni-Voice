@@ -196,6 +196,37 @@
     color-scheme: dark;
   }
 
+  /* —— Fallback: respect OS preference before JS applies data-theme —— */
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme]) {
+      color-scheme: dark;
+    }
+    html:not([data-theme]) {
+      --color-text: 255 255 255;
+      --color-text-secondary: 203 213 225;
+      --color-text-tertiary: 148 163 184;
+      --color-text-inverse: 15 23 42;
+      --color-page-bg: 3 7 18;
+      --color-surface: 24 35 54;
+      --color-surface-alt: 31 41 59;
+      --color-border: 44 49 61;
+      --color-border-strong: 71 86 106;
+      --color-border-subtle: 33 45 66;
+      --color-hover: 38 45 62;
+      --color-active: 60 68 86;
+      --color-input-bg: 24 35 54;
+      --color-input-border: 71 86 106;
+      --color-primary: 96 165 250;
+      --color-primary-hover: 126 185 255;
+      --color-primary-active: 153 193 255;
+      --color-primary-bg: 29 58 103;
+      --color-primary-text: 191 219 254;
+      --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+      --color-overlay: 0 0 0 / 0.6;
+      color-scheme: dark;
+    }
+  }
+
   body {
     background-color: rgb(var(--color-page-bg));
     color: rgb(var(--color-text));
