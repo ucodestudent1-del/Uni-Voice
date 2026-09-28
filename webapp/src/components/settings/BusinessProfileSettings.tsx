@@ -104,20 +104,20 @@ export default function BusinessProfileSettings() {
         setBusiness(data.business);
         setForm({
           name: data.business?.name || "",
-          legalName: data.business?.legal_name || "",
+          legalName: data.business?.legalName || "",
           email: data.business?.email || "",
           phone: data.business?.phone || "",
           website: data.business?.website || "",
-          taxId: data.business?.tax_id || "",
-          registrationNumber: data.business?.registration_number || "",
-          addressLine1: data.business?.address_line_1 || "",
-          addressLine2: data.business?.address_line_2 || "",
+          taxId: data.business?.taxId || "",
+          registrationNumber: data.business?.registrationNumber || "",
+          addressLine1: data.business?.addressLine1 || "",
+          addressLine2: data.business?.addressLine2 || "",
           city: data.business?.city || "",
-          stateOrRegion: data.business?.state_or_region || "",
-          postalCode: data.business?.postal_code || "",
-          countryCode: data.business?.country_code || "US",
-          defaultCurrency: data.business?.default_currency || "USD",
-          logoUrl: data.business?.logo_url || "",
+          stateOrRegion: data.business?.stateOrRegion || "",
+          postalCode: data.business?.postalCode || "",
+          countryCode: data.business?.countryCode || "US",
+          defaultCurrency: data.business?.defaultCurrency || "USD",
+          logoUrl: data.business?.logoUrl || "",
         });
       } catch (err: any) {
         setError(err.response?.data?.error || "Failed to load business profile");

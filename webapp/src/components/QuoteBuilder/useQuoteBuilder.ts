@@ -94,7 +94,7 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
         setBusiness(b);
         setData(prev => ({
           ...prev,
-          currency: prev.currency === "USD" ? (b.default_currency || "USD") : prev.currency,
+          currency: prev.currency === "USD" ? (b.defaultCurrency || "USD") : prev.currency,
           notes: prev.notes || b.default_notes || "",
           terms: prev.terms || b.default_terms || "Net 30",
           paymentInstructions: prev.paymentInstructions || b.default_payment_instructions || "",

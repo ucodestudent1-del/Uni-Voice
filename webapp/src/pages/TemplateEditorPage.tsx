@@ -65,7 +65,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
       .then((d) => {
         const b = d.business as ApiBusiness;
         setBusiness(b);
-        if (b?.logo_url) setLogoUrl(b.logo_url);
+        if (b?.logoUrl) setLogoUrl(b.logoUrl);
       })
       .catch(() => {});
   }, []);
@@ -84,15 +84,15 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
   const businessOverride = useMemo(() => {
     if (!business) return null;
     const addressParts = [
-      business.address_line_1,
-      business.address_line_2,
-      [business.city, business.state_or_region, business.postal_code].filter(Boolean).join(", "),
-      business.country_code,
+      business.addressLine1,
+      business.addressLine2,
+      [business.city, business.stateOrRegion, business.postalCode].filter(Boolean).join(", "),
+      business.countryCode,
     ].filter(Boolean);
     return {
       ...business,
       address: addressParts.join("\n"),
-      logo_url: logoUrl ?? business.logo_url,
+      logoUrl: logoUrl ?? business.logoUrl,
     };
   }, [business, logoUrl]);
 

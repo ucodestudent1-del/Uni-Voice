@@ -62,10 +62,10 @@ export default function Products() {
       name: product.name,
       description: product.description || "",
       sku: product.sku || "",
-      defaultUnitPrice: parseFloat(product.default_unit_price),
-      defaultTaxRate: parseFloat(product.default_tax_rate),
+      defaultUnitPrice: parseFloat(product.defaultUnitPrice),
+      defaultTaxRate: parseFloat(product.defaultTaxRate),
       unit: product.unit,
-      defaultCurrency: product.default_currency,
+      defaultCurrency: product.defaultCurrency,
     });
     setShowForm(true);
   }
@@ -233,8 +233,8 @@ export default function Products() {
                     {p.description && <p className="text-xs text-secondary">{p.description}</p>}
                   </td>
                   <td className="py-3 px-4 text-sm text-secondary">{p.sku || "—"}</td>
-                  <td className="py-3 px-4 text-right text-sm font-medium text-primary">${parseFloat(p.default_unit_price).toFixed(2)}</td>
-                  <td className="py-3 px-4 text-right text-sm text-secondary">{(parseFloat(p.default_tax_rate) * 100).toFixed(0)}%</td>
+                  <td className="py-3 px-4 text-right text-sm font-medium text-primary">${parseFloat(p.defaultUnitPrice).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-right text-sm text-secondary">{(parseFloat(p.defaultTaxRate) * 100).toFixed(0)}%</td>
                   <td className="py-3 px-4 text-right">
                     <Button
                       variant="ghost"

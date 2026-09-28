@@ -195,7 +195,7 @@ function InvoiceEditorContent() {
           customer = custRes.customers?.find((c: ApiCustomer) => c.id === inv.customer_id);
         }
 
-        const newDoc = invoiceToDocument(inv, business || { id: inv.business_id, name: "Business", email: "", default_currency: inv.currency }, customer);
+        const newDoc = invoiceToDocument(inv, business || { id: inv.business_id, name: "Business", email: "", defaultCurrency: inv.currency }, customer);
         setDocument(newDoc);
 
         setEditorData({

@@ -19,7 +19,7 @@ export default function Reports() {
         getBusiness().catch(() => null),
         getRevenueReport().catch(() => ({ report: [] })),
       ]);
-      if (bizRes) setCurrency((bizRes as any).business?.default_currency ?? "USD");
+      if (bizRes) setCurrency((bizRes as any).business?.defaultCurrency ?? "USD");
       setRevenue(data.report ?? []);
     } catch {
       setRevenue([]);

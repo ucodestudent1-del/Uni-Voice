@@ -439,13 +439,13 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <Link
-                    to="/app/invoices/new"
+                  <button
+                    type="button"
                     className="text-xs text-primary-brand hover:text-primary-hover font-medium"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); navigate("/app/invoices/new"); }}
                   >
                     Continue editing →
-                  </Link>
+                  </button>
                 </div>
               </Link>
             )}

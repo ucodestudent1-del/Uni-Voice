@@ -76,20 +76,20 @@ export interface ApiPaymentMethod {
 export interface ApiBusiness {
   id: string;
   name: string;
-  legal_name?: string | null;
+  legalName?: string | null;
   email?: string | null;
   phone?: string | null;
   website?: string | null;
-  default_currency: string;
-  country_code?: string;
-  logo_url?: string | null;
-  address_line_1?: string | null;
-  address_line_2?: string | null;
+  defaultCurrency: string;
+  countryCode?: string;
+  logoUrl?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
   city?: string | null;
-  state_or_region?: string | null;
-  postal_code?: string | null;
-  tax_id?: string | null;
-  registration_number?: string | null;
+  stateOrRegion?: string | null;
+  postalCode?: string | null;
+  taxId?: string | null;
+  registrationNumber?: string | null;
 }
 
 export interface ApiPlan {
@@ -268,16 +268,16 @@ export interface ApiCustomerSummary {
 
 export interface ApiProduct {
   id: string;
-  business_id: string;
+  businessId: string;
   name: string;
   description?: string | null;
   sku?: string | null;
-  default_unit_price: string;
-  default_tax_rate: string;
+  defaultUnitPrice: string;
+  defaultTaxRate: string;
   unit: string;
-  default_currency: string;
-  created_at: string;
-  updated_at: string;
+  defaultCurrency: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ApiTemplate {

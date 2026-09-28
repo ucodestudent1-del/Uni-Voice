@@ -199,6 +199,12 @@ export class InvoiceService {
       currency: input.currency ?? "USD",
       createdBy: userId,
     });
+
+    // Recalculate and persist computed line item totals and invoice totals
+    const fresh = await invoiceRepository.findById(businessId, invoiceId);
+    const calc = await this.recalculate(fresh);
+    await this.persistCalculationResults(invoiceId, fresh, calc);
+
     await invoiceRepository.recordEvent(invoiceId, {
       eventType: "created", actorId: userId, actorType: userId ? "user" : "system",
     });
@@ -267,6 +273,7 @@ export class InvoiceService {
     const needsRecalc = await this.invoiceTotalsStale(invoice);
     if (needsRecalc) {
       const calc = await this.recalculate(invoice);
+      await this.persistCalculationResults(invoice.id, invoice, calc);
       return this.summarize(invoice, calc);
     }
     return {
@@ -343,6 +350,9 @@ export class InvoiceService {
     if (invoice.isFinalized) throw new BusinessLogicError("Cannot modify a finalized invoice");
     const itemsWithSnapshot = await this.applyProductSnapshots(businessId, items);
     await invoiceRepository.setItems(businessId, id, itemsWithSnapshot as any);
+    const fresh = await invoiceRepository.findById(businessId, id);
+    const calc = await this.recalculate(fresh);
+    await this.persistCalculationResults(id, fresh, calc);
     await invoiceRepository.recordEvent(id, { eventType: "line_item_updated", actorId: userId });
   }
 
@@ -350,6 +360,9 @@ export class InvoiceService {
     const invoice = await invoiceRepository.findById(businessId, id);
     if (invoice.isFinalized) throw new BusinessLogicError("Cannot modify a finalized invoice");
     await invoiceRepository.setFees(businessId, id, fees as any);
+    const fresh = await invoiceRepository.findById(businessId, id);
+    const calc = await this.recalculate(fresh);
+    await this.persistCalculationResults(id, fresh, calc);
     await invoiceRepository.recordEvent(id, { eventType: "fee_added", actorId: userId });
   }
 

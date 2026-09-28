@@ -1642,8 +1642,8 @@ function registerBusinessInfoComponent() {
           {label && <h3 className="text-xs font-semibold text-secondary uppercase tracking-wider mb-2">{label}</h3>}
           {business && (
             <div className="space-y-1">
-              {showLogo && business.logo_url && (
-                <img src={business.logo_url} alt={business.name} className="h-12 w-auto mb-2" />
+              {showLogo && business.logoUrl && (
+                <img src={business.logoUrl} alt={business.name} className="h-12 w-auto mb-2" />
               )}
               {showName && business.name && <p className="text-xl font-bold text-primary">{business.name}</p>}
               {showEmail && business.email && <p className="text-sm text-secondary">{business.email}</p>}

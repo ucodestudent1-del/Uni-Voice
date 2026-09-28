@@ -89,7 +89,7 @@ export default function QuickInvoicePage() {
     }
   }
 
-  const currency = business?.default_currency || customer?.defaultCurrency || "USD";
+  const currency = business?.defaultCurrency || customer?.defaultCurrency || "USD";
   const selectedProduct = products.find((product) => product.id === serviceId);
 
   // Safe decimal parsing helper
@@ -105,8 +105,8 @@ export default function QuickInvoicePage() {
   useEffect(() => {
     if (!selectedProduct) return;
     setDescription(selectedProduct.description || selectedProduct.name);
-    setUnitPrice(selectedProduct.default_unit_price || "0.00");
-    setTaxRate(selectedProduct.default_tax_rate || "0");
+    setUnitPrice(selectedProduct.defaultUnitPrice || "0.00");
+    setTaxRate(selectedProduct.defaultTaxRate || "0");
   }, [selectedProduct?.id]);
 
   const calculation = useMemo(() => {
@@ -178,8 +178,8 @@ export default function QuickInvoicePage() {
             catalogName: selectedProduct?.name || null,
             catalogSku: selectedProduct?.sku || null,
             catalogTaxCategory: null,
-            catalogUnitPrice: selectedProduct?.default_unit_price || null,
-            catalogTaxRate: selectedProduct?.default_tax_rate || null,
+            catalogUnitPrice: selectedProduct?.defaultUnitPrice || null,
+            catalogTaxRate: selectedProduct?.defaultTaxRate || null,
           },
         ],
       });
@@ -364,7 +364,7 @@ if (loading) {
                   <option value="">Custom work description</option>
                   {products.map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.name} — {formatCurrency(product.default_unit_price, product.default_currency || currency)}
+                      {product.name} — {formatCurrency(product.defaultUnitPrice, product.defaultCurrency || currency)}
                     </option>
                   ))}
                 </select>

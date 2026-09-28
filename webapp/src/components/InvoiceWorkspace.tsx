@@ -199,12 +199,12 @@ function buildCalcInput(data: WorkspaceInvoiceData): InvoiceCalculationInput {
 function businessAddressString(b: ApiBusiness | null): string | undefined {
   if (!b) return undefined;
   const parts = [
-    b.address_line_1,
-    b.address_line_2,
+    b.addressLine1,
+    b.addressLine2,
     b.city,
-    b.state_or_region,
-    [b.postal_code, b.country_code].filter(Boolean).join(" "),
-    b.tax_id ? `Tax ID: ${b.tax_id}` : undefined,
+    b.stateOrRegion,
+    [b.postalCode, b.countryCode].filter(Boolean).join(" "),
+    b.taxId ? `Tax ID: ${b.taxId}` : undefined,
   ];
   const joined = parts.filter(Boolean).join("\n");
   return joined || undefined;
@@ -251,11 +251,11 @@ function toPercentDisplay(rate: string | undefined | null): string {
   return `${v.toFixed(2)}%`;
 }
 
-function lineTotalDisplay(item: WorkspaceLineItem, calc?: any): string | null {
+function lineTotalDisplay(item: WorkspaceLineItem, currency: string, calc?: any): string | null {
   if (calc?.lineItems) {
     const idx = calc.lineItems.findIndex((li: any) => li.description === item.description && li.lineTotal != null);
     if (idx >= 0) {
-      return fmt(calc.lineItems[idx].lineTotal, "");
+      return fmt(calc.lineItems[idx].lineTotal, currency);
     }
   }
   const qty = new Decimal(item.quantity || 1);
@@ -268,7 +268,7 @@ function lineTotalDisplay(item: WorkspaceLineItem, calc?: any): string | null {
       total = total.minus(parseDecimal(item.discount));
     }
   }
-  return fmt(total, "");
+  return fmt(total, currency);
 }
 
 export default function InvoiceWorkspace() {
@@ -388,7 +388,7 @@ export default function InvoiceWorkspace() {
   }, []);
 
   const defaultTaxRate = settings?.default_tax_rate ?? "0";
-  const defaultCurrency = business?.default_currency ?? settings?.default_currency ?? "USD";
+  const defaultCurrency = business?.defaultCurrency ?? settings?.default_currency ?? "USD";
 
   useEffect(() => {
     if (!isNew) return;
@@ -667,10 +667,10 @@ export default function InvoiceWorkspace() {
       description: product.name,
       quantity: "1",
       unit: product.unit || "each",
-      unitPrice: product.default_unit_price || "0",
+      unitPrice: product.defaultUnitPrice || "0",
       discount: "",
       discountType: "fixed",
-      taxRate: product.default_tax_rate || invoice?.taxRate || "0",
+      taxRate: product.defaultTaxRate || invoice?.taxRate || "0",
       isTaxInclusive: false,
       productId: product.id,
     };
@@ -741,12 +741,11 @@ export default function InvoiceWorkspace() {
         : undefined) ??
       undefined;
     return {
-      businessName: business?.name || business?.legal_name || "Untitled Business",
+      businessName: business?.name || business?.legalName || "Untitled Business",
       businessEmail: business?.email ?? undefined,
       businessPhone: business?.phone ?? undefined,
       businessWebsite: business?.website ?? undefined,
-      businessAddress: businessAddressString(business),
-      businessLogo: business?.logo_url ?? undefined,
+      businessLogo: business?.logoUrl ?? undefined,
       customerName: invoice.customer?.name ?? customers.find((c) => c.id === invoice.customerId)?.name ?? undefined,
       customerCompanyName:
         invoice.customer?.companyName ?? customers.find((c) => c.id === invoice.customerId)?.companyName ?? undefined,
@@ -1349,7 +1348,7 @@ const SavedServicesBar = React.memo(function SavedServicesBar({
             className="flex flex-col items-start rounded-lg border border-color bg-surface-alt px-3 py-2 text-left whitespace-nowrap hover:border-color-strong hover:bg-surface"
           >
             <span className="text-sm font-medium text-primary">{p.name}</span>
-            <span className="text-xs text-tertiary">{fmt(p.default_unit_price, p.default_currency)}</span>
+            <span className="text-xs text-tertiary">{fmt(p.defaultUnitPrice, p.defaultCurrency)}</span>
           </button>
         ))}
       </div>

@@ -38,8 +38,8 @@ export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, cu
     showEmail: true,
     showPhone: !!business.phone,
     showWebsite: !!business.website,
-    showAddress: !!(business.address_line_1 || business.address_line_2),
-    showLogo: !!business.logo_url,
+    showAddress: !!(business.addressLine1 || business.addressLine2),
+    showLogo: !!business.logoUrl,
     label: "From",
   });
 
@@ -108,7 +108,7 @@ export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, cu
         showPhone: !!business.phone,
         showWebsite: !!business.website,
         showAddress: false,
-        showLogo: !!business.logo_url,
+        showLogo: !!business.logoUrl,
         label: "From",
       },
     });

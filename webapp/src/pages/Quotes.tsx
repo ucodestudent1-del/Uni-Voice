@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   getQuotes,
   getQuoteById,
@@ -250,11 +250,14 @@ export default function Quotes() {
         breadcrumbs={[{ label: "Home", to: "/app" }, { label: "Quotes" }]}
         description={`${total} quote${total !== 1 ? "s" : ""} total`}
         primaryAction={
-          <Link to="/app/quotes/new">
-            <Button variant="primary" size="md" icon={<Plus className="w-4 h-4" />}>
-              New Quote
-            </Button>
-          </Link>
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => navigate("/app/quotes/new")}
+          >
+            New Quote
+          </Button>
         }
       />
 

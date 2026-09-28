@@ -178,7 +178,7 @@ export default function Templates() {
                   <div className="h-40 overflow-hidden">
                     <TemplatePreview
                       document={t.document as unknown as InvoiceDocument}
-                      business={business ? { ...business, logo_url: business?.logo_url || undefined } : undefined}
+                      business={business ? { ...business, logoUrl: business?.logoUrl || undefined } : undefined}
                       compact
                       className="h-full"
                     />

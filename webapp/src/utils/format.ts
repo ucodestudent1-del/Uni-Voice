@@ -22,7 +22,8 @@ function getCurrencyFormatter(currency: string, decimalPlaces = 2): Intl.NumberF
 export function formatCurrency(amount: Decimal.Value, currency: string, decimalPlaces = 2): string {
   const d = new Decimal(amount || 0);
   const rounded = d.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
-  const formatter = getCurrencyFormatter(currency, decimalPlaces);
+  const safeCurrency = currency && currency.length >= 3 ? currency : "USD";
+  const formatter = getCurrencyFormatter(safeCurrency, decimalPlaces);
   return formatter.format(Number(rounded.toNumber()));
 }
 
