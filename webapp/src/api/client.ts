@@ -66,8 +66,10 @@ api.interceptors.response.use(
     const responseType = response.config?.responseType;
     if (
       responseType !== "blob" &&
+      responseType !== "arraybuffer" &&
       typeof contentType === "string" &&
-      !contentType.includes("application/json")
+      !contentType.includes("application/json") &&
+      !contentType.includes("text/")
     ) {
       return Promise.reject(new Error("Unexpected response format"));
     }

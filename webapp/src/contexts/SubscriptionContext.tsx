@@ -51,6 +51,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const { isAuthenticated, isLoading: authLoading, businessId } = useAuth();
   const isInitialLoad = useRef(true);
+  const lastBusinessId = useRef<string | undefined>(undefined);
 
   async function refresh() {
     if (!businessId) {
@@ -103,7 +104,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       isInitialLoad.current = false;
       return;
     }
-    if (isInitialLoad.current || !businessId) {
+    if (!businessId) {
+      setLoading(false);
+      return;
+    }
+
+    if (isInitialLoad.current || businessId !== lastBusinessId.current) {
+      lastBusinessId.current = businessId;
       isInitialLoad.current = false;
       void refresh();
     }

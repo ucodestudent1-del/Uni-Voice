@@ -1146,7 +1146,7 @@ const WorkspaceHeader = React.memo(function WorkspaceHeader({
         <button
           type="button"
           onClick={navigateBack}
-          className="rounded-lg p-1.5 text-tertiary hover-bg-hover hover:text-primary"
+          className="rounded-lg p-1.5 text-tertiary hover:bg-surface-alt hover:text-primary"
           aria-label="Back to invoices"
         >
           <X className="h-5 w-5" />
@@ -1518,7 +1518,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                       type="button"
                       onClick={() => onDuplicate(item.id ?? String(i))}
                       title="Duplicate line"
-                      className="rounded p-1.5 text-tertiary hover-bg-hover hover:text-primary"
+                      className="rounded p-1.5 text-tertiary hover:bg-surface-alt hover:text-primary"
                     >
                       <FileText className="h-4 w-4" />
                     </button>
@@ -2182,3 +2182,4 @@ const PreviewDialog = React.memo(function PreviewDialog({
     </div>
   );
 });
+

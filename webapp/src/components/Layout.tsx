@@ -7,11 +7,13 @@ import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
 import { Menu, Plus } from "lucide-react";
 
+import type { PlanTier } from "@/types/app";
+
 interface NavItem {
   name: string;
   to: string;
   feature?: string;
-  requiredPlan?: string;
+  requiredPlan?: PlanTier;
 }
 
 export default function Layout() {
@@ -30,13 +32,15 @@ export default function Layout() {
     { name: "Invoices", to: "/app/invoices" },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
-    { name: "Quotes", to: "/app/quotes", requiredPlan: "business" as any },
+    { name: "Quotes", to: "/app/quotes", feature: "quotes.create", requiredPlan: "business" as PlanTier },
     { name: "Payments", to: "/app/payments" },
-    { name: "Receipts", to: "/app/receipts", requiredPlan: "business" as any },
-    { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" as any },
-    { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "business" as any },
-    { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" as any },
-    { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "business" as any },
+    { name: "Receipts", to: "/app/receipts", feature: "receipts.create", requiredPlan: "scale" as PlanTier },
+    { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" as PlanTier },
+    { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "business" as PlanTier },
+    { name: "Recurring", to: "/app/recurring", feature: "invoices.recurring", requiredPlan: "pro" as PlanTier },
+    { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" as PlanTier },
+    { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "business" as PlanTier },
+    { name: "Credit Notes", to: "/app/credit-notes", feature: "credit_notes.create", requiredPlan: "business" as PlanTier },
     { name: "Plans", to: "/app/plans" },
     { name: "Settings", to: "/app/settings" },
   ];
@@ -68,7 +72,7 @@ export default function Layout() {
                            ? "bg-primary-bg text-on-primary-strong"
                            : isLocked
                              ? "text-tertiary cursor-not-allowed"
-                             : "text-secondary hover-bg-hover hover:text-primary"
+                             : "text-secondary hover:bg-surface-alt hover:text-primary"
                        }`
                      }
                    >
@@ -94,7 +98,8 @@ export default function Layout() {
               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                 plan.code === "free" ? "bg-surface-alt text-tertiary" :
                 plan.code === "pro" ? "bg-primary-bg text-on-primary" :
-                "bg-info-bg text-info-text"
+                plan.code === "scale" ? "bg-info-bg text-info-text" :
+                "bg-success-bg text-success-text"
               }`}>
                 {plan.code}
               </span>
@@ -102,7 +107,7 @@ export default function Layout() {
           )}
           <button
             onClick={handleLogout}
-            className="w-full text-left text-sm font-medium text-secondary hover:text-primary hover-bg-hover rounded-lg px-3 py-2"
+            className="w-full text-left text-sm font-medium text-secondary hover:text-primary hover:bg-surface-alt rounded-lg px-3 py-2"
           >
             Sign out
           </button>
@@ -114,7 +119,7 @@ export default function Layout() {
           <header className="flex md:hidden items-center justify-between h-16 border-b border-color bg-surface px-4">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg p-2 text-secondary hover-bg-hover md:hidden"
+              className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden"
               aria-label="Open navigation menu"
             >
               <Menu className="h-5 w-5" />
@@ -136,7 +141,7 @@ export default function Layout() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="rounded-lg p-2 text-secondary hover-bg-hover md:hidden"
+                className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden"
               >
                 <Menu className="h-5 w-5" />
               </button>
@@ -185,7 +190,7 @@ export default function Layout() {
                                 ? "bg-primary-bg text-on-primary-strong"
                                 : isLocked
                                   ? "text-tertiary cursor-not-allowed"
-                                  : "text-secondary hover-bg-hover hover:text-primary"
+                                  : "text-secondary hover:bg-surface-alt hover:text-primary"
                             }`
                           }
                         >
@@ -204,7 +209,7 @@ export default function Layout() {
               <div className="border-t border-color p-4">
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left text-sm font-medium text-secondary hover:text-primary hover-bg-hover rounded-lg px-3 py-2"
+                  className="w-full text-left text-sm font-medium text-secondary hover:text-primary hover:bg-surface-alt rounded-lg px-3 py-2"
                 >
                   Sign out
                 </button>
@@ -217,3 +222,4 @@ export default function Layout() {
     </div>
   );
 }
+

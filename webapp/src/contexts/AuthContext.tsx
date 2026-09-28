@@ -109,10 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [token]);
 
-  const login = (newToken: string, newUser: User) => {
+   const login = (newToken: string, newUser: User) => {
     safeSetToken(newToken);
     setToken(newToken);
     setUser(newUser);
+    setOnboarding(null);
+    clearSubscriptionCache();
   };
 
   const logout = () => {

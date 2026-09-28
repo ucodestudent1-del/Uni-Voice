@@ -10,7 +10,7 @@ export default function UpgradePrompt({ feature, requiredPlan, message, children
     return <>{children}</>;
   }
 
-  const tierOrder = { free: 0, pro: 1, business: 2 };
+  const tierOrder = { free: 0, pro: 1, scale: 2, business: 3 };
   const currentTier = tierOrder[plan.code as keyof typeof tierOrder] ?? 0;
   const requiredTier = tierOrder[requiredPlan as keyof typeof tierOrder] ?? 2;
 
@@ -29,7 +29,7 @@ export default function UpgradePrompt({ feature, requiredPlan, message, children
             {message ?? `This feature requires a ${requiredPlan} plan. Upgrade to unlock it.`}
           </p>
           <div className="mt-2">
-            <a href="/plans" className="text-sm font-medium text-yellow-700 underline hover:text-yellow-600">
+            <a href="/app/plans" className="text-sm font-medium text-yellow-700 underline hover:text-yellow-600">
               View Plans
             </a>
           </div>
