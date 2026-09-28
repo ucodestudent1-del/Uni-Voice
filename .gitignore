@@ -4,3 +4,12 @@ dist/
 .env
 .DS_Store
 migrate_out.txt
+debug-api*.mjs
+healthcheck*.js
+healthcheck*.mjs
+healthcheck-results/
+healthcheck-inspect.cjs
+healthcheck-summary.cjs
+test-*.mjs
+test-*.cjs
+webapp/favicon.svg
