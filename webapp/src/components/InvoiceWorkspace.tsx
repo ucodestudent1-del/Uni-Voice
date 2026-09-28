@@ -48,7 +48,6 @@ import { formatCurrency, formatDate, parseDecimal } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
-import EmptyState from "@/components/ui/EmptyState";
 import CustomerSelector from "./CustomerSelector";
 import InvoicePreview, {
   type PreviewAttachment,
@@ -955,14 +954,38 @@ export default function InvoiceWorkspace() {
             <ValidationBanner issues={validation.issues} />
           )}
           {invoice.items.length === 0 ? (
-            <EmptyState
-              title="No line items yet"
-              description="Add your first line item to get started"
-              icon={<FileText className="h-10 w-10" />}
-              actionLabel="Add line item"
-              onAction={() => addItem("service")}
-              className="py-12"
-            />
+            <div className="mb-6 rounded-xl border border-dashed border-color bg-surface-alt py-12 text-center">
+              <FileText className="mx-auto h-12 w-12 text-tertiary/40" />
+              <h3 className="mt-4 text-lg font-semibold text-primary">No line items added yet</h3>
+              <p className="mt-2 max-w-sm text-sm text-tertiary">
+                Add a product or service so your invoice has something to bill for.
+              </p>
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => addItem("service")}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary-action px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover focus:ring-2 focus:ring-primary"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add a line item
+                </button>
+                {products.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (products.length === 1) addFromProduct(products[0]);
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-color bg-surface px-4 py-2 text-sm font-medium text-primary hover:bg-hover focus:ring-2 focus:ring-primary"
+                  >
+                    <Package className="h-4 w-4" />
+                    Add from saved product
+                  </button>
+                )}
+              </div>
+              {products.length > 1 && (
+                <SavedServicesBar products={products} onSelect={addFromProduct} />
+              )}
+            </div>
           ) : (
             <LineItemsTable
               invoice={invoice}
