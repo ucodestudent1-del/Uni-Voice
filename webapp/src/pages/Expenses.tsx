@@ -3,12 +3,12 @@ import {
   Plus,
   DollarSign,
   CalendarDays,
-  CheckCircle,
   BarChart3,
 } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getExpensesWithSummary,
+  getExpenseSummary,
   getExpenseCategoryBreakdown,
   getExpenseMonthlyTrend,
   getExpenseBudgetSettings,
@@ -48,12 +48,17 @@ export default function Expenses() {
   const [saving, setSaving] = useState(false);
 
   const [summary, setSummary] = useState<ApiExpenseSummary | null>(null);
+  const [monthlySummary, setMonthlySummary] = useState<ApiExpenseSummary | null>(null);
   const [categoryBreakdown, setCategoryBreakdown] = useState<ApiExpenseCategoryBreakdown[] | null>(null);
   const [monthlyTrend, setMonthlyTrend] = useState<ApiExpenseMonthlyTrend[] | null>(null);
   const [budgetSettings, setBudgetSettings] = useState<ApiExpenseBudgetSettings | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [vendorFilter, setVendorFilter] = useState("");
+  const [customerNameFilter, setCustomerNameFilter] = useState("");
+  const [projectNameFilter, setProjectNameFilter] = useState("");
+  const [billableFilter, setBillableFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
@@ -66,15 +71,23 @@ export default function Expenses() {
       offset: (page - 1) * pageSize,
       search: searchTerm || undefined,
       category: categoryFilter || undefined,
+      vendor: vendorFilter || undefined,
+      customerName: customerNameFilter || undefined,
+      projectName: projectNameFilter || undefined,
+      isBillable: billableFilter === "all" ? undefined : billableFilter === "true",
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     }),
-    [pageSize, page, searchTerm, categoryFilter, dateFrom, dateTo]
+    [pageSize, page, searchTerm, categoryFilter, vendorFilter, customerNameFilter, projectNameFilter, billableFilter, dateFrom, dateTo]
   );
 
   const resetFilters = () => {
     setSearchTerm("");
     setCategoryFilter("");
+    setVendorFilter("");
+    setCustomerNameFilter("");
+    setProjectNameFilter("");
+    setBillableFilter("all");
     setDateFrom("");
     setDateTo("");
     setPage(1);
@@ -83,6 +96,10 @@ export default function Expenses() {
   const handleFiltersChange = (newParams: ExpenseSearchParams) => {
     setSearchTerm(newParams.search ?? "");
     setCategoryFilter(newParams.category ?? "");
+    setVendorFilter(newParams.vendor ?? "");
+    setCustomerNameFilter(newParams.customerName ?? "");
+    setProjectNameFilter(newParams.projectName ?? "");
+    setBillableFilter(newParams.isBillable === undefined ? "all" : newParams.isBillable ? "true" : "false");
     setDateFrom(newParams.dateFrom ?? "");
     setDateTo(newParams.dateTo ?? "");
     setPage(1);
@@ -96,6 +113,18 @@ export default function Expenses() {
       setExpenses(data.expenses ?? []);
       setTotal(data.total ?? 0);
       setSummary(data.summary ?? null);
+
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const monthEnd = new Date();
+      monthEnd.setHours(23, 59, 59, 999);
+
+      const monthlyRes = await getExpenseSummary({
+        dateFrom: monthStart.toISOString().split("T")[0],
+        dateTo: monthEnd.toISOString().split("T")[0],
+      });
+      setMonthlySummary(monthlyRes.summary ?? null);
     } catch (err: any) {
       if (err.response?.status === 403) {
         setError("Expense tracking requires a Business plan. Please upgrade to continue.");
@@ -141,8 +170,11 @@ export default function Expenses() {
       category: expense.category,
       expense_date: expense.expense_date,
       payment_method: expense.payment_method,
-      receipt_url: expense.receipt_url,
-      notes: expense.notes,
+      vendor: expense.vendor ?? "",
+      customer_id: expense.customer_id ?? null,
+      project_id: expense.project_id ?? null,
+      receipt_url: expense.receipt_url ?? "",
+      notes: expense.notes ?? "",
       is_billable: expense.is_billable,
       is_reimbursed: expense.is_reimbursed,
     });
@@ -166,31 +198,37 @@ export default function Expenses() {
     if (!formData.description || !formData.amount) return;
     setSaving(true);
     setError(null);
-    try {
-      if (editingId) {
-        await updateExpense(editingId, {
-          description: formData.description,
-          amount: formData.amount,
-          category: (formData.category ?? "other") as ApiExpense["category"],
-          expense_date: formData.expense_date,
-          payment_method: formData.payment_method,
-          receipt_url: formData.receipt_url || null,
-          notes: formData.notes || null,
-          is_billable: formData.is_billable,
-          is_reimbursed: formData.is_reimbursed,
-        });
-        toast("Expense updated", { type: "success" });
-      } else {
-        await createExpense({
-          description: formData.description,
-          amount: formData.amount,
-          category: (formData.category ?? "other") as ApiExpense["category"],
-          expense_date: formData.expense_date ?? new Date().toISOString().split("T")[0],
-          payment_method: formData.payment_method ?? "cash",
-          receipt_url: formData.receipt_url || null,
-          notes: formData.notes || null,
-          is_billable: formData.is_billable,
-        });
+      try {
+       if (editingId) {
+         await updateExpense(editingId, {
+           description: formData.description,
+           amount: formData.amount,
+           category: (formData.category ?? "other") as ApiExpense["category"],
+           expenseDate: formData.expense_date,
+           paymentMethod: formData.payment_method,
+           vendor: formData.vendor || null,
+           customerId: formData.customer_id,
+           projectId: formData.project_id,
+           receiptUrl: formData.receipt_url || null,
+           notes: formData.notes || null,
+           isBillable: formData.is_billable,
+           isReimbursed: formData.is_reimbursed,
+         });
+         toast("Expense updated", { type: "success" });
+       } else {
+         await createExpense({
+           description: formData.description,
+           amount: formData.amount,
+           category: (formData.category ?? "other") as ApiExpense["category"],
+           expenseDate: formData.expense_date ?? new Date().toISOString().split("T")[0],
+           paymentMethod: formData.payment_method ?? "cash",
+           vendor: formData.vendor || null,
+           customerId: formData.customer_id,
+           projectId: formData.project_id,
+           receiptUrl: formData.receipt_url || null,
+           notes: formData.notes || null,
+           isBillable: formData.is_billable,
+         });
         toast("Expense added", { type: "success" });
       }
       setShowForm(false);
@@ -277,15 +315,15 @@ export default function Expenses() {
               />
               <ExpenseKPICard
                 title="This Month"
-                value={summary?.total_amount ?? "0"}
-                subtitle={`${summary?.count ?? 0} expenses`}
+                value={monthlySummary?.total_amount ?? "0"}
+                subtitle={`${monthlySummary?.count ?? 0} expenses`}
                 icon={<CalendarDays className="w-5 h-5" />}
                 iconBackground="status-primary-bg text-on-primary"
                 isLoading={loading}
                 currency={summaryCurrency}
               />
               <ExpenseKPICard
-                title="Billable"
+                title="Billable Expenses"
                 value={summary?.billable_amount ?? "0"}
                 subtitle={`${summary?.count ?? 0} expenses`}
                 icon={<DollarSign className="w-5 h-5" />}
@@ -294,16 +332,8 @@ export default function Expenses() {
                 currency={summaryCurrency}
               />
               <ExpenseKPICard
-                title="Reimbursed"
-                value={summary?.reimbursed_amount ?? "0"}
-                icon={<CheckCircle className="w-5 h-5" />}
-                iconBackground="status-success-bg status-success-text"
-                isLoading={loading}
-                currency={summaryCurrency}
-              />
-              <ExpenseKPICard
-                title="Outstanding"
-                value={summary ? (parseFloat(summary.billable_amount || "0") - parseFloat(summary.reimbursed_amount || "0")).toString() : "0"}
+                title="Unpaid / Reimbursable"
+                value={summary?.non_reimbursed_billable ?? "0"}
                 subtitle="Billable, not reimbursed"
                 icon={<BarChart3 className="w-5 h-5" />}
                 iconBackground="status-error-bg status-error-text"

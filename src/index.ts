@@ -2229,6 +2229,56 @@ app.get(
   }
 );
 
+app.patch(
+  "/api/expenses/:id/assign-invoice",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const { invoiceId } = req.body as { invoiceId?: string | null };
+      if (invoiceId !== null && invoiceId !== undefined) {
+        const invoiceCheck = await query(
+          `SELECT 1 FROM invoices WHERE id = $1 AND business_id = $2`,
+          [invoiceId, req.user!.businessId]
+        );
+        if (!invoiceCheck.rows.length) {
+          return res.status(404).json({ error: "Invoice not found" });
+        }
+      }
+      const expense = await expenseService.update(req.user!.businessId, req.params.id, {
+        invoiceId: invoiceId ?? null,
+      } as any);
+      res.json(camelToSnake({ expense }));
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.get(
+  "/api/expenses/invoice-options",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await query(
+        `SELECT id, invoice_number, customer_name, total, status
+         FROM invoices
+         WHERE business_id = $1
+           AND status IN ('draft', 'sent', 'viewed', 'partially_paid')
+         ORDER BY created_at DESC
+         LIMIT 100`,
+        [req.user!.businessId]
+      );
+      res.json({ invoices: camelToSnake(result.rows) });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 app.get(
   "/api/businesses/current/expense-settings",
   requireAuth,

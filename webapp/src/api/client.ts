@@ -1193,6 +1193,7 @@ export async function getExpenses(params?: {
   minAmount?: number;
   maxAmount?: number;
   search?: string;
+  vendor?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number }> {
@@ -1205,12 +1206,44 @@ export async function getExpense(id: string): Promise<{ expense: ApiExpense }> {
   return res.data;
 }
 
-export async function createExpense(data: Partial<ApiExpense>): Promise<{ expense: ApiExpense }> {
+export interface ExpenseCreatePayload {
+  customerId?: string | null;
+  projectId?: string | null;
+  description: string;
+  amount: string | number;
+  currency?: string;
+  category?: string;
+  expenseDate?: string | Date;
+  paymentMethod?: string;
+  vendor?: string | null;
+  receiptUrl?: string | null;
+  notes?: string | null;
+  isBillable?: boolean;
+}
+
+export interface ExpenseUpdatePayload {
+  customerId?: string | null;
+  projectId?: string | null;
+  invoiceId?: string | null;
+  description?: string;
+  amount?: string | number;
+  currency?: string;
+  category?: string;
+  expenseDate?: string | Date;
+  paymentMethod?: string;
+  vendor?: string | null;
+  receiptUrl?: string | null;
+  notes?: string | null;
+  isBillable?: boolean;
+  isReimbursed?: boolean;
+}
+
+export async function createExpense(data: ExpenseCreatePayload): Promise<{ expense: ApiExpense }> {
   const res = await api.post("/expenses", data);
   return res.data;
 }
 
-export async function updateExpense(id: string, data: Partial<ApiExpense>): Promise<{ expense: ApiExpense }> {
+export async function updateExpense(id: string, data: ExpenseUpdatePayload): Promise<{ expense: ApiExpense }> {
   const res = await api.patch(`/expenses/${id}`, data);
   return res.data;
 }
@@ -1228,6 +1261,7 @@ export async function getExpenseSummary(params?: {
   category?: string;
   dateFrom?: string;
   dateTo?: string;
+  vendor?: string;
 }): Promise<{ summary: ApiExpenseSummary }> {
   const res = await api.get("/expenses/summary", { params });
   return res.data;
@@ -1247,6 +1281,9 @@ export function buildExpenseSearchParams(params: ExpenseSearchParams): Record<st
   if (params.minAmount !== undefined) result.minAmount = params.minAmount;
   if (params.maxAmount !== undefined) result.maxAmount = params.maxAmount;
   if (params.search !== undefined) result.search = params.search;
+  if (params.vendor !== undefined) result.vendor = params.vendor;
+  if (params.customerName !== undefined) result.customerName = params.customerName;
+  if (params.projectName !== undefined) result.projectName = params.projectName;
   if (params.sortBy !== undefined) result.sortBy = params.sortBy;
   if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
   return result;
@@ -1265,6 +1302,7 @@ export async function getExpensesWithSummary(params?: {
   minAmount?: number;
   maxAmount?: number;
   search?: string;
+  vendor?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number; summary: ApiExpenseSummary }> {
@@ -1296,6 +1334,16 @@ export async function getExpenseBudgetSettings(): Promise<{ budget: ApiExpenseBu
 
 export async function updateExpenseBudgetSettings(data: Partial<ApiExpenseBudgetSettings>): Promise<{ budget: ApiExpenseBudgetSettings }> {
   const res = await api.patch("/businesses/current/expense-settings", data);
+  return res.data;
+}
+
+export async function assignExpenseToInvoice(expenseId: string, invoiceId: string | null): Promise<{ expense: ApiExpense }> {
+  const res = await api.patch(`/expenses/${expenseId}/assign-invoice`, { invoiceId });
+  return res.data;
+}
+
+export async function getExpenseInvoiceOptions(): Promise<{ invoices: Array<{ id: string; invoice_number: string; customer_name?: string | null; total: string; status: string }> }> {
+  const res = await api.get("/expenses/invoice-options");
   return res.data;
 }
 

@@ -910,12 +910,17 @@ export interface ApiExpense {
   category: ExpenseCategory;
   expense_date: string;
   payment_method: string;
+  vendor?: string | null;
   receipt_url?: string | null;
   notes?: string | null;
   is_billable: boolean;
   is_reimbursed: boolean;
   created_at: string;
   updated_at: string;
+  customer_name?: string | null;
+  project_name?: string | null;
+  invoice_number?: string | null;
+  invoice_status?: string | null;
 }
 
 export interface ApiExpenseSummary {
@@ -942,6 +947,9 @@ export interface ExpenseSearchParams {
   minAmount?: number;
   maxAmount?: number;
   search?: string;
+  vendor?: string;
+  customerName?: string;
+  projectName?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }

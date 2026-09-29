@@ -30,6 +30,7 @@ export const ExpenseSchema = z.object({
   category: ExpenseCategoryEnum.default("other"),
   expenseDate: z.union([z.string(), z.date()]),
   paymentMethod: z.string().default("cash"),
+  vendor: z.string().nullable().optional(),
   receiptUrl: z.string().nullable(),
   notes: z.string().nullable(),
   isBillable: z.boolean().default(false),
@@ -55,6 +56,7 @@ export const ExpenseCreateSchema = z.object({
   category: ExpenseCategoryEnum.default("other"),
   expenseDate: z.union([z.string(), z.date()]).optional(),
   paymentMethod: z.string().default("cash"),
+  vendor: z.string().nullable().optional(),
   receiptUrl: z.string().nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   isBillable: z.boolean().default(false),
@@ -65,6 +67,7 @@ export type ExpenseCreateInput = z.infer<typeof ExpenseCreateSchema>;
 export const ExpenseUpdateSchema = z.object({
   customerId: z.string().uuid().nullable().optional(),
   projectId: z.string().uuid().nullable().optional(),
+  invoiceId: z.string().uuid().nullable().optional(),
   description: z.string().min(1).max(2000).optional(),
   amount: z.preprocess(
     (v) => {
@@ -77,6 +80,7 @@ export const ExpenseUpdateSchema = z.object({
   category: ExpenseCategoryEnum.optional(),
   expenseDate: z.union([z.string(), z.date()]).optional(),
   paymentMethod: z.string().optional(),
+  vendor: z.string().nullable().optional(),
   receiptUrl: z.string().nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   isBillable: z.boolean().optional(),
@@ -97,6 +101,9 @@ export const ExpenseSearchSchema = z.object({
   minAmount: z.coerce.number().min(0).optional(),
   maxAmount: z.coerce.number().min(0).optional(),
   search: z.string().optional(),
+  vendor: z.string().optional(),
+  customerName: z.string().optional(),
+  projectName: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(50),
   offset: z.coerce.number().int().nonnegative().default(0),
   sortBy: z.enum(["expense_date", "amount", "created_at", "category"]).default("expense_date"),

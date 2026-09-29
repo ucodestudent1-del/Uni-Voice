@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, X, Calendar, Filter } from "lucide-react";
+import { Search, X, Calendar, Filter, Tag, FileText, User } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EXPENSE_CATEGORY_OPTIONS } from "./ExpenseCategoryBadge";
 import type { ExpenseSearchParams } from "@/types/api";
@@ -36,6 +36,23 @@ export default function ExpenseFilters({
     });
   };
 
+  const handleBillableChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    onChange({
+      ...params,
+      isBillable: val === "all" ? undefined : val === "true",
+      offset: 0,
+    });
+  };
+
+  const handleVendorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...params,
+      vendor: e.target.value || undefined,
+      offset: 0,
+    });
+  };
+
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
       ...params,
@@ -61,7 +78,10 @@ export default function ExpenseFilters({
     !!params.search ||
     !!params.category ||
     !!params.dateFrom ||
-    !!params.dateTo;
+    !!params.dateTo ||
+    !!params.vendor ||
+    !!params.customerName ||
+    params.isBillable !== undefined;
 
   return (
     <div className="bg-surface rounded-xl border border-color p-4 space-y-3">
@@ -74,7 +94,7 @@ export default function ExpenseFilters({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" />
             <input
               type="text"
-              placeholder="Search expenses..."
+              placeholder="Search description or notes..."
               defaultValue={params.search ?? ""}
               onChange={handleSearchChange}
               className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pl-10 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
@@ -125,9 +145,38 @@ export default function ExpenseFilters({
       </div>
 
       {advancedOpen && (
-        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-color-subtle">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-color-subtle">
           <div>
-            <label className="block text-xs font-medium text-tertiary mb-1">
+            <label className="block text-xs font-medium text-tertiary mb-1 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" />
+              Client
+            </label>
+            <input
+              type="text"
+              placeholder="Customer name..."
+              value={params.customerName ?? ""}
+              onChange={(e) => onChange({ ...params, customerName: e.target.value || undefined, offset: 0 })}
+              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-tertiary mb-1 flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5" />
+              Vendor
+            </label>
+            <input
+              type="text"
+              placeholder="Vendor name..."
+              value={params.vendor ?? ""}
+              onChange={handleVendorChange}
+              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-tertiary mb-1 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
               From Date
             </label>
             <input
@@ -137,8 +186,10 @@ export default function ExpenseFilters({
               className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
+
           <div>
-            <label className="block text-xs font-medium text-tertiary mb-1">
+            <label className="block text-xs font-medium text-tertiary mb-1 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" />
               To Date
             </label>
             <input
@@ -148,12 +199,34 @@ export default function ExpenseFilters({
               className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
+
+          <div>
+            <label className="block text-xs font-medium text-tertiary mb-1 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5" />
+              Billable Status
+            </label>
+            <select
+              value={
+                params.isBillable === undefined
+                  ? "all"
+                  : params.isBillable
+                    ? "true"
+                    : "false"
+              }
+              onChange={handleBillableChange}
+              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">All</option>
+              <option value="true">Billable</option>
+              <option value="false">Not Billable</option>
+            </select>
+          </div>
         </div>
       )}
 
       {hasActiveFilters && (
         <div className="flex items-center gap-2 pt-2 border-t border-color-subtle">
-          <Calendar className="w-4 h-4 text-tertiary" />
+          <Filter className="w-4 h-4 text-tertiary" />
           <span className="text-xs text-tertiary">
             Active filters applied
           </span>

@@ -27,12 +27,17 @@ export interface Expense {
   category: ExpenseCategory;
   expenseDate: Date;
   paymentMethod: string;
+  vendor: string | null;
   receiptUrl: string | null;
   notes: string | null;
   isBillable: boolean;
   isReimbursed: boolean;
   createdAt: Date;
   updatedAt: Date;
+  customerName?: string | null;
+  projectName?: string | null;
+  invoiceNumber?: string | null;
+  invoiceStatus?: string | null;
 }
 
 export interface ExpenseSummary {

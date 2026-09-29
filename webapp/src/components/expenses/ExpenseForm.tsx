@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EXPENSE_CATEGORY_OPTIONS } from "./ExpenseCategoryBadge";
+import CustomerSelector from "@/components/CustomerSelector";
+import ProjectSelector from "@/components/ProjectSelector";
 import type { ApiExpense } from "@/types/api";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -11,6 +13,9 @@ export interface ExpenseFormData {
   category: string;
   expense_date: string;
   payment_method: string;
+  vendor: string;
+  customer_id: string | null;
+  project_id: string | null;
   receipt_url: string;
   notes: string;
   is_billable: boolean;
@@ -43,6 +48,9 @@ export default function ExpenseForm({
     category: "other",
     expense_date: new Date().toISOString().slice(0, 10),
     payment_method: "cash",
+    vendor: "",
+    customer_id: null,
+    project_id: null,
     receipt_url: "",
     notes: "",
     is_billable: false,
@@ -61,6 +69,9 @@ export default function ExpenseForm({
           ? new Date(initialData.expense_date).toISOString().slice(0, 10)
           : new Date().toISOString().slice(0, 10),
         payment_method: initialData.payment_method ?? "cash",
+        vendor: initialData.vendor ?? "",
+        customer_id: initialData.customer_id ?? null,
+        project_id: initialData.project_id ?? null,
         receipt_url: initialData.receipt_url ?? "",
         notes: initialData.notes ?? "",
         is_billable: initialData.is_billable ?? false,
@@ -109,6 +120,9 @@ export default function ExpenseForm({
       category: "other",
       expense_date: new Date().toISOString().slice(0, 10),
       payment_method: "cash",
+      vendor: "",
+      customer_id: null,
+      project_id: null,
       receipt_url: "",
       notes: "",
       is_billable: false,
@@ -246,18 +260,55 @@ export default function ExpenseForm({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-secondary mb-1">
+                Vendor
+              </label>
+              <input
+                type="text"
+                value={formData.vendor}
+                onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Who was this paid to?"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary mb-1">
+                Receipt URL
+              </label>
+              <input
+                type="url"
+                value={formData.receipt_url}
+                onChange={(e) =>
+                  setFormData({ ...formData, receipt_url: e.target.value })
+                }
+                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">
-              Receipt URL
+              Customer
             </label>
-            <input
-              type="url"
-              value={formData.receipt_url}
-              onChange={(e) =>
-                setFormData({ ...formData, receipt_url: e.target.value })
-              }
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="https://..."
+            <CustomerSelector
+              value={formData.customer_id ?? undefined}
+              onChange={(val) => setFormData({ ...formData, customer_id: val ?? null })}
+              placeholder="Assign to a customer"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary mb-1">
+              Project
+            </label>
+            <ProjectSelector
+              value={formData.project_id ?? undefined}
+              onChange={(val) => setFormData({ ...formData, project_id: val ?? null })}
+              placeholder="Assign to a project"
             />
           </div>
 

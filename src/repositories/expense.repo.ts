@@ -18,6 +18,9 @@ export interface ExpenseSearchOpts {
   minAmount?: number;
   maxAmount?: number;
   search?: string;
+  vendor?: string;
+  customerName?: string;
+  projectName?: string;
   limit?: number;
   offset?: number;
   sortBy?: string;
@@ -33,6 +36,7 @@ export interface ExpenseInput {
   category?: ExpenseCategoryType;
   expenseDate?: string | Date;
   paymentMethod?: string;
+  vendor?: string | null;
   receiptUrl?: string | null;
   notes?: string | null;
   isBillable?: boolean;
@@ -41,12 +45,14 @@ export interface ExpenseInput {
 export interface ExpenseUpdateInput {
   customerId?: string | null;
   projectId?: string | null;
+  invoiceId?: string | null;
   description?: string;
   amount?: Decimal.Value;
   currency?: string;
   category?: ExpenseCategoryType;
   expenseDate?: string | Date;
   paymentMethod?: string;
+  vendor?: string | null;
   receiptUrl?: string | null;
   notes?: string | null;
   isBillable?: boolean;
@@ -75,42 +81,55 @@ export class ExpenseRepository {
         : input.expenseDate
       : new Date().toISOString().split("T")[0];
 
-    const res = await query(
-      `INSERT INTO expenses (
-        id, business_id, user_id, customer_id, project_id, invoice_id,
-        description, amount, currency, category, expense_date,
-        payment_method, receipt_url, notes, is_billable, is_reimbursed,
-        created_at, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, NULL,
-        $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, false,
-        $15, $15
-      ) RETURNING *`,
-      [
-        id,
-        businessId,
-        userId ?? null,
-        input.customerId ?? null,
-        input.projectId ?? null,
-        input.description,
-        amount.toFixed(2),
-        input.currency ?? "USD",
-        input.category ?? "other",
-        expenseDate,
-        input.paymentMethod ?? "cash",
-        input.receiptUrl ?? null,
-        input.notes ?? null,
-        input.isBillable ?? false,
-        now,
-      ]
+     const res = await query(
+       `INSERT INTO expenses (
+         id, business_id, user_id, customer_id, project_id, invoice_id,
+         description, amount, currency, category, expense_date,
+         payment_method, vendor, receipt_url, notes, is_billable, is_reimbursed,
+         created_at, updated_at
+       ) VALUES (
+         $1, $2, $3, $4, $5, NULL,
+         $6, $7, $8, $9, $10,
+         $11, $12, $13, $14, $15, false,
+         $16, $16
+       ) RETURNING *`,
+       [
+         id,
+         businessId,
+         userId ?? null,
+         input.customerId ?? null,
+         input.projectId ?? null,
+         input.description,
+         amount.toFixed(2),
+         input.currency ?? "USD",
+         input.category ?? "other",
+         expenseDate,
+         input.paymentMethod ?? "cash",
+         input.vendor ?? null,
+         input.receiptUrl ?? null,
+         input.notes ?? null,
+         input.isBillable ?? false,
+         now,
+       ]
     );
 
     return this.rowToModel(res.rows[0]);
   }
 
   async findById(businessId: string, id: string): Promise<Expense> {
-    const res = await query(`SELECT * FROM expenses WHERE id = $1 AND business_id = $2`, [id, businessId]);
+    const res = await query(
+      `SELECT e.*, 
+          c.name as customer_name, 
+          p.name as project_name,
+          i.invoice_number,
+          i.status as invoice_status
+       FROM expenses e
+       LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
+       LEFT JOIN projects p ON p.id = e.project_id AND p.business_id = e.business_id
+       LEFT JOIN invoices i ON i.id = e.invoice_id AND i.business_id = e.business_id
+       WHERE e.id = $1 AND e.business_id = $2`,
+      [id, businessId]
+    );
     if (!res.rows.length) throw new NotFoundError(`Expense ${id} not found`);
     return this.rowToModel(res.rows[0]);
   }
@@ -121,7 +140,7 @@ export class ExpenseRepository {
     const sortBy = opts.sortBy ?? "expense_date";
     const sortOrder = opts.sortOrder ?? "desc";
 
-    const conditions: string[] = ["business_id = $1"];
+    const conditions: string[] = ["e.business_id = $1"];
     const vals: unknown[] = [businessId];
     let i = 2;
 
@@ -165,17 +184,37 @@ export class ExpenseRepository {
       conditions.push(`amount <= $${i++}::numeric`);
       vals.push(opts.maxAmount);
     }
-    if (opts.search) {
-      conditions.push(`description ILIKE $${i++}`);
-      vals.push(`%${opts.search}%`);
-    }
+     if (opts.search) {
+       conditions.push(`(e.description ILIKE $${i} OR c.name ILIKE $${i} OR p.name ILIKE $${i})`);
+       vals.push(`%${opts.search}%`);
+       i++;
+     }
+     if (opts.vendor) {
+       conditions.push(`vendor ILIKE $${i++}`);
+       vals.push(`%${opts.vendor}%`);
+     }
+     if (opts.customerName) {
+       conditions.push(`c.name ILIKE $${i++}`);
+       vals.push(`%${opts.customerName}%`);
+     }
+     if (opts.projectName) {
+       conditions.push(`p.name ILIKE $${i++}`);
+       vals.push(`%${opts.projectName}%`);
+     }
 
     const sortCol = SORTABLE_COLUMNS[sortBy] || "expense_date";
     const sortDir = sortOrder === "desc" ? "DESC" : "ASC";
 
     const dataRes = await query(
-      `SELECT *, COUNT(*) OVER() AS total_count
-       FROM expenses
+      `SELECT e.*, 
+          c.name as customer_name, 
+          p.name as project_name,
+          i.invoice_number,
+          COUNT(*) OVER() AS total_count
+       FROM expenses e
+       LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
+       LEFT JOIN projects p ON p.id = e.project_id AND p.business_id = e.business_id
+       LEFT JOIN invoices i ON i.id = e.invoice_id AND i.business_id = e.business_id
         WHERE ${conditions.join(" AND ")}
         ORDER BY ${sortCol} ${sortDir}, created_at DESC
         LIMIT $${i++} OFFSET $${i}`,
@@ -199,9 +238,10 @@ export class ExpenseRepository {
       vals.push(value);
     };
 
-    if (input.customerId !== undefined) setField("customer_id", input.customerId);
-    if (input.projectId !== undefined) setField("project_id", input.projectId);
-    if (input.description !== undefined) setField("description", input.description);
+     if (input.customerId !== undefined) setField("customer_id", input.customerId);
+     if (input.projectId !== undefined) setField("project_id", input.projectId);
+     if (input.invoiceId !== undefined) setField("invoice_id", input.invoiceId);
+     if (input.description !== undefined) setField("description", input.description);
     if (input.amount !== undefined) {
       const amount = new Decimal(input.amount);
       if (amount.isNegative()) {
@@ -217,8 +257,9 @@ export class ExpenseRepository {
         : input.expenseDate;
       setField("expense_date", d);
     }
-    if (input.paymentMethod !== undefined) setField("payment_method", input.paymentMethod);
-    if (input.receiptUrl !== undefined) setField("receipt_url", input.receiptUrl);
+     if (input.paymentMethod !== undefined) setField("payment_method", input.paymentMethod);
+     if (input.vendor !== undefined) setField("vendor", input.vendor);
+     if (input.receiptUrl !== undefined) setField("receipt_url", input.receiptUrl);
     if (input.notes !== undefined) setField("notes", input.notes);
     if (input.isBillable !== undefined) setField("is_billable", input.isBillable);
     if (input.isReimbursed !== undefined) setField("is_reimbursed", input.isReimbursed);
@@ -261,23 +302,37 @@ export class ExpenseRepository {
       conditions.push(`expense_date >= $${i++}::date`);
       vals.push(opts.dateFrom.toISOString().split("T")[0]);
     }
-    if (opts.dateTo) {
-      conditions.push(`expense_date <= $${i++}::date`);
-      vals.push(opts.dateTo.toISOString().split("T")[0]);
-    }
+     if (opts.dateTo) {
+       conditions.push(`expense_date <= $${i++}::date`);
+       vals.push(opts.dateTo.toISOString().split("T")[0]);
+     }
+     if (opts.vendor) {
+       conditions.push(`vendor ILIKE $${i++}`);
+       vals.push(`%${opts.vendor}%`);
+     }
+     if (opts.customerName) {
+       conditions.push(`c.name ILIKE $${i++}`);
+       vals.push(`%${opts.customerName}%`);
+     }
+     if (opts.projectName) {
+       conditions.push(`p.name ILIKE $${i++}`);
+       vals.push(`%${opts.projectName}%`);
+     }
 
-    const res = await query(
+     const res = await query(
       `SELECT
-         COALESCE(SUM(amount), 0) as total_amount,
-         COALESCE(SUM(CASE WHEN is_billable THEN amount ELSE 0 END), 0) as billable_amount,
-         COALESCE(SUM(CASE WHEN is_reimbursed THEN amount ELSE 0 END), 0) as reimbursed_amount,
-         COALESCE(SUM(CASE WHEN is_billable AND NOT is_reimbursed THEN amount ELSE 0 END), 0) as non_reimbursed_billable,
-         COUNT(*) as count,
-         MAX(currency) as currency
-       FROM expenses
-       WHERE ${conditions.join(" AND ")}`,
-      vals
-    );
+           COALESCE(SUM(amount), 0) as total_amount,
+          COALESCE(SUM(CASE WHEN is_billable THEN amount ELSE 0 END), 0) as billable_amount,
+          COALESCE(SUM(CASE WHEN is_reimbursed THEN amount ELSE 0 END), 0) as reimbursed_amount,
+          COALESCE(SUM(CASE WHEN is_billable AND NOT is_reimbursed THEN amount ELSE 0 END), 0) as non_reimbursed_billable,
+          COUNT(*) as count,
+          MAX(currency) as currency
+        FROM expenses e
+        LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
+        LEFT JOIN projects p ON p.id = e.project_id AND p.business_id = e.business_id
+        WHERE ${conditions.join(" AND ")}`,
+       vals
+     );
 
     const r = res.rows[0];
     return {
@@ -386,13 +441,18 @@ export class ExpenseRepository {
        currency: (r.currency as string) as Expense["currency"],
       category: (r.category as ExpenseCategory) || "other",
       expenseDate: rowToDate(r.expense_date) ?? new Date(),
-      paymentMethod: (r.payment_method as string) || "cash",
-      receiptUrl: r.receipt_url as string | null,
+       paymentMethod: (r.payment_method as string) || "cash",
+       vendor: r.vendor as string | null,
+       receiptUrl: r.receipt_url as string | null,
       notes: r.notes as string | null,
       isBillable: Boolean(r.is_billable),
       isReimbursed: Boolean(r.is_reimbursed),
       createdAt: rowToDate(r.created_at)!,
       updatedAt: rowToDate(r.updated_at)!,
+      customerName: r.customer_name as string | null,
+      projectName: r.project_name as string | null,
+      invoiceNumber: r.invoice_number as string | null,
+      invoiceStatus: r.invoice_status as string | null,
     };
   }
 }
