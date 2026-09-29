@@ -6,6 +6,7 @@ import type { Expense, ExpenseSummary } from "../domain/models/expense.js";
 import type { ExpenseCreateInput, ExpenseUpdateInput, ExpenseSearchInput } from "../domain/schemas/expense.js";
 import type { PagedResult } from "../repositories/helpers.js";
 import type { ExpenseCategory } from "../domain/models/expense.js";
+import { invalidateReportsCache } from "../services/reports-cache.js";
 
 export interface ExpenseCategoryBreakdown {
   category: ExpenseCategory;
@@ -32,7 +33,9 @@ export class ExpenseService {
       ...input,
       amount: new Decimal(input.amount),
     };
-    return this.repo.create(businessId, expenseInput, userId ?? null);
+    const result = await this.repo.create(businessId, expenseInput, userId ?? null);
+    invalidateReportsCache(businessId);
+    return result;
   }
 
   async getById(businessId: string, id: string): Promise<Expense> {
@@ -62,12 +65,15 @@ export class ExpenseService {
       updateInput.amount = new Decimal(input.amount);
     }
 
-    return this.repo.update(businessId, id, updateInput);
+    const result = await this.repo.update(businessId, id, updateInput);
+    invalidateReportsCache(businessId);
+    return result;
   }
 
   async delete(businessId: string, id: string): Promise<void> {
     await this.repo.findById(businessId, id);
     await this.repo.delete(businessId, id);
+    invalidateReportsCache(businessId);
   }
 
   async getSummary(businessId: string, opts: ExpenseSearchInput): Promise<ExpenseSummary> {

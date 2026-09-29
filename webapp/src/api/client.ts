@@ -24,6 +24,16 @@ import type {
   ApiPaymentSummary,
   ApiPaymentDetail,
   ApiPaymentEvent,
+  ReportFiltersParams,
+  ApiDashboardSummary,
+  ApiRevenueReport,
+  ApiInvoicesReport,
+  ApiPaymentsReport,
+  ApiExpensesReport,
+  ApiClientsReport,
+  ApiTaxSummaryReport,
+  ApiProfitLossReport,
+  ApiAgingReport,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -47,6 +57,16 @@ export type {
   ApiPaymentSummary,
   ApiPaymentDetail,
   ApiPaymentEvent,
+  ReportFiltersParams,
+  ApiDashboardSummary,
+  ApiRevenueReport,
+  ApiInvoicesReport,
+  ApiPaymentsReport,
+  ApiExpensesReport,
+  ApiClientsReport,
+  ApiTaxSummaryReport,
+  ApiProfitLossReport,
+  ApiAgingReport,
 };
 
 declare module "axios" {
@@ -402,16 +422,6 @@ export async function getRecurring() {
 
 export async function createRecurring(data: any) {
   const res = await api.post("/recurring", data);
-  return res.data;
-}
-
-export async function getRevenueReport() {
-  const res = await api.get("/reports/revenue");
-  return res.data;
-}
-
-export async function getTaxSummaryReport() {
-  const res = await api.get("/reports/tax-summary");
   return res.data;
 }
 
@@ -1156,11 +1166,6 @@ export async function getEnhancedDashboard() {
   return res.data;
 }
 
-export async function getAgingReport() {
-  const res = await api.get("/reports/aging");
-  return res.data;
-}
-
 export async function getPaymentMetricsReport() {
   const res = await api.get("/reports/payment-metrics");
   return res.data;
@@ -1690,3 +1695,76 @@ export async function getStripeConfigTyped(): Promise<StripeConfig> {
   const res = await api.get("/stripe/config");
   return res.data;
 }
+
+// ============================================================================
+// ENHANCED REPORTS — dashboard, revenue, invoices, payments, expenses,
+// clients, tax summary, profit & loss, aging
+// ============================================================================
+
+export async function getDashboardSummary(): Promise<ApiDashboardSummary> {
+  const res = await api.get("/reports/dashboard");
+  return res.data;
+}
+
+export async function getRevenueReport(params?: ReportFiltersParams): Promise<ApiRevenueReport> {
+  const res = await api.get("/reports/revenue", { params: buildReportParams(params) });
+  return res.data;
+}
+
+export async function getInvoicesReport(params?: ReportFiltersParams): Promise<ApiInvoicesReport> {
+  const res = await api.get("/reports/invoices", { params: buildReportParams(params) });
+  return res.data;
+}
+
+export async function getPaymentsReport(params?: ReportFiltersParams): Promise<ApiPaymentsReport> {
+  const res = await api.get("/reports/payments", { params: buildReportParams(params) });
+  return res.data;
+}
+
+export async function getExpensesReport(params?: ReportFiltersParams): Promise<ApiExpensesReport> {
+  const res = await api.get("/reports/expenses", { params: buildReportParams(params) });
+  return res.data;
+}
+
+export async function getClientsReport(params?: ReportFiltersParams): Promise<ApiClientsReport> {
+  const res = await api.get("/reports/clients", { params: buildReportParams(params) });
+  return res.data;
+}
+
+export async function getTaxSummaryReport(params?: ReportFiltersParams): Promise<ApiTaxSummaryReport> {
+  const res = await api.get("/reports/tax-summary", { params: buildReportParams(params) });
+  return res.data;
+}
+
+export async function getProfitLossReport(params?: ReportFiltersParams): Promise<ApiProfitLossReport> {
+  const res = await api.get("/reports/profit-loss", { params: buildReportParams(params) });
+  return res.data;
+}
+
+export async function getAgingReport(): Promise<ApiAgingReport> {
+  const res = await api.get("/reports/aging");
+  return res.data;
+}
+
+export async function exportReportCsv(reportType: string, params?: ReportFiltersParams): Promise<Blob> {
+  const res = await api.get(`/reports/${reportType}/csv`, {
+    params: buildReportParams(params),
+    responseType: "blob",
+  });
+  return res.data;
+}
+
+function buildReportParams(params?: ReportFiltersParams): Record<string, any> {
+  if (!params) return {};
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    if (Array.isArray(value)) {
+      result[key] = value;
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+

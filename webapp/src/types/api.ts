@@ -975,3 +975,262 @@ export interface ApiExpenseBudgetSettings {
   budget_warning_threshold: number;
   budget_over_threshold: number;
 }
+
+// ============================================================================
+// REPORTS
+// ============================================================================
+
+export interface ReportFiltersParams {
+  dateFrom?: string;
+  dateTo?: string;
+  customerId?: string;
+  projectId?: string;
+  status?: string | string[];
+  category?: string;
+  search?: string;
+  provider?: string;
+  paymentStatus?: string | string[];
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export interface ApiDashboardSummary {
+  totalRevenue: string;
+  totalOutstanding: string;
+  paymentsReceived: string;
+  expenses: string;
+  netIncome: string;
+  totalOverdue: string;
+  draftCount: number;
+  overdueCount: number;
+  sentCount: number;
+  paidCount: number;
+  totalInvoices: number;
+  currency: string;
+}
+
+export interface ApiRevenueByPeriod {
+  period: string;
+  invoiced: string;
+  paid: string;
+  count: number;
+  currency: string;
+}
+
+export interface ApiRevenueByStatus {
+  status: string;
+  count: number;
+  total_amount: string;
+  paid_amount: string;
+  outstanding_amount: string;
+  currency: string;
+}
+
+export interface ApiRevenueByCustomer {
+  customerId: string;
+  customerName: string | null;
+  invoiceCount: number;
+  invoiced: string;
+  paid: string;
+  outstanding: string;
+  currency: string;
+}
+
+export interface ApiRevenueReport {
+  summary: ApiDashboardSummary;
+  byStatus: ApiRevenueByStatus[];
+  byPeriod: ApiRevenueByPeriod[];
+  byCustomer: ApiRevenueByCustomer[];
+}
+
+export interface ApiInvoiceReportItem {
+  id: string;
+  invoice_number: string | null;
+  customer_name: string | null;
+  customer_email: string | null;
+  status: string;
+  currency: string;
+  total: string;
+  amount_paid: string;
+  amount_due: string;
+  issue_date: string | null;
+  due_date: string | null;
+  paid_at: string | null;
+  days_overdue: number;
+  created_at: string;
+}
+
+export interface ApiInvoiceReportSummary {
+  totalInvoices: number;
+  totalInvoiced: string;
+  totalPaid: string;
+  totalOutstanding: string;
+  totalOverdue: string;
+  currency: string;
+  statusBreakdown: Array<{ status: string; count: number; amount: string }>;
+  byPeriod: ApiRevenueByPeriod[];
+}
+
+export interface ApiInvoicesReport {
+  summary: ApiInvoiceReportSummary;
+  invoices: ApiInvoiceReportItem[];
+}
+
+export interface ApiPaymentReportItem {
+  id: string;
+  invoice_id: string;
+  invoice_number: string | null;
+  customer_name: string | null;
+  amount: string;
+  currency: string;
+  status: string;
+  method: string | null;
+  provider: string;
+  paid_at: string | null;
+  created_at: string;
+}
+
+export interface ApiPaymentReportSummary {
+  totalPayments: number;
+  totalAmount: string;
+  totalPaid: string;
+  totalPending: string;
+  totalFailed: string;
+  totalRefunded: string;
+  paymentsThisMonth: string;
+  currency: string;
+  providerBreakdown: Array<{ provider: string; count: number; amount: string }>;
+  methodBreakdown: Array<{ method: string; count: number; amount: string }>;
+  dailyTrend: Array<{ date: string; amount: string; count: number }>;
+}
+
+export interface ApiPaymentsReport {
+  summary: ApiPaymentReportSummary;
+  payments: ApiPaymentReportItem[];
+}
+
+export interface ApiExpenseReportItem {
+  id: string;
+  description: string;
+  amount: string;
+  currency: string;
+  category: string;
+  expense_date: string;
+  payment_method: string;
+  vendor: string | null;
+  is_billable: boolean;
+  is_reimbursed: boolean;
+  customer_name?: string | null;
+  project_name?: string | null;
+  invoice_number?: string | null;
+}
+
+export interface ApiExpenseReportSummary {
+  totalExpenses: number;
+  totalAmount: string;
+  billableAmount: string;
+  reimbursedAmount: string;
+  nonReimbursedBillable: string;
+  currency: string;
+  categoryBreakdown: Array<{ category: string; total: string; count: number; percentage: number }>;
+  monthlyTrend: Array<{ period: string; amount: string; count: number }>;
+}
+
+export interface ApiExpensesReport {
+  summary: ApiExpenseReportSummary;
+  expenses: ApiExpenseReportItem[];
+}
+
+export interface ApiClientReportItem {
+  id: string;
+  name: string;
+  company_name: string | null;
+  email: string | null;
+  phone: string | null;
+  country_code: string | null;
+  invoice_count: number;
+  total_invoiced: string;
+  total_paid: string;
+  total_outstanding: string;
+  last_invoice_date: string | null;
+  currency: string;
+}
+
+export interface ApiClientReportSummary {
+  totalClients: number;
+  totalInvoiced: string;
+  totalPaid: string;
+  totalOutstanding: string;
+  averageInvoiceValue: string;
+  currency: string;
+}
+
+export interface ApiClientsReport {
+  summary: ApiClientReportSummary;
+  clients: ApiClientReportItem[];
+}
+
+export interface ApiTaxSummaryItem {
+  period: string;
+  tax_collected: string;
+  taxable_amount: string;
+  invoice_count: number;
+  currency: string;
+}
+
+export interface ApiTaxSummaryBreakdown {
+  rate: string;
+  name: string;
+  taxable_basis: string;
+  tax_collected: string;
+  invoice_count: number;
+  currency: string;
+}
+
+export interface ApiTaxSummaryReport {
+  summary: {
+    totalTaxCollected: string;
+    totalTaxableAmount: string;
+    periodStart: string | null;
+    periodEnd: string | null;
+    currency: string;
+  };
+  byPeriod: ApiTaxSummaryItem[];
+  byRate: ApiTaxSummaryBreakdown[];
+}
+
+export interface ApiProfitLossReport {
+  periodStart: string | null;
+  periodEnd: string | null;
+  currency: string;
+  revenue: {
+    total: string;
+    count: number;
+    byMonth: Array<{ period: string; amount: string; count: number }>;
+  };
+  expenses: {
+    total: string;
+    count: number;
+    byCategory: Array<{ category: string; total: string; count: number }>;
+    byMonth: Array<{ period: string; amount: string; count: number }>;
+  };
+  netIncome: string;
+  grossMargin: number;
+}
+
+export interface ApiAgingBucket {
+  bucket: "current" | "1-30" | "31-60" | "61-90" | "90+";
+  count: number;
+  amount: string;
+}
+
+export interface ApiAgingReport {
+  buckets: ApiAgingBucket[];
+  summary: {
+    totalOutstanding: string;
+    totalOverdue: string;
+    currency: string;
+  };
+}

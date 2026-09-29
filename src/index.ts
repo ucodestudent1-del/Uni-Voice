@@ -13,6 +13,7 @@ import { subscriptionService } from "./services/subscription.service.js";
 import { requireAuth, optionalAuth, AuthRequest, generateToken } from "./middleware/auth.js";
 import { requireEntitlement, requireUsageLimit } from "./middleware/entitlement.js";
 import { reportsCache, invalidateReportsCache } from "./services/reports-cache.js";
+import { reportsService, type ReportFilters } from "./services/reports-service.js";
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
@@ -1406,6 +1407,213 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
   };
   reportsCache.set(cacheKey, response);
    res.json(response);
+});
+
+// ============================================================================
+// ENHANCED REPORTS — revenue, invoices, payments, expenses, clients,
+// tax summary, profit & loss (Business plan)
+// ============================================================================
+
+app.get("/api/reports/dashboard", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await reportsService.getDashboardSummary(req.user!.businessId);
+  res.json(result);
+});
+
+app.get("/api/reports/revenue", requireAuth, requireEntitlement("reports.revenue"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const filters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    customerId: req.query.customerId as string | undefined,
+    status: req.query.status as string | string[] | undefined,
+  };
+  const result = await reportsService.getRevenueReport(req.user!.businessId, filters);
+  res.json(result);
+});
+
+app.get("/api/reports/invoices", requireAuth, requireEntitlement("reports.invoices"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const status = req.query.status;
+  const filters: ReportFilters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    customerId: req.query.customerId as string | undefined,
+    projectId: req.query.projectId as string | undefined,
+    status: Array.isArray(status)
+      ? status.map((s) => String(s))
+      : status ? [String(status)] : undefined,
+    search: req.query.search as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+    sortBy: req.query.sortBy as string | undefined,
+    sortOrder: (req.query.sortOrder as string | undefined) as "asc" | "desc" | undefined,
+  };
+  const result = await reportsService.getInvoicesReport(req.user!.businessId, filters);
+  res.json(result);
+});
+
+app.get("/api/reports/payments", requireAuth, requireEntitlement("reports.payments"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const status = req.query.status;
+  const filters: ReportFilters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    provider: req.query.provider as string | undefined,
+    search: req.query.search as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+    sortBy: req.query.sortBy as string | undefined,
+    sortOrder: (req.query.sortOrder as string | undefined) as "asc" | "desc" | undefined,
+  };
+  if (status) {
+    filters.paymentStatus = Array.isArray(status) ? status.map((s) => String(s)) : [String(status)];
+  }
+  const result = await reportsService.getPaymentsReport(req.user!.businessId, filters);
+  res.json(result);
+});
+
+app.get("/api/reports/expenses", requireAuth, requireEntitlement("reports.expenses"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const filters: ReportFilters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    customerId: req.query.customerId as string | undefined,
+    projectId: req.query.projectId as string | undefined,
+    category: req.query.category as string | undefined,
+    search: req.query.search as string | undefined,
+    vendor: req.query.vendor as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+    sortBy: req.query.sortBy as string | undefined,
+    sortOrder: (req.query.sortOrder as string | undefined) as "asc" | "desc" | undefined,
+  };
+  const result = await reportsService.getExpensesReport(req.user!.businessId, filters);
+  res.json(result);
+});
+
+app.get("/api/reports/clients", requireAuth, requireEntitlement("reports.clients"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const filters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    search: req.query.search as string | undefined,
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+  };
+  const result = await reportsService.getClientsReport(req.user!.businessId, filters);
+  res.json(result);
+});
+
+app.get("/api/reports/tax-summary", requireAuth, requireEntitlement("reports.tax_summary"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const filters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+  };
+  const result = await reportsService.getTaxSummaryReport(req.user!.businessId, filters);
+  res.json(result);
+});
+
+app.get("/api/reports/profit-loss", requireAuth, requireEntitlement("reports.profit_loss"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const filters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+  };
+  const result = await reportsService.getProfitLossReport(req.user!.businessId, filters);
+  res.json(result);
+});
+
+app.get("/api/reports/aging", requireAuth, requireEntitlement("reports.aging"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await reportsService.getAgingReport(req.user!.businessId);
+  res.json(result);
+});
+
+// Report CSV export endpoints
+app.get("/api/reports/revenue/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const report = await reportsService.getRevenueReport(req.user!.businessId, {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    customerId: req.query.customerId as string | undefined,
+  });
+  const headers = ["status", "count", "total_amount", "paid_amount", "outstanding_amount"];
+  const rows = [headers.join(",")];
+  for (const r of report.byStatus) {
+    rows.push(headers.map((h) => JSON.stringify(String(r[h as keyof typeof r] ?? ""))).join(","));
+  }
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=revenue-report.csv");
+  res.send(rows.join("\n"));
+});
+
+app.get("/api/reports/invoices/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const report = await reportsService.getInvoicesReport(req.user!.businessId, {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    customerId: req.query.customerId as string | undefined,
+    status: req.query.status ? (Array.isArray(req.query.status) ? req.query.status as string[] : [req.query.status as string]) : undefined,
+    search: req.query.search as string | undefined,
+  });
+  const headers = ["invoice_number", "customer_name", "status", "total", "amount_paid", "amount_due", "issue_date", "due_date", "paid_at", "days_overdue"];
+  const rows = [headers.join(",")];
+  for (const r of report.invoices) {
+    rows.push(headers.map((h) => JSON.stringify(String((r as any)[h] ?? ""))).join(","));
+  }
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=invoices-report.csv");
+  res.send(rows.join("\n"));
+});
+
+app.get("/api/reports/payments/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const report = await reportsService.getPaymentsReport(req.user!.businessId, {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    provider: req.query.provider as string | undefined,
+  });
+  const headers = ["paid_at", "invoice_number", "customer_name", "amount", "currency", "status", "method", "provider"];
+  const rows = [headers.join(",")];
+  for (const r of report.payments) {
+    rows.push(headers.map((h) => JSON.stringify(String((r as any)[h] ?? ""))).join(","));
+  }
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=payments-report.csv");
+  res.send(rows.join("\n"));
+});
+
+app.get("/api/reports/expenses/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const report = await reportsService.getExpensesReport(req.user!.businessId, {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+    category: req.query.category as string | undefined,
+    vendor: req.query.vendor as string | undefined,
+  });
+  const headers = ["expense_date", "vendor", "description", "category", "amount", "currency", "payment_method", "is_billable", "is_reimbursed"];
+  const rows = [headers.join(",")];
+  for (const r of report.expenses) {
+    rows.push(headers.map((h) => JSON.stringify(String((r as any)[h] ?? ""))).join(","));
+  }
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=expenses-report.csv");
+  res.send(rows.join("\n"));
+});
+
+app.get("/api/reports/clients/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const report = await reportsService.getClientsReport(req.user!.businessId);
+  const headers = ["name", "company_name", "email", "phone", "country_code", "invoice_count", "total_invoiced", "total_paid", "total_outstanding", "last_invoice_date"];
+  const rows = [headers.join(",")];
+  for (const r of report.clients) {
+    rows.push(headers.map((h) => JSON.stringify(String((r as any)[h] ?? ""))).join(","));
+  }
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=clients-report.csv");
+  res.send(rows.join("\n"));
 });
 
 // ============================================================================
