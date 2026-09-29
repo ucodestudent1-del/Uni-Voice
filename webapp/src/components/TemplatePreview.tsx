@@ -30,26 +30,69 @@ const SAMPLE_CUSTOMER = {
 const SAMPLE_ITEMS = [
   {
     id: "item-1",
-    description: "Service — Monthly Retainer",
-    quantity: "1",
-    unit: "month",
-    unitPrice: "0.00",
+    description: "Monthly retainer — January services",
+    quantity: "10",
+    unit: "hour",
+    unitPrice: "150.00",
     discount: "0.00",
-    taxRate: "0.00",
+    taxRate: "0.0825",
+    isTaxInclusive: false,
+  },
+  {
+    id: "item-2",
+    description: "Research and consultation",
+    quantity: "5",
+    unit: "hour",
+    unitPrice: "200.00",
+    discount: "0.00",
+    taxRate: "0.0825",
     isTaxInclusive: false,
   },
 ];
 
+const SAMPLE_FEES = [
+  { description: "Filing fee", amount: "350.00", taxRate: "0.0825" },
+  { description: "Service fee", amount: "50.00", taxRate: "0.0825" },
+];
+
+const SAMPLE_CUSTOM_FIELDS: Record<string, string> = {
+  hours: "10",
+  rate: "150.00",
+  court_costs: "350.00",
+  retainer_balance: "2000.00",
+  retainer: "2000.00",
+  expenses: "450.00",
+  milestone: "Design",
+  case_number: "CV-2024-1234",
+  project: "Website Redesign",
+  property_address: "456 Oak Avenue",
+  frequency: "Monthly",
+  service_location: "Main Building",
+  vin: "1HGBH41JXMN109186",
+  service_type: "Maintenance",
+  order_number: "ORD-7742",
+  project_code: "PRJ-2024-09",
+  platform_fee: "75.00",
+  warranty: "12 months parts, 90 days labor",
+  property_access: "Leave keys with building management",
+  delivery_date: "2024-12-25",
+  job_site: "123 Main St, Suite 100",
+  job_number: "JOB-001",
+  retention: "5",
+  deposit: "500.00",
+};
+
 const SAMPLE_INVOICE = {
   invoiceNumber: "INV-000001",
-  issueDate: "",
-  dueDate: "",
+  issueDate: "2024-09-15",
+  dueDate: "2024-10-15",
   currency: "USD",
   items: SAMPLE_ITEMS,
-  fees: [],
-  notes: "",
-  terms: "",
-  paymentInstructions: "",
+  fees: SAMPLE_FEES,
+  customFields: SAMPLE_CUSTOM_FIELDS,
+  notes: "Thank you for your business. Please let us know if you have any questions.",
+  terms: "Payment is due within 30 days. A 2% late fee applies to overdue balances.",
+  paymentInstructions: "Pay via bank transfer to account #1234-5678-9012. Reference invoice number.",
 };
 
 interface TemplatePreviewProps {
@@ -78,15 +121,21 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
     };
 
     const subtotal = SAMPLE_ITEMS.reduce((sum, item) => sum.add(calcLineTotal(item)), new Decimal(0)).toFixed(2);
-    const taxRate = SAMPLE_ITEMS[0]?.taxRate || "0";
-    const taxTotal = new Decimal(subtotal).mul(taxRate).toFixed(2);
-    const total = new Decimal(subtotal).plus(taxTotal).toFixed(2);
+    const taxTotal = SAMPLE_ITEMS.reduce(
+      (sum, item) => sum.add(new Decimal(calcLineTotal(item)).mul(item.taxRate || "0")),
+      new Decimal(0)
+    ).toFixed(2);
+    const feeTotal = SAMPLE_FEES.reduce(
+      (sum, fee) => sum.add(new Decimal(fee.amount).mul(new Decimal(1).plus(fee.taxRate || "0"))),
+      new Decimal(0)
+    ).toFixed(2);
+    const total = new Decimal(subtotal).plus(taxTotal).plus(feeTotal).toFixed(2);
 
     const calculations = {
       subtotal,
       discountTotal: "0.00",
       taxTotal,
-      feeTotal: "0.00",
+      feeTotal,
       total,
       amountDue: total,
       lineItems: SAMPLE_ITEMS.map((item) => ({
@@ -96,7 +145,7 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
         discountAmount: "0.00",
         taxAmount: new Decimal(item.quantity).mul(item.unitPrice).mul(item.taxRate || "0").toFixed(2),
       })),
-      fees: [],
+      fees: SAMPLE_FEES,
       formatCurrency: (value: unknown, currency: string) =>
         formatCurrency(
           new Decimal(typeof value === "string" || typeof value === "number" ? value : 0),

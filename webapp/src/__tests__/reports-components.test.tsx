@@ -13,6 +13,7 @@ const mockExpensesReport: ApiExpensesReport = {
     billableAmount: "500.00",
     reimbursedAmount: "300.00",
     nonReimbursedBillable: "200.00",
+    currency: "USD",
     categoryBreakdown: [
       { category: "supplies", total: "800.00", count: 5, percentage: 53.3 },
       { category: "software", total: "700.00", count: 7, percentage: 46.7 },
@@ -31,11 +32,15 @@ const mockInvoicesReport: ApiInvoicesReport = {
     totalPaid: "3000.00",
     totalOutstanding: "2000.00",
     totalOverdue: "500.00",
+    currency: "USD",
+    statusBreakdown: [
+      { status: "sent", count: 8, amount: "4000.00" },
+      { status: "paid", count: 2, amount: "1000.00" },
+    ],
+    byPeriod: [
+      { period: "2026-09", invoiced: "5000.00", paid: "3000.00", count: 10, currency: "USD" },
+    ],
   },
-  statusBreakdown: [
-    { status: "sent", count: 8, amount: "4000.00" },
-    { status: "paid", count: 2, amount: "1000.00" },
-  ],
 };
 
 const mockPaymentsReport: ApiPaymentsReport = {

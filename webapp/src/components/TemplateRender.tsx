@@ -509,7 +509,11 @@ function renderComponent(
       const props = comp.props as any;
       const key = props?.key as string ?? "";
       const label = (props?.label as string) ?? key;
-      const value = props?.value as string ?? "";
+      const customFields = ctx.invoice?.customFields;
+      let value = props?.value as string ?? "";
+      if (customFields && key && customFields[key] !== undefined) {
+        value = customFields[key];
+      }
       return (
         <div {...baseProps}>
           <span className="label">{label}:</span> <span className="value">{value}</span>

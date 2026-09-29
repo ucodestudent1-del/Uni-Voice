@@ -659,6 +659,87 @@ function registerLineItemsComponent() {
       const currency = ctx.currency || component.props.currency;
       const { columns, showHeader, allowMultiPage } = component.props;
 
+      const formatCurrencyVal = (val: unknown): string => {
+        if (!ctx.calculations?.formatCurrency) {
+          const d = new Decimal(typeof val === "string" || typeof val === "number" ? val : 0);
+          return d.isZero() ? `0.00 ${currency}` : d.toFixed(2);
+        }
+        return ctx.calculations.formatCurrency(val, currency);
+      };
+
+      const formatRate = (val: unknown): string => {
+        const d = new Decimal(typeof val === "string" || typeof val === "number" ? val : 0).mul(100);
+        return d.toFixed(2) + "%";
+      };
+
+      const getColumnValue = (item: any, key: string): string => {
+        switch (key) {
+          case "description":
+            return item.description || "—";
+          case "quantity":
+          case "hours":
+          case "visits":
+            return `${item.quantity ?? "0"} ${item.unit || ""}`;
+          case "unit":
+            return item.unit || "";
+          case "unitPrice":
+          case "rate":
+          case "price":
+            return formatCurrencyVal(item.unitPrice);
+          case "discount":
+            return formatCurrencyVal(item.discount);
+          case "taxRate":
+          case "tax":
+            return formatRate(item.taxRate);
+          case "taxAmount":
+            return formatCurrencyVal(
+              new Decimal(item.quantity || 0).mul(item.unitPrice || 0).mul(item.taxRate || 0)
+            );
+          case "lineSubtotal":
+          case "subtotal":
+            return formatCurrencyVal(
+              new Decimal(item.quantity || 0).mul(item.unitPrice || 0)
+            );
+          case "lineTotal":
+          case "amount":
+          case "total": {
+            const lineTotal = ctx.calculations?.computeLineTotal
+              ? ctx.calculations.computeLineTotal(item, currency)
+              : new Decimal(item.quantity || 0).mul(item.unitPrice || 0).sub(item.discount || 0);
+            return formatCurrencyVal(lineTotal);
+          }
+          case "sku":
+            return item.sku || "";
+          case "product":
+            return item.product || "";
+          case "package":
+            return item.package || "";
+          case "usage":
+            return item.usage || "";
+          case "task":
+            return item.task || "";
+          case "type":
+            return item.type || "";
+          case "service":
+            return item.service || "";
+          case "milestone":
+            return item.milestone || "";
+          default: {
+            const val = item[key];
+            if (typeof val === "number" || typeof val === "string") {
+              if (key.toLowerCase().includes("price") || key.toLowerCase().includes("amount") || key.toLowerCase().includes("total")) {
+                return formatCurrencyVal(val);
+              }
+              if (key.toLowerCase().includes("tax") || key.toLowerCase().includes("rate")) {
+                return formatRate(val);
+              }
+              return String(val ?? "");
+            }
+            return "";
+          }
+        }
+      };
+
       return (
         <div className="overflow-x-auto" style={{ ...component.style }}>
           <table className="w-full border-collapse">
@@ -680,31 +761,11 @@ function registerLineItemsComponent() {
             <tbody>
               {items.map((item: any, i: number) => (
                 <tr key={item.id || i} className="border-b border-color-subtle">
-                  {columns.filter((c) => c.visible).map((col) => {
-                    let value: React.ReactNode = "";
-                    switch (col.key) {
-                      case "description":
-                        value = item.description || "—";
-                        break;
-                      case "quantity":
-                        value = `${item.quantity} ${item.unit || "each"}`;
-                        break;
-                      case "unitPrice":
-                        value = ctx.calculations?.formatCurrency(item.unitPrice, currency);
-                        break;
-                      case "amount":
-                        value = ctx.calculations?.formatCurrency(
-                          ctx.calculations.computeLineTotal(item, currency),
-                          currency
-                        );
-                        break;
-                    }
-                    return (
-                      <td key={col.key} className="py-3 text-sm" style={{ textAlign: col.align || "left" }}>
-                        {value}
-                      </td>
-                    );
-                  })}
+                  {columns.filter((c) => c.visible).map((col) => (
+                    <td key={col.key} className="py-3 text-sm" style={{ textAlign: col.align || "left" }}>
+                      {getColumnValue(item, col.key)}
+                    </td>
+                  ))}
                 </tr>
               ))}
               {items.length === 0 && (
@@ -1162,11 +1223,18 @@ function registerCustomFieldComponent() {
     }) as any,
     canHaveChildren: false,
     allowedParentTypes: ["column", "row", "section"],
-    render: (component) => {
+     render: (component, ctx) => {
+      const key = component.props.key;
+      const invoice = ctx.invoice;
+      const customFields = invoice?.customFields;
+      let value = component.props.value;
+      if (customFields && key && customFields[key] !== undefined) {
+        value = customFields[key];
+      }
       return (
         <div style={{ ...component.style }}>
           <span className="text-secondary">{component.props.label}</span>
-          <span className="font-medium text-primary">{component.props.value}</span>
+          <span className="font-medium text-primary">{value}</span>
         </div>
       );
     },
