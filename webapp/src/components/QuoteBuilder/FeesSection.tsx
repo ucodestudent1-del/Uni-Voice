@@ -1,6 +1,8 @@
-import { Trash2 } from "lucide-react";
-import { getCurrencyMetadata } from "../../utils/currency";
+import { Trash2, Plus } from "lucide-react";
+import { getCurrencyMetadata } from "@/utils/currency";
+import { Button } from "@/components/ui/Button";
 import type { BuilderFee } from "./types";
+import { DEFAULT_FEE, generateRowId } from "./types";
 
 interface FeesSectionProps {
   fees: BuilderFee[];
@@ -10,23 +12,38 @@ interface FeesSectionProps {
 
 export function FeesSection({ fees, currency, onChange }: FeesSectionProps) {
   const meta = getCurrencyMetadata(currency);
+  const step = meta.decimalPlaces === 0 ? "1" : "0.01";
 
   function updateFee(id: string, patch: Partial<BuilderFee>) {
-    onChange(fees.map(f => f.id === id ? { ...f, ...patch } : f));
+    onChange(fees.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
   function removeFee(id: string) {
-    onChange(fees.filter(f => f.id !== id));
+    onChange(fees.filter((f) => f.id !== id));
   }
 
   function addFee() {
     const newFee: BuilderFee = {
-      id: `fee_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      description: "",
-      amount: "0.00",
-      taxRate: "0",
+      id: generateRowId(),
+      ...DEFAULT_FEE,
     };
     onChange([...fees, newFee]);
+  }
+
+  if (fees.length === 0) {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-secondary">Fees</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<Plus className="h-4 w-4" />}
+          onClick={addFee}
+        >
+          Add Fee
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -34,74 +51,90 @@ export function FeesSection({ fees, currency, onChange }: FeesSectionProps) {
       <h3 className="text-sm font-medium text-secondary">Fees</h3>
 
       {fees.length > 0 && (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-color-subtle text-left text-xs font-medium text-secondary uppercase">
-              <th className="pb-2">Description</th>
-              <th className="pb-2 text-right">Amount</th>
-              <th className="pb-2 text-right">Tax %</th>
-              <th className="pb-2 w-[8%]">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fees.map((fee) => (
-              <tr key={fee.id} className="border-b border-color-subtle/50">
-                <td className="py-2">
+        <div className="space-y-3">
+          {fees.map((fee) => (
+            <div
+              key={fee.id}
+              className="rounded-xl border border-color-subtle bg-surface p-4 shadow-sm"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
+                <div>
+                  <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+                    Description
+                  </label>
                   <input
                     type="text"
                     value={fee.description}
                     onChange={(e) => updateFee(fee.id, { description: e.target.value })}
                     placeholder="Fee description"
-                    className="w-full rounded-lg border border-input-border bg-surface-alt px-2 py-1 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
-                </td>
-                <td className="py-2">
-                  <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-tertiary text-xs">{meta.symbol}</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step={meta.decimalPlaces === 0 ? "1" : "0.01"}
-                      value={fee.amount}
-                      onChange={(e) => updateFee(fee.id, { amount: e.target.value })}
-                      className="w-full rounded-lg border border-input-border bg-surface-alt px-6 py-1 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+                      Amount
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-tertiary text-sm">{meta.symbol}</span>
+                      <input
+                        type="number"
+                        value={fee.amount}
+                        onChange={(e) => updateFee(fee.id, { amount: e.target.value })}
+                        placeholder="0.00"
+                        min="0"
+                        step={step}
+                        className="w-full rounded-lg border border-input-border bg-surface-alt px-8 py-2 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
                   </div>
-                </td>
-                <td className="py-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={fee.taxRate}
-                    onChange={(e) => updateFee(fee.id, { taxRate: e.target.value })}
-                    className="w-full rounded-lg border border-input-border bg-surface-alt px-2 py-1 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
-                </td>
-                <td className="py-2">
-                  <button
-                    type="button"
-                    onClick={() => removeFee(fee.id)}
-                    className="rounded-lg p-1 text-tertiary hover:bg-error-bg hover:text-error-text"
-                    title="Remove fee"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+                  <div>
+                    <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+                      Tax Rate
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={fee.taxRate}
+                        onChange={(e) => updateFee(fee.id, { taxRate: e.target.value })}
+                        placeholder="0"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 pr-8 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-tertiary text-sm">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 border-t border-color-subtle pt-3">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={<Trash2 className="h-4 w-4" />}
+                  onClick={() => removeFee(fee.id)}
+                  className="w-full"
+                >
+                  Remove Fee
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
+        icon={<Plus className="h-4 w-4" />}
         onClick={addFee}
-        className="inline-flex items-center gap-2 rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-xs font-medium text-secondary hover:bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
       >
-        + Add fee
-      </button>
+        Add Another Fee
+      </Button>
     </div>
   );
 }

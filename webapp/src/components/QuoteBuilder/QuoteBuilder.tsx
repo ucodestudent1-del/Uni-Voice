@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Send, Copy, Download } from "lucide-react";
+import { ArrowLeft, Send, Copy, Download } from "lucide-react";
 import { useQuoteBuilder } from "./useQuoteBuilder";
 import { LineItemsTable } from "./LineItemsTable";
 import { FeesSection } from "./FeesSection";
-import { QuoteTotals } from "./QuoteTotals";
+import { QuoteSummary } from "./QuoteSummary";
 import { QuoteDetailsForm } from "./QuoteDetailsForm";
 import { ReviewAndSendDialog } from "./ReviewAndSendDialog";
-import { ValidationPanel } from "../../components/ValidationPanel";
-import { Button } from "../../components/ui/Button";
+import { ValidationPanel } from "@/components/ValidationPanel";
+import { Button } from "@/components/ui/Button";
 
 interface QuoteBuilderProps {
   quoteId?: string | null;
@@ -30,42 +30,48 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     actionMessage,
     updateField,
     setItems,
-    addFee,
-    removeFee,
     setFees,
     doSave,
   } = useQuoteBuilder({ quoteId });
 
-  const customerOptions: Array<{ id: string; name: string; email?: string; companyName?: string }> = customers.map(c => ({
+  const customerOptions: Array<{ id: string; name: string; email?: string; companyName?: string }> = customers.map((c) => ({
     id: c.id,
     name: c.name,
     email: c.email ?? undefined,
     companyName: c.companyName ?? undefined,
   }));
 
-  const currencyLocked = data.items.length > 0 && data.items.some(item => Number(item.unitPrice) > 0);
+  const currencyLocked = data.items.length > 0 && data.items.some((item) => Number(item.unitPrice) > 0);
 
   function getSaveStateLabel(): string {
     switch (saveState) {
-      case "saving": return "Saving…";
-      case "saved": return "Saved";
-      case "error": return "Save failed";
-      case "unsaved": return "Unsaved changes";
-      default: return "Unsaved";
+      case "saving":
+        return "Saving…";
+      case "saved":
+        return "Saved";
+      case "error":
+        return "Save failed";
+      case "unsaved":
+        return "Unsaved changes";
+      default:
+        return "Unsaved";
     }
   }
 
   const saveStateColor =
-    saveState === "saved" ? "text-success-text"
-    : saveState === "saving" ? "text-tertiary"
-    : saveState === "error" ? "text-error-text"
-    : "text-warning-text";
+    saveState === "saved"
+      ? "text-success-text"
+      : saveState === "saving"
+        ? "text-tertiary"
+        : saveState === "error"
+          ? "text-error-text"
+          : "text-warning-text";
 
   async function handleSend() {
     const quoteId = data.savedQuoteId;
     if (!quoteId) return;
     try {
-      const { finalizeQuote, sendQuote } = await import("../../api/client");
+      const { finalizeQuote, sendQuote } = await import("@/api/client");
       await finalizeQuote(quoteId);
       await sendQuote(quoteId);
     } catch (err: any) {
@@ -78,7 +84,7 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     const quoteId = data.savedQuoteId;
     if (!quoteId) return;
     try {
-      const { getQuotePdf } = await import("../../api/client");
+      const { getQuotePdf } = await import("@/api/client");
       const blob = await getQuotePdf(quoteId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -94,9 +100,14 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
   async function handleConvert() {
     const quoteId = data.savedQuoteId;
     if (!quoteId) return;
-    if (!window.confirm("Convert this quote to an invoice? This will finalize the quote and create a new invoice.")) return;
+    if (
+      !window.confirm(
+        "Convert this quote to an invoice? This will finalize the quote and create a new invoice."
+      )
+    )
+      return;
     try {
-      const { convertQuote } = await import("../../api/client");
+      const { convertQuote } = await import("@/api/client");
       const result = await convertQuote(quoteId);
       if (result?.invoiceId) {
         navigate(`/app/invoices/${result.invoiceId}`);
@@ -143,9 +154,7 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          {actionMessage && (
-            <span className={`text-sm ${saveStateColor}`}>{actionMessage}</span>
-          )}
+          {actionMessage && <span className={`text-sm ${saveStateColor}`}>{actionMessage}</span>}
           <div className={`flex items-center gap-1.5 text-sm font-medium ${saveStateColor}`}>
             {saveState === "saving" && (
               <span className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
@@ -160,7 +169,7 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
                 icon={<Download className="h-4 w-4" />}
                 onClick={handleDownloadPdf}
               >
-                PDF
+                Download PDF
               </Button>
               <Button
                 variant="secondary"
@@ -177,7 +186,7 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
                 icon={<Copy className="h-4 w-4" />}
                 onClick={handleConvert}
               >
-                Convert
+                Convert to Invoice
               </Button>
             </>
           )}
@@ -193,40 +202,49 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
 
       {/* Validation panel */}
       {validation.issues.length > 0 && (
-        <ValidationPanel issues={validation.issues} hasErrors={validation.hasErrors} hasWarnings={validation.hasWarnings} />
+        <ValidationPanel
+          issues={validation.issues}
+          hasErrors={validation.hasErrors}
+          hasWarnings={validation.hasWarnings}
+        />
       )}
 
       {/* Main layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
         {/* Form section */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           {/* Customer selector */}
-          <div className="bg-surface rounded-xl border border-color-subtle p-6">
-            <h3 className="text-sm font-medium text-secondary mb-3">Customer</h3>
+          <div className="bg-surface rounded-xl border border-color-subtle p-6 shadow-sm">
+            <label className="block text-xs font-medium text-tertiary uppercase mb-2">
+              Customer
+            </label>
             <select
               value={data.customerId ?? ""}
               onChange={(e) => updateField("customerId", e.target.value ? e.target.value : null)}
               className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="">Select a customer</option>
-              {customerOptions.map(c => (
-                <option key={c.id} value={c.id}>{c.name} {c.companyName ? `(${c.companyName})` : ""}</option>
+              {customerOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} {c.companyName ? `(${c.companyName})` : ""}
+                </option>
               ))}
             </select>
           </div>
 
           {/* Line items */}
-          <div className="bg-surface rounded-xl border border-color-subtle p-6">
+          <div className="bg-surface rounded-xl border border-color-subtle p-6 shadow-sm">
             <h3 className="text-sm font-medium text-secondary mb-3">Line Items</h3>
             <LineItemsTable
               items={data.items}
               currency={data.currency}
+              calcResult={calcResult}
               onChange={setItems}
             />
           </div>
 
           {/* Fees */}
-          <div className="bg-surface rounded-xl border border-color-subtle p-6">
+          <div className="bg-surface rounded-xl border border-color-subtle p-6 shadow-sm">
             <FeesSection
               fees={data.fees}
               currency={data.currency}
@@ -235,38 +253,24 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
           </div>
 
           {/* Quote details */}
-          <div className="bg-surface rounded-xl border border-color-subtle p-6">
+          <div className="bg-surface rounded-xl border border-color-subtle p-6 shadow-sm">
             <QuoteDetailsForm
               data={data}
-              customers={customerOptions}
               onChange={updateField}
               currencyLocked={currencyLocked}
             />
           </div>
         </div>
 
-        {/* Totals sidebar */}
+        {/* Quote Summary sidebar */}
         <div>
-          <div className="bg-surface rounded-xl border border-color-subtle p-6 sticky top-6">
-            <h3 className="text-sm font-medium text-secondary mb-3">Totals</h3>
-            <QuoteTotals calcResult={calcResult} currency={data.currency} />
-
-            {isNew && (
-              <button
-                type="button"
-                onClick={doSave}
-                disabled={saveState === "saving"}
-                className="w-full mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-60"
-              >
-                {saveState === "saving" ? (
-                  <span className="animate-spin h-4 w-4 border-2 border-on-primary border-t-transparent rounded-full" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                {saveState === "saving" ? "Saving…" : "Save Draft"}
-              </button>
-            )}
-          </div>
+          <QuoteSummary
+            calcResult={calcResult}
+            currency={data.currency}
+            itemsCount={data.items.length}
+            onSaveDraft={doSave}
+            saveState={saveState}
+          />
         </div>
       </div>
 

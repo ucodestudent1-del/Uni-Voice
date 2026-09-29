@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Decimal } from "decimal.js";
 import { Send, X, Download } from "lucide-react";
 import type { QuoteBuilderData } from "./types";
-import type { CalculationResult } from "../../utils/calculation";
-import { formatCurrency } from "../../utils/format";
+import type { CalculationResult } from "@/utils/calculation";
+import { formatCurrency } from "@/utils/format";
+import { Button } from "@/components/ui/Button";
 
 interface ReviewAndSendDialogProps {
   open: boolean;
@@ -52,14 +53,10 @@ Best regards`
         <div className="border-b border-color-subtle p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-primary">Review &amp; Send Quote</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg p-1 text-tertiary hover:text-primary"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-1">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </Button>
           </div>
           <p className="mt-1 text-sm text-secondary">
             Review the quote details and send it to your customer.
@@ -69,7 +66,7 @@ Best regards`
         <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
           {/* Customer info */}
           <div className="bg-surface-alt rounded-lg border border-color-subtle p-4">
-            <h3 className="text-xs font-medium text-secondary uppercase mb-2">Customer</h3>
+            <h3 className="text-xs font-medium text-tertiary uppercase mb-2">Customer</h3>
             <div className="text-sm">
               <div className="font-medium text-primary">{customerName}</div>
               <div className="text-tertiary">{customerEmail}</div>
@@ -78,76 +75,81 @@ Best regards`
 
           {/* Line items */}
           <div>
-            <h3 className="text-xs font-medium text-secondary uppercase mb-2">Line Items</h3>
+            <h3 className="text-xs font-medium text-tertiary uppercase mb-2">Line Items</h3>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-color-subtle text-left">
-                  <th className="pb-1 text-secondary">Description</th>
-                  <th className="pb-1 text-right text-secondary">Qty</th>
-                  <th className="pb-1 text-right text-secondary">Rate</th>
-                  <th className="pb-1 text-right text-secondary">Total</th>
+                  <th className="pb-2 text-secondary">Description</th>
+                  <th className="pb-2 text-right text-secondary">Qty</th>
+                  <th className="pb-2 text-right text-secondary">Unit Price</th>
+                  <th className="pb-2 text-right text-secondary">Line Total</th>
                 </tr>
               </thead>
               <tbody>
-                {data.items.map(item => (
+                {data.items.map((item) => (
                   <tr key={item.id} className="border-b border-color-subtle/50">
-                    <td className="py-1 text-secondary">{item.description || "(no description)"}</td>
-                    <td className="py-1 text-right">{item.quantity}</td>
-                    <td className="py-1 text-right">{formatCurrency(item.unitPrice, data.currency)}</td>
-                    <td className="py-1 text-right font-medium">{formatCurrency(
-                      new Decimal(item.quantity).mul(item.unitPrice).minus(
-                        item.discount && Number(item.discount) > 0
-                          ? item.discountType === "percentage"
-                            ? new Decimal(item.quantity).mul(item.unitPrice).mul(item.discount).div(100)
-                            : new Decimal(item.discount)
-                          : 0
-                      ),
-                      data.currency
-                    )}</td>
+                    <td className="py-2 text-secondary">{item.description || "(no description)"}</td>
+                    <td className="py-2 text-right">{item.quantity}</td>
+                    <td className="py-2 text-right">{formatCurrency(item.unitPrice, data.currency)}</td>
+                    <td className="py-2 text-right font-medium text-primary">
+                      {formatCurrency(
+                        new Decimal(item.quantity).mul(item.unitPrice).minus(
+                          item.discount && Number(item.discount) > 0
+                            ? item.discountType === "percentage"
+                              ? new Decimal(item.quantity)
+                                  .mul(item.unitPrice)
+                                  .mul(item.discount)
+                                  .div(100)
+                              : new Decimal(item.discount)
+                            : 0
+                        ),
+                        data.currency
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Totals */}
-          {calcResult && (
-            <div className="bg-surface-alt rounded-lg border border-color-subtle p-4">
-              <h3 className="text-xs font-medium text-secondary uppercase mb-2">Totals</h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-tertiary">Subtotal</span>
-                  <span className="text-primary">{formatCurrency(calcResult.subtotal, data.currency)}</span>
-                </div>
-                {!calcResult.discountTotal.isZero() && (
-                  <div className="flex justify-between">
-                    <span className="text-tertiary">Discount</span>
-                    <span className="text-error-text">-{formatCurrency(calcResult.discountTotal, data.currency)}</span>
+            {/* Quote Summary */}
+            {calcResult && (
+              <div className="bg-surface-alt rounded-lg border border-color-subtle p-4">
+                <h3 className="text-xs font-medium text-tertiary uppercase mb-2">Quote Summary</h3>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-secondary">Subtotal</span>
+                    <span className="text-primary font-tabular-nums">{formatCurrency(calcResult.subtotal, data.currency)}</span>
                   </div>
-                )}
-                {!calcResult.taxTotal.isZero() && (
-                  <div className="flex justify-between">
-                    <span className="text-tertiary">Tax</span>
-                    <span className="text-primary">{formatCurrency(calcResult.taxTotal, data.currency)}</span>
+                  {!calcResult.discountTotal.isZero() && (
+                    <div className="flex justify-between py-1.5">
+                      <span className="text-secondary">Discount</span>
+                      <span className="text-error-text font-tabular-nums">−{formatCurrency(calcResult.discountTotal, data.currency)}</span>
+                    </div>
+                  )}
+                  {!calcResult.taxTotal.isZero() && (
+                    <div className="flex justify-between py-1.5">
+                      <span className="text-secondary">Tax</span>
+                      <span className="text-primary font-tabular-nums">{formatCurrency(calcResult.taxTotal, data.currency)}</span>
+                    </div>
+                  )}
+                  {!calcResult.feeTotal.isZero() && (
+                    <div className="flex justify-between py-1.5">
+                      <span className="text-secondary">Fees</span>
+                      <span className="text-primary font-tabular-nums">{formatCurrency(calcResult.feeTotal, data.currency)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold pt-3 border-t border-color-subtle">
+                    <span className="text-primary">Total</span>
+                    <span className="text-primary-brand font-tabular-nums">{formatCurrency(calcResult.total, data.currency)}</span>
                   </div>
-                )}
-                {!calcResult.feeTotal.isZero() && (
-                  <div className="flex justify-between">
-                    <span className="text-tertiary">Fees</span>
-                    <span className="text-primary">{formatCurrency(calcResult.feeTotal, data.currency)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-lg font-bold pt-2 border-t border-color-subtle">
-                  <span className="text-primary">Total</span>
-                  <span className="text-primary">{formatCurrency(calcResult.total, data.currency)}</span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Email composition */}
           <div>
-            <h3 className="text-xs font-medium text-secondary uppercase mb-2">Email to customer</h3>
+            <h3 className="text-xs font-medium text-tertiary uppercase mb-2">Email to customer</h3>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-tertiary mb-1">Subject</label>
@@ -172,39 +174,26 @@ Best regards`
         </div>
 
         <div className="border-t border-color-subtle p-4 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
-          >
+          <Button variant="secondary" size="md" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            icon={<Download className="h-4 w-4" />}
             onClick={onDownloadPdf}
-            className="inline-flex items-center gap-2 rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
           >
-            <Download className="h-4 w-4" />
             Download PDF
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Send className="h-4 w-4" />}
             onClick={handleSend}
             disabled={sending}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-5 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-60"
           >
-            {sending ? (
-              <>
-                <span className="animate-spin h-4 w-4 border-2 border-on-primary border-t-transparent rounded-full" />
-                Sending…
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4" />
-                Finalize &amp; Send
-              </>
-            )}
-          </button>
+            {sending ? "Sending…" : "Finalize & Send"}
+          </Button>
         </div>
       </div>
     </div>

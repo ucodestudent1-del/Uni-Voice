@@ -1,38 +1,20 @@
-import { SUPPORTED_CURRENCIES } from "../../utils/currency";
+import { SUPPORTED_CURRENCIES } from "@/utils/currency";
 import type { QuoteBuilderData } from "./types";
 
 interface QuoteDetailsFormProps {
   data: QuoteBuilderData;
-  customers: Array<{ id: string; name: string; email?: string; companyName?: string }>;
   onChange: (field: keyof QuoteBuilderData, value: any) => void;
-  onLineItemChange?: (items: any) => void;
   currencyLocked: boolean;
 }
 
-export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: QuoteDetailsFormProps) {
+export function QuoteDetailsForm({ data, onChange, currencyLocked }: QuoteDetailsFormProps) {
   return (
     <div className="space-y-5">
       <h3 className="text-sm font-medium text-secondary">Quote Details</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-secondary mb-1">Customer</label>
-          <select
-            value={data.customerId ?? ""}
-            onChange={(e) => onChange("customerId", e.target.value ? e.target.value : null)}
-            className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="">Select customer</option>
-            {customers.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name} {c.companyName ? `(${c.companyName})` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-secondary mb-1">Currency</label>
+          <label className="block text-xs font-medium text-tertiary uppercase mb-1">Currency</label>
           <select
             value={data.currency}
             onChange={(e) => onChange("currency", e.target.value)}
@@ -49,7 +31,7 @@ export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: 
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-secondary mb-1">Issue Date</label>
+          <label className="block text-xs font-medium text-tertiary uppercase mb-1">Issue Date</label>
           <input
             type="date"
             value={data.issueDate}
@@ -59,7 +41,7 @@ export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: 
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-secondary mb-1">Due Date</label>
+          <label className="block text-xs font-medium text-tertiary uppercase mb-1">Due Date</label>
           <input
             type="date"
             value={data.dueDate}
@@ -69,7 +51,7 @@ export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: 
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-secondary mb-1">Expiry Date</label>
+          <label className="block text-xs font-medium text-tertiary uppercase mb-1">Expiry Date</label>
           <input
             type="date"
             value={data.expiryDate ?? ""}
@@ -80,7 +62,7 @@ export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: 
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">Invoice Discount</label>
+        <label className="block text-xs font-medium text-tertiary uppercase mb-1">Quote Discount</label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <select
             value={data.discount.type}
@@ -105,7 +87,7 @@ export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: 
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">Notes</label>
+        <label className="block text-xs font-medium text-tertiary uppercase mb-1">Notes</label>
         <textarea
           value={data.notes}
           onChange={(e) => onChange("notes", e.target.value)}
@@ -116,7 +98,7 @@ export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: 
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">Terms</label>
+        <label className="block text-xs font-medium text-tertiary uppercase mb-1">Terms</label>
         <textarea
           value={data.terms}
           onChange={(e) => onChange("terms", e.target.value)}
@@ -127,7 +109,7 @@ export function QuoteDetailsForm({ data, customers, onChange, currencyLocked }: 
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">Payment Instructions</label>
+        <label className="block text-xs font-medium text-tertiary uppercase mb-1">Payment Instructions</label>
         <textarea
           value={data.paymentInstructions}
           onChange={(e) => onChange("paymentInstructions", e.target.value)}
