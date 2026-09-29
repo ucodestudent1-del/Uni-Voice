@@ -342,37 +342,42 @@ export default function Customers() {
                   <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Outstanding</th>
                   <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Last Invoice</th>
                   <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Status</th>
-                  <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Actions</th>
+                  <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {effectiveRows.map((c) => {
                   const hasBalance = customerHasBalance(c);
+                  const isSelected = quickViewCustomer?.id === c.id;
                   return (
                      <tr
-                       key={c.id}
-                       className={`border-b border-color-subtle border-color last:border-b-0 hover:bg-surface-alt hover:bg-hover ${
-                         hasBalance ? "border-l-2 border-l-red-400 status-error-bg/20" : ""
-                       }`}
-                     >
-                      <td className="py-3 px-4">
-                        <button
-                          type="button"
-                          onClick={() => setQuickViewCustomer(c)}
-                          className="text-left text-sm font-medium text-primary hover:text-primary-brand"
-                          aria-label={`Quick view ${c.name}`}
-                        >
-                          {c.name}
-                        </button>
-                        {c.companyName && (
-                          <p className="text-xs text-secondary">{c.companyName}</p>
-                        )}
-                        {!c.companyName && c.mostRecentInvoiceDate && (
-                          <p className="text-xs text-tertiary">
-                            Last activity: {formatDate(c.mostRecentInvoiceDate)}
-                          </p>
-                        )}
-                      </td>
+                        key={c.id}
+                        aria-current={isSelected ? "true" : undefined}
+                        className={`border-b border-color-subtle border-color last:border-b-0 transition-colors ${
+                          isSelected
+                            ? "bg-primary-bg"
+                            : hasBalance
+                            ? "border-l-2 border-l-error-text hover:bg-surface-alt"
+                            : "hover:bg-surface-alt"
+                        }`}
+                      >
+                        <td className={`py-3 pl-4 pr-4 ${isSelected ? "border-l-2 border-l-primary" : ""}`}>
+                          <button
+                            type="button"
+                            onClick={() => setQuickViewCustomer(c)}
+                            aria-label={`Show details for ${c.name}`}
+                            className="text-left text-sm font-medium text-primary hover:text-primary-brand hover:underline"
+                          >
+                            {c.name}
+                          </button>
+                          {c.companyName ? (
+                            <p className="text-xs text-secondary">{c.companyName}</p>
+                          ) : c.mostRecentInvoiceDate ? (
+                            <p className="text-xs text-tertiary">
+                              Last activity: {formatDate(c.mostRecentInvoiceDate)}
+                            </p>
+                          ) : null}
+                        </td>
                       <td className="py-3 px-4 text-sm text-secondary">
                         {getCustomerPrimaryContact(c) ? (
                           <span className="break-all">{getCustomerPrimaryContact(c)}</span>
@@ -399,55 +404,66 @@ export default function Customers() {
                         <CustomerStatusBadge status={c.status} />
                       </td>
                        <td className="py-3 px-4">
-                         <div className="flex items-center justify-center gap-1">
+                         <div className="flex flex-wrap items-center justify-end gap-1">
                            <Button
                              variant="ghost"
                              size="sm"
-                             icon={<Eye className="w-3.5 h-3.5" />}
+                             icon={<Eye className="h-3.5 w-3.5" />}
                              onClick={() => navigate(`/app/customers/${c.id}`)}
-                             title="View customer"
-                           />
+                             title={`Open the full profile for ${c.name}`}
+                             aria-label={`View full profile for ${c.name}`}
+                           >
+                             View
+                           </Button>
                            <Button
                              variant="ghost"
                              size="sm"
-                             icon={<Edit2 className="w-3.5 h-3.5" />}
+                             icon={<Edit2 className="h-3.5 w-3.5" />}
                              onClick={() => handleEdit(c)}
-                             title="Edit customer"
-                           />
+                             title={`Edit contact and billing details for ${c.name}`}
+                             aria-label={`Edit ${c.name}`}
+                           >
+                             Edit
+                           </Button>
                            <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
                              <Button
                                variant="ghost"
                                size="sm"
-                               icon={<FileText className="w-3.5 h-3.5" />}
+                               icon={<FileText className="h-3.5 w-3.5" />}
                                onClick={() => handleCreateInvoice(c)}
                                disabled={creatingInvoiceFor === c.id}
-                               title="Create invoice for this customer"
-                               className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand"
+                               title={`Create a new invoice for ${c.name}`}
+                               aria-label={`Create invoice for ${c.name}`}
                              >
-                               {creatingInvoiceFor === c.id ? "..." : ""}
+                               {creatingInvoiceFor === c.id ? "Creating…" : "Invoice"}
                              </Button>
                            </FeatureGate>
                            {c.status === "archived" ? (
                              <Button
                                variant="ghost"
                                size="sm"
-                               icon={<RefreshCw className="w-3.5 h-3.5" />}
+                               icon={<RefreshCw className="h-3.5 w-3.5" />}
                                onClick={() => handleRestore(c)}
-                               title="Restore customer"
-                               className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand"
-                             />
+                               title={`Restore ${c.name} to the active list`}
+                               aria-label={`Restore ${c.name}`}
+                             >
+                               Restore
+                             </Button>
                            ) : (
                              <Button
                                variant="ghost"
                                size="sm"
-                               icon={<Archive className="w-3.5 h-3.5" />}
+                               icon={<Archive className="h-3.5 w-3.5" />}
                                onClick={() => handleArchive(c)}
-                               title="Archive customer"
+                               title={`Archive ${c.name}. This can be undone.`}
+                               aria-label={`Archive ${c.name}`}
                                className="status-error-text hover:status-error-text"
-                             />
+                             >
+                               Archive
+                             </Button>
                            )}
                          </div>
-                       </td>
+                        </td>
                     </tr>
                   );
                 })}
@@ -491,10 +507,12 @@ export default function Customers() {
 
       {quickViewCustomer && (
         <CustomerQuickView
-          customerId={quickViewCustomer.id}
-          customerName={quickViewCustomer.name}
-          currency={quickViewCustomer.defaultCurrency || "USD"}
+          customer={quickViewCustomer}
           onClose={() => setQuickViewCustomer(null)}
+          onEdit={(c) => {
+            setQuickViewCustomer(null);
+            handleEdit(c);
+          }}
         />
       )}
     </div>

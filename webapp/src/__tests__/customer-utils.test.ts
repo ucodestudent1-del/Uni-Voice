@@ -4,6 +4,12 @@ import {
   getInvoiceDisplayStatus,
   getCustomerPrimaryContact,
   customerHasBalance,
+  formatAddressLines,
+  getCustomerInitials,
+  getCustomerBillingSnapshot,
+  getCustomerDisplayName,
+  getInvoiceAmountDue,
+  getInvoiceReference,
 } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
 
@@ -192,5 +198,179 @@ describe("customerHasBalance", () => {
 
   it("returns false when outstanding is undefined", () => {
     expect(customerHasBalance(makeCustomer({ totalOutstanding: undefined }))).toBe(false);
+  });
+});
+
+describe("formatAddressLines", () => {
+  const address = {
+    addressLine1: "123 Main St",
+    addressLine2: "Suite 400",
+    city: "New York",
+    stateOrRegion: "NY",
+    postalCode: "10001",
+    countryCode: "US",
+    taxId: null,
+  };
+
+  it("builds one line per address component and merges locality", () => {
+    expect(formatAddressLines(address)).toEqual([
+      "123 Main St",
+      "Suite 400",
+      "New York, NY 10001",
+      "US",
+    ]);
+  });
+
+  it("omits a missing postal code", () => {
+    expect(formatAddressLines({ ...address, postalCode: null })).toContain("New York, NY");
+  });
+
+  it("omits blank optional lines", () => {
+    expect(formatAddressLines({ ...address, addressLine2: null })).not.toContain("Suite 400");
+  });
+
+  it("returns an empty array when no address is present", () => {
+    expect(formatAddressLines(null)).toEqual([]);
+    expect(formatAddressLines(undefined)).toEqual([]);
+  });
+});
+
+describe("getCustomerInitials", () => {
+  it("prefers the company name", () => {
+    expect(getCustomerInitials({ name: "Jane Doe", companyName: "Acme Inc" })).toBe("AI");
+  });
+
+  it("uses first and last name when no company exists", () => {
+    expect(getCustomerInitials({ name: "Jane Doe", companyName: null })).toBe("JD");
+  });
+
+  it("takes the first two letters of a single word", () => {
+    expect(getCustomerInitials({ name: "Acme", companyName: null })).toBe("AC");
+  });
+
+  it("ignores punctuation when building the monogram", () => {
+    expect(getCustomerInitials({ name: "O'Brien & Sons", companyName: null })).toBe("OS");
+  });
+
+  it("falls back to a marker when no name is available", () => {
+    expect(getCustomerInitials({ name: "   ", companyName: null })).toBe("?");
+  });
+});
+
+describe("getCustomerDisplayName", () => {
+  it("prefers the company name", () => {
+    expect(getCustomerDisplayName({ name: "Jane Doe", companyName: "Acme Inc" })).toBe("Acme Inc");
+  });
+
+  it("falls back to the contact name", () => {
+    expect(getCustomerDisplayName({ name: "Jane Doe", companyName: null })).toBe("Jane Doe");
+  });
+
+  it("falls back to a placeholder when both are blank", () => {
+    expect(getCustomerDisplayName({ name: "", companyName: null })).toBe("Unnamed customer");
+  });
+});
+
+describe("getCustomerBillingSnapshot", () => {
+  const base = {
+    totalInvoiceCount: 0,
+    finalizedInvoiceCount: 0,
+    totalBilled: "0",
+    totalPaid: "0",
+    totalOutstanding: "0",
+    totalOverdue: "0",
+  };
+
+  it("reports never_invoiced when there are no invoices", () => {
+    const snapshot = getCustomerBillingSnapshot(base);
+    expect(snapshot.state).toBe("never_invoiced");
+    expect(snapshot.label).toBe("No invoices issued yet");
+  });
+
+  it("reports settled when nothing is outstanding", () => {
+    const snapshot = getCustomerBillingSnapshot({
+      ...base,
+      totalInvoiceCount: 3,
+      finalizedInvoiceCount: 3,
+      totalBilled: "900.00",
+      totalPaid: "900.00",
+    });
+    expect(snapshot.state).toBe("settled");
+    expect(snapshot.label).toBe("All invoices paid");
+    expect(snapshot.openInvoiceCount).toBe(0);
+  });
+
+  it("reports outstanding and counts open invoices", () => {
+    const snapshot = getCustomerBillingSnapshot({
+      ...base,
+      totalInvoiceCount: 4,
+      finalizedInvoiceCount: 2,
+      totalBilled: "1200.00",
+      totalPaid: "700.00",
+      totalOutstanding: "500.00",
+    });
+    expect(snapshot.state).toBe("outstanding");
+    expect(snapshot.label).toBe("2 invoices awaiting payment");
+    expect(snapshot.openInvoiceCount).toBe(2);
+    expect(snapshot.outstanding).toBe("500.00");
+  });
+
+  it("uses the singular form for a single open invoice", () => {
+    const snapshot = getCustomerBillingSnapshot({
+      ...base,
+      totalInvoiceCount: 1,
+      finalizedInvoiceCount: 0,
+      totalBilled: "150.00",
+      totalOutstanding: "150.00",
+    });
+    expect(snapshot.label).toBe("1 invoice awaiting payment");
+  });
+
+  it("treats overdue as the most urgent state", () => {
+    const snapshot = getCustomerBillingSnapshot({
+      ...base,
+      totalInvoiceCount: 3,
+      finalizedInvoiceCount: 2,
+      totalBilled: "800.00",
+      totalPaid: "300.00",
+      totalOutstanding: "500.00",
+      totalOverdue: "200.00",
+    });
+    expect(snapshot.state).toBe("overdue");
+    expect(snapshot.overdue).toBe("200.00");
+  });
+
+  it("normalises missing amounts to 0.00", () => {
+    const snapshot = getCustomerBillingSnapshot({
+      ...base,
+      totalBilled: undefined as unknown as string,
+      totalPaid: null as unknown as string,
+    });
+    expect(snapshot.billed).toBe("0.00");
+    expect(snapshot.paid).toBe("0.00");
+  });
+});
+
+describe("getInvoiceAmountDue", () => {
+  it("prefers amountDue when positive", () => {
+    expect(getInvoiceAmountDue({ amountDue: "120.50", total: "200.00" })).toBe("120.50");
+  });
+
+  it("falls back to the total when amountDue is zero", () => {
+    expect(getInvoiceAmountDue({ amountDue: "0.00", total: "200.00" })).toBe("200.00");
+  });
+
+  it("falls back to the total when amountDue is missing", () => {
+    expect(getInvoiceAmountDue({ amountDue: undefined as unknown as string, total: "75.00" })).toBe("75.00");
+  });
+});
+
+describe("getInvoiceReference", () => {
+  it("uses the invoice number when assigned", () => {
+    expect(getInvoiceReference({ id: "a1b2c3d4e5f6", invoiceNumber: "INV-1042" })).toBe("INV-1042");
+  });
+
+  it("falls back to a draft reference", () => {
+    expect(getInvoiceReference({ id: "a1b2c3d4e5f6", invoiceNumber: null })).toBe("Draft #a1b2c3d4");
   });
 });
