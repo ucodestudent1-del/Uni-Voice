@@ -12,6 +12,7 @@ import { Button } from "../components/ui/Button";
 import {
   Download,
   Mail,
+  Printer,
   Copy,
   ExternalLink,
   MoreVertical,
@@ -41,6 +42,7 @@ export default function ReceiptDetail() {
   const [showActionMenu, setShowActionMenu] = useState<ActionMenuState>("closed");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [printingPdf, setPrintingPdf] = useState(false);
 
   useEffect(() => {
     if (id) loadReceipt();
@@ -83,6 +85,34 @@ export default function ReceiptDetail() {
       toast(error?.response?.data?.error || "Failed to download PDF", { type: "error" });
     } finally {
       setDownloadingPdf(false);
+    }
+  }, [receipt, toast]);
+
+  const handlePrintPdf = useCallback(async () => {
+    if (!receipt) return;
+    setPrintingPdf(true);
+    try {
+      const blob = await getReceiptPdf(receipt.id);
+      const url = window.URL.createObjectURL(blob);
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        const doc = iframe.contentDocument || iframe.contentWindow!.document;
+        doc.open();
+        doc.write(`<iframe src="${url}" style="width:100%;height:100%;border:none;"></iframe>`);
+        doc.close();
+        iframe.contentWindow!.focus();
+        iframe.contentWindow!.print();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(iframe);
+      };
+      document.body.appendChild(iframe);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } };
+      toast(error?.response?.data?.error || "Failed to print PDF", { type: "error" });
+    } finally {
+      setPrintingPdf(false);
     }
   }, [receipt, toast]);
 
@@ -179,6 +209,16 @@ export default function ReceiptDetail() {
             className="hidden sm:inline-flex"
           >
             {downloadingPdf ? "Downloading…" : "Download PDF"}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Printer className="w-4 h-4" />}
+            onClick={handlePrintPdf}
+            disabled={printingPdf}
+            className="hidden sm:inline-flex"
+          >
+            {printingPdf ? "Printing…" : "Print"}
           </Button>
           <Button
             variant="secondary"
@@ -290,7 +330,7 @@ export default function ReceiptDetail() {
       )}
 
       {/* Mobile Action Bar */}
-      <div className="sm:hidden flex gap-2">
+      <div className="sm:hidden flex flex-wrap gap-2">
         <Button
           variant="secondary"
           size="sm"
@@ -300,6 +340,16 @@ export default function ReceiptDetail() {
           className="flex-1"
         >
           PDF
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={<Printer className="w-4 h-4" />}
+          onClick={handlePrintPdf}
+          disabled={printingPdf}
+          className="flex-1"
+        >
+          Print
         </Button>
         <Button
           variant="secondary"

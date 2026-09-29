@@ -26,6 +26,7 @@ import type {
   ApiPaymentEvent,
 } from "../types/api";
 
+// Re-export types from types/api
 export type {
   InvoiceSearchParams,
   CreditNoteSearchParams,
@@ -1335,8 +1336,26 @@ export interface ApiReceipt {
   business_name?: string | null;
 }
 
+export interface ApiReceiptSummary {
+  totalReceipts: string;
+  receiptsThisMonth: string;
+  issuedAmount: string;
+  sentAmount: string;
+  failedAmount: string;
+  totalCount: number;
+  issuedCount: number;
+  sentCount: number;
+  failedCount: number;
+  currency: string;
+}
+
 export async function getReceipts(params?: ReceiptSearchParams): Promise<{ receipts: ApiReceipt[]; total: number; limit: number; offset: number }> {
   const res = await api.get("/receipts", { params });
+  return res.data;
+}
+
+export async function getReceiptSummary(): Promise<ApiReceiptSummary> {
+  const res = await api.get("/receipts/summary");
   return res.data;
 }
 

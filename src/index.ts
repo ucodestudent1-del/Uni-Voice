@@ -1183,6 +1183,46 @@ app.get("/api/receipts", requireAuth, requireEntitlement("receipts.create"), asy
   res.json(result);
 });
 
+app.get("/api/receipts/summary", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const businessId = req.user!.businessId;
+
+  const monthStart = new Date();
+  monthStart.setHours(0, 0, 0, 0);
+  monthStart.setDate(1);
+
+  const metricsRes = await query(
+    `SELECT
+       COALESCE(SUM(r.amount), 0) AS total_receipts,
+       COALESCE(SUM(CASE WHEN r.issued_at >= $2 THEN r.amount ELSE 0 END), 0) AS receipts_this_month,
+       COALESCE(SUM(CASE WHEN r.status = 'issued' THEN r.amount ELSE 0 END), 0) AS issued_amount,
+       COALESCE(SUM(CASE WHEN r.status = 'sent' THEN r.amount ELSE 0 END), 0) AS sent_amount,
+       COALESCE(SUM(CASE WHEN r.status = 'failed' THEN r.amount ELSE 0 END), 0) AS failed_amount,
+       COUNT(*) AS total_count,
+       COUNT(CASE WHEN r.status = 'issued' THEN 1 END) AS issued_count,
+       COUNT(CASE WHEN r.status = 'sent' THEN 1 END) AS sent_count,
+       COUNT(CASE WHEN r.status = 'failed' THEN 1 END) AS failed_count,
+       COALESCE(MAX(r.currency), 'USD') AS currency
+     FROM receipts r
+     WHERE r.business_id = $1`,
+    [businessId, monthStart.toISOString()]
+  );
+
+  const row = metricsRes.rows[0];
+  res.json({
+    totalReceipts: String(row.total_receipts ?? "0"),
+    receiptsThisMonth: String(row.receipts_this_month ?? "0"),
+    issuedAmount: String(row.issued_amount ?? "0"),
+    sentAmount: String(row.sent_amount ?? "0"),
+    failedAmount: String(row.failed_amount ?? "0"),
+    totalCount: Number(row.total_count ?? 0),
+    issuedCount: Number(row.issued_count ?? 0),
+    sentCount: Number(row.sent_count ?? 0),
+    failedCount: Number(row.failed_count ?? 0),
+    currency: row.currency ?? "USD",
+  });
+});
+
 app.get("/api/receipts/:id", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const receipt = await receiptService.getResponse(req.user!.businessId, req.params.id);
@@ -1210,6 +1250,8 @@ app.post("/api/receipts/:id/email", requireAuth, requireEntitlement("receipts.cr
   const result = await receiptService.sendReceiptEmail(receipt.id, {
     email: req.body.email,
     name: req.body.name,
+    subject: req.body.subject,
+    message: req.body.message,
   });
   res.json({ ok: true, ...result });
 });

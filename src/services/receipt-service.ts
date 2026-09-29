@@ -506,13 +506,19 @@ async generatePdf(receiptId: string): Promise<Buffer> {
     return { status: refundResult.status };
   }
 
-  async sendReceiptEmail(receiptId: string, recipient: { email: string; name?: string }): Promise<{ messageId: string; status: string }> {
+  async sendReceiptEmail(receiptId: string, recipient: { email: string; name?: string; subject?: string; message?: string }): Promise<{ messageId: string; status: string }> {
     const receipt = await receiptRepository.findByIdRaw(receiptId);
 
     const business = await businessRepository.findById(receipt.businessId);
 
     const templateData = await this.buildReceiptTemplateData(receipt);
-    const html = this.renderReceipt(templateData);
+    let html = this.renderReceipt(templateData);
+
+    if (recipient.message) {
+      const escapedMessage = Handlebars.escapeExpression(recipient.message).replace(/\n/g, "<br>");
+      html = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 32px; color: #333;">${escapedMessage}<br><br>${html}</div>`;
+    }
+
     const pdf = receipt.pdf ?? await this.generatePdf(receiptId);
 
     const idempotencyKey = `receipt-email:${receipt.id}`;
@@ -520,7 +526,7 @@ async generatePdf(receiptId: string): Promise<Buffer> {
       invoiceId: receipt.invoiceId,
       businessId: receipt.businessId,
       recipient,
-      subject: `Receipt ${receipt.receiptNumber} from ${business.name}`,
+      subject: recipient.subject ?? `Receipt ${receipt.receiptNumber} from ${business.name}`,
       htmlBody: html,
       attachments: [{ filename: `Receipt-${receipt.receiptNumber}.pdf`, content: pdf }],
       idempotencyKey,

@@ -3,25 +3,40 @@ import { Link } from "react-router-dom";
 import {
   getReceipts,
   getReceiptPdf,
+  getReceiptSummary,
   type ReceiptSearchParams,
   type ApiReceipt,
+  type ApiReceiptSummary,
 } from "../api/client";
-import { formatCurrency } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
+import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
-import { Download, Search, Eye, ExternalLink } from "lucide-react";
+import {
+  Download,
+  Search,
+  Eye,
+  ExternalLink,
+  Mail,
+  RefreshCw,
+  ChevronDown,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../components/ui/PageHeader";
 import { DataTable, type ColumnDef } from "../components/ui/DataTable";
+import KPICard from "../components/ui/KPICard";
 import PaymentStatus from "../components/ui/PaymentStatus";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+import { useToast } from "../components/ui/ToastProvider";
+import EmailReceiptModal from "../components/EmailReceiptModal";
 
 const STATUS_FILTERS = [
   { value: "all", label: "All Statuses" },
-  { value: "paid", label: "Paid" },
-  { value: "pending", label: "Pending" },
+  { value: "issued", label: "Issued" },
+  { value: "sent", label: "Sent" },
   { value: "failed", label: "Failed" },
-  { value: "refunded", label: "Refunded" },
 ];
 
 const PROVIDER_FILTERS = [
@@ -30,21 +45,36 @@ const PROVIDER_FILTERS = [
   { value: "stub", label: "Stub" },
 ];
 
+const SORT_OPTIONS = [
+  { value: "created_at", label: "Date (newest first)" },
+  { value: "created_at:asc", label: "Date (oldest first)" },
+  { value: "amount", label: "Amount (highest first)" },
+  { value: "amount:asc", label: "Amount (lowest first)" },
+  { value: "receipt_number", label: "Receipt # (A-Z)" },
+  { value: "receipt_number:desc", label: "Receipt # (Z-A)" },
+];
+
 export default function Receipts() {
+  const { toast } = useToast();
   const [receipts, setReceipts] = useState<ApiReceipt[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [summary, setSummary] = useState<ApiReceiptSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [pageSize, setPageSize] = useState(50);
+  const [sortBy, setSortBy] = useState("created_at");
+  const [pageSize, setPageSize] = useState(25);
   const [page, setPage] = useState(1);
 
-  // Debounce search so we don't fire an API request on every keystroke.
+  const [emailModalReceipt, setEmailModalReceipt] = useState<ApiReceipt | null>(null);
+
   const debouncedSetSearchTerm = useDebouncedCallback((value: string) => {
     setSearchTerm(value);
     setPage(1);
@@ -53,6 +83,10 @@ export default function Receipts() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     debouncedSetSearchTerm(e.target.value);
   };
+
+  const [sortColumn, sortOrder] = sortBy.includes(":")
+    ? sortBy.split(":") as [string, "asc" | "desc"]
+    : ([sortBy, "desc"] as [string, "asc" | "desc"]);
 
   const currentParams: ReceiptSearchParams = useMemo(
     () => ({
@@ -63,8 +97,10 @@ export default function Receipts() {
       search: searchTerm || undefined,
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
+      sortBy: sortColumn,
+      sortOrder: sortOrder,
     }),
-    [page, pageSize, searchTerm, statusFilter, providerFilter, dateFrom, dateTo]
+    [page, pageSize, searchTerm, statusFilter, providerFilter, dateFrom, dateTo, sortColumn, sortOrder]
   );
 
   const loadReceipts = useCallback(async () => {
@@ -83,9 +119,25 @@ export default function Receipts() {
     }
   }, [currentParams]);
 
+  const loadSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    try {
+      const data = await getReceiptSummary();
+      setSummary(data);
+    } catch {
+      setSummary(null);
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadReceipts();
   }, [loadReceipts]);
+
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
 
   const handleDownloadPdf = useCallback(async (receiptId: string) => {
     try {
@@ -97,15 +149,30 @@ export default function Receipts() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to download receipt PDF");
+      toast(err.response?.data?.error || "Failed to download receipt PDF", { type: "error" });
     }
-  }, [setError]);
+  }, [toast]);
 
   const navigate = useNavigate();
 
   const handleViewReceipt = useCallback((receiptId: string) => {
     navigate(`/app/receipts/${receiptId}`);
   }, [navigate]);
+
+  const handleEmailReceipt = useCallback((receipt: ApiReceipt) => {
+    setEmailModalReceipt(receipt);
+  }, []);
+
+  const handleEmailSent = () => {
+    loadReceipts();
+    loadSummary();
+    setEmailModalReceipt(null);
+  };
+
+  const handleRefresh = () => {
+    loadReceipts();
+    loadSummary();
+  };
 
   const columns = useMemo<ColumnDef<ApiReceipt>[]>(
     () => [
@@ -123,7 +190,9 @@ export default function Receipts() {
               >
                 {r.receipt_number || `#${String(r.id).slice(0, 8)}`}
               </Link>
-              <span className="text-xs text-tertiary">{r.issued_at ? new Date(r.issued_at).toLocaleDateString() : r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}</span>
+              <span className="text-xs text-tertiary">
+                {r.issued_at ? new Date(r.issued_at).toLocaleDateString() : r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
+              </span>
             </div>
           );
         },
@@ -146,10 +215,22 @@ export default function Receipts() {
               {r.customer_name && (
                 <span className="text-xs text-tertiary">{r.customer_name}</span>
               )}
-              {r.customer_email && (
-                <span className="text-xs text-tertiary">{r.customer_email}</span>
-              )}
             </div>
+          );
+        },
+        sortable: false,
+        align: "left",
+      },
+      {
+        header: "Date",
+        accessor: "issued_at",
+        cell: (row) => {
+          const r = row as ApiReceipt;
+          const date = r.issued_at || r.created_at;
+          return (
+            <span className="text-sm text-secondary">
+              {date ? formatDate(date) : "—"}
+            </span>
           );
         },
         sortable: false,
@@ -159,7 +240,7 @@ export default function Receipts() {
         header: "Amount",
         accessor: "amount",
         cell: (row) => (
-          <span className="text-sm font-medium text-primary">
+          <span className="text-sm font-medium text-primary font-tabular-nums">
             {formatCurrencyValue(Number((row as ApiReceipt).amount), (row as ApiReceipt).currency)}
           </span>
         ),
@@ -181,7 +262,7 @@ export default function Receipts() {
         header: "Sent To",
         accessor: "sent_to",
         cell: (row) => (
-          <span className="text-sm text-secondary">
+          <span className="text-sm text-secondary truncate max-w-[180px] inline-block">
             {(row as ApiReceipt).sent_to || "—"}
           </span>
         ),
@@ -209,6 +290,13 @@ export default function Receipts() {
               >
                 <Eye className="h-3.5 w-3.5" />
               </button>
+              <button
+                onClick={() => handleEmailReceipt(r)}
+                className="text-xs text-secondary hover:text-primary"
+                title="Email receipt"
+              >
+                <Mail className="h-3.5 w-3.5" />
+              </button>
               {r.provider_receipt_url && (
                 <a
                   href={r.provider_receipt_url}
@@ -234,19 +322,31 @@ export default function Receipts() {
         align: "center",
       },
     ],
-    [handleViewReceipt, handleDownloadPdf]
+    [handleViewReceipt, handleDownloadPdf, handleEmailReceipt]
   );
+
+  const hasActiveFilters = searchTerm || statusFilter !== "all" || providerFilter !== "all" || dateFrom || dateTo;
+
+  function clearFilters() {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setProviderFilter("all");
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
+  }
 
   async function handleExportCsv() {
     try {
       const csvRows = [
-        ["Receipt #", "Invoice", "Customer", "Amount", "Currency", "Provider", "Status", "Created"],
+        ["Receipt #", "Invoice", "Customer", "Date", "Amount", "Currency", "Provider", "Status", "Created"],
       ];
       for (const r of receipts) {
         csvRows.push([
           r.receipt_number || "",
           r.invoice_number || "",
           r.customer_name || "",
+          r.issued_at ? new Date(r.issued_at).toLocaleDateString() : r.created_at ? new Date(r.created_at).toLocaleDateString() : "",
           r.amount || "",
           r.currency,
           r.provider || "",
@@ -263,7 +363,7 @@ export default function Receipts() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      setError(err.message || "Failed to export");
+      toast(err.message || "Failed to export", { type: "error" });
     }
   }
 
@@ -278,19 +378,8 @@ export default function Receipts() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      setError(err.message || "Failed to export");
+      toast(err.message || "Failed to export", { type: "error" });
     }
-  }
-
-  const hasActiveFilters = searchTerm || statusFilter !== "all" || providerFilter !== "all" || dateFrom || dateTo;
-
-  function clearFilters() {
-    setSearchTerm("");
-    setStatusFilter("all");
-    setProviderFilter("all");
-    setDateFrom("");
-    setDateTo("");
-    setPage(1);
   }
 
   return (
@@ -310,21 +399,82 @@ export default function Receipts() {
           </Button>
         }
         secondaryActions={
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<Download className="w-4 h-4" />}
-            onClick={handleExportJson}
-            title="Export JSON"
-          >
-            JSON
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Download className="w-4 h-4" />}
+              onClick={handleExportJson}
+              title="Export JSON"
+            >
+              JSON
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<RefreshCw className="w-4 h-4" />}
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+          </>
         }
       />
 
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <KPICard
+          title="Total Receipts"
+          value={summary?.totalReceipts ?? "0"}
+          currency={summary?.currency || "USD"}
+          subtitle={`${summary?.totalCount ?? 0} receipts`}
+          icon={<CheckCircle className="w-5 h-5" />}
+          iconBackground="status-success-bg status-success-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Receipts This Month"
+          value={summary?.receiptsThisMonth ?? "0"}
+          currency={summary?.currency || "USD"}
+          subtitle="Last 30 days"
+          icon={<Clock className="w-5 h-5" />}
+          iconBackground="status-info-bg status-info-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Issued"
+          value={summary?.issuedAmount ?? "0"}
+          currency={summary?.currency || "USD"}
+          subtitle={`${summary?.issuedCount ?? 0} receipts`}
+          icon={<Clock className="w-5 h-5" />}
+          iconBackground="status-info-bg status-info-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Sent"
+          value={summary?.sentAmount ?? "0"}
+          currency={summary?.currency || "USD"}
+          subtitle={`${summary?.sentCount ?? 0} receipts`}
+          icon={<CheckCircle className="w-5 h-5" />}
+          iconBackground="status-success-bg status-success-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Failed"
+          value={summary?.failedAmount ?? "0"}
+          currency={summary?.currency || "USD"}
+          subtitle={`${summary?.failedCount ?? 0} receipts`}
+          icon={<XCircle className="w-5 h-5" />}
+          iconBackground="status-error-bg status-error-text"
+          isLoading={summaryLoading}
+        />
+      </div>
+
+      {/* Filters */}
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-4">
             <label className="block text-xs font-medium text-secondary mb-1">Search</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
@@ -337,7 +487,7 @@ export default function Receipts() {
               />
             </div>
           </div>
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-xs font-medium text-secondary mb-1">Status</label>
             <select
               value={statusFilter}
@@ -349,7 +499,7 @@ export default function Receipts() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-xs font-medium text-secondary mb-1">Provider</label>
             <select
               value={providerFilter}
@@ -361,7 +511,7 @@ export default function Receipts() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="lg:col-span-2">
             <label className="block text-xs font-medium text-secondary mb-1">Date Range</label>
             <div className="grid grid-cols-2 gap-2">
               <input
@@ -376,6 +526,21 @@ export default function Receipts() {
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
                 className="rounded-lg border border-input-border bg-surface-alt px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
+            </div>
+          </div>
+          <div className="lg:col-span-2 flex items-end">
+            <div className="relative w-full">
+              <label className="block text-xs font-medium text-secondary mb-1">Sort By</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+              >
+                {SORT_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-[22px] h-4 w-4 text-tertiary pointer-events-none" />
             </div>
           </div>
         </div>
@@ -398,7 +563,8 @@ export default function Receipts() {
         )}
       </div>
 
-      <div className="bg-surface rounded-xl border border-color-subtle overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-surface rounded-xl border border-color-subtle overflow-hidden">
         <DataTable
           columns={columns}
           data={receipts}
@@ -412,11 +578,135 @@ export default function Receipts() {
             hasActiveFilters ? (
               <span>No receipts match your filters.</span>
             ) : (
-              <span>No receipts found. Receipts are generated when payments are recorded.</span>
+              <span>No receipts found. Receipts are generated automatically when payments are recorded.</span>
             )
           }
         />
       </div>
+
+      {/* Mobile Card List */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <div className="text-center py-10 text-tertiary">
+            <div className="inline-flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              Loading…
+            </div>
+          </div>
+        ) : receipts.length === 0 ? (
+          <div className="bg-surface rounded-xl border border-color-subtle p-8 text-center">
+            <p className="text-sm text-tertiary">
+              {hasActiveFilters
+                ? "No receipts match your filters."
+                : "No receipts found. Receipts are generated automatically when payments are recorded."}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {receipts.map((r) => (
+              <div key={r.id} className="bg-surface rounded-xl border border-color-subtle p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <Link
+                      to={`/app/receipts/${r.id}`}
+                      className="text-sm font-medium text-primary-brand hover:underline"
+                    >
+                      {r.receipt_number || `#${String(r.id).slice(0, 8)}`}
+                    </Link>
+                    <Link
+                      to={r.invoice_id ? `/app/invoices/${r.invoice_id}` : "#"}
+                      className="text-xs text-secondary block mt-0.5"
+                    >
+                      {r.invoice_number || "—"}
+                    </Link>
+                    {r.customer_name && (
+                      <span className="text-xs text-tertiary">{r.customer_name}</span>
+                    )}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className="text-sm font-medium text-primary font-tabular-nums">
+                      {formatCurrencyValue(Number(r.amount), r.currency)}
+                    </span>
+                    <PaymentStatus status={r.status} showIcon size="sm" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-xs text-tertiary">
+                    {r.issued_at ? formatDate(r.issued_at) : r.created_at ? formatDate(r.created_at) : "—"}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleViewReceipt(r.id)}
+                      className="p-2 text-secondary hover:text-primary hover:bg-surface-alt rounded-lg"
+                      title="View receipt"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleEmailReceipt(r)}
+                      className="p-2 text-secondary hover:text-primary hover:bg-surface-alt rounded-lg"
+                      title="Email receipt"
+                    >
+                      <Mail className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDownloadPdf(r.id)}
+                      className="p-2 text-secondary hover:text-primary hover:bg-surface-alt rounded-lg"
+                      title="Download PDF"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Mobile Pagination */}
+        {!loading && total > 0 && (
+          <div className="flex items-center justify-center gap-4 py-4 text-sm">
+            <button
+              onClick={() => setPage(Math.max(page - 1, 1))}
+              disabled={page === 1}
+              className="px-3 py-1 text-secondary disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <span className="text-tertiary">Page {page} of {Math.ceil(total / pageSize)}</span>
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={page >= Math.ceil(total / pageSize)}
+              className="px-3 py-1 text-secondary disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* Mobile page size selector */}
+        <div className="flex justify-center py-2">
+          <select
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+            className="rounded-lg border border-input-border bg-surface-alt px-2 py-1 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value={10}>10 per page</option>
+            <option value={25}>25 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Email Receipt Modal */}
+      {emailModalReceipt && (
+        <EmailReceiptModal
+          open={!!emailModalReceipt}
+          onClose={() => setEmailModalReceipt(null)}
+          onEmailSent={handleEmailSent}
+          receipt={emailModalReceipt as unknown as Parameters<typeof EmailReceiptModal>[0]["receipt"]}
+        />
+      )}
     </div>
   );
 }
