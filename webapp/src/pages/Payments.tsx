@@ -1,16 +1,42 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { getPaymentsByBusiness } from "../api/client";
+import {
+  getPaymentsByBusiness,
+  getPaymentSummary,
+  type ApiPaymentSummary,
+} from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
-import { Plus, Download, RefreshCw, ExternalLink } from "lucide-react";
+import {
+  Download,
+  RefreshCw,
+  ExternalLink,
+  Search,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import PageHeader from "../components/ui/PageHeader";
 import { DataTable, type ColumnDef } from "../components/ui/DataTable";
+import KPICard from "../components/ui/KPICard";
 import PaymentStatus from "../components/ui/PaymentStatus";
 import { type ApiPaymentWithInvoice } from "../types/api";
 
-const STATUS_FILTERS = ["all", "succeeded", "pending", "failed", "refunded"];
+const STATUS_FILTERS = [
+  { value: "all", label: "All Statuses" },
+  { value: "succeeded", label: "Paid" },
+  { value: "pending", label: "Pending" },
+  { value: "failed", label: "Failed" },
+  { value: "refunded", label: "Refunded" },
+];
+
+const PROVIDER_OPTIONS = [
+  { value: "all", label: "All Providers" },
+  { value: "stripe", label: "Stripe" },
+  { value: "stub", label: "Manual/Stub" },
+  { value: "manual", label: "Manual" },
+];
 
 export default function Payments() {
   const [payments, setPayments] = useState<ApiPaymentWithInvoice[]>([]);
@@ -18,10 +44,28 @@ export default function Payments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [summary, setSummary] = useState<ApiPaymentSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [providerFilter, setProviderFilter] = useState("all");
   const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
+
+  const currency = summary?.currency || "USD";
+
+  const loadSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    try {
+      const data = await getPaymentSummary();
+      setSummary(data);
+    } catch {
+      setSummary(null);
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
 
   const loadPayments = useCallback(async () => {
     setLoading(true);
@@ -31,6 +75,7 @@ export default function Payments() {
         limit: pageSize,
         offset: (page - 1) * pageSize,
         status: statusFilter === "all" ? undefined : statusFilter,
+        provider: providerFilter === "all" ? undefined : providerFilter,
         search: searchTerm || undefined,
       });
       setPayments(data.payments ?? []);
@@ -42,39 +87,42 @@ export default function Payments() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter, searchTerm]);
+  }, [page, pageSize, statusFilter, providerFilter, searchTerm]);
 
   useEffect(() => {
     loadPayments();
-  }, [loadPayments]);
+    loadSummary();
+  }, [loadPayments, loadSummary]);
 
   const columns = useMemo<ColumnDef<ApiPaymentWithInvoice>[]>(
     () => [
       {
-        header: "Date",
-        accessor: "paid_at",
-        cell: (row) => (
-          <span className="text-sm text-secondary">
-            {(row as ApiPaymentWithInvoice).paid_at ? formatDate(new Date((row as ApiPaymentWithInvoice).paid_at as string)) : "—"}
-          </span>
-        ),
+        header: "Payment ID",
+        accessor: "id",
+        cell: (row) => {
+          const p = row as ApiPaymentWithInvoice;
+          return (
+            <span className="text-xs font-mono text-tertiary">
+              {p.id.slice(0, 8)}
+            </span>
+          );
+        },
         sortable: false,
         align: "left",
       },
       {
-        header: "Invoice",
-        accessor: "invoice_id",
+        header: "Client",
+        accessor: "customer_name",
         cell: (row) => {
           const p = row as ApiPaymentWithInvoice;
           return (
             <div className="flex flex-col">
-              <Link
-                to={`/app/invoices/${p.invoice_id}`}
-                className="text-sm font-medium text-primary-brand hover:text-primary-hover"
-              >
-                {p.invoice_number || `#${String(p.invoice_id).slice(0, 8)}`}
-              </Link>
-              <span className="text-xs text-tertiary">{p.customer_name || "—"}</span>
+              <span className="text-sm font-medium text-primary">
+                {p.customer_name || "—"}
+              </span>
+              {p.customer_email && (
+                <span className="text-xs text-tertiary truncate">{p.customer_email}</span>
+              )}
             </div>
           );
         },
@@ -82,40 +130,68 @@ export default function Payments() {
         align: "left",
       },
       {
+        header: "Invoice",
+        accessor: "invoice_number",
+        cell: (row) => {
+          const p = row as ApiPaymentWithInvoice;
+          return (
+            <Link
+              to={`/app/invoices/${p.invoice_id}`}
+              className="text-sm font-medium text-primary-brand hover:text-primary-hover"
+            >
+              {p.invoice_number || `#${p.invoice_id.slice(0, 8)}`}
+            </Link>
+          );
+        },
+        sortable: false,
+        align: "left",
+      },
+      {
+        header: "Date",
+        accessor: "paid_at",
+        cell: (row) => {
+          const p = row as ApiPaymentWithInvoice;
+          return (
+            <span className="text-sm text-secondary">
+              {p.paid_at ? formatDate(new Date(p.paid_at)) : "—"}
+            </span>
+          );
+        },
+        sortable: false,
+        align: "left",
+      },
+      {
+        header: "Payment Method",
+        accessor: "method",
+        cell: (row) => {
+          const p = row as ApiPaymentWithInvoice;
+          const method = p.method || p.provider || "—";
+          const label = method === "manual" || method === "stub"
+            ? "Manual"
+            : method.charAt(0).toUpperCase() + method.slice(1);
+          return <span className="text-sm text-secondary capitalize">{label}</span>;
+        },
+        sortable: false,
+        align: "left",
+      },
+      {
         header: "Amount",
         accessor: "amount",
-        cell: (row) => (
-          <span className="text-sm font-medium text-primary">
-            {formatCurrencyValue((row as ApiPaymentWithInvoice).amount, (row as ApiPaymentWithInvoice).currency)}
-          </span>
-        ),
+        cell: (row) => {
+          const p = row as ApiPaymentWithInvoice;
+          return (
+            <span className="text-sm font-medium text-primary font-tabular-nums">
+              {formatCurrencyValue(p.amount, p.currency)}
+            </span>
+          );
+        },
         sortable: false,
         align: "right",
       },
       {
-        header: "Method",
-        accessor: "method",
-        cell: (row) => (
-          <span className="text-sm text-secondary capitalize">
-            {(row as ApiPaymentWithInvoice).method || (row as ApiPaymentWithInvoice).provider || "—"}
-          </span>
-        ),
-        sortable: false,
-        align: "left",
-      },
-      {
-        header: "Provider",
-        accessor: "provider",
-        cell: (row) => (
-          <span className="text-sm text-tertiary">{(row as ApiPaymentWithInvoice).provider || "—"}</span>
-        ),
-        sortable: false,
-        align: "left",
-      },
-      {
         header: "Status",
         accessor: "status",
-        cell: (row) => <PaymentStatus status={(row as ApiPaymentWithInvoice).status} showIcon />,
+        cell: (row) => <PaymentStatus status={(row as ApiPaymentWithInvoice).status} showIcon showLabel size="sm" />,
         sortable: false,
         align: "center",
       },
@@ -126,9 +202,9 @@ export default function Payments() {
           const p = row as ApiPaymentWithInvoice;
           return (
             <Link
-              to={`/app/invoices/${p.invoice_id}`}
+              to={`/app/payments/${p.id}`}
               className="text-xs text-secondary hover:text-primary"
-              title="View invoice"
+              title="View payment"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
@@ -141,7 +217,7 @@ export default function Payments() {
     []
   );
 
-  const hasActiveFilters = searchTerm || statusFilter !== "all";
+  const hasActiveFilters = searchTerm || statusFilter !== "all" || providerFilter !== "all";
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > Math.ceil(total / pageSize)) return;
@@ -153,33 +229,102 @@ export default function Payments() {
     setPage(1);
   };
 
+  const handleRefresh = () => {
+    loadPayments();
+    loadSummary();
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Payments"
         description={`${total} payment${total !== 1 ? "s" : ""} recorded`}
         primaryAction={
-          <Button
-            variant="secondary"
-            size="md"
-            icon={<Download className="h-4 w-4" />}
-            onClick={() => {}}
-          >
-            Export
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<Download className="h-4 w-4" />}
+              onClick={() => {}}
+            >
+              Export
+            </Button>
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<RefreshCw className="h-4 w-4" />}
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+          </div>
         }
       />
 
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <KPICard
+          title="Total Payments"
+          value={summary?.totalPayments ?? "0"}
+          currency={currency}
+          subtitle={`${summary?.totalPaymentCount ?? 0} payments`}
+          icon={<CheckCircle className="w-5 h-5" />}
+          iconBackground="status-success-bg status-success-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Payments This Month"
+          value={summary?.paymentsThisMonth ?? "0"}
+          currency={currency}
+          subtitle="Last 30 days"
+          icon={<Clock className="w-5 h-5" />}
+          iconBackground="status-info-bg status-info-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Pending Payments"
+          value={summary?.pendingPayments ?? "0"}
+          currency={currency}
+          subtitle={`${summary?.pendingCount ?? 0} payments`}
+          icon={<Clock className="w-5 h-5" />}
+          iconBackground="status-warning-bg status-warning-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Failed Payments"
+          value={summary?.failedPayments ?? "0"}
+          currency={currency}
+          subtitle={`${summary?.failedCount ?? 0} payments`}
+          icon={<XCircle className="w-5 h-5" />}
+          iconBackground="status-error-bg status-error-text"
+          isLoading={summaryLoading}
+        />
+        <KPICard
+          title="Refunds"
+          value={summary?.refunds ?? "0"}
+          currency={currency}
+          subtitle={`${summary?.refundCount ?? 0} refunds`}
+          icon={<RefreshCw className="w-5 h-5" />}
+          iconBackground="status-tertiary-bg status-tertiary-text"
+          isLoading={summaryLoading}
+        />
+      </div>
+
+      {/* Filters */}
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="sm:col-span-2">
-            <input
-              type="text"
-              placeholder="Search by invoice number, customer name, or provider reference..."
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-tertiary" />
+              <input
+                type="text"
+                placeholder="Search by invoice number, customer name, or provider reference..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pl-10 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
           </div>
           <div>
             <select
@@ -188,8 +333,21 @@ export default function Payments() {
               className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {STATUS_FILTERS.map((s) => (
-                <option key={s} value={s}>
-                  {s === "all" ? "All Statuses" : s.charAt(0).toUpperCase() + s.slice(1)}
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <select
+              value={providerFilter}
+              onChange={(e) => { setProviderFilter(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {PROVIDER_OPTIONS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
                 </option>
               ))}
             </select>

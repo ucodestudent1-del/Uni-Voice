@@ -2527,6 +2527,130 @@ app.get("/api/payments", requireAuth, async (req: AuthRequest, res) => {
   res.json({ payments: listRes.rows, total: countRes.rows[0]?.total ?? 0, limit, offset });
 });
 
+// Payment summary metrics for dashboard KPIs
+app.get("/api/payments/summary", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const businessId = req.user!.businessId;
+
+  const monthStart = new Date();
+  monthStart.setHours(0, 0, 0, 0);
+  monthStart.setDate(1);
+
+  const metricsRes = await query(
+    `SELECT
+       COALESCE(SUM(CASE WHEN p.status = 'succeeded' THEN p.amount ELSE 0 END), 0) AS total_payments,
+       COALESCE(SUM(CASE WHEN p.status = 'succeeded' AND p.paid_at >= $2 THEN p.amount ELSE 0 END), 0) AS payments_this_month,
+       COALESCE(SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END), 0) AS pending_payments,
+       COALESCE(SUM(CASE WHEN p.status = 'failed' THEN p.amount ELSE 0 END), 0) AS failed_payments,
+       COALESCE(SUM(CASE WHEN p.status = 'refunded' OR p.status = 'partially_refunded' THEN p.amount ELSE 0 END), 0) AS refunds,
+       COUNT(CASE WHEN p.status = 'succeeded' THEN 1 END) AS total_payment_count,
+       COUNT(CASE WHEN p.status = 'pending' THEN 1 END) AS pending_count,
+       COUNT(CASE WHEN p.status = 'failed' THEN 1 END) AS failed_count,
+       COUNT(CASE WHEN p.status = 'refunded' OR p.status = 'partially_refunded' THEN 1 END) AS refund_count,
+       COALESCE(MAX(p.currency), 'USD') AS currency
+     FROM payments p
+     WHERE p.business_id = $1`,
+    [businessId, monthStart.toISOString()]
+  );
+
+  const row = metricsRes.rows[0];
+  res.json({
+    totalPayments: String(row.total_payments ?? "0"),
+    paymentsThisMonth: String(row.payments_this_month ?? "0"),
+    pendingPayments: String(row.pending_payments ?? "0"),
+    failedPayments: String(row.failed_payments ?? "0"),
+    refunds: String(row.refunds ?? "0"),
+    totalPaymentCount: Number(row.total_payment_count ?? 0),
+    pendingCount: Number(row.pending_count ?? 0),
+    failedCount: Number(row.failed_count ?? 0),
+    refundCount: Number(row.refund_count ?? 0),
+    currency: row.currency ?? "USD",
+  });
+});
+
+// Record a payment manually (offline/stub)
+app.post("/api/payments/record", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { invoiceId, amount, provider = "manual", providerPaymentId, idempotencyKey } = req.body;
+  if (!invoiceId || !amount) return res.status(400).json({ error: "invoiceId and amount required" });
+
+  await invoiceService.recordPayment(
+    req.user!.businessId,
+    invoiceId,
+    amount,
+    provider,
+    providerPaymentId,
+    idempotencyKey
+  );
+  invalidateReportsCache(req.user!.businessId);
+  res.status(201).json({ ok: true });
+});
+
+// Single payment detail with invoice, customer, and payment events timeline
+app.get("/api/payments/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+
+  const paymentRes = await query(
+    `SELECT p.*, i.invoice_number, i.status as invoice_status, i.total as invoice_total,
+            i.amount_due as invoice_amount_due, i.amount_paid as invoice_amount_paid,
+            i.currency as invoice_currency, i.due_date as invoice_due_date,
+            i.issue_date as invoice_issue_date, i.sent_at as invoice_sent_at,
+            i.paid_at as invoice_paid_at, i.notes as invoice_notes,
+            c.name as customer_name, c.email as customer_email, c.address_line_1 as customer_address_line_1,
+            c.address_line_2 as customer_address_line_2, c.city as customer_city,
+            c.state_or_region as customer_state, c.postal_code as customer_postal_code,
+            c.country_code as customer_country_code,
+            b.name as business_name, b.email as business_email, b.phone as business_phone
+     FROM payments p
+     JOIN invoices i ON i.id = p.invoice_id
+     JOIN businesses b ON b.id = p.business_id
+     LEFT JOIN customers c ON c.id = i.customer_id
+     WHERE p.id = $1 AND p.business_id = $2`,
+    [req.params.id, req.user!.businessId]
+  );
+
+  if (!paymentRes.rows.length) return res.status(404).json({ error: "Payment not found" });
+  const payment = paymentRes.rows[0];
+
+  const eventsRes = await query(
+    `SELECT event_type, status, amount, metadata, created_at
+     FROM payment_events
+     WHERE payment_id = $1
+     ORDER BY created_at ASC`,
+    [req.params.id]
+  );
+
+  res.json({ payment, events: eventsRes.rows });
+});
+
+// Issue a refund for a payment
+app.post("/api/payments/:id/refund", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { amount, reason } = req.body;
+  if (!amount) return res.status(400).json({ error: "amount required" });
+
+  const payRes = await query(
+    `SELECT invoice_id, currency, status, provider FROM payments WHERE id = $1 AND business_id = $2`,
+    [req.params.id, req.user!.businessId]
+  );
+  if (!payRes.rows.length) return res.status(404).json({ error: "Payment not found" });
+  const paymentRow = payRes.rows[0];
+
+  const result = await invoiceService.refundPayment(
+    req.user!.businessId,
+    paymentRow.invoice_id,
+    req.params.id,
+    amount,
+    paymentRow.currency,
+    paymentRow.provider ?? "stub",
+    undefined,
+    `refund:${crypto.randomUUID()}`,
+    reason
+  );
+  invalidateReportsCache(req.user!.businessId);
+  res.json({ ok: true, status: result.status });
+});
+
 app.get("/api/tax-rates", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await query(

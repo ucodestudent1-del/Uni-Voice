@@ -433,6 +433,66 @@ export interface ApiPaymentWithInvoice extends ApiPayment {
   customer_email?: string | null;
 }
 
+export interface ApiPaymentSummary {
+  totalPayments: string;
+  paymentsThisMonth: string;
+  pendingPayments: string;
+  failedPayments: string;
+  refunds: string;
+  totalPaymentCount: number;
+  pendingCount: number;
+  failedCount: number;
+  refundCount: number;
+  currency: string;
+}
+
+export interface ApiPaymentEvent {
+  event_type: string;
+  status: string | null;
+  amount: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ApiPaymentDetail {
+  id: string;
+  invoice_id: string;
+  business_id: string;
+  provider: string;
+  provider_payment_id?: string | null;
+  amount: string;
+  currency: string;
+  status: string;
+  method?: string | null;
+  paid_at?: string | null;
+  idempotency_key?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  invoice_number?: string | null;
+  invoice_status?: string | null;
+  invoice_total?: string | null;
+  invoice_amount_due?: string | null;
+  invoice_amount_paid?: string | null;
+  invoice_currency?: string | null;
+  invoice_due_date?: string | null;
+  invoice_issue_date?: string | null;
+  invoice_sent_at?: string | null;
+  invoice_paid_at?: string | null;
+  invoice_notes?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_address_line_1?: string | null;
+  customer_address_line_2?: string | null;
+  customer_city?: string | null;
+  customer_state?: string | null;
+  customer_postal_code?: string | null;
+  customer_country_code?: string | null;
+  business_name?: string | null;
+  business_email?: string | null;
+  business_phone?: string | null;
+}
+
 export interface ApiInvoiceEvent {
   id: string;
   invoice_id: string;

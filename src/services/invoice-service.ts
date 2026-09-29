@@ -656,7 +656,8 @@ export class InvoiceService {
     currency: string,
     provider = "stripe",
     providerRefundId?: string,
-    idempotencyKey?: string
+    idempotencyKey?: string,
+    reason?: string
   ): Promise<{ status: string }> {
     const invoice = await invoiceRepository.findById(businessId, invoiceId);
     const client = await getClient();
@@ -718,7 +719,7 @@ export class InvoiceService {
       await invoiceRepository.recordEvent(invoiceId, {
         eventType: "payment_refunded",
         actorType: "payment",
-        metadata: { amount: refundAmount.toString(), provider, providerRefundId, newPaymentStatus },
+        metadata: { amount: refundAmount.toString(), provider, providerRefundId, newPaymentStatus, reason },
       }, client);
 
       await client.query("COMMIT");

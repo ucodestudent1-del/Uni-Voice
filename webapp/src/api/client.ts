@@ -20,6 +20,10 @@ import type {
   ApiExpenseCategoryBreakdown,
   ApiExpenseMonthlyTrend,
   ApiExpenseBudgetSettings,
+  ApiPaymentWithInvoice,
+  ApiPaymentSummary,
+  ApiPaymentDetail,
+  ApiPaymentEvent,
 } from "../types/api";
 
 export type {
@@ -38,6 +42,10 @@ export type {
   ApiExpenseCategoryBreakdown,
   ApiExpenseMonthlyTrend,
   ApiExpenseBudgetSettings,
+  ApiPaymentWithInvoice,
+  ApiPaymentSummary,
+  ApiPaymentDetail,
+  ApiPaymentEvent,
 };
 
 declare module "axios" {
@@ -509,6 +517,32 @@ export async function getPaymentsByBusiness(params?: {
   search?: string;
 }) {
   const res = await api.get("/payments", { params });
+  return res.data;
+}
+
+export async function getPaymentSummary() {
+  const res = await api.get("/payments/summary");
+  return res.data;
+}
+
+export async function getPayment(id: string) {
+  const res = await api.get(`/payments/${id}`);
+  return res.data;
+}
+
+export async function refundPayment(paymentId: string, data: { amount: number; reason?: string }) {
+  const res = await api.post(`/payments/${paymentId}/refund`, data);
+  return res.data;
+}
+
+export async function recordPaymentManually(data: {
+  invoiceId: string;
+  amount: number;
+  provider?: string;
+  providerPaymentId?: string;
+  idempotencyKey?: string;
+}) {
+  const res = await api.post(`/payments/record`, data);
   return res.data;
 }
 
