@@ -23,7 +23,7 @@ export const DocumentTemplateInputSchema = z.object({
   config: z.record(z.string(), z.unknown()).default({}),
   is_default: z.boolean().default(false),
   is_active: z.boolean().default(true),
-  document_type: z.enum(["invoice", "quote", "recurring_invoice"]).default("invoice"),
+  document_type: z.enum(["invoice", "quote", "recurring_invoice", "credit_note"]).default("invoice"),
 });
 
 export type DocumentTemplateInput = z.infer<typeof DocumentTemplateInputSchema>;
@@ -38,7 +38,7 @@ export const DocumentTemplateUpdateSchema = z.object({
   config: z.record(z.string(), z.unknown()).optional(),
   is_default: z.boolean().optional(),
   is_active: z.boolean().optional(),
-  document_type: z.enum(["invoice", "quote", "recurring_invoice"]).optional(),
+  document_type: z.enum(["invoice", "quote", "recurring_invoice", "credit_note"]).optional(),
 });
 
 export type DocumentTemplateUpdate = z.infer<typeof DocumentTemplateUpdateSchema>;

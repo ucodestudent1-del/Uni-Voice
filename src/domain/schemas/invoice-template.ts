@@ -3,7 +3,7 @@ import { z } from "zod";
 export const InvoiceTemplateLifecycleSchema = z.enum(["draft", "published", "archived"]);
 export type InvoiceTemplateLifecycle = z.infer<typeof InvoiceTemplateLifecycleSchema>;
 
-export const DocumentTypeSchema = z.enum(["invoice", "quote", "recurring_invoice"]);
+export const DocumentTypeSchema = z.enum(["invoice", "quote", "recurring_invoice", "credit_note"]);
 export type DocumentType = z.infer<typeof DocumentTypeSchema>;
 
 export const INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION = "1.0";

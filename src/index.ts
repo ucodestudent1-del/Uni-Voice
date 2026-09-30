@@ -17,6 +17,7 @@ import { reportsService, type ReportFilters } from "./services/reports-service.j
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { creditNoteService } from "./services/credit-note-service.js";
 import { recurringService } from "./services/recurring-service.js";
 import { quoteService } from "./services/quote-service.js";
 import { receiptService } from "./services/receipt-service.js";
@@ -30,6 +31,7 @@ import { productRepository } from "./repositories/product.repo.js";
 import { productServiceRepository } from "./repositories/product-service.repo.js";
 import { productServiceService } from "./services/product-service/product-service.js";
 import { invoiceRepository, type InvoiceListOptions, type InvoiceListItem } from "./repositories/invoice.repo.js";
+import { creditNoteRepository } from "./repositories/credit-note.repo.js";
 import { receiptRepository } from "./repositories/receipt.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { documentTemplateRepository } from "./repositories/document-template.repo.js";
@@ -1302,6 +1304,43 @@ app.post("/api/recurring", requireAuth, requireEntitlement("invoices.recurring")
      req.body.notes, req.body.terms, req.body.isActive ?? true, now]
   );
   res.status(201).json({ recurringInvoiceId: id });
+});
+
+// ============================================================================
+// CREDIT NOTES (Business tier)
+// ============================================================================
+app.get("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await creditNoteRepository.findManyPage(req.user!.businessId, {
+    status: req.query.status as string | undefined,
+    customerId: req.query.customer_id as string | undefined,
+    search: req.query.search as string | undefined,
+    currency: req.query.currency as string | undefined,
+    sortBy: req.query.sort_by as string | undefined,
+    sortOrder: (req.query.sort_order as string | undefined) === "asc" ? "asc" : "desc",
+    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    offset: req.query.offset ? Number(req.query.offset) : undefined,
+  });
+  res.json({
+    creditNotes: result.data,
+    total: result.total,
+    limit: result.limit,
+    offset: result.offset,
+  });
+});
+
+app.get("/api/credit-notes/:id", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cn = await creditNoteRepository.findById(req.user!.businessId, req.params.id);
+  res.json({ creditNote: cn });
+});
+
+app.get("/api/credit-notes/:id/pdf", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const pdf = await creditNoteService.generatePdf(req.user!.businessId, req.params.id);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=credit-note-${req.params.id}.pdf`);
+  res.send(pdf);
 });
 
 // ============================================================================
