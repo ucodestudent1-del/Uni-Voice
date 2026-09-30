@@ -19,6 +19,7 @@ export default function Landing() {
           <div className="hidden md:flex items-center gap-8">
             <Link to="#templates" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Templates</Link>
             <Link to="#features" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Features</Link>
+            <Link to="/pricing" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Pricing</Link>
             <Link to="#faq" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">FAQ</Link>
             <button onClick={() => navigate("/login")} className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">
               Login
@@ -114,6 +115,24 @@ export default function Landing() {
         features={pricingFeatures}
       />
 
+      {/* Pricing teaser */}
+      <Section className="py-20">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-inverse sm:text-4xl">Simple, transparent pricing</h2>
+          <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
+            One flat monthly rate. No per-invoice fees. Cancel anytime.
+          </p>
+        </div>
+        <div className="mt-12 flex justify-center">
+          <Link
+            to="/pricing"
+            className="inline-flex items-center rounded-lg bg-primary-action px-6 py-3 text-base font-medium text-on-primary hover:bg-primary-hover shadow-lg transition-colors"
+          >
+            View Full Pricing
+          </Link>
+        </div>
+      </Section>
+
       {/* FAQ */}
       <FaqSection id="faq" items={faqs} />
 
@@ -141,9 +160,10 @@ export default function Landing() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <p className="text-secondary text-tertiary">© 2026 InvoiceFlow. All rights reserved.</p>
-            <div className="flex gap-6">
+         <div className="flex gap-6">
               <Link to="/privacy" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Privacy</Link>
               <Link to="/terms" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Terms</Link>
+              <Link to="/pricing" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">Pricing</Link>
             </div>
           </div>
         </div>

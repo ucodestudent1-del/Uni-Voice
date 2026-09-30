@@ -4,6 +4,7 @@ import { useAuth } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
 
 const Landing = lazy(() => import("./pages/Landing"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
@@ -83,8 +84,9 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Suspense fallback={<Fallback />}><Landing /></Suspense>} />
-      <Route path="/login" element={<Suspense fallback={<Fallback />}><PublicOnly><Login /></PublicOnly></Suspense>} />
+       <Route path="/" element={<Suspense fallback={<Fallback />}><Landing /></Suspense>} />
+       <Route path="/pricing" element={<Suspense fallback={<Fallback />}><Pricing /></Suspense>} />
+       <Route path="/login" element={<Suspense fallback={<Fallback />}><PublicOnly><Login /></PublicOnly></Suspense>} />
       <Route path="/register" element={<Suspense fallback={<Fallback />}><PublicOnly><Register /></PublicOnly></Suspense>} />
       <Route path="/auth/callback" element={<Suspense fallback={<Fallback />}><PublicOnly><AuthCallback /></PublicOnly></Suspense>} />
        <Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
