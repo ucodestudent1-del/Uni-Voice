@@ -1,7 +1,7 @@
 import { useSubscription } from "../contexts/SubscriptionContext";
 import type { SubscriptionCardProps } from "@/types/components";
 
-export { SubscriptionCardProps };
+export type { SubscriptionCardProps };
 
 export default function SubscriptionCard({ onUpgrade, compact = false }: SubscriptionCardProps) {
   const { plan, subscription, loading } = useSubscription();

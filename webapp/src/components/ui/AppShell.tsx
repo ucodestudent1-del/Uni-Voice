@@ -5,7 +5,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import type { TopBarProps, AppShellProps } from "@/types/components";
 
-export { TopBarProps, AppShellProps };
+export type { TopBarProps, AppShellProps };
 
 export function TopBar({
   onSearchFocus,

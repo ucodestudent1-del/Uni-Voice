@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { StatusBadge, invoiceStatusConfig, type StatusBadgeProps } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
 
-export { StatusBadgeProps };
+export type { StatusBadgeProps };
 
 const InvoiceStatusBadgeInner = forwardRef<HTMLSpanElement, StatusBadgeProps>(
   function InvoiceStatusBadge({ status, isOverdue, className }, ref) {

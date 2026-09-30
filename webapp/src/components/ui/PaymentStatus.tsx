@@ -10,7 +10,7 @@ import {
 import type { ComponentType } from "react";
 import type { PaymentStatusType, PaymentStatusProps } from "@/types/components";
 
-export { PaymentStatusType, PaymentStatusProps };
+export type { PaymentStatusType, PaymentStatusProps };
 
 const paymentStatusConfigWithIcons = {
   ...paymentStatusConfig,

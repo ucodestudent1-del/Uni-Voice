@@ -2,8 +2,6 @@ import { createContext, useContext, useState, useCallback } from "react";
 import Toast, { type ToastProps } from "./Toast";
 import type { ToastContextValue, ToastType } from "@/types/components";
 
-export { ToastContextValue, ToastType };
-
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function useToast(): ToastContextValue {

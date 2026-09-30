@@ -1,6 +1,6 @@
 import { StatusBadge, projectStatusConfig, type StatusBadgeProps } from "@/components/ui/StatusBadge";
 
-export { StatusBadgeProps as ProjectStatusBadgeProps };
+export type { StatusBadgeProps as ProjectStatusBadgeProps };
 
 export default function ProjectStatusBadge({ status, className = "", ...props }: StatusBadgeProps) {
   return (

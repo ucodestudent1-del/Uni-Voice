@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import type { EmptyStateProps } from "@/types/components";
 
-export { EmptyStateProps };
+export type { EmptyStateProps };
 
 type EmptyStateVariant = "default" | "compact" | "sidebar" | "loading" | "error";
 

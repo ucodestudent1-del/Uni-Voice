@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
 import type { ToastProps, ToastType } from "@/types/components";
 
-export { ToastProps, ToastType };
+export type { ToastProps, ToastType };
 
 const iconMap: Record<ToastType, React.ComponentType<{ className?: string }>> = {
   success: CheckCircle,

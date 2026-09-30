@@ -5,7 +5,7 @@ import { formatMoney as formatMoneyUtil, type CurrencyCode } from "@/types/curre
 import { formatCurrency } from "@/utils/format";
 import type { MoneyProps } from "@/types/components";
 
-export { MoneyProps };
+export type { MoneyProps };
 
 function formatValue(value: Decimal.Value, currency: string, decimalPlaces: number): string {
   if (currency.length === 3) {

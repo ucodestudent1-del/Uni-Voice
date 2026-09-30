@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import type { BreadcrumbItem, PageHeaderProps } from "@/types/components";
 
-export { BreadcrumbItem, PageHeaderProps };
+export type { BreadcrumbItem, PageHeaderProps };
 
 export default function PageHeader({
   title,

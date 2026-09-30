@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { X } from "lucide-react";
 import type { ConfirmationDialogProps } from "@/types/components";
 
-export { ConfirmationDialogProps };
+export type { ConfirmationDialogProps };
 
 export default function ConfirmationDialog({
   open,

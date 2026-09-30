@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import type { ColumnDef, DataTableProps } from "@/types/components";
 
-export { ColumnDef };
+export type { ColumnDef };
 
 function getCellValue<TData>(row: TData, column: ColumnDef<TData>): unknown {
   if (typeof column.accessor === "function") return column.accessor(row);

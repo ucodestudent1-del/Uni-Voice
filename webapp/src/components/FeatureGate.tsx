@@ -4,7 +4,7 @@ import type { FeatureFlag } from "@/types/api";
 import type { FeatureFlagProps } from "@/types/components";
 import UpgradePrompt from "./UpgradePrompt";
 
-export { FeatureFlagProps };
+export type { FeatureFlagProps };
 
 export default function FeatureGate({ feature, children, fallback }: FeatureFlagProps) {
   const { plan, features } = useSubscription();
