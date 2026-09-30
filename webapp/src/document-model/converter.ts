@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { DocumentBuilder, insertComponent } from "./document-operations";
 import { getComponentDefinition } from "./registry";
-import { ApiInvoice, ApiCustomer, ApiBusiness } from "../types/api";
+import type { ApiInvoice, ApiCustomer, ApiBusiness } from "../types/api";
 import { DEFAULT_INVOICE_TERMS } from "../constants/invoiceTerms";
 
 export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, customer?: ApiCustomer): InvoiceDocument {

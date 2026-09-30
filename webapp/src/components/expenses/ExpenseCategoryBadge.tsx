@@ -1,4 +1,4 @@
-import { ExpensesCategory, ExpenseCategoryColor } from "@/types/expenses";
+import type { ExpensesCategory, ExpenseCategoryColor } from "@/types/expenses";
 
 export const EXPENSE_CATEGORY_CONFIG: Record<ExpensesCategory, { label: string; color: ExpenseCategoryColor; icon: string }> = {
   supplies: { label: "Supplies", color: "info", icon: "🖇" },
