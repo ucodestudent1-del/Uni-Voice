@@ -59,4 +59,80 @@ describe("KPICard", () => {
     );
     expect(screen.getByText("12 items")).toBeInTheDocument();
   });
+
+  it("renders stat variant with icon next to title", () => {
+    render(
+      <KPICard
+        title="Revenue"
+        value="1234.56"
+        currency="USD"
+        icon={<DollarSign className="w-5 h-5" />}
+        iconBackground="bg-success-bg text-success-text"
+        variant="stat"
+      />
+    );
+    expect(screen.getByText("Revenue")).toBeInTheDocument();
+    expect(screen.getByText("$1,234.56")).toBeInTheDocument();
+  });
+
+  it("renders tinted variant with success state", () => {
+    render(
+      <KPICard
+        title="Paid"
+        value="1000"
+        currency="USD"
+        icon={<DollarSign className="w-5 h-5" />}
+        iconBackground="bg-success-bg text-success-text"
+        variant="tinted"
+        state="success"
+      />
+    );
+    expect(screen.getByText("Paid")).toBeInTheDocument();
+  });
+
+  it("renders inline variant with sparkline", () => {
+    render(
+      <KPICard
+        title="Pending"
+        value="500"
+        currency="USD"
+        icon={<DollarSign className="w-5 h-5" />}
+        iconBackground="bg-warning-bg text-warning-text"
+        variant="inline"
+        sparkline={[{ value: 10 }, { value: 30 }, { value: 20 }, { value: 50 }]}
+        sparklineColor="rgb(245, 158, 11)"
+      />
+    );
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+  });
+
+  it("renders trend variant with trend indicator", () => {
+    render(
+      <KPICard
+        title="Revenue"
+        value="1234.56"
+        currency="USD"
+        icon={<DollarSign className="w-5 h-5" />}
+        variant="trend"
+        trend={{ value: "12.5%", direction: "up" }}
+      />
+    );
+    expect(screen.getByText("Revenue")).toBeInTheDocument();
+    expect(screen.getByText("↑ 12.5%")).toBeInTheDocument();
+  });
+
+  it("renders progress bar when progressPct is provided (stat variant)", () => {
+    const { container } = render(
+      <KPICard
+        title="Collection"
+        value="85"
+        icon={<DollarSign className="w-5 h-5" />}
+        iconBackground="bg-info-bg text-info-text"
+        variant="stat"
+        progressPct={85}
+      />
+    );
+    const bar = container.querySelector('div[aria-label="85% progress"]');
+    expect(bar).toBeInTheDocument();
+  });
 });

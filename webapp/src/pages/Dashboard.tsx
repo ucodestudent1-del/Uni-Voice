@@ -8,12 +8,10 @@ import {
   CheckCircle,
   CalendarDays,
   Clock,
-  FileText,
   Plus,
-  Search,
 } from "lucide-react";
-import { getDashboardData, getInvoices } from "../api/client";
-import type { ApiDashboardData, ApiInvoiceListItem, ApiUpcomingInvoice, ApiInvoice } from "../types/api";
+import { getDashboardData, getInvoices, getVolumeTrendReport } from "../api/client";
+import type { ApiDashboardData, ApiInvoiceListItem, ApiUpcomingInvoice, ApiInvoice, ApiVolumeTrend } from "../types/api";
 import { KPICard } from "@/components/ui";
 import RevenueChart from "../components/dashboard/RevenueChart";
 import StatusBreakdown from "../components/dashboard/StatusBreakdown";
@@ -70,6 +68,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [volumeTrend, setVolumeTrend] = useState<ApiVolumeTrend[]>([]);
 
   useEffect(() => {
     loadAll();
@@ -79,8 +78,13 @@ export default function Dashboard() {
     setLoading(true);
     setLoadError(null);
     try {
-      const data = await getDashboardData();
-      setDashboard((data.data ?? data) as ApiDashboardData);
+      const [dashRes, trendRes] = await Promise.all([
+        getDashboardData(),
+        getVolumeTrendReport({ period: "day", months: 1 }).catch(() => []),
+      ]);
+      setDashboard((dashRes.data ?? dashRes) as ApiDashboardData);
+      const trendData = Array.isArray(trendRes) ? trendRes : trendRes?.data ?? [];
+      setVolumeTrend(Array.isArray(trendData) ? trendData : []);
     } catch (err: any) {
       setDashboard(null);
       setLoadError(err.response?.data?.error || "Could not load dashboard");
@@ -115,7 +119,7 @@ export default function Dashboard() {
         <div className="h-8 bg-surface-alt rounded w-48" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-surface rounded-xl border border-color p-5 h-28" />
+            <div key={i} className="bg-surface rounded-xl border border-color p-5 h-28 animate-pulse" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -177,6 +181,14 @@ export default function Dashboard() {
 
   const needsAttentionCount = overdueInvoices.length + needsAttention.length + summary.draftCount;
 
+  const sparklinePoints = useMemo(() => {
+    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.paid) }));
+  }, [volumeTrend]);
+
+  const revenueTrendPoints = useMemo(() => {
+    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.invoiced) }));
+  }, [volumeTrend]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -205,6 +217,11 @@ export default function Dashboard() {
           subtitle={`${(summary.draftCount + summary.sentCount + summary.overdueCount)} unpaid invoices`}
           icon={<DollarSign className="w-5 h-5" />}
           iconBackground="bg-info-bg text-info-text"
+          variant="stat"
+          state="info"
+          progressPct={summary.totalInvoices > 0 ? (summary.paidCount / summary.totalInvoices) * 100 : 0}
+          sparkline={revenueTrendPoints}
+          sparklineColor="rgb(var(--color-info))"
         />
         <KPICard
           title="Overdue"
@@ -213,6 +230,8 @@ export default function Dashboard() {
           subtitle={`${summary.overdueCount} overdue invoices`}
           icon={<AlertTriangle className="w-5 h-5" />}
           iconBackground="bg-error-bg text-error-text"
+          variant="tinted"
+          state="error"
         />
         <KPICard
           title="Paid This Month"
@@ -221,6 +240,10 @@ export default function Dashboard() {
           subtitle={`${summary.paidCount} paid invoices`}
           icon={<CheckCircle className="w-5 h-5" />}
           iconBackground="bg-success-bg text-success-text"
+          variant="stat"
+          state="success"
+          sparkline={sparklinePoints}
+          sparklineColor="rgb(var(--color-success))"
         />
         <KPICard
           title="Revenue This Month"
@@ -228,7 +251,9 @@ export default function Dashboard() {
           currency={currency}
           subtitle="Total revenue earned"
           icon={<DollarSign className="w-5 h-5" />}
-          iconBackground="status-warning-bg status-warning-text"
+          iconBackground="bg-warning-bg text-warning-text"
+          variant="trend"
+          trend={{ value: "See chart", direction: "up" }}
         />
         <KPICard
           title="Due Next 7 Days"
@@ -237,6 +262,7 @@ export default function Dashboard() {
           subtitle={`${upcoming.length} invoices due`}
           icon={<CalendarDays className="w-5 h-5" />}
           iconBackground="bg-warning-bg text-warning-text"
+          variant="inline"
         />
       </div>
 

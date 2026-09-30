@@ -12,7 +12,7 @@ export { default as PaymentStatus, type PaymentStatusType, type PaymentStatusPro
 export { default as StatusBadge, type StatusBadgeProps, type StatusConfig, invoiceStatusConfig, paymentStatusConfig, projectStatusConfig, customerStatusConfig, getStatusBadgeClassName } from "./StatusBadge";
 export { default as PageHeader, type BreadcrumbItem, type PageHeaderProps } from "./PageHeader";
 export { Section, SectionHeader } from "./Section";
-export { default as KPICard, type KPICardProps } from "./KPICard";
+export { default as KPICard, type KPICardProps, type KpiCardVariant, type KpiCardState, type SparklinePoint } from "./KPICard";
 export { default as FeaturesSection } from "./FeaturesSection";
 export { default as FaqSection } from "./FaqSection";
 export { default as TemplateGallery } from "./TemplateGallery";

@@ -4,10 +4,12 @@ import {
   getReceipts,
   getReceiptPdf,
   getReceiptSummary,
+  getVolumeTrendReport,
   type ReceiptSearchParams,
   type ApiReceipt,
   type ApiReceiptSummary,
 } from "../api/client";
+import { type ApiVolumeTrend } from "../types/api";
 import { formatCurrencyValue } from "../lib/utils";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
@@ -63,6 +65,7 @@ export default function Receipts() {
 
   const [summary, setSummary] = useState<ApiReceiptSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
+  const [volumeTrend, setVolumeTrend] = useState<ApiVolumeTrend[]>([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -131,6 +134,16 @@ export default function Receipts() {
     }
   }, []);
 
+  const loadVolumeTrend = useCallback(async () => {
+    try {
+      const data = await getVolumeTrendReport({ period: "day", months: 1 });
+      const trendData = Array.isArray(data) ? data : data?.data ?? [];
+      setVolumeTrend(Array.isArray(trendData) ? trendData : []);
+    } catch {
+      setVolumeTrend([]);
+    }
+  }, []);
+
   useEffect(() => {
     loadReceipts();
   }, [loadReceipts]);
@@ -138,6 +151,10 @@ export default function Receipts() {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  useEffect(() => {
+    loadVolumeTrend();
+  }, [loadVolumeTrend]);
 
   const handleDownloadPdf = useCallback(async (receiptId: string) => {
     try {
@@ -172,6 +189,7 @@ export default function Receipts() {
   const handleRefresh = () => {
     loadReceipts();
     loadSummary();
+    loadVolumeTrend();
   };
 
   const columns = useMemo<ColumnDef<ApiReceipt>[]>(
@@ -327,6 +345,10 @@ export default function Receipts() {
 
   const hasActiveFilters = searchTerm || statusFilter !== "all" || providerFilter !== "all" || dateFrom || dateTo;
 
+  const sparklinePoints = useMemo(() => {
+    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.paid) }));
+  }, [volumeTrend]);
+
   function clearFilters() {
     setSearchTerm("");
     setStatusFilter("all");
@@ -431,6 +453,8 @@ export default function Receipts() {
           subtitle={`${summary?.totalCount ?? 0} receipts`}
           icon={<CheckCircle className="w-5 h-5" />}
           iconBackground="status-success-bg status-success-text"
+          variant="tinted"
+          state="success"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -440,6 +464,10 @@ export default function Receipts() {
           subtitle="Last 30 days"
           icon={<Clock className="w-5 h-5" />}
           iconBackground="status-info-bg status-info-text"
+          variant="stat"
+          state="info"
+          sparkline={sparklinePoints}
+          sparklineColor="rgb(var(--color-info))"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -449,6 +477,7 @@ export default function Receipts() {
           subtitle={`${summary?.issuedCount ?? 0} receipts`}
           icon={<Clock className="w-5 h-5" />}
           iconBackground="status-info-bg status-info-text"
+          variant="inline"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -458,6 +487,7 @@ export default function Receipts() {
           subtitle={`${summary?.sentCount ?? 0} receipts`}
           icon={<CheckCircle className="w-5 h-5" />}
           iconBackground="status-success-bg status-success-text"
+          variant="inline"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -467,6 +497,8 @@ export default function Receipts() {
           subtitle={`${summary?.failedCount ?? 0} receipts`}
           icon={<XCircle className="w-5 h-5" />}
           iconBackground="status-error-bg status-error-text"
+          variant="tinted"
+          state="error"
           isLoading={summaryLoading}
         />
       </div>

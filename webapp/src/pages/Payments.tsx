@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   getPaymentsByBusiness,
   getPaymentSummary,
+  getVolumeTrendReport,
   type ApiPaymentSummary,
 } from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
@@ -21,7 +22,7 @@ import PageHeader from "../components/ui/PageHeader";
 import { DataTable, type ColumnDef } from "../components/ui/DataTable";
 import KPICard from "../components/ui/KPICard";
 import PaymentStatus from "../components/ui/PaymentStatus";
-import { type ApiPaymentWithInvoice } from "../types/api";
+import { type ApiPaymentWithInvoice, type ApiVolumeTrend } from "../types/api";
 
 const STATUS_FILTERS = [
   { value: "all", label: "All Statuses" },
@@ -46,6 +47,7 @@ export default function Payments() {
 
   const [summary, setSummary] = useState<ApiPaymentSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
+  const [volumeTrend, setVolumeTrend] = useState<ApiVolumeTrend[]>([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -53,7 +55,11 @@ export default function Payments() {
   const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
 
-  const currency = summary?.currency || "USD";
+   const currency = summary?.currency || "USD";
+
+  const sparklinePoints = useMemo(() => {
+    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.paid) }));
+  }, [volumeTrend]);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
@@ -64,6 +70,16 @@ export default function Payments() {
       setSummary(null);
     } finally {
       setSummaryLoading(false);
+    }
+  }, []);
+
+  const loadVolumeTrend = useCallback(async () => {
+    try {
+      const data = await getVolumeTrendReport({ period: "day", months: 1 });
+      const trendData = Array.isArray(data) ? data : data?.data ?? [];
+      setVolumeTrend(Array.isArray(trendData) ? trendData : []);
+    } catch {
+      setVolumeTrend([]);
     }
   }, []);
 
@@ -92,7 +108,8 @@ export default function Payments() {
   useEffect(() => {
     loadPayments();
     loadSummary();
-  }, [loadPayments, loadSummary]);
+    loadVolumeTrend();
+  }, [loadPayments, loadSummary, loadVolumeTrend]);
 
   const columns = useMemo<ColumnDef<ApiPaymentWithInvoice>[]>(
     () => [
@@ -232,6 +249,7 @@ export default function Payments() {
   const handleRefresh = () => {
     loadPayments();
     loadSummary();
+    loadVolumeTrend();
   };
 
   return (
@@ -271,6 +289,8 @@ export default function Payments() {
           subtitle={`${summary?.totalPaymentCount ?? 0} payments`}
           icon={<CheckCircle className="w-5 h-5" />}
           iconBackground="status-success-bg status-success-text"
+          variant="tinted"
+          state="success"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -280,6 +300,10 @@ export default function Payments() {
           subtitle="Last 30 days"
           icon={<Clock className="w-5 h-5" />}
           iconBackground="status-info-bg status-info-text"
+          variant="stat"
+          state="info"
+          sparkline={sparklinePoints}
+          sparklineColor="rgb(var(--color-info))"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -289,6 +313,7 @@ export default function Payments() {
           subtitle={`${summary?.pendingCount ?? 0} payments`}
           icon={<Clock className="w-5 h-5" />}
           iconBackground="status-warning-bg status-warning-text"
+          variant="inline"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -298,6 +323,8 @@ export default function Payments() {
           subtitle={`${summary?.failedCount ?? 0} payments`}
           icon={<XCircle className="w-5 h-5" />}
           iconBackground="status-error-bg status-error-text"
+          variant="tinted"
+          state="error"
           isLoading={summaryLoading}
         />
         <KPICard
@@ -307,6 +334,7 @@ export default function Payments() {
           subtitle={`${summary?.refundCount ?? 0} refunds`}
           icon={<RefreshCw className="w-5 h-5" />}
           iconBackground="status-tertiary-bg status-tertiary-text"
+          variant="inline"
           isLoading={summaryLoading}
         />
       </div>
