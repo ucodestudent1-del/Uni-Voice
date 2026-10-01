@@ -148,9 +148,9 @@ WORKDIR /app
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup && \
+# Create non-root user for nginx (nginx package creates nginx user)
+RUN groupadd -r -g 1001 appgroup && \
+    useradd -r -u 1001 -g appgroup -m -d /home/appuser appuser && \
     chown -R nginx:nginx /var/cache/nginx /var/log/nginx /app/webapp/dist && \
     chown -R appuser:appgroup /app && \
     chmod +x /app/docker-entrypoint.sh
