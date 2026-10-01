@@ -1162,7 +1162,7 @@ export async function recordDepositPayment(id: string, data: { amount: number; p
 // ============================================================================
 
 export async function getEnhancedDashboard() {
-  const res = await api.get("/dashboard/enhanced");
+  const res = await api.get("/reports/dashboard");
   return res.data;
 }
 
@@ -1703,7 +1703,7 @@ export async function getStripeConfigTyped(): Promise<StripeConfig> {
 
 export async function getDashboardSummary(): Promise<ApiDashboardSummary> {
   const res = await api.get("/reports/dashboard");
-  return res.data;
+  return res.data.summary;
 }
 
 export async function getRevenueReport(params?: ReportFiltersParams): Promise<ApiRevenueReport> {

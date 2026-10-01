@@ -24,8 +24,8 @@ export default function ReportKPICards({
 }: ReportKPICardsProps) {
   const revenueTrend = useMemo(() => {
     if (volumeTrend.length < 2) return undefined;
-    const current = new Decimal(volumeTrend[volumeTrend.length - 1].invoiced);
-    const previous = new Decimal(volumeTrend[volumeTrend.length - 2].invoiced);
+    const current = new Decimal(volumeTrend[volumeTrend.length - 1].invoiced ?? 0);
+    const previous = new Decimal(volumeTrend[volumeTrend.length - 2].invoiced ?? 0);
     if (previous.isZero()) return undefined;
     const pct = current.sub(previous).div(previous).mul(100).toNumber();
     return {
@@ -36,8 +36,8 @@ export default function ReportKPICards({
 
   const paidTrend = useMemo(() => {
     if (volumeTrend.length < 2) return undefined;
-    const current = new Decimal(volumeTrend[volumeTrend.length - 1].paid);
-    const previous = new Decimal(volumeTrend[volumeTrend.length - 2].paid);
+    const current = new Decimal(volumeTrend[volumeTrend.length - 1].paid ?? 0);
+    const previous = new Decimal(volumeTrend[volumeTrend.length - 2].paid ?? 0);
     if (previous.isZero()) return undefined;
     const pct = current.sub(previous).div(previous).mul(100).toNumber();
     return {
@@ -48,7 +48,7 @@ export default function ReportKPICards({
 
   const netIncome = useMemo(() => {
     if (!summary) return "0";
-    return new Decimal(summary.totalRevenue).minus(new Decimal(summary.expenses)).toFixed(2);
+    return new Decimal(summary.totalRevenue ?? 0).minus(new Decimal(summary.expenses ?? 0)).toFixed(2);
   }, [summary]);
 
   return (

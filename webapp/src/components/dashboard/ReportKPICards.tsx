@@ -30,8 +30,8 @@ export default function ReportKPICards({
 }: ReportKPICardsProps) {
   const revenueTrend = useMemo(() => {
     if (volumeTrend.length < 2) return undefined;
-    const current = new Decimal(volumeTrend[volumeTrend.length - 1].invoiced);
-    const previous = new Decimal(volumeTrend[volumeTrend.length - 2].invoiced);
+    const current = new Decimal(volumeTrend[volumeTrend.length - 1].invoiced ?? 0);
+    const previous = new Decimal(volumeTrend[volumeTrend.length - 2].invoiced ?? 0);
     if (previous.isZero()) return undefined;
     const pct = current.sub(previous).div(previous).mul(100).toNumber();
     return { value: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, direction: (pct >= 0 ? "up" : "down") as "up" | "down" };
@@ -39,8 +39,8 @@ export default function ReportKPICards({
 
   const paymentTrend = useMemo(() => {
     if (volumeTrend.length < 2) return undefined;
-    const currentPaid = new Decimal(volumeTrend[volumeTrend.length - 1].paid);
-    const previousPaid = new Decimal(volumeTrend[volumeTrend.length - 2].paid);
+    const currentPaid = new Decimal(volumeTrend[volumeTrend.length - 1].paid ?? 0);
+    const previousPaid = new Decimal(volumeTrend[volumeTrend.length - 2].paid ?? 0);
     if (previousPaid.isZero()) return undefined;
     const pct = currentPaid.sub(previousPaid).div(previousPaid).mul(100).toNumber();
     return { value: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, direction: (pct >= 0 ? "up" : "down") as "up" | "down" };

@@ -173,7 +173,7 @@ export default function PaymentsReport({
           <ReportStatCard title="Total Amount" value={formatCurrencyValue(summary.totalAmount, currency)} icon={<DollarSign className="w-5 h-5" />} iconBg="bg-success-bg text-success-text" subtitle={currency} />
           <ReportStatCard title="Paid" value={formatCurrencyValue(summary.totalPaid, currency)} icon={<CheckCircle className="w-5 h-5" />} iconBg="bg-success-bg text-success-text" subtitle={currency} />
           <ReportStatCard title="Pending" value={formatCurrencyValue(summary.totalPending, currency)} icon={<Clock className="w-5 h-5" />} iconBg="bg-info-bg text-info-text" subtitle={currency} />
-          <ReportStatCard title="Failed/Refunded" value={formatCurrencyValue(new Decimal(summary.totalFailed).plus(new Decimal(summary.totalRefunded)), currency)} icon={<XCircle className="w-5 h-5" />} iconBg="bg-error-bg text-error-text" subtitle={currency} />
+           <ReportStatCard title="Failed/Refunded" value={formatCurrencyValue(new Decimal(summary.totalFailed ?? 0).plus(new Decimal(summary.totalRefunded ?? 0)), currency)} icon={<XCircle className="w-5 h-5" />} iconBg="bg-error-bg text-error-text" subtitle={currency} />
         </div>
       )}
 
