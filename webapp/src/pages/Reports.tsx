@@ -115,7 +115,11 @@ export default function Reports() {
       setVolumeTrend(dash.volumeTrend ?? (Array.isArray(trendRes) ? trendRes : []));
       setError(null);
     } catch (err: any) {
-      setError(err.message || "Failed to load dashboard data");
+      if (err.response?.status === 403) {
+        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError(err.message || "Failed to load dashboard data");
+      }
     } finally {
       setLoading("dashboard", false);
     }
@@ -127,8 +131,13 @@ export default function Reports() {
       try {
         const data = await getRevenueReport(filters);
         setRevenueData(data);
+        setError(null);
       } catch (err: any) {
-        setError(err.message || "Failed to load revenue report");
+        if (err.response?.status === 403) {
+          setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+        } else {
+          setError(err.message || "Failed to load revenue report");
+        }
       } finally {
         setLoading("revenue", false);
       }
@@ -140,8 +149,13 @@ export default function Reports() {
     try {
       const data = await getInvoicesReport(filters);
       setInvoicesData(data);
+      setError(null);
     } catch (err: any) {
-      setError(err.message || "Failed to load invoices report");
+      if (err.response?.status === 403) {
+        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError(err.message || "Failed to load invoices report");
+      }
     } finally {
       setLoading("invoices", false);
     }
@@ -152,8 +166,13 @@ export default function Reports() {
     try {
       const data = await getPaymentsReport(filters);
       setPaymentsData(data);
+      setError(null);
     } catch (err: any) {
-      setError(err.message || "Failed to load payments report");
+      if (err.response?.status === 403) {
+        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError(err.message || "Failed to load payments report");
+      }
     } finally {
       setLoading("payments", false);
     }
@@ -164,8 +183,13 @@ export default function Reports() {
     try {
       const data = await getExpensesReport(filters);
       setExpensesData(data);
+      setError(null);
     } catch (err: any) {
-      setError(err.message || "Failed to load expenses report");
+      if (err.response?.status === 403) {
+        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError(err.message || "Failed to load expenses report");
+      }
     } finally {
       setLoading("expenses", false);
     }
@@ -176,8 +200,13 @@ export default function Reports() {
     try {
       const data = await getClientsReport(filters);
       setClientsData(data);
+      setError(null);
     } catch (err: any) {
-      setError(err.message || "Failed to load clients report");
+      if (err.response?.status === 403) {
+        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError(err.message || "Failed to load clients report");
+      }
     } finally {
       setLoading("clients", false);
     }
@@ -189,8 +218,13 @@ export default function Reports() {
       try {
         const data = await getTaxSummaryReport(filters);
         setTaxData(data);
+        setError(null);
       } catch (err: any) {
-        setError(err.message || "Failed to load tax summary");
+        if (err.response?.status === 403) {
+          setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+        } else {
+          setError(err.message || "Failed to load tax summary");
+        }
       } finally {
         setLoading("tax", false);
       }
@@ -203,8 +237,13 @@ export default function Reports() {
       try {
         const data = await getProfitLossReport(filters);
         setProfitLossData(data);
+        setError(null);
       } catch (err: any) {
-        setError(err.message || "Failed to load profit & loss report");
+        if (err.response?.status === 403) {
+          setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+        } else {
+          setError(err.message || "Failed to load profit & loss report");
+        }
       } finally {
         setLoading("profit-loss", false);
       }
