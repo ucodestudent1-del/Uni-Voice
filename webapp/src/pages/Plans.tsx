@@ -19,22 +19,6 @@ const PLAN_FEATURES: Record<string, { label: string; available: boolean }[]> = {
     { label: "All templates", available: true },
     { label: "Online payments", available: true },
     { label: "Recurring invoices", available: true },
-    { label: "Expense tracking", available: false },
-  ],
-  business: [
-    { label: "Unlimited invoices", available: true },
-    { label: "Unlimited customers", available: true },
-    { label: "All templates", available: true },
-    { label: "Online payments", available: true },
-    { label: "Recurring invoices", available: true },
-    { label: "Expense tracking", available: true },
-  ],
-  scale: [
-    { label: "Unlimited invoices", available: true },
-    { label: "Unlimited customers", available: true },
-    { label: "All templates", available: true },
-    { label: "Online payments", available: true },
-    { label: "Recurring invoices", available: true },
     { label: "Expense tracking", available: true },
   ],
 };
@@ -46,7 +30,7 @@ export default function Plans() {
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const tierOrder = { free: 0, pro: 1, scale: 2, business: 3 };
+  const tierOrder = { free: 0, pro: 1 };
   const sortedPlans = [...allPlans].sort(
     (a, b) => (tierOrder[a.code as keyof typeof tierOrder] ?? 99) - (tierOrder[b.code as keyof typeof tierOrder] ?? 99),
   );

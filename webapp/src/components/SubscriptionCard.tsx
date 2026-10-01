@@ -40,7 +40,6 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
 
   const isFree = plan.code === "free";
   const isPro = plan.code === "pro";
-  const isBusiness = plan.code === "business";
 
   const statusColor =
     subscription?.status === "active" ? "status-success-bg status-success-text" :
@@ -61,7 +60,7 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
       )}
 
       <div className={`flex items-center ${compact ? "justify-center flex-col" : "gap-4"}`}>
-        <div className={`rounded-full ${isFree ? "bg-surface-alt" : isPro ? "bg-primary-bg" : "bg-info-bg"} p-3`}>
+        <div className={`rounded-full ${isFree ? "bg-surface-alt" : "bg-primary-bg"} p-3`}>
           {plan.code === "free" ? "★" : plan.code === "pro" ? "★" : "★"}
         </div>
         <div>

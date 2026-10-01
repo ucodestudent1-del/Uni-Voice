@@ -64,7 +64,7 @@ export default function ExpenseDetail() {
       setExpense(res.expense);
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError("Expense tracking requires a Business plan. Please upgrade to continue.");
+        setError("Expense tracking requires a Pro plan. Please upgrade to continue.");
       } else {
         setError(err.response?.data?.error || "Failed to load expense");
       }

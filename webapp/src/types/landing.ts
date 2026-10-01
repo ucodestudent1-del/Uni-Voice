@@ -79,7 +79,7 @@ export const faqs: FaqItem[] = [
   },
   {
     question: "Can I customize templates with my branding?",
-    answer: "Yes. On Pro or Business you can upload your logo, choose brand colors, and customize fonts for every document.",
+    answer: "Yes. On Pro you can upload your logo, choose brand colors, and customize fonts for every document.",
   },
 ];
 

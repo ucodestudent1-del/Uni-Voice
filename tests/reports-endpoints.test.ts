@@ -28,8 +28,8 @@ describe("Reports endpoints (integration)", () => {
     email = `${userId}@example.com`;
     headers = authHeader(businessId, userId, email);
 
-    const businessPlan = await subscriptionService.getPlan("business");
-    if (!businessPlan) throw new Error("business plan not found");
+    const businessPlan = await subscriptionService.getPlan("pro");
+    if (!businessPlan) throw new Error("pro plan not found");
     await subscriptionRepository.createSubscription({
       businessId,
       planId: businessPlan.id,

@@ -18,9 +18,9 @@ export default function FeatureGate({ feature, children, fallback }: FeatureFlag
     return <>{children}</>;
   }
 
-  const tierOrder = { free: 0, pro: 1, scale: 2, business: 3 };
+  const tierOrder = { free: 0, pro: 1 };
   const currentTier = tierOrder[plan.code as keyof typeof tierOrder] ?? 0;
-  const requiredTier = featureFlag.requires_plan ? tierOrder[featureFlag.requires_plan as keyof typeof tierOrder] ?? 2 : 0;
+  const requiredTier = featureFlag.requires_plan ? tierOrder[featureFlag.requires_plan as keyof typeof tierOrder] ?? 1 : 0;
 
   if (currentTier >= requiredTier) {
     return <>{children}</>;

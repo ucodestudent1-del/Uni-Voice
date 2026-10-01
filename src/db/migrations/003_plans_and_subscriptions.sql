@@ -3,7 +3,7 @@
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Subscription plans (Free / Pro / Scale / Business)
+-- Subscription plans (Free / Pro)
 -- ----------------------------------------------------------------------------
 DROP TYPE IF EXISTS subscription_plan CASCADE;
 CREATE TYPE subscription_plan AS ENUM ('free', 'pro', 'scale', 'business');

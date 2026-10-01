@@ -39,7 +39,7 @@ const TIER_COPY: Record<TierKey, { tagline: string; description: string }> = {
   pro: {
     tagline: "All features. Billed monthly.",
     description:
-      "Full automation, expense tracking, multi-currency, and everything in Free — plus all the tools to scale your business.",
+      "Full automation, expense tracking, multi-currency, and everything in Free — plus advanced project management, quotes, and financial reporting.",
   },
 };
 
@@ -71,7 +71,7 @@ export default function Plans() {
   }, []);
 
   const proPlan = allPlans.find(
-    (p) => p.code === "pro" || p.code === "scale" || p.code === "business"
+    (p) => p.code === "pro"
   );
 
   const proPrice = proPlan ? Math.round(proPlan.price) : 30;

@@ -127,7 +127,7 @@ export default function Expenses() {
       setMonthlySummary(monthlyRes.summary ?? null);
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError("Expense tracking requires a Business plan. Please upgrade to continue.");
+          setError("Expense tracking requires a Pro plan. Please upgrade to continue.");
       } else {
         setError(err.response?.data?.error || "Failed to load expenses");
       }
@@ -237,7 +237,7 @@ export default function Expenses() {
       loadExpensesWithSummary();
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError("Expense tracking requires a Business plan.");
+          setError("Expense tracking requires a Pro plan.");
       } else {
         setError(err.response?.data?.error || "Failed to save expense");
       }
@@ -257,7 +257,7 @@ export default function Expenses() {
   const totalAmount = summary?.total_amount ?? "0";
 
   return (
-    <FeatureGate feature="expenses.tracking" requiredPlan="business">
+    <FeatureGate feature="expenses.tracking" requiredPlan="pro">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-primary">Expenses</h1>

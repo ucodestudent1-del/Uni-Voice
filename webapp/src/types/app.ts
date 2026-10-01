@@ -57,7 +57,7 @@ export interface ThemeContextType {
   toggleTheme: () => void;
 }
 
-export type PlanTier = "free" | "pro" | "scale" | "business";
+export type PlanTier = "free" | "pro";
 
 export type TierOrder = Record<PlanTier, number>;
 

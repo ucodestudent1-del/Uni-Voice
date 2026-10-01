@@ -32,19 +32,19 @@ export default function Layout() {
     { name: "Invoices", to: "/app/invoices" },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
-    { name: "Quotes", to: "/app/quotes", feature: "quotes.create", requiredPlan: "business" as PlanTier },
+    { name: "Quotes", to: "/app/quotes", feature: "quotes.create", requiredPlan: "pro" as PlanTier },
     { name: "Payments", to: "/app/payments" },
-    { name: "Receipts", to: "/app/receipts", feature: "receipts.create", requiredPlan: "scale" as PlanTier },
+    { name: "Receipts", to: "/app/receipts", feature: "receipts.create", requiredPlan: "pro" as PlanTier },
     { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" as PlanTier },
-     { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "business" as PlanTier },
-    { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" as PlanTier },
-    { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "business" as PlanTier },
-    { name: "Credit Notes", to: "/app/credit-notes", feature: "credit_notes.create", requiredPlan: "business" as PlanTier },
+     { name: "Expenses", to: "/app/expenses", feature: "expenses.tracking", requiredPlan: "pro" as PlanTier },
+     { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" as PlanTier },
+     { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "pro" as PlanTier },
+     { name: "Credit Notes", to: "/app/credit-notes", feature: "credit_notes.create", requiredPlan: "pro" as PlanTier },
     { name: "Plans", to: "/app/plans" },
     { name: "Settings", to: "/app/settings" },
   ];
 
-  const tierOrder = { free: 0, pro: 1, scale: 2, business: 3 };
+  const tierOrder = { free: 0, pro: 1 };
   const currentTier = plan ? tierOrder[plan.code as keyof typeof tierOrder] ?? 0 : 0;
 
   return (
@@ -94,12 +94,10 @@ export default function Layout() {
           {plan && (
             <div className="mb-3 flex items-center justify-between rounded-lg bg-surface-alt px-3 py-2">
               <span className="text-sm font-medium text-secondary">{plan.name} Plan</span>
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                plan.code === "free" ? "bg-surface-alt text-tertiary" :
-                plan.code === "pro" ? "bg-primary-bg text-on-primary" :
-                plan.code === "scale" ? "bg-info-bg text-info-text" :
-                "bg-success-bg text-success-text"
-              }`}>
+               <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                 plan.code === "free" ? "bg-surface-alt text-tertiary" :
+                 "bg-primary-bg text-on-primary"
+             }`}>
                 {plan.code}
               </span>
             </div>
