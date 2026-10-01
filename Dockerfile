@@ -22,6 +22,7 @@ COPY --from=backend-deps /app/node_modules/ ./node_modules/
 COPY package*.json ./
 COPY tsconfig.json tsconfig.typecheck.json ./
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 
 # Build backend TypeScript → dist/
 RUN npx tsc -p tsconfig.json && node scripts/copy-migrations.js
