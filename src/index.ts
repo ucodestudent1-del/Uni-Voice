@@ -126,7 +126,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
         fontSrc: ["'self'", "https:", "data:"],
-        connectSrc: ["'self'", "https://api.stripe.com", "https://sentry.io"],
+        connectSrc: ["'self'", "https://api.stripe.com", "https://sentry.io", "https://plausible.io"],
         frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com", "https://sentry.io"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
