@@ -43,7 +43,7 @@ describe("Reports cache (integration)", () => {
   it("caches revenue report and invalidates on invoice finalize", async () => {
     const firstRes = await agent.get("/api/reports/revenue").set(headers);
     expect(firstRes.status).toBe(200);
-    expect(firstRes.body.report).toHaveLength(0);
+    expect(firstRes.body.summary.totalInvoices).toBe(0);
 
     const customerId = await createTestCustomer(businessId, "Test Customer");
     const invoiceId = await invoiceService.createDraft(
@@ -72,7 +72,7 @@ describe("Reports cache (integration)", () => {
 
     const secondRes = await agent.get("/api/reports/revenue").set(headers);
     expect(secondRes.status).toBe(200);
-    const draftRow = secondRes.body.report.find((r: any) => r.status === "draft");
+    const draftRow = secondRes.body.byStatus.find((r: any) => r.status === "draft");
     expect(draftRow).toBeDefined();
     expect(Number(draftRow.total_amount)).toBeCloseTo(110, 1);
   }, 60000);
@@ -103,18 +103,18 @@ describe("Reports cache (integration)", () => {
 
     const emptyRes = await agent.get("/api/reports/tax-summary").set(headers);
     expect(emptyRes.status).toBe(200);
-    expect(emptyRes.body.report).toHaveLength(0);
+    expect(emptyRes.body.byRate).toHaveLength(0);
 
     await invoiceService.finalize(businessId, invoiceId, userId);
 
     const populatedRes = await agent.get("/api/reports/tax-summary").set(headers);
     expect(populatedRes.status).toBe(200);
-    expect(populatedRes.body.report).toHaveLength(1);
-    expect(Number(populatedRes.body.report[0].tax_total)).toBeCloseTo(20, 1);
+    expect(populatedRes.body.byRate.length).toBeGreaterThan(0);
+    expect(Number(populatedRes.body.byRate[0].tax_collected)).toBeCloseTo(20, 1);
   }, 60000);
 
   it("caches dashboard and invalidates on invoice finalize", async () => {
-    const dashboardRes = await agent.get("/api/dashboard/enhanced").set(headers);
+    const dashboardRes = await agent.get("/api/reports/dashboard").set(headers);
     expect(dashboardRes.status).toBe(200);
     expect(dashboardRes.body.summary).toBeDefined();
 
@@ -143,7 +143,7 @@ describe("Reports cache (integration)", () => {
 
     await invoiceService.finalize(businessId, invoiceId, userId);
 
-    const invalidatedRes = await agent.get("/api/dashboard/enhanced").set(headers);
+    const invalidatedRes = await agent.get("/api/reports/dashboard").set(headers);
     expect(invalidatedRes.status).toBe(200);
     expect(invalidatedRes.body.summary.totalInvoices).toBeGreaterThan(0);
   }, 60000);

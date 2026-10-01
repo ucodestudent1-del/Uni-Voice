@@ -993,7 +993,7 @@ export class ReportsService {
     }
 
     if (filters.dateFrom) {
-      conditions.push(`EXISTS (SELECT 1 FROM invoices i WHERE i.customer_id = c.id AND i.business_id = c.business_id AND i.created_at >= $${paramIdx})`);
+      conditions.push(`EXISTS (SELECT 1 FROM invoices i WHERE i.customer_id = c.id AND i.business_id = $${paramIdx})`);
       vals.push(filters.dateFrom);
       paramIdx++;
     }
@@ -1006,18 +1006,16 @@ export class ReportsService {
               COALESCE(inv_stats.total_outstanding, 0) AS total_outstanding,
               inv_stats.last_invoice_date
        FROM customers c
-       LEFT JOIN (
+       LEFT JOIN LATERAL (
          SELECT
-           i.customer_id,
            COUNT(*)::int AS invoice_count,
            COALESCE(SUM(i.total), 0) AS total_invoiced,
            COALESCE(SUM(i.amount_paid), 0) AS total_paid,
            COALESCE(SUM(i.amount_due), 0) AS total_outstanding,
            MAX(i.created_at) AS last_invoice_date
          FROM invoices i
-         WHERE i.business_id = c.business_id
-         GROUP BY i.customer_id
-       ) inv_stats ON inv_stats.customer_id = c.id
+         WHERE i.business_id = c.business_id AND i.customer_id = c.id
+       ) inv_stats ON TRUE
        WHERE ${conditions.join(" AND ")}
        ORDER BY total_invoiced DESC, c.name ASC
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
@@ -1037,16 +1035,14 @@ export class ReportsService {
          COALESCE(SUM(inv_stats.total_outstanding), 0) AS total_outstanding,
          COALESCE(MAX(c.default_currency), 'USD') AS currency
        FROM customers c
-       LEFT JOIN (
+       LEFT JOIN LATERAL (
          SELECT
-           i.customer_id,
            COALESCE(SUM(i.total), 0) AS total_invoiced,
            COALESCE(SUM(i.amount_paid), 0) AS total_paid,
            COALESCE(SUM(i.amount_due), 0) AS total_outstanding
          FROM invoices i
-         WHERE i.business_id = c.business_id
-         GROUP BY i.customer_id
-       ) inv_stats ON inv_stats.customer_id = c.id
+         WHERE i.business_id = c.business_id AND i.customer_id = c.id
+       ) inv_stats ON TRUE
        WHERE c.business_id = $1`,
       [businessId]
     );
@@ -1116,24 +1112,22 @@ export class ReportsService {
          ORDER BY period ASC`,
         [businessId, dateFrom, dateTo]
       ),
-      query(
-        `SELECT
-           COALESCE(ti.tax_rate, 0) AS rate,
-           COALESCE(tr.name, 'Tax') AS name,
-           COUNT(DISTINCT i.id) AS invoice_count,
-           COALESCE(SUM(ti.tax_amount), 0) AS tax_collected,
-           COALESCE(SUM(ti.line_subtotal + ti.discount), 0) AS taxable_basis,
-           COALESCE(MAX(i.currency), 'USD') AS currency
-         FROM invoices i
-         JOIN invoice_items ti ON ti.invoice_id = i.id
-         LEFT JOIN business_tax_rates tr ON tr.id = ti.tax_rate_id
-         WHERE i.business_id = $1 AND i.is_finalized = TRUE
-           AND i.created_at >= $2 AND i.created_at <= $3
-           AND ti.tax_amount > 0
-         GROUP BY ti.tax_rate, tr.name
-         ORDER BY tax_collected DESC`,
-        [businessId, dateFrom, dateTo]
-      ),
+       query(
+         `SELECT
+            COALESCE(ti.tax_rate, 0) AS rate,
+            COUNT(DISTINCT i.id) AS invoice_count,
+            COALESCE(SUM(ti.tax_amount), 0) AS tax_collected,
+            COALESCE(SUM(ti.line_subtotal + ti.discount), 0) AS taxable_basis,
+            COALESCE(MAX(i.currency), 'USD') AS currency
+          FROM invoices i
+          JOIN invoice_items ti ON ti.invoice_id = i.id
+          WHERE i.business_id = $1 AND i.is_finalized = TRUE
+            AND i.created_at >= $2 AND i.created_at <= $3
+            AND ti.tax_amount > 0
+          GROUP BY ti.tax_rate
+          ORDER BY tax_collected DESC`,
+         [businessId, dateFrom, dateTo]
+       ),
       query(
         `SELECT
            COALESCE(SUM(i.tax_total), 0) AS total_tax_collected,
@@ -1164,9 +1158,9 @@ export class ReportsService {
         invoice_count: Number(r.invoice_count ?? 0),
         currency: r.currency ?? "USD",
       })),
-      byRate: byRate.rows.map((r) => ({
-        rate: String(r.rate ?? "0"),
-        name: r.name ?? "Tax",
+       byRate: byRate.rows.map((r) => ({
+         rate: String(r.rate ?? "0"),
+        name: "Tax",
         taxable_basis: String(r.taxable_basis ?? "0"),
         tax_collected: String(r.tax_collected ?? "0"),
         invoice_count: Number(r.invoice_count ?? 0),
@@ -1215,10 +1209,12 @@ export class ReportsService {
       ),
       query(
         `SELECT COALESCE(MAX(currency), 'USD') AS currency
-         FROM (SELECT currency FROM invoices WHERE business_id = $1 LIMIT 1
-               UNION
-               SELECT currency FROM expenses WHERE business_id = $1 LIMIT 1) c`,
-        [businessId, businessId]
+         FROM (
+           (SELECT currency FROM invoices WHERE business_id = $1 LIMIT 1)
+           UNION
+           (SELECT currency FROM expenses WHERE business_id = $1 LIMIT 1)
+         ) c`,
+        [businessId]
       ),
     ]);
 
@@ -1290,8 +1286,8 @@ export class ReportsService {
     const now = new Date();
     const [buckets, summary] = await Promise.all([
       query(
-        `SELECT bucket, COUNT(*)::int AS count, COALESCE(SUM(amount), 0) AS amount
-         FROM (
+        `SELECT bucket, COUNT(*)::int AS count, COALESCE(SUM(amount_due), 0) AS amount
+          FROM (
            SELECT i.amount_due,
                  CASE
                    WHEN i.due_date IS NULL THEN 'current'

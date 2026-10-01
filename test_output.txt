@@ -1,0 +1,440 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run tests/reports-endpoints.test.ts --reporter=verbose --no-color
+
+ RUN  v3.2.7 C:/Users/New User/Desktop/New folder
+
+[17:37:53.402] [32mINFO[39m (12084): [36mDropped 69 tables (rollback)[39m
+[17:37:53.895] [32mINFO[39m (12084): [36mApplied migration: 001_initial_schema.sql[39m
+[17:37:54.002] [32mINFO[39m (12084): [36mApplied migration: 002_customers_enhancements.sql[39m
+[17:37:54.059] [32mINFO[39m (12084): [36mApplied migration: 002_discounts_and_types.sql[39m
+[17:37:54.153] [32mINFO[39m (12084): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[17:37:54.215] [32mINFO[39m (12084): [36mApplied migration: 004_users.sql[39m
+[17:37:54.288] [32mINFO[39m (12084): [36mApplied migration: 005_users_2fa.sql[39m
+[17:37:54.378] [32mINFO[39m (12084): [36mApplied migration: 006_google_oauth.sql[39m
+[17:37:54.440] [32mINFO[39m (12084): [36mApplied migration: 007_onboarding.sql[39m
+[17:37:54.518] [32mINFO[39m (12084): [36mApplied migration: 008_document_composition.sql[39m
+[17:37:54.571] [32mINFO[39m (12084): [36mApplied migration: 009_document_templates.sql[39m
+[17:37:54.626] [32mINFO[39m (12084): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[17:37:54.715] [32mINFO[39m (12084): [36mApplied migration: 010_product_service_catalog.sql[39m
+[17:37:54.783] [32mINFO[39m (12084): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[17:37:55.290] [32mINFO[39m (12084): [36mApplied migration: 012_projects.sql[39m
+[17:37:55.827] [32mINFO[39m (12084): [36mApplied migration: 012_user_sessions.sql[39m
+[17:37:56.671] [32mINFO[39m (12084): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[17:37:56.777] [32mINFO[39m (12084): [36mApplied migration: 014_project_time_tracking.sql[39m
+[17:37:57.779] [32mINFO[39m (12084): [36mApplied migration: 015_document_template_type.sql[39m
+[17:37:58.197] [32mINFO[39m (12084): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[17:37:58.238] [32mINFO[39m (12084): [36mApplied migration: 017_expenses.sql[39m
+[17:37:58.298] [32mINFO[39m (12084): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[17:37:58.323] [32mINFO[39m (12084): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[17:37:59.334] [32mINFO[39m (12084): [36mApplied migration: 020_team_access.sql[39m
+[17:37:59.954] [32mINFO[39m (12084): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[17:38:00.262] [32mINFO[39m (12084): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[17:38:00.983] [32mINFO[39m (12084): [36mApplied migration: 023_quote_schema.sql[39m
+[17:38:01.218] [32mINFO[39m (12084): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[17:38:01.294] [32mINFO[39m (12084): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[17:38:01.330] [32mINFO[39m (12084): [36mApplied migration: 026_performance_indexes.sql[39m
+[17:38:01.381] [32mINFO[39m (12084): [36mApplied migration: 027_tax_report_index.sql[39m
+[17:38:01.494] [32mINFO[39m (12084): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[17:38:02.236] [32mINFO[39m (12084): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[17:38:02.298] [32mINFO[39m (12084): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[17:38:02.348] [32mINFO[39m (12084): [36mApplied migration: 031_performance_optimizations.sql[39m
+[17:38:02.644] [32mINFO[39m (12084): [36mApplied migration: 032_expense_budget_settings.sql[39m
+[17:38:02.752] [32mINFO[39m (12084): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[17:38:02.786] [32mINFO[39m (12084): [36mApplied migration: 034_expense_vendor.sql[39m
+[17:38:02.815] [32mINFO[39m (12084): [36mApplied migration: 035_credit_note_pdf_cache.sql[39m
+[17:38:02.815] [32mINFO[39m (12084): [36mCompleted 38 migrations[39m
+Slow query (1471ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1483ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1726ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1776ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1482ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/dashboard returns 
+summary, aging, and payment metrics
+Slow query (3185ms): TRUNCATE TABLE "businesses", "products", "business_settings", "invoice_number_sequences", 
+"templates
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/dashboard returns 
+summary, aging, and payment metrics
+Slow query (1463ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, sort_order)
+       V
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/dashboard returns 
+summary, aging, and payment metrics
+Slow query (2783ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/dashboard returns 
+summary, aging, and payment metrics
+Slow query (1613ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/dashboard returns 
+summary, aging, and payment metrics
+Slow query (1219ms): INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, 
+current_period_star
+
+ ✓ tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/dashboard returns summary, aging, and payment metrics 18218ms
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+Slow query (2212ms): TRUNCATE TABLE "invoice_number_sequences", "templates", "business_tax_rates", "customers", 
+"invoice_
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+Slow query (1523ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+Slow query (1736ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+Slow query (1505ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+Slow query (1158ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+Slow query (1099ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+Slow query (1365ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+ × tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period breakdown 17060ms
+   → expected false to be true // Object.is equality
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (6517ms): TRUNCATE TABLE "expense_budget_settings", "invoice_number_sequences", "templates", 
+"business_tax_rat
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (2119ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (1440ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (3048ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (1507ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (1444ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (1475ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (1032ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (1368ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (1162ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns 
+invoices with status filter
+Slow query (2545ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+[17:39:29.710] [32mINFO[39m (8580): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[17:39:29.968] [32mINFO[39m (8580): [36mInvoice af0986d7-d545-4281-838f-6b5604e3a76d finalized as INV-2026-000001[39m
+ ✓ tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/invoices returns invoices with status filter 35859ms
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/payments returns 
+provider and method breakdowns
+Slow query (3097ms): TRUNCATE TABLE "expense_budget_settings", "invoice_fees", "invoice_events", 
+"recurring_invoice_items
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/payments returns 
+provider and method breakdowns
+Slow query (1912ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/payments returns 
+provider and method breakdowns
+Slow query (1577ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+ × tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/payments returns provider and method breakdowns 10899ms
+   → expected { summary: { …(11) }, payments: [] } to have property "providerBreakdown"
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/expenses returns 
+category and monthly breakdowns
+Slow query (1947ms): TRUNCATE TABLE "recurring_invoice_items", "ai_generation_logs", "plans", "feature_flags", 
+"usage_quo
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/expenses returns 
+category and monthly breakdowns
+Slow query (1151ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/expenses returns 
+category and monthly breakdowns
+Slow query (1663ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/expenses returns 
+category and monthly breakdowns
+Slow query (1599ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+ ✓ tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/expenses returns category and monthly breakdowns 13562ms
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/clients returns client 
+metrics
+Slow query (2329ms): TRUNCATE TABLE "recurring_invoice_items", "ai_generation_logs", "plans", "feature_flags", 
+"usage_quo
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/clients returns client 
+metrics
+Slow query (1518ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/clients returns client 
+metrics
+Slow query (1038ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+[17:40:04.186] [32mINFO[39m (8580): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[17:40:04.347] [32mINFO[39m (8580): [36mInvoice 017b7574-c3e6-475f-8b7e-83156477c0f0 finalized as INV-2026-000001[39m
+ ✓ tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/clients returns client metrics 9906ms
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (2414ms): TRUNCATE TABLE "recurring_invoice_items", "ai_generation_logs", "plans", "feature_flags", 
+"usage_quo
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (1535ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (1153ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (1284ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (1352ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (1584ms): INSERT INTO business_settings (business_id, default_currency, default_terms, default_notes, 
+time_zon
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (2116ms): INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, 
+current_period_star
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (1557ms): UPDATE invoice_items SET tax_amount = $1, line_subtotal = $2, line_total = $3
+       WHERE id = $4 A
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns 
+rates with amounts
+Slow query (2663ms): INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata, created_at)
+    
+
+[17:40:30.034] [32mINFO[39m (8580): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[17:40:31.458] [32mINFO[39m (8580): [36mInvoice e95a08a8-b123-457a-961c-ac6b60d494ce finalized as INV-2026-000001[39m
+[17:40:31.477] [31mERROR[39m (8580): [36mUnhandled error[39m
+    [35mrequestId[39m: "unknown"
+    [35murl[39m: "/api/reports/tax-summary"
+    [35mmethod[39m: "GET"
+    err: {
+      "type": "DatabaseError",
+      "message": "column ti.tax_rate_id does not exist",
+      "stack":
+          error: column ti.tax_rate_id does not exist
+              at C:\Users\New User\Desktop\New folder\node_modules\pg-pool\index.js:45:11
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+              at query (C:\Users\New User\Desktop\New folder\src\db\pool.ts:59:15)
+              at async Promise.all (index 1)
+              at ReportsService.getTaxSummaryReport (C:\Users\New User\Desktop\New folder\src\services\reports-service.ts:1100:40)
+              at C:\Users\New User\Desktop\New folder\src\index.ts:1484:18
+      "length": 171,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "42703",
+      "hint": "Perhaps you meant to reference the column \"ti.tax_rate\".",
+      "position": "475",
+      "file": "parse_relation.c",
+      "line": "3870",
+      "routine": "errorMissingColumn"
+    }
+ × tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns rates with amounts 27130ms
+   → expected 500 to be 200 // Object.is equality
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/profit-loss returns 
+income and expense data
+Slow query (3005ms): SELECT
+           COALESCE(SUM(i.tax_total), 0) AS total_tax_collected,
+           COALESCE(SUM(i.su
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/profit-loss returns 
+income and expense data
+Slow query (3390ms): TRUNCATE TABLE "invoice_template_permissions", "payment_intents", "project_events", 
+"user_sessions",
+
+ × tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/profit-loss returns income and expense data 7789ms
+   → expected { …(7) } to have property "income"
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/aging returns buckets 
+with current/overdue split
+Slow query (1188ms): TRUNCATE TABLE "invoice_template_permissions", "payment_intents", "project_events", 
+"user_sessions",
+
+[17:40:44.391] [32mINFO[39m (8580): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[17:40:44.461] [32mINFO[39m (8580): [36mInvoice fdc2b27e-db6a-4df1-af78-b7feafe3b01c finalized as INV-2026-000001[39m
+ ✓ tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/aging returns buckets with current/overdue split 5203ms
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > CSV export returns a blob with report data
+Slow query (5653ms): TRUNCATE TABLE "invoice_template_permissions", "payment_intents", "project_events", 
+"user_sessions",
+
+ ✓ tests/reports-endpoints.test.ts > Reports endpoints (integration) > CSV export returns a blob with report data 12225ms
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > Returns 403 for users without 
+reports.expenses entitlement
+Slow query (2811ms): TRUNCATE TABLE "invoice_template_permissions", "payment_intents", "project_events", 
+"user_sessions",
+
+stderr | tests/reports-endpoints.test.ts > Reports endpoints (integration) > Returns 403 for users without 
+reports.expenses entitlement
+Slow query (1166ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+
+ ✓ tests/reports-endpoints.test.ts > Reports endpoints (integration) > Returns 403 for users without reports.expenses entitlement 10567ms
+[17:41:07.297] [32mINFO[39m (8580): [36mClient error[39m
+    [35mrequestId[39m: "unknown"
+    [35murl[39m: "/api/reports/expenses"
+    [35mmethod[39m: "GET"
+    err: {
+      "type": "ForbiddenError",
+      "message": "Requires business plan (current: free)",
+      "stack":
+          ForbiddenError: Requires business plan (current: free)
+              at C:\Users\New User\Desktop\New folder\src\middleware\entitlement.ts:24:19
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+      "statusCode": 403,
+      "isOperational": true,
+      "code": "FORBIDDEN",
+      "name": "ForbiddenError"
+    }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/revenue returns period 
+breakdown
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 7 passed (11)
+   Start at  17:37:51
+   Duration  195.81s (transform 1.55s, setup 0ms, collect 3.25s, tests 168.42s, environment 0ms, prepare 170ms)
+
+ ❯ tests/reports-endpoints.test.ts:56:44
+     54|     const res = await agent.get("/api/reports/revenue?dateFrom=2026-01…
+     55|     expect(res.status).toBe(200);
+     56|     expect(Array.isArray(res.body.report)).toBe(true);
+       |                                            ^
+     57|     expect(Array.isArray(res.body.byStatus)).toBe(true);
+     58|   }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/payments returns provider 
+and method breakdowns
+AssertionError: expected { summary: { …(11) }, payments: [] } to have property "providerBreakdown"
+ ❯ tests/reports-endpoints.test.ts:86:22
+     84|     expect(res.status).toBe(200);
+     85|     expect(res.body).toHaveProperty("summary");
+     86|     expect(res.body).toHaveProperty("providerBreakdown");
+       |                      ^
+     87|     expect(res.body).toHaveProperty("methodBreakdown");
+     88|   }, 60000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/tax-summary returns rates 
+with amounts
+AssertionError: expected 500 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 500[39m
+
+ ❯ tests/reports-endpoints.test.ts:138:24
+    136| 
+    137|     const res = await agent.get("/api/reports/tax-summary").set(header…
+    138|     expect(res.status).toBe(200);
+       |                        ^
+    139|     expect(Array.isArray(res.body.report)).toBe(true);
+    140|     expect(res.body.report.length).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/reports-endpoints.test.ts > Reports endpoints (integration) > GET /api/reports/profit-loss returns income 
+and expense data
+AssertionError: expected { …(7) } to have property "income"
+ ❯ tests/reports-endpoints.test.ts:148:22
+    146|     const res = await agent.get("/api/reports/profit-loss").set(header…
+    147|     expect(res.status).toBe(200);
+    148|     expect(res.body).toHaveProperty("income");
+       |                      ^
+    149|     expect(res.body).toHaveProperty("expenses");
+    150|     expect(res.body).toHaveProperty("netIncome");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

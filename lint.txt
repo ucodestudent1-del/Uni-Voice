@@ -1,0 +1,9 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run eslint src/services/reports-service.ts src/repositories/subscription.repo.ts 
+src/services/subscription.service.ts src/index.ts

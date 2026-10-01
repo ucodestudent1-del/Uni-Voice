@@ -1346,66 +1346,7 @@ app.get("/api/credit-notes/:id/pdf", requireAuth, requireEntitlement("invoices.c
 // ============================================================================
 // REPORTS (Business tier)
 // ============================================================================
-app.get("/api/reports/revenue", requireAuth, requireEntitlement("reports.revenue"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const cacheKey = `revenue:${req.user!.businessId}`;
-  const cached = reportsCache.get(cacheKey);
-  if (cached) return res.json(cached);
-  const result = await query(
-    `SELECT status, COUNT(*) as count, SUM(total) as total_amount, SUM(amount_paid) as paid_amount
-     FROM invoices WHERE business_id = $1 GROUP BY status ORDER BY status`,
-    [req.user!.businessId]
-  );
-  const response = { report: result.rows };
-  reportsCache.set(cacheKey, response);
-   res.json(response);
-});
-
-app.get("/api/reports/tax-summary", requireAuth, requireEntitlement("reports.tax_summary"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const cacheKey = `tax-summary:${req.user!.businessId}`;
-  const cached = reportsCache.get(cacheKey);
-  if (cached) return res.json(cached);
-  const result = await query(
-    `SELECT DATE_TRUNC('month', created_at) as month, SUM(tax_total) as tax_total
-     FROM invoices WHERE business_id = $1 AND is_finalized = TRUE GROUP BY month ORDER BY month DESC LIMIT 12`,
-    [req.user!.businessId]
-  );
-  const response = { report: result.rows };
-  reportsCache.set(cacheKey, response);
-     res.json(response);
-});
-
-app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const monthsParam = Number(req.query.months ?? 1);
-  const months = Number.isInteger(monthsParam) && monthsParam > 0 && monthsParam <= 24 ? monthsParam : 1;
-  const cacheKey = `volume-trend:${req.user!.businessId}:${months}`;
-  const cached = reportsCache.get(cacheKey);
-  if (cached) return res.json(cached);
-  const now = new Date();
-  const cutoff = new Date(now.getFullYear(), now.getMonth() - months + 1, 1);
-  const result = await query(
-    `SELECT
-       TO_CHAR(date_trunc('month', COALESCE(issue_date, created_at)), 'YYYY-MM') as period,
-       COUNT(*) as count,
-       COALESCE(SUM(total), 0) as invoiced,
-       COALESCE(SUM(amount_paid), 0) as paid
-      FROM invoices
-      WHERE business_id = $1
-        AND (issue_date IS NULL OR issue_date >= $2 OR created_at >= $2)
-      GROUP BY date_trunc('month', COALESCE(issue_date, created_at))
-      ORDER BY period ASC`,
-    [req.user!.businessId, cutoff.toISOString()]
-  );
-  reportsCache.set(cacheKey, result.rows);
-  res.json(result.rows);
-});
-
-// ============================================================================
-// ENHANCED DASHBOARD
-// ============================================================================
-app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) => {
+app.get("/api/reports/dashboard", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const cacheKey = `dashboard:${req.user!.businessId}`;
   const cached = reportsCache.get(cacheKey);
@@ -1415,24 +1356,14 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const [summary, agingBuckets, volumeTrend, paymentMetrics] = await Promise.all([
-    invoiceRepository.getDashboardSummary(businessId),
+    reportsService.getDashboardSummary(businessId),
     invoiceRepository.getAgingBuckets(businessId, now),
     invoiceRepository.getVolumeTrend(businessId, 1),
     invoiceRepository.getPaymentMetrics(businessId, monthStart),
   ]);
 
   const response = {
-    summary: {
-      totalOutstanding: summary.totalOutstanding,
-      totalOverdue: summary.totalOverdue,
-      totalPaidThisMonth: summary.totalPaidThisMonth,
-      totalRevenue: summary.totalRevenue,
-      draftCount: summary.draftCount,
-      overdueCount: summary.overdueCount,
-      sentCount: summary.sentCount,
-      paidCount: summary.paidCount,
-      totalInvoices: summary.totalInvoices,
-    },
+    summary,
     agingBuckets,
     paymentMetrics: {
       averagePaymentTimeDays: paymentMetrics.averagePaymentTimeDays,
@@ -1445,17 +1376,17 @@ app.get("/api/dashboard/enhanced", requireAuth, async (req: AuthRequest, res) =>
     volumeTrend,
   };
   reportsCache.set(cacheKey, response);
-   res.json(response);
+  res.json(response);
 });
 
-// ============================================================================
-// ENHANCED REPORTS — revenue, invoices, payments, expenses, clients,
-// tax summary, profit & loss (Business plan)
-// ============================================================================
-
-app.get("/api/reports/dashboard", requireAuth, async (req: AuthRequest, res) => {
+app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await reportsService.getDashboardSummary(req.user!.businessId);
+  const cacheKey = `volume-trend:${req.user!.businessId}`;
+  const cached = reportsCache.get(cacheKey);
+  if (cached) return res.json(cached);
+  const months = Math.min(Number(req.query.months ?? 3), 12);
+  const result = await invoiceRepository.getVolumeTrend(req.user!.businessId, months);
+  reportsCache.set(cacheKey, result);
   res.json(result);
 });
 

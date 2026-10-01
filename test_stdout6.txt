@@ -1,0 +1,260 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run tests/reports-endpoints.test.ts --reporter=verbose
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/New User/Desktop/New folder[39m
+
+[18:14:55.973] [32mINFO[39m (12600): [36mDropped 69 tables (rollback)[39m
+Slow query (1550ms): 
+    CREATE TABLE IF NOT EXISTS migrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NO
+[18:14:58.324] [32mINFO[39m (12600): [36mApplied migration: 001_initial_schema.sql[39m
+[18:14:58.434] [32mINFO[39m (12600): [36mApplied migration: 002_customers_enhancements.sql[39m
+[18:14:58.499] [32mINFO[39m (12600): [36mApplied migration: 002_discounts_and_types.sql[39m
+[18:14:58.556] [32mINFO[39m (12600): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[18:14:58.600] [32mINFO[39m (12600): [36mApplied migration: 004_users.sql[39m
+[18:14:58.627] [32mINFO[39m (12600): [36mApplied migration: 005_users_2fa.sql[39m
+[18:14:58.675] [32mINFO[39m (12600): [36mApplied migration: 006_google_oauth.sql[39m
+[18:14:58.711] [32mINFO[39m (12600): [36mApplied migration: 007_onboarding.sql[39m
+[18:14:58.765] [32mINFO[39m (12600): [36mApplied migration: 008_document_composition.sql[39m
+[18:14:58.789] [32mINFO[39m (12600): [36mApplied migration: 009_document_templates.sql[39m
+[18:14:58.877] [32mINFO[39m (12600): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[18:14:58.955] [32mINFO[39m (12600): [36mApplied migration: 010_product_service_catalog.sql[39m
+[18:14:59.066] [32mINFO[39m (12600): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[18:14:59.532] [32mINFO[39m (12600): [36mApplied migration: 012_projects.sql[39m
+[18:14:59.867] [32mINFO[39m (12600): [36mApplied migration: 012_user_sessions.sql[39m
+[18:15:00.168] [32mINFO[39m (12600): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[18:15:00.223] [32mINFO[39m (12600): [36mApplied migration: 014_project_time_tracking.sql[39m
+[18:15:00.246] [32mINFO[39m (12600): [36mApplied migration: 015_document_template_type.sql[39m
+[18:15:00.251] [32mINFO[39m (12600): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[18:15:00.279] [32mINFO[39m (12600): [36mApplied migration: 017_expenses.sql[39m
+[18:15:00.294] [32mINFO[39m (12600): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[18:15:00.311] [32mINFO[39m (12600): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[18:15:00.344] [32mINFO[39m (12600): [36mApplied migration: 020_team_access.sql[39m
+[18:15:01.417] [32mINFO[39m (12600): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[18:15:01.434] [32mINFO[39m (12600): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[18:15:01.749] [32mINFO[39m (12600): [36mApplied migration: 023_quote_schema.sql[39m
+[18:15:01.755] [32mINFO[39m (12600): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[18:15:01.760] [32mINFO[39m (12600): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[18:15:02.468] [32mINFO[39m (12600): [36mApplied migration: 026_performance_indexes.sql[39m
+[18:15:02.498] [32mINFO[39m (12600): [36mApplied migration: 027_tax_report_index.sql[39m
+[18:15:02.623] [32mINFO[39m (12600): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[18:15:02.638] [32mINFO[39m (12600): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[18:15:02.680] [32mINFO[39m (12600): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[18:15:02.696] [32mINFO[39m (12600): [36mApplied migration: 031_performance_optimizations.sql[39m
+[18:15:02.706] [32mINFO[39m (12600): [36mApplied migration: 032_expense_budget_settings.sql[39m
+[18:15:02.717] [32mINFO[39m (12600): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[18:15:02.722] [32mINFO[39m (12600): [36mApplied migration: 034_expense_vendor.sql[39m
+[18:15:02.726] [32mINFO[39m (12600): [36mApplied migration: 035_credit_note_pdf_cache.sql[39m
+[18:15:02.726] [32mINFO[39m (12600): [36mCompleted 38 migrations[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (10101ms): TRUNCATE TABLE "businesses", "products", "business_settings", 
+"invoice_number_sequences", "templates
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1460ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1553ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1762ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1269ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1914ms): INSERT INTO businesses (id, owner_id, name, country_code, default_currency, created_at, 
+updated_at)
+
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (3384ms): INSERT INTO business_settings (business_id, default_currency, default_terms, 
+default_notes, time_zon
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/dashboard returns summary, aging, and payment metrics[33m 23843[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (6387ms): TRUNCATE TABLE "invoice_number_sequences", "templates", "business_tax_rates", 
+"customers", "invoice_
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (7193ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1459ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1510ms): INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, 
+current_period_star
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/revenue returns period breakdown[33m 18602[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (11289ms): TRUNCATE TABLE "expense_budget_settings", "invoice_number_sequences", "templates", 
+"business_tax_rat
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1414ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1246ms): INSERT INTO businesses (id, owner_id, name, country_code, default_currency, created_at, 
+updated_at)
+
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1217ms): INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata, 
+created_at)
+    
+
+[18:16:33.393] [32mINFO[39m (13124): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1663ms): INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata, 
+created_at)
+    
+
+[18:16:37.414] [32mINFO[39m (13124): [36mInvoice c5e9eccc-4840-432e-b5de-52c1d61dfd09 finalized as INV-2026-000001[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (2870ms): UPDATE invoices SET pdf_cache = NULL, pdf_cache_hash = NULL, pdf_cached_at = NULL WHERE 
+id = $1
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/invoices returns invoices with status filter[33m 27403[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/payments returns provider and method breakdowns
+[22m[39mSlow query (10888ms): TRUNCATE TABLE "expense_budget_settings", "receipts", "project_notes", 
+"user_sessions", "credit_note
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/payments returns provider and method breakdowns
+[22m[39mSlow query (1520ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/payments returns provider and method breakdowns
+[22m[39mSlow query (1701ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/payments returns provider and method breakdowns
+[22m[39mSlow query (1184ms): INSERT INTO business_settings (business_id, default_currency, default_terms, 
+default_notes, time_zon
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/payments returns provider and method breakdowns[33m 18096[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/expenses returns category and monthly breakdowns
+[22m[39mSlow query (8027ms): TRUNCATE TABLE "project_notes", "business_users", "business_invitations", 
+"business_tax_rates", "cus
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/expenses returns category and monthly breakdowns[33m 9462[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/clients returns client metrics
+[22m[39mSlow query (3052ms): TRUNCATE TABLE "project_notes", "business_users", "business_invitations", 
+"business_tax_rates", "cus
+
+[18:17:13.067] [32mINFO[39m (13124): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[18:17:13.255] [32mINFO[39m (13124): [36mInvoice 09f3e459-c0ec-47b8-aaed-7c10909a053c finalized as INV-2026-000001[39m
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/clients returns client metrics[33m 5436[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/tax-summary returns rates with amounts
+[22m[39mSlow query (6362ms): TRUNCATE TABLE "project_notes", "business_users", "business_invitations", 
+"business_tax_rates", "cus
+
+[18:17:22.948] [32mINFO[39m (13124): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[18:17:23.699] [32mINFO[39m (13124): [36mInvoice 90cef116-5102-4b22-84fe-028f03c2b3d4 finalized as INV-2026-000001[39m
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/tax-summary returns rates with amounts[33m 11014[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/profit-loss returns income and expense data
+[22m[39mSlow query (6200ms): TRUNCATE TABLE "project_notes", "business_users", "business_invitations", 
+"business_tax_rates", "cus
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/profit-loss returns income and expense data[33m 7211[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/aging returns buckets with current/overdue split
+[22m[39mSlow query (5579ms): TRUNCATE TABLE "email_log", "customer_tax_identifiers", "quote_items", "plans", 
+"feature_flags", "us
+
+[18:17:41.076] [32mINFO[39m (13124): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[18:17:41.482] [32mINFO[39m (13124): [36mInvoice a0b12740-0231-40c1-ad63-5a3f45ecbf46 finalized as INV-2026-000001[39m
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/aging returns buckets with current/overdue split[33m 10081[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (4663ms): TRUNCATE TABLE "email_log", "customer_tax_identifiers", "quote_items", "plans", 
+"feature_flags", "us
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (1608ms): INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, 
+current_period_star
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mCSV export returns a blob with report data[33m 9258[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (12225ms): TRUNCATE TABLE "feature_flags", "usage_quotas", "twofa_attempts", 
+"twofa_recovery_codes", "users", "
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1489ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[18:18:06.951] [32mINFO[39m (13124): [36mClient error[39m
+    [35mrequestId[39m: "unknown"
+    [35murl[39m: "/api/reports/expenses"
+    [35mmethod[39m: "GET"
+    err: {
+      "type": "ForbiddenError",
+      "message": "Requires business plan (current: free)",
+      "stack":
+          ForbiddenError: Requires business plan (current: free)
+              at C:\Users\New User\Desktop\New folder\src\middleware\entitlement.ts:24:19
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+      "statusCode": 403,
+      "isOperational": true,
+      "code": "FORBIDDEN",
+      "name": "ForbiddenError"
+    }
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mReturns 403 for users without reports.expenses entitlement[33m 16092[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 18:14:53
+[2m   Duration [22m 193.42s[2m (transform 1.53s, setup 0ms, collect 26.45s, tests 156.50s, environment 0ms, prepare 763ms)[22m
+

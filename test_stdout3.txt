@@ -1,0 +1,630 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run tests/reports-endpoints.test.ts --reporter=verbose
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/New User/Desktop/New folder[39m
+
+[17:57:38.388] [32mINFO[39m (4564): [36mDropped 69 tables (rollback)[39m
+[17:57:38.858] [32mINFO[39m (4564): [36mApplied migration: 001_initial_schema.sql[39m
+[17:57:38.989] [32mINFO[39m (4564): [36mApplied migration: 002_customers_enhancements.sql[39m
+[17:57:39.051] [32mINFO[39m (4564): [36mApplied migration: 002_discounts_and_types.sql[39m
+[17:57:39.323] [32mINFO[39m (4564): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[17:57:39.347] [32mINFO[39m (4564): [36mApplied migration: 004_users.sql[39m
+[17:57:39.426] [32mINFO[39m (4564): [36mApplied migration: 005_users_2fa.sql[39m
+[17:57:39.481] [32mINFO[39m (4564): [36mApplied migration: 006_google_oauth.sql[39m
+[17:57:39.498] [32mINFO[39m (4564): [36mApplied migration: 007_onboarding.sql[39m
+[17:57:39.602] [32mINFO[39m (4564): [36mApplied migration: 008_document_composition.sql[39m
+[17:57:39.661] [32mINFO[39m (4564): [36mApplied migration: 009_document_templates.sql[39m
+[17:57:39.721] [32mINFO[39m (4564): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[17:57:39.790] [32mINFO[39m (4564): [36mApplied migration: 010_product_service_catalog.sql[39m
+[17:57:40.033] [32mINFO[39m (4564): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[17:57:40.132] [32mINFO[39m (4564): [36mApplied migration: 012_projects.sql[39m
+[17:57:40.172] [32mINFO[39m (4564): [36mApplied migration: 012_user_sessions.sql[39m
+[17:57:40.434] [32mINFO[39m (4564): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[17:57:40.598] [32mINFO[39m (4564): [36mApplied migration: 014_project_time_tracking.sql[39m
+[17:57:40.743] [32mINFO[39m (4564): [36mApplied migration: 015_document_template_type.sql[39m
+[17:57:40.795] [32mINFO[39m (4564): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[17:57:40.855] [32mINFO[39m (4564): [36mApplied migration: 017_expenses.sql[39m
+[17:57:40.944] [32mINFO[39m (4564): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[17:57:41.008] [32mINFO[39m (4564): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[17:57:41.551] [32mINFO[39m (4564): [36mApplied migration: 020_team_access.sql[39m
+[17:57:41.595] [32mINFO[39m (4564): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[17:57:41.640] [32mINFO[39m (4564): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[17:57:41.694] [32mINFO[39m (4564): [36mApplied migration: 023_quote_schema.sql[39m
+[17:57:41.785] [32mINFO[39m (4564): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[17:57:41.790] [32mINFO[39m (4564): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[17:57:41.823] [32mINFO[39m (4564): [36mApplied migration: 026_performance_indexes.sql[39m
+[17:57:41.877] [32mINFO[39m (4564): [36mApplied migration: 027_tax_report_index.sql[39m
+[17:57:41.911] [32mINFO[39m (4564): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[17:57:41.936] [32mINFO[39m (4564): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[17:57:42.027] [32mINFO[39m (4564): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[17:57:42.077] [32mINFO[39m (4564): [36mApplied migration: 031_performance_optimizations.sql[39m
+[17:57:42.108] [32mINFO[39m (4564): [36mApplied migration: 032_expense_budget_settings.sql[39m
+[17:57:42.204] [32mINFO[39m (4564): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[17:57:42.243] [32mINFO[39m (4564): [36mApplied migration: 034_expense_vendor.sql[39m
+[17:57:42.284] [32mINFO[39m (4564): [36mApplied migration: 035_credit_note_pdf_cache.sql[39m
+[17:57:42.284] [32mINFO[39m (4564): [36mCompleted 38 migrations[39m
+Slow query (1588ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1298ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1096ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1222ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1515ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1684ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1447ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1003ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (8153ms): TRUNCATE TABLE "businesses", "business_settings", "invoice_number_sequences", 
+"business_tax_rates", 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (2147ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (2235ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1449ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (2478ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1226ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1200ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (2651ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1452ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1184ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1857ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (2104ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1516ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1513ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1523ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1038ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1378ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1729ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1756ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1678ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1602ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1317ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1271ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1638ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1494ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1700ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1012ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[22m[39mSlow query (1037ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/dashboard returns summary, aging, and payment metrics[33m 60024[2mms[22m[39m
+[31m   → Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1762ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (7482ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (8895ms): TRUNCATE TABLE "templates", "business_settings", "products", "invoice_items", 
+"invoice_snapshots", "
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (3061ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (3182ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (2572ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1996ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1559ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (2597ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1345ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (2418ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1057ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1271ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1328ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1510ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1314ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1272ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1012ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1085ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1412ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/revenue returns period breakdown
+[22m[39mSlow query (1475ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/revenue returns period breakdown[33m 45146[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (7143ms): TRUNCATE TABLE "templates", "business_settings", "products", "invoice_items", 
+"invoice_snapshots", "
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1039ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, 
+sort_order)
+       V
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1144ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1030ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1931ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (3156ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1121ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1557ms): INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, 
+current_period_star
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mGET 
+/api/reports/invoices returns invoices with status filter
+[22m[39mSlow query (1132ms): UPDATE invoice_items SET tax_amount = $1, line_subtotal = $2, line_total = $3
+       WHERE id = $4 A
+
+[18:00:45.118] [32mINFO[39m (8008): [36mGenerated invoice number INV-2026-000001 for business 00000000-0000-0000-0000-000000000001[39m
+[18:00:46.770] [32mINFO[39m (8008): [36mInvoice 2412ba56-84a6-4826-9d10-174554dde2d5 finalized as INV-2026-000001[39m
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/invoices returns invoices with status filter[33m 41725[2mms[22m[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/payments returns provider and method breakdowns[33m 30013[2mms[22m[39m
+[31m   → Query read timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/expenses returns category and monthly breakdowns[33m 30920[2mms[22m[39m
+[31m   → Query read timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/clients returns client metrics[33m 30265[2mms[22m[39m
+[31m   → Query read timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/tax-summary returns rates with amounts[33m 30641[2mms[22m[39m
+[31m   → Query read timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/profit-loss returns income and expense data[33m 30393[2mms[22m[39m
+[31m   → Query read timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/aging returns buckets with current/overdue split[33m 30529[2mms[22m[39m
+[31m   → Query read timeout[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (18795ms): TRUNCATE TABLE "templates", "products", "invoice_items", "invoice_snapshots", 
+"payment_events", "quo
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (1204ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (1799ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (1119ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (1300ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (1575ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > [22m[2mCSV 
+export returns a blob with report data
+[22m[39mSlow query (1117ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mCSV export returns a blob with report data[33m 37977[2mms[22m[39m
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (11460ms): TRUNCATE TABLE "templates", "products", "invoice_items", "invoice_snapshots", 
+"payment_events", "quo
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1402ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1377ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1435ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1284ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1267ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1199ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1634ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1481ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1052ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1782ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1141ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (3454ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1006ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[90mstderr[2m | tests/reports-endpoints.test.ts[2m > [22m[2mReports endpoints (integration)[2m > 
+[22m[2mReturns 403 for users without reports.expenses entitlement
+[22m[39mSlow query (1461ms): INSERT INTO feature_flags (code, name, description, category, is_premium, 
+requires_plan, metadata)
+ 
+
+[18:05:06.464] [32mINFO[39m (8008): [36mClient error[39m
+    [35mrequestId[39m: "unknown"
+    [35murl[39m: "/api/reports/expenses"
+    [35mmethod[39m: "GET"
+    err: {
+      "type": "ForbiddenError",
+      "message": "Requires business plan (current: free)",
+      "stack":
+          ForbiddenError: Requires business plan (current: free)
+              at C:\Users\New User\Desktop\New folder\src\middleware\entitlement.ts:24:19
+              at processTicksAndRejections (node:internal/process/task_queues:104:5)
+      "statusCode": 403,
+      "isOperational": true,
+      "code": "FORBIDDEN",
+      "name": "ForbiddenError"
+    }
+ [32m✓[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mReturns 403 for users without reports.expenses entitlement[33m 38873[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 7 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[31m[1mError[22m: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with 
+"hookTimeout".[39m
+[36m [2m❯[22m tests/reports-endpoints.test.ts:[2m23:3[22m[39m
+    [90m 21| [39m  [35mlet[39m headers[33m:[39m { [33mAuthorization[39m[33m:[39m string }[33m;[39m
+    [90m 22| [39m
+    [90m 23| [39m  [34mbeforeEach[39m([35masync[39m () [33m=>[39m {
+    [90m   | [39m  [31m^[39m
+    [90m 24| [39m    [35mawait[39m [34mtruncateTestDb[39m()[33m;[39m
+    [90m 25| [39m    [35mconst[39m biz [33m=[39m [35mawait[39m [34mcreateTestBusiness[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/payments returns provider and method breakdowns
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/expenses returns category and monthly breakdowns
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/clients returns client metrics
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/tax-summary returns rates with amounts
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/profit-loss returns income and expense data
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/aging returns buckets with current/overdue split
+[31m[1mError[22m: Query read timeout[39m
+[90m [2m❯[22m node_modules/pg-pool/index.js:[2m45:11[22m[39m
+[36m [2m❯[22m query src/db/pool.ts:[2m59:15[22m[39m
+    [90m 57| [39m[35mexport[39m [35masync[39m [35mfunction[39m [34mquery[39m(text[33m:[39m 
+string[33m,[39m params[33m?[39m[33m:[39m unknown[]) {
+    [90m 58| [39m  [35mconst[39m start [33m=[39m [33mDate[39m[33m.[39m[34mnow[39m()[33m;[39m
+    [90m 59| [39m  [35mconst[39m res [33m=[39m [35mawait[39m pool[33m.[39m[34mquery[39m(text[33m,[39m 
+params [35mas[39m never)[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m 60| [39m  [35mconst[39m ms [33m=[39m [33mDate[39m[33m.[39m[34mnow[39m() [33m-[39m 
+start[33m;[39m
+    [90m 61| [39m  [35mconst[39m ctx [33m=[39m requestStore[33m.[39m[34mgetStore[39m()[33m;[39m
+[90m [2m❯[22m truncateTestDb tests/helpers/db.ts:[2m18:5[22m[39m
+[90m [2m❯[22m tests/reports-endpoints.test.ts:[2m24:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m7 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (11)[39m
+[2m   Start at [22m 17:57:37
+[2m   Duration [22m 449.37s[2m (transform 1.33s, setup 0ms, collect 15.20s, tests 406.51s, environment 0ms, prepare 417ms)[22m
+

@@ -71,8 +71,14 @@ export class SubscriptionService {
       { code: "reports.tax_summary", name: "Tax Summaries", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "reports.income", name: "Income Reports", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "expenses.tracking", name: "Expense Tracking", category: "expenses", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
-      { code: "reports.profit_loss", name: "Profit & Loss Reporting", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
-      { code: "invoices.custom_fields", name: "Custom Invoice Fields", category: "invoicing", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "reports.income", name: "Income Reports", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "reports.expenses", name: "Expense Tracking & Reporting", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "reports.profit_loss", name: "Profit & Loss Reporting", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "reports.invoices", name: "Invoice Reports", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "reports.payments", name: "Payment Reports", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "reports.clients", name: "Client Reports", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "reports.aging", name: "Aging / Collections Report", category: "reports", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
+        { code: "invoices.custom_fields", name: "Custom Invoice Fields", category: "invoicing", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "documents.custom_numbering", name: "Custom Document Numbering", category: "documents", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "templates.advanced_pdf", name: "Advanced PDF Customization", category: "templates", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
       { code: "data.backup_export", name: "Data Backup / Export", category: "data", isPremium: true, requiresPlan: "business" as PlanCode, metadata: {} },
@@ -93,9 +99,7 @@ export class SubscriptionService {
        { code: "projects.invoicing", name: "Create Invoices from Projects", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
     ];
 
-    for (const f of featureFlags) {
-      await subscriptionRepository.upsertFeatureFlag(f);
-    }
+    await subscriptionRepository.bulkUpsertFeatureFlags(featureFlags);
   }
 
   async getSubscriptionContext(businessId: string): Promise<SubscriptionContext> {

@@ -53,8 +53,9 @@ describe("Reports endpoints (integration)", () => {
   it("GET /api/reports/revenue returns period breakdown", async () => {
     const res = await agent.get("/api/reports/revenue?dateFrom=2026-01-01&dateTo=2026-12-31").set(headers);
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.report)).toBe(true);
     expect(Array.isArray(res.body.byStatus)).toBe(true);
+    expect(Array.isArray(res.body.byPeriod)).toBe(true);
+    expect(res.body).toHaveProperty("summary");
   }, 60000);
 
   it("GET /api/reports/invoices returns invoices with status filter", async () => {
@@ -83,8 +84,8 @@ describe("Reports endpoints (integration)", () => {
     const res = await agent.get("/api/reports/payments").set(headers);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("summary");
-    expect(res.body).toHaveProperty("providerBreakdown");
-    expect(res.body).toHaveProperty("methodBreakdown");
+    expect(res.body.summary).toHaveProperty("providerBreakdown");
+    expect(res.body.summary).toHaveProperty("methodBreakdown");
   }, 60000);
 
   it("GET /api/reports/expenses returns category and monthly breakdowns", async () => {
@@ -136,16 +137,16 @@ describe("Reports endpoints (integration)", () => {
 
     const res = await agent.get("/api/reports/tax-summary").set(headers);
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.report)).toBe(true);
-    expect(res.body.report.length).toBeGreaterThan(0);
-    expect(res.body.report[0]).toHaveProperty("tax_rate");
-    expect(res.body.report[0]).toHaveProperty("tax_total");
+    expect(Array.isArray(res.body.byRate)).toBe(true);
+    expect(res.body.byRate.length).toBeGreaterThan(0);
+    expect(res.body.byRate[0]).toHaveProperty("rate");
+    expect(res.body.byRate[0]).toHaveProperty("tax_collected");
   }, 60000);
 
   it("GET /api/reports/profit-loss returns income and expense data", async () => {
     const res = await agent.get("/api/reports/profit-loss").set(headers);
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("income");
+    expect(res.body).toHaveProperty("revenue");
     expect(res.body).toHaveProperty("expenses");
     expect(res.body).toHaveProperty("netIncome");
   }, 60000);

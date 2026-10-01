@@ -1,0 +1,72 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run eslint src/services/reports-service.ts src/repositories/subscription.repo.ts 
+src/services/subscription.service.ts src/index.ts tests/reports-cache.test.ts tests/reports-endpoints.test.ts
+
+C:\Users\New User\Desktop\New folder\src\index.ts
+    25:27   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+    29:10   warning  'customerRepository' is defined but never used  @typescript-eslint/no-unused-vars
+    58:3    warning  'CustomerSchema' is defined but never used      @typescript-eslint/no-unused-vars
+    99:64   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+    99:74   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   102:40   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   102:72   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   105:22   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   105:32   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   105:43   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   278:18   warning  'name' is assigned a value but never used       @typescript-eslint/no-unused-vars
+   474:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   497:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   508:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   520:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   559:31   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   615:19   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   646:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   697:65   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   967:64   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   990:82   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   996:81   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1534:62   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1551:62   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1569:62   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1582:62   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  1961:64   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2429:12   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2641:19   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  2766:15   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  3004:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  3021:17   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  3033:41   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  3082:99   warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  3154:67   warning  '_next' is defined but never used               @typescript-eslint/no-unused-vars
+  3167:105  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\src\services\reports-service.ts
+     4:10  warning  'rowToDate' is defined but never used              @typescript-eslint/no-unused-vars
+     4:21  warning  'toDecimal' is defined but never used              @typescript-eslint/no-unused-vars
+     4:37  warning  'PagedResult' is defined but never used            @typescript-eslint/no-unused-vars
+   498:11  warning  'countRes' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  1144:11  warning  'totalByMonth' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  1144:64  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  1223:63  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  1224:64  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  1229:31  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  1249:53  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  1250:39  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  1258:54  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\tests\reports-cache.test.ts
+   4:46  warning  'createTestUser' is defined but never used  @typescript-eslint/no-unused-vars
+  75:55  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+C:\Users\New User\Desktop\New folder\tests\reports-endpoints.test.ts
+    4:46  warning  'createTestUser' is defined but never used  @typescript-eslint/no-unused-vars
+  175:51  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+✖ 52 problems (0 errors, 52 warnings)
+

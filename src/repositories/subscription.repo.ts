@@ -130,6 +130,24 @@ export class SubscriptionRepository {
     return this.rowToFeatureFlag(res.rows[0]);
   }
 
+  async bulkUpsertFeatureFlags(flags: { code: string; name: string; description?: string | null; category?: string; isPremium?: boolean; requiresPlan?: PlanCode; metadata?: Record<string, unknown> }[]): Promise<void> {
+    if (flags.length === 0) return;
+    const values: string[] = [];
+    const params: unknown[] = [];
+    let paramIdx = 1;
+    for (const f of flags) {
+      values.push(`($${paramIdx}, $${paramIdx + 1}, $${paramIdx + 2}, $${paramIdx + 3}, $${paramIdx + 4}, $${paramIdx + 5}, $${paramIdx + 6})`);
+      params.push(f.code, f.name, f.description ?? null, f.category ?? "general", f.isPremium ?? false, f.requiresPlan ?? null, JSON.stringify(f.metadata ?? {}));
+      paramIdx += 7;
+    }
+    await query(
+      `INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+       VALUES ${values.join(", ")}
+       ON CONFLICT (code) DO NOTHING`,
+      params
+    );
+  }
+
   async findFeatureFlagByCode(code: string): Promise<FeatureFlag | null> {
     const res = await query("SELECT * FROM feature_flags WHERE code = $1", [code]);
     if (!res.rows.length) return null;

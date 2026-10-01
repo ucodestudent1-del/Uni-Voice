@@ -1,0 +1,152 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run tests/reports-endpoints.test.ts --reporter=verbose
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/New User/Desktop/New folder[39m
+
+[17:52:02.986] [32mINFO[39m (9952): [36mDropped 69 tables (rollback)[39m
+Slow query (1150ms): 
+    CREATE TABLE IF NOT EXISTS migrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NO
+[17:52:06.035] [32mINFO[39m (9952): [36mApplied migration: 001_initial_schema.sql[39m
+[17:52:06.596] [32mINFO[39m (9952): [36mApplied migration: 002_customers_enhancements.sql[39m
+[17:52:07.311] [32mINFO[39m (9952): [36mApplied migration: 002_discounts_and_types.sql[39m
+[17:52:07.581] [32mINFO[39m (9952): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[17:52:08.641] [32mINFO[39m (9952): [36mApplied migration: 004_users.sql[39m
+[17:52:08.967] [32mINFO[39m (9952): [36mApplied migration: 005_users_2fa.sql[39m
+[17:52:09.705] [32mINFO[39m (9952): [36mApplied migration: 006_google_oauth.sql[39m
+[17:52:09.864] [32mINFO[39m (9952): [36mApplied migration: 007_onboarding.sql[39m
+[17:52:10.352] [32mINFO[39m (9952): [36mApplied migration: 008_document_composition.sql[39m
+[17:52:11.987] [32mINFO[39m (9952): [36mApplied migration: 009_document_templates.sql[39m
+[17:52:14.907] [32mINFO[39m (9952): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[17:52:14.995] [32mINFO[39m (9952): [36mApplied migration: 010_product_service_catalog.sql[39m
+[17:52:17.054] [32mINFO[39m (9952): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[17:52:20.012] [32mINFO[39m (9952): [36mApplied migration: 012_projects.sql[39m
+[17:52:21.005] [32mINFO[39m (9952): [36mApplied migration: 012_user_sessions.sql[39m
+[17:52:21.460] [32mINFO[39m (9952): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[17:52:23.321] [32mINFO[39m (9952): [36mApplied migration: 014_project_time_tracking.sql[39m
+[17:52:23.332] [32mINFO[39m (9952): [36mApplied migration: 015_document_template_type.sql[39m
+[17:52:23.725] [32mINFO[39m (9952): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[17:52:25.158] [32mINFO[39m (9952): [36mApplied migration: 017_expenses.sql[39m
+[17:52:26.532] [32mINFO[39m (9952): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[17:52:26.589] [32mINFO[39m (9952): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[17:52:26.749] [32mINFO[39m (9952): [36mApplied migration: 020_team_access.sql[39m
+[17:52:26.875] [32mINFO[39m (9952): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[17:52:27.024] [32mINFO[39m (9952): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[17:52:27.114] [32mINFO[39m (9952): [36mApplied migration: 023_quote_schema.sql[39m
+[17:52:27.184] [32mINFO[39m (9952): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[17:52:27.247] [32mINFO[39m (9952): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[17:52:27.328] [32mINFO[39m (9952): [36mApplied migration: 026_performance_indexes.sql[39m
+[17:52:27.392] [32mINFO[39m (9952): [36mApplied migration: 027_tax_report_index.sql[39m
+[17:52:27.925] [32mINFO[39m (9952): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[17:52:28.016] [32mINFO[39m (9952): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[17:52:28.083] [32mINFO[39m (9952): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[17:52:28.255] [32mINFO[39m (9952): [36mApplied migration: 031_performance_optimizations.sql[39m
+[17:52:28.642] [32mINFO[39m (9952): [36mApplied migration: 032_expense_budget_settings.sql[39m
+[17:52:29.115] [32mINFO[39m (9952): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[17:52:30.289] [32mINFO[39m (9952): [36mApplied migration: 034_expense_vendor.sql[39m
+[17:52:31.421] [32mINFO[39m (9952): [36mApplied migration: 035_credit_note_pdf_cache.sql[39m
+[17:52:31.421] [32mINFO[39m (9952): [36mCompleted 38 migrations[39m
+Slow query (1493ms): INSERT INTO plans (code, name, description, price_monthly, currency, is_active, sort_order)
+       V
+Slow query (1219ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+Slow query (1181ms): INSERT INTO feature_flags (code, name, description, category, is_premium, requires_plan, metadata)
+ 
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/dashboard returns summary, aging, and payment metrics[33m 30120[2mms[22m[39m
+[31m   → Query read timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/revenue returns period breakdown[33m 5006[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/invoices returns invoices with status filter[33m 5015[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/payments returns provider and method breakdowns[33m 5014[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/expenses returns category and monthly breakdowns[33m 5017[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/clients returns client metrics[33m 5015[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/tax-summary returns rates with amounts[33m 5016[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/profit-loss returns income and expense data[33m 5013[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET /api/reports/aging returns buckets with current/overdue split[33m 5016[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mCSV export returns a blob with report data[33m 5018[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+ [31m×[39m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mReturns 403 for users without reports.expenses entitlement[33m 5014[2mms[22m[39m
+[31m   → Connection terminated due to connection timeout[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 11 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/dashboard returns summary, aging, and payment metrics
+[31m[1mError[22m: Query read timeout[39m
+[90m [2m❯[22m node_modules/pg-pool/index.js:[2m45:11[22m[39m
+[36m [2m❯[22m query src/db/pool.ts:[2m59:15[22m[39m
+    [90m 57| [39m[35mexport[39m [35masync[39m [35mfunction[39m [34mquery[39m(text[33m:[39m 
+string[33m,[39m params[33m?[39m[33m:[39m unknown[]) {
+    [90m 58| [39m  [35mconst[39m start [33m=[39m [33mDate[39m[33m.[39m[34mnow[39m()[33m;[39m
+    [90m 59| [39m  [35mconst[39m res [33m=[39m [35mawait[39m pool[33m.[39m[34mquery[39m(text[33m,[39m 
+params [35mas[39m never)[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m 60| [39m  [35mconst[39m ms [33m=[39m [33mDate[39m[33m.[39m[34mnow[39m() [33m-[39m 
+start[33m;[39m
+    [90m 61| [39m  [35mconst[39m ctx [33m=[39m requestStore[33m.[39m[34mgetStore[39m()[33m;[39m
+[90m [2m❯[22m truncateTestDb tests/helpers/db.ts:[2m18:5[22m[39m
+[90m [2m❯[22m tests/reports-endpoints.test.ts:[2m24:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/revenue returns period breakdown
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/invoices returns invoices with status filter
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/payments returns provider and method breakdowns
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/expenses returns category and monthly breakdowns
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/clients returns client metrics
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/tax-summary returns rates with amounts
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/profit-loss returns income and expense data
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mGET 
+/api/reports/aging returns buckets with current/overdue split
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > [22mCSV 
+export returns a blob with report data
+[41m[1m FAIL [22m[49m tests/reports-endpoints.test.ts[2m > [22mReports endpoints (integration)[2m > 
+[22mReturns 403 for users without reports.expenses entitlement
+[31m[1mError[22m: Connection terminated due to connection timeout[39m
+[90m [2m❯[22m node_modules/pg-pool/index.js:[2m45:11[22m[39m
+[36m [2m❯[22m query src/db/pool.ts:[2m59:15[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m11 failed[39m[22m[90m (11)[39m
+[2m   Start at [22m 17:51:57
+[2m   Duration [22m 186.25s[2m (transform 1.42s, setup 0ms, collect 8.84s, tests 80.27s, environment 0ms, prepare 319ms)[22m
+
+    [90m 57| [39m[35mexport[39m [35masync[39m [35mfunction[39m [34mquery[39m(text[33m:[39m 
+string[33m,[39m params[33m?[39m[33m:[39m unknown[]) {
+    [90m 58| [39m  [35mconst[39m start [33m=[39m [33mDate[39m[33m.[39m[34mnow[39m()[33m;[39m
+    [90m 59| [39m  [35mconst[39m res [33m=[39m [35mawait[39m pool[33m.[39m[34mquery[39m(text[33m,[39m 
+params [35mas[39m never)[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m 60| [39m  [35mconst[39m ms [33m=[39m [33mDate[39m[33m.[39m[34mnow[39m() [33m-[39m 
+start[33m;[39m
+    [90m 61| [39m  [35mconst[39m ctx [33m=[39m requestStore[33m.[39m[34mgetStore[39m()[33m;[39m
+[90m [2m❯[22m truncateTestDb tests/helpers/db.ts:[2m13:15[22m[39m
+[90m [2m❯[22m tests/reports-endpoints.test.ts:[2m24:5[22m[39m
+
+[31m[1mCaused by: Error[22m: Connection terminated unexpectedly[39m
+[90m [2m❯[22m Connection.<anonymous> node_modules/pg/lib/client.js:[2m204:73[22m[39m
+[90m [2m❯[22m Socket.<anonymous> node_modules/pg/lib/connection.js:[2m64:12[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯[22m[39m
+

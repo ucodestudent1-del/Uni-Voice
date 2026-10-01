@@ -1,0 +1,97 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run tests/reports-endpoints.test.ts --reporter=verbose
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/New User/Desktop/New folder[39m
+
+[18:13:18.708] [32mINFO[39m (12084): [36mDropped 69 tables (rollback)[39m
+Slow query (1520ms): 
+    CREATE TABLE IF NOT EXISTS migrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NO
+[18:13:25.150] [32mINFO[39m (12084): [36mApplied migration: 001_initial_schema.sql[39m
+[18:13:27.116] [32mINFO[39m (12084): [36mApplied migration: 002_customers_enhancements.sql[39m
+[18:13:27.308] [32mINFO[39m (12084): [36mApplied migration: 002_discounts_and_types.sql[39m
+[18:13:27.787] [32mINFO[39m (12084): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[18:13:27.839] [32mINFO[39m (12084): [36mApplied migration: 004_users.sql[39m
+[18:13:28.010] [32mINFO[39m (12084): [36mApplied migration: 005_users_2fa.sql[39m
+[18:13:28.093] [32mINFO[39m (12084): [36mApplied migration: 006_google_oauth.sql[39m
+[18:13:28.259] [32mINFO[39m (12084): [36mApplied migration: 007_onboarding.sql[39m
+[18:13:28.502] [32mINFO[39m (12084): [36mApplied migration: 008_document_composition.sql[39m
+[18:13:28.558] [32mINFO[39m (12084): [36mApplied migration: 009_document_templates.sql[39m
+[18:13:29.332] [32mINFO[39m (12084): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[18:13:29.454] [32mINFO[39m (12084): [36mApplied migration: 010_product_service_catalog.sql[39m
+[18:13:29.587] [32mINFO[39m (12084): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[18:13:29.790] [32mINFO[39m (12084): [36mApplied migration: 012_projects.sql[39m
+[18:13:29.839] [32mINFO[39m (12084): [36mApplied migration: 012_user_sessions.sql[39m
+[18:13:30.418] [32mINFO[39m (12084): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[18:13:31.424] [32mINFO[39m (12084): [36mApplied migration: 014_project_time_tracking.sql[39m
+[18:13:31.475] [32mINFO[39m (12084): [36mApplied migration: 015_document_template_type.sql[39m
+[18:13:31.503] [32mINFO[39m (12084): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[18:13:33.370] [32mINFO[39m (12084): [36mApplied migration: 017_expenses.sql[39m
+[18:13:33.510] [32mINFO[39m (12084): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[18:13:33.600] [32mINFO[39m (12084): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[18:13:33.691] [32mINFO[39m (12084): [36mApplied migration: 020_team_access.sql[39m
+[18:13:34.883] [32mINFO[39m (12084): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[18:13:35.129] [32mINFO[39m (12084): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[18:13:36.691] [32mINFO[39m (12084): [36mApplied migration: 023_quote_schema.sql[39m
+[18:13:36.744] [32mINFO[39m (12084): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[18:13:36.786] [32mINFO[39m (12084): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[18:13:38.504] [32mINFO[39m (12084): [36mApplied migration: 026_performance_indexes.sql[39m
+[18:13:38.905] [32mINFO[39m (12084): [36mApplied migration: 027_tax_report_index.sql[39m
+[18:13:41.890] [32mINFO[39m (12084): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[18:13:42.301] [32mINFO[39m (12084): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[18:13:46.684] [32mINFO[39m (12084): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[18:13:47.503] [32mINFO[39m (12084): [36mApplied migration: 031_performance_optimizations.sql[39m
+[18:13:47.691] [32mINFO[39m (12084): [36mApplied migration: 032_expense_budget_settings.sql[39m
+[18:13:47.862] [32mINFO[39m (12084): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[18:13:48.023] [32mINFO[39m (12084): [36mApplied migration: 034_expense_vendor.sql[39m
+[18:13:48.142] [32mINFO[39m (12084): [36mApplied migration: 035_credit_note_pdf_cache.sql[39m
+[18:13:48.142] [32mINFO[39m (12084): [36mCompleted 38 migrations[39m
+[31mNo test files found, exiting with code 1
+[39m
+[2mfilter: [22m[33mtests/reports-endpoints.test.ts[39m
+[2minclude: [22m[33mtests/**/*.test.ts[39m
+[2mexclude:  [22m[33m**/node_modules/**[2m, [22m**/dist/**[2m, [22m**/cypress/**[2m, 
+[22m**/.{idea,git,cache,output,temp}/**[2m, 
+[22m**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Unhandled Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1merror[22m: ON CONFLICT DO UPDATE command cannot affect row a second time[39m
+[90m [2m❯[22m node_modules/pg-pool/index.js:[2m45:11[22m[39m
+[90m [2m❯[22m process.processTicksAndRejections node:internal/process/task_queues:[2m104:5[22m[39m
+[36m [2m❯[22m query src/db/pool.ts:[2m53:15[22m[39m
+    [90m 53| [39m}
+    [90m 54| [39m
+    [90m 55| [39m[35mconst[39m [33mSLOW_QUERY_THRESHOLD[39m [33m=[39m [34m500[39m[33m;[39m
+    [90m   | [39m         [31m^[39m
+    [90m 56| [39m
+    [90m 57| [39m[35mexport[39m [35masync[39m [35mfunction[39m [34mquery[39m(text[33m:[39m 
+string[33m,[39m params[33m?[39m[33m:[39m unknown[]) {
+[90m [2m❯[22m SubscriptionRepository.bulkUpsertFeatureFlags 
+src/repositories/subscription.repo.ts:[2m105:5[22m[39m
+[90m [2m❯[22m SubscriptionService.ensureDefaults src/services/subscription.service.ts:[2m96:5[22m[39m
+[90m [2m❯[22m resetTestDb tests/helpers/db.ts:[2m18:3[22m[39m
+[90m [2m❯[22m Object.setup tests/global-setup.ts:[2m4:3[22m[39m
+[90m [2m❯[22m TestProject._initializeGlobalSetup 
+../../../New%20User/Desktop/New%20folder/node_modules/vitest/dist/chunks/cli-api.DVe0nWUx.js:[2m7084:21[22m[39m
+[90m [2m❯[22m Vitest.initializeGlobalSetup 
+../../../New%20User/Desktop/New%20folder/node_modules/vitest/dist/chunks/cli-api.DVe0nWUx.js:[2m9734:35[22m[39m
+[90m [2m❯[22m 
+../../../New%20User/Desktop/New%20folder/node_modules/vitest/dist/chunks/cli-api.DVe0nWUx.js:[2m9646:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ length: 239, severity: 'ERROR', code: '21000', detail: undefined, hint: 
+'Ensure that no rows proposed for insertion within the same command have duplicate constrained values.', position: 
+undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: 
+undefined, dataType: undefined, constraint: undefined, file: 'nodeModifyTable.c', routine: 'ExecOnConflictUpdate' 
+}[39m
+
+
+
