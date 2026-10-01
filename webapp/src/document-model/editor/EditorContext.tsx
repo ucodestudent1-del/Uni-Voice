@@ -72,7 +72,7 @@ export const EditorProvider: React.FC<EditorProviderProps> = ({
   const [dirty, setDirty] = useState(false);
   const [isAutosaveEnabled, setIsAutosaveEnabled] = useState(false);
 
-  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveRef = useRef(false);
   const lastSavedVersionRef = useRef(initialDocument.version);
   const documentRef = useRef(initialDocument);
