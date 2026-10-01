@@ -1,12 +1,13 @@
 # Multi-stage Dockerfile
-# Builds both the backend and frontend, serves via nginx with SPA fallback
+# Builds both the backend and frontend
+# Express serves the frontend SPA and API on port 4000
 
-# ————————————————————————————————————————
-# Stage 1: Backend dependencies + system libs
-# —…………………………………………
-FROM node:22-bookworm-slim AS backend-deps
+# —………………………………
+# Stage 1: Install dependencies + system libs
+# —………………………………
+FROM node:22-bookworm-slim AS deps
 
-# Install system dependencies FIRST (needed by Puppeteer/chrome at runtime and during build)
+# Install system dependencies FIRST (needed by Puppeteer/chrome at runtime)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
@@ -44,10 +45,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libxss1 \
     libxtst6 \
-    lsb-release \
-    wget \
-    xdg-utils \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -68,8 +65,8 @@ FROM node:22-bookworm-slim AS backend-builder
 
 WORKDIR /app
 
-COPY --from=backend-deps /app/node_modules/ ./node_modules/
-COPY --from=backend-deps /root/.cache/ /root/.cache/
+COPY --from=deps /app/node_modules/ ./node_modules/
+COPY --from=deps /root/.cache/ /root/.cache/
 COPY package*.json ./
 COPY tsconfig.json tsconfig.typecheck.json ./
 COPY src/ ./src/
@@ -93,13 +90,13 @@ COPY webapp/ ./
 RUN npm run build
 
 # —………………………………
-# Stage 4: Production image — nginx + backend
+# Stage 4: Production image
 # —………………………………
 FROM node:22-bookworm-slim AS production
 
-# Install nginx and shared libs needed at runtime
+# Copy system libraries needed at runtime (Chrome/Puppeteer)
+# Reinstall the specific libs needed at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
     libnss3 \
     libgbm1 \
     libgtk-3-0 \
@@ -128,34 +125,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libxss1 \
     libxtst6 \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy frontend build
-COPY --from=frontend-builder /app/webapp/dist/ /app/webapp/dist/
-
-# Copy backend from builder
+# Copy backend compiled output
 COPY --from=backend-builder /app/dist/ /app/dist/
 COPY --from=backend-builder /app/node_modules/ /app/node_modules/
 COPY --from=backend-builder /root/.cache/ /root/.cache/
 
-# Copy entrypoint
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+# Copy frontend build
+COPY --from=frontend-builder /app/webapp/dist/ /app/webapp/dist/
+
+# Copy migrations
+COPY --from=backend-builder /app/dist/db/migrations/ /app/dist/db/migrations/
 
 WORKDIR /app
-
-# Copy nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Create non-root user
-# Note: Debian's nginx package uses 'www-data' user, not 'nginx'
-RUN groupadd -g 1001 -r appgroup && \
-    useradd -u 1001 -g appgroup -m -d /home/appuser -s /bin/sh appuser && \
-    mkdir -p /var/cache/nginx /var/log/nginx /var/lib/nginx/body /var/lib/nginx/fastcgi /var/lib/nginx/proxy /var/lib/nginx/scgi /var/lib/nginx/uwsgi && \
-    chown -R www-data:www-data /var/cache/nginx /var/log/nginx /var/lib/nginx && \
-    chown -R appuser:appgroup /app && \
-    chmod +x /app/docker-entrypoint.sh
 
 # Production environment variables
 ENV NODE_ENV=production
@@ -172,7 +155,6 @@ ENV AUTH_MODE=dev
 ENV AUTH_JWT_SECRET=dev-secret-change-me
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/invoice_dev
 
-EXPOSE 80
 EXPOSE 4000
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["node", "dist/index.js"]
