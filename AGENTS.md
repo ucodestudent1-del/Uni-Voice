@@ -27,6 +27,23 @@ Commands to run during this session:
 > **Tip:** Use `npm run dev:all` from the project root to start both the
 > backend (`localhost:4000`) and frontend (`localhost:5173`) together.
 
+## Remaining Work (post-recent changes)
+
+1. **InvoiceWorkspace `handleFinalizeAndSend` redundant fetches** — `webapp/src/components/InvoiceWorkspace.tsx:846-884` calls `getInvoice` twice (lines 858, 871) after finalize/send. Use optimistic updates from the finalize response instead.
+2. **InvoiceWorkspace autosave batching** — `doSave` (`InvoiceWorkspace.tsx:531`) still fires 3 sequential API calls (`updateInvoice` → `setInvoiceItems` → `setInvoiceFees`). Should be a single `PATCH /api/invoices/:id` endpoint.
+3. **Missing `/api/reports/aging` and `/api/reports/payment-metrics`** backend endpoints — `webapp/src/api/client.ts:1169` and `:1744` call endpoints that don't exist in `src/index.ts`. `ReportSection.tsx` silently swallows 404s via `.catch(() => ({...}))`.
+4. **`computeChurnRate` uses `customer_email` instead of `customer_id`** — `webapp/src/pages/ReportSection.tsx:239` produces incorrect churn when customers share email domains.
+5. **List endpoints still fetch 500 customers** — `Invoices.tsx:94` and `CreditNotes.tsx:78` use `limit: 500` instead of lazy-loaded 100.
+
+### Commands for the upcoming work
+| Command | What it does |
+|---|---|
+| `npm run typecheck` | Backend type-check |
+| `npm run lint` | Backend lint |
+| `npm run test` | Backend tests |
+| `cd webapp && npm run typecheck` | Frontend type-check |
+| `cd webapp && npm run lint` | Frontend lint |
+
 ## Stack
 - **Backend**: Express + TypeScript + PostgreSQL (`node-pg-migrate`-style SQL migrations)
 - **Money**: `decimal.js` (integer minor-unit math, never float)

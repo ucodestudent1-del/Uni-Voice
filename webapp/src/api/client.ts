@@ -1167,8 +1167,7 @@ export async function getEnhancedDashboard() {
 }
 
 export async function getPaymentMetricsReport() {
-  const res = await api.get("/reports/payment-metrics");
-  return res.data;
+  return null;
 }
 
 export async function getVolumeTrendReport(params?: { period?: "day" | "week" | "month"; months?: number }) {

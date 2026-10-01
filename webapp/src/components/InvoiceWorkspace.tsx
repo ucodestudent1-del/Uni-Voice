@@ -843,40 +843,27 @@ export default function InvoiceWorkspace() {
     setReviewSending(true);
     setReviewError(null);
     try {
-      if (!cur.isFinalized) {
+       if (!cur.isFinalized) {
         const finalRes = await finalizeInvoice(curId);
         setInvoice((prev) =>
           prev
             ? {
                 ...prev,
                 isFinalized: true,
-                status: "draft",
-                invoiceNumber: prev.invoiceNumber ?? finalRes.invoiceNumber ?? null,
-              }
-            : prev
-        );
-        const refreshed = await getInvoice(curId);
-        setInvoice((prev) =>
-          prev
-            ? {
-                ...prev,
-                invoiceNumber: refreshed.invoice.invoice_number ?? prev.invoiceNumber ?? null,
-                status: refreshed.invoice.status,
-                publicToken: refreshed.invoice.public_token ?? null,
+                status: "sent",
+                invoiceNumber: finalRes.invoiceNumber ?? prev.invoiceNumber ?? null,
+                publicToken: prev.publicToken ?? null,
               }
             : prev
         );
       }
       await sendInvoice(curId);
-      const refreshed = await getInvoice(curId);
       setInvoice((prev) =>
         prev
           ? {
               ...prev,
-               isFinalized: true,
+              isFinalized: true,
               status: "sent",
-              invoiceNumber: refreshed.invoice.invoice_number ?? prev.invoiceNumber ?? null,
-              publicToken: refreshed.invoice.public_token ?? null,
             }
           : prev
       );

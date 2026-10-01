@@ -241,7 +241,8 @@ function computeChurnRate(invoices: ApiInvoiceListItem[]): number | null {
   const customerSet = new Set<string>();
   const churnedSet = new Set<string>();
   invoices.forEach((inv) => {
-    const customerId = inv.customer_id || inv.id;
+    const customerId = inv.customer_id;
+    if (!customerId) return;
     customerSet.add(customerId);
     if (inv.status === "cancelled" || inv.status === "void") {
       churnedSet.add(customerId);

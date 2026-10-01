@@ -10,9 +10,8 @@ import {
   getExpensesReport,
   getClientsReport,
   getTaxSummaryReport,
-  getProfitLossReport,
-  getAgingReport,
-  exportReportCsv,
+   getProfitLossReport,
+   exportReportCsv,
   type ReportFiltersParams,
 } from "@/api/client";
 import { useSubscription } from "@/contexts/SubscriptionContext";
