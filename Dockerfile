@@ -3,7 +3,7 @@
 
 # ————————————————————————————————————————
 # Stage 1: Backend dependencies + system libs
-# —————————…………………………………………
+# —…………………………………………
 FROM node:22-bookworm-slim AS backend-deps
 
 # Install system dependencies FIRST (needed by Puppeteer/chrome at runtime and during build)
@@ -48,18 +48,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     xdg-utils \
     curl \
-    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install backend dependencies (skip Puppeteer browser download during npm install to prevent build failures)
+# Install backend dependencies (skip Puppeteer browser download during npm install)
 COPY package*.json ./
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci
 ENV PUPPETEER_SKIP_DOWNLOAD=false
 
-# Download Chrome separately for Puppeteer (works reliably in Docker build environment)
+# Download Chrome separately for Puppeteer
 RUN npx puppeteer browsers install chrome
 
 # —………………………………
@@ -98,11 +97,39 @@ RUN npm run build
 # —………………………………
 FROM node:22-bookworm-slim AS production
 
-# Copy system deps from builder (already installed nginx + chrome libs)
-COPY --from=backend-deps /etc/nginx/ /etc/nginx/
-COPY --from=backend-deps /usr/sbin/nginx /usr/sbin/nginx
-COPY --from=backend-deps /usr/lib/nginx/ /usr/lib/nginx/
-COPY --from=backend-deps /var/log/nginx/ /var/log/nginx/
+# Install nginx and shared libs needed at runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
+    libnss3 \
+    libgbm1 \
+    libgtk-3-0 \
+    libasound2 \
+    libatk1.0-0 \
+    libcairo2 \
+    libcups2 \
+    libdbus-1-3 \
+    libexpat1 \
+    libfontconfig1 \
+    libgdk-pixbuf-2.0-0 \
+    libglib2.0-0 \
+    libnspr4 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1 \
+    libxss1 \
+    libxtst6 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy frontend build
 COPY --from=frontend-builder /app/webapp/dist/ /app/webapp/dist/
