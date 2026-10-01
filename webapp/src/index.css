@@ -30,9 +30,9 @@
     /* —— Text —— */
     --color-text: 15 23 42;             /* slate-900      */
     --color-text-secondary: 71 85 105;  /* slate-600      */
-    --color-text-tertiary: 148 163 184; /* slate-500      */
+    --color-text-tertiary: 94 110 149;  /* slate-500 — raised from 400 for AA on page-bg */
     --color-text-inverse: 255 255 255;  /* white          */
-    --color-text-disabled: 148 163 184; /* slate-500      */
+    --color-text-disabled: 94 110 149; /* slate-500 — raised from 400 for AA on page-bg */
 
     /* —— Interactive states —— */
     --color-hover: 241 245 249;         /* slate-100 (hover surface) */
@@ -41,17 +41,17 @@
 
     /* —— Input fields —— */
     --color-input-bg: 255 255 255;       /* white        */
-    --color-input-border: 203 213 225;   /* slate-300    */
+    --color-input-border: 100 117 149;  /* slate-500 — raised from 300 for AA contrast */
     --color-input-focus-ring: 37 99 232; /* blue-600     */
-    --color-input-placeholder: 160 174 192; /* slate-400  */
+    --color-input-placeholder: 100 117 149; /* slate-500 — raised from 400 for AA on white */
     --color-input-disabled: 241 245 249; /* slate-100    */
 
     /* —— Primary / brand —— */
     --color-primary: 37 99 232;           /* blue-600          */
     --color-primary-hover: 29 78 216;     /* blue-700          */
     --color-primary-active: 30 62 180;    /* blue-800          */
-    --color-primary-bg: 219 233 255;      /* blue-100          */
-    --color-primary-bg-strong: 191 219 254; /* blue-50       */
+    --color-primary-bg: 239 246 255;      /* blue-50 — raised from 100 for AA contrast with blue-600 */
+    --color-primary-bg-strong: 219 233 255; /* blue-100 */
     --color-primary-text: 30 62 180;      /* blue-800          */
     --color-primary-text-strong: 29 78 216; /* blue-700       */
     --color-primary-ring: 37 99 232;     /* blue-600          */
@@ -70,22 +70,22 @@
     --color-success: 34 197 94;          /* green-500  */
     --color-success-bg: 220 252 231;     /* green-50   */
     --color-success-text: 21 128 61;     /* green-800  */
-    --color-success-border: 187 247 208; /* green-200  */
+    --color-success-border: 87 154 87;   /* green-600 — raised from 200 for AA contrast */
 
     --color-warning: 245 158 11;         /* amber-500  */
     --color-warning-bg: 255 247 225;     /* amber-50   */
-    --color-warning-text: 189 100 3;     /* amber-700  */
-    --color-warning-border: 253 224 153; /* amber-200  */
+    --color-warning-text: 180 83 9;     /* amber-800 — raised from 700 for AA on amber-50 */
+    --color-warning-border: 217 119 9;   /* amber-600 — raised from 200 */
 
     --color-error: 239 68 68;           /* red-500    */
     --color-error-bg: 254 232 232;       /* red-50     */
     --color-error-text: 185 28 28;       /* red-800    */
-    --color-error-border: 254 202 202;  /* red-300    */
+    --color-error-border: 220 38 38;    /* red-600 — raised from 300 */
 
     --color-info: 59 130 246;            /* blue-500   */
     --color-info-bg: 219 233 255;       /* blue-50    */
     --color-info-text: 30 62 180;        /* blue-800   */
-    --color-info-border: 191 219 254;   /* blue-200   */
+    --color-info-border: 60 120 200;    /* blue-600 — raised from 200 */
 
     /* —— Chart colors —— */
     --chart-text: 0 0 0;                /* black        */
@@ -130,7 +130,7 @@
 
     /* —— Input fields —— */
     --color-input-bg: 24 35 54;         /* slate-800      */
-    --color-input-border: 71 86 106;    /* slate-700      */
+    --color-input-border: 100 117 149;  /* slate-500 — raised from 700 for AA contrast */
     --color-input-focus-ring: 96 165 250;/* blue-400      */
     --color-input-placeholder: 148 163 184; /* slate-500 */
     --color-input-disabled: 38 45 62;   /* slate-800      */
@@ -139,7 +139,7 @@
     --color-primary: 96 165 250;        /* blue-400         */
     --color-primary-hover: 126 185 255; /* blue-300         */
     --color-primary-active: 153 193 255;/* blue-200         */
-    --color-primary-bg: 29 58 103;      /* blue-900/950     */
+    --color-primary-bg: 20 45 90;       /* blue-950 — darkened for AA contrast */
     --color-primary-bg-strong: 23 41 76;/* blue-900          */
     --color-primary-text: 191 219 254;  /* blue-200          */
     --color-primary-text-strong: 147 197 253; /* blue-300 */
@@ -172,7 +172,7 @@
     --color-error-border: 153 56 60;     /* red-800      */
 
     --color-info: 96 165 250;            /* blue-400    */
-    --color-info-bg: 29 58 103;          /* blue-900    */
+    --color-info-bg: 20 45 90;          /* blue-950 — darkened for AA contrast */
     --color-info-text: 191 219 254;      /* blue-200    */
     --color-info-border: 62 90 153;      /* blue-800    */
 
@@ -215,11 +215,11 @@
       --color-hover: 38 45 62;
       --color-active: 60 68 86;
       --color-input-bg: 24 35 54;
-      --color-input-border: 71 86 106;
-      --color-primary: 96 165 250;
-      --color-primary-hover: 126 185 255;
-      --color-primary-active: 153 193 255;
-      --color-primary-bg: 29 58 103;
+       --color-input-border: 100 117 149;
+       --color-primary: 96 165 250;
+       --color-primary-hover: 126 185 255;
+       --color-primary-active: 153 193 255;
+       --color-primary-bg: 20 45 90;
       --color-primary-text: 191 219 254;
       --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.10);
       --color-overlay: 0 0 0 / 0.6;
