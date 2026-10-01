@@ -37,7 +37,6 @@ const Projects = lazy(() => import("./pages/Projects"));
 const Quotes = lazy(() => import("./pages/Quotes"));
 const Receipts = lazy(() => import("./pages/Receipts"));
 const ReceiptDetail = lazy(() => import("./pages/ReceiptDetail"));
-const RecurringInvoices = lazy(() => import("./pages/RecurringInvoices"));
 const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
 const Reports = lazy(() => import("./pages/Reports"));
 
@@ -119,9 +118,8 @@ export default function App() {
          <Route path="projects/:id" element={<Suspense fallback={<Fallback />}><ProjectDetail /></Suspense>} />
          <Route path="quotes" element={<Suspense fallback={<Fallback />}><Quotes /></Suspense>} />
          <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
-         <Route path="quotes/:id" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
-         <Route path="recurring" element={<Suspense fallback={<Fallback />}><RecurringInvoices /></Suspense>} />
-         <Route path="credit-notes" element={<Suspense fallback={<Fallback />}><CreditNotes /></Suspense>} />
+        <Route path="quotes/:id" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
+        <Route path="credit-notes" element={<Suspense fallback={<Fallback />}><CreditNotes /></Suspense>} />
          <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
          <Route path="receipts/:id" element={<Suspense fallback={<Fallback />}><ReceiptDetail /></Suspense>} />
          <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />
