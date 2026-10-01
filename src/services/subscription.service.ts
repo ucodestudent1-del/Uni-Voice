@@ -4,6 +4,7 @@ import { rowToDate } from "../repositories/helpers.js";
 import { getRequestContext } from "../db/pool.js";
 import { featureFlagCache, invalidateFeatureFlagCache, clearFeatureFlagCache } from "./feature-flag-cache.js";
 import { invalidateReportsCache } from "./reports-cache.js";
+import { isDev } from "../config/index.js";
 
 const TIER_HIERARCHY: Record<PlanCode, number> = { free: 0, pro: 1, scale: 2, business: 3 };
 
@@ -109,11 +110,12 @@ export class SubscriptionService {
 
     let result = await subscriptionRepository.findSubscriptionWithPlan(businessId);
     if (!result) {
-      const freePlan = await this.getPlan("free");
-      if (!freePlan) throw new Error("Default plans not initialized");
+      const defaultPlanCode = isDev ? "business" : "free";
+      const defaultPlan = await this.getPlan(defaultPlanCode);
+      if (!defaultPlan) throw new Error("Default plans not initialized");
       const created = await subscriptionRepository.createSubscription({
         businessId,
-        planId: freePlan.id,
+        planId: defaultPlan.id,
         status: "active",
         billingCycle: "monthly",
         currentPeriodStart: new Date(),
@@ -123,7 +125,7 @@ export class SubscriptionService {
         // A concurrent request created the subscription; fetch the existing one.
         result = await subscriptionRepository.findSubscriptionWithPlan(businessId);
       } else {
-        result = { subscription: created, plan: freePlan };
+        result = { subscription: created, plan: defaultPlan };
       }
     }
     if (!result) throw new Error("Failed to create or retrieve subscription");

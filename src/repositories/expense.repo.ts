@@ -282,32 +282,32 @@ export class ExpenseRepository {
   }
 
   async getSummary(businessId: string, opts: ExpenseSearchOpts = {}): Promise<ExpenseSummary> {
-    const conditions: string[] = ["business_id = $1"];
+    const conditions: string[] = ["e.business_id = $1"];
     const vals: unknown[] = [businessId];
     let i = 2;
 
     if (opts.customerId) {
-      conditions.push(`customer_id = $${i++}`);
+      conditions.push(`e.customer_id = $${i++}`);
       vals.push(opts.customerId);
     }
     if (opts.projectId) {
-      conditions.push(`project_id = $${i++}`);
+      conditions.push(`e.project_id = $${i++}`);
       vals.push(opts.projectId);
     }
     if (opts.category) {
-      conditions.push(`category = $${i++}`);
+      conditions.push(`e.category = $${i++}`);
       vals.push(opts.category);
     }
     if (opts.dateFrom) {
-      conditions.push(`expense_date >= $${i++}::date`);
+      conditions.push(`e.expense_date >= $${i++}::date`);
       vals.push(opts.dateFrom.toISOString().split("T")[0]);
     }
      if (opts.dateTo) {
-       conditions.push(`expense_date <= $${i++}::date`);
+       conditions.push(`e.expense_date <= $${i++}::date`);
        vals.push(opts.dateTo.toISOString().split("T")[0]);
      }
      if (opts.vendor) {
-       conditions.push(`vendor ILIKE $${i++}`);
+       conditions.push(`e.vendor ILIKE $${i++}`);
        vals.push(`%${opts.vendor}%`);
      }
      if (opts.customerName) {
@@ -321,12 +321,12 @@ export class ExpenseRepository {
 
      const res = await query(
       `SELECT
-           COALESCE(SUM(amount), 0) as total_amount,
-          COALESCE(SUM(CASE WHEN is_billable THEN amount ELSE 0 END), 0) as billable_amount,
-          COALESCE(SUM(CASE WHEN is_reimbursed THEN amount ELSE 0 END), 0) as reimbursed_amount,
-          COALESCE(SUM(CASE WHEN is_billable AND NOT is_reimbursed THEN amount ELSE 0 END), 0) as non_reimbursed_billable,
+           COALESCE(SUM(e.amount), 0) as total_amount,
+          COALESCE(SUM(CASE WHEN e.is_billable THEN e.amount ELSE 0 END), 0) as billable_amount,
+          COALESCE(SUM(CASE WHEN e.is_reimbursed THEN e.amount ELSE 0 END), 0) as reimbursed_amount,
+          COALESCE(SUM(CASE WHEN e.is_billable AND NOT e.is_reimbursed THEN e.amount ELSE 0 END), 0) as non_reimbursed_billable,
           COUNT(*) as count,
-          MAX(currency) as currency
+           MAX(e.currency) as currency
         FROM expenses e
         LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
         LEFT JOIN projects p ON p.id = e.project_id AND p.business_id = e.business_id
