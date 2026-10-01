@@ -3,34 +3,39 @@ set -e
 
 echo "Starting Universal Invoice Generator..."
 
+cd /app
+
 # Run database migrations on startup (non-fatal if DB not yet ready)
 echo "Running database migrations..."
-cd /app
 node dist/db/migrate.js || echo "Migrations skipped or already applied"
 
-# If running as root, drop privileges for the backend
-if [ "$(id -u)" = "0" ]; then
-  echo "Starting backend API server as non-root user..."
-  # Start the backend API server in the background as nodejs user
-  su -s /bin/sh -c "node dist/index.js" nodejs &
-  BACKEND_PID=$!
-  sleep 2
+# Start the backend API server
+echo "Starting backend API server..."
+node dist/index.js &
+BACKEND_PID=$!
 
-  # Start nginx as nginx user (master process still needs root for binding port 80)
-  echo "Starting nginx..."
-  nginx -g "daemon off;" &
-  NGINX_PID=$!
-else
-  # Non-root mode — start both directly
-  echo "Starting backend API server..."
-  node dist/index.js &
-  BACKEND_PID=$!
-  sleep 2
+# Wait for backend to be ready
+echo "Waiting for backend to be ready..."
+MAX_WAIT=30
+WAITED=0
+while [ $WAITED -lt $MAX_WAIT ]; do
+  if kill -0 $BACKEND_PID 2>/dev/null; then
+    if curl -s http://localhost:4000/api/health >/dev/null 2>&1; then
+      echo "Backend is ready."
+      break
+    fi
+  else
+    echo "Backend process exited unexpectedly."
+    exit 1
+  fi
+  sleep 1
+  WAITED=$((WAITED + 1))
+done
 
-  echo "Starting nginx on port 8080..."
-  nginx -g "daemon off; error_log /dev/stderr;" &
-  NGINX_PID=$!
-fi
+# Start nginx
+echo "Starting nginx..."
+nginx -g "daemon off;" &
+NGINX_PID=$!
 
 # If either process dies, exit
 wait -n $BACKEND_PID $NGINX_PID
