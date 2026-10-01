@@ -3236,7 +3236,10 @@ function processRecurringJob() {
 }
 
 if (!isTest) {
-  start();
+  start().catch((err) => {
+    logger.error({ err }, "Failed to start server");
+    process.exit(1);
+  });
 }
 
 export default app;

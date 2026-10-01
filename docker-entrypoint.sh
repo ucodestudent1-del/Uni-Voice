@@ -18,19 +18,26 @@ BACKEND_PID=$!
 echo "Waiting for backend to be ready..."
 MAX_WAIT=30
 WAITED=0
+BACKEND_READY=false
 while [ $WAITED -lt $MAX_WAIT ]; do
-  if kill -0 $BACKEND_PID 2>/dev/null; then
-    if curl -s http://localhost:4000/api/health >/dev/null 2>&1; then
-      echo "Backend is ready."
-      break
-    fi
-  else
+  if ! kill -0 $BACKEND_PID 2>/dev/null; then
     echo "Backend process exited unexpectedly."
     exit 1
+  fi
+  if curl -s http://127.0.0.1:4000/api/health >/dev/null 2>&1; then
+    echo "Backend is ready."
+    BACKEND_READY=true
+    break
   fi
   sleep 1
   WAITED=$((WAITED + 1))
 done
+
+if [ "$BACKEND_READY" = false ]; then
+  echo "ERROR: Backend did not become ready within ${MAX_WAIT} seconds."
+  kill $BACKEND_PID 2>/dev/null || true
+  exit 1
+fi
 
 # Start nginx
 echo "Starting nginx..."
