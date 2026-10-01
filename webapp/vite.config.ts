@@ -10,6 +10,9 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
     },
   },
+  define: {
+    "import.meta.env.VITE_PLAUSIBLE_DOMAIN": JSON.stringify(process.env.PLAUSIBLE_DOMAIN ?? ""),
+  },
   server: {
     host: true,
     port: 5173,

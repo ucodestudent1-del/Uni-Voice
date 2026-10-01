@@ -1,4 +1,5 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
+import rateLimit from "express-rate-limit";
 import compression from "compression";
 import cors from "cors";
 import helmet from "helmet";
@@ -192,6 +193,29 @@ function getCookie(header: string | undefined, name: string): string | null {
 }
 
 // Health
+// ============================================================================
+// RATE LIMITING
+// ============================================================================
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: "Too many attempts. Please try again later.", code: "RATE_LIMITED" },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isDev ? () => true : undefined,
+});
+
+const generalRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 1000 : 300,
+  message: { error: "Too many requests", code: "RATE_LIMITED" },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isDev ? () => true : undefined,
+});
+
+app.use(generalRateLimiter);
+
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", env: env.APP_ENV, timestamp: new Date().toISOString() });
 });
@@ -211,7 +235,7 @@ if (isDev) {
 // ============================================================================
 // AUTH
 // ============================================================================
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", authRateLimiter, async (req, res) => {
   const { email, password, name, countryCode, defaultCurrency } = req.body;
   if (!email || !password) return res.status(400).json({ error: "email and password required" });
 
@@ -248,7 +272,7 @@ app.post("/api/auth/register", async (req, res) => {
   res.status(201).json({ token, user: { id: userId, businessId, email, countryCode: countryCode || "US", defaultCurrency: defaultCurrency || "USD" } });
 });
 
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", authRateLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "email and password required" });
 
@@ -366,7 +390,7 @@ function handleAuthError(err: unknown, res: express.Response) {
 
 // Second factor verification during login (no session token yet).
 // Accepts the code from an authenticator app OR a one-time recovery code.
-app.post("/api/auth/2fa/verify", async (req, res) => {
+app.post("/api/auth/2fa/verify", authRateLimiter, async (req, res) => {
   const { email, code } = req.body;
   if (!email || !code) return res.status(400).json({ error: "email and code required" });
 

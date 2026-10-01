@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import { env } from "../../config/index.js";
 import { logger } from "../../utils/logger.js";
 import { query } from "../../db/pool.js";
@@ -73,8 +74,132 @@ export class SmtpEmailProvider implements EmailProvider {
     return { messageId: info.messageId ?? `msg-${Date.now()}@example.com`, status: "sent" };
   }
 
-  async verifyConnection(): Promise<boolean> {
+   async verifyConnection(): Promise<boolean> {
     return this.transporter.verify().then(() => true).catch(() => false);
+  }
+}
+
+export class SendGridEmailProvider implements EmailProvider {
+  readonly name = "sendgrid";
+  private initialized = false;
+
+  constructor() {
+    this.init();
+  }
+
+  private init() {
+    if (env.SENDGRID_API_KEY) {
+      sgMail.setApiKey(env.SENDGRID_API_KEY);
+      this.initialized = true;
+    }
+  }
+
+  async send(email: { to: EmailRecipient; subject: string; html: string; attachments?: Array<{ filename: string; content: Buffer }> }): Promise<{ messageId: string; status: EmailStatus }> {
+    if (!this.initialized) {
+      throw new Error("SendGrid API key not configured (SENDGRID_API_KEY)");
+    }
+    const msg: sgMail.MailDataRequired = {
+      to: email.to.email,
+      from: env.EMAIL_FROM,
+      subject: email.subject,
+      html: email.html,
+    };
+    if (email.to.name) {
+      msg.dynamicTemplateData = { name: email.to.name };
+    }
+    if (email.attachments?.length) {
+      msg.attachments = email.attachments.map((a) => ({
+        filename: a.filename,
+        content: a.content.toString("base64"),
+        type: "application/octet-stream",
+        disposition: "attachment",
+      }));
+    }
+    const [response] = await sgMail.send(msg);
+    const messageId = typeof response?.headers?.["x-message-id"] === "string"
+      ? response.headers["x-message-id"]
+      : `sg-${Date.now()}@sendgrid.net`;
+    return { messageId, status: "sent" };
+  }
+
+  async verifyConnection(): Promise<boolean> {
+    if (!this.initialized) return false;
+    try {
+      const [resp] = await sgMail.send({
+        to: env.EMAIL_FROM,
+        from: env.EMAIL_FROM,
+        subject: "Connection test — ignore",
+        html: "<p>Connection test — ignore</p>",
+      });
+      return resp.statusCode >= 200 && resp.statusCode < 300;
+    } catch {
+      return false;
+    }
+  }
+}
+
+export class SesEmailProvider implements EmailProvider {
+  readonly name = "ses";
+  private ses: import("@aws-sdk/client-ses").SES | null = null;
+  private initialized = false;
+
+  constructor() {
+    if (env.AWS_SES_ACCESS_KEY_ID && env.AWS_SES_SECRET_ACCESS_KEY) {
+      this.init();
+    }
+  }
+
+  private async init() {
+    const mod = await import("@aws-sdk/client-ses");
+    const ses = new mod.SES({
+      region: env.AWS_SES_REGION ?? "us-east-1",
+      credentials: {
+        accessKeyId: env.AWS_SES_ACCESS_KEY_ID!,
+        secretAccessKey: env.AWS_SES_SECRET_ACCESS_KEY!,
+      },
+    });
+    this.ses = ses;
+    this.initialized = true;
+  }
+
+  async send(email: { to: EmailRecipient; subject: string; html: string; attachments?: Array<{ filename: string; content: Buffer }> }): Promise<{ messageId: string; status: EmailStatus }> {
+    if (!this.initialized) {
+      await this.init();
+    }
+    const params: any = {
+      Source: env.EMAIL_FROM,
+      Destination: {
+        ToAddresses: [email.to.email],
+      },
+      Message: {
+        Subject: { Data: email.subject, Charset: "UTF-8" },
+        Body: {
+          Html: { Data: email.html, Charset: "UTF-8" },
+        },
+      },
+    };
+    if (email.attachments?.length) {
+      params.Attachments = email.attachments.map((a) => ({
+        Filename: a.filename,
+        Content: a.content.toString("base64"),
+        ContentType: "application/octet-stream",
+      }));
+    }
+    const result: any = await this.ses!.send(params);
+    return { messageId: result.MessageId ?? `ses-${Date.now()}`, status: "sent" };
+  }
+
+  async verifyConnection(): Promise<boolean> {
+    if (!this.initialized) {
+      await this.init();
+    }
+    try {
+      const mod = await import("@aws-sdk/client-ses");
+      await this.ses!.send(new mod.ListIdentitiesCommand({}));
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -86,8 +211,16 @@ export class EmailService {
   }
 
   static createProvider(type: string): EmailProvider {
-    if (type === "smtp") return new SmtpEmailProvider();
-    return new StubEmailProvider();
+    switch (type) {
+      case "smtp":
+        return new SmtpEmailProvider();
+      case "sendgrid":
+        return new SendGridEmailProvider();
+      case "ses":
+        return new SesEmailProvider();
+      default:
+        return new StubEmailProvider();
+    }
   }
 
   getProviderName(): string {
