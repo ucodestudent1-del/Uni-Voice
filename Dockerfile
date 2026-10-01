@@ -148,10 +148,11 @@ WORKDIR /app
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create non-root user for nginx (nginx package creates nginx user)
+# Create non-root user
+# Note: Debian's nginx package uses 'www-data' user, not 'nginx'
 RUN groupadd -r -g 1001 appgroup && \
-    useradd -r -u 1001 -g appgroup -m -d /home/appuser appuser && \
-    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /app/webapp/dist && \
+    useradd -u 1001 -g appgroup -m -d /home/appuser appuser && \
+    chown -R www-data:www-data /var/cache/nginx /var/log/nginx /app/webapp/dist && \
     chown -R appuser:appgroup /app && \
     chmod +x /app/docker-entrypoint.sh
 
