@@ -424,7 +424,7 @@ export default function InvoiceWorkspace() {
 
   useEffect(() => {
     if (isNew || invoiceId || loadedInvoiceId === id) return;
-    let cancelled = false;
+    const cancelled = false;
     async function loadInvoice() {
       setLoading(true);
       try {

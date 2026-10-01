@@ -1,78 +1,100 @@
-FROM node:22-bookworm-slim
+# Multi-stage Dockerfile
+# Builds both the backend and frontend, serves via nginx with SPA fallback
+
+# ————————————————————————————————————————
+# Stage 1: Backend dependencies
+# —————————————————————————……………………
+FROM node:20-alpine AS backend-deps
 
 WORKDIR /app
 
-# Install system dependencies FIRST (needed by Puppeteer/chrome at runtime and during build)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    fonts-liberation \
-    unzip \
-    libasound2 \
-    libatk1.0-0 \
-    libatomic1 \
-    libc6 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libexpat1 \
-    libfontconfig1 \
-    libgbm1 \
-    libgcc-s1 \
-    libgdk-pixbuf-2.0-0 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libstdc++6 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    lsb-release \
-    wget \
-    xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install backend dependencies (skip Puppeteer browser download during npm install to prevent build failures)
 COPY package*.json ./
-ENV PUPPETEER_SKIP_DOWNLOAD=true
-RUN npm install
-ENV PUPPETEER_SKIP_DOWNLOAD=false
+RUN npm ci
 
-# Download Chrome separately for Puppeteer (works reliably in Docker build environment)
-RUN npx puppeteer browsers install chrome
+# —————————————————————————……………………
+# Stage 2: Backend build
+# —————————…………………………………………
+FROM node:20-alpine AS backend-builder
 
-# Install frontend dependencies
-COPY webapp/package*.json webapp/
-RUN cd webapp && npm install
+WORKDIR /app
 
-# Copy source and build (npm run build already includes the webapp build step)
-COPY . .
+COPY --from=backend-deps /app/node_modules/ ./node_modules/
+COPY package*.json ./
+COPY tsconfig.json tsconfig.typecheck.json ./
+COPY src/ ./src/
+
+# Build backend TypeScript → dist/
+RUN npx tsc -p tsconfig.json && node scripts/copy-migrations.js
+
+# —————————————————…………………………
+# Stage 3: Frontend build
+# —………………………………………………
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/webapp
+
+COPY webapp/package*.json ./
+RUN npm ci
+
+COPY webapp/ ./
+
 RUN npm run build
 
-ENV NODE_ENV=production
-ENV APP_ENV=production
-ENV PORT=4000
-ENV APP_PUBLIC_BASE_URL=https://uni-voice-production.up.railway.app
-ENV EMAIL_FROM=noreply@example.com
-ENV EMAIL_PROVIDER=stub
-ENV PDF_PROVIDER=html
-ENV PAYMENT_PROVIDER=stub
-ENV TAX_PROVIDER=manual
-ENV AI_PROVIDER=stub
+# —————————………………………………………………
+# Stage 4: Runtime — Node backend only
+# —……………………………………………………
+FROM node:20-alpine AS backend
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -u 1001 -S -G nodejs -h /home/nodejs nodejs
+
+# Install only production deps
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy built artifacts from builder
+COPY --from=backend-builder --chown=nodejs:nodejs /app/dist/ ./dist/
+# Migrations are already in dist/db/migrations/ from the build step
+
+# Copy entrypoint
+COPY --chown=nodejs:nodejs docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
+USER nodejs
 
 EXPOSE 4000
 
-CMD ["node", "dist/index.js"]
+CMD ["./docker-entrypoint.sh"]
+
+# —————————………………………………………………
+# Stage 5: Production image — nginx + backend
+# —……………………………………………………
+FROM nginx:stable-alpine AS production
+
+# Copy nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy frontend build
+COPY --from=frontend-builder /app/webapp/dist/ /app/webapp/dist/
+
+# Copy backend
+COPY --from=backend /app/ /app/
+
+# Create non-root user for nginx
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup && \
+    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /app/webapp/dist && \
+    chown -R appuser:appgroup /app && \
+    chmod +x /app/docker-entrypoint.sh
+
+# Start both nginx and the backend
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+EXPOSE 80
+EXPOSE 4000
+
+ENTRYPOINT ["/docker-entrypoint.sh"]

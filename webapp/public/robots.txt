@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://invoiceflow.app/sitemap.xml
+
+# Disallow sensitive areas
+Disallow: /app/
+Disallow: /login
+Disallow: /register
+Disallow: /onboarding
+Disallow: /settings/
+Disallow: /plans
+Disallow: /pricing
+Disallow: /auth/callback
+
+# Allow public invoice viewing
+Allow: /invoice/
+Allow: /public/invoice/
+
+# Crawl delay
+Crawl-delay: 10

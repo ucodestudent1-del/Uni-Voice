@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getPlans, upgradeSubscription } from "../api/client";
 import type { ApiPlan } from "../types/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useMetaTags } from "../hooks/useMetaTags";
 
 type TierKey = "free" | "pro";
 
@@ -49,6 +50,11 @@ export default function Plans() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useMetaTags({
+    title: "Simple, Transparent Pricing | InvoiceFlow",
+    description: "One flat monthly rate. No per-invoice fees. Cancel anytime. Start with our forever-free plan or upgrade to Pro for full automation.",
+  });
 
   useEffect(() => {
     async function loadPlans() {

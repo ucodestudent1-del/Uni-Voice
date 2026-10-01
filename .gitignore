@@ -1,7 +1,9 @@
 node_modules/
 dist/
+webapp/dist/
 *.log
 .env
+.env.*
 .DS_Store
 migrate_out.txt
 debug-api*.mjs

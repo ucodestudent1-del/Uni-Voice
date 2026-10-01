@@ -6,10 +6,16 @@ import FaqSection from "../components/ui/FaqSection";
 import TemplateGallery from "../components/ui/TemplateGallery";
 import ThemeToggle from "../components/ThemeToggle";
 import { pricingFeatures, faqs, templateModules } from "../data/landing";
+import { useMetaTags } from "../hooks/useMetaTags";
 
 export default function Landing() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  useMetaTags({
+    title: "Professional Invoice Generator | InvoiceFlow",
+    description: "Create, send, and track invoices in seconds. Free plan includes everything you need to get started. Upgrade to Pro for automation that saves you hours every month.",
+  });
 
   return (
     <div className="min-h-screen bg-surface-alt text-inverse">

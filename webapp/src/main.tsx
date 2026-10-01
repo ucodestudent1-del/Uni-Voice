@@ -1,4 +1,5 @@
 import React from "react";
+import * as Sentry from "@sentry/react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
@@ -7,7 +8,10 @@ import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { ThemeProvider, applyInitialTheme } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { initSentry } from "./lib/sentry";
 import "./index.css";
+
+initSentry();
 
 const App = React.lazy(() => import("./App"));
 
@@ -43,7 +47,13 @@ function AppLazy() {
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
-      <ErrorBoundary>
+      <Sentry.ErrorBoundary
+        fallback={({ resetError }) => (
+          <ErrorBoundary onReset={resetError}>
+            <AppLazy />
+          </ErrorBoundary>
+        )}
+      >
         <AuthProvider>
           <SubscriptionProvider>
             <ThemeProvider>
@@ -53,7 +63,7 @@ ReactDOM.createRoot(rootElement).render(
             </ThemeProvider>
           </SubscriptionProvider>
         </AuthProvider>
-      </ErrorBoundary>
+      </Sentry.ErrorBoundary>
     </BrowserRouter>
   </React.StrictMode>
 );

@@ -116,7 +116,26 @@ for (const method of HTTP_METHODS) {
   };
 }
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://static.sentry-sdks.com"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        fontSrc: ["'self'", "https:", "data:"],
+        connectSrc: ["'self'", "https://api.stripe.com", "https://sentry.io"],
+        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com", "https://sentry.io"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'self'"],
+        upgradeInsecureRequests: isDev ? [] : ["'none'"] ,
+      },
+    },
+  })
+);
 app.use(compression());
 app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true }));
 app.use(express.json({ limit: "10mb" }));

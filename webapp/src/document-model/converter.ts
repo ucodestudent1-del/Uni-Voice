@@ -19,7 +19,7 @@ export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, cu
   const doc = createEmptyDocument(invoice.business_id as UUID, "Untitled Invoice");
 
   const builder = new DocumentBuilder(doc);
-  let currentParent: ParentId = doc.rootSectionId;
+  const currentParent: ParentId = doc.rootSectionId;
   let insertIndex = 0;
 
   const insert = (type: ComponentType, props?: any, style?: StyleProps) => {
