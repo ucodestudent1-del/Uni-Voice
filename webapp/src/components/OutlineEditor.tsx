@@ -108,11 +108,11 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
     (id) => document.sections[id as string] || document.rows[id as string] || document.columns[id as string] || document.components[id as string]
   );
 
+  const tree = useMemo(() => buildNodeTree(document, null), [document]);
+
   if (!rootChildren.length) {
     return null;
   }
-
-  const tree = useMemo(() => buildNodeTree(document, null), [document]);
 
   return (
     <div className="w-64 overflow-y-auto border-l border-color-subtle bg-surface">

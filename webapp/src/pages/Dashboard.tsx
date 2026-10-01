@@ -113,6 +113,14 @@ export default function Dashboard() {
       });
   }, [dashboard?.requiringAttention]);
 
+  const sparklinePoints = useMemo(() => {
+    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.paid) }));
+  }, [volumeTrend]);
+
+  const revenueTrendPoints = useMemo(() => {
+    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.invoiced) }));
+  }, [volumeTrend]);
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-8">
@@ -180,14 +188,6 @@ export default function Dashboard() {
   ];
 
   const needsAttentionCount = overdueInvoices.length + needsAttention.length + summary.draftCount;
-
-  const sparklinePoints = useMemo(() => {
-    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.paid) }));
-  }, [volumeTrend]);
-
-  const revenueTrendPoints = useMemo(() => {
-    return volumeTrend.slice(-7).map((d) => ({ value: Number(d.invoiced) }));
-  }, [volumeTrend]);
 
   return (
     <div className="space-y-6">

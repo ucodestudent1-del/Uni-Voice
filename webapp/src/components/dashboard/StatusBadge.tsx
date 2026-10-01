@@ -1,6 +1,6 @@
 import { StatusBadge as SharedStatusBadge, invoiceStatusConfig, type StatusBadgeProps as SharedStatusBadgeProps } from "@/components/ui/StatusBadge";
 
-export interface StatusBadgeProps extends SharedStatusBadgeProps {}
+export type StatusBadgeProps = SharedStatusBadgeProps;
 
 export const statusConfig = invoiceStatusConfig.configs;
 

@@ -509,15 +509,19 @@ export interface ApiPaymentIntent {
 }
 
 export interface ApiDashboardSummary {
+  totalRevenue: string;
   totalOutstanding: string;
   totalOverdue: string;
+  paymentsReceived: string;
+  expenses: string;
+  netIncome: string;
   totalPaidThisMonth: string;
-  totalRevenue: string;
   draftCount: number;
   overdueCount: number;
   sentCount: number;
   paidCount: number;
   totalInvoices: number;
+  currency: string;
 }
 
 export interface ApiInvoiceListItem {
@@ -996,21 +1000,6 @@ export interface ReportFiltersParams {
   sortOrder?: "asc" | "desc";
 }
 
-export interface ApiDashboardSummary {
-  totalRevenue: string;
-  totalOutstanding: string;
-  paymentsReceived: string;
-  expenses: string;
-  netIncome: string;
-  totalOverdue: string;
-  draftCount: number;
-  overdueCount: number;
-  sentCount: number;
-  paidCount: number;
-  totalInvoices: number;
-  currency: string;
-}
-
 export interface ApiRevenueByPeriod {
   period: string;
   invoiced: string;
@@ -1218,12 +1207,6 @@ export interface ApiProfitLossReport {
   };
   netIncome: string;
   grossMargin: number;
-}
-
-export interface ApiAgingBucket {
-  bucket: "current" | "1-30" | "31-60" | "61-90" | "90+";
-  count: number;
-  amount: string;
 }
 
 export interface ApiAgingReport {

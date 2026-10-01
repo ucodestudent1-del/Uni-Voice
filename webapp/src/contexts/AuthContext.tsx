@@ -5,8 +5,6 @@ import type {
 } from "@/types/app";
 import {
   getMe,
-  login as apiLogin,
-  register as apiRegister,
   verifyTwoFactor as verifyTwoFactorApi,
   getOnboarding,
   completeOnboardingStep,
@@ -109,26 +107,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [token]);
 
-   const login = (newToken: string, newUser: User) => {
+  const login = useCallback((newToken: string, newUser: User) => {
     safeSetToken(newToken);
     setToken(newToken);
     setUser(newUser);
     setOnboarding(null);
     clearSubscriptionCache();
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     safeRemoveToken();
     setToken(null);
     setUser(null);
     setOnboarding(null);
     clearSubscriptionCache();
-  };
+  }, []);
 
-  const verifyTwoFactor = async (email: string, code: string) => {
+  const verifyTwoFactor = useCallback(async (email: string, code: string) => {
     const data = await verifyTwoFactorApi(email, code);
     login(data.token, data.user as unknown as User);
-  };
+  }, [login]);
 
   return (
     <AuthContext.Provider value={{ user, businessId: user?.businessId, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
