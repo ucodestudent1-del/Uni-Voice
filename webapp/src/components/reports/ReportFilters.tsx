@@ -141,7 +141,7 @@ export default function ReportFilters({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         {presets && (
           <>
             <div className="flex items-center gap-1.5">
@@ -151,17 +151,17 @@ export default function ReportFilters({
                   key={p.value}
                   type="button"
                   onClick={() => handlePresetChange(p.value)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                     activePreset() === p.value
                       ? "bg-primary-bg text-on-primary"
-                      : "text-tertiary hover:text-primary hover:bg-surface-alt"
+                      : "text-tertiary hover:text-secondary hover:bg-surface-alt"
                   }`}
                 >
                   {p.label}
                 </button>
               ))}
             </div>
-            <div className="h-4 w-px bg-color-subtle" />
+            <div className="h-8 w-px bg-color-subtle self-center" />
           </>
         )}
 
@@ -185,7 +185,7 @@ export default function ReportFilters({
                 placeholder="To date"
               />
             </div>
-            <div className="h-4 w-px bg-color-subtle" />
+            <div className="h-8 w-px bg-color-subtle self-center" />
           </>
         )}
 
@@ -205,9 +205,9 @@ export default function ReportFilters({
         <button
           type="button"
           onClick={() => setAdvancedOpen(!advancedOpen)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-color px-3 py-1.5 text-xs font-medium text-secondary hover:bg-surface-alt transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-color px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt transition-colors h-10"
         >
-          <Filter className="w-3.5 h-3.5" />
+          <Filter className="w-4 h-4" />
           Filters
           {hasActiveFilters && (
             <span className="inline-flex items-center justify-center w-1.5 h-1.5 rounded-full bg-primary-action text-on-primary" />
@@ -218,9 +218,9 @@ export default function ReportFilters({
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex items-center gap-1 rounded-lg text-xs font-medium text-secondary hover:text-primary hover:bg-surface-alt transition-colors"
+            className="inline-flex items-center gap-1 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-surface-alt transition-colors h-10 px-3"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
             Reset
           </button>
         )}
@@ -229,7 +229,7 @@ export default function ReportFilters({
       {advancedOpen && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           {availableFilters.showStatus && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="form-label-secondary">Status</label>
               <select
                 value={filters.status ? (Array.isArray(filters.status) ? filters.status[0] : filters.status) : ""}
@@ -247,7 +247,7 @@ export default function ReportFilters({
           )}
 
           {availableFilters.showCategory && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="form-label-secondary">Category</label>
               <select
                 value={filters.category ?? ""}
@@ -265,7 +265,7 @@ export default function ReportFilters({
           )}
 
           {availableFilters.showCustomer && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="form-label-secondary flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
                 Customer
@@ -283,7 +283,7 @@ export default function ReportFilters({
           )}
 
           {availableFilters.showProject && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="form-label-secondary flex items-center gap-1">
                 <LayoutGrid className="w-3.5 h-3.5" />
                 Project
@@ -301,7 +301,7 @@ export default function ReportFilters({
           )}
 
           {availableFilters.showProvider && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="form-label-secondary flex items-center gap-1">
                 <Tag className="w-3.5 h-3.5" />
                 Provider

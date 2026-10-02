@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import FormField from "./FormField";
 import SavedIndicator from "./SavedIndicator";
+import { Button } from "../ui/Button";
 
 export interface NotificationSettings {
   emailNotifications: boolean;
@@ -160,12 +161,13 @@ export default function NotificationsSettings() {
 
       <div className="flex items-center justify-between pt-4">
         <SavedIndicator show={saved} />
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={save}
-          className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
         >
           Save Notification Settings
-        </button>
+        </Button>
       </div>
     </div>
   );

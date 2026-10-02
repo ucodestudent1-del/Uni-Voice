@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { getTaxRates } from "../api/client";
+import { ChevronDown } from "lucide-react";
 
 interface TaxRate {
   id: string;
@@ -54,12 +55,13 @@ export default function TaxSelector({ value, onChange, allowNone = true, placeho
   return (
     <div ref={containerRef} className="relative">
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500"
+        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer focus-within:ring-2 focus-within:ring-primary transition-colors h-10"
         onClick={() => setOpen(!open)}
       >
-        <span className="text-sm text-primary truncate">
+        <span className="truncate">
           {selected ? `${selected.name} (${formatRate(selected.rate)})` : placeholder}
         </span>
+        <ChevronDown className="w-4 h-4 text-tertiary shrink-0 ml-2" />
       </div>
 
       {open && (

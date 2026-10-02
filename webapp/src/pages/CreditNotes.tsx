@@ -233,26 +233,28 @@ export default function CreditNotes() {
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-primary">Filters</h3>
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-3">
+            <Button
+              variant={showAdvancedFilters ? "secondary" : "ghost"}
+              size="sm"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-brand" : "text-secondary hover:text-primary"}`}
             >
               {showAdvancedFilters ? "Hide" : "Show"} Advanced
-            </button>
+            </Button>
             {hasActiveFilters && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={clearFilters}
-                className="text-sm font-medium text-secondary hover:text-primary"
               >
                 Clear All
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5">
             <label className="form-label">Search</label>
             <input
               type="text"
@@ -262,7 +264,7 @@ export default function CreditNotes() {
               className="form-control"
             />
           </div>
-          <div>
+          <div className="lg:col-span-3">
             <label className="form-label">Status</label>
             <select
               value={statusFilter}
@@ -274,7 +276,7 @@ export default function CreditNotes() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="lg:col-span-4">
             <label className="form-label">Currency</label>
             <input
               type="text"
@@ -287,8 +289,8 @@ export default function CreditNotes() {
         </div>
 
         {showAdvancedFilters && (
-          <div className="mt-4 border-t border-color-subtle pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+          <div className="mt-4 border-t border-color-subtle pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="lg:col-span-4">
               <label className="form-label">Customer</label>
               <select
                 value={customerFilter}
@@ -402,44 +404,50 @@ export default function CreditNotes() {
                   <td className="py-3 px-4 text-center">
                     <InvoiceStatusBadge status={cn.status} />
                   </td>
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {cn.status === "draft" && (
-                        <button
-                          onClick={() => handleFinalize(cn.id)}
-                          className="text-xs text-primary-brand hover:text-primary-brand"
-                          title="Finalize"
-                        >
-                          Finalize
-                        </button>
-                      )}
-                      {cn.status === "finalized" && Number(cn.amount_remaining || 0) > 0 && (
-                        <button
-                          onClick={() => handleApply(cn.id)}
-                          className="text-xs status-success-text hover:status-success-text"
-                          title="Apply to Invoice"
-                        >
-                          Apply
-                        </button>
-                      )}
-                      {["finalized", "applied"].includes(cn.status) && (
-                        <button
-                          onClick={() => handleCancel(cn.id)}
-                          className="text-xs status-error-text hover:status-error-text"
-                          title="Cancel"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDownloadPdf(cn.id)}
-                        className="text-xs text-secondary hover:text-primary"
-                        title="Download PDF"
-                      >
-                        PDF
-                      </button>
-                    </div>
-                  </td>
+                   <td className="py-3 px-4 text-center">
+                     <div className="flex items-center justify-center gap-2">
+                       {cn.status === "draft" && (
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleFinalize(cn.id)}
+                           title="Finalize"
+                         >
+                           Finalize
+                         </Button>
+                       )}
+                       {cn.status === "finalized" && Number(cn.amount_remaining || 0) > 0 && (
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleApply(cn.id)}
+                           title="Apply to Invoice"
+                           className="status-success-text"
+                         >
+                           Apply
+                         </Button>
+                       )}
+                       {["finalized", "applied"].includes(cn.status) && (
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleCancel(cn.id)}
+                           title="Cancel"
+                           className="status-error-text"
+                         >
+                           Cancel
+                         </Button>
+                       )}
+                       <Button
+                         variant="ghost"
+                         size="sm"
+                         onClick={() => handleDownloadPdf(cn.id)}
+                         title="Download PDF"
+                       >
+                         PDF
+                       </Button>
+                     </div>
+                   </td>
                 </tr>
               ))
             )}
@@ -451,7 +459,7 @@ export default function CreditNotes() {
             <p className="text-sm text-secondary">
               Page {page} of {totalPages} • {total} credit notes
             </p>
-            <div className="flex items-center gap-2">
+             <div className="flex items-center gap-2">
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
@@ -461,20 +469,22 @@ export default function CreditNotes() {
                   <option key={size} value={size}>{size} per page</option>
                 ))}
               </select>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="rounded-lg border border-input-border px-3 py-1 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
               >
                 Previous
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="rounded-lg border border-input-border px-3 py-1 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}

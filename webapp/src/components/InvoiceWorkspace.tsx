@@ -49,6 +49,7 @@ import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
 import CustomerSelector from "./CustomerSelector";
+import { Button } from "./ui/Button";
 import InvoicePreview, {
   type PreviewAttachment,
   type PreviewFee,
@@ -948,25 +949,25 @@ export default function InvoiceWorkspace() {
                 Add a product or service so your invoice has something to bill for.
               </p>
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="md"
+                  icon={<Plus className="h-4 w-4" />}
                   onClick={() => addItem("service")}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary-action px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover focus:ring-2 focus:ring-primary"
                 >
-                  <Plus className="h-4 w-4" />
                   Add a line item
-                </button>
+                </Button>
                 {products.length > 0 && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    icon={<Package className="h-4 w-4" />}
                     onClick={() => {
                       if (products.length === 1) addFromProduct(products[0]);
                     }}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-color bg-surface px-4 py-2 text-sm font-medium text-primary hover:bg-hover focus:ring-2 focus:ring-primary"
                   >
-                    <Package className="h-4 w-4" />
                     Add from saved product
-                  </button>
+                  </Button>
                 )}
               </div>
               {products.length > 1 && (
@@ -1607,14 +1608,14 @@ const FeesSection = React.memo(function FeesSection({
             value={fee.description}
             onChange={(e) => updateFee(i, { description: e.target.value })}
             placeholder="Description"
-            className="flex-1 rounded border border-input-border bg-input px-2 py-1 text-sm text-primary placeholder-tertiary focus-ring-primary"
+            className="flex-1 form-control"
           />
           <input
             type="number"
             value={fee.amount}
             onChange={(e) => updateFee(i, { amount: e.target.value || "0" })}
             placeholder="0.00"
-            className="w-24 rounded border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus-ring-primary"
+            className="w-32 form-control text-right font-tabular-nums"
           />
           <button
             type="button"
@@ -2069,32 +2070,24 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
             </div>
 
             <div className="flex justify-end gap-3 border-t border-color p-4">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={onClose}
                 disabled={sending}
-                className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
                 onClick={onFinalizeAndSend}
                 disabled={sending || validation.hasErrors}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-5 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50"
+                icon={sending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                iconPosition="left"
               >
-                {sending ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Finalizing…
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    Finalize &amp; send by email
-                  </>
-                )}
-              </button>
+                {sending ? "Finalizing…" : "Finalize & send by email"}
+              </Button>
             </div>
           </>
         ) : (
@@ -2110,23 +2103,25 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
             </div>
             <div className="p-6 text-center">
               <p className="text-sm text-secondary">What would you like to do next?</p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row justify-center gap-2">
-                <button
-                  type="button"
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row justify-center">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  icon={<Link2 className="h-4 w-4" />}
+                  iconPosition="left"
                   onClick={onCopyPaymentLink}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-input-border bg-surface px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
                 >
-                  <Link2 className="h-4 w-4" />
                   Copy payment link
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  icon={<Download className="h-4 w-4" />}
+                  iconPosition="left"
                   onClick={onDownloadPdf}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-input-border bg-surface px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
                 >
-                  <Download className="h-4 w-4" />
                   Download PDF
-                </button>
+                </Button>
                 <a
                   href={invoice.publicToken ? `${window.location.origin}/invoice/${invoice.publicToken}` : "#"}
                   target="_blank"
@@ -2139,13 +2134,13 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
               </div>
             </div>
             <div className="flex justify-end border-t border-color p-4">
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="md"
                 onClick={onClose}
-                className="rounded-lg bg-primary-action px-5 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover"
               >
                 Done
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -2169,13 +2164,15 @@ const PreviewDialog = React.memo(function PreviewDialog({
         <div className="sticky top-0 flex items-center justify-between border-b border-color bg-surface-alt px-4 py-2">
           <h3 className="text-sm font-semibold text-secondary">Invoice preview</h3>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Download className="h-3.5 w-3.5" />}
+              iconPosition="left"
               onClick={onDownloadPdf}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-input-border bg-surface px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover"
             >
-              <Download className="h-3.5 w-3.5" /> Download
-            </button>
+              Download
+            </Button>
             <button
               type="button"
               onClick={onClose}

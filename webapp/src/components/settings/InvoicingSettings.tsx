@@ -3,6 +3,7 @@ import { getBusinessSettings, updateBusinessSettings, getNumberingConfig, update
 import type { ApiBusinessSettings } from "../../types/api";
 import FormField from "./FormField";
 import SavedIndicator from "./SavedIndicator";
+import { Button } from "../ui/Button";
 
 export default function InvoicingSettings() {
   const [settings, setSettings] = useState<ApiBusinessSettings | null>(null);
@@ -241,13 +242,14 @@ export default function InvoicingSettings() {
 
       <div className="flex items-center justify-between pt-4">
         <SavedIndicator show={saved} />
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={save}
           disabled={saving}
-          className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save Changes"}
-        </button>
+        </Button>
       </div>
     </div>
   );

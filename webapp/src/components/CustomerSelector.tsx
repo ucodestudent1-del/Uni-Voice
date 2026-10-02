@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { getCustomers, createCustomer, type CustomerSearchParams } from "../api/client";
 import type { ApiCustomer } from "../types/api";
 import { validateCustomerForm, type CustomerFormValues } from "../schemas/customer";
+import { ChevronDown } from "lucide-react";
 
 interface CustomerSelectorProps {
   value?: string;
@@ -118,12 +119,13 @@ export default function CustomerSelector({
   return (
     <div ref={containerRef} className="relative">
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500"
+        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-colors h-10"
         onClick={() => { setOpen(!open); setCreateMode(false); }}
       >
-        <span className="text-sm text-primary truncate" title={selectedDisplay}>
+        <span className="truncate" title={selectedDisplay}>
           {selectedDisplay}
         </span>
+        <ChevronDown className="w-4 h-4 text-tertiary shrink-0 ml-2" />
       </div>
 
       {open && (
@@ -137,14 +139,14 @@ export default function CustomerSelector({
                   required
                   value={createForm?.name ?? ""}
                   onChange={(e) => setCreateForm((prev) => prev ? { ...prev, name: e.target.value } : { name: e.target.value, email: "", countryCode: "US" })}
-                  className="w-full px-2 py-1 text-sm border border-input-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="form-control"
                 />
                 <input
                   type="email"
                   placeholder="Email address"
                   value={createForm?.email ?? ""}
                   onChange={(e) => setCreateForm((prev) => prev ? { ...prev, email: e.target.value } : { name: "", email: e.target.value, countryCode: "US" })}
-                  className="w-full px-2 py-1 text-sm border border-input-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="form-control"
                 />
                 {createError && <p className="text-xs status-error-text">{createError}</p>}
                 <button
@@ -158,12 +160,12 @@ export default function CustomerSelector({
             </div>
           ) : (
             <div className="p-2 border-b border-color-subtle">
-              <input
+             <input
                 type="text"
                 placeholder="Search customers..."
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full px-2 py-1 text-sm border border-input-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                className="form-control"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>

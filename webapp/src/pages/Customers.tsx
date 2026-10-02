@@ -236,8 +236,9 @@ export default function Customers() {
       </div>
 
           <div className="bg-surface rounded-xl border border-color-subtle border-color p-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="md:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-4">
+                <label className="form-label">Search</label>
                 <input
                   type="text"
                   placeholder="Search customers by name, email, or company..."
@@ -246,7 +247,8 @@ export default function Customers() {
                   className="form-control"
                 />
               </div>
-              <div>
+              <div className="lg:col-span-3">
+                <label className="form-label">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
@@ -257,7 +259,8 @@ export default function Customers() {
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="lg:col-span-2">
+                <label className="form-label">Sort By</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -268,18 +271,8 @@ export default function Customers() {
                   ))}
                 </select>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 text-sm text-secondary">
-                    <input
-                      type="checkbox"
-                      checked={includeArchived}
-                      onChange={(e) => setIncludeArchived(e.target.checked)}
-                      className="rounded border-input-border text-primary-brand focus:ring-primary"
-                    />
-                    Show archived
-                  </label>
-                </div>
+              <div className="lg:col-span-1.5">
+                <label className="form-label">Direction</label>
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as any)}
@@ -288,6 +281,17 @@ export default function Customers() {
                   <option value="asc">Ascending</option>
                   <option value="desc">Descending</option>
                 </select>
+              </div>
+              <div className="lg:col-span-1.5 flex items-end">
+                <label className="flex items-center gap-2 text-sm text-secondary cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeArchived}
+                    onChange={(e) => setIncludeArchived(e.target.checked)}
+                    className="rounded border-input-border text-primary-brand focus:ring-primary"
+                  />
+                  Show archived
+                </label>
               </div>
             </div>
           </div>
@@ -471,33 +475,31 @@ export default function Customers() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-tertiary">
-                Page {currentPage} of {totalPages} • {total} customers
-              </p>
-              <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => handlePage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1"
-              >
-                Previous
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => handlePage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1"
-              >
-                Next
-              </Button>
-              </div>
-            </div>
-          )}
+           {totalPages > 1 && (
+             <div className="flex items-center justify-between mt-4 pt-4 border-t border-color-subtle">
+               <p className="text-sm text-tertiary">
+                 Page {currentPage} of {totalPages} • {total} customers
+               </p>
+               <div className="flex items-center gap-2">
+               <Button
+                 variant="secondary"
+                 size="sm"
+                 onClick={() => handlePage(currentPage - 1)}
+                 disabled={currentPage === 1}
+               >
+                 Previous
+               </Button>
+               <Button
+                 variant="secondary"
+                 size="sm"
+                 onClick={() => handlePage(currentPage + 1)}
+                 disabled={currentPage === totalPages}
+               >
+                 Next
+               </Button>
+               </div>
+             </div>
+           )}
         </>
       )}
 

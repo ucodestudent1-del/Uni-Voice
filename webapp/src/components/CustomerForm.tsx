@@ -208,67 +208,73 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
             </div>
           </div>
 
-          <fieldset className="border border-color-subtle rounded-lg p-4">
-            <legend className="text-sm font-medium text-secondary px-1">Address</legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <input
-                  type="text"
-                  placeholder="Street address"
-                  value={formData.addressLine1}
-                  onChange={(e) => handleChange("addressLine1", e.target.value)}
-                  className="form-control"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Street address 2"
-                  value={formData.addressLine2}
-                  onChange={(e) => handleChange("addressLine2", e.target.value)}
-                  className="form-control"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="City"
-                  value={formData.city}
-                  onChange={(e) => handleChange("city", e.target.value)}
-                  className="form-control"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="State / Region"
-                  value={formData.stateOrRegion}
-                  onChange={(e) => handleChange("stateOrRegion", e.target.value)}
-                  className="form-control"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Postal code"
-                  value={formData.postalCode}
-                  onChange={(e) => handleChange("postalCode", e.target.value)}
-                  className="form-control"
-                />
-              </div>
-              <div>
-                <select
-                  value={formData.countryCode}
-                  onChange={(e) => handleChange("countryCode", e.target.value)}
-                  className="form-select"
-                >
-                  {COUNTRIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </fieldset>
+           <fieldset className="border border-color-subtle rounded-lg p-4">
+             <legend className="text-xs font-medium text-tertiary uppercase px-1">Address</legend>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+               <div className="md:col-span-2">
+                 <label className="form-label">Street Address *</label>
+                 <input
+                   type="text"
+                   placeholder="Street address"
+                   value={formData.addressLine1}
+                   onChange={(e) => handleChange("addressLine1", e.target.value)}
+                   className="form-control"
+                 />
+               </div>
+               <div>
+                 <label className="form-label">Street Address 2</label>
+                 <input
+                   type="text"
+                   placeholder="Street address 2"
+                   value={formData.addressLine2}
+                   onChange={(e) => handleChange("addressLine2", e.target.value)}
+                   className="form-control"
+                 />
+               </div>
+               <div>
+                 <label className="form-label">City *</label>
+                 <input
+                   type="text"
+                   placeholder="City"
+                   value={formData.city}
+                   onChange={(e) => handleChange("city", e.target.value)}
+                   className="form-control"
+                 />
+               </div>
+               <div>
+                 <label className="form-label">State / Region *</label>
+                 <input
+                   type="text"
+                   placeholder="State / Region"
+                   value={formData.stateOrRegion}
+                   onChange={(e) => handleChange("stateOrRegion", e.target.value)}
+                   className="form-control"
+                 />
+               </div>
+               <div>
+                 <label className="form-label">Postal Code *</label>
+                 <input
+                   type="text"
+                   placeholder="Postal code"
+                   value={formData.postalCode}
+                   onChange={(e) => handleChange("postalCode", e.target.value)}
+                   className="form-control"
+                 />
+               </div>
+               <div>
+                 <label className="form-label">Country *</label>
+                 <select
+                   value={formData.countryCode}
+                   onChange={(e) => handleChange("countryCode", e.target.value)}
+                   className="form-select"
+                 >
+                   {COUNTRIES.map((c) => (
+                     <option key={c} value={c}>{c}</option>
+                   ))}
+                 </select>
+               </div>
+             </div>
+           </fieldset>
 
           <div>
             <label className="form-label">Notes</label>

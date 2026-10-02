@@ -560,31 +560,31 @@ export default function Receipts() {
               />
             </div>
           </div>
-          <div className="lg:col-span-2 flex items-end">
-            <div className="relative w-full">
-              <label className="form-label">Sort By</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="form-select"
-              >
-                {SORT_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-[22px] h-4 w-4 text-tertiary pointer-events-none" />
-            </div>
-          </div>
+      <div className="lg:col-span-2 flex items-end">
+        <div className="relative w-full">
+          <label className="form-label">Sort By</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="form-select"
+          >
+            {SORT_OPTIONS.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
         </div>
 
         {hasActiveFilters && (
           <div className="mt-3 flex justify-end">
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={clearFilters}
-              className="text-sm font-medium text-secondary hover:text-primary"
             >
               Clear All
-            </button>
+            </Button>
           </div>
         )}
 

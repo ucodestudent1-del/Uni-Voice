@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { getProjects } from "../api/client";
 import type { ApiProject } from "../types/api";
 import ProjectStatusBadge from "./ProjectStatusBadge";
+import { ChevronDown } from "lucide-react";
 
 interface ProjectSelectorProps {
   value?: string;
@@ -54,10 +55,10 @@ export default function ProjectSelector({ value, onChange, placeholder = "Select
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer hover:bg-surface-alt focus-within:ring-2 focus-within:ring-primary-500"
+        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer hover:bg-surface-alt focus-within:ring-2 focus-within:ring-primary transition-colors h-10"
         onClick={() => setOpen(!open)}
       >
-        <span className="text-sm text-primary truncate">
+        <span className="truncate" title={selectedProject ? selectedProject.name : placeholder}>
           {selectedProject ? selectedProject.name : placeholder}
         </span>
         {value && (
@@ -67,12 +68,13 @@ export default function ProjectSelector({ value, onChange, placeholder = "Select
               e.stopPropagation();
               onChange(undefined);
             }}
-            className="text-tertiary hover:text-secondary"
+            className="text-tertiary hover:text-secondary shrink-0 ml-2"
             title="Clear"
           >
             ×
           </button>
         )}
+        {!value && <ChevronDown className="w-4 h-4 text-tertiary shrink-0" />}
       </div>
 
       {open && (
@@ -86,7 +88,7 @@ export default function ProjectSelector({ value, onChange, placeholder = "Select
                 loadProjects(e.target.value);
               }}
               placeholder="Search projects..."
-              className="w-full px-2 py-1 text-sm border border-input-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+              className="form-control"
               autoFocus
             />
           </div>

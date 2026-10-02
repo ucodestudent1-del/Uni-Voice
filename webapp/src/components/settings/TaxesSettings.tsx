@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getTaxRates, createTaxRate, updateTaxRate, deleteTaxRate } from "../../api/client";
 import type { ApiTaxRate } from "../../types/api";
 import FormField from "./FormField";
+import { Button } from "../ui/Button";
 
 export default function TaxesSettings() {
   const [taxRates, setTaxRates] = useState<ApiTaxRate[]>([]);
@@ -205,20 +206,22 @@ export default function TaxesSettings() {
         </div>
         <div className="mt-6 flex gap-3">
           {editingId && (
-            <button
+            <Button
+              variant="secondary"
+              size="md"
               onClick={() => { setEditingId(null); setForm(emptyForm); }}
-              className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
             >
               Cancel
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={saveRate}
             disabled={saving || !form.name || !form.rate}
-            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
           >
             {saving ? "Saving…" : editingId ? "Update Rate" : "Add Rate"}
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import {
 import { calculationEngine, type LineItemInput, type FeeInput, type InvoiceCalculationInput } from "../utils/calculation";
 import { formatCurrency } from "../utils/format";
 import { SUPPORTED_CURRENCIES } from "../utils/currency";
+import { Button } from "./ui/Button";
 
 import {
   InvoiceDocument,
@@ -686,18 +687,20 @@ function InvoiceEditorContent() {
           <h1 className="text-lg font-semibold text-error-text">Could not load invoice</h1>
           <p className="mt-2 text-sm text-error-text">{loadError}</p>
           <div className="mt-4 flex gap-3 justify-center">
-            <button
-              onClick={() => setRetryKey((key) => key + 1)}
-              className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-            >
-              Try again
-            </button>
-            <button
-              onClick={() => navigate("/app/invoices")}
-              className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
-            >
-              Back to invoices
-            </button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => setRetryKey((key) => key + 1)}
+              >
+                Try again
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => navigate("/app/invoices")}
+              >
+                Back to invoices
+              </Button>
           </div>
         </div>
       </div>
@@ -740,90 +743,96 @@ function InvoiceEditorContent() {
               </span>
            )}
         </div>
-        <div className="flex gap-2">
-          <button
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={undo}
             disabled={!canUndo}
-            className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
             title="Undo (Ctrl+Z)"
+            className="px-2"
           >
             &larr;
-          </button>
-           <button
-              onClick={redo}
-              disabled={!canRedo}
-              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
-              title="Redo (Ctrl+Y)"
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={redo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Y)"
+            className="px-2"
+          >
+            &rarr;
+          </Button>
+          <Button
+            variant={previewMode === "preview" ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setPreviewMode(previewMode === "edit" ? "preview" : "edit")}
+            title="Toggle preview"
+          >
+            {previewMode === "edit" ? "Preview" : "Edit"}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowTemplateGallery(true)}
+            title="Choose template"
+          >
+            Gallery
+          </Button>
+          <Button
+            variant={outlineMode ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setOutlineMode(!outlineMode)}
+            title="Toggle document outline"
+          >
+            Outline
+          </Button>
+          <Button
+            variant={showValidation ? "secondary" : "ghost"}
+            size="sm"
+            onClick={() => setShowValidation(!showValidation)}
+            title="Validation"
+          >
+            {validationErrorCount > 0 ? "⚠" : validationWarningCount > 0 ? "!" : "✓"}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleSave}
+            disabled={saveState === "saving"}
+          >
+            Save
+          </Button>
+          {!editorData?.invoiceNumber && (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleFinalize}
+              disabled={!validation.isValid}
             >
-              &rarr;
-            </button>
-            <button
-              onClick={() => setPreviewMode(previewMode === "edit" ? "preview" : "edit")}
-              className={`rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover ${
-                previewMode === "preview" ? "bg-primary-bg text-on-primary" : ""
-              }`}
-              title="Toggle preview"
-            >
-              {previewMode === "edit" ? "Preview" : "Edit"}
-            </button>
-            <button
-              onClick={() => setShowTemplateGallery(true)}
-              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover"
-              title="Choose template"
-            >
-              Gallery
-            </button>
-            <button
-              onClick={() => setOutlineMode(!outlineMode)}
-              className={`rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover ${
-                outlineMode ? "bg-primary-bg text-on-primary" : ""
-              }`}
-              title="Toggle document outline"
-            >
-              Outline
-            </button>
-            <button
-              onClick={() => setShowValidation(!showValidation)}
-              className={`rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-hover ${
-                showValidation ? "bg-primary-bg text-on-primary" : ""
-              }`}
-              title="Validation"
-            >
-              {validationErrorCount > 0 ? "⚠" : validationWarningCount > 0 ? "!" : "✓"}
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saveState === "saving"}
-              className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
-            >
-              Save
-            </button>
-            {!editorData?.invoiceNumber && (
-              <button
-                onClick={handleFinalize}
-                disabled={!validation.isValid}
-                className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              Finalize &amp; Send
+            </Button>
+          )}
+          {editorData?.invoiceNumber && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handlePdfDownload}
               >
-                Finalize &amp; Send
-              </button>
-            )}
-            {editorData?.invoiceNumber && (
-              <>
-                <button
-                  onClick={handlePdfDownload}
-                  className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-hover"
-                >
-                  Download PDF
-                </button>
-                <button
-                  onClick={handleSend}
-                  className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-                >
-                  Send
-                </button>
-              </>
-            )}
-          </div>
+                Download PDF
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSend}
+              >
+                Send
+              </Button>
+            </>
+          )}
+        </div>
         </div>
 
         {actionMessage && (

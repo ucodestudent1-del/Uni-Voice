@@ -4,6 +4,7 @@ import { getBusinessSettings, updateBusinessSettings, getMe, updateUserProfile }
 import type { ApiBusinessSettings } from "../../types/api";
 import FormField from "./FormField";
 import SavedIndicator from "./SavedIndicator";
+import { Button } from "../ui/Button";
 
 export default function GeneralSettings() {
   const { section } = useParams();
@@ -118,13 +119,14 @@ export default function GeneralSettings() {
           </div>
           <div className="flex items-center justify-between border-t border-color-subtle pt-4">
             <SavedIndicator show={saved} />
-            <button
+           <Button
+              variant="primary"
+              size="md"
               onClick={saveAccount}
               disabled={saving}
-              className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save Account Settings"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -245,13 +247,14 @@ export default function GeneralSettings() {
 
       <div className="flex items-center justify-between pt-4">
         <SavedIndicator show={saved} />
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={savePrefs}
           disabled={saving}
-          className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save Preferences"}
-        </button>
+        </Button>
       </div>
     </div>
   );

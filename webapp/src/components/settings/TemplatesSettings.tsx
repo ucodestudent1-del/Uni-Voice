@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getInvoiceTemplates, setDefaultInvoiceTemplate } from "../../api/client";
 import type { InvoiceTemplateDTO } from "../../types/api";
+import { Button } from "../ui/Button";
 
 export default function TemplatesSettings() {
   const [templates, setTemplates] = useState<InvoiceTemplateDTO[]>([]);
@@ -51,12 +52,13 @@ export default function TemplatesSettings() {
         <div>
           <h3 className="text-md font-semibold text-primary">Your Templates</h3>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => window.location.href = "/app/templates"}
-          className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
         >
           Manage Templates
-        </button>
+        </Button>
       </div>
 
       {templates.length === 0 ? (

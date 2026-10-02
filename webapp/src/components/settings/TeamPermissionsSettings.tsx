@@ -167,7 +167,7 @@ export default function TeamPermissionsSettings() {
                       <select
                         value={m.role}
                         onChange={(e) => changeRole(m.id, e.target.value as TeamRole)}
-                        className="rounded-lg border border-input-border bg-surface-alt px-2 py-1 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="form-control-sm"
                       >
                         {ROLES.map((r) => (
                           <option key={r.value} value={r.value}>{r.label}</option>

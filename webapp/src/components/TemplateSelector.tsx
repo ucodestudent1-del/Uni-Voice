@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { getTemplates } from "../api/client";
 import type { ApiTemplate } from "../types/api";
+import { ChevronDown } from "lucide-react";
 
 interface TemplateSelectorProps {
   value?: string;
@@ -54,12 +55,13 @@ export default function TemplateSelector({ value, onChange, placeholder = "Selec
   return (
     <div ref={containerRef} className="relative">
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500"
+        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer focus-within:ring-2 focus-within:ring-primary transition-colors h-10"
         onClick={() => { setOpen(!open); setShowCreate(false); }}
       >
-        <span className="text-sm text-primary truncate">
+        <span className="truncate">
           {selected ? selected.name : (value ? `Template (${value.slice(0, 8)})` : placeholder)}
         </span>
+        <ChevronDown className="w-4 h-4 text-tertiary shrink-0 ml-2" />
       </div>
 
       {open && (

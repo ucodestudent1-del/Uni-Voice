@@ -17,6 +17,8 @@ import {
 import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
 import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
+import { Button } from "../components/ui/Button";
+import { Plus } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import type { ApiRecurringInvoice, ApiInvoiceListItem, ApiCustomer } from "../types/api";
 
@@ -192,15 +194,17 @@ export default function RecurringInvoices() {
           <h1 className="text-2xl font-bold text-primary">Recurring Invoices</h1>
           <p className="text-sm text-secondary mt-1">{total} schedules total</p>
         </div>
-        <FeatureGate feature="invoices.recurring" requiredPlan="pro" fallback={
+         <FeatureGate feature="invoices.recurring" requiredPlan="pro" fallback={
           <UpgradePrompt feature="Recurring Invoices" requiredPlan="pro" />
         }>
-          <button
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
             onClick={() => { setEditingRecurring(null); setShowCreateDialog(true); }}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
             New Schedule
-          </button>
+          </Button>
         </FeatureGate>
       </div>
 
@@ -208,17 +212,18 @@ export default function RecurringInvoices() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-primary">Filters</h3>
           {hasActiveFilters && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={clearFilters}
-              className="text-sm font-medium text-secondary hover:text-primary"
             >
               Clear All
-            </button>
+            </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5">
             <label className="form-label">Search</label>
             <input
               type="text"
@@ -228,7 +233,7 @@ export default function RecurringInvoices() {
               className="form-control"
             />
           </div>
-          <div>
+          <div className="lg:col-span-3">
             <label className="form-label">Status</label>
             <select
               value={statusFilter}
@@ -240,7 +245,7 @@ export default function RecurringInvoices() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="lg:col-span-4">
             <label className="form-label">Customer</label>
             <select
               value={customerFilter}
@@ -295,14 +300,16 @@ export default function RecurringInvoices() {
                 <td colSpan={9} className="py-16 text-center text-secondary">
                   {hasActiveFilters ? "No schedules match your filters" : "No recurring invoices yet"}
                   {!hasActiveFilters && (
-                    <FeatureGate feature="invoices.recurring" requiredPlan="pro" fallback={null}>
-                      <button
-                        onClick={() => { setEditingRecurring(null); setShowCreateDialog(true); }}
-                        className="ml-2 inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-                      >
-                        Create your first schedule
-                      </button>
-                    </FeatureGate>
+                      <FeatureGate feature="invoices.recurring" requiredPlan="pro" fallback={null}>
+                        <Button
+                          variant="primary"
+                          size="md"
+                          className="ml-2"
+                          onClick={() => { setEditingRecurring(null); setShowCreateDialog(true); }}
+                        >
+                          Create your first schedule
+                        </Button>
+                      </FeatureGate>
                   )}
                 </td>
               </tr>
@@ -407,20 +414,22 @@ export default function RecurringInvoices() {
                   <option key={size} value={size}>{size} per page</option>
                 ))}
               </select>
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="rounded-lg border border-input-border px-3 py-1 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
               >
                 Previous
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="rounded-lg border border-input-border px-3 py-1 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -674,20 +683,21 @@ function RecurringInvoiceDialog({
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-color-subtle">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="md"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
               type="submit"
               disabled={isLoading || !formData.customerId || !formData.name}
-              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover disabled:opacity-50"
             >
               {isLoading ? "Saving..." : initialData ? "Save Changes" : "Create Schedule"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

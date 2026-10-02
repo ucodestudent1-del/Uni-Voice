@@ -337,7 +337,8 @@
 
   /* Standardized form control classes — consistent padding, height, border, and focus ring */
   .form-control {
-    @apply rounded-lg border bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2;
+    @apply h-10 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.5rem;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
@@ -350,7 +351,8 @@
     ring-color: rgb(var(--color-focus-ring));
   }
   .form-control-sm {
-    @apply rounded-lg border bg-white px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2;
+    @apply h-8 rounded-lg border px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2rem;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
@@ -363,10 +365,15 @@
     ring-color: rgb(var(--color-focus-ring));
   }
   .form-select {
-    @apply appearance-none rounded-lg border bg-white px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2;
+    @apply h-10 appearance-none rounded-lg border px-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.5rem;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23647484' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
   }
   .form-select::placeholder {
     color: rgb(var(--color-input-placeholder));
@@ -393,6 +400,11 @@
   }
   .form-field-wrapper {
     @apply flex flex-col gap-1;
+  }
+  .form-field-wrapper > label + input,
+  .form-field-wrapper > label + select,
+  .form-field-wrapper > label + textarea {
+    margin-top: 0.25rem;
   }
 
   /* Standardized button classes — consistent height and padding */
@@ -456,7 +468,8 @@
 
   /* Search input with icon — consistent padding and alignment */
   .search-input {
-    @apply w-full rounded-lg border bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2;
+    @apply min-w-[18rem] rounded-lg border px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.5rem;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
@@ -472,10 +485,26 @@
     @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4;
     color: rgb(var(--color-text-tertiary));
   }
+  /* Search input in a group that also has a button — narrower min-width but still roomy */
+  .search-input-inline {
+    @apply min-w-[14rem] rounded-lg border px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.5rem;
+    background-color: rgb(var(--color-input-bg));
+    border-color: rgb(var(--color-input-border));
+    color: rgb(var(--color-text));
+  }
+  .search-input-inline::placeholder {
+    color: rgb(var(--color-input-placeholder));
+  }
+  .search-input-inline:focus-visible {
+    @apply ring-2;
+    ring-color: rgb(var(--color-focus-ring));
+  }
 
   /* Standardized input with trailing icon (e.g. currency symbol) */
   .input-with-prefix {
-    @apply w-full rounded-lg border bg-white pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2;
+    @apply w-full rounded-lg border px-3 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.5rem;
     font-variant-numeric: tabular-nums;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
@@ -489,7 +518,8 @@
     ring-color: rgb(var(--color-focus-ring));
   }
   .input-with-suffix {
-    @apply w-full rounded-lg border bg-white px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2;
+    @apply w-full rounded-lg border px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.5rem;
     font-variant-numeric: tabular-nums;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
@@ -519,6 +549,51 @@
   .hover-bg-error-bg:hover { background-color: rgb(var(--color-error-bg)); }
   .hover-bg-success-bg:hover { background-color: rgb(var(--color-success-bg)); }
 
-  /* Primary background shorthand (used by expense & invoice components) */
-  .bg-primary-bg { background-color: rgb(var(--color-primary-bg)); }
+   /* Primary background shorthand (used by expense & invoice components) */
+   .bg-primary-bg { background-color: rgb(var(--color-primary-bg)); }
+
+   /* ============== Global form control normalization ==============
+    * Many components use inline Tailwind classes for inputs/selects
+    * instead of the .form-control / .form-select utilities. This
+    * block normalizes those inline patterns to a consistent height,
+    * padding, border, and focus ring. Components are free to override
+    * with their own classes — these rules only fill the gaps.
+    * ============================================================= */
+
+   /* Normalize standard inputs/selects that use the common inline pattern */
+   input[type="text"],
+   input[type="number"],
+   input[type="email"],
+   input[type="date"],
+   input[type="password"],
+   textarea {
+     background-color: rgb(var(--color-input-bg));
+     border-color: rgb(var(--color-input-border));
+     color: rgb(var(--color-text));
+   }
+
+   input[type="text"]::placeholder,
+   input[type="number"]::placeholder,
+   input[type="email"]::placeholder,
+   input[type="date"]::placeholder,
+   input[type="password"]::placeholder,
+   textarea::placeholder {
+     color: rgb(var(--color-input-placeholder));
+   }
+
+   /* Native select chevron — use a consistent arrow via CSS for selects
+      that DON'T have the .form-select or .form-control-sm class */
+   select:not(.form-select):not(.form-control-sm) {
+     background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23647484' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+     background-repeat: no-repeat;
+     background-position: right 0.75rem center;
+     -webkit-appearance: none;
+     appearance: none;
+   }
+
+   /* Dropdown-style custom selects (non-native) — add chevron spacing */
+   [class*="border-input-border"][class*="rounded"] {
+     min-height: 2.5rem;
+   }
+
 }

@@ -3,6 +3,7 @@ import { createProject, updateProject, getCustomers, type ProjectSearchParams } 
 import type { ApiProject, ApiCustomer } from "../types/api";
 import { formatDate } from "../utils/format";
 import { Button } from "./ui/Button";
+import { ChevronDown } from "lucide-react";
 
 interface ProjectFormProps {
   project?: ApiProject | null;
@@ -239,14 +240,15 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
               <label className="form-label">Customer</label>
               <div className="relative">
                 <div
-                  className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500"
+                  className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer focus-within:ring-2 focus-within:ring-primary transition-colors h-10"
                   onClick={() => setCustomerDropdownOpen(!customerDropdownOpen)}
                 >
-                  <span className="text-sm text-primary truncate">
+                  <span className="truncate">
                     {selectedCustomer
                       ? `${selectedCustomer.name}${selectedCustomer.companyName ? ` (${selectedCustomer.companyName})` : ""}`
                       : "Select a customer"}
                   </span>
+                  <ChevronDown className="w-4 h-4 text-tertiary shrink-0 ml-2" />
                 </div>
                 {formData.customerId && (
                   <button
@@ -371,22 +373,22 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                   className="form-control flex-1"
                   placeholder="Add a tag..."
                 />
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
-                  className="btn btn-secondary"
                   title="Presets"
                 >
                   Presets
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={handleAddCustomTag}
                   disabled={!tagInput.trim()}
-                  className="rounded-lg border border-input-border px-3 py-2 text-sm text-secondary hover:bg-surface-alt disabled:opacity-50"
                 >
                   Add
-                </button>
+                </Button>
               </div>
               {tagDropdownOpen && (
                 <div className="absolute z-50 mt-1 bg-surface border border-color-subtle rounded-lg shadow-lg">

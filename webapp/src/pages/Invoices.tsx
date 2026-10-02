@@ -317,26 +317,28 @@ const [searchTerm, setSearchTerm] = useState("");
       <div className="bg-surface rounded-xl border border-color-subtle border-color p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-inverse">Filters</h3>
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-3">
+            <Button
+              variant={showAdvancedFilters ? "secondary" : "ghost"}
+              size="sm"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-brand text-primary-brand" : "text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
             >
               {showAdvancedFilters ? "Hide" : "Show"} Advanced
-            </button>
+            </Button>
             {hasActiveFilters && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={clearFilters}
-                className="text-sm font-medium text-tertiary hover:text-primary dark:hover:text-tertiary"
               >
                 Clear All
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-<div className="lg:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5">
             <label className="form-label">Search</label>
             <input
               type="text"
@@ -346,7 +348,7 @@ const [searchTerm, setSearchTerm] = useState("");
               className="form-control"
             />
           </div>
-          <div>
+          <div className="lg:col-span-3">
             <label className="form-label">Status</label>
             <select
               value={statusFilter}
@@ -358,7 +360,7 @@ const [searchTerm, setSearchTerm] = useState("");
               ))}
             </select>
           </div>
-          <div>
+          <div className="lg:col-span-4">
             <label className="form-label">Payment State</label>
             <select
               value={paymentStateFilter}
@@ -373,8 +375,8 @@ const [searchTerm, setSearchTerm] = useState("");
         </div>
 
         {showAdvancedFilters && (
-          <div className="mt-4 border-t border-color-subtle border-color pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            <div>
+          <div className="mt-4 border-t border-color-subtle border-color pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-3">
               <label className="form-label">Customer</label>
               <select
                 value={customerFilter}
@@ -387,7 +389,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 ))}
               </select>
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <label className="form-label">Currency</label>
               <input
                 type="text"
@@ -397,7 +399,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 className="form-control"
               />
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <label className="form-label">Min Amount</label>
               <input
                 type="number"
@@ -409,7 +411,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 className="form-control"
               />
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <label className="form-label">Max Amount</label>
               <input
                 type="number"
@@ -421,7 +423,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 className="form-control"
               />
             </div>
-            <div>
+            <div className="lg:col-span-1.5">
               <label className="form-label">Issue Date From</label>
               <input
                 type="date"
@@ -430,7 +432,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 className="form-control"
               />
             </div>
-            <div>
+            <div className="lg:col-span-1.5">
               <label className="form-label">Issue Date To</label>
               <input
                 type="date"
@@ -439,7 +441,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 className="form-control"
               />
             </div>
-            <div>
+            <div className="lg:col-span-1.5">
               <label className="form-label">Due Date From</label>
               <input
                 type="date"
@@ -448,7 +450,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 className="form-control"
               />
             </div>
-            <div>
+            <div className="lg:col-span-1.5">
               <label className="form-label">Due Date To</label>
               <input
                 type="date"
@@ -617,22 +619,21 @@ const [searchTerm, setSearchTerm] = useState("");
             <p className="text-sm text-tertiary">
               Page {page} of {totalPages} • {total} invoices
             </p>
-            <div className="flex items-center gap-2">
-               <select
-                 value={pageSize}
-                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                 className="form-control-sm"
-               >
-                 {PAGE_SIZE_OPTIONS.map((size) => (
-                   <option key={size} value={size}>{size} per page</option>
-                 ))}
-               </select>
+             <div className="flex items-center gap-2">
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                  className="form-control-sm"
+                >
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>{size} per page</option>
+                  ))}
+                </select>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="px-3 py-1"
               >
                 Previous
               </Button>
@@ -641,7 +642,6 @@ const [searchTerm, setSearchTerm] = useState("");
                 size="sm"
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="px-3 py-1"
               >
                 Next
               </Button>

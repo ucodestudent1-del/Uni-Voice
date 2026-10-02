@@ -84,9 +84,9 @@ export default function ExpenseFilters({
     params.isBillable !== undefined;
 
   return (
-    <div className="bg-surface rounded-xl border border-color p-4 space-y-3">
+    <div className="bg-surface rounded-xl border border-color-subtle p-4 space-y-3">
       <div className="flex gap-3 items-end">
-        <div className="flex-1">
+        <div className="flex-1 min-w-[200px]">
           <label className="block text-xs font-medium text-tertiary mb-1">
             Search
           </label>
@@ -97,19 +97,19 @@ export default function ExpenseFilters({
               placeholder="Search description or notes..."
               defaultValue={params.search ?? ""}
               onChange={handleSearchChange}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pl-10 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="search-input"
             />
           </div>
         </div>
 
-        <div className="w-48">
+        <div className="min-w-[160px]">
           <label className="block text-xs font-medium text-tertiary mb-1">
             Category
           </label>
           <select
             value={params.category ?? ""}
             onChange={handleCategoryChange}
-            className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-select"
           >
             <option value="">All Categories</option>
             {EXPENSE_CATEGORY_OPTIONS.map((o) => (
@@ -138,6 +138,7 @@ export default function ExpenseFilters({
             variant="ghost"
             size="sm"
             icon={<X className="w-4 h-4" />}
+            iconPosition="left"
             onClick={handleClearFilters}
             className="self-end"
           />
@@ -156,7 +157,7 @@ export default function ExpenseFilters({
               placeholder="Customer name..."
               value={params.customerName ?? ""}
               onChange={(e) => onChange({ ...params, customerName: e.target.value || undefined, offset: 0 })}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
 
@@ -170,7 +171,7 @@ export default function ExpenseFilters({
               placeholder="Vendor name..."
               value={params.vendor ?? ""}
               onChange={handleVendorChange}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
 
@@ -183,7 +184,7 @@ export default function ExpenseFilters({
               type="date"
               value={params.dateFrom ?? ""}
               onChange={handleDateFromChange}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
 
@@ -196,7 +197,7 @@ export default function ExpenseFilters({
               type="date"
               value={params.dateTo ?? ""}
               onChange={handleDateToChange}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
 
@@ -214,7 +215,7 @@ export default function ExpenseFilters({
                     : "false"
               }
               onChange={handleBillableChange}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               <option value="all">All</option>
               <option value="true">Billable</option>
