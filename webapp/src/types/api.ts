@@ -910,6 +910,7 @@ export interface ApiExpense {
   invoice_id?: string | null;
   description: string;
   amount: string;
+  tax_amount: string;
   currency: string;
   category: ExpenseCategory;
   expense_date: string;
@@ -918,6 +919,7 @@ export interface ApiExpense {
   receipt_url?: string | null;
   notes?: string | null;
   is_billable: boolean;
+  is_reimbursable: boolean;
   is_reimbursed: boolean;
   created_at: string;
   updated_at: string;
@@ -930,6 +932,7 @@ export interface ApiExpense {
 export interface ApiExpenseSummary {
   total_amount: string;
   billable_amount: string;
+  reimbursable_amount: string;
   reimbursed_amount: string;
   non_reimbursed_billable: string;
   count: number;
@@ -945,6 +948,7 @@ export interface ExpenseSearchParams {
   projectId?: string;
   category?: string;
   isBillable?: boolean;
+  isReimbursable?: boolean;
   isReimbursed?: boolean;
   dateFrom?: string;
   dateTo?: string;
@@ -952,6 +956,7 @@ export interface ExpenseSearchParams {
   maxAmount?: number;
   search?: string;
   vendor?: string;
+  paymentMethod?: string;
   customerName?: string;
   projectName?: string;
   sortBy?: string;
@@ -1104,12 +1109,14 @@ export interface ApiExpenseReportItem {
   id: string;
   description: string;
   amount: string;
+  tax_amount: string;
   currency: string;
   category: string;
   expense_date: string;
   payment_method: string;
   vendor: string | null;
   is_billable: boolean;
+  is_reimbursable: boolean;
   is_reimbursed: boolean;
   customer_name?: string | null;
   project_name?: string | null;
@@ -1117,14 +1124,15 @@ export interface ApiExpenseReportItem {
 }
 
 export interface ApiExpenseReportSummary {
-  totalExpenses: number;
-  totalAmount: string;
-  billableAmount: string;
-  reimbursedAmount: string;
-  nonReimbursedBillable: string;
+  total_expenses: number;
+  total_amount: string;
+  billable_amount: string;
+  reimbursable_amount: string;
+  reimbursed_amount: string;
+  non_reimbursed_billable: string;
   currency: string;
-  categoryBreakdown: Array<{ category: string; total: string; count: number; percentage: number }>;
-  monthlyTrend: Array<{ period: string; amount: string; count: number }>;
+  category_breakdown: Array<{ category: string; total: string; count: number; percentage: number }>;
+  monthly_trend: Array<{ period: string; amount: string; count: number }>;
 }
 
 export interface ApiExpensesReport {

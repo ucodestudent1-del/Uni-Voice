@@ -13,7 +13,8 @@ export type SettingsTab =
   | "security"
   | "billing"
   | "account"
-  | "theme";
+  | "theme"
+  | "expense-categories";
 
 export interface SettingsNavItem {
   id: SettingsTab;

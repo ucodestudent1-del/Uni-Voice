@@ -8,6 +8,7 @@ import {
   FileText,
   Download,
   X,
+  Trash2,
 } from "lucide-react";
 import {
   getExpensesWithSummary,
@@ -37,8 +38,17 @@ import {
 } from "../components/expenses";
 import { EXPENSE_CATEGORY_OPTIONS } from "../components/expenses/ExpenseCategoryBadge";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+import { formatCurrencyValue } from "../lib/utils";
 
 const PAYMENT_METHODS = ["cash", "card", "bank_transfer", "check", "other"];
+
+const STATUS_FILTERS = [
+  { value: "", label: "All Statuses" },
+  { value: "billable", label: "Billable" },
+  { value: "reimbursable", label: "Needs Reimbursement" },
+  { value: "reimbursed", label: "Reimbursed" },
+  { value: "paid", label: "Paid" },
+];
 
 export default function Expenses() {
   const { toast } = useToast();
@@ -65,11 +75,15 @@ export default function Expenses() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
+  const [pageSize] = useState(50);
   const [activeTab, setActiveTab] = useState<"dashboard" | "transactions">("transactions");
+  const [sortBy, setSortBy] = useState<string>("expense_date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   const debouncedSetSearch = useDebouncedCallback((value: string) => {
     setSearchTerm(value);
@@ -90,6 +104,11 @@ export default function Expenses() {
     setPage(1);
   };
 
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setPage(1);
+  };
+
   const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateFrom(e.target.value);
     setPage(1);
@@ -104,6 +123,7 @@ export default function Expenses() {
     setSearchTerm("");
     setCategoryFilter("");
     setPaymentFilter("");
+    setStatusFilter("");
     setDateFrom("");
     setDateTo("");
     setPage(1);
@@ -116,10 +136,20 @@ export default function Expenses() {
       search: searchTerm || undefined,
       category: categoryFilter || undefined,
       paymentMethod: paymentFilter || undefined,
+      sortBy,
+      sortOrder,
+      ...(statusFilter === "billable" ? { isBillable: true } : {}),
+      ...(statusFilter === "reimbursable"
+        ? { isReimbursable: true, isReimbursed: false }
+        : {}),
+      ...(statusFilter === "reimbursed" ? { isReimbursed: true } : {}),
+      ...(statusFilter === "paid"
+        ? { isBillable: false, isReimbursable: false, isReimbursed: false }
+        : {}),
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     }),
-    [pageSize, page, searchTerm, categoryFilter, paymentFilter, dateFrom, dateTo]
+    [pageSize, page, searchTerm, categoryFilter, paymentFilter, statusFilter, dateFrom, dateTo, sortBy, sortOrder]
   );
 
   const loadExpensesWithSummary = useCallback(async () => {
@@ -179,6 +209,10 @@ export default function Expenses() {
     loadAnalytics();
   }, [loadAnalytics]);
 
+  useEffect(() => {
+    setSelectedRows(new Set());
+  }, [expenses]);
+
   const summaryCurrency = summary?.currency ?? "USD";
 
   const handleEdit = (expense: ApiExpense) => {
@@ -195,7 +229,28 @@ export default function Expenses() {
       receipt_url: expense.receipt_url ?? "",
       notes: expense.notes ?? "",
       is_billable: expense.is_billable,
+      is_reimbursable: (expense as any).is_reimbursable ?? false,
       is_reimbursed: expense.is_reimbursed,
+    });
+    setShowForm(true);
+  };
+
+  const handleDuplicate = (expense: ApiExpense) => {
+    setEditingId(null);
+    setFormData({
+      description: expense.description,
+      amount: expense.amount,
+      category: expense.category,
+      expense_date: new Date().toISOString().split("T")[0],
+      payment_method: expense.payment_method,
+      vendor: expense.vendor ?? "",
+      customer_id: expense.customer_id ?? null,
+      project_id: expense.project_id ?? null,
+      receipt_url: expense.receipt_url ?? "",
+      notes: expense.notes ?? "",
+      is_billable: expense.is_billable,
+      is_reimbursable: (expense as any).is_reimbursable ?? false,
+      is_reimbursed: false,
     });
     setShowForm(true);
   };
@@ -234,6 +289,11 @@ export default function Expenses() {
     handleDelete(expense);
   };
 
+  const handlePanelDuplicate = (expense: ApiExpense) => {
+    handleDuplicate(expense);
+    handlePanelClose();
+  };
+
   const handleFormSubmit = async (formData: ExpenseFormData) => {
     if (!formData.description || !formData.amount) return;
     setSaving(true);
@@ -243,7 +303,8 @@ export default function Expenses() {
         await updateExpense(editingId, {
           description: formData.description,
           amount: formData.amount,
-          category: (formData.category ?? "other") as ApiExpense["category"],
+          taxAmount: formData.tax_amount ? parseFloat(formData.tax_amount) : 0,
+          category: (formData.category ?? "other") as any,
           expenseDate: formData.expense_date,
           paymentMethod: formData.payment_method,
           vendor: formData.vendor || null,
@@ -252,6 +313,7 @@ export default function Expenses() {
           receiptUrl: formData.receipt_url || null,
           notes: formData.notes || null,
           isBillable: formData.is_billable,
+          isReimbursable: formData.is_reimbursable,
           isReimbursed: formData.is_reimbursed,
         });
         toast("Expense updated", { type: "success" });
@@ -259,7 +321,8 @@ export default function Expenses() {
         await createExpense({
           description: formData.description,
           amount: formData.amount,
-          category: (formData.category ?? "other") as ApiExpense["category"],
+          taxAmount: formData.tax_amount ? parseFloat(formData.tax_amount) : 0,
+          category: (formData.category ?? "other") as any,
           expenseDate: formData.expense_date ?? new Date().toISOString().split("T")[0],
           paymentMethod: formData.payment_method ?? "cash",
           vendor: formData.vendor || null,
@@ -268,6 +331,7 @@ export default function Expenses() {
           receiptUrl: formData.receipt_url || null,
           notes: formData.notes || null,
           isBillable: formData.is_billable,
+          isReimbursable: formData.is_reimbursable,
         });
         toast("Expense added", { type: "success" });
       }
@@ -293,17 +357,53 @@ export default function Expenses() {
     setFormData(null);
   };
 
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("desc");
+    }
+    setPage(1);
+  };
+
+  const handleSelectRow = (id: string) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedRows(newSelected);
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      const allIds = new Set(expenses.map((e) => e.id));
+      setSelectedRows(allIds);
+    } else {
+      setSelectedRows(new Set());
+    }
+  };
+
   const exportToCsv = () => {
-    if (!expenses.length) return;
-    const headers = ["Date", "Description", "Category", "Vendor", "Payment Method", "Amount", "Billable", "Reimbursed"];
-    const rows = expenses.map((e) => [
+    const rowsToExport =
+      selectedRows.size > 0
+        ? expenses.filter((e) => selectedRows.has(e.id))
+        : expenses;
+
+    if (!rowsToExport.length) return;
+    const headers = ["Date", "Description", "Category", "Vendor", "Payment Method", "Amount", "Tax", "Billable", "Reimbursable", "Reimbursed"];
+    const rows = rowsToExport.map((e) => [
       e.expense_date,
       e.description,
       e.category,
       e.vendor ?? "",
       e.payment_method,
       e.amount,
+      (e as any).tax_amount ?? "0",
       e.is_billable ? "Yes" : "No",
+      (e as any).is_reimbursable ? "Yes" : "No",
       e.is_reimbursed ? "Yes" : "No",
     ]);
     const csvContent = [headers, ...rows]
@@ -316,6 +416,36 @@ export default function Expenses() {
     link.download = `expenses-${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDashboardClick = (filterType: string) => {
+    switch (filterType) {
+      case "this_month": {
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+        const monthEnd = new Date();
+        monthEnd.setHours(23, 59, 59, 999);
+        setDateFrom(monthStart.toISOString().split("T")[0]);
+        setDateTo(monthEnd.toISOString().split("T")[0]);
+        setPage(1);
+        break;
+      }
+      case "billable":
+        setStatusFilter("billable");
+        setPage(1);
+        break;
+      case "reimbursable":
+        setStatusFilter("reimbursable");
+        setPage(1);
+        break;
+    }
+    setActiveTab("transactions");
+  };
+
+  const clearStatusFilter = () => {
+    setStatusFilter("");
+    setPage(1);
   };
 
   return (
@@ -367,6 +497,36 @@ export default function Expenses() {
           >
             Transactions
           </button>
+          {selectedRows.size > 0 && activeTab === "transactions" && (
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-tertiary">
+                {selectedRows.size} selected
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Download className="w-4 h-4" />}
+                onClick={exportToCsv}
+              >
+                Export Selected
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Trash2 className="w-4 h-4" />}
+                onClick={() => {
+                  if (confirm(`Delete ${selectedRows.size} expense(s)?`)) {
+                    selectedRows.forEach((id) => {
+                      const exp = expenses.find((e) => e.id === id);
+                      if (exp) handleDelete(exp);
+                    });
+                  }
+                }}
+              >
+                Delete Selected
+              </Button>
+            </div>
+          )}
         </div>
 
         {activeTab === "dashboard" && (
@@ -388,22 +548,30 @@ export default function Expenses() {
                 iconBackground="status-primary-bg text-on-primary"
                 isLoading={loading}
                 currency={summaryCurrency}
+                onClick={() => handleDashboardClick("this_month")}
+                clickable
               />
               <ExpenseKPICard
-                title="Outstanding"
-                value={summary?.non_reimbursed_billable ?? "0"}
-                subtitle="Billable, not reimbursed"
+                title="Billable"
+                value={summary?.billable_amount ?? "0"}
+                subtitle="Billable expenses"
                 icon={<BarChart3 className="w-5 h-5" />}
+                iconBackground="status-warning-bg status-warning-text"
+                isLoading={loading}
+                currency={summaryCurrency}
+                onClick={() => handleDashboardClick("billable")}
+                clickable
+              />
+              <ExpenseKPICard
+                title="Reimbursable"
+                value={summary?.reimbursable_amount ?? "0"}
+                subtitle="Eligible for reimbursement"
+                icon={<FileText className="w-5 h-5" />}
                 iconBackground="status-error-bg status-error-text"
                 isLoading={loading}
                 currency={summaryCurrency}
-              />
-              <ExpenseKPICard
-                title="Expenses"
-                value={summary?.count ?? 0}
-                icon={<FileText className="w-5 h-5" />}
-                iconBackground="status-tertiary-bg status-tertiary-text"
-                isLoading={loading}
+                onClick={() => handleDashboardClick("reimbursable")}
+                clickable
               />
             </div>
 
@@ -426,7 +594,7 @@ export default function Expenses() {
 
         {activeTab === "transactions" && (
           <>
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end flex-wrap">
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-xs font-medium text-tertiary mb-1">
                   Search
@@ -455,7 +623,7 @@ export default function Expenses() {
                   <option value="">All Categories</option>
                   {EXPENSE_CATEGORY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
-                      {o.label}
+                      {o.icon} {o.label}
                     </option>
                   ))}
                 </select>
@@ -474,6 +642,23 @@ export default function Expenses() {
                   {PAYMENT_METHODS.map((m) => (
                     <option key={m} value={m}>
                       {m.charAt(0).toUpperCase() + m.slice(1).replace("_", " ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="min-w-[160px]">
+                <label className="block text-xs font-medium text-tertiary mb-1">
+                  Status
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={handleStatusChange}
+                  className="form-select"
+                >
+                  {STATUS_FILTERS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
                     </option>
                   ))}
                 </select>
@@ -518,7 +703,7 @@ export default function Expenses() {
                   size="sm"
                   icon={<X className="w-4 h-4" />}
                   onClick={resetFilters}
-                  disabled={!searchTerm && !categoryFilter && !paymentFilter && !dateFrom && !dateTo}
+                  disabled={!searchTerm && !categoryFilter && !paymentFilter && !statusFilter && !dateFrom && !dateTo}
                 >
                   Clear
                 </Button>
@@ -531,11 +716,18 @@ export default function Expenses() {
               pageSize={pageSize}
               currentPage={page}
               loading={loading}
+              sortColumn={sortBy}
+              sortOrder={sortOrder}
+              onSort={handleSort}
               onPageChange={setPage}
-              onPageSizeChange={setPageSize}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onRowClick={handleRowClick}
+              selectedRows={selectedRows}
+              onSelectRow={handleSelectRow}
+              onSelectAll={handleSelectAll}
+              selectAllChecked={expenses.length > 0 && expenses.every((e) => selectedRows.has(e.id))}
+              selectAllIndeterminate={!!selectedRows.size && selectedRows.size < expenses.length}
             />
           </>
         )}
@@ -555,6 +747,7 @@ export default function Expenses() {
           onClose={handlePanelClose}
           onEdit={handlePanelEdit}
           onDelete={handlePanelDelete}
+          onDuplicate={handlePanelDuplicate}
           loading={saving}
         />
       </div>

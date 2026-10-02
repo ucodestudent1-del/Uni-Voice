@@ -122,12 +122,14 @@ export interface ExpenseReportItem {
   id: string;
   description: string;
   amount: string;
+  tax_amount: string;
   currency: string;
   category: string;
   expense_date: string;
   payment_method: string;
   vendor: string | null;
   is_billable: boolean;
+  is_reimbursable: boolean;
   is_reimbursed: boolean;
   customer_name: string | null;
   project_name: string | null;
@@ -138,6 +140,7 @@ export interface ExpenseReportSummary {
   totalExpenses: number;
   totalAmount: string;
   billableAmount: string;
+  reimbursableAmount: string;
   reimbursedAmount: string;
   nonReimbursedBillable: string;
   currency: string;
@@ -845,8 +848,8 @@ export class ReportsService {
     const sortDir = sortOrder === "desc" ? "DESC" : "ASC";
 
     const dataRes = await query(
-      `SELECT e.id, e.description, e.amount, e.currency, e.category, e.expense_date,
-              e.payment_method, e.vendor, e.is_billable, e.is_reimbursed,
+      `SELECT e.id, e.description, e.amount, e.tax_amount, e.currency, e.category, e.expense_date,
+              e.payment_method, e.vendor, e.is_billable, e.is_reimbursable, e.is_reimbursed,
               c.name as customer_name, p.name as project_name, i.invoice_number
        FROM expenses e
        LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
@@ -871,6 +874,7 @@ export class ReportsService {
          COUNT(*)::int AS total_count,
          COALESCE(SUM(e.amount), 0) AS total_amount,
          COALESCE(SUM(CASE WHEN e.is_billable THEN e.amount ELSE 0 END), 0) AS billable_amount,
+         COALESCE(SUM(CASE WHEN e.is_reimbursable THEN e.amount ELSE 0 END), 0) AS reimbursable_amount,
          COALESCE(SUM(CASE WHEN e.is_reimbursed THEN e.amount ELSE 0 END), 0) AS reimbursed_amount,
          COALESCE(SUM(CASE WHEN e.is_billable AND NOT e.is_reimbursed THEN e.amount ELSE 0 END), 0) AS non_reimbursed_billable,
          COALESCE(MAX(e.currency), 'USD') AS currency
@@ -934,12 +938,14 @@ export class ReportsService {
       id: r.id,
       description: r.description,
       amount: String(r.amount ?? "0"),
+      tax_amount: String(r.tax_amount ?? "0"),
       currency: r.currency,
       category: r.category,
       expense_date: r.expense_date ? new Date(r.expense_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
       payment_method: r.payment_method,
       vendor: r.vendor,
       is_billable: Boolean(r.is_billable),
+      is_reimbursable: Boolean(r.is_reimbursable),
       is_reimbursed: Boolean(r.is_reimbursed),
       customer_name: r.customer_name,
       project_name: r.project_name,
@@ -951,6 +957,7 @@ export class ReportsService {
         totalExpenses: Number(countRes.rows[0]?.total ?? 0),
         totalAmount: String(summaryRow.total_amount ?? "0"),
         billableAmount: String(summaryRow.billable_amount ?? "0"),
+        reimbursableAmount: String(summaryRow.reimbursable_amount ?? "0"),
         reimbursedAmount: String(summaryRow.reimbursed_amount ?? "0"),
         nonReimbursedBillable: String(summaryRow.non_reimbursed_billable ?? "0"),
         currency: summaryRow.currency ?? "USD",

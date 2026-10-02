@@ -20,6 +20,8 @@ describe("ExpenseRepository", () => {
         currency: "USD",
         category: "supplies",
         paymentMethod: "credit_card",
+        taxAmount: new Decimal("2.55"),
+        isReimbursable: true,
       });
 
       expect(expense.id).toBeTruthy();
@@ -29,6 +31,8 @@ describe("ExpenseRepository", () => {
       expect(expense.currency).toBe("USD");
       expect(expense.category).toBe("supplies");
       expect(expense.paymentMethod).toBe("credit_card");
+      expect(expense.taxAmount).toBe("2.55");
+      expect(expense.isReimbursable).toBe(true);
       expect(expense.isBillable).toBe(false);
       expect(expense.isReimbursed).toBe(false);
     });
@@ -107,6 +111,16 @@ describe("ExpenseRepository", () => {
       expect(result.total).toBe(1);
     });
 
+    it("isReimbursable filter works", async () => {
+      await expenseRepository.update(businessId, (await expenseRepository.findMany(businessId)).data[0].id, {
+        isReimbursable: true,
+      });
+      const result = await expenseRepository.findMany(businessId, {
+        isReimbursable: true,
+      });
+      expect(result.total).toBe(1);
+    });
+
     it("supports sorting by amount desc", async () => {
       const result = await expenseRepository.findMany(businessId, {
         sortBy: "amount",
@@ -129,8 +143,23 @@ describe("ExpenseRepository", () => {
         isBillable: true,
       });
 
-      expect(updated.description).toBe("Updated");
-      expect(updated.isBillable).toBe(true);
+       expect(updated.description).toBe("Updated");
+       expect(updated.isBillable).toBe(true);
+    });
+
+    it("updates tax_amount and isReimbursable", async () => {
+      const created = await expenseRepository.create(businessId, {
+        description: "Original",
+        amount: new Decimal("10.00"),
+      });
+
+      const updated = await expenseRepository.update(businessId, created.id, {
+        taxAmount: new Decimal("1.50"),
+        isReimbursable: true,
+      });
+
+      expect(updated.taxAmount).toBe("1.50");
+      expect(updated.isReimbursable).toBe(true);
     });
   });
 
@@ -229,10 +258,25 @@ describe("ExpenseRepository", () => {
         isBillable: false,
       });
 
-      const summary = await expenseRepository.getSummary(businessId);
+       const summary = await expenseRepository.getSummary(businessId);
       expect(summary.totalAmount).toBe("150.00");
       expect(summary.billableAmount).toBe("100.00");
       expect(summary.count).toBe(2);
+    });
+
+    it("includes reimbursableAmount when isReimbursable is set", async () => {
+      await expenseRepository.create(businessId, {
+        description: "Reimbursable Expense",
+        amount: new Decimal("100.00"),
+        isReimbursable: true,
+      });
+      await expenseRepository.create(businessId, {
+        description: "Non-reimbursable",
+        amount: new Decimal("50.00"),
+      });
+
+      const summary = await expenseRepository.getSummary(businessId);
+      expect(summary.reimbursableAmount).toBe("100.00");
     });
   });
 });

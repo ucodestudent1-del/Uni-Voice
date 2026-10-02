@@ -140,24 +140,24 @@ export default function ExpensesReport({
   ];
 
   const categoryChartData = useMemo(() => {
-    return (summary?.categoryBreakdown ?? []).map((c) => ({
+    return (summary?.category_breakdown ?? []).map((c) => ({
       category: EXPENSE_CATEGORY_CONFIG[c.category as keyof typeof EXPENSE_CATEGORY_CONFIG]?.label ?? c.category,
       value: Number(c.total),
       count: c.count,
       percentage: c.percentage,
       rawCategory: c.category,
     }));
-  }, [summary?.categoryBreakdown]);
+  }, [summary?.category_breakdown]);
 
   const categoryTotal = categoryChartData.reduce((sum, c) => sum + c.value, 0);
 
   const monthlyTrendData = useMemo(() => {
-    return (summary?.monthlyTrend ?? []).map((m) => ({
+    return (summary?.monthly_trend ?? []).map((m) => ({
       period: m.period,
       amount: Number(m.amount),
       count: m.count,
     }));
-  }, [summary?.monthlyTrend]);
+  }, [summary?.monthly_trend]);
 
   if (loading) {
     return (
@@ -202,31 +202,31 @@ export default function ExpensesReport({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <KPICard
             title="Total Expenses"
-            value={summary.totalAmount}
+            value={summary.total_amount}
             currency={currency}
-            subtitle={`${summary.totalExpenses} expenses`}
+            subtitle={`${summary.total_expenses} expenses`}
             icon={<ShoppingCart className="w-5 h-5" />}
             iconBackground="bg-error-bg text-error-text"
           />
           <KPICard
             title="Billable"
-            value={summary.billableAmount}
+            value={summary.billable_amount}
             currency={currency}
             subtitle="Billable expenses"
             icon={<ShoppingCart className="w-5 h-5" />}
             iconBackground="bg-info-bg text-info-text"
           />
           <KPICard
-            title="Reimbursed"
-            value={summary.reimbursedAmount}
+            title="Reimbursable"
+            value={summary.reimbursable_amount}
             currency={currency}
-            subtitle="Reimbursed to you"
+            subtitle="Eligible for reimbursement"
             icon={<ShoppingCart className="w-5 h-5" />}
-            iconBackground="bg-success-bg text-success-text"
+            iconBackground="bg-warning-bg text-warning-text"
           />
           <KPICard
             title="Non-Reimbursed Billable"
-            value={summary.nonReimbursedBillable}
+            value={summary.non_reimbursed_billable}
             currency={currency}
             subtitle="Still to collect"
             icon={<ShoppingCart className="w-5 h-5" />}

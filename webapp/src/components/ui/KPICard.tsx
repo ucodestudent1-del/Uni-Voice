@@ -27,6 +27,8 @@ export interface KPICardProps {
   sparkline?: SparklinePoint[];
   sparklineColor?: string;
   className?: string;
+  clickable?: boolean;
+  onClick?: () => void;
 }
 
 const stateTintClasses: Record<KpiCardState, string> = {
@@ -94,12 +96,14 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
       variant = "default",
       state = "default",
       progressPct,
-      sparkline,
-      sparklineColor,
-      className,
-    },
-    ref
-  ) {
+       sparkline,
+       sparklineColor,
+       className,
+       clickable = false,
+       onClick,
+     },
+     ref
+   ) {
     const hasTrend = !!trend;
     const formatted = formatValue(value, currency, hasTrend);
 
@@ -109,8 +113,15 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
       "rounded-xl border p-5 shadow-sm transition-colors",
       stateBorderClasses[state],
       variant === "tinted" ? stateTintClasses[state] : "bg-surface",
+      clickable && "cursor-pointer hover:bg-surface-alt",
       className
     );
+
+    const handleCardClick = () => {
+      if (clickable && onClick) {
+        onClick();
+      }
+    };
 
     const valueColorClass =
       state === "success"
@@ -149,7 +160,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
 
     if (variant === "inline") {
       return (
-        <div ref={ref} className={cardClasses}>
+        <div ref={ref} className={cardClasses} onClick={handleCardClick}>
           <div className="flex items-center gap-3">
             <span
               className={`rounded-lg p-2 flex-shrink-0 ${iconBoxClass}`}
@@ -185,7 +196,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
 
     if (variant === "tinted") {
       return (
-        <div ref={ref} className={cn(cardClasses, "border-none")}>
+        <div ref={ref} className={cn(cardClasses, "border-none")} onClick={handleCardClick}>
           <div className="flex items-center justify-between gap-2 mb-3">
             <p className="text-xs font-medium text-tertiary uppercase tracking-wider">
               {title}
@@ -213,7 +224,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
 
     if (variant === "stat") {
       return (
-        <div ref={ref} className={cardClasses}>
+        <div ref={ref} className={cardClasses} onClick={handleCardClick}>
           <div className="flex items-center gap-2 mb-3">
             <p className="text-xs font-medium text-tertiary uppercase tracking-wider">
               {title}
@@ -253,7 +264,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
 
     if (variant === "trend") {
       return (
-        <div ref={ref} className={cardClasses}>
+        <div ref={ref} className={cardClasses} onClick={handleCardClick}>
           <div className="flex items-center justify-between gap-2 mb-3">
             <p className="text-xs font-medium text-tertiary uppercase tracking-wider flex items-center gap-1.5">
               {icon}
@@ -282,7 +293,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
 
     // Default variant — original layout preserved
     return (
-      <div ref={ref} className={cardClasses}>
+      <div ref={ref} className={cardClasses} onClick={handleCardClick}>
          <div className="flex items-center gap-3">
            <span
              className={`rounded-lg p-2 flex-shrink-0 ${iconBoxClass}`}
@@ -312,7 +323,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
            </div>
          </div>
        </div>
-     );
+    );
   }
 );
 

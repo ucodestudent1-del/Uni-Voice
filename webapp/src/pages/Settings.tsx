@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { Tag } from "lucide-react";
 import SettingsSidebar from "../components/settings/SettingsSidebar";
 import GeneralSettings from "../components/settings/GeneralSettings";
 import BusinessProfileSettings from "../components/settings/BusinessProfileSettings";
@@ -13,6 +14,7 @@ import IntegrationsSettings from "../components/settings/IntegrationsSettings";
 import SecuritySettings from "../components/settings/SecuritySettings";
 import BillingSubscriptionSettings from "../components/settings/BillingSubscriptionSettings";
 import ThemeSettings from "../components/settings/ThemeSettings";
+import ExpenseCategoriesSettings from "../components/settings/ExpenseCategoriesSettings";
 import FeatureGate from "../components/FeatureGate";
 import type { SettingsNavItem, SettingsSection } from "../types/settings";
 
@@ -29,7 +31,8 @@ export type SettingsTab =
   | "security"
   | "billing"
   | "account"
-  | "theme";
+  | "theme"
+  | "expense-categories";
 
 function IconGeneral(): React.ReactNode {
   return (
@@ -155,6 +158,7 @@ const mainNavItems: SettingsNavItem[] = [
   { id: "security", label: "Security", icon: <IconSecurity />, description: "Password, 2FA, sessions" },
   { id: "billing", label: "Billing & Subscription", icon: <IconBilling />, description: "Plan, usage, invoices" },
   { id: "theme", label: "Appearance", icon: <IconTheme />, description: "Dark mode, preferences" },
+  { id: "expense-categories", label: "Expense Categories", icon: <Tag className="w-5 h-5" />, description: "Custom expense category management" },
 ];
 
 const accountNavItems: SettingsNavItem[] = [
@@ -215,6 +219,8 @@ export default function Settings() {
         return <GeneralSettings />;
       case "theme":
         return <ThemeSettings />;
+      case "expense-categories":
+        return <ExpenseCategoriesSettings />;
       default:
         return (
           <div className="text-sm text-tertiary">

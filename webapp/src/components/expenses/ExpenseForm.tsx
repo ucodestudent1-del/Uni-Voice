@@ -1,15 +1,19 @@
-import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Upload, FileText, Image as ImageIcon, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { EXPENSE_CATEGORY_OPTIONS } from "./ExpenseCategoryBadge";
 import CustomerSelector from "@/components/CustomerSelector";
 import ProjectSelector from "@/components/ProjectSelector";
 import type { ApiExpense } from "@/types/api";
+import { uploadExpenseReceipt } from "@/api/client";
 import { useToast } from "@/components/ui/ToastProvider";
+
+const PAYMENT_METHODS = ["cash", "card", "bank_transfer", "check", "other"];
 
 export interface ExpenseFormData {
   description: string;
   amount: string;
+  tax_amount: string;
   category: string;
   expense_date: string;
   payment_method: string;
@@ -17,8 +21,11 @@ export interface ExpenseFormData {
   customer_id: string | null;
   project_id: string | null;
   receipt_url: string;
+  receipt_file: File | null;
+  receipt_preview: string | null;
   notes: string;
   is_billable: boolean;
+  is_reimbursable: boolean;
   is_reimbursed: boolean;
 }
 
@@ -31,8 +38,6 @@ export interface ExpenseFormProps {
   onSubmit: (data: ExpenseFormData) => Promise<void>;
 }
 
-const PAYMENT_METHODS = ["cash", "card", "bank_transfer", "check", "other"];
-
 export default function ExpenseForm({
   open,
   onClose,
@@ -42,9 +47,12 @@ export default function ExpenseForm({
   onSubmit,
 }: ExpenseFormProps) {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState<ExpenseFormData>({
     description: "",
     amount: "",
+    tax_amount: "",
     category: "other",
     expense_date: new Date().toISOString().slice(0, 10),
     payment_method: "cash",
@@ -52,18 +60,23 @@ export default function ExpenseForm({
     customer_id: null,
     project_id: null,
     receipt_url: "",
+    receipt_file: null,
+    receipt_preview: null,
     notes: "",
     is_billable: false,
+    is_reimbursable: false,
     is_reimbursed: false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (open && initialData) {
       setFormData({
         description: initialData.description ?? "",
         amount: initialData.amount ?? "",
+        tax_amount: (initialData as any).tax_amount ?? "",
         category: initialData.category ?? "other",
         expense_date: initialData.expense_date
           ? new Date(initialData.expense_date).toISOString().slice(0, 10)
@@ -73,8 +86,11 @@ export default function ExpenseForm({
         customer_id: initialData.customer_id ?? null,
         project_id: initialData.project_id ?? null,
         receipt_url: initialData.receipt_url ?? "",
+        receipt_file: null,
+        receipt_preview: null,
         notes: initialData.notes ?? "",
         is_billable: initialData.is_billable ?? false,
+        is_reimbursable: (initialData as any).is_reimbursable ?? false,
         is_reimbursed: initialData.is_reimbursed ?? false,
       });
       setErrors({});
@@ -82,6 +98,61 @@ export default function ExpenseForm({
   }, [open, initialData]);
 
   if (!open) return null;
+
+  const isImage = (url: string): boolean => {
+    return url.match(/\.(jpg|jpeg|png|gif|webp)$/i) !== null;
+  };
+
+  const isPdf = (url: string): boolean => {
+    return url.match(/\.(pdf)$/i) !== null;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"];
+    if (!validTypes.includes(file.type)) {
+      toast("Please upload a JPG, PNG, or PDF file.", { type: "error" });
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast("File size must be under 10MB.", { type: "error" });
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setFormData((prev) => ({
+      ...prev,
+      receipt_file: file,
+      receipt_preview: preview,
+    }));
+  };
+
+  const handleFileUpload = async () => {
+    if (!formData.receipt_file || !editingId) return;
+    setUploading(true);
+    try {
+      const res = await uploadExpenseReceipt(editingId, formData.receipt_file);
+      const receipts = res.receipts;
+      if (receipts && receipts.length > 0) {
+        const url = receipts[0].file_path;
+        setFormData((prev) => ({
+          ...prev,
+          receipt_url: url,
+          receipt_file: null,
+          receipt_preview: null,
+        }));
+        toast("Receipt uploaded successfully", { type: "success" });
+      }
+    } catch (err: any) {
+      toast(err.response?.data?.error || "Failed to upload receipt", { type: "error" });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -114,9 +185,13 @@ export default function ExpenseForm({
   };
 
   const handleClose = () => {
+    if (formData.receipt_preview) {
+      URL.revokeObjectURL(formData.receipt_preview);
+    }
     setFormData({
       description: "",
       amount: "",
+      tax_amount: "",
       category: "other",
       expense_date: new Date().toISOString().slice(0, 10),
       payment_method: "cash",
@@ -124,20 +199,41 @@ export default function ExpenseForm({
       customer_id: null,
       project_id: null,
       receipt_url: "",
+      receipt_file: null,
+      receipt_preview: null,
       notes: "",
       is_billable: false,
+      is_reimbursable: false,
       is_reimbursed: false,
     });
     setErrors({});
     onClose();
   };
 
+  const handleReceiptUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, receipt_url: e.target.value }));
+  };
+
+  const clearReceiptPreview = () => {
+    if (formData.receipt_preview) {
+      URL.revokeObjectURL(formData.receipt_preview);
+    }
+    setFormData((prev) => ({
+      ...prev,
+      receipt_file: null,
+      receipt_preview: null,
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-overlay flex items-center justify-center overflow-y-auto py-8">
-      <div className="bg-surface rounded-xl shadow-xl w-full max-w-2xl mx-4 my-8 border border-color">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-3xl mx-4 my-8 border border-color">
         <div className="flex items-center justify-between p-6 border-b border-color-subtle">
           <h3 className="text-lg font-semibold text-primary">
-            {editingId ? "Edit Expense" : "Add New Expense"}
+            {editingId ? "Edit Expense" : "Add Expense"}
           </h3>
           <button
             type="button"
@@ -177,7 +273,7 @@ export default function ExpenseForm({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="form-label">
                 Amount *
@@ -202,6 +298,23 @@ export default function ExpenseForm({
 
             <div>
               <label className="form-label">
+                Tax Amount
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.tax_amount}
+                onChange={(e) =>
+                  setFormData({ ...formData, tax_amount: e.target.value })
+                }
+                className="w-full rounded-lg border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary font-tabular-nums border-input-border"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div>
+              <label className="form-label">
                 Category *
               </label>
               <select
@@ -220,7 +333,7 @@ export default function ExpenseForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="form-label">
                 Date *
@@ -258,9 +371,7 @@ export default function ExpenseForm({
                 ))}
               </select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="form-label">
                 Vendor
@@ -273,21 +384,119 @@ export default function ExpenseForm({
                 placeholder="Who was this paid to?"
               />
             </div>
+          </div>
 
-            <div>
-              <label className="form-label">
-                Receipt URL
-              </label>
-              <input
-                type="url"
-                value={formData.receipt_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, receipt_url: e.target.value })
-                }
-                className="form-control"
-                placeholder="https://..."
-              />
+          <div>
+            <label className="form-label">
+              Receipt
+            </label>
+            <div className="border-2 border-dashed border-color-subtle rounded-lg p-4 text-center">
+              {formData.receipt_preview ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center">
+                    {isImage(formData.receipt_url) ? (
+                      <img
+                        src={formData.receipt_preview}
+                        alt="Receipt preview"
+                        className="max-h-32 max-w-full rounded"
+                      />
+                    ) : (
+                      <FileText className="w-12 h-12 text-tertiary" />
+                    )}
+                  </div>
+                  <p className="text-xs text-tertiary">
+                    {formData.receipt_file?.name || "New file selected"}
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearReceiptPreview}
+                      disabled={saving || uploading}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ) : formData.receipt_url ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center">
+                    {isImage(formData.receipt_url) ? (
+                      <img
+                        src={formData.receipt_url}
+                        alt="Receipt"
+                        className="max-h-32 max-w-full rounded"
+                      />
+                    ) : isPdf(formData.receipt_url) ? (
+                      <FileText className="w-12 h-12 text-tertiary" />
+                    ) : (
+                      <iframe
+                        src={formData.receipt_url}
+                        title="Receipt"
+                        className="max-h-32 max-w-full rounded"
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs text-tertiary">Receipt attached</p>
+                </div>
+              ) : (
+                <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <Upload className="w-8 h-8 text-tertiary mx-auto mb-2" />
+                  <p className="text-sm text-secondary mb-1">
+                    Drag & drop or click to upload
+                  </p>
+                  <p className="text-xs text-tertiary mb-2">
+                    JPG, PNG, GIF, WebP, or PDF (max 10MB)
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={saving || uploading}
+                    icon={<Upload className="w-4 h-4" />}
+                  >
+                    Choose File
+                  </Button>
+                  <p className="text-xs text-tertiary mt-2">
+                    Or paste a receipt URL below
+                  </p>
+                  <input
+                    type="url"
+                    value={formData.receipt_url}
+                    onChange={handleReceiptUrlChange}
+                    className="form-control mt-2"
+                    placeholder="https://..."
+                    disabled={saving || uploading}
+                  />
+                  {editingId && formData.receipt_url === "" && (
+                    <p className="text-xs text-tertiary mt-1">
+                      After saving, you can upload receipts directly.
+                    </p>
+                  )}
+                </>
+              )}
             </div>
+
+            {editingId && formData.receipt_file && formData.receipt_url === "" && (
+              <div className="mt-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleFileUpload}
+                  disabled={saving || uploading}
+                  icon={<Upload className="w-4 h-4" />}
+                >
+                  {uploading ? "Uploading…" : "Upload Receipt"}
+                </Button>
+              </div>
+            )}
           </div>
 
           <div>
@@ -327,7 +536,7 @@ export default function ExpenseForm({
             />
           </div>
 
-          <div className="flex gap-6 pt-2">
+          <div className="flex flex-col sm:flex-row sm:gap-6 gap-3 pt-2">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -339,19 +548,31 @@ export default function ExpenseForm({
               />
               <span className="text-sm text-secondary">Billable</span>
             </label>
-            {editingId && (
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.is_reimbursed}
-                  onChange={(e) =>
-                    setFormData({ ...formData, is_reimbursed: e.target.checked })
-                  }
-                  className="rounded border-input-border text-primary focus:ring-primary"
-                />
-                <span className="text-sm text-secondary">Reimbursed</span>
-              </label>
-            )}
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.is_reimbursable}
+                onChange={(e) =>
+                  setFormData({ ...formData, is_reimbursable: e.target.checked })
+                }
+                className="rounded border-input-border text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-secondary">Reimbursable</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.is_reimbursed}
+                onChange={(e) =>
+                  setFormData({ ...formData, is_reimbursed: e.target.checked })
+                }
+                className="rounded border-input-border text-primary focus:ring-primary"
+                disabled={!formData.is_reimbursable}
+              />
+              <span className="text-sm text-secondary">Reimbursed</span>
+            </label>
           </div>
         </form>
 
@@ -368,7 +589,7 @@ export default function ExpenseForm({
             variant="primary"
             size="md"
             type="submit"
-            disabled={saving || !formData.description || !formData.amount}
+            disabled={saving || uploading || !formData.description || !formData.amount}
             onClick={(e) => handleSubmit(e)}
           >
             {saving ? "Saving…" : editingId ? "Update" : "Save Expense"}

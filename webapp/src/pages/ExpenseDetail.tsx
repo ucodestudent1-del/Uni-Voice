@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Edit2,
   Trash2,
+  Copy,
   X,
   FileText,
   Download,
@@ -16,7 +17,7 @@ import {
   Folder,
   FileImage,
 } from "lucide-react";
-import { getExpense, updateExpense, deleteExpense, assignExpenseToInvoice, getExpenseInvoiceOptions } from "../api/client";
+import { getExpense, updateExpense, deleteExpense, createExpense, assignExpenseToInvoice, getExpenseInvoiceOptions } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../components/ui/ToastProvider";
@@ -159,6 +160,7 @@ export default function ExpenseDetail() {
       const updated = await updateExpense(expense.id, {
         description: formData.description,
         amount: formData.amount,
+        taxAmount: formData.tax_amount ? parseFloat(formData.tax_amount) : 0,
         category: (formData.category ?? "other") as ApiExpense["category"],
         expenseDate: formData.expense_date,
         paymentMethod: formData.payment_method,
@@ -168,6 +170,7 @@ export default function ExpenseDetail() {
         receiptUrl: formData.receipt_url || null,
         notes: formData.notes || null,
         isBillable: formData.is_billable,
+        isReimbursable: formData.is_reimbursable,
         isReimbursed: formData.is_reimbursed,
       });
       setExpense(updated.expense);
@@ -234,9 +237,74 @@ export default function ExpenseDetail() {
     }
   };
 
+  const handleReimbursableToggle = async () => {
+    if (!expense) return;
+    setSaving(true);
+    try {
+      const res = await updateExpense(expense.id, { isReimbursable: !expense.is_reimbursable });
+      setExpense(res.expense);
+      toast(
+        expense.is_reimbursable
+          ? "Marked as not reimbursable"
+          : "Marked as reimbursable",
+        { type: "success" }
+      );
+    } catch (err: any) {
+      toast(err.response?.data?.error || "Failed to update expense", { type: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReimbursedToggle = async () => {
+    if (!expense) return;
+    setSaving(true);
+    try {
+      const res = await updateExpense(expense.id, { isReimbursed: !expense.is_reimbursed });
+      setExpense(res.expense);
+      toast(
+        expense.is_reimbursed
+          ? "Marked as not reimbursed"
+          : "Marked as reimbursed",
+        { type: "success" }
+      );
+    } catch (err: any) {
+      toast(err.response?.data?.error || "Failed to update expense", { type: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (!expense) return;
+    try {
+      const newExpense = await createExpense({
+        description: expense.description,
+        amount: expense.amount,
+        taxAmount: (expense as any).tax_amount ? parseFloat((expense as any).tax_amount) : 0,
+        category: expense.category,
+        expenseDate: new Date().toISOString().split("T")[0],
+        paymentMethod: expense.payment_method,
+        vendor: expense.vendor ?? null,
+        customerId: expense.customer_id,
+        projectId: expense.project_id,
+        receiptUrl: expense.receipt_url ?? null,
+        notes: expense.notes ?? null,
+        isBillable: expense.is_billable,
+        isReimbursable: expense.is_reimbursable ?? false,
+      });
+      toast("Expense duplicated", { type: "success" });
+      navigate(`/app/expenses/${newExpense.expense.id}`);
+    } catch (err: any) {
+      toast(err.response?.data?.error || "Failed to duplicate expense", { type: "error" });
+    }
+  };
+
   const summary = {
     totalAmount: expense.amount ?? "0",
+    taxAmount: (expense as any).tax_amount ?? "0",
     billableAmount: expense.is_billable ? (expense.amount ?? "0") : "0",
+    reimbursableAmount: expense.is_reimbursable ? (expense.amount ?? "0") : "0",
     reimbursedAmount: expense.is_reimbursed ? (expense.amount ?? "0") : "0",
     nonReimbursedBillable: expense.is_billable && !expense.is_reimbursed
       ? (expense.amount ?? "0")
@@ -263,26 +331,34 @@ export default function ExpenseDetail() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          {!editMode ? (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<Edit2 className="w-4 h-4" />}
-                onClick={() => setEditMode(true)}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                icon={<Trash2 className="w-4 h-4" />}
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                Delete
-              </Button>
-            </>
+          <div className="flex gap-2">
+            {!editMode ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<Copy className="w-4 h-4" />}
+                  onClick={handleDuplicate}
+                >
+                  Duplicate
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<Edit2 className="w-4 h-4" />}
+                  onClick={() => setEditMode(true)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  icon={<Trash2 className="w-4 h-4" />}
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  Delete
+                </Button>
+              </>
           ) : (
             <Button
               variant="ghost"
@@ -316,6 +392,13 @@ export default function ExpenseDetail() {
               currency={summary.currency}
             />
             <KPICard
+              title="Tax Amount"
+              value={summary.taxAmount}
+              icon={<DollarSign className="w-5 h-5" />}
+              iconBackground="status-tertiary-bg status-tertiary-text"
+              currency={summary.currency}
+            />
+            <KPICard
               title="Billable Amount"
               value={summary.billableAmount}
               icon={<DollarSign className="w-5 h-5" />}
@@ -324,20 +407,18 @@ export default function ExpenseDetail() {
               subtitle={expense.is_billable ? "Billable" : "Not billable"}
             />
             <KPICard
-              title="Reimbursed"
-              value={summary.reimbursedAmount}
+              title="Reimbursable"
+              value={summary.reimbursableAmount}
               icon={<CheckCircle className="w-5 h-5" />}
-              iconBackground="status-success-bg status-success-text"
+              iconBackground={expense.is_reimbursed ? "status-success-bg status-success-text" : "status-error-bg status-error-text"}
               currency={summary.currency}
-              subtitle={expense.is_reimbursed ? "Reimbursed" : "Not reimbursed"}
-            />
-            <KPICard
-              title="Outstanding"
-              value={summary.nonReimbursedBillable}
-              icon={<Tag className="w-5 h-5" />}
-              iconBackground="status-error-bg status-error-text"
-              currency={summary.currency}
-              subtitle="Billable, not reimbursed"
+              subtitle={
+                expense.is_reimbursed
+                  ? "Reimbursed"
+                  : expense.is_reimbursable
+                    ? "Needs reimbursement"
+                    : "Not reimbursable"
+              }
             />
           </div>
 
@@ -519,15 +600,85 @@ export default function ExpenseDetail() {
                 </div>
               )}
             </div>
-          </div>
+           </div>
 
-          <div className="bg-surface rounded-xl border border-color">
-            <div className="px-6 py-4 border-b border-color-subtle">
-              <h2 className="text-lg font-semibold text-primary flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-tertiary" />
-                Invoice Assignment
-              </h2>
-            </div>
+           <div className="bg-surface rounded-xl border border-color">
+             <div className="px-6 py-4 border-b border-color-subtle">
+               <h2 className="text-lg font-semibold text-primary flex items-center gap-2">
+                 <CheckCircle className="w-5 h-5 text-tertiary" />
+                 Reimbursement
+               </h2>
+             </div>
+             <div className="p-6 space-y-4">
+               {expense.is_reimbursable ? (
+                 <div className="space-y-4">
+                   <div className="flex items-center justify-between p-4 bg-surface-alt rounded-lg border border-color-subtle">
+                     <div>
+                       <p className="text-xs font-medium text-tertiary uppercase">Reimbursement Status</p>
+                       <p className="text-sm text-primary mt-0.5">
+                         {expense.is_reimbursed
+                           ? "Reimbursed"
+                           : "Needs reimbursement"}
+                       </p>
+                       <p className="text-xs text-tertiary mt-1">
+                         {expense.is_reimbursed
+                           ? `$${expense.amount} has been reimbursed`
+                           : `${formatCurrency(expense.amount, expense.currency ?? "USD")} awaiting reimbursement`}
+                       </p>
+                     </div>
+                   </div>
+                   <div className="flex gap-2">
+                     {!expense.is_reimbursed && (
+                       <Button
+                         variant="secondary"
+                         size="sm"
+                         onClick={handleReimbursedToggle}
+                         disabled={saving}
+                       >
+                         Mark as Reimbursed
+                       </Button>
+                     )}
+                     {expense.is_reimbursed && (
+                       <Button
+                         variant="secondary"
+                         size="sm"
+                         onClick={handleReimbursedToggle}
+                         disabled={saving}
+                       >
+                         Mark as Not Reimbursed
+                       </Button>
+                     )}
+                   </div>
+                 </div>
+               ) : (
+                 <div className="text-center py-6 text-tertiary">
+                   <CheckCircle className="w-10 h-10 text-tertiary mx-auto mb-3" />
+                   <p className="text-sm font-medium text-secondary mb-1">
+                     This expense is not reimbursable
+                   </p>
+                   <p className="text-xs text-tertiary mb-4">
+                     Mark as reimbursable in the form to track employee reimbursement.
+                   </p>
+                   <Button
+                     variant="primary"
+                     size="sm"
+                     onClick={handleReimbursableToggle}
+                     disabled={saving}
+                   >
+                     Mark as Reimbursable
+                   </Button>
+                 </div>
+               )}
+             </div>
+           </div>
+
+           <div className="bg-surface rounded-xl border border-color">
+             <div className="px-6 py-4 border-b border-color-subtle">
+               <h2 className="text-lg font-semibold text-primary flex items-center gap-2">
+                 <Share2 className="w-5 h-5 text-tertiary" />
+                 Invoice Assignment
+               </h2>
+             </div>
             <div className="p-6 space-y-4">
               {expense.is_billable && (
                 <div className="flex items-center justify-between p-4 bg-surface-alt rounded-lg border border-color-subtle">

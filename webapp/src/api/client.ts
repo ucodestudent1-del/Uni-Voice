@@ -1191,6 +1191,7 @@ export async function getExpenses(params?: {
   projectId?: string;
   category?: string;
   isBillable?: boolean;
+  isReimbursable?: boolean;
   isReimbursed?: boolean;
   dateFrom?: string;
   dateTo?: string;
@@ -1198,6 +1199,7 @@ export async function getExpenses(params?: {
   maxAmount?: number;
   search?: string;
   vendor?: string;
+  paymentMethod?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number }> {
@@ -1215,6 +1217,7 @@ export interface ExpenseCreatePayload {
   projectId?: string | null;
   description: string;
   amount: string | number;
+  taxAmount?: string | number;
   currency?: string;
   category?: string;
   expenseDate?: string | Date;
@@ -1223,6 +1226,7 @@ export interface ExpenseCreatePayload {
   receiptUrl?: string | null;
   notes?: string | null;
   isBillable?: boolean;
+  isReimbursable?: boolean;
 }
 
 export interface ExpenseUpdatePayload {
@@ -1231,6 +1235,7 @@ export interface ExpenseUpdatePayload {
   invoiceId?: string | null;
   description?: string;
   amount?: string | number;
+  taxAmount?: string | number;
   currency?: string;
   category?: string;
   expenseDate?: string | Date;
@@ -1239,6 +1244,7 @@ export interface ExpenseUpdatePayload {
   receiptUrl?: string | null;
   notes?: string | null;
   isBillable?: boolean;
+  isReimbursable?: boolean;
   isReimbursed?: boolean;
 }
 
@@ -1263,9 +1269,13 @@ export async function getExpenseSummary(params?: {
   customerId?: string;
   projectId?: string;
   category?: string;
+  isBillable?: boolean;
+  isReimbursable?: boolean;
+  isReimbursed?: boolean;
   dateFrom?: string;
   dateTo?: string;
   vendor?: string;
+  paymentMethod?: string;
 }): Promise<{ summary: ApiExpenseSummary }> {
   const res = await api.get("/expenses/summary", { params });
   return res.data;
@@ -1279,6 +1289,7 @@ export function buildExpenseSearchParams(params: ExpenseSearchParams): Record<st
   if (params.projectId !== undefined) result.projectId = params.projectId;
   if (params.category !== undefined) result.category = params.category;
   if (params.isBillable !== undefined) result.isBillable = params.isBillable;
+  if (params.isReimbursable !== undefined) result.isReimbursable = params.isReimbursable;
   if (params.isReimbursed !== undefined) result.isReimbursed = params.isReimbursed;
   if (params.dateFrom !== undefined) result.dateFrom = params.dateFrom;
   if (params.dateTo !== undefined) result.dateTo = params.dateTo;
@@ -1286,6 +1297,7 @@ export function buildExpenseSearchParams(params: ExpenseSearchParams): Record<st
   if (params.maxAmount !== undefined) result.maxAmount = params.maxAmount;
   if (params.search !== undefined) result.search = params.search;
   if (params.vendor !== undefined) result.vendor = params.vendor;
+  if (params.paymentMethod !== undefined) result.paymentMethod = params.paymentMethod;
   if (params.customerName !== undefined) result.customerName = params.customerName;
   if (params.projectName !== undefined) result.projectName = params.projectName;
   if (params.sortBy !== undefined) result.sortBy = params.sortBy;
@@ -1300,6 +1312,7 @@ export async function getExpensesWithSummary(params?: {
   projectId?: string;
   category?: string;
   isBillable?: boolean;
+  isReimbursable?: boolean;
   isReimbursed?: boolean;
   dateFrom?: string;
   dateTo?: string;
@@ -1307,6 +1320,7 @@ export async function getExpensesWithSummary(params?: {
   maxAmount?: number;
   search?: string;
   vendor?: string;
+  paymentMethod?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number; summary: ApiExpenseSummary }> {
@@ -1348,6 +1362,57 @@ export async function assignExpenseToInvoice(expenseId: string, invoiceId: strin
 
 export async function getExpenseInvoiceOptions(): Promise<{ invoices: Array<{ id: string; invoice_number: string; customer_name?: string | null; total: string; status: string }> }> {
   const res = await api.get("/expenses/invoice-options");
+  return res.data;
+}
+
+export interface ApiExpenseCustomCategory {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function getExpenseCustomCategories(): Promise<{ categories: ApiExpenseCustomCategory[] }> {
+  const res = await api.get("/expenses/categories/custom");
+  return res.data;
+}
+
+export async function createExpenseCustomCategory(data: {
+  name: string;
+  color?: string;
+  icon?: string | null;
+}): Promise<{ category: ApiExpenseCustomCategory }> {
+  const res = await api.post("/expenses/categories/custom", data);
+  return res.data;
+}
+
+export async function updateExpenseCustomCategory(
+  id: string,
+  data: {
+    name?: string;
+    color?: string;
+    icon?: string | null;
+    is_active?: boolean;
+  }
+): Promise<{ category: ApiExpenseCustomCategory }> {
+  const res = await api.patch(`/expenses/categories/custom/${id}`, data);
+  return res.data;
+}
+
+export async function deleteExpenseCustomCategory(id: string): Promise<void> {
+  await api.delete(`/expenses/categories/custom/${id}`);
+}
+
+export async function uploadExpenseReceipt(expenseId: string, file: File): Promise<{ receipts: Array<{ id: string; file_name: string; file_path: string; file_size: number; mime_type: string | null; created_at: string }> }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await api.post(`/expenses/${expenseId}/receipts`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 }
 

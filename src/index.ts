@@ -1502,7 +1502,7 @@ app.get("/api/reports/expenses", requireAuth, requireEntitlement("reports.expens
     sortOrder: (req.query.sortOrder as string | undefined) as "asc" | "desc" | undefined,
   };
   const result = await reportsService.getExpensesReport(req.user!.businessId, filters);
-  res.json(result);
+  res.json(camelToSnake(result));
 });
 
 app.get("/api/reports/clients", requireAuth, requireEntitlement("reports.clients"), async (req: AuthRequest, res) => {
@@ -2574,6 +2574,222 @@ app.patch(
 
       const result = await query(upsertQuery, vals);
       res.json({ budget: result.rows[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ============================================================================
+// EXPENSE RECEIPT UPLOAD
+// ============================================================================
+app.post(
+  "/api/expenses/:id/receipts",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const { IncomingForm } = await import("formidable");
+      const form = new IncomingForm({
+        multiples: true,
+        uploadDir: undefined,
+      });
+      const data: any = await new Promise((resolve, reject) => {
+        form.parse(req as any, (err: any, fields: any, files: any) => {
+          if (err) reject(err);
+          else resolve({ fields, files });
+        });
+      });
+
+      const files = Array.isArray(data.files.file) ? data.files.file : [data.files.file];
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const fs = await import("node:fs/promises");
+      const path = await import("node:path");
+      const uploadDir = path.join(process.cwd(), "uploads", "receipts");
+      await fs.mkdir(uploadDir, { recursive: true });
+
+      const uploaded: any[] = [];
+      for (const file of files) {
+        const ext = path.extname(file.originalFilename ?? "");
+        const fileName = `${crypto.randomUUID()}${ext}`;
+        const filePath = path.join(uploadDir, fileName);
+        await fs.copyFile(file.filepath ?? file.tempFilePath, filePath);
+        const stats = await fs.stat(filePath);
+
+        const result = await query(
+          `INSERT INTO expense_receipts
+             (business_id, expense_id, file_name, file_path, file_size, mime_type, uploaded_by, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+           RETURNING id, file_name, file_path, file_size, mime_type, created_at`,
+          [
+            req.user!.businessId,
+            req.params.id,
+            file.originalFilename ?? fileName,
+            `/uploads/receipts/${fileName}`,
+            stats.size,
+            file.mimetype ?? null,
+            req.user!.id,
+          ]
+        );
+        uploaded.push(result.rows[0]);
+      }
+
+      res.json({ receipts: camelToSnake(uploaded) });
+    } catch (err: any) {
+      if (err.code === "ENOENT" || err.message?.includes("parseMultipartForm")) {
+        return res.status(400).json({ error: "Failed to parse upload" });
+      }
+      next(err);
+    }
+  }
+);
+
+// ============================================================================
+// EXPENSE CUSTOM CATEGORIES
+// ============================================================================
+app.get(
+  "/api/expenses/categories/custom",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await query(
+        "SELECT id, name, color, icon, is_active, sort_order, created_at, updated_at FROM expense_custom_categories WHERE business_id = $1 ORDER BY sort_order, name",
+        [req.user!.businessId]
+      );
+      res.json({ categories: camelToSnake(result.rows) });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.post(
+  "/api/expenses/categories/custom",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const { name, color = "info", icon } = req.body;
+      if (!name || typeof name !== "string" || name.trim().length === 0) {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+      const maxOrder = await query(
+        "SELECT COALESCE(MAX(sort_order), 0) AS max_order FROM expense_custom_categories WHERE business_id = $1",
+        [req.user!.businessId]
+      );
+      const sortOrder = Number(maxOrder.rows[0]?.max_order ?? 0) + 1;
+      const result = await query(
+        `INSERT INTO expense_custom_categories
+           (business_id, name, color, icon, is_active, sort_order, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, true, $5, NOW(), NOW())
+         RETURNING id, name, color, icon, is_active, sort_order, created_at, updated_at`,
+        [req.user!.businessId, name.trim(), color, icon ?? null, sortOrder]
+      );
+      res.status(201).json({ category: camelToSnake(result.rows[0]) });
+    } catch (err: any) {
+      if (err.code === "23505") {
+        return res.status(409).json({ error: "Category with this name already exists" });
+      }
+      next(err);
+    }
+  }
+);
+
+app.patch(
+  "/api/expenses/categories/custom/:categoryId",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const { name, color, icon, is_active: isActive } = req.body;
+      const updates: string[] = [];
+      const vals: unknown[] = [req.user!.businessId, req.params.categoryId];
+      let i = 3;
+      if (name !== undefined) {
+        updates.push(`name = $${i++}`);
+        vals.push(name);
+      }
+      if (color !== undefined) {
+        updates.push(`color = $${i++}`);
+        vals.push(color);
+      }
+      if (icon !== undefined) {
+        updates.push(`icon = $${i++}`);
+        vals.push(icon);
+      }
+      if (isActive !== undefined) {
+        updates.push(`is_active = $${i++}`);
+        vals.push(isActive);
+      }
+      if (updates.length === 0) {
+        const existing = await query(
+          "SELECT id, name, color, icon, is_active, sort_order, created_at, updated_at FROM expense_custom_categories WHERE business_id = $1 AND id = $2",
+          vals
+        );
+        if (!existing.rows.length) {
+          return res.status(404).json({ error: "Custom category not found" });
+        }
+        return res.json({ category: camelToSnake(existing.rows[0]) });
+      }
+      updates.push("updated_at = NOW()");
+      const result = await query(
+        `UPDATE expense_custom_categories SET ${updates.join(", ")} WHERE business_id = $1 AND id = $2 RETURNING id, name, color, icon, is_active, sort_order, created_at, updated_at`,
+        vals
+      );
+      if (!result.rows.length) {
+        return res.status(404).json({ error: "Custom category not found" });
+      }
+      res.json({ category: camelToSnake(result.rows[0]) });
+    } catch (err: any) {
+      if (err.code === "23505") {
+        return res.status(409).json({ error: "Category with this name already exists" });
+      }
+      next(err);
+    }
+  }
+);
+
+app.delete(
+  "/api/expenses/categories/custom/:categoryId",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await query(
+        "DELETE FROM expense_custom_categories WHERE business_id = $1 AND id = $2 RETURNING id",
+        [req.user!.businessId, req.params.categoryId]
+      );
+      if (!result.rows.length) {
+        return res.status(404).json({ error: "Custom category not found" });
+      }
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+app.get(
+  "/api/expenses/categories",
+  requireAuth,
+  requireEntitlement("expenses.tracking"),
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await query(
+        "SELECT id, name, color, icon, is_active, sort_order FROM expense_custom_categories WHERE business_id = $1 AND is_active = true ORDER BY sort_order, name",
+        [req.user!.businessId]
+      );
+      res.json({ categories: camelToSnake(result.rows) });
     } catch (err) {
       next(err);
     }

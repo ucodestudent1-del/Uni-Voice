@@ -26,6 +26,13 @@ export const ExpenseSchema = z.object({
   invoiceId: z.string().uuid().nullable(),
   description: z.string().min(1),
   amount: z.string(),
+  taxAmount: z.preprocess(
+    (v) => {
+      if (typeof v === "string" || typeof v === "number") return Number(v);
+      return v;
+    },
+    z.number().min(0, "Tax amount must be >= 0").default(0)
+  ),
   currency: CurrencyEnum,
   category: ExpenseCategoryEnum.default("other"),
   expenseDate: z.union([z.string(), z.date()]),
@@ -34,6 +41,7 @@ export const ExpenseSchema = z.object({
   receiptUrl: z.string().nullable(),
   notes: z.string().nullable(),
   isBillable: z.boolean().default(false),
+  isReimbursable: z.boolean().default(false),
   isReimbursed: z.boolean().default(false),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -52,6 +60,13 @@ export const ExpenseCreateSchema = z.object({
     },
     z.number().min(0, "Amount must be >= 0")
   ),
+  taxAmount: z.preprocess(
+    (v) => {
+      if (typeof v === "string" || typeof v === "number") return Number(v);
+      return v;
+    },
+    z.number().min(0, "Tax amount must be >= 0").default(0)
+  ).optional(),
   currency: CurrencyEnum.optional(),
   category: ExpenseCategoryEnum.default("other"),
   expenseDate: z.union([z.string(), z.date()]).optional(),
@@ -60,6 +75,7 @@ export const ExpenseCreateSchema = z.object({
   receiptUrl: z.string().nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   isBillable: z.boolean().default(false),
+  isReimbursable: z.boolean().default(false),
 });
 
 export type ExpenseCreateInput = z.infer<typeof ExpenseCreateSchema>;
@@ -76,6 +92,13 @@ export const ExpenseUpdateSchema = z.object({
     },
     z.number().min(0).optional()
   ),
+  taxAmount: z.preprocess(
+    (v) => {
+      if (typeof v === "string" || typeof v === "number") return Number(v);
+      return v;
+    },
+    z.number().min(0).optional()
+  ),
   currency: CurrencyEnum.optional(),
   category: ExpenseCategoryEnum.optional(),
   expenseDate: z.union([z.string(), z.date()]).optional(),
@@ -84,6 +107,7 @@ export const ExpenseUpdateSchema = z.object({
   receiptUrl: z.string().nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   isBillable: z.boolean().optional(),
+  isReimbursable: z.boolean().optional(),
   isReimbursed: z.boolean().optional(),
 });
 
@@ -95,6 +119,7 @@ export const ExpenseSearchSchema = z.object({
   userId: z.string().uuid().optional(),
   category: ExpenseCategoryEnum.optional(),
   isBillable: z.coerce.boolean().optional(),
+  isReimbursable: z.coerce.boolean().optional(),
   isReimbursed: z.coerce.boolean().optional(),
   dateFrom: z.coerce.date().optional(),
   dateTo: z.coerce.date().optional(),
@@ -115,6 +140,7 @@ export type ExpenseSearchInput = z.infer<typeof ExpenseSearchSchema>;
 export const ExpenseSummarySchema = z.object({
   totalAmount: z.string(),
   billableAmount: z.string(),
+  reimbursableAmount: z.string(),
   reimbursedAmount: z.string(),
   nonReimbursedBillable: z.string(),
   count: z.number().int().nonnegative(),

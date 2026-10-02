@@ -2,6 +2,7 @@ import {
   X,
   Edit2,
   Trash2,
+  Copy,
   Calendar,
   DollarSign,
   Tag,
@@ -10,11 +11,13 @@ import {
   FileImage,
   CheckCircle,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import ExpenseCategoryBadge from "./ExpenseCategoryBadge";
 import type { ApiExpense } from "@/types/api";
 import { formatDate } from "@/utils/format";
+import { formatCurrencyValue } from "@/lib/utils";
 import { Money } from "@/components/ui";
 
 export interface ExpenseDetailPanelProps {
@@ -23,7 +26,7 @@ export interface ExpenseDetailPanelProps {
   onClose: () => void;
   onEdit: (expense: ApiExpense) => void;
   onDelete: (expense: ApiExpense) => void;
-  onSave?: (expense: ApiExpense) => void;
+  onDuplicate?: (expense: ApiExpense) => void;
   loading?: boolean;
 }
 
@@ -47,31 +50,52 @@ function DetailRow({
   );
 }
 
-function StatusBadge({
-  isBillable,
-  isReimbursed,
-}: {
-  isBillable: boolean;
-  isReimbursed: boolean;
-}) {
-  let label: string;
-  let className: string;
+const REIMBURSEMENT_STATUS: Record<string, { label: string; className: string }> = {
+  billable: {
+    label: "Billable",
+    className:
+      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium status-warning-bg status-warning-text",
+  },
+  reimbursable_not_submitted: {
+    label: "Needs Reimbursement",
+    className:
+      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium status-error-bg status-error-text",
+  },
+  submitted: {
+    label: "Submitted",
+    className:
+      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium status-info-bg status-info-text",
+  },
+  reimbursed: {
+    label: "Reimbursed",
+    className:
+      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium status-success-bg status-success-text",
+  },
+  paid: {
+    label: "Paid",
+    className:
+      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium status-tertiary-bg status-tertiary-text",
+  },
+};
 
-  if (isReimbursed) {
-    label = "Reimbursed";
-    className =
-      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium status-success-bg status-success-text";
-  } else if (isBillable) {
-    label = "Billable";
-    className =
-      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium status-warning-bg status-warning-text";
+function ExpenseStatusBadge({ expense }: { expense: ApiExpense }) {
+  let key: string;
+  if (expense.is_reimbursed) {
+    key = "reimbursed";
+  } else if (expense.is_reimbursable) {
+    key = "reimbursable_not_submitted";
+  } else if (expense.is_billable) {
+    key = "billable";
   } else {
-    label = "Paid";
-    className =
-      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium status-tertiary-bg status-tertiary-text";
+    key = "paid";
   }
 
-  return <span className={className}>{label}</span>;
+  const config = REIMBURSEMENT_STATUS[key];
+  return (
+    <span className={config.className}>
+      {config.label}
+    </span>
+  );
 }
 
 export default function ExpenseDetailPanel({
@@ -80,12 +104,26 @@ export default function ExpenseDetailPanel({
   onClose,
   onEdit,
   onDelete,
+  onDuplicate,
   loading = false,
 }: ExpenseDetailPanelProps) {
   if (!open || !expense) return null;
 
   const currency = expense.currency ?? "USD";
-  const amount = <Money amount={expense.amount} currency={currency} className="text-2xl font-bold" />;
+  const amount = (
+    <Money amount={expense.amount} currency={currency} className="text-2xl font-bold" />
+  );
+  const taxAmount = expense.tax_amount
+    ? formatCurrencyValue(expense.tax_amount, currency)
+    : null;
+
+  const isImage = (url: string): boolean => {
+    return url.match(/\.(jpg|jpeg|png|gif|webp)$/i) !== null;
+  };
+
+  const isPdf = (url: string): boolean => {
+    return url.match(/\.(pdf)$/i) !== null;
+  };
 
   return (
     <>
@@ -99,13 +137,13 @@ export default function ExpenseDetailPanel({
         aria-label="Expense detail panel"
       >
         <div className="flex items-center justify-between p-6 border-b border-color-subtle">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-info-bg flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-info-text" />
             </div>
-            <div>
-              <h2 className="text-lg font-semibold text-primary">
-                Expense Details
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-semibold text-primary truncate">
+                {expense.vendor || "Expense Details"}
               </h2>
               <p className="text-sm text-tertiary mt-0.5 line-clamp-1">
                 {expense.description}
@@ -130,6 +168,14 @@ export default function ExpenseDetailPanel({
                 {amount}
               </p>
             </DetailRow>
+
+            {taxAmount && (
+              <DetailRow label="Tax Amount" icon={<DollarSign className="w-4 h-4 text-tertiary" />}>
+                <p className="text-sm text-primary font-tabular-nums">
+                  {taxAmount}
+                </p>
+              </DetailRow>
+            )}
 
             <DetailRow label="Date" icon={<Calendar className="w-4 h-4 text-tertiary" />}>
               <p className="text-sm text-primary">
@@ -159,10 +205,7 @@ export default function ExpenseDetailPanel({
             </DetailRow>
 
             <DetailRow label="Status" icon={<CheckCircle className="w-4 h-4 text-tertiary" />}>
-              <StatusBadge
-                isBillable={expense.is_billable}
-                isReimbursed={expense.is_reimbursed}
-              />
+              <ExpenseStatusBadge expense={expense} />
             </DetailRow>
           </div>
 
@@ -177,40 +220,6 @@ export default function ExpenseDetailPanel({
               <p className="text-sm text-primary whitespace-pre-wrap break-words">
                 {expense.notes}
               </p>
-            </DetailRow>
-          )}
-
-          {expense.receipt_url && (
-            <DetailRow label="Receipt" icon={<FileImage className="w-4 h-4 text-tertiary" />}>
-              <div className="border border-color-subtle rounded-lg overflow-hidden">
-                {expense.receipt_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                  <img
-                    src={expense.receipt_url}
-                    alt="Receipt"
-                    className="w-full max-h-64 object-contain bg-surface-alt"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "";
-                    }}
-                  />
-                ) : (
-                  <iframe
-                    src={expense.receipt_url}
-                    title="Receipt"
-                    className="w-full h-64"
-                  />
-                )}
-              </div>
-              <div className="mt-2">
-                <a
-                  href={expense.receipt_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary-brand hover:underline flex items-center gap-2"
-                >
-                  <FileImage className="w-4 h-4" />
-                  View receipt
-                </a>
-              </div>
             </DetailRow>
           )}
 
@@ -232,27 +241,84 @@ export default function ExpenseDetailPanel({
                 </p>
               </DetailRow>
             )}
-
-            {expense.invoice_id && (
-              <DetailRow label="Assigned Invoice" icon={<AlertCircle className="w-4 h-4 text-tertiary" />}>
-                <p className="text-sm text-primary font-medium">
-                  {expense.invoice_number || expense.invoice_id}
-                </p>
-              </DetailRow>
-            )}
           </div>
+
+          {expense.receipt_url && (
+            <DetailRow label="Receipt" icon={<FileImage className="w-4 h-4 text-tertiary" />}>
+              <div className="border border-color-subtle rounded-lg overflow-hidden">
+                {isImage(expense.receipt_url) ? (
+                  <img
+                    src={expense.receipt_url}
+                    alt="Receipt"
+                    className="w-full max-h-64 object-contain bg-surface-alt"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : isPdf(expense.receipt_url) ? (
+                  <div className="p-8 text-center">
+                    <FileImage className="w-16 h-16 text-tertiary mx-auto mb-4" />
+                    <p className="text-sm text-secondary">PDF Receipt</p>
+                  </div>
+                ) : (
+                  <iframe
+                    src={expense.receipt_url}
+                    title="Receipt"
+                    className="w-full h-64"
+                  />
+                )}
+              </div>
+              <div className="mt-2">
+                <a
+                  href={expense.receipt_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary-brand hover:underline flex items-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View receipt
+                </a>
+              </div>
+            </DetailRow>
+          )}
+
+          {expense.invoice_id && (
+            <DetailRow label="Assigned Invoice" icon={<AlertCircle className="w-4 h-4 text-tertiary" />}>
+              <p className="text-sm text-primary font-medium">
+                {expense.invoice_number || expense.invoice_id}
+              </p>
+              {expense.invoice_status && (
+                <p className="text-xs text-tertiary mt-0.5">
+                  Status: {expense.invoice_status}
+                </p>
+              )}
+            </DetailRow>
+          )}
         </div>
 
         <div className="flex items-center justify-between p-6 border-t border-color-subtle">
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<Trash2 className="w-4 h-4" />}
-            onClick={() => onDelete(expense)}
-            disabled={loading}
-          >
-            Delete
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Trash2 className="w-4 h-4" />}
+              onClick={() => onDelete(expense)}
+              disabled={loading}
+            >
+              Delete
           </Button>
+            {onDuplicate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Copy className="w-4 h-4" />}
+                onClick={() => onDuplicate(expense)}
+                disabled={loading}
+              >
+                Duplicate
+              </Button>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button
               variant="secondary"
@@ -270,7 +336,7 @@ export default function ExpenseDetailPanel({
               disabled={loading}
             >
               Edit
-          </Button>
+            </Button>
           </div>
         </div>
       </aside>

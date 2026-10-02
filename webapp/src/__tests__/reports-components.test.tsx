@@ -8,17 +8,18 @@ import type { ApiExpensesReport, ApiInvoicesReport, ApiPaymentsReport } from "@/
 const mockExpensesReport: ApiExpensesReport = {
   expenses: [],
   summary: {
-    totalAmount: "1500.00",
-    totalExpenses: 12,
-    billableAmount: "500.00",
-    reimbursedAmount: "300.00",
-    nonReimbursedBillable: "200.00",
+    total_amount: "1500.00",
+    total_expenses: 12,
+    billable_amount: "500.00",
+    reimbursable_amount: "420.00",
+    reimbursed_amount: "300.00",
+    non_reimbursed_billable: "200.00",
     currency: "USD",
-    categoryBreakdown: [
+    category_breakdown: [
       { category: "supplies", total: "800.00", count: 5, percentage: 53.3 },
       { category: "software", total: "700.00", count: 7, percentage: 46.7 },
     ],
-    monthlyTrend: [
+    monthly_trend: [
       { period: "2026-09", amount: "1500.00", count: 12 },
     ],
   },
@@ -84,8 +85,8 @@ describe("ExpensesReport", () => {
     expect(screen.getAllByText("$1,500.00").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Billable").length).toBeGreaterThan(0);
     expect(screen.getAllByText("$500.00").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Reimbursed").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("$300.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Reimbursable").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$420.00").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Non-Reimbursed Billable").length).toBeGreaterThan(0);
     expect(screen.getAllByText("$200.00").length).toBeGreaterThan(0);
   });

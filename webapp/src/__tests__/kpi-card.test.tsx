@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { KPICard } from "@/components/ui";
 import { DollarSign } from "lucide-react";
 
@@ -134,5 +134,23 @@ describe("KPICard", () => {
     );
     const bar = container.querySelector('div[aria-label="85% progress"]');
     expect(bar).toBeInTheDocument();
+  });
+
+  it("calls onClick when clickable card is clicked", () => {
+    const onClick = vi.fn();
+    render(
+      <KPICard
+        title="Total Expenses"
+        value="1234.56"
+        currency="USD"
+        icon={<DollarSign className="w-5 h-5" />}
+        iconBackground="bg-surface-alt"
+        clickable
+        onClick={onClick}
+      />
+    );
+    const card = screen.getByText("Total Expenses").closest(".cursor-pointer");
+    fireEvent.click(card!);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });

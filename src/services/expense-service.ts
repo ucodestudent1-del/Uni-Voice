@@ -32,6 +32,7 @@ export class ExpenseService {
     const expenseInput: ExpenseInput = {
       ...input,
       amount: new Decimal(input.amount),
+      taxAmount: input.taxAmount !== undefined ? new Decimal(input.taxAmount) : undefined,
     };
     const result = await this.repo.create(businessId, expenseInput, userId ?? null);
     invalidateReportsCache(businessId);
@@ -63,6 +64,9 @@ export class ExpenseService {
     const updateInput: RepoExpenseUpdateInput = { ...input };
     if (input.amount !== undefined) {
       updateInput.amount = new Decimal(input.amount);
+    }
+    if (input.taxAmount !== undefined) {
+      updateInput.taxAmount = new Decimal(input.taxAmount);
     }
 
     const result = await this.repo.update(businessId, id, updateInput);

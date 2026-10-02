@@ -23,6 +23,7 @@ export interface Expense {
   invoiceId: string | null;
   description: string;
   amount: string;
+  taxAmount: string;
   currency: CurrencyCode;
   category: ExpenseCategory;
   expenseDate: Date;
@@ -31,6 +32,7 @@ export interface Expense {
   receiptUrl: string | null;
   notes: string | null;
   isBillable: boolean;
+  isReimbursable: boolean;
   isReimbursed: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -43,6 +45,7 @@ export interface Expense {
 export interface ExpenseSummary {
   totalAmount: string;
   billableAmount: string;
+  reimbursableAmount: string;
   reimbursedAmount: string;
   nonReimbursedBillable: string;
   count: number;
