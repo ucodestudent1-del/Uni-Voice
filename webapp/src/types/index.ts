@@ -58,9 +58,9 @@ export type { AnalyticsEventName, AnalyticsEvent, Analytics } from "./analytics"
 
 export { ANALYTICS_EVENTS, analytics } from "./analytics";
 
-export type { FeatureItem, FaqItem, TemplateModule, FeatureIcon } from "./landing";
+export type { FeatureItem, FaqItem, TemplateModule, FeatureIcon } from "../types/landing";
 
-export { pricingFeatures, faqs, templateModules } from "./landing";
+export { pricingFeatures, faqs, templateModules } from "../data/landing";
 
 export type { CustomerFormValues } from "./customer-schema";
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FaqItem } from "../../data/landing";
+import type { FaqItem } from "@/types/landing";
 import { Section, SectionHeader } from "./Section";
 
 export interface FaqSectionProps {
