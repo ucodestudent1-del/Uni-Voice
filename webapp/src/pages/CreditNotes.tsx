@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Plus, Trash2 } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCreditNotes,
@@ -18,7 +19,10 @@ import {
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
+import { Button } from "../components/ui/Button";
 import { formatCurrency, formatDate } from "../utils/format";
+import { getCurrencyMetadata } from "../types/currency";
+import { LINE_ITEM_UNITS } from "../types/quote-builder";
 import { Decimal } from "decimal.js";
 import type { ApiCreditNote, ApiCreditNoteItem, ApiCreditNoteListItem, ApiInvoiceListItem, ApiCustomer } from "../types/api";
 
@@ -516,6 +520,9 @@ function CreateCreditNoteDialog({
 
   if (!isOpen) return null;
 
+  const meta = getCurrencyMetadata(formData.currency);
+  const step = meta.decimalPlaces === 0 ? "1" : "0.01";
+
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
@@ -538,16 +545,40 @@ function CreateCreditNoteDialog({
     }));
   };
 
+  const lineTotal = useMemo(() => {
+    return formData.items.map((item) => {
+      try {
+        const q = new Decimal(item.quantity || 0);
+        const p = new Decimal(item.unitPrice || 0);
+        const tax = new Decimal(item.taxRate || 0);
+        const sub = q.mul(p);
+        const taxAmt = sub.mul(tax.div(100));
+        return sub.plus(taxAmt).toDecimalPlaces(meta.decimalPlaces, Decimal.ROUND_HALF_UP);
+      } catch {
+        return new Decimal(0);
+      }
+    });
+  }, [formData.items, meta.decimalPlaces]);
+
+  const subtotal = useMemo(() => {
+    return lineTotal.reduce((sum, lt) => sum.plus(lt), new Decimal(0));
+  }, [lineTotal]);
+
+  const formattedDate = useMemo(() => {
+    if (!formData.issueDate) return "";
+    return formatDate(new Date(formData.issueDate + "T00:00:00"));
+  }, [formData.issueDate]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onCreate(formData);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-overlay flex items-center justify-center z-50 p-4">
       <div className="bg-surface rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-color-subtle">
-          <h3 className="text-lg font-semibold text-primary">Create Credit Note</h3>
+          <h2 className="text-2xl font-bold text-primary">Create Credit Note</h2>
           <p className="text-sm text-secondary mt-1">Fill in the details below</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -557,7 +588,7 @@ function CreateCreditNoteDialog({
               <select
                 value={formData.customerId}
                 onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               >
                 <option value="">Select customer</option>
@@ -571,7 +602,7 @@ function CreateCreditNoteDialog({
               <select
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
@@ -586,8 +617,11 @@ function CreateCreditNoteDialog({
                 type="date"
                 value={formData.issueDate}
                 onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
+              {formattedDate && (
+                <p className="mt-1 text-xs text-tertiary">{formattedDate}</p>
+              )}
             </div>
           </div>
 
@@ -597,7 +631,7 @@ function CreateCreditNoteDialog({
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Internal notes..."
             />
           </div>
@@ -605,81 +639,138 @@ function CreateCreditNoteDialog({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold text-primary">Line Items</h4>
-              <button type="button" onClick={addItem} className="text-xs text-primary-brand hover:text-primary-brand">+ Add Item</button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Plus className="h-4 w-4" />}
+                onClick={addItem}
+              >
+                Add Item
+              </Button>
             </div>
-            <div className="space-y-3">
-              {formData.items.map((item, index) => (
-                <div key={index} className="grid grid-cols-[1fr_80px_80px_100px_80px_auto] gap-2 items-center">
-                  <input
-                    type="text"
-                    placeholder="Description"
-                    value={item.description}
-                    onChange={(e) => updateItem(index, "description", e.target.value)}
-                    className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="Qty"
-                    value={item.quantity}
-                    onChange={(e) => updateItem(index, "quantity", e.target.value)}
-                    className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Unit"
-                    value={item.unit}
-                    onChange={(e) => updateItem(index, "unit", e.target.value)}
-                    className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="Rate"
-                    value={item.unitPrice}
-                    onChange={(e) => updateItem(index, "unitPrice", e.target.value)}
-                    className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    placeholder="Tax %"
-                    value={item.taxRate}
-                    onChange={(e) => updateItem(index, "taxRate", e.target.value)}
-                    className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    disabled={formData.items.length <= 1}
-                    className="status-error-text hover:status-error-text disabled:opacity-50"
-                  >
-                    ✕
-                  </button>
+
+            <div className="border border-color-subtle rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-surface-alt">
+                  <tr>
+                    <th className="text-left text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-3">Description</th>
+                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Qty</th>
+                    <th className="text-left text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Unit</th>
+                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Rate</th>
+                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Tax %</th>
+                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Amount</th>
+                    <th className="w-10" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.items.map((item, index) => (
+                    <tr key={index} className="border-t border-color-subtle">
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          placeholder="Product or service..."
+                          value={item.description}
+                          onChange={(e) => updateItem(index, "description", e.target.value)}
+                          className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <input
+                          type="number"
+                          step={step}
+                          min="0"
+                          placeholder="1"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(index, "quantity", e.target.value)}
+                          className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary font-tabular-nums"
+                        />
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <select
+                          value={item.unit}
+                          onChange={(e) => updateItem(index, "unit", e.target.value)}
+                          className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary capitalize focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          {LINE_ITEM_UNITS.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-tertiary text-sm">{meta.symbol}</span>
+                          <input
+                            type="number"
+                            step={step}
+                            min="0"
+                            value={item.unitPrice}
+                            onChange={(e) => updateItem(index, "unitPrice", e.target.value)}
+                            className="w-full rounded-md border border-input-border bg-input px-7 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary font-tabular-nums"
+                          />
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={item.taxRate}
+                          onChange={(e) => updateItem(index, "taxRate", e.target.value)}
+                          className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary font-tabular-nums"
+                        />
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <span className="block text-sm text-primary font-tabular-nums text-right">
+                          {formatCurrency(lineTotal[index]?.toString() ?? "0", formData.currency)}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-1 text-center">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          disabled={formData.items.length <= 1}
+                          className="p-1 text-tertiary hover:text-error-text hover:bg-error-bg rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Remove line item"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <div className="w-48 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-secondary">Subtotal</span>
+                  <span className="text-primary font-tabular-nums">{formatCurrency(subtotal.toString(), formData.currency)}</span>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-color-subtle">
-            <button
-              type="button"
+          <div className="flex justify-end gap-3 pt-5 border-t border-color-subtle mt-2">
+            <Button
+              variant="secondary"
+              size="md"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg"
+              disabled={isLoading}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
               type="submit"
+              icon={<Plus className="h-5 w-5" />}
+              iconPosition="right"
               disabled={isLoading || !formData.customerId}
-              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover disabled:opacity-50"
             >
               {isLoading ? "Creating..." : "Create Credit Note"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
