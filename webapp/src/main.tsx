@@ -7,7 +7,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { ThemeProvider, applyInitialTheme } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/ui/ToastProvider";
-import ErrorBoundary from "./components/ErrorBoundary";
 import { initSentry } from "./lib/sentry";
 import "./index.css";
 
@@ -47,23 +46,40 @@ function AppLazy() {
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
-      <Sentry.ErrorBoundary
-        fallback={({ resetError }) => (
-          <ErrorBoundary onReset={resetError}>
-            <AppLazy />
-          </ErrorBoundary>
-        )}
-      >
-        <AuthProvider>
-          <SubscriptionProvider>
-            <ThemeProvider>
-              <ToastProvider>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <Sentry.ErrorBoundary
+                fallback={({ error, resetError }) => {
+                  const message =
+                    error instanceof Error ? error.message : String(error ?? "Unknown error");
+                  return (
+                  <div className="min-h-screen flex items-center justify-center bg-surface-alt">
+                    <div className="text-center max-w-md px-6">
+                      <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text mb-4">
+                        Something went wrong. Please try again.
+                      </div>
+                      <p className="text-xs text-tertiary font-mono mb-4">
+                        {message}
+                      </p>
+                      <button
+                        onClick={resetError}
+                        className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        Reload
+                      </button>
+                    </div>
+                  </div>
+                  );
+                }}
+              >
                 <AppLazy />
-              </ToastProvider>
-            </ThemeProvider>
-          </SubscriptionProvider>
-        </AuthProvider>
-      </Sentry.ErrorBoundary>
+              </Sentry.ErrorBoundary>
+            </ToastProvider>
+          </ThemeProvider>
+        </SubscriptionProvider>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
