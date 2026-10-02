@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Check,
   Clipboard,
+  CreditCard,
   Download,
   Mail,
   MessageCircle,
@@ -482,45 +483,69 @@ if (loading) {
       {step === "review" && (
         <div className="space-y-6">
           <section className="rounded-xl border border-color-subtle bg-surface p-4 sm:p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-secondary">Invoice for</p>
                 <h1 className="text-xl font-bold text-primary">{customer?.name || "Customer"}</h1>
               </div>
-              <span className="rounded-full bg-primary-bg px-3 py-1 text-sm font-medium text-primary-brand">Ready to send</span>
+              <span className="inline-flex items-center rounded-full bg-primary-bg px-3 py-1 text-sm font-medium text-primary-brand">
+                Ready to send
+              </span>
             </div>
-            <div className="mt-6 space-y-3 text-sm">
+
+            <div className="mt-6 space-y-1 text-sm">
               <div className="flex items-start justify-between gap-4 border-b border-color-subtle pb-3">
                 <span className="text-secondary">{description || "Work description"}</span>
                 <span className="font-medium text-primary whitespace-nowrap">{formatCurrency(calculation.total, currency)}</span>
               </div>
-              <div className="flex justify-between text-secondary">
-                <span>Quantity</span>
-                <span>{quantity}</span>
-              </div>
-              <div className="flex justify-between text-secondary">
-                <span>Price</span>
-                <span>{formatCurrency(unitPrice, currency)}</span>
-              </div>
-              <div className="flex justify-between text-secondary">
-                <span>Tax</span>
-                <span>{taxRate}%</span>
-              </div>
-              <div className="flex justify-between border-t border-color-subtle pt-3 text-base font-semibold text-primary">
-                <span>Total due</span>
-                <span>{formatCurrency(calculation.total, currency)}</span>
-              </div>
-              <div className="flex justify-between text-secondary">
-                <span>Issue date</span>
-                <span>{issueDate}</span>
-              </div>
-              <div className="flex justify-between text-secondary">
-                <span>Due date</span>
-                <span>{dueDate}</span>
-              </div>
-              {notes && <p className="rounded-lg bg-surface-alt p-3 text-secondary">{notes}</p>}
-              {paymentInstructions && <p className="rounded-lg bg-surface-alt p-3 text-secondary">{paymentInstructions}</p>}
             </div>
+
+            <table className="mt-4 w-full border-collapse text-sm font-tabular-nums">
+              <tbody>
+                <tr>
+                  <td className="py-2 text-tertiary">Quantity</td>
+                  <td className="text-right text-secondary">{quantity}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-tertiary">Price</td>
+                  <td className="text-right text-secondary">{formatCurrency(unitPrice, currency)}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-tertiary font-tabular-nums">Tax rate</td>
+                  <td className="text-right text-tertiary">
+                    {taxRate ? `${taxRate}%` : "0%"}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-tertiary">Issue date</td>
+                  <td className="text-right text-secondary">{issueDate}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 text-tertiary">Due date</td>
+                  <td className="text-right text-secondary">{dueDate}</td>
+                </tr>
+              </tbody>
+            </table>
+
+              <div className="mt-6 border-t border-color-subtle pt-4">
+              <div className="flex justify-between text-sm font-medium text-secondary">
+                <span>Subtotal</span>
+                <span className="text-right text-primary">{formatCurrency(calculation.lineSubtotal, currency)}</span>
+              </div>
+              {Number(calculation.tax) > 0 && (
+                <div className="flex justify-between text-sm font-medium text-secondary">
+                  <span>Tax</span>
+                  <span className="text-right text-primary">{formatCurrency(calculation.tax, currency)}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-color-subtle pt-3 mt-1">
+                <span className="text-base font-semibold text-secondary">Total due</span>
+                <span className="text-right text-2xl font-bold text-primary">{formatCurrency(calculation.total, currency)}</span>
+              </div>
+            </div>
+
+            {notes && <p className="mt-4 rounded-lg bg-surface-alt p-3 text-secondary">{notes}</p>}
+            {paymentInstructions && <p className="mt-2 rounded-lg bg-surface-alt p-3 text-secondary">{paymentInstructions}</p>}
           </section>
           <div className="flex flex-col-reverse gap-3 sm:flex-row">
             <button
@@ -547,15 +572,16 @@ if (loading) {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full status-success-bg status-success-text">
               <Check className="h-6 w-6" />
             </div>
-            <h1 className="mt-3 text-xl font-bold text-primary">Invoice is ready</h1>
+             <h1 className="mt-3 text-xl font-bold text-primary">Invoice is ready</h1>
             <p className="mt-1 text-sm text-secondary">Send it now or copy the secure payment link.</p>
             {paymentLink && (
               <a
                 href={paymentLink}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-surface px-4 py-2 text-sm font-medium text-primary-brand ring-1 ring-primary-200 hover:bg-primary-bg"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-action px-6 py-3 text-sm font-semibold text-on-primary shadow-md hover:bg-primary-hover hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
               >
+                <CreditCard className="h-5 w-5" />
                 Open payment page
               </a>
             )}

@@ -652,25 +652,25 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
   const isOverdue = isOverdueStatus(invoice.status, invoice.due_date);
   return (
     <div className="bg-surface rounded-xl border border-color-subtle p-8">
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-primary">
+          <h2 className="text-2xl font-bold text-primary">
             {invoice.invoice_number || "Draft Invoice"}
           </h2>
+          <InvoiceStatus status={invoice.status} isOverdue={isOverdue} showIcon className="mt-1" />
         </div>
-        <InvoiceStatus status={invoice.status} isOverdue={isOverdue} showIcon />
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-color-subtle">
-              <th className="text-left text-xs font-medium text-secondary uppercase py-2">#</th>
-              <th className="text-left text-xs font-medium text-secondary uppercase py-2">Description</th>
-              <th className="text-right text-xs font-medium text-secondary uppercase py-2">Qty</th>
-              <th className="text-right text-xs font-medium text-secondary uppercase py-2">Rate</th>
-              <th className="text-right text-xs font-medium text-secondary uppercase py-2">Tax</th>
-              <th className="text-right text-xs font-medium text-secondary uppercase py-2">Amount</th>
+              <th className="text-left text-xs font-semibold text-tertiary uppercase py-2">#</th>
+              <th className="text-left text-xs font-semibold text-tertiary uppercase py-2">Description</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Qty</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Rate</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Tax Rate</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -678,12 +678,14 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
               const lineTotal = new Decimal(item.quantity || 1).mul(item.unit_price || 0);
               return (
                 <tr key={item.id || i} className="border-b border-color-subtle">
-                  <td className="py-2 text-sm text-secondary">{i + 1}</td>
+                  <td className="py-2 text-sm text-tertiary font-tabular-nums">{i + 1}</td>
                   <td className="py-2 text-sm text-primary">{item.description || "—"}</td>
-                  <td className="py-2 text-right text-sm text-secondary">{item.quantity} {item.unit}</td>
-                  <td className="py-2 text-right text-sm text-secondary">{formatCurrency(item.unit_price, invoice.currency)}</td>
-                  <td className="py-2 text-right text-sm text-secondary">{Number(item.tax_rate) > 0 ? `${Number(new Decimal(item.tax_rate).mul(100)).toFixed(2)}%` : "-"}</td>
-                  <td className="py-2 text-right text-sm font-medium text-primary">{formatCurrency(lineTotal, invoice.currency)}</td>
+                  <td className="py-2 text-sm text-secondary text-right font-tabular-nums">{item.quantity} {item.unit}</td>
+                  <td className="py-2 text-sm text-secondary text-right font-tabular-nums">{formatCurrency(item.unit_price, invoice.currency)}</td>
+                  <td className="py-2 text-sm text-tertiary text-right font-tabular-nums">
+                    {Number(item.tax_rate) > 0 ? `${new Decimal(item.tax_rate).mul(100).toFixed(2)}%` : "0%"}
+                  </td>
+                  <td className="py-2 text-right text-sm font-medium text-primary font-tabular-nums">{formatCurrency(lineTotal, invoice.currency)}</td>
                 </tr>
               );
             })}
@@ -692,50 +694,60 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
       </div>
 
       <div className="mt-6 flex justify-end">
-        <table className="w-64 border-collapse">
+        <table className="w-72 border-collapse font-tabular-nums">
           <tbody>
             <tr>
-              <td className="py-2 text-sm text-secondary">Subtotal</td>
-              <td className="py-2 text-right text-sm text-primary">{formatCurrency(invoice.subtotal, invoice.currency)}</td>
+              <td className="py-2.5 text-sm text-secondary">Subtotal</td>
+              <td className="py-2.5 text-right text-sm text-primary">{formatCurrency(invoice.subtotal, invoice.currency)}</td>
             </tr>
             {Number(invoice.discount_total) > 0 && (
               <tr>
-                <td className="py-2 text-sm text-secondary">Discount</td>
-                <td className="py-2 text-right text-sm text-primary">-{formatCurrency(invoice.discount_total, invoice.currency)}</td>
+                <td className="py-2.5 text-sm text-secondary">Discount</td>
+                <td className="py-2.5 text-right text-sm text-success-text">-{formatCurrency(invoice.discount_total, invoice.currency)}</td>
               </tr>
             )}
-            {Number(invoice.tax_total) > 0 && (
-              <tr>
-                <td className="py-2 text-sm text-secondary">Tax</td>
-                <td className="py-2 text-right text-sm text-primary">{formatCurrency(invoice.tax_total, invoice.currency)}</td>
-              </tr>
-            )}
+            <tr>
+              <td className="py-2.5 text-sm text-secondary">Tax</td>
+              <td className="py-2.5 text-right text-sm text-primary">
+                {Number(invoice.tax_total) > 0
+                  ? formatCurrency(invoice.tax_total, invoice.currency)
+                  : formatCurrency(0, invoice.currency)}
+              </td>
+            </tr>
             {Number(invoice.fee_total) > 0 && (
               <tr>
-                <td className="py-2 text-sm text-secondary">Fees</td>
-                <td className="py-2 text-right text-sm text-primary">{formatCurrency(invoice.fee_total, invoice.currency)}</td>
+                <td className="py-2.5 text-sm text-secondary">Fees</td>
+                <td className="py-2.5 text-right text-sm text-primary">{formatCurrency(invoice.fee_total, invoice.currency)}</td>
               </tr>
             )}
-            <tr className="border-t border-color-subtle">
-              <td className="py-3 text-lg font-semibold text-primary">Total</td>
-              <td className="py-3 text-right text-lg font-bold text-primary">{formatCurrency(invoice.total, invoice.currency)}</td>
+            <tr className="border-t-2 border-color-subtle pt-3">
+              <td className="pt-3 text-lg font-semibold text-secondary">Total</td>
+              <td className="pt-3 text-right text-2xl font-bold text-primary">{formatCurrency(invoice.total, invoice.currency)}</td>
+            </tr>
+            <tr className="border-t border-color-subtle pt-2.5">
+              <td className="pt-2.5 text-base font-semibold text-primary-brand">Amount Due</td>
+              <td className="pt-2.5 text-right text-2xl font-bold text-primary-brand">{formatCurrency(invoice.amount_due, invoice.currency)}</td>
             </tr>
             <tr>
               <td className="py-2 text-sm text-secondary">Paid</td>
               <td className="py-2 text-right text-sm text-primary">{formatCurrency(invoice.amount_paid, invoice.currency)}</td>
             </tr>
-            <tr>
-              <td className="py-2 text-sm font-semibold text-primary">Amount Due</td>
-              <td className="py-2 text-right text-lg font-bold text-primary-brand">{formatCurrency(invoice.amount_due, invoice.currency)}</td>
-            </tr>
           </tbody>
         </table>
       </div>
 
+      <div className="mt-4 flex justify-between items-center pt-4 border-t border-color-subtle">
+        <div className="flex gap-6">
+          <InfoRow label="Issue date" value={invoice.issue_date ? formatDate(invoice.issue_date) : "—"} />
+          <InfoRow label="Due date" value={invoice.due_date ? formatDate(invoice.due_date) : "—"} />
+        </div>
+        <InfoRow label="Currency" value={invoice.currency} />
+      </div>
+
       {invoice.notes && <p className="mt-6 text-sm text-secondary whitespace-pre-line">{invoice.notes}</p>}
       {invoice.payment_instructions && (
-        <div className="mt-4 bg-surface-alt rounded-lg p-4">
-          <h4 className="text-xs font-semibold text-secondary uppercase mb-1">Payment Instructions</h4>
+        <div className="mt-4 rounded-lg bg-surface-alt p-4">
+          <h4 className="text-xs font-semibold text-tertiary uppercase mb-1">Payment Instructions</h4>
           <p className="text-sm text-secondary whitespace-pre-line">{invoice.payment_instructions}</p>
         </div>
       )}

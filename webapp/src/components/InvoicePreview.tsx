@@ -118,23 +118,23 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
   const hasAmountPaid = new Decimal(invoice.amountPaid ?? 0).gt(0);
 
   return (
-    <div className="invoice-preview bg-surface border border-color rounded-xl shadow-md font-[system-ui,-apple-system,BlinkMacSystemFont,Segoe_UI,Roboto,Helvetica,Arial,sans-serif]">
+    <div className="invoice-preview bg-surface border border-color rounded-xl shadow-sm font-[system-ui,-apple-system,BlinkMacSystemFont,Segoe_UI,Roboto,Helvetica,Arial,sans-serif]">
       {/* Header: business + status */}
-      <div className="flex justify-between items-start mb-8 pb-6 border-b border-color">
+      <div className="flex items-start justify-between gap-4">
         <div>
           {invoice.businessLogo ? (
-            <img src={invoice.businessLogo} alt={invoice.businessName} className="h-12 w-auto" />
+            <img src={invoice.businessLogo} alt={invoice.businessName} className="h-10 w-auto" />
           ) : (
             <h2 className="text-2xl font-bold text-primary">{invoice.businessName || "Your Business"}</h2>
           )}
-          {invoice.businessEmail && <p className="text-sm text-secondary">{invoice.businessEmail}</p>}
+          {invoice.businessEmail && <p className="mt-1 text-sm text-secondary">{invoice.businessEmail}</p>}
           {invoice.businessPhone && <p className="text-sm text-secondary">{invoice.businessPhone}</p>}
           {invoice.businessWebsite && <p className="text-sm text-tertiary">{invoice.businessWebsite}</p>}
           {invoice.businessAddress && (
-            <p className="text-sm text-tertiary mt-1 whitespace-pre-line">{invoice.businessAddress}</p>
+            <p className="mt-1 text-sm text-tertiary whitespace-pre-line">{invoice.businessAddress}</p>
           )}
         </div>
-        <div className="text-right">
+        <div className="flex flex-col items-end gap-1">
           <InvoiceStatus
             status={invoice.status ?? "draft"}
             isOverdue={overdue}
@@ -142,111 +142,113 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
             size="sm"
           />
           {invoice.invoiceNumber && (
-            <p className="mt-2 text-lg font-semibold text-primary">#{invoice.invoiceNumber}</p>
+            <p className="text-xl font-bold text-primary">#{invoice.invoiceNumber}</p>
           )}
         </div>
       </div>
 
       {/* Invoice details + bill to */}
-      <div className="grid grid-cols-2 gap-8 mb-8">
+      <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-2">Bill To</h3>
+          <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider">Bill To</h3>
           {invoice.customerName ? (
-            <>
-              <p className="text-base font-semibold text-primary">{invoice.customerName}</p>
-              {invoice.customerCompanyName && <p className="text-sm text-tertiary">{invoice.customerCompanyName}</p>}
-              {invoice.customerEmail && <p className="text-sm text-tertiary">{invoice.customerEmail}</p>}
+            <div className="mt-2 space-y-0.5">
+              <p className="font-semibold text-primary">{invoice.customerName}</p>
+              {invoice.customerCompanyName && <p className="text-sm text-secondary">{invoice.customerCompanyName}</p>}
+              {invoice.customerEmail && <p className="text-sm text-secondary">{invoice.customerEmail}</p>}
               {invoice.customerAddress && (
-                <p className="text-sm text-tertiary mt-1 whitespace-pre-line">{invoice.customerAddress}</p>
+                <p className="text-sm text-secondary whitespace-pre-line">{invoice.customerAddress}</p>
               )}
-            </>
+            </div>
           ) : (
-            <p className="text-sm text-tertiary italic">No customer selected</p>
+            <p className="mt-2 text-sm italic text-tertiary">No customer selected</p>
           )}
         </div>
-        <div className="text-right">
-          <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-2">Invoice Details</h3>
-          <div className="space-y-1 text-sm">
+        <div>
+          <h3 className="text-xs font-semibold text-tertiary uppercase tracking-wider">Invoice Details</h3>
+          <div className="mt-2 space-y-1.5 text-sm">
             {invoice.invoiceNumber && (
-              <p className="text-secondary">
-                <span className="text-tertiary">Invoice #:</span>{" "}
-                <span className="text-primary font-medium">{invoice.invoiceNumber}</span>
-              </p>
+              <div className="flex justify-between gap-4">
+                <span className="text-tertiary">Invoice #:</span>
+                <span className="font-medium text-primary">{invoice.invoiceNumber}</span>
+              </div>
             )}
             {invoice.issueDate && (
-              <p className="text-secondary">
-                <span className="text-tertiary">Issue date:</span>{" "}
-                <span className="text-primary">{formatDate(invoice.issueDate)}</span>
-              </p>
+              <div className="flex justify-between gap-4">
+                <span className="text-tertiary">Issue date:</span>
+                <span className="font-medium text-primary">{formatDate(invoice.issueDate)}</span>
+              </div>
             )}
             {invoice.dueDate && (
-              <p className="text-secondary">
-                <span className="text-tertiary">Due date:</span>{" "}
-                <span className="text-primary">{formatDate(invoice.dueDate)}</span>
-              </p>
+              <div className="flex justify-between gap-4">
+                <span className="text-tertiary">Due date:</span>
+                <span className="font-medium text-primary">{formatDate(invoice.dueDate)}</span>
+              </div>
             )}
             {invoice.terms && (
-              <p className="text-secondary">
-                <span className="text-tertiary">Terms:</span>{" "}
-                <span className="text-primary">{invoice.terms}</span>
-              </p>
+              <div className="flex justify-between gap-4">
+                <span className="text-tertiary">Terms:</span>
+                <span className="font-medium text-primary">{invoice.terms}</span>
+              </div>
             )}
-            <p className="text-secondary">
-              <span className="text-tertiary">Currency:</span>{" "}
-              <span className="text-primary">{cur}</span>
-            </p>
+            <div className="flex justify-between gap-4">
+              <span className="text-tertiary">Currency:</span>
+              <span className="font-medium text-primary">{cur}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Line items table */}
-      <table className="w-full border-collapse mb-6">
-        <thead>
-          <tr className="border-b border-color">
-            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3.5 px-3">#</th>
-            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Description</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Qty</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Unit Price</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Tax</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {invoice.items.map((item, i) => {
-            const lineTotal = lineTotals[i];
-            const hasRate = new Decimal(item.unitPrice || 0).gt(0);
-            return (
-              <tr key={i} className="border-b border-color-subtle odd:bg-surface even:bg-surface">
-                <td className="py-3 px-3 text-sm text-tertiary font-tabular-nums">{i + 1}</td>
-                <td className="py-3 px-3 text-sm text-primary max-w-xs break-words">
-                  {item.description || <span className="text-tertiary italic">Untitled item</span>}
-                </td>
-                <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
-                  {fmtQuantity(item.quantity)} {item.unit}
-                </td>
-                <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
-                  {hasRate ? fmtNumber(item.unitPrice, cur) : ""}
-                </td>
-                <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
-                  {fmtRate(item.taxRate)}
-                </td>
-                <td className="py-3 px-3 text-right text-sm font-medium text-primary font-tabular-nums">{lineTotal}</td>
-              </tr>
-            );
-          })}
-          {invoice.items.length === 0 && (
-            <tr>
-              <td colSpan={6} className="py-8 text-center text-sm text-tertiary">
-                No line items added yet
-              </td>
+      <div className="mt-6 overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-color">
+              <th className="text-left text-xs font-semibold text-tertiary uppercase py-3 px-3">#</th>
+              <th className="text-left text-xs font-semibold text-tertiary uppercase py-3 px-3">Description</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Qty</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Unit Price</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Tax Rate</th>
+              <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Amount</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {invoice.items.map((item, i) => {
+              const lineTotal = lineTotals[i];
+              const hasRate = new Decimal(item.unitPrice || 0).gt(0);
+              return (
+                <tr key={i} className="border-b border-color-subtle">
+                  <td className="py-3 px-3 text-sm text-tertiary font-tabular-nums">{i + 1}</td>
+                  <td className="py-3 px-3 text-sm text-primary max-w-xs break-words">
+                    {item.description || <span className="italic text-tertiary">Untitled item</span>}
+                  </td>
+                  <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
+                    {fmtQuantity(item.quantity)} {item.unit}
+                  </td>
+                  <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
+                    {hasRate ? fmtNumber(item.unitPrice, cur) : ""}
+                  </td>
+                  <td className="py-3 px-3 text-sm text-tertiary text-right font-tabular-nums">
+                    {fmtRate(item.taxRate)}
+                  </td>
+                  <td className="py-3 px-3 text-right text-sm font-medium text-primary font-tabular-nums">{lineTotal}</td>
+                </tr>
+              );
+            })}
+            {invoice.items.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-10 text-center text-sm text-tertiary">
+                  No line items added yet
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Fees */}
       {invoice.fees.length > 0 && (
-        <table className="w-full border-collapse mb-2">
+        <table className="mt-2 w-full border-collapse">
           <tbody>
             {invoice.fees.map((fee, i) => (
               <tr key={i} className="border-b border-color-subtle">
@@ -261,48 +263,48 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
       )}
 
       {/* Totals */}
-      <div className="flex justify-end mb-8">
-        <table className="w-64 border-collapse font-tabular-nums">
+      <div className="mt-8 flex justify-end">
+        <table className="w-72 border-collapse font-tabular-nums">
           <tbody>
             <tr>
-              <td className="py-2 text-sm text-secondary">Subtotal</td>
-              <td className="py-2 text-right text-sm text-primary">{fmtNumber(invoice.subtotal, cur)}</td>
+              <td className="py-2.5 text-sm text-secondary">Subtotal</td>
+              <td className="py-2.5 text-right text-sm text-primary">{fmtNumber(invoice.subtotal, cur)}</td>
             </tr>
             {Number(invoice.discountTotal) > 0 && (
               <tr>
-                <td className="py-2 text-sm text-secondary">Discount</td>
-                <td className="py-2 text-right text-sm text-success-text">−{fmtNumber(invoice.discountTotal, cur)}</td>
+                <td className="py-2.5 text-sm text-secondary">Discount</td>
+                <td className="py-2.5 text-right text-sm text-success-text">−{fmtNumber(invoice.discountTotal, cur)}</td>
               </tr>
             )}
             <tr>
-              <td className="py-2 text-sm text-secondary">Tax</td>
-              <td className="py-2 text-right text-sm text-primary">
+              <td className="py-2.5 text-sm text-secondary">Tax</td>
+              <td className="py-2.5 text-right text-sm text-primary">
                 {Number(invoice.taxTotal) > 0
                   ? fmtNumber(invoice.taxTotal, cur)
-                  : `0.00 ${cur}`}
+                  : fmtNumber(0, cur)}
               </td>
             </tr>
             {Number(invoice.feeTotal) > 0 && (
               <tr>
-                <td className="py-2 text-sm text-secondary">Fees</td>
-                <td className="py-2 text-right text-sm text-primary">{fmtNumber(invoice.feeTotal, cur)}</td>
+                <td className="py-2.5 text-sm text-secondary">Fees</td>
+                <td className="py-2.5 text-right text-sm text-primary">{fmtNumber(invoice.feeTotal, cur)}</td>
               </tr>
             )}
-            <tr className="border-t border-color pt-2">
-              <td className="py-3 text-lg font-semibold text-primary">Total</td>
-              <td className="py-3 text-right text-xl font-bold text-primary">{fmtNumber(invoice.total, cur)}</td>
+            <tr className="border-t-2 border-color pt-3">
+              <td className="pt-3 text-lg font-semibold text-secondary">Total</td>
+              <td className="pt-3 text-right text-2xl font-bold text-primary">{fmtNumber(invoice.total, cur)}</td>
             </tr>
             {hasAmountPaid && (
               <>
                 <tr>
-                  <td className="py-2 text-sm text-secondary">Paid</td>
-                  <td className="py-2 text-right text-sm text-success-text font-tabular-nums">
+                  <td className="py-2.5 text-sm text-secondary">Paid</td>
+                  <td className="py-2.5 text-right text-sm text-success-text font-tabular-nums">
                     +{fmtNumber(invoice.amountPaid, cur)}
                   </td>
                 </tr>
-                <tr>
-                  <td className="py-2 text-base font-semibold text-primary-brand">Amount Due</td>
-                  <td className="py-2 text-right text-xl font-bold text-primary-brand">
+                <tr className="border-t border-color pt-2.5">
+                  <td className="pt-2.5 text-base font-semibold text-primary-brand">Amount Due</td>
+                  <td className="pt-2.5 text-right text-2xl font-bold text-primary-brand">
                     {fmtNumber(invoice.amountDue, cur)}
                   </td>
                 </tr>
@@ -314,13 +316,13 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
 
       {/* Notes, terms, payment instructions */}
       {invoice.notes && (
-        <p className="text-sm text-secondary mb-4 whitespace-pre-line">{invoice.notes}</p>
+        <p className="mt-6 text-sm text-secondary whitespace-pre-line">{invoice.notes}</p>
       )}
       {invoice.terms && (
-        <p className="text-xs text-tertiary mb-4 whitespace-pre-line">{invoice.terms}</p>
+        <p className="mt-2 text-xs text-tertiary whitespace-pre-line">{invoice.terms}</p>
       )}
       {invoice.paymentInstructions && (
-        <div className="bg-surface-alt rounded-lg p-4 mt-6">
+        <div className="mt-6 rounded-lg bg-surface-alt p-4">
           <h4 className="text-xs font-semibold text-tertiary uppercase mb-2">Payment Instructions</h4>
           <p className="text-sm text-secondary whitespace-pre-line">{invoice.paymentInstructions}</p>
         </div>
@@ -367,14 +369,16 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
       {/* Payment link / CTA */}
       {invoice.paymentLink && (
         <div className="mt-10 border-t border-color pt-6 text-center">
+          <div className="mb-2 text-2xl font-bold text-primary">{fmtNumber(invoice.amountDue, cur)}</div>
+          <p className="mb-4 text-sm text-tertiary">Total amount due</p>
           <a
             href={invoice.paymentLink}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-action px-6 py-3 text-base font-semibold text-on-primary shadow-md hover:bg-primary-hover hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-action px-8 py-3.5 text-base font-semibold text-on-primary shadow-md hover:bg-primary-hover hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
           >
             <CreditCard className="h-5 w-5" />
-            Pay {fmtNumber(invoice.amountDue, cur)} now
+            Pay now
           </a>
-          <p className="mt-2 text-xs text-tertiary">
+          <p className="mt-3 text-xs text-tertiary">
             Secure online payment — no account required
           </p>
         </div>
