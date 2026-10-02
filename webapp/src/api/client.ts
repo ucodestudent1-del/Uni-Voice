@@ -33,7 +33,8 @@ import type {
   ApiClientsReport,
   ApiTaxSummaryReport,
   ApiProfitLossReport,
-  ApiAgingReport,
+   ApiAgingReport,
+  ApiPaymentMetrics,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -77,6 +78,49 @@ declare module "axios" {
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
 
+type CacheEntry = {
+  data: unknown;
+  expiresAt: number;
+};
+
+const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const responseCache = new Map<string, CacheEntry>();
+
+function cacheKey(url: string, params: Record<string, unknown> | undefined): string {
+  if (!params) return url;
+  const entries = Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null)
+    .sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length === 0) return url;
+  const qs = entries.map(([k, v]) => `${k}=${String(v)}`).join("&");
+  return `${url}?${qs}`;
+}
+
+export function getCacheKey(url: string, params?: Record<string, unknown>): string {
+  return cacheKey(url, params);
+}
+
+export function invalidateCache(pattern?: string): void {
+  if (!pattern) {
+    responseCache.clear();
+    return;
+  }
+  const prefix = pattern.replace(/\*$/, "");
+  for (const key of responseCache.keys()) {
+    if (key.startsWith(prefix)) {
+      responseCache.delete(key);
+    }
+  }
+}
+
+export function invalidateCacheByKey(url: string): void {
+  for (const key of responseCache.keys()) {
+    if (key.startsWith(url)) {
+      responseCache.delete(key);
+    }
+  }
+}
+
 export const api = axios.create({
   baseURL: API_BASE,
 });
@@ -111,9 +155,32 @@ api.interceptors.response.use(
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
-    return Promise.reject(error);
-  }
+  return Promise.reject(error);
+}
 );
+
+interface CachedGetOptions {
+  ttlMs?: number;
+  skipCache?: boolean;
+}
+
+export async function cachedGet(
+  url: string,
+  params?: Record<string, unknown>,
+  options?: CachedGetOptions
+): Promise<any> {
+  const key = cacheKey(url, params);
+  const ttl = options?.ttlMs ?? CACHE_TTL_MS;
+  if (!options?.skipCache) {
+    const cached = responseCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+  }
+  const res = await api.get(url, { params });
+  responseCache.set(key, { data: res.data, expiresAt: Date.now() + ttl });
+  return res.data;
+}
 
 export async function login(email: string, password: string) {
   const res = await api.post("/auth/login", { email, password });
@@ -193,47 +260,67 @@ export async function getStripeConfig() {
 }
 
 export async function getInvoices(params?: { status?: string; customerId?: string; search?: string; limit?: number; offset?: number }) {
-  const res = await api.get("/invoices", { params });
-  return res.data;
+  const res = await cachedGet("/invoices", params as Record<string, unknown> | undefined, { ttlMs: 30 * 1000 });
+  return res;
 }
 
 export async function getInvoice(id: string) {
-  const res = await api.get(`/invoices/${id}`);
-  return res.data;
+  const res = await cachedGet(`/invoices/${id}`, undefined, { ttlMs: 15 * 1000 });
+  return res;
 }
 
 export async function createInvoice(data: any) {
   const res = await api.post("/invoices", data);
+  invalidateCache("/invoices?");
+  invalidateCacheByKey("/invoices/");
   return res.data;
 }
 
 export async function updateInvoice(id: string, data: any) {
   const res = await api.patch(`/invoices/${id}`, data);
+  invalidateCacheByKey("/invoices");
   return res.data;
 }
 
 export async function setInvoiceItems(id: string, items: any[]) {
   const res = await api.put(`/invoices/${id}/items`, items);
+  invalidateCacheByKey(`/invoices/${id}`);
   return res.data;
 }
 
 export async function setInvoiceFees(id: string, fees: any[]) {
   const res = await api.put(`/invoices/${id}/fees`, fees);
+  invalidateCacheByKey(`/invoices/${id}`);
   return res.data;
 }
 
-export async function finalizeInvoice(id: string) {
+export interface FinalizeInvoiceResult {
+  invoiceNumber: string;
+  publicToken?: string | null;
+}
+
+export async function finalizeInvoice(id: string): Promise<FinalizeInvoiceResult> {
   const res = await api.post(`/invoices/${id}/finalize`);
+  invalidateCacheByKey(`/invoices/${id}`);
+  invalidateCache("/invoices?");
   return res.data;
 }
 
-export async function sendInvoice(id: string) {
+export interface SendInvoiceResult {
+  publicToken: string;
+  status: string;
+}
+
+export async function sendInvoice(id: string): Promise<SendInvoiceResult> {
   const res = await api.post(`/invoices/${id}/send`);
+  invalidateCacheByKey(`/invoices/${id}`);
+  invalidateCache("/invoices?");
   return res.data;
 }
 
 export async function duplicateInvoice(id: string) {
   const res = await api.post(`/invoices/${id}/duplicate`);
+  invalidateCache("/invoices?");
   return res.data;
 }
 
@@ -278,8 +365,8 @@ export async function createPaymentIntent(id: string) {
 }
 
 export async function getDashboardData() {
-  const res = await api.get("/dashboard");
-  return res.data;
+  const res = await cachedGet("/dashboard", undefined, { ttlMs: 60 * 1000 });
+  return res;
 }
 
 export async function payInvoicePublic(token: string, data: { amount: number; provider?: string; idempotencyKey?: string }) {
@@ -304,8 +391,8 @@ export interface CustomerSearchParams {
 }
 
 export async function getCustomers(params?: CustomerSearchParams) {
-  const res = await api.get("/customers", { params });
-  return res.data;
+  const res = await cachedGet("/customers", params as Record<string, unknown> | undefined, { ttlMs: 60 * 1000 });
+  return res;
 }
 
 export async function createCustomer(data: any) {
@@ -376,8 +463,8 @@ export function buildCustomerSearchParams(params: CustomerSearchParams): Record<
 }
 
 export async function getProducts(params?: { limit?: number; offset?: number }) {
-  const res = await api.get("/products", { params });
-  return res.data;
+  const res = await cachedGet("/products", params as Record<string, unknown> | undefined, { ttlMs: 60 * 1000 });
+  return res;
 }
 
 export async function createProduct(data: any) {
@@ -1162,12 +1249,17 @@ export async function recordDepositPayment(id: string, data: { amount: number; p
 // ============================================================================
 
 export async function getEnhancedDashboard() {
-  const res = await api.get("/reports/dashboard");
-  return res.data;
+  const res = await cachedGet("/reports/dashboard", undefined, { ttlMs: 45 * 1000 });
+  return res;
 }
 
-export async function getPaymentMetricsReport() {
-  return null;
+export async function getPaymentMetricsReport(): Promise<ApiPaymentMetrics | null> {
+  try {
+    const res = await api.get("/reports/payment-metrics");
+    return res.data;
+  } catch {
+    return null;
+  }
 }
 
 export async function getVolumeTrendReport(params?: { period?: "day" | "week" | "month"; months?: number }) {

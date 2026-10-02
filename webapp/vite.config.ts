@@ -36,6 +36,9 @@ export default defineConfig({
             if (id.includes("lucide-react")) {
               return "icons";
             }
+            if (id.includes("@sentry") || id.includes("rrweb")) {
+              return "monitoring";
+            }
             return "vendor";
           }
         },
@@ -48,5 +51,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["react", "react-dom", "axios", "react-router-dom"],
+    exclude: ["recharts", "@sentry/react"],
   },
 });

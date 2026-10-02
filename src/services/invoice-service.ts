@@ -353,6 +353,7 @@ export class InvoiceService {
     const fresh = await invoiceRepository.findById(businessId, id);
     const calc = await this.recalculate(fresh);
     await this.persistCalculationResults(id, fresh, calc);
+    invalidateInvoiceDetailCache(businessId, id);
     await invoiceRepository.recordEvent(id, { eventType: "line_item_updated", actorId: userId });
   }
 
@@ -363,13 +364,83 @@ export class InvoiceService {
     const fresh = await invoiceRepository.findById(businessId, id);
     const calc = await this.recalculate(fresh);
     await this.persistCalculationResults(id, fresh, calc);
+    invalidateInvoiceDetailCache(businessId, id);
     await invoiceRepository.recordEvent(id, { eventType: "fee_added", actorId: userId });
   }
 
-  async finalize(businessId: string, id: string, userId?: string): Promise<{ invoiceNumber: string }> {
+  async updateDraftWithItems(
+    businessId: string,
+    id: string,
+    input: Partial<CreateInvoiceDraftInput>,
+    userId?: string
+  ): Promise<string> {
     const invoice = await invoiceRepository.findById(businessId, id);
+    if (invoice.isFinalized) throw new BusinessLogicError("Cannot modify a finalized invoice");
+
+    const now = new Date().toISOString();
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      const metaInput: Record<string, unknown> = {
+        customer_id: input.customerId,
+        currency: input.currency,
+        issue_date: input.issueDate instanceof Date ? input.issueDate.toISOString() : input.issueDate ?? null,
+        due_date: input.dueDate instanceof Date ? input.dueDate.toISOString() : input.dueDate ?? null,
+        notes: input.notes,
+        terms: input.terms,
+        payment_instructions: input.paymentInstructions,
+        template_id: input.templateId,
+        deposit_amount: input.depositAmount,
+        deposit_type: input.depositType,
+        deposit_due_date: input.depositDueDate instanceof Date ? input.depositDueDate.toISOString() : input.depositDueDate,
+        deposit_payment_purpose: input.depositPaymentPurpose,
+        late_fee_type: input.lateFeeType,
+        late_fee_value: input.lateFeeValue,
+      };
+
+      const updatedInvoice = await invoiceRepository.update(businessId, id, metaInput, client);
+
+      let needsRecalc = false;
+      if (input.items !== undefined) {
+        const itemsWithSnapshot = await this.applyProductSnapshots(businessId, input.items);
+        await invoiceRepository.setItems(businessId, id, itemsWithSnapshot as any, client, now);
+        needsRecalc = true;
+      }
+      if (input.fees !== undefined) {
+        await invoiceRepository.setFees(businessId, id, input.fees as any, client, now);
+        needsRecalc = true;
+      }
+
+      if (needsRecalc) {
+        const fresh = await invoiceRepository.findById(businessId, id);
+        const calc = await this.recalculate(fresh);
+        await this.persistCalculationResults(id, fresh, calc, client);
+      }
+
+      await invoiceRepository.clearPdfCache(id, client);
+      await invoiceRepository.recordEvent(id, {
+        eventType: "updated", actorId: userId, actorType: userId ? "user" : "system",
+        metadata: { fields: Object.keys(input) },
+      }, client);
+
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    invalidateInvoiceDetailCache(businessId, id);
+    return id;
+  }
+
+  async finalize(businessId: string, id: string, userId?: string): Promise<{ invoiceNumber: string; publicToken?: string | null }> {
+    const invoice = await invoiceRepository.findById(businessId, id);
+    const existingNumber = invoice.invoiceNumber ?? "";
     if (invoice.isFinalized) {
-      return { invoiceNumber: invoice.invoiceNumber ?? "" };
+      return { invoiceNumber: existingNumber, publicToken: invoice.publicToken };
     }
     if (!invoice.customerId) throw new BusinessLogicError("Cannot finalize an invoice without a customer");
 
@@ -415,7 +486,7 @@ export class InvoiceService {
     invalidateReportsCache(businessId);
     invalidateInvoiceDetailCache(businessId, id);
     await invoiceRepository.clearPdfCache(id);
-    return { invoiceNumber: invoice.invoiceNumber ?? generatedNumber };
+    return { invoiceNumber: invoice.invoiceNumber ?? generatedNumber, publicToken: invoice.publicToken };
   }
 
   private toTemplateItems(items: RepoInvoice["items"]): TemplateLineItem[] {
@@ -486,7 +557,7 @@ export class InvoiceService {
     );
   }
 
-  async send(businessId: string, id: string, userId?: string): Promise<void> {
+  async send(businessId: string, id: string, userId?: string): Promise<{ publicToken: string; status: string }> {
     const invoice = await invoiceRepository.findById(businessId, id);
     if (!invoice.isFinalized) throw new BusinessLogicError("Cannot send an invoice that is not finalized");
 
@@ -519,6 +590,9 @@ export class InvoiceService {
     await invoiceRepository.setStatus(id, "sent", { sentAt: new Date() });
     await emailService.sendInvoiceEmail(emailData);
     await invoiceRepository.recordEvent(id, { eventType: "sent", actorId: userId });
+    invalidateInvoiceDetailCache(businessId, id);
+    invalidateReportsCache(businessId);
+    return { publicToken: token, status: "sent" };
   }
 
   async recordView(token: string): Promise<string> {

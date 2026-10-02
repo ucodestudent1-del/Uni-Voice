@@ -1024,8 +1024,15 @@ app.get("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
 
 app.patch("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const id = await invoiceService.updateDraft(req.user!.businessId, req.params.id, req.body, req.user.id);
-  res.json({ invoiceId: id });
+  const body = req.body ?? {};
+  const hasItemsOrFees = body.items !== undefined || body.fees !== undefined;
+  if (hasItemsOrFees) {
+    const id = await invoiceService.updateDraftWithItems(req.user!.businessId, req.params.id, body, req.user.id);
+    res.json({ invoiceId: id });
+  } else {
+    const id = await invoiceService.updateDraft(req.user!.businessId, req.params.id, body, req.user.id);
+    res.json({ invoiceId: id });
+  }
 });
 
 app.put("/api/invoices/:id/items", requireAuth, async (req: AuthRequest, res) => {
@@ -1049,8 +1056,8 @@ app.post("/api/invoices/:id/finalize", requireAuth, async (req: AuthRequest, res
 
 app.post("/api/invoices/:id/send", requireAuth, requireEntitlement("reminders.automated"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceService.send(req.user!.businessId, req.params.id, req.user.id);
-  res.json({ ok: true });
+  const result = await invoiceService.send(req.user!.businessId, req.params.id, req.user.id);
+  res.json(result);
 });
 
 app.post("/api/invoices/:id/send-reminder", requireAuth, requireEntitlement("reminders.automated"), async (req: AuthRequest, res) => {
@@ -1429,6 +1436,19 @@ app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) 
   if (cached) return res.json(cached);
   const months = Math.min(Number(req.query.months ?? 3), 12);
   const result = await invoiceRepository.getVolumeTrend(req.user!.businessId, months);
+  reportsCache.set(cacheKey, result);
+  res.json(result);
+});
+
+app.get("/api/reports/payment-metrics", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cacheKey = `payment-metrics:${req.user!.businessId}`;
+  const cached = reportsCache.get(cacheKey);
+  if (cached) return res.json(cached);
+  const monthStart = new Date();
+  monthStart.setHours(0, 0, 0, 0);
+  monthStart.setDate(1);
+  const result = await invoiceRepository.getPaymentMetrics(req.user!.businessId, monthStart);
   reportsCache.set(cacheKey, result);
   res.json(result);
 });

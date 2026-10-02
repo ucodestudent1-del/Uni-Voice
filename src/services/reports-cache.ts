@@ -9,6 +9,7 @@ export function invalidateReportsCache(businessId: string): void {
   reportsCache.delete(`dashboard:${businessId}`);
   reportsCache.delete(`dashboard-summary:${businessId}`);
   reportsCache.delete(`aging:${businessId}`);
+  reportsCache.delete(`payment-metrics:${businessId}`);
   invalidateReportCacheByPattern(`revenue-report:${businessId}:*`);
   invalidateReportCacheByPattern(`invoices-report:${businessId}:*`);
   invalidateReportCacheByPattern(`payments-report:${businessId}:*`);

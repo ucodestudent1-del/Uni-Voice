@@ -205,39 +205,42 @@ export class InvoiceRepository {
     );
   }
 
-  async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[]): Promise<void> {
-    const client = await getClient();
-    const now = new Date().toISOString();
+async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[], client?: any, nowOverride?: string): Promise<void> {
+    const ownsClient = !client;
+    const c = client ?? (await getClient());
+    const now = nowOverride ?? new Date().toISOString();
     try {
-      await client.query("BEGIN");
-      await client.query("DELETE FROM invoice_items WHERE invoice_id = $1", [invoiceId]);
-      await this.insertItems(client, invoiceId, items, now);
-      await client.query("COMMIT");
+      if (ownsClient) await c.query("BEGIN");
+      await c.query("DELETE FROM invoice_items WHERE invoice_id = $1", [invoiceId]);
+      await this.insertItems(c, invoiceId, items, now);
+      if (ownsClient) await c.query("COMMIT");
     } catch (e) {
-      await client.query("ROLLBACK");
+      if (ownsClient) await c.query("ROLLBACK");
       throw e;
     } finally {
-      client.release();
+      if (ownsClient) c.release();
     }
   }
 
-  async setFees(businessId: string, invoiceId: string, fees: InvoiceFeeInput[]): Promise<void> {
-    const client = await getClient();
-    const now = new Date().toISOString();
+  async setFees(businessId: string, invoiceId: string, fees: InvoiceFeeInput[], client?: any, nowOverride?: string): Promise<void> {
+    const ownsClient = !client;
+    const c = client ?? (await getClient());
+    const now = nowOverride ?? new Date().toISOString();
     try {
-      await client.query("BEGIN");
-      await client.query("DELETE FROM invoice_fees WHERE invoice_id = $1", [invoiceId]);
-      await this.insertFees(client, invoiceId, fees, now);
-      await client.query("COMMIT");
+      if (ownsClient) await c.query("BEGIN");
+      await c.query("DELETE FROM invoice_fees WHERE invoice_id = $1", [invoiceId]);
+      await this.insertFees(c, invoiceId, fees, now);
+      if (ownsClient) await c.query("COMMIT");
     } catch (e) {
-      await client.query("ROLLBACK");
+      if (ownsClient) await c.query("ROLLBACK");
       throw e;
     } finally {
-      client.release();
+      if (ownsClient) c.release();
     }
   }
 
-  async update(businessId: string, id: string, input: Partial<Record<string, unknown>>): Promise<Invoice> {
+  async update(businessId: string, id: string, input: Partial<Record<string, unknown>>, client?: any): Promise<Invoice> {
+    const exec = client ? client.query.bind(client) : query;
     const set: string[] = [];
     const vals: unknown[] = [businessId, id];
     let i = 3;
@@ -252,11 +255,11 @@ export class InvoiceRepository {
     }
     set.push(`version = version + 1`);
     set.push(`updated_at = NOW()`);
-    const res = await query(
+    const res = await exec(
       `UPDATE invoices SET ${set.join(", ")} WHERE id = $2 AND business_id = $1 RETURNING *`,
       vals
-    );
-    if (!res.rows.length) throw new NotFoundError(`Invoice ${id} not found`);
+    ) as any;
+    if (!res.rows?.length) throw new NotFoundError(`Invoice ${id} not found`);
     return this.rowToModel(res.rows[0]);
   }
 
@@ -1102,8 +1105,9 @@ async getVolumeTrend(businessId: string, months: number): Promise<Array<{
     );
   }
 
-  async clearPdfCache(invoiceId: string): Promise<void> {
-    await query(
+  async clearPdfCache(invoiceId: string, client?: any): Promise<void> {
+    const exec = client ? client.query.bind(client) : query;
+    await exec(
       `UPDATE invoices SET pdf_cache = NULL, pdf_cache_hash = NULL, pdf_cached_at = NULL WHERE id = $1`,
       [invoiceId]
     );

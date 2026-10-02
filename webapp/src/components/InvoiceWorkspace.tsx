@@ -34,8 +34,6 @@ import {
   getInvoicePdf,
   getProducts,
   sendInvoice,
-  setInvoiceFees,
-  setInvoiceItems,
   updateInvoice,
 } from "../api/client";
 import {
@@ -549,29 +547,32 @@ export default function InvoiceWorkspace() {
         depositPaymentPurpose: cur.depositPaymentPurpose,
         lateFeeType: cur.lateFeeType || "none",
         lateFeeValue: cur.lateFeeValue || "0",
+        items: cur.items.map(toApiItem),
+        fees: cur.fees,
       };
-      const apiItems = cur.items.map(toApiItem);
-      const apiFees = cur.fees;
 
       if (!curId) {
-        const res = await createInvoice({ ...metaPayload, items: apiItems, fees: apiFees });
+        const res = await createInvoice(metaPayload);
         setInvoiceId(res.invoiceId);
         setLoadedInvoiceId(res.invoiceId);
-        lastSavedItemsRef.current = JSON.stringify(apiItems);
-        lastSavedFeesRef.current = JSON.stringify(apiFees);
+        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
+        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
         if (newFlag) {
           navigate(`/app/invoices/${res.invoiceId}/edit`, { replace: true });
         }
       } else {
-        await updateInvoice(curId, metaPayload);
-        if (JSON.stringify(apiItems) !== lastSavedItemsRef.current) {
-          await setInvoiceItems(curId, apiItems);
-          lastSavedItemsRef.current = JSON.stringify(apiItems);
+        const itemsChanged = JSON.stringify(metaPayload.items) !== lastSavedItemsRef.current;
+        const feesChanged = JSON.stringify(metaPayload.fees) !== lastSavedFeesRef.current;
+        if (itemsChanged || feesChanged) {
+          const payload: Record<string, unknown> = { ...metaPayload };
+          if (!itemsChanged) delete payload.items;
+          if (!feesChanged) delete payload.fees;
+          await updateInvoice(curId, payload);
+        } else {
+          await updateInvoice(curId, metaPayload);
         }
-        if (JSON.stringify(apiFees) !== lastSavedFeesRef.current) {
-          await setInvoiceFees(curId, apiFees);
-          lastSavedFeesRef.current = JSON.stringify(apiFees);
-        }
+        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
+        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
       }
       setSaveState("saved");
       setDirty(false);
@@ -835,7 +836,7 @@ export default function InvoiceWorkspace() {
   }
 
   async function handleFinalizeAndSend() {
-    const { invoiceId: curId, invoice: cur, isNew: newFlag } = latestRef.current;
+    const { invoiceId: curId, invoice: cur } = latestRef.current;
     if (!cur || !curId) return;
     if (!cur.customerId) {
       setReviewError("Select a customer before sending.");
@@ -844,27 +845,16 @@ export default function InvoiceWorkspace() {
     setReviewSending(true);
     setReviewError(null);
     try {
-       if (!cur.isFinalized) {
-        const finalRes = await finalizeInvoice(curId);
-        setInvoice((prev) =>
-          prev
-            ? {
-                ...prev,
-                isFinalized: true,
-                status: "sent",
-                invoiceNumber: finalRes.invoiceNumber ?? prev.invoiceNumber ?? null,
-                publicToken: prev.publicToken ?? null,
-              }
-            : prev
-        );
-      }
-      await sendInvoice(curId);
+      const finalRes = await finalizeInvoice(curId);
+      const sendRes = await sendInvoice(curId);
       setInvoice((prev) =>
         prev
           ? {
               ...prev,
               isFinalized: true,
-              status: "sent",
+              status: sendRes.status ?? "sent",
+              invoiceNumber: finalRes.invoiceNumber ?? prev.invoiceNumber ?? null,
+              publicToken: sendRes.publicToken ?? finalRes.publicToken ?? prev.publicToken ?? null,
             }
           : prev
       );
@@ -1855,7 +1845,7 @@ const PhotoUploadSection = React.memo(function PhotoUploadSection({
           {items.map((a) => (
             <div key={a.id} className="relative">
               {a.type.startsWith("image/") ? (
-                <img src={a.url} alt={a.name} className="h-20 w-20 rounded-lg object-cover" />
+                <img src={a.url} alt={a.name} className="h-20 w-20 rounded-lg object-cover" loading="lazy" />
               ) : (
                 <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-color bg-surface-alt">
                   <FileText className="h-6 w-6 text-tertiary" />
