@@ -630,7 +630,7 @@ function CreateCreditNoteDialog({
                 className="form-control"
               />
               {formattedDate && (
-                <p className="mt-1 text-xs text-tertiary">{formattedDate}</p>
+                <p className="mt-1 text-xs text-secondary">{formattedDate}</p>
               )}
             </div>
           </div>
@@ -663,12 +663,12 @@ function CreateCreditNoteDialog({
               <table className="w-full text-sm">
                 <thead className="bg-surface-alt">
                   <tr>
-                    <th className="text-left text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-3">Description</th>
-                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Qty</th>
-                    <th className="text-left text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Unit</th>
-                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Rate</th>
-                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Tax %</th>
-                    <th className="text-right text-xs font-semibold text-tertiary uppercase tracking-wider py-2.5 px-2">Amount</th>
+                     <th className="text-left text-xs font-semibold text-secondary uppercase tracking-wider py-3.5 px-3">Description</th>
+                     <th className="text-right text-xs font-semibold text-secondary uppercase tracking-wider py-3.5 px-2">Qty</th>
+                     <th className="text-left text-xs font-semibold text-secondary uppercase tracking-wider py-3.5 px-2">Unit</th>
+                     <th className="text-right text-xs font-semibold text-secondary uppercase tracking-wider py-3.5 px-2">Rate</th>
+                     <th className="text-right text-xs font-semibold text-secondary uppercase tracking-wider py-3.5 px-2">Tax %</th>
+                     <th className="text-right text-xs font-semibold text-secondary uppercase tracking-wider py-3.5 px-2">Amount</th>
                     <th className="w-10" />
                   </tr>
                 </thead>

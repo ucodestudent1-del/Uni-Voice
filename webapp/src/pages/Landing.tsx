@@ -213,7 +213,7 @@ function InvoicePreviewHero() {
       {/* Business info + status */}
       <div className="flex justify-between items-start mb-8 pb-6 border-b border-color-subtle">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-action/10 text-primary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-bg text-primary">
             <span className="text-xl font-bold text-primary">NF</span>
           </div>
           <div>
@@ -252,10 +252,10 @@ function InvoicePreviewHero() {
       <table className="w-full text-sm mb-8">
         <thead>
           <tr className="border-b border-color-subtle text-left font-medium">
-            <th className="pb-3 text-xs font-semibold text-tertiary uppercase">Description</th>
-            <th className="pb-3 text-right text-xs font-semibold text-tertiary uppercase">Qty</th>
-            <th className="pb-3 text-right text-xs font-semibold text-tertiary uppercase">Rate</th>
-            <th className="pb-3 text-right text-xs font-semibold text-tertiary uppercase">Amount</th>
+            <th className="pb-3 text-xs font-semibold text-secondary uppercase">Description</th>
+            <th className="pb-3 text-right text-xs font-semibold text-secondary uppercase">Qty</th>
+            <th className="pb-3 text-right text-xs font-semibold text-secondary uppercase">Rate</th>
+            <th className="pb-3 text-right text-xs font-semibold text-secondary uppercase">Amount</th>
           </tr>
         </thead>
         <tbody>

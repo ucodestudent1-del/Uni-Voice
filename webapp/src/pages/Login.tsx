@@ -139,14 +139,14 @@ export default function Login() {
                    {loading ? "Signing in..." : "Sign In"}
                  </button>
 
-                    <div className="relative my-6">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-input-border" />
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-3 bg-surface-alt text-tertiary">Or sign in with</span>
-                      </div>
-                    </div>
+                     <div className="relative my-6">
+                       <div className="absolute inset-0 flex items-center">
+                         <div className="w-full border-t border-input-border" />
+                       </div>
+                       <div className="relative flex justify-center text-sm">
+                         <span className="px-3 bg-surface-alt text-tertiary font-medium">Or sign in with</span>
+                       </div>
+                     </div>
 
                    <button
                      type="button"
@@ -198,11 +198,11 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setStep("credentials")}
-                    className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary"
+                    className="text-sm text-tertiary hover:text-primary"
                   >
                     ← Use a different account
                   </button>
-                  <Link to="/login" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">
+                  <Link to="/login" className="text-sm text-tertiary hover:text-primary">
                     Didn't receive a code?
                   </Link>
                 </div>
@@ -225,7 +225,7 @@ export default function Login() {
             )}
 
             <div className="mt-4 text-center">
-              <Link to="/" className="text-sm text-tertiary hover:text-secondary dark:hover:text-tertiary">
+              <Link to="/" className="text-sm text-tertiary hover:text-secondary">
                 ← Back to homepage
               </Link>
             </div>

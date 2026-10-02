@@ -203,12 +203,12 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
       <table className="w-full border-collapse mb-6">
         <thead>
           <tr className="border-b border-color">
-            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3 px-3">#</th>
-            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3 px-3">Description</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Qty</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Unit Price</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Tax</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Amount</th>
+            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3.5 px-3">#</th>
+            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Description</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Qty</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Unit Price</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Tax</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3.5 px-3">Amount</th>
           </tr>
         </thead>
         <tbody>

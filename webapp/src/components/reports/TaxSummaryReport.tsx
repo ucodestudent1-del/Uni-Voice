@@ -194,11 +194,11 @@ export default function TaxSummaryReport({ data, loading, currency, onExport }: 
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-surface-alt border-b border-color">
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Rate</th>
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Name</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Taxable Basis</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Tax Collected</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Invoices</th>
+                   <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Rate</th>
+                   <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Name</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Taxable Basis</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Tax Collected</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Invoices</th>
                 </tr>
               </thead>
               <tbody>
@@ -216,7 +216,7 @@ export default function TaxSummaryReport({ data, loading, currency, onExport }: 
                     <td className="py-3 px-4 text-right text-sm font-tabular-nums text-primary">
                       {formatCurrencyValue(r.tax_collected, currency)}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-tertiary">{r.invoice_count}</td>
+                   <td className="py-3.5 px-4 text-right text-sm text-secondary">{r.invoice_count}</td>
                   </tr>
                 ))}
               </tbody>
@@ -234,10 +234,10 @@ export default function TaxSummaryReport({ data, loading, currency, onExport }: 
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-surface-alt border-b border-color">
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Month</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Taxable Amount</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Tax Collected</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Invoices</th>
+                   <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Month</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Taxable Amount</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Tax Collected</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Invoices</th>
                 </tr>
               </thead>
               <tbody>
@@ -252,7 +252,7 @@ export default function TaxSummaryReport({ data, loading, currency, onExport }: 
                     <td className="py-3 px-4 text-right text-sm font-tabular-nums text-primary">
                       {formatCurrencyValue(p.tax_collected, currency)}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-tertiary">{p.invoice_count}</td>
+                     <td className="py-3.5 px-4 text-right text-sm text-secondary">{p.invoice_count}</td>
                   </tr>
                 ))}
               </tbody>

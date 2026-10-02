@@ -83,9 +83,9 @@ export default function ExpenseTrendChart({
   if (loading) {
     return (
       <div className="bg-surface rounded-xl border border-color p-5">
-        <h3 className="text-sm font-semibold text-primary mb-4">Spending Trend</h3>
+        <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Spending Trend</h3>
         <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-          <p className="text-sm text-tertiary">Loading trends…</p>
+          <p className="text-sm text-secondary">Loading trends…</p>
         </div>
       </div>
     );
@@ -94,9 +94,9 @@ export default function ExpenseTrendChart({
   if (!chartData.length) {
     return (
       <div className="bg-surface rounded-xl border border-color p-5">
-        <h3 className="text-sm font-semibold text-primary mb-4">Spending Trend</h3>
+        <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Spending Trend</h3>
         <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-          <p className="text-sm text-tertiary">No expense data yet</p>
+          <p className="text-sm text-secondary">No expense data yet</p>
         </div>
       </div>
     );
@@ -107,7 +107,7 @@ export default function ExpenseTrendChart({
   return (
     <div className="bg-surface rounded-xl border border-color p-5">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-semibold text-primary">Spending Trend</h3>
+        <h3 className="text-sm font-semibold text-primary tracking-tight">Spending Trend</h3>
         <div className="inline-flex rounded-lg border border-color overflow-hidden">
           <button
             onClick={() => setPeriod("month")}

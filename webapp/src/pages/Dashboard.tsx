@@ -288,7 +288,7 @@ export default function Dashboard() {
               </Link>
             </div>
             {upcoming.length === 0 ? (
-              <div className="px-5 pb-6 text-center text-sm text-tertiary">
+              <div className="px-5 pb-6 text-center text-sm text-secondary">
                 Nothing due this week
               </div>
             ) : (
@@ -338,15 +338,15 @@ export default function Dashboard() {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b border-color-subtle">
-                    <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Invoice</th>
-                    <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Customer</th>
-                    <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">Status</th>
-                    <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Amount</th>
-                    <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Due Date</th>
-                  </tr>
-                </thead>
+            <thead>
+                    <tr className="border-b border-color-subtle">
+                      <th className="text-left text-xs font-medium text-tertiary uppercase py-3.5 px-4">Invoice</th>
+                      <th className="text-left text-xs font-medium text-tertiary uppercase py-3.5 px-4">Customer</th>
+                      <th className="text-center text-xs font-medium text-tertiary uppercase py-3.5 px-4">Status</th>
+                      <th className="text-right text-xs font-medium text-tertiary uppercase py-3.5 px-4">Amount</th>
+                      <th className="text-right text-xs font-medium text-tertiary uppercase py-3.5 px-4">Due Date</th>
+                    </tr>
+                  </thead>
                 <tbody>
                     {(requiringAttention.length > 0 ? requiringAttention : upcoming).slice(0, 10).map((rawInv) => {
                       const inv = normalizeInvoice(rawInv);
@@ -355,31 +355,31 @@ export default function Dashboard() {
                           key={inv.id}
                           className="border-b border-color-subtle last:border-b-0 hover:bg-surface-alt transition-colors"
                         >
-                          <td className="py-3 px-4">
-                            <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-primary-brand hover:text-primary-hover">
-                              {inv.invoice_number || `#${inv.id.slice(0, 8)}`}
-                            </Link>
-                            <p className="text-xs text-tertiary">
-                              {inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ""}
-                            </p>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-secondary">{inv.customer_name || "—"}</td>
-                          <td className="py-3 px-4 text-center">
-                            <InvoiceStatus status={inv.status} isOverdue={isOverdueStatus(inv.status, inv.due_date)} showIcon />
-                          </td>
-                          <td className="py-3 px-4 text-right text-sm font-medium text-primary">
-                            {formatCurrencyValue(inv.amount_due || inv.total, inv.currency)}
-                          </td>
-                          <td className={`py-3 px-4 text-right text-sm ${inv.status === "overdue" ? "text-error-text font-medium" : "text-secondary"}`}>
-                            {inv.due_date ? new Date(inv.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
-                          </td>
+                         <td className="py-3.5 px-4">
+                             <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-primary-brand hover:text-primary-hover">
+                               {inv.invoice_number || `#${inv.id.slice(0, 8)}`}
+                             </Link>
+                             <p className="text-xs text-secondary">
+                               {inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ""}
+                             </p>
+                           </td>
+                           <td className="py-3.5 px-4 text-sm text-secondary">{inv.customer_name || "—"}</td>
+                           <td className="py-3.5 px-4 text-center">
+                             <InvoiceStatus status={inv.status} isOverdue={isOverdueStatus(inv.status, inv.due_date)} showIcon />
+                           </td>
+                           <td className="py-3.5 px-4 text-right text-sm font-medium text-primary">
+                             {formatCurrencyValue(inv.amount_due || inv.total, inv.currency)}
+                           </td>
+                           <td className={`py-3.5 px-4 text-right text-sm ${inv.status === "overdue" ? "text-error-text font-medium" : "text-secondary"}`}>
+                             {inv.due_date ? new Date(inv.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                           </td>
                         </tr>
                       );
                     })}
                 </tbody>
               </table>
               {requiringAttention.length === 0 && upcoming.length === 0 && (
-                <div className="py-8 text-center text-sm text-tertiary">
+                <div className="py-8 text-center text-sm text-secondary">
                   No recent activity
                 </div>
               )}

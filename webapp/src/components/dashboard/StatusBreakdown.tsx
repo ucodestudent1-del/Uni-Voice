@@ -16,11 +16,11 @@ export default function StatusBreakdown({ data = [] }: { data?: StatusSegment[] 
 
   return (
     <div className="bg-surface rounded-xl border border-color p-5">
-      <h3 className="text-sm font-semibold text-primary mb-4">Invoice Status</h3>
+      <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Invoice Status</h3>
 
       {total === 0 ? (
         <div className="h-40 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-          <p className="text-sm text-tertiary">No invoices yet</p>
+          <p className="text-sm text-secondary">No invoices yet</p>
         </div>
       ) : (
         <div className="relative h-40">
@@ -69,9 +69,9 @@ export default function StatusBreakdown({ data = [] }: { data?: StatusSegment[] 
         </div>
       )}
 
-      <div className="mt-4 space-y-1">
+      <div className="mt-4 space-y-1.5">
         {segments.map((segment) => (
-          <div key={segment.label} className="flex items-center justify-between py-1.5 text-sm">
+          <div key={segment.label} className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: segment.color }} />
               <span className="text-secondary">{segment.label}</span>

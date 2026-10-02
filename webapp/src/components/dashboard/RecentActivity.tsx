@@ -73,7 +73,7 @@ export default function RecentActivity({ eventLimit = 8 }: RecentActivityProps) 
   if (events.length === 0) {
     return (
       <SectionCard title="Recent Activity">
-        <div className="py-8 text-center text-sm text-tertiary">
+        <div className="py-8 text-center text-sm text-secondary">
           <p>No recent activity</p>
         </div>
       </SectionCard>
@@ -111,13 +111,13 @@ export default function RecentActivity({ eventLimit = 8 }: RecentActivityProps) 
                           {metadata.invoice_number}
                         </Link>
                       ) : (
-                        <span className="text-tertiary"> — {evt.event_type}</span>
+                        <span className="text-secondary"> — {evt.event_type}</span>
                       )}
                     </p>
-                    <span className="text-xs text-tertiary whitespace-nowrap flex-shrink-0">{evt._relativeTime}</span>
+                    <span className="text-xs text-secondary whitespace-nowrap flex-shrink-0">{evt._relativeTime}</span>
                   </div>
                   {metadata.amount && (
-                    <p className="text-xs text-tertiary mt-0.5">
+                    <p className="text-xs text-secondary mt-0.5">
                       {metadata.currency ? `${metadata.currency} ` : ""}{metadata.amount}
                     </p>
                   )}

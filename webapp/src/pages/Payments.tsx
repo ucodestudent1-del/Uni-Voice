@@ -119,7 +119,7 @@ export default function Payments() {
         cell: (row) => {
           const p = row as ApiPaymentWithInvoice;
           return (
-            <span className="text-xs font-mono text-tertiary">
+             <span className="text-xs font-mono text-secondary">
               {p.id.slice(0, 8)}
             </span>
           );
@@ -138,7 +138,7 @@ export default function Payments() {
                 {p.customer_name || "—"}
               </span>
               {p.customer_email && (
-                <span className="text-xs text-tertiary truncate">{p.customer_email}</span>
+                <span className="text-xs text-secondary truncate">{p.customer_email}</span>
               )}
             </div>
           );

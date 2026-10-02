@@ -73,7 +73,7 @@ function UpcomingPaymentsList({ preloadedItems }: { preloadedItems?: ApiInvoiceL
 
   if (loading) {
     return (
-      <div className="py-8 text-center text-sm text-tertiary">
+      <div className="py-8 text-center text-sm text-secondary">
         Loading upcoming payments...
       </div>
     );
@@ -101,8 +101,8 @@ function UpcomingPaymentsList({ preloadedItems }: { preloadedItems?: ApiInvoiceL
 
   if (sorted.length === 0) {
     return (
-      <div className="py-8 text-center text-sm text-tertiary">
-        <p>No upcoming payments</p>
+      <div className="py-8 text-center text-sm text-secondary">
+        No upcoming payments
       </div>
     );
   }

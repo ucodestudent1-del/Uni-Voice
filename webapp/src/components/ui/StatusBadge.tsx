@@ -82,7 +82,7 @@ export function isOverdueStatus(status: string, dueDate?: string | null): boolea
 }
 
 export function getStatusBadgeClassName(config: InternalStatusConfig, size: "sm" | "md" = "md"): string {
-  const sizeClasses = size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-0.5 text-xs";
+  const sizeClasses = size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs";
   return cn(
     "inline-flex items-center gap-1 rounded-full font-medium",
     config.className,
@@ -110,8 +110,8 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeComponentProps
   ) {
     const effectiveStatus = isOverdue && status !== "paid" ? "overdue" : status;
     const configItem = config.getConfig(effectiveStatus);
-    const sizeClasses = size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-0.5 text-xs";
-    const iconClass = size === "sm" ? "w-3 h-3" : "w-4 h-4";
+    const sizeClasses = size === "sm" ? "px-2 py-1 text-xs" : "px-2.5 py-1 text-xs";
+    const iconClass = size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4";
 
     return (
       <span

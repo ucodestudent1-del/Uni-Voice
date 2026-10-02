@@ -39,9 +39,9 @@ export function SectionHeader({
 }) {
   const alignClass = align === "center" ? "text-center mx-auto" : "text-left";
   return (
-    <div className={`mb-12 ${alignClass} ${className ?? ""}`}>
-      <h2 className="text-3xl font-bold text-primary sm:text-4xl">{title}</h2>
-      {subtitle && <p className="mt-3 text-secondary">{subtitle}</p>}
+    <div className={`mb-10 ${alignClass} ${className ?? ""}`}>
+      <h2 className="text-3xl font-bold text-primary sm:text-4xl leading-tight">{title}</h2>
+      {subtitle && <p className="mt-3 text-base text-secondary max-w-2xl leading-relaxed">{subtitle}</p>}
     </div>
   );
 }

@@ -176,7 +176,7 @@ export default function RevenueReport({ data, loading, currency, onExport }: Rev
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className="bg-surface rounded-xl border border-color p-5">
-            <h3 className="text-sm font-semibold text-primary mb-4">Revenue Trend</h3>
+            <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Revenue Trend</h3>
             {periodChartData.length > 0 ? (
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
@@ -232,7 +232,7 @@ export default function RevenueReport({ data, loading, currency, onExport }: Rev
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-                <p className="text-sm text-tertiary">No revenue data</p>
+                <p className="text-sm text-secondary">No revenue data</p>
               </div>
             )}
           </div>
@@ -240,7 +240,7 @@ export default function RevenueReport({ data, loading, currency, onExport }: Rev
 
         <div>
           <div className="bg-surface rounded-xl border border-color p-5">
-            <h3 className="text-sm font-semibold text-primary mb-4">Revenue by Status</h3>
+            <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Revenue by Status</h3>
             {statusChartData.length > 0 ? (
               <div className="relative h-56">
                 <ResponsiveContainer width="100%" height="100%">
@@ -287,13 +287,13 @@ export default function RevenueReport({ data, loading, currency, onExport }: Rev
                     <span className="text-xl font-bold text-primary font-tabular-nums">
                       {formatCurrencyValue(statusTotal, currency)}
                     </span>
-                    <span className="text-xs text-tertiary">total</span>
+                    <span className="text-xs text-secondary">total</span>
                   </span>
                 </div>
               </div>
             ) : (
               <div className="h-56 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-                <p className="text-sm text-tertiary">No status data</p>
+                <p className="text-sm text-secondary">No status data</p>
               </div>
             )}
           </div>
@@ -309,11 +309,11 @@ export default function RevenueReport({ data, loading, currency, onExport }: Rev
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-surface-alt border-b border-color">
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Customer</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Invoices</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Invoiced</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Paid</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Outstanding</th>
+                 <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Customer</th>
+                 <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Invoices</th>
+                 <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Invoiced</th>
+                 <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Paid</th>
+                 <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Outstanding</th>
                 </tr>
               </thead>
               <tbody>

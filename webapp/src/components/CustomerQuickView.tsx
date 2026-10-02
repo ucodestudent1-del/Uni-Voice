@@ -301,7 +301,7 @@ function DetailRow({
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-tertiary">{label}</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-tertiary">{label}</p>
         <div className={cn("mt-0.5 text-sm break-words", muted ? "text-tertiary" : "text-primary")}>
           {children}
         </div>

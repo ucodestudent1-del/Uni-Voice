@@ -28,11 +28,12 @@
     --color-border-subtle: 241 245 249;  /* slate-100 */
 
     /* —— Text —— */
-    --color-text: 15 23 42;             /* slate-900      */
-    --color-text-secondary: 71 85 105;  /* slate-600      */
-    --color-text-tertiary: 94 110 149;  /* slate-500 — raised from 400 for AA on page-bg */
+    --color-text: 15 23 42;             /* slate-900 — primary text */
+    --color-text-secondary: 30 41 60;   /* slate-800 — secondary, AA contrast on page-bg */
+    --color-text-tertiary: 71 85 105;   /* slate-600 — tertiary/muted */
     --color-text-inverse: 255 255 255;  /* white          */
-    --color-text-disabled: 94 110 149; /* slate-500 — raised from 400 for AA on page-bg */
+    --color-text-disabled: 100 117 149; /* slate-500 */
+    --color-text-muted: 100 117 149;    /* alias for muted/disabled text */
 
     /* —— Interactive states —— */
     --color-hover: 241 245 249;         /* slate-100 (hover surface) */
@@ -122,6 +123,7 @@
     --color-text-tertiary: 148 163 184; /* slate-500      */
     --color-text-inverse: 15 23 42;     /* slate-900      */
     --color-text-disabled: 148 163 184; /* slate-500      */
+    --color-text-muted: 148 163 184;    /* alias for muted */
 
     /* —— Interactive states —— */
     --color-hover: 38 45 62;            /* slate-800      */
@@ -190,6 +192,7 @@
   /* ================ HTML element defaults ================ */
   html {
     color-scheme: light;
+    font-size: 16px;
   }
 
   [data-theme="dark"] html {
@@ -205,7 +208,9 @@
       --color-text: 255 255 255;
       --color-text-secondary: 203 213 225;
       --color-text-tertiary: 148 163 184;
+      --color-text-muted: 148 163 184;
       --color-text-inverse: 15 23 42;
+      --color-text-disabled: 148 163 184;
       --color-page-bg: 3 7 18;
       --color-surface: 24 35 54;
       --color-surface-alt: 31 41 59;
@@ -220,18 +225,32 @@
        --color-primary-hover: 126 185 255;
        --color-primary-active: 153 193 255;
        --color-primary-bg: 20 45 90;
-      --color-primary-text: 191 219 254;
-      --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.10);
-      --color-overlay: 0 0 0 / 0.6;
-      color-scheme: dark;
+       --color-primary-text: 191 219 254;
+       --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+       --color-overlay: 0 0 0 / 0.6;
+       color-scheme: dark;
     }
   }
 
   body {
     background-color: rgb(var(--color-page-bg));
     color: rgb(var(--color-text));
-    font-size: 12pt;
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Typography scale — consistent, legible sizing */
+  h1 { @apply text-3xl font-bold; }
+  h2 { @apply text-2xl font-semibold; }
+  h3 { @apply text-lg font-semibold; }
+  h4 { @apply text-base font-medium; }
+  h5 { @apply text-sm font-semibold; }
+  h6 { @apply text-xs font-semibold; }
+
+  p { margin: 0 0 0.5rem; }
+  
 
   /* ================ Semantic utility classes ================ */
 
@@ -249,12 +268,14 @@
   .text-primary { color: rgb(var(--color-text)); }
   .text-secondary { color: rgb(var(--color-text-secondary)); }
   .text-tertiary { color: rgb(var(--color-text-tertiary)); }
-  .text-inverse { color: rgb(var(--color-text-inverse)); }
+  .text-muted { color: rgb(var(--color-text-muted)); }
+  .text-inverse { color: rgb(var(--color-text)); }
   .text-disabled { color: rgb(var(--color-text-disabled)); }
   .text-on-primary { color: rgb(var(--color-text-inverse)); }
   .text-on-primary-strong { color: rgb(var(--color-primary-text-strong)); }
   .text-primary-brand { color: rgb(var(--color-primary)); }
   .text-primary-hover { color: rgb(var(--color-primary-hover)); }
+  .text-on-primary-bg { color: rgb(var(--color-text-inverse)); }
 
   /* Border colors */
   .border-color { border-color: rgb(var(--color-border)); }
@@ -275,10 +296,15 @@
   /* Input fields */
   .bg-input { background-color: rgb(var(--color-input-bg)); }
   .border-input { border-color: rgb(var(--color-input-border)); }
-  .placeholder-input {
-    &::placeholder { color: rgb(var(--color-input-placeholder)); }
-  }
-  .bg-input-disabled { background-color: rgb(var(--color-input-disabled)); }
+   .placeholder-input {
+     color: rgb(var(--color-input-placeholder));
+     &::placeholder { color: rgb(var(--color-input-placeholder)); }
+   }
+   .bg-input-disabled { background-color: rgb(var(--color-input-disabled)); }
+   .text-muted { color: rgb(var(--color-text-muted)); }
+   .placeholder-target {
+     &::placeholder { color: rgb(var(--color-input-placeholder)); }
+   }
 
   /* Focus indicator */
   .focus-ring {
@@ -319,9 +345,15 @@
   .status-info-text { color: rgb(var(--color-info-text)); }
   .status-info-border { border-color: rgb(var(--color-info-border)); }
 
-  /* Status badges - tertiary (draft, void, etc.) */
+   /* Status badges - tertiary (draft, void, etc.) */
   .status-tertiary-bg { background-color: rgb(var(--color-surface-alt)); }
   .status-tertiary-text { color: rgb(var(--color-text-secondary)); }
+  .border-tertiary-border { border-color: rgb(var(--color-border-strong)); }
+
+  /* Aliases */
+  .bg-tertiary-bg { background-color: rgb(var(--color-surface-alt)); }
+  .text-tertiary-text { color: rgb(var(--color-text-secondary)); }
+  .border-tertiary-border { border-color: rgb(var(--color-border-strong)); }
 
    /* Disabled states */
   .disabled-state {
@@ -342,6 +374,8 @@
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
   }
   .form-control::placeholder {
     color: rgb(var(--color-input-placeholder));
@@ -356,6 +390,7 @@
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
+    font-size: 0.875rem;
   }
   .form-control-sm::placeholder {
     color: rgb(var(--color-input-placeholder));
@@ -370,6 +405,8 @@
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
     background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23647484' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
@@ -385,6 +422,7 @@
   .form-label {
     @apply block text-xs font-medium mb-1;
     color: rgb(var(--color-text-secondary));
+    letter-spacing: 0.01em;
   }
   .form-label-secondary {
     @apply block text-xs font-medium uppercase mb-1;
@@ -407,12 +445,14 @@
     margin-top: 0.25rem;
   }
 
-  /* Standardized button classes — consistent height and padding */
+  /* Standardized button classes — consistent height, padding, and hit area */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none;
+    min-height: 44px;
   }
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none;
+    min-height: 44px;
     background-color: rgb(var(--color-primary));
   }
   .btn-primary:hover {
@@ -424,6 +464,7 @@
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none;
+    min-height: 44px;
     background-color: transparent;
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text-secondary));
@@ -437,6 +478,7 @@
   }
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none;
+    min-height: 44px;
     background-color: transparent;
     color: rgb(var(--color-text-secondary));
   }
@@ -450,26 +492,33 @@
   }
   .btn-sm {
     @apply px-3 py-1.5 text-xs;
-    min-height: 32px;
+    min-height: 36px;
   }
   .btn-md {
     @apply px-4 py-2 text-sm;
     min-height: 40px;
   }
+  .btn-lg {
+    @apply px-5 py-3 text-sm font-medium;
+    min-height: 44px;
+  }
 
-  /* Standardized table cell padding */
+  /* Standardized table cell padding — readable text, consistent spacing */
   .td {
-    @apply py-3 px-4 text-sm align-top;
+    @apply py-3.5 px-4 text-sm align-top;
   }
   .th {
-    @apply text-left text-xs font-medium uppercase py-3 px-4;
+    @apply text-left text-xs font-medium uppercase py-3.5 px-4;
     color: rgb(var(--color-text-tertiary));
+    letter-spacing: 0.02em;
   }
 
   /* Search input with icon — consistent padding and alignment */
   .search-input {
-    @apply min-w-[18rem] rounded-lg border px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 box-border;
-    min-height: 2.5rem;
+    @apply min-w-[20rem] rounded-lg border px-3 py-2 pl-10 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
@@ -482,13 +531,15 @@
     ring-color: rgb(var(--color-focus-ring));
   }
   .search-icon {
-    @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4;
+    @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4;
     color: rgb(var(--color-text-tertiary));
   }
   /* Search input in a group that also has a button — narrower min-width but still roomy */
   .search-input-inline {
-    @apply min-w-[14rem] rounded-lg border px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 box-border;
-    min-height: 2.5rem;
+    @apply min-w-[16rem] rounded-lg border px-3 py-2 pl-10 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
     color: rgb(var(--color-text));
@@ -503,8 +554,10 @@
 
   /* Standardized input with trailing icon (e.g. currency symbol) */
   .input-with-prefix {
-    @apply w-full rounded-lg border px-3 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 box-border;
-    min-height: 2.5rem;
+    @apply w-full rounded-lg border px-3 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
@@ -518,8 +571,10 @@
     ring-color: rgb(var(--color-focus-ring));
   }
   .input-with-suffix {
-    @apply w-full rounded-lg border px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 box-border;
-    min-height: 2.5rem;
+    @apply w-full rounded-lg border px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
     background-color: rgb(var(--color-input-bg));
     border-color: rgb(var(--color-input-border));
@@ -567,9 +622,16 @@
    input[type="date"],
    input[type="password"],
    textarea {
+     min-height: 2.5rem;
+     min-width: 100%;
+     font-size: 0.9375rem;
+     letter-spacing: -0.01em;
      background-color: rgb(var(--color-input-bg));
      border-color: rgb(var(--color-input-border));
      color: rgb(var(--color-text));
+     padding: 0.5rem 0.75rem;
+     border-radius: 0.5rem;
+     box-sizing: border-box;
    }
 
    input[type="text"]::placeholder,
@@ -584,6 +646,9 @@
    /* Native select chevron — use a consistent arrow via CSS for selects
       that DON'T have the .form-select or .form-control-sm class */
    select:not(.form-select):not(.form-control-sm) {
+     min-height: 2.5rem;
+     font-size: 0.9375rem;
+     letter-spacing: -0.01em;
      background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23647484' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
      background-repeat: no-repeat;
      background-position: right 0.75rem center;

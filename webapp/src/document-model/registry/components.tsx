@@ -749,7 +749,7 @@ function registerLineItemsComponent() {
                   {columns.filter((c) => c.visible).map((col) => (
                     <th
                       key={col.key}
-                      className="text-left text-xs font-semibold text-secondary uppercase py-3"
+                      className="text-left text-xs font-semibold text-secondary uppercase py-3.5"
                       style={{ textAlign: col.align || "left", width: col.width }}
                     >
                       {col.label}

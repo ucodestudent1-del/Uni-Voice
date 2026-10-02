@@ -191,7 +191,7 @@ export default function Customers() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
            <h1 className="text-2xl font-bold text-inverse">Customers</h1>
-           <p className="text-sm text-tertiary mt-1">
+            <p className="text-sm text-secondary mt-1">
             {total} customers •{" "}
             <span className="text-primary font-medium">
               {totalOutstanding > 0
@@ -340,13 +340,13 @@ export default function Customers() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-color-subtle border-color">
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Customer</th>
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Contact</th>
-                  <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">Invoices</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Outstanding</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Last Invoice</th>
-                  <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">Status</th>
-                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Actions</th>
+                   <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Customer</th>
+                   <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Contact</th>
+                   <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Invoices</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Outstanding</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Last Invoice</th>
+                   <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Status</th>
+                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -377,7 +377,7 @@ export default function Customers() {
                           {c.companyName ? (
                             <p className="text-xs text-secondary">{c.companyName}</p>
                           ) : c.mostRecentInvoiceDate ? (
-                            <p className="text-xs text-tertiary">
+                            <p className="text-xs text-secondary">
                               Last activity: {formatDate(c.mostRecentInvoiceDate)}
                             </p>
                           ) : null}
@@ -477,9 +477,9 @@ export default function Customers() {
 
            {totalPages > 1 && (
              <div className="flex items-center justify-between mt-4 pt-4 border-t border-color-subtle">
-               <p className="text-sm text-tertiary">
-                 Page {currentPage} of {totalPages} • {total} customers
-               </p>
+                <p className="text-sm text-secondary">
+                  Page {currentPage} of {totalPages} • {total} customers
+                </p>
                <div className="flex items-center gap-2">
                <Button
                  variant="secondary"

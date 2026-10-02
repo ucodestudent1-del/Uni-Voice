@@ -1299,23 +1299,23 @@ const TotalsCard = React.memo(function TotalsCard({
   return (
     <div className="border-t border-color px-6 py-4">
       <div className="mx-auto grid max-w-2xl grid-cols-2 gap-x-6 gap-y-2 text-sm">
-        <div className="text-tertiary">Subtotal</div>
+        <div className="text-secondary">Subtotal</div>
         <div className="text-right font-medium text-primary">{fmt(subtotal, c)}</div>
         {Number(new Decimal(discount ?? 0).toString()) > 0 && (
           <>
-            <div className="text-tertiary">Discount</div>
+            <div className="text-secondary">Discount</div>
             <div className="text-right font-medium text-success-text">−{fmt(discount, c)}</div>
           </>
         )}
         {Number(new Decimal(tax ?? 0).toString()) > 0 && (
           <>
-            <div className="text-tertiary">Tax</div>
+            <div className="text-secondary">Tax</div>
             <div className="text-right font-medium text-primary">{fmt(tax, c)}</div>
           </>
         )}
         {Number(new Decimal(fees ?? 0).toString()) > 0 && (
           <>
-            <div className="text-tertiary">Fees</div>
+            <div className="text-secondary">Fees</div>
             <div className="text-right font-medium text-primary">{fmt(fees, c)}</div>
           </>
         )}
@@ -1324,7 +1324,7 @@ const TotalsCard = React.memo(function TotalsCard({
           {fmt(total, c)}
         </div>
 
-        <div className="pt-2 text-tertiary">Amount paid</div>
+        <div className="pt-2 text-secondary">Amount paid</div>
         <div className="pt-2 text-right">
           <input
             type="number"

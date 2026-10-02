@@ -54,27 +54,27 @@ export default function ConfirmationDialog({
         </div>
 
         {showInput && (
-          <div className="px-6 pb-4">
-            <label className="block text-sm font-medium text-secondary mb-1">
-              {inputLabel}
-              {inputRequiredMatch && (
-                <span className="text-xs text-tertiary block mt-0.5">
-                  Type "{inputRequiredMatch}" to confirm
-                </span>
-              )}
-            </label>
-            <input
-              type="text"
-              value={inputValue ?? localInput}
-              onChange={(e) => {
-                onInputChange?.(e.target.value);
-                setLocalInput(e.target.value);
-              }}
-              disabled={!!inputValue}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary disabled:opacity-50"
-              placeholder={inputPlaceholder}
-            />
-          </div>
+        <div className="px-6 pb-4">
+          <label className="block text-sm font-medium text-secondary mb-1">
+            {inputLabel}
+            {inputRequiredMatch && (
+              <span className="text-xs text-tertiary block mt-0.5">
+                Type "{inputRequiredMatch}" to confirm
+              </span>
+            )}
+          </label>
+          <input
+            type="text"
+            value={inputValue ?? localInput}
+            onChange={(e) => {
+              onInputChange?.(e.target.value);
+              setLocalInput(e.target.value);
+            }}
+            disabled={!!inputValue}
+            className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder-target disabled:opacity-50"
+            placeholder={inputPlaceholder}
+          />
+        </div>
         )}
 
         <div className="flex justify-end gap-3 border-t border-color-subtle p-6 pt-4">

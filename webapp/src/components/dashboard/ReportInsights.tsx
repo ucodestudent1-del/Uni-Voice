@@ -98,7 +98,7 @@ export default function ReportInsights({ invoices, overdueThresholdDays = 30, cu
         </div>
         <div className="py-8 text-center">
           <p className="text-sm text-secondary">No overdue invoices</p>
-          <p className="text-xs text-tertiary mt-1">All invoices are current</p>
+           <p className="text-xs text-secondary mt-1">All invoices are current</p>
         </div>
       </div>
     );
@@ -138,10 +138,10 @@ export default function ReportInsights({ invoices, overdueThresholdDays = 30, cu
                     {group.icon}
                     {group.title}
                   </span>
-                  <span className="text-xs text-tertiary">
-                    {group.count} invoice{group.count !== 1 ? "s" : ""} ·{" "}
-                    {formatCurrencyValue(group.totalAmount || "0", currency)}
-                  </span>
+                     <span className="text-xs text-secondary">
+                       {group.count} invoice{group.count !== 1 ? "s" : ""} ·{" "}
+                       {formatCurrencyValue(group.totalAmount || "0", currency)}
+                     </span>
                 </div>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function ReportInsights({ invoices, overdueThresholdDays = 30, cu
                     <p className="text-sm font-medium text-primary truncate">
                       {inv.invoice_number || `#${inv.id.slice(0, 8)}`}
                     </p>
-                    <p className="text-xs text-tertiary">
+                    <p className="text-xs text-secondary">
                       {inv.customer_name || "Unknown"} · Due{" "}
                       {due
                         ? new Date(due).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })

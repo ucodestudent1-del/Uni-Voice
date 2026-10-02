@@ -129,7 +129,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
         <span
           className={cn(
             "text-xs font-medium flex items-center gap-0.5",
-            trend.direction === "up" ? "text-error-text" : "text-success-text"
+            trend.direction === "up" ? "text-success-text" : "text-error-text"
           )}
         >
           {trend.direction === "up" ? "↑" : "↓"} {trend.value}
@@ -158,18 +158,18 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
               {icon}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-tertiary uppercase tracking-wide">
+              <p className="text-xs font-medium text-tertiary uppercase tracking-wider">
                 {title}
               </p>
               {isLoading ? (
-                <div className="h-5 w-20 bg-surface-alt rounded mt-1 animate-pulse" />
+                <div className="h-5 w-20 bg-surface-alt rounded mt-1.5 animate-pulse" />
               ) : (
-                <p className="text-lg font-bold text-primary truncate font-tabular-nums">
+                <p className="text-lg font-bold text-primary truncate font-tabular-nums mt-1">
                   {formatted}
                 </p>
               )}
               {subtitle && !isLoading && (
-                <p className="text-xs text-tertiary truncate">{subtitle}</p>
+                <p className="text-xs text-secondary truncate">{subtitle}</p>
               )}
             </div>
             {(trend || sparkline) && !isLoading && (
@@ -186,8 +186,8 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
     if (variant === "tinted") {
       return (
         <div ref={ref} className={cn(cardClasses, "border-none")}>
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-xs font-medium text-tertiary uppercase tracking-wide">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <p className="text-xs font-medium text-tertiary uppercase tracking-wider">
               {title}
             </p>
             <span
@@ -200,12 +200,12 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
           {isLoading ? (
             <div className="h-8 w-32 bg-surface-alt/50 rounded mt-1 animate-pulse" />
           ) : (
-            <p className={`text-3xl sm:text-4xl font-bold font-tabular-nums truncate ${valueColorClass}`}>
+            <p className={`text-2xl font-bold font-tabular-nums truncate ${valueColorClass}`}>
               {formatted}
             </p>
           )}
           {subtitle && !isLoading && (
-            <p className="text-xs text-tertiary mt-1 truncate">{subtitle}</p>
+            <p className="text-xs text-secondary mt-1 truncate">{subtitle}</p>
           )}
         </div>
       );
@@ -215,7 +215,7 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
       return (
         <div ref={ref} className={cardClasses}>
           <div className="flex items-center gap-2 mb-3">
-            <p className="text-xs font-medium text-tertiary uppercase tracking-wide">
+            <p className="text-xs font-medium text-tertiary uppercase tracking-wider">
               {title}
             </p>
             <span
@@ -226,14 +226,14 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
             </span>
           </div>
           {isLoading ? (
-            <div className="h-9 w-36 bg-surface-alt rounded mt-1 animate-pulse" />
+            <div className="h-7 w-36 bg-surface-alt rounded mt-1.5 animate-pulse" />
           ) : (
-            <p className="text-3xl font-bold font-tabular-nums truncate">
+            <p className="text-2xl font-bold font-tabular-nums truncate">
               {formatted}
             </p>
           )}
           {subtitle && !isLoading && (
-            <p className="text-sm text-tertiary mt-1 truncate">{subtitle}</p>
+            <p className="text-xs text-secondary mt-1 truncate">{subtitle}</p>
           )}
           {progressPct !== undefined && !isLoading && (
             <div className="mt-3 h-2 w-full bg-surface-alt rounded-full overflow-hidden">
@@ -255,21 +255,21 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
       return (
         <div ref={ref} className={cardClasses}>
           <div className="flex items-center justify-between gap-2 mb-3">
-            <p className="text-xs font-medium text-tertiary uppercase tracking-wide flex items-center gap-1.5">
+            <p className="text-xs font-medium text-tertiary uppercase tracking-wider flex items-center gap-1.5">
               {icon}
               {title}
             </p>
             {hasTrend && renderTrend()}
           </div>
           {isLoading ? (
-            <div className="h-9 w-36 bg-surface-alt rounded mt-1 animate-pulse" />
+            <div className="h-7 w-36 bg-surface-alt rounded mt-1.5 animate-pulse" />
           ) : (
-            <p className="text-3xl font-bold font-tabular-nums truncate">
+            <p className="text-2xl font-bold font-tabular-nums truncate">
               {formatted}
             </p>
           )}
           {subtitle && !isLoading && (
-            <p className="text-sm text-tertiary truncate">{subtitle}</p>
+            <p className="text-xs text-secondary truncate">{subtitle}</p>
           )}
           {!isLoading && (
             <div className="mt-2 flex items-center gap-2">
@@ -282,40 +282,37 @@ export const KPICard = forwardRef<HTMLDivElement, KPICardProps>(
 
     // Default variant — original layout preserved
     return (
-      <div
-        ref={ref}
-        className="bg-surface rounded-xl border border-color p-5 shadow hover:border-color-strong transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <span
-            className={`rounded-lg p-2 flex-shrink-0 ${iconBackground ?? "bg-surface-alt text-tertiary"}`}
-            aria-hidden="true"
-          >
-            {icon}
-          </span>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-tertiary uppercase tracking-wide">
-              {title}
-            </p>
-            {isLoading ? (
-              <div className="h-7 w-32 bg-surface-alt rounded mt-1 animate-pulse" />
-            ) : (
-              <p className="text-2xl sm:text-3xl font-bold text-primary truncate font-tabular-nums">
-                {formatted}
-              </p>
-            )}
-            {(subtitle || trend) && (
-              <div className="flex items-center gap-2 mt-1">
-                {subtitle && (
-                  <p className="text-xs text-tertiary truncate">{subtitle}</p>
-                )}
-                {hasTrend && renderTrend()}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
+      <div ref={ref} className={cardClasses}>
+         <div className="flex items-center gap-3">
+           <span
+             className={`rounded-lg p-2 flex-shrink-0 ${iconBoxClass}`}
+             aria-hidden="true"
+           >
+             {icon}
+           </span>
+           <div className="min-w-0 flex-1">
+             <p className="text-xs font-medium text-tertiary uppercase tracking-wider">
+               {title}
+             </p>
+             {isLoading ? (
+               <div className="h-5 w-20 bg-surface-alt rounded mt-1.5 animate-pulse" />
+             ) : (
+               <p className="text-lg font-bold text-primary truncate font-tabular-nums mt-1">
+                 {formatted}
+               </p>
+             )}
+             {(subtitle || trend) && (
+               <div className="flex items-center gap-2 mt-1">
+                 {subtitle && (
+                   <p className="text-xs text-secondary truncate">{subtitle}</p>
+                 )}
+                 {hasTrend && renderTrend()}
+               </div>
+             )}
+           </div>
+         </div>
+       </div>
+     );
   }
 );
 

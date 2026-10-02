@@ -18,7 +18,7 @@ export default function PageHeader({
   return (
     <div className={cn("mb-6", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav aria-label="breadcrumbs" className="mb-3 flex items-center gap-1 text-xs text-tertiary">
+        <nav aria-label="breadcrumbs" className="mb-3 flex items-center gap-1 text-xs font-medium text-tertiary">
           {breadcrumbs.map((crumb, i) => (
             <div key={i} className="flex items-center gap-1">
               {i > 0 && <ChevronRight className="h-3 w-3" />}
@@ -35,8 +35,8 @@ export default function PageHeader({
       )}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold text-primary">{title}</h1>
-          {description && <p className="mt-1 text-sm text-secondary">{description}</p>}
+          <h1 className="text-2xl font-bold text-primary leading-tight">{title}</h1>
+          {description && <p className="mt-1 text-sm text-secondary leading-relaxed">{description}</p>}
         </div>
         <div className="flex flex-shrink-0 items-center gap-3">
           {secondaryActions}

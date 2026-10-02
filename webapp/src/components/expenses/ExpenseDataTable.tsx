@@ -64,7 +64,7 @@ export default function ExpenseDataTable({
               {value as string}
             </span>
             {exp.notes && (
-              <span className="text-xs text-tertiary line-clamp-1 max-w-xs">
+              <span className="text-xs text-secondary line-clamp-1 max-w-xs">
                 {exp.notes}
               </span>
             )}
@@ -87,19 +87,19 @@ export default function ExpenseDataTable({
         const hasCustomer = !!exp.customer_name || !!exp.customer_id;
         const hasProject = !!exp.project_name || !!exp.project_id;
         if (!hasCustomer && !hasProject) {
-          return <span className="text-sm text-tertiary">—</span>;
+          return <span className="text-sm text-secondary">—</span>;
         }
         return (
           <div className="flex flex-col gap-0.5">
             {hasCustomer && (
               <span className="text-sm text-primary flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-tertiary" />
+                <User className="w-3.5 h-3.5 text-secondary" />
                 {exp.customer_name || exp.customer_id}
               </span>
             )}
             {hasProject && (
               <span className="text-sm text-primary flex items-center gap-1.5">
-                <Folder className="w-3.5 h-3.5 text-tertiary" />
+                <Folder className="w-3.5 h-3.5 text-secondary" />
                 {exp.project_name || exp.project_id}
               </span>
             )}
@@ -111,7 +111,7 @@ export default function ExpenseDataTable({
       header: "Payment Method",
       accessor: "payment_method",
       cell: (_row, value) => (
-        <span className="text-sm text-tertiary">
+        <span className="text-sm text-secondary">
           {value
             ? String(value).charAt(0).toUpperCase() +
               String(value).slice(1).replace("_", " ")
@@ -139,7 +139,7 @@ export default function ExpenseDataTable({
       cell: (row, value) => {
         const exp = row as ApiExpense;
         let label = "No";
-        let className = "text-xs text-tertiary";
+        let className = "text-xs text-secondary";
         if (value) {
           if (exp.is_reimbursed) {
             label = "Reimbursed";

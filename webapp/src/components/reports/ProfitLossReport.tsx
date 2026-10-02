@@ -155,7 +155,7 @@ export default function ProfitLossReport({ data, loading, currency, onExport }: 
       </div>
 
       <div className="bg-surface rounded-xl border border-color p-5">
-        <h3 className="text-sm font-semibold text-primary mb-4">Revenue vs. Expenses</h3>
+        <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Revenue vs. Expenses</h3>
         {chartData.length > 0 ? (
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -215,14 +215,14 @@ export default function ProfitLossReport({ data, loading, currency, onExport }: 
             </div>
           ) : (
             <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-              <p className="text-sm text-tertiary">No data for this period</p>
+              <p className="text-sm text-secondary">No data for this period</p>
             </div>
           )}
         </div>
 
       {expenseCategoryData.length > 0 && (
         <div className="bg-surface rounded-xl border border-color p-5">
-          <h3 className="text-sm font-semibold text-primary mb-4">Expenses by Category</h3>
+          <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Expenses by Category</h3>
           <div className="relative h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -268,7 +268,7 @@ export default function ProfitLossReport({ data, loading, currency, onExport }: 
                 <span className="text-xl font-bold text-primary font-tabular-nums">
                   {formatCurrencyValue(totalCategoryValue, currency)}
                 </span>
-                <span className="text-xs text-tertiary">total</span>
+                <span className="text-xs text-secondary">total</span>
               </span>
             </div>
           </div>
@@ -291,9 +291,9 @@ export default function ProfitLossReport({ data, loading, currency, onExport }: 
                     <span className="font-medium text-primary font-tabular-nums">
                       {formatCurrencyCompact(entry.value, currency)}
                     </span>
-                    <span className="text-xs text-tertiary ml-2">
-                      {entry.count} expense{entry.count !== 1 ? "s" : ""}
-                    </span>
+                     <span className="text-xs text-secondary ml-2">
+                       {entry.count} expense{entry.count !== 1 ? "s" : ""}
+                     </span>
                   </div>
                 </div>
               ))}

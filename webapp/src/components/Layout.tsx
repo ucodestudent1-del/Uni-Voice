@@ -63,18 +63,18 @@ export default function Layout() {
               return (
                 <li key={item.to}>
                    <NavLink
-                     to={item.to}
-                     end={item.to === "/app"}
-                     className={({ isActive }) =>
-                       `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                         isActive
-                           ? "bg-primary-bg text-on-primary-strong"
-                           : isLocked
-                             ? "text-tertiary cursor-not-allowed"
-                             : "text-secondary hover:bg-surface-alt hover:text-primary"
-                       }`
-                     }
-                   >
+                      to={item.to}
+                      end={item.to === "/app"}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                          isActive
+                            ? "bg-primary-bg text-on-primary-strong"
+                            : isLocked
+                              ? "text-tertiary cursor-not-allowed"
+                              : "text-secondary hover:bg-surface-alt hover:text-primary"
+                        }`
+                      }
+                    >
                      <span className="flex items-center gap-2">
                        <span className="w-5" />
                        <span>{item.name}</span>
@@ -177,19 +177,19 @@ export default function Layout() {
                     const isLocked = currentTier < reqTier;
                     return (
                       <li key={item.to}>
-                        <NavLink
-                          to={item.to}
-                          end={item.to === "/app"}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={({ isActive }) =>
-                            `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                              isActive
-                                ? "bg-primary-bg text-on-primary-strong"
-                                : isLocked
-                                  ? "text-tertiary cursor-not-allowed"
-                                  : "text-secondary hover:bg-surface-alt hover:text-primary"
-                            }`
-                          }
+                      <NavLink
+                           to={item.to}
+                           end={item.to === "/app"}
+                           onClick={() => setMobileMenuOpen(false)}
+                           className={({ isActive }) =>
+                             `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                               isActive
+                                 ? "bg-primary-bg text-on-primary-strong"
+                                 : isLocked
+                                   ? "text-tertiary cursor-not-allowed"
+                                   : "text-secondary hover:bg-surface-alt hover:text-primary"
+                             }`
+                           }
                         >
                           <span>{item.name}</span>
                           {item.requiredPlan && (

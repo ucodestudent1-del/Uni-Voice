@@ -125,8 +125,8 @@ export default function Plans() {
                   key={p.id}
                   className={`rounded-xl border p-6 transition-all ${
                     isCurrent
-                      ? "border-primary-600 bg-primary-bg"
-                      : "border-color-subtle bg-surface hover:border-primary-300"
+                      ? "border-2 border-primary-600 bg-primary-bg"
+                      : "border-color-subtle bg-surface hover:border-color-strong"
                   }`}
                 >
                   <div className="flex items-center justify-between">

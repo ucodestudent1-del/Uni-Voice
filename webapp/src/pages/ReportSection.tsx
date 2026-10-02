@@ -135,7 +135,7 @@ export default function ReportSection() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-surface rounded w-56" />
+        <div className="h-8 bg-surface-alt rounded w-56" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-surface rounded-xl border border-color p-5 h-28" />

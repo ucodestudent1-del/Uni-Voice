@@ -106,7 +106,7 @@ export default function MonthlyTrendChart({
 
       {loading ? (
         <div className="h-64 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-          <p className="text-sm text-tertiary">Loading trends...</p>
+          <p className="text-sm text-secondary">Loading trends...</p>
         </div>
       ) : error ? (
         <div className="h-64 flex flex-col items-center justify-center gap-3 border border-dashed border-error-border rounded-lg">

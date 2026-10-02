@@ -22,9 +22,9 @@ export default function BudgetProgress({ summary, budget, loading = false }: Bud
     return (
       <div className="bg-surface rounded-xl border border-color p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-primary">Monthly Budget</h3>
+          <h3 className="text-sm font-semibold text-primary tracking-tight">Monthly Budget</h3>
         </div>
-        <div className="text-center py-6 text-tertiary">
+        <div className="text-center py-6 text-secondary">
           <p className="text-sm">No budget set</p>
           <p className="text-xs mt-1">Set a monthly budget in Settings to track progress.</p>
         </div>
@@ -66,28 +66,28 @@ export default function BudgetProgress({ summary, budget, loading = false }: Bud
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-color p-5">
-        <h3 className="text-sm font-semibold text-primary mb-4">Monthly Budget</h3>
-        <div className="animate-pulse space-y-3">
-          <div className="h-4 w-full bg-surface-alt rounded" />
-          <div className="h-4 w-3/4 bg-surface-alt rounded" />
-        </div>
-      </div>
-    );
-  }
+       <div className="bg-surface rounded-xl border border-color p-5">
+         <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Monthly Budget</h3>
+         <div className="animate-pulse space-y-3">
+           <div className="h-4 w-full bg-surface-alt rounded" />
+           <div className="h-4 w-3/4 bg-surface-alt rounded" />
+         </div>
+       </div>
+     );
+   }
 
-  return (
-      <div className={`bg-surface rounded-xl border border-color p-5 ${bgColor} transition-colors`}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <TrendingUp className={`w-4 h-4 ${iconColor}`} />
-            <h3 className="text-sm font-semibold text-primary">Monthly Budget</h3>
-          </div>
-          <div className="text-xs text-tertiary">
-            {formatCurrencyValue(monthlySpent, currency)} /{" "}
-            {formatCurrencyValue(budgetAmount, currency)}
-          </div>
-        </div>
+   return (
+       <div className={`bg-surface rounded-xl border border-color p-5 ${bgColor} transition-colors`}>
+         <div className="flex items-center justify-between mb-4">
+           <div className="flex items-center gap-2">
+             <TrendingUp className={`w-4 h-4 ${iconColor}`} />
+             <h3 className="text-sm font-semibold text-primary tracking-tight">Monthly Budget</h3>
+           </div>
+           <div className="text-xs text-secondary">
+             {formatCurrencyValue(monthlySpent, currency)} /{" "}
+             {formatCurrencyValue(budgetAmount, currency)}
+           </div>
+         </div>
 
         <div className="relative h-4 rounded-full bg-surface border border-color-subtle overflow-hidden mb-3">
           <div
@@ -105,11 +105,11 @@ export default function BudgetProgress({ summary, budget, loading = false }: Bud
           ) : (
             <CheckCircle className="w-4 h-4 text-success-text" />
           )}
-          <span className="text-xs text-tertiary">{statusMessage}</span>
-        </div>
-        <span className="text-xs font-medium text-tertiary">
-          {percentage.toFixed(0)}% used
-        </span>
+           <span className="text-xs text-secondary">{statusMessage}</span>
+         </div>
+         <span className="text-xs font-medium text-secondary">
+           {percentage.toFixed(0)}% used
+         </span>
       </div>
 
       {isOverBudget && (

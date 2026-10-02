@@ -272,7 +272,7 @@ const [searchTerm, setSearchTerm] = useState("");
     return colors[state] || colors.unpaid;
   };
 
-  if (loading && invoices.length === 0) return <div className="text-center py-20 text-tertiary">Loading invoices…</div>;
+  if (loading && invoices.length === 0) return <div className="text-center py-20 text-secondary">Loading invoices…</div>;
 
   return (
     <div className="space-y-6">
@@ -464,8 +464,8 @@ const [searchTerm, setSearchTerm] = useState("");
       </div>
 
       {error && (
-        <div className="p-3 status-error-bg dark:bg-error-bg border status-error-border dark:status-error-border rounded-lg">
-          <p className="text-sm status-error-text dark:status-error-text">{error}</p>
+        <div className="p-3 status-error-bg border status-error-border rounded-lg">
+          <p className="text-sm status-error-text">{error}</p>
         </div>
       )}
 
@@ -473,51 +473,50 @@ const [searchTerm, setSearchTerm] = useState("");
         <table className="w-full">
           <thead>
             <tr className="border-b border-color-subtle border-color bg-surface-alt dark:bg-surface-alt">
-              <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
-                onClick={() => handleSort("invoice_number")}>
-                Invoice
-                {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
-                onClick={() => handleSort("customer_name")}>
-                Customer
-                {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">
-                Payment State
-              </th>
-              <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
-                onClick={() => handleSort("total")}>
-                Total
-                {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
-                onClick={() => handleSort("amount_due")}>
-                Amount Due
-                {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
-                onClick={() => handleSort("due_date")}>
-                Due Date
-                {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
-                onClick={() => handleSort("issue_date")}>
-                Issue Date
-                {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
-                onClick={() => handleSort("status")}>
-                Status
-                {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">Actions</th>
+               <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface">
+                 Invoice
+                 {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                 onClick={() => handleSort("customer_name")}>
+                 Customer
+                 {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">
+                 Payment State
+               </th>
+               <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                 onClick={() => handleSort("total")}>
+                 Total
+                 {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                 onClick={() => handleSort("amount_due")}>
+                 Amount Due
+                 {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                 onClick={() => handleSort("due_date")}>
+                 Due Date
+                 {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                 onClick={() => handleSort("issue_date")}>
+                 Issue Date
+                 {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                 onClick={() => handleSort("status")}>
+                 Status
+                 {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {invoices.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-tertiary">
+                <td colSpan={9} className="py-16 text-center text-secondary">
                   {hasActiveFilters ? "No invoices match your filters" : "No invoices yet"}
                   {!hasActiveFilters && (
                     <Button
@@ -537,43 +536,43 @@ const [searchTerm, setSearchTerm] = useState("");
                 const paymentState = getPaymentState(inv);
                 return (
                   <tr key={inv.id} className="border-b border-color-subtle border-color last:border-b-0 hover:bg-hover">
-                    <td className="py-3 px-4">
-                      <div className="flex flex-col">
-                        <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-inverse hover:text-primary-brand dark:hover:text-primary-brand">
-                          {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
-                        </Link>
-                        <span className="text-xs text-tertiary">
-                          {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-tertiary">
-                      {inv.customer_name || "—"}
-                      {inv.customer_email && <span className="text-xs text-tertiary block">{inv.customer_email}</span>}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getPaymentStateColor(paymentState)}`}>
+                   <td className="py-3.5 px-4">
+                       <div className="flex flex-col">
+                         <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
+                           {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
+                         </Link>
+                         <span className="text-xs text-secondary">
+                           {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
+                         </span>
+                       </div>
+                     </td>
+                     <td className="py-3.5 px-4 text-sm text-secondary">
+                       {inv.customer_name || "—"}
+                       {inv.customer_email && <span className="text-xs text-secondary block">{inv.customer_email}</span>}
+                     </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getPaymentStateColor(paymentState)}`}>
                         {getPaymentStateLabel(paymentState)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-inverse">
+                    <td className="py-3.5 px-4 text-right text-sm font-medium text-primary">
                       {formatCurrency(inv.total, inv.currency)}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm font-medium text-inverse">
+                    <td className="py-3.5 px-4 text-right text-sm font-medium text-primary">
                       {Number(inv.amount_due || 0) > 0
                         ? formatCurrency(inv.amount_due, inv.currency)
-                        : <span className="status-success-text dark:status-success-text">Paid</span>}
+                        : <span className="status-success-text">Paid</span>}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-tertiary">
+                    <td className="py-3.5 px-4 text-right text-sm text-secondary">
                       {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3 px-4 text-center text-sm text-tertiary">
+                    <td className="py-3.5 px-4 text-center text-sm text-secondary">
                       {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <InvoiceStatus status={inv.status} isOverdue={isOverdueStatus(inv.status, inv.due_date)} showIcon />
                     </td>
-                     <td className="py-3 px-4 text-center">
+                     <td className="py-3.5 px-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <FeatureGate feature="invoices.duplicate" requiredPlan="pro" fallback={null}>
                           <Button
@@ -596,13 +595,12 @@ const [searchTerm, setSearchTerm] = useState("");
                           </FeatureGate>
                         )}
                         {inv.status === "draft" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<FileText className="w-3.5 h-3.5" />}
-                            onClick={() => handleFinalize(inv.id)}
-                            title="Finalize"
-                            className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand"
+                         <Button
+                             variant="ghost"
+                             size="sm"
+                             icon={<FileText className="w-3.5 h-3.5" />}
+                             onClick={() => handleFinalize(inv.id)}
+                             title="Finalize"
                           />
                         )}
                       </div>
@@ -616,7 +614,7 @@ const [searchTerm, setSearchTerm] = useState("");
 
         {totalPages > 1 && (
           <div className="px-4 py-3 border-t border-color-subtle border-color flex items-center justify-between">
-            <p className="text-sm text-tertiary">
+            <p className="text-sm text-secondary">
               Page {page} of {totalPages} • {total} invoices
             </p>
              <div className="flex items-center gap-2">

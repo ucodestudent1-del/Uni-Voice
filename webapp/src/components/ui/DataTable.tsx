@@ -68,35 +68,35 @@ function DataTableInner<TData extends Record<string, any>>(
                     />
                   </th>
                 )}
-                {columns.map((col, i) => {
-                  const isSortable = col.sortable !== false && onSort && typeof col.accessor === "string";
-                  const isSorted = sortColumn === (col.accessor as string);
-                  const align = col.align ?? "left";
-                  return (
-                    <th
-                      key={String(col.accessor ?? i)}
-                      className={cn(
-                        "text-xs font-medium text-tertiary uppercase py-3 px-4 whitespace-nowrap",
-                        {
-                          "text-left": align === "left",
-                          "text-center": align === "center",
-                          "text-right": align === "right",
-                          "cursor-pointer select-none hover:bg-surface": !!isSortable,
-                        },
-                        col.className
-                      )}
-                      onClick={isSortable ? () => onSort!(col.accessor as string) : undefined}
-                      aria-sort={isSortable && isSorted ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                    >
-                      <span className="flex items-center gap-1">
-                        {col.header}
-                        {isSortable && isSorted && (
-                          <span className="text-xs">{sortOrder === "asc" ? "▲" : "▼"}</span>
-                        )}
-                      </span>
-                    </th>
-                  );
-                })}
+                 {columns.map((col, i) => {
+                   const isSortable = col.sortable !== false && onSort && typeof col.accessor === "string";
+                   const isSorted = sortColumn === (col.accessor as string);
+                   const align = col.align ?? "left";
+                   return (
+                     <th
+                       key={String(col.accessor ?? i)}
+                       className={cn(
+                         "text-xs font-medium text-tertiary uppercase py-3.5 px-4 whitespace-nowrap",
+                         {
+                           "text-left": align === "left",
+                           "text-center": align === "center",
+                           "text-right": align === "right",
+                           "cursor-pointer select-none hover:bg-surface": !!isSortable,
+                         },
+                         col.className
+                       )}
+                       onClick={isSortable ? () => onSort!(col.accessor as string) : undefined}
+                       aria-sort={isSortable && isSorted ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                     >
+                       <span className="flex items-center gap-1">
+                         {col.header}
+                         {isSortable && isSorted && (
+                           <span className="text-xs">{sortOrder === "asc" ? "▲" : "▼"}</span>
+                         )}
+                       </span>
+                     </th>
+                   );
+                 })}
                 {actions && <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-2 w-16">Actions</th>}
               </tr>
             ))}
@@ -142,11 +142,11 @@ function DataTableInner<TData extends Record<string, any>>(
                       const value = getCellValue(row, col);
                       const align = col.align ?? "left";
                       return (
-                        <td
-                          key={String(col.accessor ?? colIndex)}
-                          className={cn(
-                            "py-3 px-4 text-sm align-top",
-                            {
+                         <td
+                           key={String(col.accessor ?? colIndex)}
+                           className={cn(
+                             "py-3.5 px-4 text-sm align-top leading-relaxed",
+                             {
                               "text-left": align === "left",
                               "text-center": align === "center",
                               "text-right": align === "right",
@@ -168,14 +168,14 @@ function DataTableInner<TData extends Record<string, any>>(
 
       {onPageChange && totalPages > 1 && (
         <div className="flex items-center justify-between px-2 py-4">
-          <div className="flex-1 text-sm text-tertiary">
+          <div className="flex-1 text-sm font-medium text-secondary">
             page {currentPage} of {totalPages} • {total} rows
           </div>
           <div className="flex items-center gap-2">
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-              className="form-control-sm"
+              className="form-control-sm min-w-[120px]"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>

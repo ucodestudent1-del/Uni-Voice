@@ -25,7 +25,7 @@ export default function ThemeToggle() {
         className={`rounded-md p-1.5 text-sm transition-all ${
           resolvedTheme === "light" && theme === "light"
             ? "bg-surface text-primary shadow"
-            : "hover:text-primary"
+            : "text-tertiary hover:text-primary"
         }`}
         title="Light"
       >
@@ -38,7 +38,7 @@ export default function ThemeToggle() {
         className={`rounded-md p-1.5 text-sm transition-all ${
           resolvedTheme === "dark" && theme === "dark"
             ? "bg-surface text-primary shadow"
-            : "hover:text-primary"
+            : "text-tertiary hover:text-primary"
         }`}
         title="Dark"
       >
@@ -51,7 +51,7 @@ export default function ThemeToggle() {
         className={`rounded-md p-1.5 text-sm transition-all ${
           theme === "system"
             ? "bg-surface text-primary shadow"
-            : "hover:text-primary"
+            : "text-tertiary hover:text-primary"
         }`}
         title="System"
       >

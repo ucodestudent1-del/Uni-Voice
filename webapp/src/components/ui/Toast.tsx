@@ -45,7 +45,7 @@ export default function Toast({ id, type = "info", title, message, actionLabel, 
     >
       <Icon className="h-5 w-5 flex-shrink-0" />
       <div className="flex-1">
-        {title && <p className="font-medium">{title}</p>}
+        {title && <p className="text-sm font-medium">{title}</p>}
         <p className="text-sm">{message}</p>
       </div>
       {actionLabel && onAction && (
@@ -58,7 +58,7 @@ export default function Toast({ id, type = "info", title, message, actionLabel, 
       )}
       <button
         onClick={() => setVisible(false)}
-        className="rounded-lg p-1 hover:bg-surface-alt/20"
+        className="rounded-lg p-1 text-tertiary hover:bg-surface-alt hover:text-primary"
         aria-label="Dismiss"
       >
         <X className="h-4 w-4" />

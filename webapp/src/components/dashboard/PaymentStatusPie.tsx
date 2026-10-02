@@ -16,11 +16,11 @@ export default function PaymentStatusPie({ data = [] }: PaymentStatusPieProps) {
 
   return (
     <div className="bg-surface rounded-xl border border-color p-5">
-      <h3 className="text-sm font-semibold text-primary mb-4">Payment Status</h3>
+      <h3 className="text-sm font-semibold text-primary tracking-tight mb-4">Payment Status</h3>
 
       {total === 0 ? (
         <div className="h-40 flex items-center justify-center border border-dashed border-color-subtle rounded-lg">
-          <p className="text-sm text-tertiary">No invoices yet</p>
+          <p className="text-sm text-secondary">No invoices yet</p>
         </div>
       ) : (
         <div className="relative h-40">

@@ -32,18 +32,18 @@ return (
       >
         <div className="flex items-center justify-around h-16 pb-[env(safe-area-inset-bottom,0px)]">
           {items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/app"}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center flex-1 pt-1 text-xs font-medium transition-colors ${
-                  isActive
-                    ? "text-primary-brand"
-                    : "text-tertiary hover:text-primary dark:hover:text-tertiary"
-                }`
-              }
-            >
+             <NavLink
+               key={item.to}
+               to={item.to}
+               end={item.to === "/app"}
+               className={({ isActive }) =>
+                 `flex flex-col items-center justify-center flex-1 pt-1 text-xs font-medium transition-colors ${
+                   isActive
+                     ? "text-primary-brand"
+                     : "text-tertiary hover:text-primary"
+                 }`
+               }
+             >
               {({ isActive }) => {
                 const Icon = item.icon;
                 return (
