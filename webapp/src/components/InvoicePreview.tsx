@@ -116,25 +116,17 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
   }, [invoice.items, cur]);
 
   const hasAmountPaid = new Decimal(invoice.amountPaid ?? 0).gt(0);
-  const isDraft = invoice.status === "draft";
 
   return (
     <div className="invoice-preview bg-surface border border-color rounded-xl shadow-md font-[system-ui,-apple-system,BlinkMacSystemFont,Segoe_UI,Roboto,Helvetica,Arial,sans-serif]">
       {/* Header: business + status */}
       <div className="flex justify-between items-start mb-8 pb-6 border-b border-color">
         <div>
-          <div className="flex items-center gap-4 mb-2">
-            {invoice.businessLogo ? (
-              <img src={invoice.businessLogo} alt={invoice.businessName} className="h-12 w-auto" />
-            ) : (
-              <h2 className="text-2xl font-bold text-primary">{invoice.businessName || "Your Business"}</h2>
-            )}
-            {isDraft && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2.5 py-0.5 text-xs font-semibold text-warning-text">
-                Draft
-              </span>
-            )}
-          </div>
+          {invoice.businessLogo ? (
+            <img src={invoice.businessLogo} alt={invoice.businessName} className="h-12 w-auto" />
+          ) : (
+            <h2 className="text-2xl font-bold text-primary">{invoice.businessName || "Your Business"}</h2>
+          )}
           {invoice.businessEmail && <p className="text-sm text-secondary">{invoice.businessEmail}</p>}
           {invoice.businessPhone && <p className="text-sm text-secondary">{invoice.businessPhone}</p>}
           {invoice.businessWebsite && <p className="text-sm text-tertiary">{invoice.businessWebsite}</p>}
@@ -143,15 +135,12 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
           )}
         </div>
         <div className="text-right">
-          {!isDraft && (
-            <InvoiceStatus
-              status={invoice.status}
-              isOverdue={overdue}
-              showIcon
-              size="sm"
-              className="mb-2"
-            />
-          )}
+          <InvoiceStatus
+            status={invoice.status ?? "draft"}
+            isOverdue={overdue}
+            showIcon={invoice.status !== "draft"}
+            size="sm"
+          />
           {invoice.invoiceNumber && (
             <p className="mt-2 text-lg font-semibold text-primary">#{invoice.invoiceNumber}</p>
           )}
@@ -214,12 +203,12 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
       <table className="w-full border-collapse mb-6">
         <thead>
           <tr className="border-b border-color">
-            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3">#</th>
-            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3">Description</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Qty</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Unit Price</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Tax</th>
-            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3">Amount</th>
+            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3 px-3">#</th>
+            <th className="text-left text-xs font-semibold text-tertiary uppercase py-3 px-3">Description</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Qty</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Unit Price</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Tax</th>
+            <th className="text-right text-xs font-semibold text-tertiary uppercase py-3 px-3">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -227,21 +216,21 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
             const lineTotal = lineTotals[i];
             const hasRate = new Decimal(item.unitPrice || 0).gt(0);
             return (
-              <tr key={i} className="border-b border-color-subtle">
-                <td className="py-3 text-sm text-tertiary font-tabular-nums">{i + 1}</td>
-                <td className="py-3 text-sm text-primary">
+              <tr key={i} className="border-b border-color-subtle odd:bg-surface even:bg-surface">
+                <td className="py-3 px-3 text-sm text-tertiary font-tabular-nums">{i + 1}</td>
+                <td className="py-3 px-3 text-sm text-primary max-w-xs break-words">
                   {item.description || <span className="text-tertiary italic">Untitled item</span>}
                 </td>
-                <td className="py-3 text-sm text-secondary text-right font-tabular-nums">
+                <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
                   {fmtQuantity(item.quantity)} {item.unit}
                 </td>
-                <td className="py-3 text-sm text-secondary text-right font-tabular-nums">
+                <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
                   {hasRate ? fmtNumber(item.unitPrice, cur) : ""}
                 </td>
-                <td className="py-3 text-sm text-secondary text-right font-tabular-nums">
+                <td className="py-3 px-3 text-sm text-secondary text-right font-tabular-nums">
                   {fmtRate(item.taxRate)}
                 </td>
-                <td className="py-3 text-right text-sm font-medium text-primary font-tabular-nums">{lineTotal}</td>
+                <td className="py-3 px-3 text-right text-sm font-medium text-primary font-tabular-nums">{lineTotal}</td>
               </tr>
             );
           })}
