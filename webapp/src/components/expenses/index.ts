@@ -6,3 +6,4 @@ export { default as BudgetProgress, type BudgetProgressProps } from "./BudgetPro
 export { default as ExpenseForm, type ExpenseFormData, type ExpenseFormProps } from "./ExpenseForm";
 export { default as ExpenseFilters, type ExpenseFiltersProps } from "./ExpenseFilters";
 export { default as ExpenseDataTable, type ExpenseDataTableProps } from "./ExpenseDataTable";
+export { default as ExpenseDetailPanel, type ExpenseDetailPanelProps } from "./ExpenseDetailPanel";

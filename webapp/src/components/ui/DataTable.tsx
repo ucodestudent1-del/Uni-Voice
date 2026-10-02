@@ -34,6 +34,7 @@ function DataTableInner<TData extends Record<string, any>>(
     selectAllIndeterminate = false,
     actions,
     rowClassName,
+    onRowClick,
     className,
     ...rest
   }: DataTableProps<TData>,
@@ -120,15 +121,17 @@ function DataTableInner<TData extends Record<string, any>>(
             ) : (
               data.map((row, rowIndex) => {
                 const rowId = getRowId(row, rowIndex);
-                return (
-                  <tr
-                    key={rowId}
-                    className={cn(
-                      "border-b border-color-subtle last:border-b-0 hover:bg-surface-alt transition-colors",
-                      rowClassName?.(row)
-                    )}
-                  >
-                    {onSelectAll && (
+                 return (
+                   <tr
+                     key={rowId}
+                     className={cn(
+                       "border-b border-color-subtle last:border-b-0 transition-colors",
+                       onRowClick && "cursor-pointer hover:bg-surface-alt",
+                       rowClassName?.(row)
+                     )}
+                     onClick={onRowClick ? () => onRowClick(row) : undefined}
+                   >
+                     {onSelectAll && (
                       <td className="py-2 px-2 text-center">
                         <input
                           type="checkbox"

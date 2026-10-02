@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Plus,
-  DollarSign,
+  Search,
   CalendarDays,
+  DollarSign,
   BarChart3,
+  FileText,
+  Download,
+  X,
 } from "lucide-react";
-import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getExpensesWithSummary,
   getExpenseSummary,
@@ -29,12 +32,15 @@ import {
   BudgetProgress,
   ExpenseForm,
   type ExpenseFormData,
-  ExpenseFilters,
   ExpenseDataTable,
+  ExpenseDetailPanel,
 } from "../components/expenses";
+import { EXPENSE_CATEGORY_OPTIONS } from "../components/expenses/ExpenseCategoryBadge";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+
+const PAYMENT_METHODS = ["cash", "card", "bank_transfer", "check", "other"];
 
 export default function Expenses() {
-  const { plan } = useSubscription();
   const { toast } = useToast();
 
   const [expenses, setExpenses] = useState<ApiExpense[]>([]);
@@ -47,6 +53,9 @@ export default function Expenses() {
   const [formData, setFormData] = useState<Partial<ApiExpense> | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [panelExpense, setPanelExpense] = useState<ApiExpense | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+
   const [summary, setSummary] = useState<ApiExpenseSummary | null>(null);
   const [monthlySummary, setMonthlySummary] = useState<ApiExpenseSummary | null>(null);
   const [categoryBreakdown, setCategoryBreakdown] = useState<ApiExpenseCategoryBreakdown[] | null>(null);
@@ -55,15 +64,50 @@ export default function Expenses() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [vendorFilter, setVendorFilter] = useState("");
-  const [customerNameFilter, setCustomerNameFilter] = useState("");
-  const [projectNameFilter, setProjectNameFilter] = useState("");
-  const [billableFilter, setBillableFilter] = useState<string>("all");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "transactions">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "transactions">("transactions");
+
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  }, 300);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSetSearch(e.target.value);
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCategoryFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handlePaymentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPaymentFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handleDateFromChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDateFrom(e.target.value);
+    setPage(1);
+  };
+
+  const handleDateToChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDateTo(e.target.value);
+    setPage(1);
+  };
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setCategoryFilter("");
+    setPaymentFilter("");
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
+  };
 
   const params: ExpenseSearchParams = useMemo(
     () => ({
@@ -71,39 +115,12 @@ export default function Expenses() {
       offset: (page - 1) * pageSize,
       search: searchTerm || undefined,
       category: categoryFilter || undefined,
-      vendor: vendorFilter || undefined,
-      customerName: customerNameFilter || undefined,
-      projectName: projectNameFilter || undefined,
-      isBillable: billableFilter === "all" ? undefined : billableFilter === "true",
+      paymentMethod: paymentFilter || undefined,
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
     }),
-    [pageSize, page, searchTerm, categoryFilter, vendorFilter, customerNameFilter, projectNameFilter, billableFilter, dateFrom, dateTo]
+    [pageSize, page, searchTerm, categoryFilter, paymentFilter, dateFrom, dateTo]
   );
-
-  const resetFilters = () => {
-    setSearchTerm("");
-    setCategoryFilter("");
-    setVendorFilter("");
-    setCustomerNameFilter("");
-    setProjectNameFilter("");
-    setBillableFilter("all");
-    setDateFrom("");
-    setDateTo("");
-    setPage(1);
-  };
-
-  const handleFiltersChange = (newParams: ExpenseSearchParams) => {
-    setSearchTerm(newParams.search ?? "");
-    setCategoryFilter(newParams.category ?? "");
-    setVendorFilter(newParams.vendor ?? "");
-    setCustomerNameFilter(newParams.customerName ?? "");
-    setProjectNameFilter(newParams.projectName ?? "");
-    setBillableFilter(newParams.isBillable === undefined ? "all" : newParams.isBillable ? "true" : "false");
-    setDateFrom(newParams.dateFrom ?? "");
-    setDateTo(newParams.dateTo ?? "");
-    setPage(1);
-  };
 
   const loadExpensesWithSummary = useCallback(async () => {
     setLoading(true);
@@ -127,7 +144,7 @@ export default function Expenses() {
       setMonthlySummary(monthlyRes.summary ?? null);
     } catch (err: any) {
       if (err.response?.status === 403) {
-          setError("Expense tracking requires a Pro plan. Please upgrade to continue.");
+        setError("Expense tracking requires a Pro plan. Please upgrade to continue.");
       } else {
         setError(err.response?.data?.error || "Failed to load expenses");
       }
@@ -162,6 +179,8 @@ export default function Expenses() {
     loadAnalytics();
   }, [loadAnalytics]);
 
+  const summaryCurrency = summary?.currency ?? "USD";
+
   const handleEdit = (expense: ApiExpense) => {
     setEditingId(expense.id);
     setFormData({
@@ -188,47 +207,68 @@ export default function Expenses() {
       setExpenses((prev) => prev.filter((e) => e.id !== expense.id));
       setTotal((prev) => prev - 1);
       toast("Expense deleted", { type: "info" });
+      setPanelOpen(false);
+      setPanelExpense(null);
       loadExpensesWithSummary();
     } catch (err: any) {
       toast(err.response?.data?.error || "Failed to delete expense", { type: "error" });
     }
   };
 
+  const handleRowClick = (expense: ApiExpense) => {
+    setPanelExpense(expense);
+    setPanelOpen(true);
+  };
+
+  const handlePanelClose = () => {
+    setPanelOpen(false);
+    setPanelExpense(null);
+  };
+
+  const handlePanelEdit = (expense: ApiExpense) => {
+    handleEdit(expense);
+    handlePanelClose();
+  };
+
+  const handlePanelDelete = (expense: ApiExpense) => {
+    handleDelete(expense);
+  };
+
   const handleFormSubmit = async (formData: ExpenseFormData) => {
     if (!formData.description || !formData.amount) return;
     setSaving(true);
     setError(null);
-      try {
-       if (editingId) {
-         await updateExpense(editingId, {
-           description: formData.description,
-           amount: formData.amount,
-           category: (formData.category ?? "other") as ApiExpense["category"],
-           expenseDate: formData.expense_date,
-           paymentMethod: formData.payment_method,
-           vendor: formData.vendor || null,
-           customerId: formData.customer_id,
-           projectId: formData.project_id,
-           receiptUrl: formData.receipt_url || null,
-           notes: formData.notes || null,
-           isBillable: formData.is_billable,
-           isReimbursed: formData.is_reimbursed,
-         });
-         toast("Expense updated", { type: "success" });
-       } else {
-         await createExpense({
-           description: formData.description,
-           amount: formData.amount,
-           category: (formData.category ?? "other") as ApiExpense["category"],
-           expenseDate: formData.expense_date ?? new Date().toISOString().split("T")[0],
-           paymentMethod: formData.payment_method ?? "cash",
-           vendor: formData.vendor || null,
-           customerId: formData.customer_id,
-           projectId: formData.project_id,
-           receiptUrl: formData.receipt_url || null,
-           notes: formData.notes || null,
-           isBillable: formData.is_billable,
-         });
+    try {
+      if (editingId) {
+        await updateExpense(editingId, {
+          description: formData.description,
+          amount: formData.amount,
+          category: (formData.category ?? "other") as ApiExpense["category"],
+          expenseDate: formData.expense_date,
+          paymentMethod: formData.payment_method,
+          vendor: formData.vendor || null,
+          customerId: formData.customer_id,
+          projectId: formData.project_id,
+          receiptUrl: formData.receipt_url || null,
+          notes: formData.notes || null,
+          isBillable: formData.is_billable,
+          isReimbursed: formData.is_reimbursed,
+        });
+        toast("Expense updated", { type: "success" });
+      } else {
+        await createExpense({
+          description: formData.description,
+          amount: formData.amount,
+          category: (formData.category ?? "other") as ApiExpense["category"],
+          expenseDate: formData.expense_date ?? new Date().toISOString().split("T")[0],
+          paymentMethod: formData.payment_method ?? "cash",
+          vendor: formData.vendor || null,
+          customerId: formData.customer_id,
+          projectId: formData.project_id,
+          receiptUrl: formData.receipt_url || null,
+          notes: formData.notes || null,
+          isBillable: formData.is_billable,
+        });
         toast("Expense added", { type: "success" });
       }
       setShowForm(false);
@@ -237,7 +277,7 @@ export default function Expenses() {
       loadExpensesWithSummary();
     } catch (err: any) {
       if (err.response?.status === 403) {
-          setError("Expense tracking requires a Pro plan.");
+        setError("Expense tracking requires a Pro plan.");
       } else {
         setError(err.response?.data?.error || "Failed to save expense");
       }
@@ -253,14 +293,41 @@ export default function Expenses() {
     setFormData(null);
   };
 
-  const summaryCurrency = summary?.currency ?? "USD";
-  const totalAmount = summary?.total_amount ?? "0";
+  const exportToCsv = () => {
+    if (!expenses.length) return;
+    const headers = ["Date", "Description", "Category", "Vendor", "Payment Method", "Amount", "Billable", "Reimbursed"];
+    const rows = expenses.map((e) => [
+      e.expense_date,
+      e.description,
+      e.category,
+      e.vendor ?? "",
+      e.payment_method,
+      e.amount,
+      e.is_billable ? "Yes" : "No",
+      e.is_reimbursed ? "Yes" : "No",
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `expenses-${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <FeatureGate feature="expenses.tracking" requiredPlan="pro">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-primary">Expenses</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-primary">Expenses</h1>
+            <p className="text-sm text-secondary mt-0.5">
+              Track, categorize, and manage your business spending.
+            </p>
+          </div>
           <Button
             variant="primary"
             size="md"
@@ -304,10 +371,10 @@ export default function Expenses() {
 
         {activeTab === "dashboard" && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <ExpenseKPICard
                 title="Total Expenses"
-                value={totalAmount}
+                value={summary?.total_amount ?? "0"}
                 icon={<DollarSign className="w-5 h-5" />}
                 iconBackground="status-info-bg status-info-text"
                 isLoading={loading}
@@ -323,22 +390,20 @@ export default function Expenses() {
                 currency={summaryCurrency}
               />
               <ExpenseKPICard
-                title="Billable Expenses"
-                value={summary?.billable_amount ?? "0"}
-                subtitle={`${summary?.count ?? 0} expenses`}
-                icon={<DollarSign className="w-5 h-5" />}
-                iconBackground="status-warning-bg status-warning-text"
-                isLoading={loading}
-                currency={summaryCurrency}
-              />
-              <ExpenseKPICard
-                title="Unpaid / Reimbursable"
+                title="Outstanding"
                 value={summary?.non_reimbursed_billable ?? "0"}
                 subtitle="Billable, not reimbursed"
                 icon={<BarChart3 className="w-5 h-5" />}
                 iconBackground="status-error-bg status-error-text"
                 isLoading={loading}
                 currency={summaryCurrency}
+              />
+              <ExpenseKPICard
+                title="Expenses"
+                value={summary?.count ?? 0}
+                icon={<FileText className="w-5 h-5" />}
+                iconBackground="status-tertiary-bg status-tertiary-text"
+                isLoading={loading}
               />
             </div>
 
@@ -361,11 +426,104 @@ export default function Expenses() {
 
         {activeTab === "transactions" && (
           <>
-            <ExpenseFilters
-              params={params}
-              onChange={handleFiltersChange}
-              onReset={resetFilters}
-            />
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-medium text-tertiary mb-1">
+                  Search
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" />
+                  <input
+                    type="text"
+                    placeholder="Search description or notes..."
+                    defaultValue={searchTerm}
+                    onChange={handleSearchChange}
+                    className="search-input"
+                  />
+                </div>
+              </div>
+
+              <div className="min-w-[160px]">
+                <label className="block text-xs font-medium text-tertiary mb-1">
+                  Category
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={handleCategoryChange}
+                  className="form-select"
+                >
+                  <option value="">All Categories</option>
+                  {EXPENSE_CATEGORY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="min-w-[160px]">
+                <label className="block text-xs font-medium text-tertiary mb-1">
+                  Payment Method
+                </label>
+                <select
+                  value={paymentFilter}
+                  onChange={handlePaymentChange}
+                  className="form-select"
+                >
+                  <option value="">All Methods</option>
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {m.charAt(0).toUpperCase() + m.slice(1).replace("_", " ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="min-w-[140px]">
+                <label className="block text-xs font-medium text-tertiary mb-1">
+                  From Date
+                </label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={handleDateFromChange}
+                  className="form-control"
+                />
+              </div>
+
+              <div className="min-w-[140px]">
+                <label className="block text-xs font-medium text-tertiary mb-1">
+                  To Date
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={handleDateToChange}
+                  className="form-control"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  icon={<Download className="w-4 h-4" />}
+                  onClick={exportToCsv}
+                  disabled={!expenses.length}
+                >
+                  Export
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<X className="w-4 h-4" />}
+                  onClick={resetFilters}
+                  disabled={!searchTerm && !categoryFilter && !paymentFilter && !dateFrom && !dateTo}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
 
             <ExpenseDataTable
               expenses={expenses}
@@ -377,6 +535,7 @@ export default function Expenses() {
               onPageSizeChange={setPageSize}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onRowClick={handleRowClick}
             />
           </>
         )}
@@ -388,6 +547,15 @@ export default function Expenses() {
           initialData={formData}
           saving={saving}
           onSubmit={handleFormSubmit}
+        />
+
+        <ExpenseDetailPanel
+          expense={panelExpense}
+          open={panelOpen}
+          onClose={handlePanelClose}
+          onEdit={handlePanelEdit}
+          onDelete={handlePanelDelete}
+          loading={saving}
         />
       </div>
     </FeatureGate>

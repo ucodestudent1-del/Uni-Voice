@@ -1,5 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, Eye, User, Folder } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import { DataTable, Button } from "@/components/ui";
 import type { ColumnDef } from "@/types/components";
 import ExpenseCategoryBadge from "./ExpenseCategoryBadge";
@@ -16,6 +15,7 @@ export interface ExpenseDataTableProps {
   onPageSizeChange?: (size: number) => void;
   onEdit: (expense: ApiExpense) => void;
   onDelete: (expense: ApiExpense) => void;
+  onRowClick?: (expense: ApiExpense) => void;
 }
 
 export default function ExpenseDataTable({
@@ -28,14 +28,13 @@ export default function ExpenseDataTable({
   onPageSizeChange,
   onEdit,
   onDelete,
+  onRowClick,
 }: ExpenseDataTableProps) {
-  const navigate = useNavigate();
-
   const columns: ColumnDef<ApiExpense>[] = [
     {
       header: "Date",
       accessor: "expense_date",
-      cell: (row, value) => {
+      cell: (_row, value) => {
         if (!value) return "—";
         return new Date(value as string).toLocaleDateString("en-US", {
           year: "numeric",
@@ -43,15 +42,6 @@ export default function ExpenseDataTable({
           day: "numeric",
         });
       },
-    },
-    {
-      header: "Vendor",
-      accessor: "vendor",
-      cell: (_row, value) => (
-        <span className="text-sm text-primary truncate max-w-[140px] block">
-          {value ? String(value) : "—"}
-        </span>
-      ),
     },
     {
       header: "Description",
@@ -80,35 +70,16 @@ export default function ExpenseDataTable({
       ),
     },
     {
-      header: "Client / Project",
-      accessor: "customer_id",
-      cell: (row) => {
-        const exp = row as ApiExpense;
-        const hasCustomer = !!exp.customer_name || !!exp.customer_id;
-        const hasProject = !!exp.project_name || !!exp.project_id;
-        if (!hasCustomer && !hasProject) {
-          return <span className="text-sm text-secondary">—</span>;
-        }
-        return (
-          <div className="flex flex-col gap-0.5">
-            {hasCustomer && (
-              <span className="text-sm text-primary flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-secondary" />
-                {exp.customer_name || exp.customer_id}
-              </span>
-            )}
-            {hasProject && (
-              <span className="text-sm text-primary flex items-center gap-1.5">
-                <Folder className="w-3.5 h-3.5 text-secondary" />
-                {exp.project_name || exp.project_id}
-              </span>
-            )}
-          </div>
-        );
-      },
+      header: "Vendor",
+      accessor: "vendor",
+      cell: (_row, value) => (
+        <span className="text-sm text-primary truncate max-w-[140px] block">
+          {value ? String(value) : "—"}
+        </span>
+      ),
     },
     {
-      header: "Payment Method",
+      header: "Payment",
       accessor: "payment_method",
       cell: (_row, value) => (
         <span className="text-sm text-secondary">
@@ -133,19 +104,19 @@ export default function ExpenseDataTable({
       },
     },
     {
-      header: "Billable Status",
+      header: "Status",
       accessor: "is_billable",
       align: "center",
       cell: (row, value) => {
         const exp = row as ApiExpense;
-        let label = "No";
-        let className = "text-xs text-secondary";
+        let label = "Paid";
+        let className = "text-xs font-medium status-tertiary-bg status-tertiary-text";
         if (value) {
           if (exp.is_reimbursed) {
             label = "Reimbursed";
             className = "text-xs font-medium status-success-bg status-success-text";
           } else {
-            label = "Billable";
+            label = "Reimbursable";
             className = "text-xs font-medium status-warning-bg status-warning-text";
           }
         }
@@ -160,14 +131,10 @@ export default function ExpenseDataTable({
       cell: (row, _value) => {
         const exp = row as ApiExpense;
         return (
-          <div className="flex items-center justify-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<Eye className="w-3.5 h-3.5" />}
-              onClick={() => navigate(`/app/expenses/${exp.id}`)}
-              title="View expense"
-            />
+          <div
+            className="flex items-center justify-center gap-1"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Button
               variant="ghost"
               size="sm"
@@ -200,6 +167,7 @@ export default function ExpenseDataTable({
       isLoading={loading}
       emptyMessage="No expenses found. Try adjusting your search or filters."
       rowKey="id"
+      onRowClick={onRowClick}
     />
   );
 }

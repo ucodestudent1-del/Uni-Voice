@@ -61,6 +61,7 @@ export interface DataTableProps<TData> extends HTMLAttributes<HTMLDivElement> {
   selectAllIndeterminate?: boolean;
   actions?: ReactNode;
   rowClassName?: (row: TData) => string;
+  onRowClick?: (row: TData) => void;
 }
 
 export interface ToastProps {
