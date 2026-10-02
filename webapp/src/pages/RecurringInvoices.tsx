@@ -219,21 +219,21 @@ export default function RecurringInvoices() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-secondary mb-1">Search</label>
+            <label className="form-label">Search</label>
             <input
               type="text"
               placeholder="Name, customer..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Status</label>
+            <label className="form-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -241,11 +241,11 @@ export default function RecurringInvoices() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Customer</label>
+            <label className="form-label">Customer</label>
             <select
               value={customerFilter}
               onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               <option value="">All Customers</option>
               {customers.map((c) => (
@@ -401,7 +401,7 @@ export default function RecurringInvoices() {
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="rounded-lg border border-input-border px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control-sm"
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>{size} per page</option>
@@ -542,11 +542,11 @@ function RecurringInvoiceDialog({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Customer *</label>
+              <label className="form-label">Customer *</label>
               <select
                 value={formData.customerId}
                 onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
                 required
               >
                 <option value="">Select customer</option>
@@ -556,22 +556,22 @@ function RecurringInvoiceDialog({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Name *</label>
+              <label className="form-label">Name *</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
                 required
                 placeholder="e.g. Monthly Retainer"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Frequency *</label>
+              <label className="form-label">Frequency *</label>
               <select
                 value={formData.frequency}
                 onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 {FREQUENCY_OPTIONS.map((f) => (
                   <option key={f.value} value={f.value}>{f.label}</option>
@@ -579,41 +579,41 @@ function RecurringInvoiceDialog({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Interval Count</label>
+              <label className="form-label">Interval Count</label>
               <input
                 type="number"
                 min="1"
                 max="12"
                 value={formData.intervalCount}
                 onChange={(e) => setFormData({ ...formData, intervalCount: Number(e.target.value) })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Next Generation Date *</label>
+              <label className="form-label">Next Generation Date *</label>
               <input
                 type="date"
                 value={formData.nextGenerationAt}
                 onChange={(e) => setFormData({ ...formData, nextGenerationAt: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">End Date (optional)</label>
+              <label className="form-label">End Date (optional)</label>
               <input
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
+              <label className="form-label">Currency</label>
               <select
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
@@ -626,7 +626,7 @@ function RecurringInvoiceDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Auto-Send Generated Invoices</label>
+              <label className="form-label">Auto-Send Generated Invoices</label>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -638,7 +638,7 @@ function RecurringInvoiceDialog({
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Active</label>
+              <label className="form-label">Active</label>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -652,23 +652,23 @@ function RecurringInvoiceDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Notes</label>
+            <label className="form-label">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               placeholder="Notes for generated invoices..."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Terms</label>
+            <label className="form-label">Terms</label>
             <textarea
               value={formData.terms}
               onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
               rows={2}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               placeholder="Payment terms for generated invoices..."
             />
           </div>

@@ -507,24 +507,24 @@ export default function Receipts() {
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-4">
-            <label className="block text-xs font-medium text-secondary mb-1">Search</label>
+            <label className="form-label">Search</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
+              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Receipt #, invoice #, customer name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 pl-10 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="search-input"
               />
             </div>
           </div>
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-secondary mb-1">Status</label>
+            <label className="form-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -532,11 +532,11 @@ export default function Receipts() {
             </select>
           </div>
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-secondary mb-1">Provider</label>
+            <label className="form-label">Provider</label>
             <select
               value={providerFilter}
               onChange={(e) => { setProviderFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {PROVIDER_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -544,29 +544,29 @@ export default function Receipts() {
             </select>
           </div>
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-secondary mb-1">Date Range</label>
+            <label className="form-label">Date Range</label>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                className="rounded-lg border border-input-border bg-surface-alt px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control-sm"
               />
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                className="rounded-lg border border-input-border bg-surface-alt px-2 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control-sm"
               />
             </div>
           </div>
           <div className="lg:col-span-2 flex items-end">
             <div className="relative w-full">
-              <label className="block text-xs font-medium text-secondary mb-1">Sort By</label>
+              <label className="form-label">Sort By</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                className="form-select"
               >
                 {SORT_OPTIONS.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -721,7 +721,7 @@ export default function Receipts() {
           <select
             value={pageSize}
             onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-            className="rounded-lg border border-input-border bg-surface-alt px-2 py-1 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-control-sm"
           >
             <option value={10}>10 per page</option>
             <option value={25}>25 per page</option>

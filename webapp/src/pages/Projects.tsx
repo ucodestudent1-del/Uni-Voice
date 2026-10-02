@@ -183,10 +183,10 @@ const [search, setSearch] = useState("");
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects..."
-            className="w-full rounded-lg border border-input-border pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="search-input"
           />
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary"
+            className="search-icon"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -204,7 +204,7 @@ const [search, setSearch] = useState("");
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-select"
           >
             {STATUS_FILTERS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -232,7 +232,7 @@ const [search, setSearch] = useState("");
         <div className="overflow-x-auto">
           {projects.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-secondary text-tertiary mb-4">No projects found</p>
+              <p className="text-tertiary mb-4">No projects found</p>
               <Button
                 variant="primary"
                 size="md"
@@ -246,11 +246,11 @@ const [search, setSearch] = useState("");
             <table className="w-full text-left">
               <thead className="bg-surface-alt dark:bg-surface-alt border-b border-color-subtle border-color">
                 <tr>
-                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Project</th>
-                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Customer</th>
-                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Status</th>
+                  <th className="px-4 py-3 text-xs font-medium text-tertiary uppercase">Project</th>
+                  <th className="px-4 py-3 text-xs font-medium text-tertiary uppercase">Customer</th>
+                  <th className="px-4 py-3 text-xs font-medium text-tertiary uppercase">Status</th>
                   <th
-                    className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase cursor-pointer hover:bg-surface-alt hover:bg-hover"
+                    className="px-4 py-3 text-xs font-medium text-tertiary uppercase cursor-pointer hover:bg-hover"
                     onClick={() => handleSort("due_date")}
                   >
                     Due Date
@@ -258,17 +258,17 @@ const [search, setSearch] = useState("");
                       <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>
                     )}
                   </th>
-                  <th className="px-4 py-3 text-xs font-medium text-secondary text-tertiary uppercase">Tags</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-secondary text-tertiary uppercase">Actions</th>
+                  <th className="px-4 py-3 text-xs font-medium text-tertiary uppercase">Tags</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-tertiary uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-surface-alt hover:bg-hover">
+                  <tr key={project.id} className="hover:bg-hover">
                     <td className="px-4 py-3">
                       <p className="font-medium text-inverse">{project.name}</p>
                       {project.description && (
-                        <p className="text-sm text-secondary text-tertiary line-clamp-1">{project.description}</p>
+                        <p className="text-sm text-tertiary line-clamp-1">{project.description}</p>
                       )}
                     </td>
                     <td className="px-4 py-3">

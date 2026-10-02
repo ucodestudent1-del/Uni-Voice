@@ -386,7 +386,7 @@ function ReminderSection({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-secondary mb-1">
+                    <label className="form-label">
                       {direction === "before" ? "Days Before Due" : "Days After Due"}
                     </label>
                     <input
@@ -395,18 +395,18 @@ function ReminderSection({
                       max={365}
                       value={seq.offsetDays}
                       onChange={(e) => onUpdate(index, "offsetDays", Number(e.target.value))}
-                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="form-control"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-secondary mb-1">Max Sends</label>
+                    <label className="form-label">Max Sends</label>
                     <input
                       type="number"
                       min={1}
                       max={10}
                       value={seq.maxSends}
                       onChange={(e) => onUpdate(index, "maxSends", Number(e.target.value))}
-                      className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="form-control"
                     />
                   </div>
                   <div className="flex items-end gap-2">
@@ -452,23 +452,23 @@ function ReminderSection({
 
             <div className="space-y-3 pt-3 border-t border-color-subtle">
               <div>
-                <label className="block text-xs font-medium text-secondary mb-1">Subject</label>
+                <label className="form-label">Subject</label>
                 <input
                   type="text"
                   value={seq.subject ?? ""}
                   onChange={(e) => onUpdate(index, "subject", e.target.value)}
                   placeholder="e.g. Invoice {{invoice_number}} due in {{days}} days"
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-secondary mb-1">Message</label>
+                <label className="form-label">Message</label>
                 <textarea
                   value={seq.message ?? ""}
                   onChange={(e) => onUpdate(index, "message", e.target.value)}
                   rows={3}
                   placeholder="Dear {{customer_name}},\n\nThis is a reminder that invoice {{invoice_number}} for {{amount_due}} is due on {{due_date}}.\n\nThank you!"
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
             </div>
@@ -510,34 +510,34 @@ function TemplateDialog({
         </div>
         <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Template Name *</label>
+            <label className="form-label">Template Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               required
               placeholder="e.g. Standard Reminder"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Subject *</label>
+            <label className="form-label">Subject *</label>
             <input
               type="text"
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               required
               placeholder="Invoice {{invoice_number}} - Payment Reminder"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Message *</label>
+            <label className="form-label">Message *</label>
             <textarea
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               rows={6}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               required
               placeholder="Dear {{customer_name}},\n\nThis is a reminder that invoice {{invoice_number}} for {{amount_due}} is due on {{due_date}}.\n\nYou can view and pay this invoice online using the secure link below.\n\nThank you for your business.\n\n{{business_name}}"
             />

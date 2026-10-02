@@ -173,7 +173,7 @@ export default function BusinessProfileSettings() {
                 type="text"
                 value={form.name}
                 onChange={(e) => { updateForm({ name: e.target.value }); saveField("name", e.target.value); }}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
             <FormField label="Legal Name" description="Full legal name for tax and contractual purposes.">
@@ -181,7 +181,7 @@ export default function BusinessProfileSettings() {
                 type="text"
                 value={form.legalName}
                 onChange={(e) => { updateForm({ legalName: e.target.value }); saveField("legal_name", e.target.value); }}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
             <FormField label="Email Address" description="Primary business email for customer communications.">
@@ -189,7 +189,7 @@ export default function BusinessProfileSettings() {
                 type="email"
                 value={form.email}
                 onChange={(e) => { updateForm({ email: e.target.value }); saveField("email", e.target.value); }}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
             <FormField label="Phone">
@@ -197,7 +197,7 @@ export default function BusinessProfileSettings() {
                 type="tel"
                 value={form.phone}
                 onChange={(e) => { updateForm({ phone: e.target.value }); saveField("phone", e.target.value); }}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
             <div className="md:col-span-2">
@@ -206,7 +206,7 @@ export default function BusinessProfileSettings() {
                   type="url"
                   value={form.website}
                   onChange={(e) => { updateForm({ website: e.target.value }); saveField("website", e.target.value); }}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </FormField>
             </div>
@@ -215,7 +215,7 @@ export default function BusinessProfileSettings() {
                 type="text"
                 value={form.taxId}
                 onChange={(e) => { updateForm({ taxId: e.target.value }); saveField("tax_id", e.target.value); }}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
             <FormField label="Registration Number" description="Official company registration number.">
@@ -223,7 +223,7 @@ export default function BusinessProfileSettings() {
                 type="text"
                 value={form.registrationNumber}
                 onChange={(e) => { updateForm({ registrationNumber: e.target.value }); saveField("registration_number", e.target.value); }}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
           </div>
@@ -232,7 +232,7 @@ export default function BusinessProfileSettings() {
             <select
               value={form.defaultCurrency}
               onChange={(e) => { updateForm({ defaultCurrency: e.target.value }); saveField("default_currency", e.target.value); }}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             >
               {currencyOptions.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -248,7 +248,7 @@ export default function BusinessProfileSettings() {
                   value={form.addressLine1}
                   onChange={(e) => { updateForm({ addressLine1: e.target.value }); saveField("address_line_1", e.target.value); }}
                   placeholder="Street address"
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -257,7 +257,7 @@ export default function BusinessProfileSettings() {
                   value={form.addressLine2}
                   onChange={(e) => { updateForm({ addressLine2: e.target.value }); saveField("address_line_2", e.target.value); }}
                   placeholder="Apt, suite, unit (optional)"
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -266,7 +266,7 @@ export default function BusinessProfileSettings() {
                   value={form.city}
                   onChange={(e) => { updateForm({ city: e.target.value }); saveField("city", e.target.value); }}
                   placeholder="City"
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -275,7 +275,7 @@ export default function BusinessProfileSettings() {
                   value={form.stateOrRegion}
                   onChange={(e) => { updateForm({ stateOrRegion: e.target.value }); saveField("state_or_region", e.target.value); }}
                   placeholder="State / Region"
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -284,14 +284,14 @@ export default function BusinessProfileSettings() {
                   value={form.postalCode}
                   onChange={(e) => { updateForm({ postalCode: e.target.value }); saveField("postal_code", e.target.value); }}
                   placeholder="Postal code"
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
                 <select
                   value={form.countryCode}
                   onChange={(e) => { updateForm({ countryCode: e.target.value }); saveField("country_code", e.target.value); }}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 >
                   {countryOptions.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -317,7 +317,7 @@ export default function BusinessProfileSettings() {
                 value={form.logoUrl}
                 onChange={(e) => { updateForm({ logoUrl: e.target.value }); saveField("logo_url", e.target.value); }}
                 placeholder="Logo URL"
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
           </FormField>

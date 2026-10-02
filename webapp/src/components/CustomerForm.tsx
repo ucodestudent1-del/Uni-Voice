@@ -127,73 +127,73 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Name *</label>
+              <label className="form-label">Name *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Email</label>
+              <label className="form-label">Email</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Company</label>
+              <label className="form-label">Company</label>
               <input
                 type="text"
                 value={formData.companyName}
                 onChange={(e) => handleChange("companyName", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Phone</label>
+              <label className="form-label">Phone</label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Tax ID</label>
+            <label className="form-label">Tax ID</label>
             <input
               type="text"
               value={formData.taxId}
               onChange={(e) => handleChange("taxId", e.target.value)}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Payment Terms (Days)</label> Net
+              <label className="form-label">Payment Terms (Days)</label> Net
               <input
                 type="number"
                 min="0"
                 step="1"
                 value={formData.paymentTerms ?? ""}
                 onChange={(e) => handleChange("paymentTerms", e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
                 placeholder="e.g. 30"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Default Currency</label>
+              <label className="form-label">Default Currency</label>
               <select
                 value={formData.defaultCurrency || ""}
                 onChange={(e) => handleChange("defaultCurrency", e.target.value || undefined)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="">Default</option>
                 <option value="USD">USD</option>
@@ -217,7 +217,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="Street address"
                   value={formData.addressLine1}
                   onChange={(e) => handleChange("addressLine1", e.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -226,7 +226,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="Street address 2"
                   value={formData.addressLine2}
                   onChange={(e) => handleChange("addressLine2", e.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -235,7 +235,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="City"
                   value={formData.city}
                   onChange={(e) => handleChange("city", e.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -244,7 +244,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="State / Region"
                   value={formData.stateOrRegion}
                   onChange={(e) => handleChange("stateOrRegion", e.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
@@ -253,14 +253,14 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
                   placeholder="Postal code"
                   value={formData.postalCode}
                   onChange={(e) => handleChange("postalCode", e.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
                 <select
                   value={formData.countryCode}
                   onChange={(e) => handleChange("countryCode", e.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-select"
                 >
                   {COUNTRIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -271,12 +271,12 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
           </fieldset>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Notes</label>
+            <label className="form-label">Notes</label>
             <textarea
               rows={3}
               value={formData.notes}
               onChange={(e) => handleChange("notes", e.target.value)}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               placeholder="Additional notes for this customer..."
             />
           </div>

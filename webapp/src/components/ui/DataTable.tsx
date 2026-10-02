@@ -175,7 +175,7 @@ function DataTableInner<TData extends Record<string, any>>(
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-              className="rounded-lg border border-input-border bg-input px-2 py-1 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control-sm"
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>

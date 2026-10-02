@@ -173,7 +173,7 @@ export default function ReportFilters({
                 type="date"
                 value={filters.dateFrom ?? ""}
                 onChange={handleDateFromChange}
-                className="rounded-lg border border-input-border bg-input px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control-sm"
                 placeholder="From date"
               />
               <span className="text-xs text-tertiary">to</span>
@@ -181,7 +181,7 @@ export default function ReportFilters({
                 type="date"
                 value={filters.dateTo ?? ""}
                 onChange={handleDateToChange}
-                className="rounded-lg border border-input-border bg-input px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control-sm"
                 placeholder="To date"
               />
             </div>
@@ -191,13 +191,13 @@ export default function ReportFilters({
 
         {availableFilters.showSearch && (
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" />
+            <Search className="search-icon" />
             <input
               type="text"
               placeholder="Search..."
               defaultValue={filters.search ?? ""}
               onChange={(e) => debouncedSetSearch(e.target.value)}
-              className="rounded-lg border border-input-border bg-input pl-8 pr-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="search-input"
             />
           </div>
         )}
@@ -230,11 +230,11 @@ export default function ReportFilters({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           {availableFilters.showStatus && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-tertiary uppercase">Status</label>
+              <label className="form-label-secondary">Status</label>
               <select
                 value={filters.status ? (Array.isArray(filters.status) ? filters.status[0] : filters.status) : ""}
                 onChange={handleStatusChange}
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="">All statuses</option>
                 {STATUS_OPTIONS.map((opt) => (
@@ -248,11 +248,11 @@ export default function ReportFilters({
 
           {availableFilters.showCategory && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-tertiary uppercase">Category</label>
+              <label className="form-label-secondary">Category</label>
               <select
                 value={filters.category ?? ""}
                 onChange={handleCategoryChange}
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="">All categories</option>
                 {EXPENSE_CATEGORY_OPTIONS.map((opt) => (
@@ -266,7 +266,7 @@ export default function ReportFilters({
 
           {availableFilters.showCustomer && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-tertiary uppercase flex items-center gap-1">
+              <label className="form-label-secondary flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
                 Customer
               </label>
@@ -277,14 +277,14 @@ export default function ReportFilters({
                 onChange={(e) =>
                   onChange({ ...filters, customerId: e.target.value || undefined, offset: 0 })
                 }
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
           )}
 
           {availableFilters.showProject && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-tertiary uppercase flex items-center gap-1">
+              <label className="form-label-secondary flex items-center gap-1">
                 <LayoutGrid className="w-3.5 h-3.5" />
                 Project
               </label>
@@ -295,14 +295,14 @@ export default function ReportFilters({
                 onChange={(e) =>
                   onChange({ ...filters, projectId: e.target.value || undefined, offset: 0 })
                 }
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
           )}
 
           {availableFilters.showProvider && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-tertiary uppercase flex items-center gap-1">
+              <label className="form-label-secondary flex items-center gap-1">
                 <Tag className="w-3.5 h-3.5" />
                 Provider
               </label>
@@ -313,7 +313,7 @@ export default function ReportFilters({
                 onChange={(e) =>
                   onChange({ ...filters, provider: e.target.value || undefined, offset: 0 })
                 }
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
           )}

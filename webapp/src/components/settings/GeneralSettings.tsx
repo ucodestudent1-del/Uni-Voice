@@ -94,8 +94,8 @@ export default function GeneralSettings() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-inverse">Account</h2>
-          <p className="text-sm text-secondary text-tertiary mt-1">
+          <h2 className="text-lg font-semibold text-primary">Account</h2>
+          <p className="text-sm text-tertiary mt-1">
             Manage your personal account details.
           </p>
         </div>
@@ -106,13 +106,13 @@ export default function GeneralSettings() {
 
         <div className="rounded-xl border border-color-subtle border-color bg-surface p-6 space-y-6">
           <div>
-            <h3 className="text-md font-semibold text-inverse mb-4">Profile</h3>
+            <h3 className="text-md font-semibold text-primary mb-4">Profile</h3>
             <FormField label="Email Address" description="Your login email address.">
               <input
                 type="email"
                 value={accountForm.email}
                 onChange={(e) => setAccountForm({ email: e.target.value })}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
           </div>
@@ -135,7 +135,7 @@ export default function GeneralSettings() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-inverse">General</h2>
-        <p className="text-sm text-secondary text-tertiary mt-1">
+        <p className="text-sm text-tertiary mt-1">
           Configure app-level preferences for your business.
         </p>
       </div>
@@ -149,11 +149,11 @@ export default function GeneralSettings() {
           label="Default Currency"
           description="The default currency for new invoices."
         >
-          <select
-            value={prefsForm.defaultCurrency}
-            onChange={(e) => setPrefsForm({ ...prefsForm, defaultCurrency: e.target.value })}
-            className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
-          >
+           <select
+             value={prefsForm.defaultCurrency}
+             onChange={(e) => setPrefsForm({ ...prefsForm, defaultCurrency: e.target.value })}
+             className="form-select"
+           >
             <option value="USD">USD — US Dollar</option>
             <option value="EUR">EUR — Euro</option>
             <option value="GBP">GBP — Pound Sterling</option>
@@ -169,11 +169,11 @@ export default function GeneralSettings() {
           label="Time Zone"
           description="Your local time zone for displaying dates and scheduling."
         >
-          <select
-            value={prefsForm.timeZone}
-            onChange={(e) => setPrefsForm({ ...prefsForm, timeZone: e.target.value })}
-            className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
-          >
+            <select
+              value={prefsForm.timeZone}
+              onChange={(e) => setPrefsForm({ ...prefsForm, timeZone: e.target.value })}
+              className="form-select"
+            >
             <option value="UTC">UTC</option>
             <option value="America/New_York">Eastern Time (America/New_York)</option>
             <option value="America/Chicago">Central Time (America/Chicago)</option>
@@ -192,12 +192,12 @@ export default function GeneralSettings() {
           label="Locale"
           description="Locale for number and date formatting."
         >
-          <select
-            value={prefsForm.locale}
-            onChange={(e) => setPrefsForm({ ...prefsForm, locale: e.target.value })}
-            className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="en-US">English (US)</option>
+           <select
+             value={prefsForm.locale}
+             onChange={(e) => setPrefsForm({ ...prefsForm, locale: e.target.value })}
+             className="form-select"
+           >
+             <option value="en-US">English (US)</option>
             <option value="en-GB">English (UK)</option>
             <option value="de-DE">German (Germany)</option>
             <option value="fr-FR">French (France)</option>
@@ -211,11 +211,11 @@ export default function GeneralSettings() {
           label="Date Format"
           description="How dates are displayed throughout the app."
         >
-          <select
-            value={prefsForm.dateFormat}
-            onChange={(e) => setPrefsForm({ ...prefsForm, dateFormat: e.target.value })}
-            className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
-          >
+           <select
+             value={prefsForm.dateFormat}
+             onChange={(e) => setPrefsForm({ ...prefsForm, dateFormat: e.target.value })}
+             className="form-select"
+           >
             <option value="MM/DD/YYYY">MM/DD/YYYY</option>
             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
             <option value="YYYY-MM-DD">YYYY-MM-DD</option>
@@ -228,11 +228,11 @@ export default function GeneralSettings() {
           label="Language"
           description="App display language."
         >
-          <select
-            value={prefsForm.language}
-            onChange={(e) => setPrefsForm({ ...prefsForm, language: e.target.value })}
-            className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
-          >
+           <select
+             value={prefsForm.language}
+             onChange={(e) => setPrefsForm({ ...prefsForm, language: e.target.value })}
+             className="form-select"
+           >
             <option value="en">English</option>
             <option value="es">Español</option>
             <option value="fr">Français</option>

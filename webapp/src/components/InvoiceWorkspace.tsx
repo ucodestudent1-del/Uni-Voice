@@ -1225,7 +1225,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           onChange={(e) => onField("invoiceNumber", e.target.value || null)}
           placeholder="Auto-assigned"
           disabled={invoice.isFinalized}
-          className="mt-1 w-36 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary disabled:opacity-50"
+          className="form-control mt-1 w-36"
         />
       </div>
 
@@ -1235,7 +1235,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           type="date"
           value={invoice.issueDate ?? ""}
           onChange={(e) => onField("issueDate", e.target.value || null)}
-          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
+          className="form-control mt-1 w-36"
         />
       </div>
 
@@ -1245,7 +1245,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           type="date"
           value={invoice.dueDate ?? ""}
           onChange={(e) => onField("dueDate", e.target.value || null)}
-          className="mt-1 w-40 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
+          className="form-control mt-1 w-36"
         />
       </div>
 
@@ -1254,7 +1254,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
         <select
           value={invoice.currency}
           onChange={(e) => onField("currency", e.target.value)}
-          className="mt-1 w-28 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
+          className="form-control mt-1 w-36"
         >
           {["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CNY"].map((c) => (
             <option key={c} value={c}>
@@ -1271,7 +1271,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           value={toPercent(invoice.taxRate ?? "0")}
           onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
           placeholder="e.g. 8.5"
-          className="mt-1 w-24 rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
+          className="form-control mt-1 w-36"
         />
       </div>
     </div>
@@ -1329,7 +1329,7 @@ const TotalsCard = React.memo(function TotalsCard({
             type="number"
             value={invoice.amountPaid ?? "0"}
             onChange={(e) => onField("amountPaid", e.target.value || null)}
-            className="w-28 rounded-lg border border-input-border bg-input px-2 py-1 text-right text-sm text-primary focus-ring-primary"
+            className="form-control-sm w-28 text-right"
           />
         </div>
         <div className="pt-1 text-secondary">Balance due</div>
@@ -1416,7 +1416,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) => onItemChange(item.id ?? String(i), { description: e.target.value })}
                     placeholder="What did you do?"
                     rows={2}
-                    className="w-full min-h-[40px] resize-y rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary placeholder-tertiary focus-ring-primary overflow-hidden"
+                    className="form-control-sm resize-y min-h-[40px]"
                   />
                 </td>
                 <td className="px-2 py-3">
@@ -1428,7 +1428,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     }
                     min={1}
                     step="any"
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus-ring-primary"
+                    className="form-control-sm text-right"
                   />
                 </td>
                 <td className="px-2 py-3">
@@ -1437,7 +1437,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) =>
                       onItemChange(item.id ?? String(i), { unit: e.target.value })
                     }
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus-ring-primary"
+                    className="form-control-sm"
                     title="Unit"
                   >
                     {LINE_ITEM_UNITS.map((u) => (
@@ -1460,7 +1460,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                       }
                       min={0}
                       step={step}
-                      className="w-full rounded-lg border border-input-border bg-input px-6 py-1.5 text-right text-sm text-primary focus-ring-primary"
+                      className="form-control-sm text-right"
                     />
                   </div>
                 </td>
@@ -1473,7 +1473,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     }
                     min={0}
                     step={step}
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary placeholder-tertiary focus-ring-primary"
+                    className="form-control-sm text-right"
                     placeholder="0.00"
                   />
                 </td>
@@ -1483,7 +1483,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) =>
                       onItemChange(item.id ?? String(i), { discountType: e.target.value as "fixed" | "percentage" })
                     }
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-sm text-primary focus-ring-primary"
+                    className="form-control-sm"
                     title="Discount type"
                   >
                     <option value="fixed">Fixed</option>
@@ -1502,7 +1502,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     min={0}
                     max={100}
                     step="0.01"
-                    className="w-full rounded-lg border border-input-border bg-input px-2 py-1.5 text-right text-sm text-primary focus-ring-primary"
+                    className="form-control-sm text-right"
                     title="Tax rate %"
                   />
                 </td>
@@ -1656,7 +1656,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-secondary mb-1">Deposit</label>
+          <label className="form-label-secondary">Deposit</label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <select
               value={depositType}
@@ -1664,7 +1664,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                 onField("depositType", e.target.value);
                 onField("depositValue", e.target.value === "none" ? "0" : depositValue);
               }}
-              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
+              className="form-select"
             >
               <option value="none">No deposit</option>
               <option value="fixed">Fixed amount</option>
@@ -1679,7 +1679,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                   value={depositValue}
                   onChange={(e) => onField("depositValue", e.target.value)}
                   placeholder="0.00"
-                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus-ring-primary"
+                  className="input-with-suffix w-full"
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
                   {depositType === "percentage" ? "%" : invoice.currency}
@@ -1690,7 +1690,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
               type="date"
               value={invoice.depositDueDate?.split("T")[0] ?? ""}
               onChange={(e) => onField("depositDueDate", e.target.value || null)}
-              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
+              className="form-control"
             />
           </div>
           {depositType !== "none" && (
@@ -1699,22 +1699,22 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
               value={invoice.depositPaymentPurpose ?? ""}
               onChange={(e) => onField("depositPaymentPurpose", e.target.value || null)}
               placeholder="Payment purpose (e.g. 'Booking deposit')"
-              className="mt-2 w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
+              className="form-control"
             />
           )}
         </div>
 
         <div className="border-t border-color pt-4">
-          <label className="block text-sm font-medium text-secondary mb-1">Late Fee</label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select
-              value={lateFeeType}
-              onChange={(e) => {
-                onField("lateFeeType", e.target.value);
-                onField("lateFeeValue", e.target.value === "none" ? "0" : lateFeeValue);
-              }}
-              className="rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus-ring-primary"
-            >
+           <label className="form-label-secondary">Late Fee</label>
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+             <select
+               value={lateFeeType}
+               onChange={(e) => {
+                 onField("lateFeeType", e.target.value);
+                 onField("lateFeeValue", e.target.value === "none" ? "0" : lateFeeValue);
+               }}
+               className="form-select"
+             >
               <option value="none">No late fee</option>
               <option value="fixed">Fixed amount</option>
               <option value="percentage">Percentage of total</option>
@@ -1728,7 +1728,7 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                   value={lateFeeValue}
                   onChange={(e) => onField("lateFeeValue", e.target.value)}
                   placeholder="0.00"
-                  className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pr-10 text-sm text-primary focus-ring-primary"
+                  className="input-with-suffix w-full"
                 />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
                   {lateFeeType === "percentage" ? "%" : invoice.currency}
@@ -1771,7 +1771,7 @@ const NotesSection = React.memo(function NotesSection({
           onChange={(e) => onField("notes", e.target.value || null)}
           rows={3}
           placeholder="Add a note for the customer…"
-          className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
+          className="form-control"
         />
       </div>
 
@@ -1783,7 +1783,7 @@ const NotesSection = React.memo(function NotesSection({
             onChange={(e) => onField("paymentInstructions", e.target.value || null)}
             rows={3}
             placeholder="Bank transfer, PayPal, etc.…"
-            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
+            className="form-control"
           />
         </div>
 
@@ -1794,7 +1794,7 @@ const NotesSection = React.memo(function NotesSection({
             onChange={(e) => onField("terms", e.target.value || null)}
             rows={3}
             placeholder="Payment terms (e.g. Net 30)…"
-            className="mt-1 block w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus-ring-primary"
+            className="form-control"
           />
         </div>
       </div>

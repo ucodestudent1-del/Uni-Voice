@@ -120,7 +120,7 @@ export default function Templates() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-inverse">Templates</h1>
-          <p className="mt-1 text-sm text-secondary text-tertiary">
+          <p className="mt-1 text-sm text-tertiary">
             Choose a preset to get started or customize an existing template.
           </p>
         </div>
@@ -152,7 +152,7 @@ export default function Templates() {
 
       {templates.length === 0 && !showPresetGallery && (
         <div className="text-center py-16 bg-surface-alt dark:bg-surface-alt rounded-xl border border-color-subtle border-color">
-          <p className="text-tertiary text-tertiary mb-4">No templates yet</p>
+          <p className="text-tertiary mb-4">No templates yet</p>
         <Button
           variant="primary"
           size="md"
@@ -282,7 +282,7 @@ export default function Templates() {
                 <h2 className="text-xl font-semibold text-primary">Choose a starting template</h2>
                 <button
                   onClick={() => setShowPresetGallery(false)}
-                  className="text-tertiary hover:text-secondary text-tertiary dark:hover:text-tertiary"
+                  className="text-tertiary hover:text-tertiary dark:hover:text-tertiary"
                 >
                   ✕
                 </button>

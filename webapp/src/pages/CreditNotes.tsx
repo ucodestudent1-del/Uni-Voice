@@ -70,7 +70,7 @@ export default function CreditNotes() {
 
   const loadCustomers = useCallback(async () => {
     try {
-      const data = await getCustomers({ limit: 500, enrich: false });
+      const data = await getCustomers({ limit: 100, enrich: false });
       setCustomers(data.data ?? []);
     } catch {
       setCustomers([]);
@@ -79,7 +79,7 @@ export default function CreditNotes() {
 
   const loadInvoices = useCallback(async () => {
     try {
-      const data = await getInvoices({ limit: 500, status: "finalized" });
+      const data = await getInvoices({ limit: 100, status: "finalized" });
       setInvoices(data.invoices ?? []);
     } catch {
       setInvoices([]);
@@ -253,21 +253,21 @@ export default function CreditNotes() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-secondary mb-1">Search</label>
+            <label className="form-label">Search</label>
             <input
               type="text"
               placeholder="Credit #, customer name..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Status</label>
+            <label className="form-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -275,13 +275,13 @@ export default function CreditNotes() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Currency</label>
+            <label className="form-label">Currency</label>
             <input
               type="text"
               placeholder="USD, EUR, etc."
               value={currencyFilter}
               onChange={(e) => { setCurrencyFilter(e.target.value.toUpperCase()); setPage(1); }}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
         </div>
@@ -289,11 +289,11 @@ export default function CreditNotes() {
         {showAdvancedFilters && (
           <div className="mt-4 border-t border-color-subtle pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-secondary mb-1">Customer</label>
+              <label className="form-label">Customer</label>
               <select
                 value={customerFilter}
                 onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="">All Customers</option>
                 {customers.map((c) => (
@@ -455,7 +455,7 @@ export default function CreditNotes() {
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="rounded-lg border border-input-border px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control-sm"
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>{size} per page</option>
@@ -584,11 +584,11 @@ function CreateCreditNoteDialog({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Customer *</label>
+              <label className="form-label">Customer *</label>
               <select
                 value={formData.customerId}
                 onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
                 required
               >
                 <option value="">Select customer</option>
@@ -598,11 +598,11 @@ function CreateCreditNoteDialog({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
+              <label className="form-label">Currency</label>
               <select
                 value={formData.currency}
                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
@@ -612,12 +612,12 @@ function CreateCreditNoteDialog({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Issue Date</label>
+              <label className="form-label">Issue Date</label>
               <input
                 type="date"
                 value={formData.issueDate}
                 onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
               {formattedDate && (
                 <p className="mt-1 text-xs text-tertiary">{formattedDate}</p>
@@ -626,12 +626,12 @@ function CreateCreditNoteDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Notes</label>
+            <label className="form-label">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               placeholder="Internal notes..."
             />
           </div>
@@ -666,31 +666,31 @@ function CreateCreditNoteDialog({
                   {formData.items.map((item, index) => (
                     <tr key={index} className="border-t border-color-subtle">
                       <td className="py-2.5 px-3">
-                        <input
-                          type="text"
-                          placeholder="Product or service..."
-                          value={item.description}
-                          onChange={(e) => updateItem(index, "description", e.target.value)}
-                          className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </td>
-                      <td className="py-2.5 px-2">
-                        <input
-                          type="number"
-                          step={step}
-                          min="0"
-                          placeholder="1"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(index, "quantity", e.target.value)}
-                          className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary font-tabular-nums"
-                        />
-                      </td>
-                      <td className="py-2.5 px-2">
-                        <select
-                          value={item.unit}
-                          onChange={(e) => updateItem(index, "unit", e.target.value)}
-                          className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary capitalize focus:outline-none focus:ring-1 focus:ring-primary"
-                        >
+                           <input
+                           type="text"
+                           placeholder="Product or service..."
+                           value={item.description}
+                           onChange={(e) => updateItem(index, "description", e.target.value)}
+                           className="w-full rounded-md border border-input-border bg-input px-2.5 py-1.5 text-sm text-primary placeholder-input placeholder-target focus:outline-none focus:ring-1 focus:ring-primary"
+                         />
+                       </td>
+                       <td className="py-2.5 px-2">
+                         <input
+                           type="number"
+                           step={step}
+                           min="0"
+                           placeholder="1"
+                           value={item.quantity}
+                           onChange={(e) => updateItem(index, "quantity", e.target.value)}
+                           className="w-full rounded-md border border-input-border bg-input px-2 py-1.25 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary font-tabular-nums"
+                         />
+                       </td>
+                       <td className="py-2.5 px-2">
+                         <select
+                           value={item.unit}
+                           onChange={(e) => updateItem(index, "unit", e.target.value)}
+                           className="w-full rounded-md border border-input-border bg-input px-2 py-1.25 text-sm text-primary capitalize focus:outline-none focus:ring-1 focus:ring-primary"
+                         >
                           {LINE_ITEM_UNITS.map((u) => (
                             <option key={u} value={u}>{u}</option>
                           ))}

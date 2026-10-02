@@ -98,7 +98,7 @@ export default function Login() {
               <h1 className="text-3xl font-bold text-inverse">
                 {step === "two-factor" ? "Two-factor authentication" : "Sign in to your account"}
               </h1>
-              <p className="text-secondary text-tertiary mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
+               <p className="text-xs text-tertiary mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
             </div>
 
                {step === "credentials" && (
@@ -110,24 +110,24 @@ export default function Login() {
                    <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{oauthError}</div>
                  )}
                  <div>
-                    <label className="block text-sm font-medium text-secondary text-secondary mb-1">Email address</label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="you@example.com"
-                    />
+                     <label className="form-label">Email address</label>
+                     <input
+                       type="email"
+                       required
+                       value={email}
+                       onChange={(e) => setEmail(e.target.value)}
+                       className="form-control w-full"
+                       placeholder="you@example.com"
+                     />
                  </div>
                  <div>
-                    <label className="block text-sm font-medium text-secondary text-secondary mb-1">Password</label>
+                    <label className="form-label">Password</label>
                     <input
                       type="password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="form-control w-full"
                       placeholder="••••••••"
                     />
                  </div>
@@ -141,17 +141,17 @@ export default function Login() {
 
                     <div className="relative my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-input-border border-input-border" />
+                        <div className="w-full border-t border-input-border" />
                       </div>
                       <div className="relative flex justify-center text-sm">
-                        <span className="px-3 bg-surface-alt text-secondary text-tertiary">Or sign in with</span>
+                        <span className="px-3 bg-surface-alt text-tertiary">Or sign in with</span>
                       </div>
                     </div>
 
                    <button
                      type="button"
                      onClick={() => (window.location.href = "/api/auth/oauth/google")}
-                     className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm font-medium text-secondary text-secondary hover:bg-surface-alt hover:bg-hover transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-3 rounded-lg border border-input-border bg-surface-alt px-4 py-2.5 text-sm font-medium text-secondary hover:bg-hover transition-colors"
                    >
                     <span className="flex h-5 w-5 items-center justify-center rounded status-info-bg status-info-text font-bold text-xs">G</span>
                     Sign in with Google
@@ -165,12 +165,12 @@ export default function Login() {
                   <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
                 )}
                 <div>
-                   <label className="block text-sm font-medium text-secondary text-secondary mb-1">
+                   <label className="block text-sm font-medium text-secondary mb-1">
                      Authentication code
                    </label>
-                   <p className="text-xs text-secondary text-tertiary mb-2">
+                   <p className="text-xs text-tertiary mb-2">
                      Enter the 6-digit code from your authenticator app for{" "}
-                     <span className="font-medium text-secondary text-secondary">{twoFactorEmail}</span>
+                     <span className="font-medium text-secondary">{twoFactorEmail}</span>
                      . You can also enter a recovery code.
                    </p>
                    <input
@@ -181,7 +181,7 @@ export default function Login() {
                      required
                      value={code}
                      onChange={(e) => handleCodeChange(e.target.value)}
-                     className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                     className="w-full rounded-lg border border-input-border bg-surface-alt px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
                      placeholder="—— ——"
                      maxLength={7}
                    />
@@ -198,11 +198,11 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setStep("credentials")}
-                    className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"
+                    className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary"
                   >
                     ← Use a different account
                   </button>
-                  <Link to="/login" className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary">
+                  <Link to="/login" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">
                     Didn't receive a code?
                   </Link>
                 </div>
@@ -210,7 +210,7 @@ export default function Login() {
             )}
 
             {step === "credentials" && (
-              <div className="mt-6 text-center text-sm text-secondary text-tertiary">
+              <div className="mt-6 text-center text-sm text-tertiary">
                 Don't have an account?{" "}
                 <Link to="/register" className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand font-medium">
                   Create your account
@@ -225,7 +225,7 @@ export default function Login() {
             )}
 
             <div className="mt-4 text-center">
-              <Link to="/" className="text-sm text-secondary text-tertiary hover:text-secondary dark:hover:text-tertiary">
+              <Link to="/" className="text-sm text-tertiary hover:text-secondary dark:hover:text-tertiary">
                 ← Back to homepage
               </Link>
             </div>

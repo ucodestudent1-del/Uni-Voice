@@ -191,7 +191,7 @@ export default function Customers() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
            <h1 className="text-2xl font-bold text-inverse">Customers</h1>
-           <p className="text-sm text-secondary text-tertiary mt-1">
+           <p className="text-sm text-tertiary mt-1">
             {total} customers •{" "}
             <span className="text-primary font-medium">
               {totalOutstanding > 0
@@ -243,14 +243,14 @@ export default function Customers() {
                   placeholder="Search customers by name, email, or company..."
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-                  className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control"
                 />
               </div>
               <div>
                 <select
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-                  className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-select"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -261,7 +261,7 @@ export default function Customers() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-select"
                 >
                   {SORT_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -270,12 +270,12 @@ export default function Customers() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 text-sm text-secondary text-secondary">
+                  <label className="flex items-center gap-2 text-sm text-secondary">
                     <input
                       type="checkbox"
                       checked={includeArchived}
                       onChange={(e) => setIncludeArchived(e.target.checked)}
-                      className="rounded border-input-border border-input-border text-primary-brand focus:ring-primary"
+                      className="rounded border-input-border text-primary-brand focus:ring-primary"
                     />
                     Show archived
                   </label>
@@ -283,7 +283,7 @@ export default function Customers() {
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as any)}
-                  className="rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-select"
                 >
                   <option value="asc">Ascending</option>
                   <option value="desc">Descending</option>
@@ -336,13 +336,13 @@ export default function Customers() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-color-subtle border-color">
-                  <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Customer</th>
-                  <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Contact</th>
-                  <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Invoices</th>
-                  <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Outstanding</th>
-                  <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Last Invoice</th>
-                  <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Status</th>
-                  <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Actions</th>
+                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Customer</th>
+                  <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4">Contact</th>
+                  <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">Invoices</th>
+                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Outstanding</th>
+                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Last Invoice</th>
+                  <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">Status</th>
+                  <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -473,7 +473,7 @@ export default function Customers() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-secondary text-tertiary">
+              <p className="text-sm text-tertiary">
                 Page {currentPage} of {totalPages} • {total} customers
               </p>
               <div className="flex gap-2">

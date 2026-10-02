@@ -151,7 +151,7 @@ export default function NotificationsSettings() {
                 type="text"
                 value={settings.reminderDays}
                 onChange={(e) => update({ reminderDays: e.target.value })}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </FormField>
           )}

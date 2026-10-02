@@ -17,7 +17,7 @@ const border = danger
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h3 className={`text-lg font-semibold ${danger ? "status-error-text" : "text-primary"}`}>{title}</h3>
-          {description && <p className="mt-1 text-sm text-secondary text-tertiary">{description}</p>}
+          {description && <p className="mt-1 text-sm text-tertiary">{description}</p>}
         </div>
         {actions && <div className="ml-4 flex-shrink-0">{actions}</div>}
       </div>

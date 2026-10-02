@@ -343,22 +343,24 @@ export default function Payments() {
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="sm:col-span-2">
+            <label className="form-label">Search</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-tertiary" />
+              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Search by invoice number, customer name, or provider reference..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 pl-10 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="search-input"
               />
             </div>
           </div>
           <div>
+            <label className="form-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -368,10 +370,11 @@ export default function Payments() {
             </select>
           </div>
           <div>
+            <label className="form-label">Provider</label>
             <select
               value={providerFilter}
               onChange={(e) => { setProviderFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {PROVIDER_OPTIONS.map((p) => (
                 <option key={p.value} value={p.value}>

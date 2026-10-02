@@ -82,7 +82,7 @@ export default function Register() {
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-inverse">Create your account</h1>
-              <p className="text-secondary text-tertiary mt-2">Start creating professional invoices in under two minutes</p>
+              <p className="text-tertiary mt-2">Start creating professional invoices in under two minutes</p>
             </div>
 
             <div className="mb-6">
@@ -96,35 +96,35 @@ export default function Register() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-secondary text-secondary mb-1">Email address</label>
+                  <label className="form-label">Email address</label>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-control"
                     placeholder="you@example.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary text-secondary mb-1">Password</label>
+                  <label className="form-label">Password</label>
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-control"
                     placeholder="At least 8 characters"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary text-secondary mb-1">Confirm password</label>
+                  <label className="form-label">Confirm password</label>
                   <input
                     type="password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-control"
                   />
                 </div>
                 <button
@@ -142,22 +142,22 @@ export default function Register() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-secondary text-secondary mb-1">Business Name</label>
+                  <label className="form-label">Business Name</label>
                   <input
                     type="text"
                     required
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
-                    className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-control"
                     placeholder="e.g. Acme Design Studio"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary text-secondary mb-1">Country / Region</label>
+                  <label className="form-label">Country / Region</label>
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-select"
                   >
                     {countries.map((c) => (
                       <option key={c.code} value={c.code}>{c.name}</option>
@@ -165,11 +165,11 @@ export default function Register() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary text-secondary mb-1">Default Currency</label>
+                  <label className="form-label">Default Currency</label>
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-4 py-2.5 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="form-select"
                   >
                     {currencies.map((c) => (
                       <option key={c} value={c}>{c}</option>
@@ -186,10 +186,10 @@ export default function Register() {
               </form>
             )}
 
-<div className="mt-6 flex flex-col items-center gap-4 text-sm text-secondary text-tertiary">
+<div className="mt-6 flex flex-col items-center gap-4 text-sm text-tertiary">
               <ThemeToggle />
               Already have an account?{" "}
-              <Link to="/login" className="text-primary-brand text-primary-brand hover:text-primary-brand dark:hover:text-primary-brand font-medium">
+              <Link to="/login" className="text-primary-brand hover:text-primary font-medium">
                 Sign in
               </Link>
             </div>

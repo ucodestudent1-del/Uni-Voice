@@ -145,7 +145,7 @@ export default function ProjectDetail() {
           variant="ghost"
           size="sm"
           onClick={onBack}
-          className="text-sm text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"
+          className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary"
         >
           ← Back
         </Button>
@@ -203,31 +203,31 @@ export default function ProjectDetail() {
         <nav className="flex gap-4 px-4 pt-3 border-b border-color-subtle border-color">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`text-sm font-medium pb-2 ${activeTab === "overview" ? "text-primary-brand border-b-2 border-primary-600" : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "overview" ? "text-primary-brand border-b-2 border-primary-600" : "text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab("invoices")}
-            className={`text-sm font-medium pb-2 ${activeTab === "invoices" ? "text-primary-brand border-b-2 border-primary-600" : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "invoices" ? "text-primary-brand border-b-2 border-primary-600" : "text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
           >
             Invoices
           </button>
           <button
             onClick={() => setActiveTab("activity")}
-            className={`text-sm font-medium pb-2 ${activeTab === "activity" ? "text-primary-brand border-b-2 border-primary-600" : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "activity" ? "text-primary-brand border-b-2 border-primary-600" : "text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
           >
             Activity
           </button>
           <button
             onClick={() => setActiveTab("time")}
-            className={`text-sm font-medium pb-2 ${activeTab === "time" ? "text-primary-brand border-b-2 border-primary-600" : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "time" ? "text-primary-brand border-b-2 border-primary-600" : "text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
           >
             Time
           </button>
           <button
             onClick={() => setActiveTab("notes")}
-            className={`text-sm font-medium pb-2 ${activeTab === "notes" ? "text-primary-brand border-b-2 border-primary-600" : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
+            className={`text-sm font-medium pb-2 ${activeTab === "notes" ? "text-primary-brand border-b-2 border-primary-600" : "text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
           >
             Notes
           </button>

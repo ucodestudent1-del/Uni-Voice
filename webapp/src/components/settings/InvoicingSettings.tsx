@@ -123,7 +123,7 @@ export default function InvoicingSettings() {
               type="text"
               value={numberingData.prefix}
               onChange={(e) => setNumberingData({ ...numberingData, prefix: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <FormField label="Padding" description="Minimum number of digits in the sequence.">
@@ -133,7 +133,7 @@ export default function InvoicingSettings() {
               max="10"
               value={numberingData.padding}
               onChange={(e) => setNumberingData({ ...numberingData, padding: parseInt(e.target.value) || 6 })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <div className="flex items-end">
@@ -168,14 +168,14 @@ export default function InvoicingSettings() {
               step="0.0001"
               value={settingsForm.defaultTaxRate}
               onChange={(e) => setSettingsForm({ ...settingsForm, defaultTaxRate: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <FormField label="Default Payment Terms" description="Net days before payment is due.">
             <select
               value={settingsForm.defaultTerms}
               onChange={(e) => setSettingsForm({ ...settingsForm, defaultTerms: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select w-full"
             >
               <option value="Net 7">Net 7</option>
               <option value="Net 14">Net 14</option>
@@ -193,7 +193,7 @@ export default function InvoicingSettings() {
               max="120"
               value={settingsForm.overdueReminderDays}
               onChange={(e) => setSettingsForm({ ...settingsForm, overdueReminderDays: parseInt(e.target.value) || 7 })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <div className="flex items-end">
@@ -220,7 +220,7 @@ export default function InvoicingSettings() {
             onChange={(e) => setSettingsForm({ ...settingsForm, defaultNotes: e.target.value })}
             rows={3}
             placeholder="Thank you for your business!"
-            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-control w-full"
           />
         </FormField>
         <FormField

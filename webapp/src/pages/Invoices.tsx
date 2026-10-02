@@ -91,7 +91,7 @@ const [searchTerm, setSearchTerm] = useState("");
   const loadCustomers = useCallback(async () => {
     if (customers.length > 0) return;
     try {
-      const data = await getCustomers({ limit: 500, enrich: false });
+      const data = await getCustomers({ limit: 100, enrich: false });
       setCustomers(data.data ?? []);
     } catch {
       setCustomers([]);
@@ -272,7 +272,7 @@ const [searchTerm, setSearchTerm] = useState("");
     return colors[state] || colors.unpaid;
   };
 
-  if (loading && invoices.length === 0) return <div className="text-center py-20 text-secondary text-tertiary">Loading invoices…</div>;
+  if (loading && invoices.length === 0) return <div className="text-center py-20 text-tertiary">Loading invoices…</div>;
 
   return (
     <div className="space-y-6">
@@ -320,14 +320,14 @@ const [searchTerm, setSearchTerm] = useState("");
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-brand text-primary-brand" : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
+              className={`text-sm font-medium ${showAdvancedFilters ? "text-primary-brand text-primary-brand" : "text-tertiary hover:text-primary dark:hover:text-tertiary"}`}
             >
               {showAdvancedFilters ? "Hide" : "Show"} Advanced
             </button>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="text-sm font-medium text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"
+                className="text-sm font-medium text-tertiary hover:text-primary dark:hover:text-tertiary"
               >
                 Clear All
               </button>
@@ -337,21 +337,21 @@ const [searchTerm, setSearchTerm] = useState("");
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 <div className="lg:col-span-2">
-            <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Search</label>
+            <label className="form-label">Search</label>
             <input
               type="text"
               placeholder="Invoice #, customer name, email..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Status</label>
+            <label className="form-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s} value={s}>{s === "partially_paid" ? "Partially Paid" : s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -359,11 +359,11 @@ const [searchTerm, setSearchTerm] = useState("");
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Payment State</label>
+            <label className="form-label">Payment State</label>
             <select
               value={paymentStateFilter}
               onChange={(e) => { setPaymentStateFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {PAYMENT_STATE_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -375,11 +375,11 @@ const [searchTerm, setSearchTerm] = useState("");
         {showAdvancedFilters && (
           <div className="mt-4 border-t border-color-subtle border-color pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Customer</label>
+              <label className="form-label">Customer</label>
               <select
                 value={customerFilter}
                 onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="">All Customers</option>
                 {customers.map((c) => (
@@ -388,17 +388,17 @@ const [searchTerm, setSearchTerm] = useState("");
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Currency</label>
+              <label className="form-label">Currency</label>
               <input
                 type="text"
                 placeholder="USD, EUR, etc."
                 value={currencyFilter}
                 onChange={(e) => { setCurrencyFilter(e.target.value.toUpperCase()); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Min Amount</label>
+              <label className="form-label">Min Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -406,11 +406,11 @@ const [searchTerm, setSearchTerm] = useState("");
                 placeholder="0.00"
                 value={minAmount}
                 onChange={(e) => { setMinAmount(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Max Amount</label>
+              <label className="form-label">Max Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -418,43 +418,43 @@ const [searchTerm, setSearchTerm] = useState("");
                 placeholder="999999.99"
                 value={maxAmount}
                 onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Issue Date From</label>
+              <label className="form-label">Issue Date From</label>
               <input
                 type="date"
                 value={issueDateFrom}
                 onChange={(e) => { setIssueDateFrom(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Issue Date To</label>
+              <label className="form-label">Issue Date To</label>
               <input
                 type="date"
                 value={issueDateTo}
                 onChange={(e) => { setIssueDateTo(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Due Date From</label>
+              <label className="form-label">Due Date From</label>
               <input
                 type="date"
                 value={dueDateFrom}
                 onChange={(e) => { setDueDateFrom(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-secondary text-tertiary mb-1">Due Date To</label>
+              <label className="form-label">Due Date To</label>
               <input
                 type="date"
                 value={dueDateTo}
                 onChange={(e) => { setDueDateTo(e.target.value); setPage(1); }}
-                className="w-full rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-2 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
           </div>
@@ -471,51 +471,51 @@ const [searchTerm, setSearchTerm] = useState("");
         <table className="w-full">
           <thead>
             <tr className="border-b border-color-subtle border-color bg-surface-alt dark:bg-surface-alt">
-              <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
+              <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
                 onClick={() => handleSort("invoice_number")}>
                 Invoice
                 {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-left text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
+              <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
                 onClick={() => handleSort("customer_name")}>
                 Customer
                 {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">
+              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">
                 Payment State
               </th>
-              <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
+              <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
                 onClick={() => handleSort("total")}>
                 Total
                 {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
+              <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
                 onClick={() => handleSort("amount_due")}>
                 Amount Due
                 {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-right text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
+              <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
                 onClick={() => handleSort("due_date")}>
                 Due Date
                 {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
+              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
                 onClick={() => handleSort("issue_date")}>
                 Issue Date
                 {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt hover:bg-hover"
+              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 cursor-pointer hover:bg-hover"
                 onClick={() => handleSort("status")}>
                 Status
                 {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-center text-xs font-medium text-secondary text-tertiary uppercase py-3 px-4">Actions</th>
+              <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {invoices.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-secondary text-tertiary">
+                <td colSpan={9} className="py-16 text-center text-tertiary">
                   {hasActiveFilters ? "No invoices match your filters" : "No invoices yet"}
                   {!hasActiveFilters && (
                     <Button
@@ -534,20 +534,20 @@ const [searchTerm, setSearchTerm] = useState("");
               invoices.map((inv) => {
                 const paymentState = getPaymentState(inv);
                 return (
-                  <tr key={inv.id} className="border-b border-color-subtle border-color last:border-b-0 hover:bg-surface-alt hover:bg-hover">
+                  <tr key={inv.id} className="border-b border-color-subtle border-color last:border-b-0 hover:bg-hover">
                     <td className="py-3 px-4">
                       <div className="flex flex-col">
                         <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-inverse hover:text-primary-brand dark:hover:text-primary-brand">
                           {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
                         </Link>
-                        <span className="text-xs text-secondary text-tertiary">
+                        <span className="text-xs text-tertiary">
                           {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-secondary text-tertiary">
+                    <td className="py-3 px-4 text-sm text-tertiary">
                       {inv.customer_name || "—"}
-                      {inv.customer_email && <span className="text-xs text-tertiary text-tertiary block">{inv.customer_email}</span>}
+                      {inv.customer_email && <span className="text-xs text-tertiary block">{inv.customer_email}</span>}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getPaymentStateColor(paymentState)}`}>
@@ -562,10 +562,10 @@ const [searchTerm, setSearchTerm] = useState("");
                         ? formatCurrency(inv.amount_due, inv.currency)
                         : <span className="status-success-text dark:status-success-text">Paid</span>}
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-secondary text-tertiary">
+                    <td className="py-3 px-4 text-right text-sm text-tertiary">
                       {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3 px-4 text-center text-sm text-secondary text-tertiary">
+                    <td className="py-3 px-4 text-center text-sm text-tertiary">
                       {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -614,19 +614,19 @@ const [searchTerm, setSearchTerm] = useState("");
 
         {totalPages > 1 && (
           <div className="px-4 py-3 border-t border-color-subtle border-color flex items-center justify-between">
-            <p className="text-sm text-secondary text-tertiary">
+            <p className="text-sm text-tertiary">
               Page {page} of {totalPages} • {total} invoices
             </p>
             <div className="flex items-center gap-2">
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                className="rounded-lg border border-input-border border-input-border bg-surface-alt px-3 py-1 text-sm text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>{size} per page</option>
-                ))}
-              </select>
+               <select
+                 value={pageSize}
+                 onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                 className="form-control-sm"
+               >
+                 {PAGE_SIZE_OPTIONS.map((size) => (
+                   <option key={size} value={size}>{size} per page</option>
+                 ))}
+               </select>
               <Button
                 variant="secondary"
                 size="sm"

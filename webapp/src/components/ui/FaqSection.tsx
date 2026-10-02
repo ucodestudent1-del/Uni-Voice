@@ -41,18 +41,18 @@ export default function FaqSection({
                 type="button"
                 onClick={() => toggle(index)}
                 aria-expanded={isOpen}
-                className="flex w-full items-center gap-3 px-5 py-4 text-left text-secondary text-secondary hover:bg-surface-alt hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex w-full items-center gap-3 px-5 py-4 text-left text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <span className="text-sm font-medium text-primary-brand text-primary-brand">Q{index + 1}</span>
                 <span className="flex-1 font-medium text-inverse">{item.question}</span>
-                <span className={`text-sm text-secondary text-tertiary transition-transform ${isOpen ? "rotate-180" : ""}`}>▼</span>
+                <span className={`text-sm text-tertiary transition-transform ${isOpen ? "rotate-180" : ""}`}>▼</span>
               </button>
               <div
                 className="grid transition-[grid-template-rows] duration-300 ease-in-out overflow-hidden"
                 style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
               >
                 <div className="overflow-hidden">
-                  <div className="px-5 pb-4 pt-1 text-sm text-secondary text-tertiary leading-relaxed">
+                  <div className="px-5 pb-4 pt-1 text-sm text-tertiary leading-relaxed">
                     {item.answer}
                   </div>
                 </div>

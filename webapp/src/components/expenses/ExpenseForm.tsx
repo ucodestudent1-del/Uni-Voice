@@ -158,7 +158,7 @@ export default function ExpenseForm({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="form-label">
               Description *
             </label>
             <textarea
@@ -179,7 +179,7 @@ export default function ExpenseForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
+              <label className="form-label">
                 Amount *
               </label>
               <input
@@ -201,7 +201,7 @@ export default function ExpenseForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
+              <label className="form-label">
                 Category *
               </label>
               <select
@@ -209,7 +209,7 @@ export default function ExpenseForm({
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 {EXPENSE_CATEGORY_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -222,7 +222,7 @@ export default function ExpenseForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
+              <label className="form-label">
                 Date *
               </label>
               <input
@@ -241,7 +241,7 @@ export default function ExpenseForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
+              <label className="form-label">
                 Payment Method
               </label>
               <select
@@ -249,7 +249,7 @@ export default function ExpenseForm({
                 onChange={(e) =>
                   setFormData({ ...formData, payment_method: e.target.value })
                 }
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m} value={m}>
@@ -262,20 +262,20 @@ export default function ExpenseForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
+              <label className="form-label">
                 Vendor
               </label>
               <input
                 type="text"
                 value={formData.vendor}
                 onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
                 placeholder="Who was this paid to?"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">
+              <label className="form-label">
                 Receipt URL
               </label>
               <input
@@ -284,14 +284,14 @@ export default function ExpenseForm({
                 onChange={(e) =>
                   setFormData({ ...formData, receipt_url: e.target.value })
                 }
-                className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
                 placeholder="https://..."
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="form-label">
               Customer
             </label>
             <CustomerSelector
@@ -302,7 +302,7 @@ export default function ExpenseForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="form-label">
               Project
             </label>
             <ProjectSelector
@@ -313,7 +313,7 @@ export default function ExpenseForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">
+            <label className="form-label">
               Notes
             </label>
             <textarea
@@ -322,7 +322,7 @@ export default function ExpenseForm({
                 setFormData({ ...formData, notes: e.target.value })
               }
               rows={2}
-              className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
               placeholder="Additional details..."
             />
           </div>

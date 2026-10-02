@@ -126,7 +126,7 @@ export default function PaymentsSettings() {
           <select
             value={form.paymentProvider}
             onChange={(e) => setForm({ ...form, paymentProvider: e.target.value })}
-            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-control"
           >
             <option value="stub">Built-in (Test Mode)</option>
             <option value="stripe" disabled>
@@ -147,7 +147,7 @@ export default function PaymentsSettings() {
             onChange={(e) => setForm({ ...form, paymentInstructions: e.target.value })}
             rows={4}
             placeholder="Bank: 1234 5678 90&#10;Account: 987654321"
-            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-control"
           />
         </FormField>
 
@@ -212,7 +212,7 @@ export default function PaymentsSettings() {
           <select
             value={form.lateFeeType}
             onChange={(e) => setForm({ ...form, lateFeeType: e.target.value as "none" | "fixed" | "percentage" })}
-            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-control"
           >
             <option value="none">No late fee</option>
             <option value="fixed">Fixed amount</option>
@@ -275,7 +275,7 @@ export default function PaymentsSettings() {
             max="120"
             value={form.overdueReminderDays}
             onChange={(e) => setForm({ ...form, overdueReminderDays: parseInt(e.target.value) || 7 })}
-            className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="form-control"
           />
         </FormField>
       </div>

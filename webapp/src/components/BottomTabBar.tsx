@@ -40,7 +40,7 @@ return (
                 `flex flex-col items-center justify-center flex-1 pt-1 text-xs font-medium transition-colors ${
                   isActive
                     ? "text-primary-brand"
-                    : "text-secondary text-tertiary hover:text-primary dark:hover:text-tertiary"
+                    : "text-tertiary hover:text-primary dark:hover:text-tertiary"
                 }`
               }
             >

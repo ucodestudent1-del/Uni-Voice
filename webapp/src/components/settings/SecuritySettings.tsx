@@ -90,31 +90,31 @@ export default function SecuritySettings() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Current Password</label>
+            <label className="form-label">Current Password</label>
             <input
               type="password"
               value={passwordForm.currentPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
           <div />
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">New Password</label>
+            <label className="form-label">New Password</label>
             <input
               type="password"
               value={passwordForm.newPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Confirm New Password</label>
+            <label className="form-label">Confirm New Password</label>
             <input
               type="password"
               value={passwordForm.confirmPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
         </div>

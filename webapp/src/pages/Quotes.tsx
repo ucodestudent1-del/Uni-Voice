@@ -264,24 +264,24 @@ export default function Quotes() {
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Search</label>
+            <label className="form-label">Search</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
+              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Quote #, customer name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 pl-10 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="search-input"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Status</label>
+            <label className="form-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>

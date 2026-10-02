@@ -39,7 +39,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
               Something went wrong. Please try again.
             </div>
             {this.state.error && (
-              <p className="text-xs text-tertiary text-tertiary mb-4 font-mono">
+              <p className="text-xs text-tertiary mb-4 font-mono">
                 {this.state.error.message}
               </p>
             )}

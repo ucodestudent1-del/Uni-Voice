@@ -111,21 +111,21 @@ export default function TeamPermissionsSettings() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-secondary mb-1">Email Address</label>
+            <label className="form-label">Email Address</label>
             <input
               type="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="colleague@example.com"
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Role</label>
+            <label className="form-label">Role</label>
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as TeamRole)}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control"
             >
               {ROLES.map((r) => (
                 <option key={r.value} value={r.value}>{r.label}</option>

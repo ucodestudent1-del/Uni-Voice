@@ -121,7 +121,7 @@ export default function TaxesSettings() {
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <FormField label="Code" description="Short identifier (e.g. VAT, GST, SALES_TAX).">
@@ -129,7 +129,7 @@ export default function TaxesSettings() {
               type="text"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <FormField label="Rate" description="Tax rate as a decimal (e.g. 0.0825 for 8.25%).">
@@ -140,14 +140,14 @@ export default function TaxesSettings() {
               step="0.0001"
               value={form.rate}
               onChange={(e) => setForm({ ...form, rate: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <FormField label="Type">
             <select
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select w-full"
             >
               <option value="percentage">Percentage</option>
               <option value="fixed">Fixed</option>
@@ -157,7 +157,7 @@ export default function TaxesSettings() {
             <select
               value={form.countryCode}
               onChange={(e) => setForm({ ...form, countryCode: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-select w-full"
             >
               <option value="">All countries</option>
               <option value="US">United States</option>
@@ -175,7 +175,7 @@ export default function TaxesSettings() {
               type="text"
               value={form.region}
               onChange={(e) => setForm({ ...form, region: e.target.value })}
-              className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="form-control w-full"
             />
           </FormField>
           <div className="flex items-end gap-6">

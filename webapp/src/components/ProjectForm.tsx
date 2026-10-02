@@ -193,23 +193,23 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-secondary mb-1">Project Name *</label>
+              <label className="form-label">Project Name *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
                 placeholder="e.g. Website Redesign"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Status</label>
+              <label className="form-label">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => handleChange("status", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -218,11 +218,11 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Currency</label>
+              <label className="form-label">Currency</label>
               <select
                 value={formData.currency}
                 onChange={(e) => handleChange("currency", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-select"
               >
                 <option value="USD">USD - US Dollar</option>
                 <option value="EUR">EUR - Euro</option>
@@ -236,7 +236,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-secondary mb-1">Customer</label>
+              <label className="form-label">Customer</label>
               <div className="relative">
                 <div
                   className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-surface cursor-pointer focus-within:ring-2 focus-within:ring-primary-500"
@@ -291,7 +291,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Budget</label>
+              <label className="form-label">Budget</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-sm">{formData.currency}</span>
                 <input
@@ -299,45 +299,45 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                   step="0.01"
                   value={formData.budget}
                   onChange={(e) => handleChange("budget", e.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2 pl-16 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="input-with-prefix w-full"
                   placeholder="0.00"
-                />
+                   />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Start Date</label>
+              <label className="form-label">Start Date</label>
               <input
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => handleChange("startDate", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Due Date</label>
+              <label className="form-label">Due Date</label>
               <input
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => handleChange("dueDate", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-secondary mb-1">Description</label>
+              <label className="form-label">Description</label>
               <textarea
                 rows={3}
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
-                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="form-control"
                 placeholder="Project description, scope, objectives..."
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-secondary mb-1">Tags</label>
+              <label className="form-label">Tags</label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.tags.map((t) => (
                   <span
@@ -368,13 +368,13 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                       handleAddCustomTag();
                     }
                   }}
-                  className="flex-1 rounded-lg border border-input-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="form-control flex-1"
                   placeholder="Add a tag..."
                 />
                 <button
                   type="button"
                   onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
-                  className="rounded-lg border border-input-border px-3 py-2 text-sm text-secondary hover:bg-surface-alt"
+                  className="btn btn-secondary"
                   title="Presets"
                 >
                   Presets
