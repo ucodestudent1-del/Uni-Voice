@@ -225,13 +225,13 @@ export default function Plans() {
           <h3 className="text-lg font-semibold text-primary mb-3">Still have questions?</h3>
           <p className="text-sm text-secondary">
             Visit the{" "}
-            <Link to="/faqs" className="text-primary-brand hover:text-primary-hover font-medium">
+            <Link to="/#faq" className="text-primary-brand hover:text-primary-hover font-medium">
               FAQs
             </Link>{" "}
             or{" "}
-            <Link to="/contact" className="text-primary-brand hover:text-primary-hover font-medium">
+            <a href="mailto:support@invoiceflow.com" className="text-primary-brand hover:text-primary-hover font-medium">
               contact us
-            </Link>
+            </a>
             .
           </p>
         </div>

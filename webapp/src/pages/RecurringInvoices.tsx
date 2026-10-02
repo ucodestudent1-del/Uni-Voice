@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getRecurringInvoices,
@@ -324,10 +324,8 @@ export default function RecurringInvoices() {
                 return (
                   <tr key={r.id} className="border-b border-color-subtle last:border-b-0 hover:bg-surface-alt">
                     <td className="py-3 px-4">
-                      <div className="flex flex-col">
-                        <Link to={`/app/recurring-invoices/${r.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
-                          {r.name}
-                        </Link>
+                   <div className="flex flex-col">
+                       <span className="text-sm font-medium text-primary">{r.name}</span>
                         <span className="text-xs text-secondary">{r.frequency} • every {r.interval_count}</span>
                       </div>
                     </td>

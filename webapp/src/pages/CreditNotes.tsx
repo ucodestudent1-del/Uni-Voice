@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
@@ -131,7 +131,7 @@ export default function CreditNotes() {
       setActionMessage({ type: "success", text: "Credit note created successfully!" });
       setShowCreateDialog(false);
       loadCreditNotes(currentParams);
-      navigate(`/app/credit-notes/${res.creditNoteId}`);
+      navigate("/app/credit-notes");
     } catch (err: any) {
       setActionMessage({ type: "error", text: err.response?.data?.error || "Failed to create credit note" });
     } finally {
@@ -377,10 +377,10 @@ export default function CreditNotes() {
               creditNotes.map((cn) => (
                 <tr key={cn.id} className="border-b border-color-subtle last:border-b-0 hover:bg-surface-alt">
                   <td className="py-3 px-4">
-                    <div className="flex flex-col">
-                      <Link to={`/app/credit-notes/${cn.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
-                        {cn.credit_number || `Draft #${cn.id.slice(0, 8)}`}
-                      </Link>
+                     <div className="flex flex-col">
+                       <span className="text-sm font-medium text-primary">
+                         {cn.credit_number || `Draft #${cn.id.slice(0, 8)}`}
+                       </span>
                       <span className="text-xs text-secondary">
                         {cn.issue_date ? new Date(cn.issue_date).toLocaleDateString() : "—"}
                       </span>
