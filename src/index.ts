@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "node:path";
+import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { Decimal } from "decimal.js";
 import { env, isDev, isTest } from "./config/index.js";
@@ -3456,9 +3457,43 @@ async function findBusinessByStripeSubscriptionId(stripeSubscriptionId: string):
 // ============================================================================
 const FRONTEND_DIST = path.join(process.cwd(), "webapp", "dist");
 
+function setAssetHeaders(res: express.Response, filePath: string) {
+  const relativePath = path.relative(FRONTEND_DIST, filePath);
+  const isAsset = relativePath.startsWith(`assets${path.sep}`) || relativePath.startsWith("assets/");
+  if (isAsset) {
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  }
+}
+
+function setNoCacheHeaders(res: express.Response) {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+}
+
 if (!isDev) {
-  app.use(express.static(FRONTEND_DIST));
+  const assetsDir = path.join(FRONTEND_DIST, "assets");
+
+  app.use("/assets", express.static(assetsDir, {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders: setAssetHeaders,
+  }));
+
+  app.use(
+    express.static(FRONTEND_DIST, {
+      maxAge: 0,
+      setHeaders(res, filePath) {
+        const parsed = path.parse(filePath);
+        if (parsed.ext === ".html" || parsed.name === "manifest") {
+          setNoCacheHeaders(res);
+        }
+      },
+    })
+  );
+
   app.get("*", (_req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(FRONTEND_DIST, "index.html"));
   });
 }
@@ -3495,6 +3530,10 @@ process.on("uncaughtException", (err) => {
 const PORT = env.PORT;
 
 async function start() {
+  if (!isDev && !existsSync(FRONTEND_DIST)) {
+    logger.error(`Frontend dist not found at ${FRONTEND_DIST}. Ensure the frontend is built before starting the server.`);
+    process.exit(1);
+  }
   await runMigrations();
   app.listen(PORT, () => {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
