@@ -263,103 +263,103 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
           )}
         </div>
 
-        {/* === Line items table === */}
-        <div className="mt-6 overflow-x-auto rounded-lg border border-color">
-          <table className="w-full table-fixed border-collapse text-sm">
-            <thead>
-              <tr className="bg-surface-alt">
-                <th className="py-3 pl-4 pr-2 text-left text-xs font-semibold uppercase text-tertiary">#</th>
-                <th className="py-3 pl-3 pr-2 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
-                <th className="py-3 pl-2 pr-2 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
-                <th className="py-3 pl-2 pr-2 text-right text-xs font-semibold uppercase text-tertiary">Unit Price</th>
-                <th className="py-3 pl-2 pr-2 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
-                <th className="py-3 pl-2 pr-4 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice.items.map((item, i) => {
-                const lineTotal = lineTotals[i];
-                const hasRate = new Decimal(item.unitPrice || 0).gt(0);
-                const taxPct = new Decimal(item.taxRate ?? 0).mul(100);
-                const showTaxNote = !taxPct.isZero() || item.isTaxInclusive;
-                return (
-                  <tr key={i} className="border-t border-color-subtle">
-                    <td className="py-3 pl-4 pr-2 text-sm text-tertiary font-tabular-nums">{i + 1}</td>
-                    <td className="py-3 pl-3 pr-2 align-top text-sm text-primary break-words">
-                      {item.description || <span className="italic text-tertiary">Untitled item</span>}
-                      {showTaxNote && (
-                        <span className="mt-0.5 block text-xs text-tertiary">
-                          {item.isTaxInclusive ? `incl. ${taxPct.toFixed(2)}% tax` : `${taxPct.toFixed(2)}% tax`}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 pl-2 pr-2 text-sm text-secondary text-right font-tabular-nums">
-                      {fmtQuantity(item.quantity)}
-                    </td>
-                    <td className="py-3 pl-2 pr-2 text-sm text-secondary text-right font-tabular-nums">
-                      {hasRate ? fmtNumber(item.unitPrice, cur) : "—"}
-                    </td>
-                    <td className="py-3 pl-2 pr-2 align-top text-sm text-tertiary text-right font-tabular-nums">
-                      <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
-                        {fmtRate(item.taxRate)}
-                      </span>
-                    </td>
-                    <td className="py-3 pl-2 pr-4 text-sm font-medium text-primary text-right font-tabular-nums">
-                      {lineTotal}
-                    </td>
-                  </tr>
-                );
-              })}
-              {invoice.items.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-sm text-tertiary">
-                    No line items added yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+         {/* === Line items table === */}
+         <div className="mt-6 overflow-x-auto rounded-lg border border-color">
+           <table className="w-full border-collapse text-sm">
+             <thead>
+               <tr className="bg-surface-alt">
+                 <th className="py-3 pl-4 pr-2 text-left text-xs font-semibold uppercase text-tertiary">#</th>
+                 <th className="py-3 pl-3 pr-2 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                 <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
+                 <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Unit Price</th>
+                 <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
+                 <th className="py-3 pl-3 pr-4 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
+               </tr>
+             </thead>
+             <tbody>
+               {invoice.items.map((item, i) => {
+                 const lineTotal = lineTotals[i];
+                 const hasRate = new Decimal(item.unitPrice || 0).gt(0);
+                 const taxPct = new Decimal(item.taxRate ?? 0).mul(100);
+                 const showTaxNote = !taxPct.isZero() || item.isTaxInclusive;
+                 return (
+                   <tr key={i} className="border-t border-color-subtle">
+                     <td className="py-3 pl-4 pr-2 text-center text-sm text-tertiary font-tabular-nums">{i + 1}</td>
+                     <td className="py-3 pl-3 pr-2 align-top text-sm text-primary break-words">
+                       {item.description || <span className="italic text-tertiary">Untitled item</span>}
+                       {showTaxNote && (
+                         <span className="mt-0.5 block text-xs text-tertiary">
+                           {item.isTaxInclusive ? `incl. ${taxPct.toFixed(2)}% tax` : `${taxPct.toFixed(2)}% tax`}
+                         </span>
+                       )}
+                     </td>
+                     <td className="py-3 pl-3 pr-3 text-sm text-secondary text-right font-tabular-nums">
+                       {fmtQuantity(item.quantity)}
+                     </td>
+                     <td className="py-3 pl-3 pr-3 text-sm text-secondary text-right font-tabular-nums">
+                       {hasRate ? fmtNumber(item.unitPrice, cur) : "—"}
+                     </td>
+                     <td className="py-3 pl-3 pr-3 align-top text-sm text-tertiary text-right font-tabular-nums">
+                       <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
+                         {fmtRate(item.taxRate)}
+                       </span>
+                     </td>
+                     <td className="py-3 pl-3 pr-4 text-sm font-medium text-primary text-right font-tabular-nums">
+                       {lineTotal}
+                     </td>
+                   </tr>
+                 );
+               })}
+               {invoice.items.length === 0 && (
+                 <tr>
+                   <td colSpan={6} className="py-10 text-center text-sm text-tertiary">
+                     No line items added yet
+                   </td>
+                 </tr>
+               )}
+             </tbody>
+           </table>
 
-          {itemTaxRates.length > 0 && (
-            <div className="px-4 pb-3 text-xs text-tertiary">
-              Tax rate: {itemTaxRates.join(", ")}
-            </div>
-          )}
-        </div>
+           {itemTaxRates.length > 0 && (
+             <div className="px-4 pb-3 text-xs text-tertiary">
+               Tax rate: {itemTaxRates.join(", ")}
+             </div>
+           )}
+         </div>
 
-        {/* === Fees table === */}
-        {invoice.fees.length > 0 && (
-          <div className="mt-2 overflow-x-auto rounded-lg border border-color">
-            <table className="w-full table-fixed border-collapse text-sm">
-              <thead>
-                <tr className="bg-surface-alt">
-                  <th className="py-3 pl-4 pr-2 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
-                  <th className="py-3 pl-2 pr-2 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
-                  <th className="py-3 pl-2 pr-4 text-right text-xs font-semibold uppercase text-tertiary">Fee</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.fees.map((fee, i) => (
-                  <tr key={i} className="border-t border-color-subtle">
-                    <td className="py-3 pl-4 pr-2 align-top text-sm text-primary break-words">
-                      {fee.description || <span className="italic text-tertiary">Untitled fee</span>}
-                    </td>
-                    <td className="py-3 pl-2 pr-2 text-sm text-tertiary text-right font-tabular-nums">
-                      <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
-                        {fmtRate(fee.taxRate)}
-                      </span>
-                    </td>
-                    <td className="py-3 pl-2 pr-4 text-sm font-medium text-primary text-right font-tabular-nums">
-                      {fmtNumber(fee.amount, cur)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+         {/* === Fees table === */}
+         {invoice.fees.length > 0 && (
+           <div className="mt-2 overflow-x-auto rounded-lg border border-color">
+             <table className="w-full border-collapse text-sm">
+               <thead>
+                 <tr className="bg-surface-alt">
+                   <th className="py-3 pl-4 pr-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                   <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
+                   <th className="py-3 pl-3 pr-4 text-right text-xs font-semibold uppercase text-tertiary">Fee</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {invoice.fees.map((fee, i) => (
+                   <tr key={i} className="border-t border-color-subtle">
+                     <td className="py-3 pl-4 pr-3 align-top text-sm text-primary break-words">
+                       {fee.description || <span className="italic text-tertiary">Untitled fee</span>}
+                     </td>
+                     <td className="py-3 pl-3 pr-3 text-sm text-tertiary text-right font-tabular-nums">
+                       <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
+                         {fmtRate(fee.taxRate)}
+                       </span>
+                     </td>
+                     <td className="py-3 pl-3 pr-4 text-sm font-medium text-primary text-right font-tabular-nums">
+                       {fmtNumber(fee.amount, cur)}
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+           </div>
+         )}
 
-        {/* === Totals === */}
+         {/* === Totals === */}
         <div className="mt-6 flex justify-end">
           <div className="w-64 space-y-1 font-tabular-nums">
             <div className="flex justify-between py-2 text-sm">
