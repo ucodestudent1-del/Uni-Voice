@@ -9,6 +9,7 @@ import { QuoteDetailsForm } from "./QuoteDetailsForm";
 import { ReviewAndSendDialog } from "./ReviewAndSendDialog";
 import { ValidationPanel } from "@/components/ValidationPanel";
 import { Button } from "@/components/ui/Button";
+import { finalizeQuote, sendQuote, getQuotePdf, convertQuote } from "@/api/client";
 
 interface QuoteBuilderProps {
   quoteId?: string | null;
@@ -71,7 +72,6 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     const quoteId = data.savedQuoteId;
     if (!quoteId) return;
     try {
-      const { finalizeQuote, sendQuote } = await import("@/api/client");
       await finalizeQuote(quoteId);
       await sendQuote(quoteId);
     } catch (err: any) {
@@ -84,7 +84,6 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     const quoteId = data.savedQuoteId;
     if (!quoteId) return;
     try {
-      const { getQuotePdf } = await import("@/api/client");
       const blob = await getQuotePdf(quoteId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -107,7 +106,6 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     )
       return;
     try {
-      const { convertQuote } = await import("@/api/client");
       const result = await convertQuote(quoteId);
       if (result?.invoiceId) {
         navigate(`/app/invoices/${result.invoiceId}`);

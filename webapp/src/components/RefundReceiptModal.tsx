@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { X } from "lucide-react";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatCurrencyValue } from "@/lib/utils";
+import { refundReceipt } from "@/api/client";
 
 interface RefundReceiptModalProps {
   open: boolean;
@@ -83,7 +84,6 @@ export default function RefundReceiptModal({
     setProcessing(true);
     setError(null);
     try {
-      const { refundReceipt } = await import("@/api/client");
       await refundReceipt(receipt.id, {
         amount: refundAmount.toString(),
         reason: reason || undefined,

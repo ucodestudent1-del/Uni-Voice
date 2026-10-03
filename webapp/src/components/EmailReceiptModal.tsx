@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { X } from "lucide-react";
+import { emailReceipt } from "@/api/client";
 import type { ApiReceiptDetail } from "@/api/client";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -34,7 +35,6 @@ export default function EmailReceiptModal({ open, onClose, onEmailSent, receipt 
     setSending(true);
     setError(null);
     try {
-      const { emailReceipt } = await import("@/api/client");
       await emailReceipt(receipt.id, { email, name: name || undefined, subject, message });
       toast("Receipt emailed successfully", { type: "success" });
       onEmailSent();
