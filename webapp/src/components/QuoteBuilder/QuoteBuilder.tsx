@@ -219,7 +219,7 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
             <select
               value={data.customerId ?? ""}
               onChange={(e) => updateField("customerId", e.target.value ? e.target.value : null)}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="">Select a customer</option>
               {customerOptions.map((c) => (

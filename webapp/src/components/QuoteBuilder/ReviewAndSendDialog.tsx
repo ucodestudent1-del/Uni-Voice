@@ -153,21 +153,21 @@ Best regards`
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-tertiary mb-1">Subject</label>
-                <input
-                  type="text"
-                  value={emailSubject}
-                  onChange={(e) => setEmailSubject(e.target.value)}
-                  className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-tertiary mb-1">Message</label>
-                <textarea
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  rows={6}
-                  className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
-                />
+                 <input
+                   type="text"
+                   value={emailSubject}
+                   onChange={(e) => setEmailSubject(e.target.value)}
+                   className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                 />
+               </div>
+               <div>
+                 <label className="block text-xs text-tertiary mb-0.5">Message</label>
+                 <textarea
+                   value={emailMessage}
+                   onChange={(e) => setEmailMessage(e.target.value)}
+                   rows={6}
+                   className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+                 />
               </div>
             </div>
           </div>

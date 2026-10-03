@@ -591,8 +591,8 @@ function CreateCreditNoteDialog({
           <h2 className="text-2xl font-bold text-primary">Create Credit Note</h2>
           <p className="text-sm text-secondary mt-1">Fill in the details below</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="form-label">Customer *</label>
               <select

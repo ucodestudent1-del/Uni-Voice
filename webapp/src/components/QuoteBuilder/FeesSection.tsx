@@ -59,7 +59,7 @@ export function FeesSection({ fees, currency, onChange }: FeesSectionProps) {
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
                 <div>
-                  <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+                  <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
                     Description
                   </label>
                   <input
@@ -67,13 +67,13 @@ export function FeesSection({ fees, currency, onChange }: FeesSectionProps) {
                     value={fee.description}
                     onChange={(e) => updateFee(fee.id, { description: e.target.value })}
                     placeholder="Fee description"
-                    className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+                    <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
                       Amount
                     </label>
                     <div className="relative">
@@ -85,13 +85,13 @@ export function FeesSection({ fees, currency, onChange }: FeesSectionProps) {
                         placeholder="0.00"
                         min="0"
                         step={step}
-                        className="w-full rounded-lg border border-input-border bg-surface-alt px-8 py-2 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full rounded-lg border border-input-border bg-surface-alt px-8 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+                    <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
                       Tax Rate
                     </label>
                     <div className="relative">
@@ -103,7 +103,7 @@ export function FeesSection({ fees, currency, onChange }: FeesSectionProps) {
                         min="0"
                         max="100"
                         step="0.01"
-                        className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 pr-8 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 pr-8 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-tertiary text-sm">%</span>
                     </div>
@@ -111,7 +111,7 @@ export function FeesSection({ fees, currency, onChange }: FeesSectionProps) {
                 </div>
               </div>
 
-              <div className="mt-3 border-t border-color-subtle pt-3">
+              <div className="mt-3 border-t border-color-subtle pt-2.5">
                 <Button
                   variant="danger"
                   size="sm"

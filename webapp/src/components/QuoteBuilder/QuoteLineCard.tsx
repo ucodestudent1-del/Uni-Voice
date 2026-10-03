@@ -44,10 +44,10 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[3fr_1fr]">
-        {/* Description — takes 60% width, largest field */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[3fr_1fr]">
+        {/* Description */}
         <div>
-          <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+          <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
             Description
           </label>
           <textarea
@@ -55,14 +55,14 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
             onChange={(e) => handleDescriptionChange(e.target.value)}
             placeholder="Describe the product or service..."
             rows={3}
-            className="w-full min-h-[80px] resize-y rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-1 focus:ring-primary resize-y font-tabular-nums"
+            className="w-full min-h-[72px] resize-y rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary placeholder-tertiary focus:outline-none focus:ring-1 focus:ring-primary font-tabular-nums"
           />
         </div>
 
-        {/* Numeric fields — compact 2-column grid on the right */}
+        {/* Numeric fields */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+            <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
               Quantity
             </label>
             <input
@@ -71,18 +71,18 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
               step={meta.decimalPlaces === 0 ? "1" : "0.01"}
               value={item.quantity}
               onChange={(e) => handleNumberChange("quantity", e.target.value)}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+            <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
               Unit
             </label>
             <select
               value={item.unit}
               onChange={(e) => handleNumberChange("unit", e.target.value)}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary capitalize"
+              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary capitalize"
             >
               {LINE_ITEM_UNITS.map((u) => (
                 <option key={u} value={u}>
@@ -93,7 +93,7 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
           </div>
 
           <div className="col-span-2">
-            <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+            <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
               Unit Price
             </label>
             <div className="relative">
@@ -104,13 +104,13 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
                 step={step}
                 value={item.unitPrice}
                 onChange={(e) => handleNumberChange("unitPrice", e.target.value)}
-                className="w-full rounded-lg border border-input-border bg-surface-alt px-8 py-2 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-lg border border-input-border bg-surface-alt px-8 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+            <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
               Discount
             </label>
             <input
@@ -119,18 +119,18 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
               step={step}
               value={item.discount}
               onChange={(e) => handleNumberChange("discount", e.target.value)}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+            <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
               Discount Type
             </label>
             <select
               value={item.discountType}
               onChange={(e) => handleNumberChange("discountType", e.target.value as "fixed" | "percentage")}
-              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="fixed">Fixed</option>
               <option value="percentage">Percentage</option>
@@ -138,7 +138,7 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-tertiary uppercase mb-1">
+            <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">
               Tax Rate
             </label>
             <div className="relative">
@@ -149,7 +149,7 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
                 step="0.01"
                 value={item.taxRate}
                 onChange={(e) => handleNumberChange("taxRate", e.target.value)}
-                className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-2 pr-8 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 pr-8 text-sm text-primary text-right focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-tertiary text-sm">%</span>
             </div>
@@ -162,7 +162,8 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
                 id={`tax-inclusive-${item.id}`}
                 checked={item.isTaxInclusive ?? false}
                 onChange={(e) => onChange({ isTaxInclusive: e.target.checked })}
-                className="mt-1 h-4 w-4 rounded border-input-border text-primary-brand focus:ring-primary"
+                className="mt-0.5 h-4 w-4 rounded border-input-border text-primary-brand focus:ring-primary"
+                title={item.isTaxInclusive ? "Tax-inclusive" : "Tax-exclusive"}
               />
               <label
                 htmlFor={`tax-inclusive-${item.id}`}
@@ -175,8 +176,7 @@ export function QuoteLineCard({ item, index, currency, calcResult, onChange, onD
         </div>
       </div>
 
-      {/* Delete button — full width, below the fields */}
-      <div className="mt-4 border-t border-color-subtle pt-3">
+      <div className="mt-3 border-t border-color-subtle pt-2.5">
         <Button
           variant="danger"
           size="sm"

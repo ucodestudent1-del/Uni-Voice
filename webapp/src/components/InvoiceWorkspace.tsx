@@ -942,7 +942,7 @@ export default function InvoiceWorkspace() {
           <CustomerHeaderSection invoice={invoice} onField={handleField} customers={customers} />
           <TotalsCard invoice={invoice} calc={calc} onField={handleField} />
         </div>
-        <div className="overflow-y-auto px-8 py-6">
+        <div className="overflow-y-auto px-6 py-5">
           {validation.hasErrors && (
             <ValidationBanner issues={validation.issues} />
           )}
@@ -1212,7 +1212,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
     <div className="flex flex-wrap items-end gap-4 p-6">
       <div className="flex flex-col">
         <label className="text-xs font-semibold text-tertiary uppercase">Customer</label>
-        <div className="mt-1 w-64">
+        <div className="mt-0.5 w-64">
           <CustomerSelector
             value={invoice.customerId ?? undefined}
             onChange={(cid) => onField("customerId", cid)}
@@ -1231,7 +1231,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           onChange={(e) => onField("invoiceNumber", e.target.value || null)}
           placeholder="Auto-assigned"
           disabled={invoice.isFinalized}
-          className="form-control mt-1 w-36"
+          className="form-control mt-0.5 w-36"
         />
       </div>
 
@@ -1241,7 +1241,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           type="date"
           value={invoice.issueDate ?? ""}
           onChange={(e) => onField("issueDate", e.target.value || null)}
-          className="form-control mt-1 w-36"
+          className="form-control mt-0.5 w-36"
         />
       </div>
 
@@ -1251,7 +1251,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           type="date"
           value={invoice.dueDate ?? ""}
           onChange={(e) => onField("dueDate", e.target.value || null)}
-          className="form-control mt-1 w-36"
+          className="form-control mt-0.5 w-36"
         />
       </div>
 
@@ -1260,7 +1260,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
         <select
           value={invoice.currency}
           onChange={(e) => onField("currency", e.target.value)}
-          className="form-control mt-1 w-36"
+          className="form-control mt-0.5 w-36"
         >
           {["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CNY"].map((c) => (
             <option key={c} value={c}>
@@ -1277,7 +1277,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           value={toPercent(invoice.taxRate ?? "0")}
           onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
           placeholder="e.g. 8.5"
-          className="form-control mt-1 w-36"
+          className="form-control mt-0.5 w-36"
         />
       </div>
 
@@ -1289,7 +1289,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           onChange={(e) => onField("poNumber", e.target.value || null)}
           placeholder="Reference #"
           disabled={invoice.isFinalized}
-          className="form-control mt-1 w-36"
+          className="form-control mt-0.5 w-36"
         />
       </div>
     </div>
@@ -1665,13 +1665,13 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
   const lateFeeValue = invoice.lateFeeValue ?? "0";
 
   return (
-    <div className="mb-6 rounded-xl border border-color bg-surface p-5">
-      <h3 className="text-sm font-semibold text-secondary uppercase mb-4">Payment Configuration</h3>
+    <div className="mb-6 rounded-xl border border-color bg-surface p-4">
+      <h3 className="text-sm font-semibold text-secondary uppercase mb-3">Payment Configuration</h3>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
           <label className="form-label-secondary">Deposit</label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <select
               value={depositType}
               onChange={(e) => {
@@ -1718,9 +1718,9 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
           )}
         </div>
 
-        <div className="border-t border-color pt-4">
+        <div className="border-t border-color pt-3">
            <label className="form-label-secondary">Late Fee</label>
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
              <select
                value={lateFeeType}
                onChange={(e) => {
@@ -1777,7 +1777,7 @@ const NotesSection = React.memo(function NotesSection({
   onRemoveAttachment: (category: "attachment" | "before" | "after", id: string) => void;
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <label className="block text-sm font-semibold text-secondary">Job notes</label>
         <textarea
@@ -1789,7 +1789,7 @@ const NotesSection = React.memo(function NotesSection({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label className="block text-sm font-semibold text-secondary">Payment instructions</label>
           <textarea

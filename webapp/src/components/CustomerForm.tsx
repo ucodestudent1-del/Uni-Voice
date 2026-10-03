@@ -118,16 +118,16 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
           </h3>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
             <div className="p-3 status-error-bg border status-error-border rounded-lg">
               <p className="text-sm status-error-text">{error}</p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="form-label">Name *</label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="form-label">Name *</label>
               <input
                 type="text"
                 required
@@ -210,7 +210,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
 
            <fieldset className="border border-color-subtle rounded-lg p-4">
              <legend className="text-xs font-medium text-tertiary uppercase px-1">Address</legend>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                <div className="md:col-span-2">
                  <label className="form-label">Street Address *</label>
                  <input

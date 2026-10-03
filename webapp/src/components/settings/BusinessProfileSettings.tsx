@@ -152,7 +152,7 @@ export default function BusinessProfileSettings() {
   }
 
   return (
-    <div className="space-y-6">
+     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-primary">Business Profile</h2>
         <p className="text-sm text-secondary mt-1">
@@ -165,9 +165,9 @@ export default function BusinessProfileSettings() {
         <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <FormField label="Business Name" description="Your public business name as shown on invoices.">
               <input
                 type="text"
@@ -241,7 +241,7 @@ export default function BusinessProfileSettings() {
           </FormField>
 
           <FormField label="Address" description="Your business address as it appears on invoices.">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="md:col-span-2">
                 <input
                   type="text"
@@ -302,7 +302,7 @@ export default function BusinessProfileSettings() {
           </FormField>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <FormField label="Business Logo" description="Upload or paste a logo URL.">
             <div className="flex flex-col items-center gap-3">
               {form.logoUrl ? (
