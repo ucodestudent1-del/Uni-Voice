@@ -55,6 +55,13 @@ export function customerHasBalance(customer: Pick<ApiCustomer, "totalOutstanding
   return new Decimal(customer.totalOutstanding ?? 0).gt(0);
 }
 
+/**
+ * Returns whether a customer has an overdue (past-due) balance.
+ */
+export function customerHasOverdue(customer: Pick<ApiCustomer, "totalOverdue">): boolean {
+  return new Decimal(customer.totalOverdue ?? 0).gt(0);
+}
+
 export type BillingState = "never_invoiced" | "settled" | "outstanding" | "overdue";
 
 export interface CustomerBillingSnapshot {

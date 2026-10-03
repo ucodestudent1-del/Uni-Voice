@@ -67,7 +67,7 @@ export const projectStatusConfig = createStatusBadgeConfig(
 
 export const customerStatusConfig = createStatusBadgeConfig(
   {
-    active: { label: "Active", className: "status-success-bg status-success-text" },
+    active: { label: "Active", className: "status-success-subtle-bg status-success-subtle-text" },
     inactive: { label: "Inactive", className: "status-tertiary-bg status-tertiary-text" },
     archived: { label: "Archived", className: "status-info-bg status-info-text" },
   },

@@ -15,17 +15,130 @@ import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import CustomerImport from "../components/CustomerImport";
 import CustomerQuickView from "../components/CustomerQuickView";
-import { Plus, FileText, Upload, Download, Eye, Edit2, Archive, RefreshCw } from "lucide-react";
+import { Plus, FileText, Upload, Download, Eye, Edit2, Archive, RefreshCw, MoreVertical, Search, Clock, Mail, Phone, Users } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
-import { getCustomerPrimaryContact, customerHasBalance } from "../utils/customer";
+import { getCustomerPrimaryContact, customerHasBalance, customerHasOverdue } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
 import { Button } from "../components/ui/Button";
+import EmptyState from "../components/ui/EmptyState";
+import { cn } from "../lib/utils";
+import type { NavigateFunction } from "react-router-dom";
+
+interface CustomerActionMenuProps {
+  customer: ApiCustomer;
+  hasOverdue: boolean;
+  isCreating: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onNavigate: NavigateFunction;
+  onEdit: (customer: ApiCustomer) => void;
+  onArchive: (customer: ApiCustomer) => void;
+  onRestore: (customer: ApiCustomer) => void;
+  onCreateInvoice: (customer: ApiCustomer) => void;
+  align?: "left" | "right";
+}
+
+function CustomerActionMenu({
+  customer,
+  isOpen,
+  onToggle,
+  onClose,
+  onNavigate,
+  onEdit,
+  onArchive,
+  onRestore,
+  onCreateInvoice,
+  isCreating,
+  align = "right",
+}: CustomerActionMenuProps) {
+  return (
+    <div className="relative flex justify-end">
+      <Button
+        variant="ghost"
+        size="sm"
+        icon={<MoreVertical className="h-4 w-4" />}
+        onClick={onToggle}
+        aria-label={`More actions for ${customer.name}`}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        className="px-2"
+      />
+      {isOpen && (
+        <div
+          data-action-menu={customer.id}
+          role="menu"
+          aria-label={`Actions for ${customer.name}`}
+          className={cn(
+            "absolute z-10 mt-1 w-44 origin-top rounded-lg bg-surface border border-color-subtle shadow-lg focus:outline-none",
+            align === "right" ? "right-0" : "left-0"
+          )}
+        >
+          <div className="py-1">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => { onClose(); onNavigate(`/app/customers/${customer.id}`); }}
+              className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-hover hover:text-primary flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              View Profile
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => { onClose(); onEdit(customer); }}
+              className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-hover hover:text-primary flex items-center gap-2"
+            >
+              <Edit2 className="h-4 w-4" />
+              Edit
+            </button>
+            <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { onClose(); onCreateInvoice(customer); }}
+                disabled={isCreating}
+                className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-hover hover:text-primary disabled:opacity-50 flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                {isCreating ? "Creating…" : "Create Invoice"}
+              </button>
+            </FeatureGate>
+            <div className="border-t border-color-subtle my-1"></div>
+            {customer.status === "archived" ? (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { onClose(); onRestore(customer); }}
+                className="w-full text-left px-3 py-2 text-sm status-error-text hover:bg-error-bg/50 flex items-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Restore
+              </button>
+            ) : (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { onClose(); onArchive(customer); }}
+                className="w-full text-left px-3 py-2 text-sm status-error-text hover:bg-error-bg/50 flex items-center gap-2"
+              >
+                <Archive className="h-4 w-4" />
+                Archive
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Customers" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
-  { value: "overdue", label: "Overdue (Has Balance)" },
+  { value: "overdue", label: "Overdue" },
   { value: "archived", label: "Archived" },
 ];
 
@@ -57,6 +170,7 @@ export default function Customers() {
   const [showImport, setShowImport] = useState(false);
   const [creatingInvoiceFor, setCreatingInvoiceFor] = useState<string | null>(null);
   const [quickViewCustomer, setQuickViewCustomer] = useState<ApiCustomer | null>(null);
+  const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
 
   const currentParams: CustomerSearchParams = {
     limit,
@@ -68,19 +182,19 @@ export default function Customers() {
     sortOrder,
     enrich: true,
   };
-
   const loadCustomers = useCallback(async (params: CustomerSearchParams) => {
     setLoading(true);
     setError(null);
     try {
       const data = await getCustomers(params);
       const list = data.data ?? [];
-      const enriched: ApiCustomer[] = list.map((c: any) => ({
-        ...c,
-        invoiceCount: c.invoiceCount ?? 0,
-        totalOutstanding: c.totalOutstanding ?? "0",
-        mostRecentInvoiceDate: c.mostRecentInvoiceDate ?? null,
-      }));
+       const enriched: ApiCustomer[] = list.map((c: any) => ({
+         ...c,
+         invoiceCount: c.invoiceCount ?? 0,
+         totalOutstanding: c.totalOutstanding ?? "0",
+         totalOverdue: c.totalOverdue ?? "0",
+         mostRecentInvoiceDate: c.mostRecentInvoiceDate ?? null,
+       }));
       setCustomers(enriched);
       setTotal(data.total ?? 0);
     } catch (err: any) {
@@ -95,6 +209,18 @@ export default function Customers() {
   useEffect(() => {
     loadCustomers(currentParams);
   }, [loadCustomers, limit, offset, search, statusFilter, includeArchived, sortBy, sortOrder]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      const openMenu = document.querySelector(`[data-action-menu="${actionMenuOpenId}"]`);
+      if (actionMenuOpenId && openMenu && !openMenu.contains(target)) {
+        setActionMenuOpenId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [actionMenuOpenId]);
 
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
@@ -183,7 +309,7 @@ export default function Customers() {
 
   const effectiveRows =
     statusFilter === "overdue"
-      ? customers.filter((c) => customerHasBalance(c))
+      ? customers.filter((c) => customerHasOverdue(c))
       : customers;
 
   return (
@@ -235,20 +361,23 @@ export default function Customers() {
         </div>
       </div>
 
-          <div className="bg-surface rounded-xl border border-color-subtle border-color p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+          <div className="bg-surface rounded-xl border border-color-subtle p-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5">
               <div className="lg:col-span-4">
-                <label className="form-label">Search</label>
-                <input
-                  type="text"
-                  placeholder="Search customers by name, email, or company..."
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-                  className="form-control"
-                />
+                <label className="form-label-secondary">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, or company…"
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
+                    className="form-control pl-10"
+                  />
+                </div>
               </div>
               <div className="lg:col-span-3">
-                <label className="form-label">Status</label>
+                <label className="form-label-secondary">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
@@ -260,7 +389,7 @@ export default function Customers() {
                 </select>
               </div>
               <div className="lg:col-span-2">
-                <label className="form-label">Sort By</label>
+                <label className="form-label-secondary">Sort By</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -272,7 +401,7 @@ export default function Customers() {
                 </select>
               </div>
               <div className="lg:col-span-1.5">
-                <label className="form-label">Direction</label>
+                <label className="form-label-secondary">Direction</label>
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as any)}
@@ -318,161 +447,225 @@ export default function Customers() {
       )}
 
       {loading && customers.length === 0 ? (
-        <div className="text-center py-20 text-secondary">Loading customers...</div>
+        <EmptyState variant="loading" title="Loading customers…" />
       ) : effectiveRows.length === 0 ? (
-        <div className="text-center py-16 bg-surface rounded-xl border border-color-subtle">
-          <p className="mt-4 text-secondary">
-            {search || statusFilter !== "all" ? "No matching customers found" : "No customers yet"}
-          </p>
-          <Button
-            variant="primary"
-            size="md"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={() => setShowForm(true)}
-            className="mt-2"
-          >
-            Add Customer
-          </Button>
+        <div className="bg-surface rounded-xl border border-color-subtle">
+          <EmptyState
+            icon={<Users className="w-8 h-8" />}
+            title={search || statusFilter !== "all" ? "No matching customers found" : "No customers yet"}
+            description={search || statusFilter !== "all" ? "Try adjusting your search or filters." : "Get started by adding your first customer."}
+            actionLabel="Add Customer"
+            onAction={() => setShowForm(true)}
+          />
         </div>
       ) : (
         <>
           <div className="bg-surface rounded-xl border border-color-subtle border-color overflow-hidden">
-            <table className="w-full">
+            {/* Desktop table — hidden on small screens */}
+            <table className="w-full table-fixed table-zebra hidden sm:table">
               <thead>
-                <tr className="border-b border-color-subtle border-color">
-                   <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Customer</th>
-                   <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4">Contact</th>
-                   <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Invoices</th>
-                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Outstanding</th>
-                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Last Invoice</th>
-                   <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Status</th>
-                   <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4">Actions</th>
+                <tr className="border-b border-color-subtle border-color bg-surface-alt/50">
+                   <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4 min-w-[180px]">Customer</th>
+                   <th className="text-left text-xs font-medium text-tertiary uppercase py-3 px-4 min-w-[200px]">Contact</th>
+                   <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 w-[80px]">Invoices</th>
+                   <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 w-[130px]">Outstanding</th>
+                   <th className="text-right text-xs font-medium text-tertiary uppercase py-3 px-4 w-[130px]">Last Invoice</th>
+                   <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 w-[100px]">Status</th>
+                   <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-2 w-[50px]">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {effectiveRows.map((c) => {
                   const hasBalance = customerHasBalance(c);
+                  const hasOverdue = customerHasOverdue(c);
                   const isSelected = quickViewCustomer?.id === c.id;
+                  const isCreating = creatingInvoiceFor === c.id;
                   return (
                      <tr
                         key={c.id}
                         aria-current={isSelected ? "true" : undefined}
-                        className={`border-b border-color-subtle border-color last:border-b-0 transition-colors ${
+                        className={`border-b border-color-subtle border-color last:border-b-0 ${
                           isSelected
                             ? "bg-primary-bg"
-                            : hasBalance
-                            ? "border-l-2 border-l-error-text hover:bg-surface-alt"
-                            : "hover:bg-surface-alt"
+                            : hasOverdue
+                            ? "border-l-2 border-l-error-text"
+                            : ""
                         }`}
                       >
-                        <td className={`py-3 pl-4 pr-4 ${isSelected ? "border-l-2 border-l-primary" : ""}`}>
+                        <td className="py-3.5 pr-4 align-top">
+                          <div className="flex items-start gap-3">
+                            <span className="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-alt text-xs font-medium text-secondary ring-1 ring-color-subtle">
+                              {c.name?.charAt(0)?.toUpperCase() ?? "?"}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <button
+                                type="button"
+                                onClick={() => setQuickViewCustomer(c)}
+                                aria-label={`Show details for ${c.name}`}
+                                className="text-left text-sm font-medium text-primary hover:text-primary-brand hover:underline"
+                              >
+                                <span className="truncate block">{c.name}</span>
+                              </button>
+                              {c.companyName ? (
+                                <p className="text-xs text-tertiary mt-0.5 truncate">{c.companyName}</p>
+                              ) : c.mostRecentInvoiceDate ? (
+                                <p className="text-xs text-tertiary mt-0.5 flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{formatDate(c.mostRecentInvoiceDate)}</span>
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                        </td>
+                       <td className="py-3.5 pr-4 align-top">
+                         {getCustomerPrimaryContact(c) ? (
+                          <div className="text-sm text-secondary space-y-0.5">
+                            {c.email && (
+                              <div className="flex items-center gap-1.5">
+                                <Mail className="w-3 h-3 text-tertiary flex-shrink-0" />
+                                <span className="truncate break-all">{c.email}</span>
+                              </div>
+                            )}
+                            {c.phone && (
+                              <div className="flex items-center gap-1.5">
+                                <Phone className="w-3 h-3 text-tertiary flex-shrink-0" />
+                                <span className="truncate">{c.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-tertiary text-sm">—</span>
+                        )}
+                       </td>
+                        <td className="py-3.5 px-4 text-center text-sm text-primary align-top">
+                         {c.invoiceCount ?? 0}
+                       </td>
+                       <td className="py-3.5 px-4 text-right align-top">
+                         {hasBalance ? (
+                           hasOverdue ? (
+                             <span className="text-sm font-medium font-tabular-nums status-error-text">
+                               {formatCurrency(c.totalOverdue || "0", c.defaultCurrency || "USD")}
+                             </span>
+                           ) : (
+                             <span className="text-sm text-secondary font-tabular-nums">
+                               {formatCurrency(c.totalOutstanding || "0", c.defaultCurrency || "USD")}
+                             </span>
+                           )
+                         ) : (
+                           <span className="text-sm text-tertiary">— paid</span>
+                         )}
+                       </td>
+                       <td className="py-3.5 px-4 text-right text-sm text-secondary align-top">
+                         {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-tertiary">—</span>}
+                       </td>
+                       <td className="py-3.5 px-4 text-center align-top">
+                         <CustomerStatusBadge status={c.status} />
+                       </td>
+                        <td className="py-3.5 px-2 align-top">
+                          <CustomerActionMenu
+                            customer={c}
+                            hasOverdue={hasOverdue}
+                            isCreating={isCreating}
+                            isOpen={actionMenuOpenId === c.id}
+                            onToggle={() => setActionMenuOpenId(actionMenuOpenId === c.id ? null : c.id)}
+                            onClose={() => setActionMenuOpenId(null)}
+                            onNavigate={navigate}
+                            onEdit={handleEdit}
+                            onArchive={handleArchive}
+                            onRestore={handleRestore}
+                            onCreateInvoice={handleCreateInvoice}
+                          />
+                        </td>
+                     </tr>
+                   );
+                 })}
+               </tbody>
+             </table>
+
+            {/* Mobile cards — visible only on small screens */}
+            <div className="sm:hidden">
+              {effectiveRows.map((c) => {
+                const hasBalance = customerHasBalance(c);
+                const hasOverdue = customerHasOverdue(c);
+                const isSelected = quickViewCustomer?.id === c.id;
+                const isCreating = creatingInvoiceFor === c.id;
+                return (
+                  <div
+                    key={c.id}
+                    aria-current={isSelected ? "true" : undefined}
+                    className={`border-b border-color-subtle border-color last:border-b-0 ${isSelected ? "bg-primary-bg" : hasOverdue ? "bg-error-bg/20" : ""}`}
+                  >
+                    <div className="flex items-start justify-between p-4 gap-2">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <span className="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-alt text-xs font-medium text-secondary ring-1 ring-color-subtle">
+                          {c.name?.charAt(0)?.toUpperCase() ?? "?"}
+                        </span>
+                        <div className="min-w-0 flex-1">
                           <button
                             type="button"
                             onClick={() => setQuickViewCustomer(c)}
                             aria-label={`Show details for ${c.name}`}
                             className="text-left text-sm font-medium text-primary hover:text-primary-brand hover:underline"
                           >
-                            {c.name}
+                            <span className="truncate block">{c.name}</span>
                           </button>
-                          {c.companyName ? (
-                            <p className="text-xs text-secondary">{c.companyName}</p>
-                          ) : c.mostRecentInvoiceDate ? (
-                            <p className="text-xs text-secondary">
-                              Last activity: {formatDate(c.mostRecentInvoiceDate)}
-                            </p>
-                          ) : null}
-                        </td>
-                      <td className="py-3 px-4 text-sm text-secondary">
-                        {getCustomerPrimaryContact(c) ? (
-                          <span className="break-all">{getCustomerPrimaryContact(c)}</span>
-                        ) : (
-                          <span className="text-tertiary">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center text-sm text-primary">
-                        {c.invoiceCount ?? 0}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {hasBalance ? (
-                          <span className="text-sm font-medium status-error-text">
-                            {formatCurrency(c.totalOutstanding || "0", c.defaultCurrency || "USD")}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-tertiary">— paid</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-right text-sm text-secondary">
-                        {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-tertiary">—</span>}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <CustomerStatusBadge status={c.status} />
-                      </td>
-                       <td className="py-3 px-4">
-                         <div className="flex flex-wrap items-center justify-end gap-1">
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             icon={<Eye className="h-3.5 w-3.5" />}
-                             onClick={() => navigate(`/app/customers/${c.id}`)}
-                             title={`Open the full profile for ${c.name}`}
-                             aria-label={`View full profile for ${c.name}`}
-                           >
-                             View
-                           </Button>
-                           <Button
-                             variant="ghost"
-                             size="sm"
-                             icon={<Edit2 className="h-3.5 w-3.5" />}
-                             onClick={() => handleEdit(c)}
-                             title={`Edit contact and billing details for ${c.name}`}
-                             aria-label={`Edit ${c.name}`}
-                           >
-                             Edit
-                           </Button>
-                           <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               icon={<FileText className="h-3.5 w-3.5" />}
-                               onClick={() => handleCreateInvoice(c)}
-                               disabled={creatingInvoiceFor === c.id}
-                               title={`Create a new invoice for ${c.name}`}
-                               aria-label={`Create invoice for ${c.name}`}
-                             >
-                               {creatingInvoiceFor === c.id ? "Creating…" : "Invoice"}
-                             </Button>
-                           </FeatureGate>
-                           {c.status === "archived" ? (
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               icon={<RefreshCw className="h-3.5 w-3.5" />}
-                               onClick={() => handleRestore(c)}
-                               title={`Restore ${c.name} to the active list`}
-                               aria-label={`Restore ${c.name}`}
-                             >
-                               Restore
-                             </Button>
-                           ) : (
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               icon={<Archive className="h-3.5 w-3.5" />}
-                               onClick={() => handleArchive(c)}
-                               title={`Archive ${c.name}. This can be undone.`}
-                               aria-label={`Archive ${c.name}`}
-                               className="status-error-text hover:status-error-text"
-                             >
-                               Archive
-                             </Button>
-                           )}
-                         </div>
-                        </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          <div className="mt-0.5 space-y-0.5">
+                            {c.companyName && <p className="text-xs text-tertiary truncate">{c.companyName}</p>}
+                            {c.email && (
+                              <p className="text-xs text-tertiary truncate">{c.email}</p>
+                            )}
+                            {c.mostRecentInvoiceDate && (
+                              <p className="text-xs text-tertiary flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                <span>{formatDate(c.mostRecentInvoiceDate)}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <CustomerActionMenu
+                        customer={c}
+                        hasOverdue={hasOverdue}
+                        isCreating={isCreating}
+                        isOpen={actionMenuOpenId === c.id}
+                        onToggle={() => setActionMenuOpenId(actionMenuOpenId === c.id ? null : c.id)}
+                        onClose={() => setActionMenuOpenId(null)}
+                        onNavigate={navigate}
+                        onEdit={handleEdit}
+                        onArchive={handleArchive}
+                        onRestore={handleRestore}
+                        onCreateInvoice={handleCreateInvoice}
+                        align="right"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 px-4 pb-3 text-sm">
+                      <div>
+                        <span className="text-xs text-tertiary">Invoices</span>
+                        <span className="text-sm text-primary ml-1">{c.invoiceCount ?? 0}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-tertiary">Outstanding</span>
+                        <span className={cn("ml-1 font-tabular-nums", hasBalance ? (hasOverdue ? "status-error-text font-medium" : "text-secondary") : "text-tertiary")}>
+                          {hasBalance
+                            ? formatCurrency(hasOverdue ? (c.totalOverdue || "0") : (c.totalOutstanding || "0"), c.defaultCurrency || "USD")
+                            : "— paid"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-tertiary">Last Invoice</span>
+                        <span className="text-sm text-secondary ml-1">
+                          {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : "—"}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-tertiary">Status</span>
+                        <span className="ml-1"><CustomerStatusBadge status={c.status} /></span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
            {totalPages > 1 && (

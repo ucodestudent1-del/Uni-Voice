@@ -240,6 +240,7 @@ export interface ApiCustomer {
   updatedAt: string;
   invoiceCount?: number;
   totalOutstanding?: string;
+  totalOverdue?: string;
   mostRecentInvoiceDate?: string | null;
 }
 

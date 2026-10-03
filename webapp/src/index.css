@@ -73,6 +73,11 @@
     --color-success-text: 21 128 61;     /* green-800  */
     --color-success-border: 87 154 87;   /* green-600 — raised from 200 for AA contrast */
 
+    --color-success-subtle: 110 235 181; /* teal-300 — soft, less saturated */
+    --color-success-subtle-bg: 235 252 250; /* teal-50 */
+    --color-success-subtle-text: 11 93 71;   /* emerald-800 */
+    --color-success-subtle-border: 110 235 181; /* teal-300 */
+
     --color-warning: 245 158 11;         /* amber-500  */
     --color-warning-bg: 255 247 225;     /* amber-50   */
     --color-warning-text: 180 83 9;     /* amber-800 — raised from 700 for AA on amber-50 */
@@ -162,6 +167,11 @@
     --color-success-bg: 20 74 38;        /* green-900    */
     --color-success-text: 132 204 171;   /* green-300    */
     --color-success-border: 21 99 47;    /* green-700    */
+
+    --color-success-subtle: 64 240 213;  /* teal-300 — soft, less saturated */
+    --color-success-subtle-bg: 15 33 31;  /* teal-950 */
+    --color-success-subtle-text: 11 93 71;   /* emerald-800 */
+    --color-success-subtle-border: 64 240 213; /* teal-300 */
 
     --color-warning: 251 191 21;         /* amber-400    */
     --color-warning-bg: 75 34 12;        /* amber-900    */
@@ -329,6 +339,22 @@
   .status-success-bg { background-color: rgb(var(--color-success-bg)); }
   .status-success-text { color: rgb(var(--color-success-text)); }
   .status-success-border { border-color: rgb(var(--color-success-border)); }
+
+  /* Status badges - success (subtle) */
+  .status-success-subtle-bg { background-color: rgb(var(--color-success-subtle-bg)); }
+  .status-success-subtle-text { color: rgb(var(--color-success-subtle-text)); }
+  .status-success-subtle-border { border-color: rgb(var(--color-success-subtle-border)); }
+
+  /* Table zebra striping */
+  .table-zebra tbody tr:nth-child(even) {
+    background-color: rgb(var(--color-surface-alt));
+  }
+  .table-zebra tbody tr:hover {
+    background-color: rgb(var(--color-hover));
+  }
+  .table-zebra tbody tr:nth-child(even):hover {
+    background-color: rgb(var(--color-hover));
+  }
 
   /* Status badges - warning */
   .status-warning-bg { background-color: rgb(var(--color-warning-bg)); }
