@@ -24,7 +24,6 @@ export interface DashboardSummary {
   totalRevenue: string;
   totalOutstanding: string;
   paymentsReceived: string;
-  expenses: string;
   netIncome: string;
   totalOverdue: string;
   draftCount: number;
@@ -118,36 +117,6 @@ export interface PaymentReportSummary {
   dailyTrend: Array<{ date: string; amount: string; count: number }>;
 }
 
-export interface ExpenseReportItem {
-  id: string;
-  description: string;
-  amount: string;
-  tax_amount: string;
-  currency: string;
-  category: string;
-  expense_date: string;
-  payment_method: string;
-  vendor: string | null;
-  is_billable: boolean;
-  is_reimbursable: boolean;
-  is_reimbursed: boolean;
-  customer_name: string | null;
-  project_name: string | null;
-  invoice_number: string | null;
-}
-
-export interface ExpenseReportSummary {
-  totalExpenses: number;
-  totalAmount: string;
-  billableAmount: string;
-  reimbursableAmount: string;
-  reimbursedAmount: string;
-  nonReimbursedBillable: string;
-  currency: string;
-  categoryBreakdown: Array<{ category: string; total: string; count: number; percentage: number }>;
-  monthlyTrend: Array<{ period: string; amount: string; count: number }>;
-}
-
 export interface ClientReportItem {
   id: string;
   name: string;
@@ -210,12 +179,6 @@ export interface ProfitLossReport {
     count: number;
     byMonth: Array<{ period: string; amount: string; count: number }>;
   };
-  expenses: {
-    total: string;
-    count: number;
-    byCategory: Array<{ category: string; total: string; count: number }>;
-    byMonth: Array<{ period: string; amount: string; count: number }>;
-  };
   netIncome: string;
   grossMargin: number;
 }
@@ -262,7 +225,7 @@ export class ReportsService {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [summary, expenseSummary, currencyRow] = await Promise.all([
+    const [summary, currencyRow] = await Promise.all([
       query(
         `SELECT
            COUNT(*) AS total_invoices,
@@ -278,17 +241,12 @@ export class ReportsService {
         [businessId, monthStart.toISOString()]
       ),
       query(
-        `SELECT COALESCE(SUM(amount), 0) AS total_expenses FROM expenses WHERE business_id = $1`,
-        [businessId]
-      ),
-      query(
         `SELECT COALESCE(MAX(currency), 'USD') AS currency FROM invoices WHERE business_id = $1`,
         [businessId]
       ),
     ]);
 
     const row = summary.rows[0];
-    const expenseTotal = String(expenseSummary.rows[0]?.total_expenses ?? "0");
     const totalRevenue = String(row.total_revenue ?? "0");
     const paymentsReceived = String(row.payments_received ?? "0");
 
@@ -296,8 +254,7 @@ export class ReportsService {
       totalRevenue,
       totalOutstanding: String(row.total_outstanding ?? "0"),
       paymentsReceived,
-      expenses: expenseTotal,
-      netIncome: new Decimal(totalRevenue).minus(new Decimal(expenseTotal)).toFixed(2),
+      netIncome: new Decimal(totalRevenue).toFixed(2),
       totalOverdue: String(row.total_overdue ?? "0"),
       draftCount: Number(row.draft_count ?? 0),
       overdueCount: Number(row.overdue_count ?? 0),
@@ -788,193 +745,6 @@ export class ReportsService {
     return result;
   }
 
-  async getExpensesReport(
-    businessId: string,
-    filters: ReportFilters = {}
-  ): Promise<{
-    summary: ExpenseReportSummary;
-    expenses: ExpenseReportItem[];
-  }> {
-    const cacheKey = `expenses-report:${businessId}:${JSON.stringify(filters)}`;
-    const cached = reportsCache.get(cacheKey);
-    if (cached) return cached;
-
-    const limit = Math.min(filters.limit ?? 50, 500);
-    const offset = filters.offset ?? 0;
-    const sortBy = filters.sortBy ?? "expense_date";
-    const sortOrder = filters.sortOrder ?? "desc";
-
-    const conditions: string[] = ["e.business_id = $1"];
-    const vals: unknown[] = [businessId];
-    let paramIdx = 2;
-
-    if (filters.category) {
-      conditions.push(`e.category = $${paramIdx}`);
-      vals.push(filters.category);
-      paramIdx++;
-    }
-
-    if (filters.customerId) {
-      conditions.push(`e.customer_id = $${paramIdx}`);
-      vals.push(filters.customerId);
-      paramIdx++;
-    }
-
-    if (filters.dateFrom) {
-      conditions.push(`e.expense_date >= $${paramIdx}`);
-      vals.push(filters.dateFrom);
-      paramIdx++;
-    }
-    if (filters.dateTo) {
-      conditions.push(`e.expense_date <= $${paramIdx}`);
-      vals.push(filters.dateTo);
-      paramIdx++;
-    }
-
-    if (filters.search) {
-      conditions.push(`(e.description ILIKE $${paramIdx} OR c.name ILIKE $${paramIdx} OR p.name ILIKE $${paramIdx})`);
-      vals.push(`%${filters.search}%`);
-      paramIdx++;
-    }
-
-    const sortColMap: Record<string, string> = {
-      amount: "e.amount",
-      expense_date: "e.expense_date",
-      created_at: "e.created_at",
-      category: "e.category",
-      vendor: "e.vendor",
-    };
-    const sortCol = sortColMap[sortBy] ?? "e.expense_date";
-    const sortDir = sortOrder === "desc" ? "DESC" : "ASC";
-
-    const dataRes = await query(
-      `SELECT e.id, e.description, e.amount, e.tax_amount, e.currency, e.category, e.expense_date,
-              e.payment_method, e.vendor, e.is_billable, e.is_reimbursable, e.is_reimbursed,
-              c.name as customer_name, p.name as project_name, i.invoice_number
-       FROM expenses e
-       LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
-       LEFT JOIN projects p ON p.id = e.project_id AND p.business_id = e.business_id
-       LEFT JOIN invoices i ON i.id = e.invoice_id AND i.business_id = e.business_id
-       WHERE ${conditions.join(" AND ")}
-       ORDER BY ${sortCol} ${sortDir}, e.created_at DESC
-       LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
-      [...vals, limit, offset]
-    );
-
-    const countRes = await query(
-      `SELECT COUNT(*)::int AS total FROM expenses e
-       LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
-       LEFT JOIN projects p ON p.id = e.project_id AND p.business_id = e.business_id
-       WHERE ${conditions.join(" AND ")}`,
-      vals
-    );
-
-    const summaryRes = await query(
-      `SELECT
-         COUNT(*)::int AS total_count,
-         COALESCE(SUM(e.amount), 0) AS total_amount,
-         COALESCE(SUM(CASE WHEN e.is_billable THEN e.amount ELSE 0 END), 0) AS billable_amount,
-         COALESCE(SUM(CASE WHEN e.is_reimbursable THEN e.amount ELSE 0 END), 0) AS reimbursable_amount,
-         COALESCE(SUM(CASE WHEN e.is_reimbursed THEN e.amount ELSE 0 END), 0) AS reimbursed_amount,
-         COALESCE(SUM(CASE WHEN e.is_billable AND NOT e.is_reimbursed THEN e.amount ELSE 0 END), 0) AS non_reimbursed_billable,
-         COALESCE(MAX(e.currency), 'USD') AS currency
-       FROM expenses e
-       LEFT JOIN customers c ON c.id = e.customer_id AND c.business_id = e.business_id
-       LEFT JOIN projects p ON p.id = e.project_id AND p.business_id = e.business_id
-       WHERE ${conditions.join(" AND ")}`,
-      vals
-    );
-
-    const categoryRes = await query(
-      `SELECT e.category,
-              COALESCE(SUM(e.amount), 0) AS total,
-              COUNT(*)::int AS count
-       FROM expenses e
-       WHERE ${conditions.slice(0, 1).join(" AND ")}
-       ${filters.dateFrom ? `AND e.expense_date >= $${2}` : ""}
-       ${filters.dateTo ? `AND e.expense_date <= $${filters.dateFrom ? 3 : 2}` : ""}
-       ${filters.category ? `AND e.category = $${filters.dateFrom ? (filters.dateTo ? 4 : 3) : 2}` : ""}
-       GROUP BY e.category
-       ORDER BY total DESC`,
-      (() => {
-        const v: unknown[] = [businessId];
-        if (filters.dateFrom) v.push(filters.dateFrom);
-        if (filters.dateTo) v.push(filters.dateTo);
-        if (filters.category) v.push(filters.category);
-        return v;
-      })()
-    );
-
-    const monthlyTrendRes = await query(
-      `SELECT
-         TO_CHAR(DATE_TRUNC('month', e.expense_date), 'YYYY-MM') AS period,
-         COALESCE(SUM(e.amount), 0) AS total,
-         COUNT(*)::int AS count
-       FROM expenses e
-       WHERE ${conditions.slice(0, 1).join(" AND ")}
-       ${filters.dateFrom ? `AND e.expense_date >= $${2}` : ""}
-       ${filters.dateTo ? `AND e.expense_date <= $${filters.dateFrom ? 3 : 2}` : ""}
-       GROUP BY DATE_TRUNC('month', e.expense_date)
-       ORDER BY period ASC`,
-      (() => {
-        const v: unknown[] = [businessId];
-        if (filters.dateFrom) v.push(filters.dateFrom);
-        if (filters.dateTo) v.push(filters.dateTo);
-        return v;
-      })()
-    );
-
-    const summaryRow = summaryRes.rows[0];
-
-    const grandTotal = Number(summaryRow.total_amount ?? 0);
-    const categoryBreakdown = categoryRes.rows.map((r) => ({
-      category: r.category,
-      total: String(r.total ?? "0"),
-      count: Number(r.count ?? 0),
-      percentage: grandTotal > 0 ? Number(((Number(r.total ?? 0) / grandTotal) * 100).toFixed(1)) : 0,
-    }));
-
-    const expenses: ExpenseReportItem[] = dataRes.rows.map((r) => ({
-      id: r.id,
-      description: r.description,
-      amount: String(r.amount ?? "0"),
-      tax_amount: String(r.tax_amount ?? "0"),
-      currency: r.currency,
-      category: r.category,
-      expense_date: r.expense_date ? new Date(r.expense_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-      payment_method: r.payment_method,
-      vendor: r.vendor,
-      is_billable: Boolean(r.is_billable),
-      is_reimbursable: Boolean(r.is_reimbursable),
-      is_reimbursed: Boolean(r.is_reimbursed),
-      customer_name: r.customer_name,
-      project_name: r.project_name,
-      invoice_number: r.invoice_number,
-    }));
-
-    const result = {
-      summary: {
-        totalExpenses: Number(countRes.rows[0]?.total ?? 0),
-        totalAmount: String(summaryRow.total_amount ?? "0"),
-        billableAmount: String(summaryRow.billable_amount ?? "0"),
-        reimbursableAmount: String(summaryRow.reimbursable_amount ?? "0"),
-        reimbursedAmount: String(summaryRow.reimbursed_amount ?? "0"),
-        nonReimbursedBillable: String(summaryRow.non_reimbursed_billable ?? "0"),
-        currency: summaryRow.currency ?? "USD",
-        categoryBreakdown,
-        monthlyTrend: monthlyTrendRes.rows.map((r) => ({
-          period: r.period,
-          amount: String(r.total ?? "0"),
-          count: Number(r.count ?? 0),
-        })),
-      } as ExpenseReportSummary,
-      expenses,
-    };
-
-    reportsCache.set(cacheKey, result);
-    return result;
-  }
-
   async getClientsReport(
     businessId: string,
     filters: ReportFilters = {}
@@ -1190,7 +960,7 @@ export class ReportsService {
     const dateFrom = filters.dateFrom ?? new Date(new Date().getFullYear(), new Date().getMonth() - 11, 1).toISOString();
     const dateTo = filters.dateTo ?? new Date().toISOString();
 
-    const [revenue, expenses, currencyRow] = await Promise.all([
+    const [revenue, currencyRow] = await Promise.all([
       query(
         `SELECT
            TO_CHAR(DATE_TRUNC('month', i.created_at), 'YYYY-MM') AS period,
@@ -1203,23 +973,9 @@ export class ReportsService {
         [businessId, dateFrom, dateTo]
       ),
       query(
-        `SELECT
-           e.category,
-           COUNT(*)::int AS count,
-           COALESCE(SUM(e.amount), 0) AS amount,
-           TO_CHAR(DATE_TRUNC('month', e.expense_date), 'YYYY-MM') AS period
-         FROM expenses e
-         WHERE e.business_id = $1 AND e.expense_date >= $2 AND e.expense_date <= $3
-         GROUP BY e.category, DATE_TRUNC('month', e.expense_date)
-         ORDER BY period ASC`,
-        [businessId, dateFrom, dateTo]
-      ),
-      query(
         `SELECT COALESCE(MAX(currency), 'USD') AS currency
          FROM (
            (SELECT currency FROM invoices WHERE business_id = $1 LIMIT 1)
-           UNION
-           (SELECT currency FROM expenses WHERE business_id = $1 LIMIT 1)
          ) c`,
         [businessId]
       ),
@@ -1228,24 +984,6 @@ export class ReportsService {
     const currency = currencyRow.rows[0]?.currency ?? "USD";
 
     const revenueTotal = revenue.rows.reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0);
-    const expenseTotal = expenses.rows.reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0);
-
-    const expenseByCategoryMap = new Map<string, { total: string; count: number }>();
-    const expenseByMonthMap = new Map<string, { amount: string; count: number }>();
-
-    expenses.rows.forEach((r: any) => {
-      const catKey = r.category;
-      const cat = expenseByCategoryMap.get(catKey) ?? { total: "0", count: 0 };
-      cat.total = new Decimal(cat.total).plus(new Decimal(r.amount ?? "0")).toFixed(2);
-      cat.count += Number(r.count ?? 0);
-      expenseByCategoryMap.set(catKey, cat);
-
-      const monthKey = r.period;
-      const month = expenseByMonthMap.get(monthKey) ?? { amount: "0", count: 0 };
-      month.amount = new Decimal(month.amount).plus(new Decimal(r.amount ?? "0")).toFixed(2);
-      month.count += Number(r.count ?? 0);
-      expenseByMonthMap.set(monthKey, month);
-    });
 
     const result: ProfitLossReport = {
       periodStart: dateFrom,
@@ -1260,22 +998,8 @@ export class ReportsService {
           count: Number(r.count ?? 0),
         })),
       },
-      expenses: {
-        total: new Decimal(expenseTotal).toFixed(2),
-        count: expenses.rows.reduce((sum: number, r: any) => sum + Number(r.count ?? 0), 0),
-        byCategory: Array.from(expenseByCategoryMap.entries()).map(([category, data]) => ({
-          category,
-          total: data.total,
-          count: data.count,
-        })).sort((a, b) => Number(b.total) - Number(a.total)),
-        byMonth: Array.from(expenseByMonthMap.entries()).map(([period, data]) => ({
-          period,
-          amount: data.amount,
-          count: data.count,
-        })).sort((a, b) => a.period.localeCompare(b.period)),
-      },
-      netIncome: new Decimal(revenueTotal).minus(expenseTotal).toFixed(2),
-      grossMargin: revenueTotal > 0 ? Number(((revenueTotal - expenseTotal) / revenueTotal * 100).toFixed(1)) : 0,
+      netIncome: new Decimal(revenueTotal).toFixed(2),
+      grossMargin: revenueTotal > 0 ? 100 : 0,
     };
 
     reportsCache.set(cacheKey, result);

@@ -3,10 +3,8 @@ import { Decimal } from "decimal.js";
 import {
   DollarSign,
   TrendingUp,
-  Clock,
   FileText,
   AlertCircle,
-  ShoppingCart,
 } from "lucide-react";
 import { KPICard } from "@/components/ui";
 import type { ApiDashboardSummary, ApiPaymentMetrics } from "@/types/api";
@@ -48,11 +46,11 @@ export default function ReportKPICards({
 
   const netIncome = useMemo(() => {
     if (!summary) return "0";
-    return new Decimal(summary.totalRevenue ?? 0).minus(new Decimal(summary.expenses ?? 0)).toFixed(2);
+    return new Decimal(summary.totalRevenue ?? 0).toFixed(2);
   }, [summary]);
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
       <KPICard
         title="Total Revenue"
         value={summary?.totalRevenue ?? "0"}
@@ -88,18 +86,10 @@ export default function ReportKPICards({
         iconBackground="bg-error-bg text-error-text"
       />
       <KPICard
-        title="Expenses"
-        value={summary?.expenses ?? "0"}
-        currency={summary?.currency ?? "USD"}
-        subtitle="Total business spend"
-        icon={<ShoppingCart className="w-5 h-5" />}
-        iconBackground="bg-tertiary-bg text-tertiary-text"
-      />
-      <KPICard
         title="Net Income"
         value={netIncome}
         currency={summary?.currency ?? "USD"}
-        subtitle="Revenue minus expenses"
+        subtitle="Total revenue earned"
         icon={<TrendingUp className="w-5 h-5" />}
         iconBackground={
           summary && new Decimal(netIncome).gte(0)

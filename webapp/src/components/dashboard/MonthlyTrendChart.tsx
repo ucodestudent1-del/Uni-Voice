@@ -185,7 +185,7 @@ export default function MonthlyTrendChart({
           </ResponsiveContainer>
         </div>
       ) : (
-        <EmptyState title="No expense data" description="Expense chart will appear after you add expenses" icon={<BarChart3 className="h-10 w-10" />} className="h-64" />
+        <EmptyState title="No revenue data" description="Revenue trend will appear once you have issued invoices" icon={<BarChart3 className="h-10 w-10" />} className="h-64" />
       )}
     </div>
   );

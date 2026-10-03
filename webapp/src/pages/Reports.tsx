@@ -7,7 +7,6 @@ import {
   getRevenueReport,
   getInvoicesReport,
   getPaymentsReport,
-  getExpensesReport,
   getClientsReport,
   getTaxSummaryReport,
    getProfitLossReport,
@@ -22,7 +21,6 @@ import {
   RevenueReport,
   InvoicesReport,
   PaymentsReport,
-  ExpensesReport,
   ClientsReport,
   TaxSummaryReport,
   ProfitLossReport,
@@ -31,14 +29,13 @@ import MonthlyTrendChart from "@/components/dashboard/MonthlyTrendChart";
 import EmptyState from "@/components/ui/EmptyState";
 import { Download } from "lucide-react";
 
-type ReportTab = "dashboard" | "revenue" | "invoices" | "payments" | "expenses" | "clients" | "tax" | "profit-loss";
+type ReportTab = "dashboard" | "revenue" | "invoices" | "payments" | "clients" | "tax" | "profit-loss";
 
 const REPORT_TABS: Array<{ id: ReportTab; label: string; icon?: React.ReactNode }> = [
   { id: "dashboard", label: "Dashboard" },
   { id: "revenue", label: "Revenue" },
   { id: "invoices", label: "Invoices" },
   { id: "payments", label: "Payments" },
-  { id: "expenses", label: "Expenses" },
   { id: "clients", label: "Clients" },
   { id: "tax", label: "Tax Summary" },
   { id: "profit-loss", label: "Profit & Loss" },
@@ -49,7 +46,6 @@ const TAB_FILTERS: Record<ReportTab, { showDateRange: boolean; showCustomer: boo
   revenue: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: false, presets: true },
   invoices: { showDateRange: true, showCustomer: false, showProject: false, showStatus: true, showCategory: false, showProvider: false, showSearch: true, presets: true },
   payments: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: true, showSearch: true, presets: true },
-  expenses: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: true, showProvider: false, showSearch: true, presets: true },
   clients: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: true, presets: true },
   tax: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: false, presets: true },
   "profit-loss": { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: false, presets: true },
@@ -69,7 +65,6 @@ export default function Reports() {
   const [revenueData, setRevenueData] = useState<any>(null);
   const [invoicesData, setInvoicesData] = useState<any>(null);
   const [paymentsData, setPaymentsData] = useState<any>(null);
-  const [expensesData, setExpensesData] = useState<any>(null);
   const [clientsData, setClientsData] = useState<any>(null);
   const [taxData, setTaxData] = useState<any>(null);
   const [profitLossData, setProfitLossData] = useState<any>(null);
@@ -177,23 +172,6 @@ export default function Reports() {
     }
   }, [filters]);
 
-  const loadExpenses = useCallback(async () => {
-    setLoading("expenses", true);
-    try {
-      const data = await getExpensesReport(filters);
-      setExpensesData(data);
-      setError(null);
-    } catch (err: any) {
-      if (err.response?.status === 403) {
-        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
-      } else {
-        setError(err.message || "Failed to load expenses report");
-      }
-    } finally {
-      setLoading("expenses", false);
-    }
-  }, [filters]);
-
   const loadClients = useCallback(async () => {
     setLoading("clients", true);
     try {
@@ -268,9 +246,6 @@ export default function Reports() {
       case "payments":
         loadPayments();
         break;
-      case "expenses":
-        loadExpenses();
-        break;
       case "clients":
         loadClients();
         break;
@@ -281,7 +256,7 @@ export default function Reports() {
         loadProfitLoss();
         break;
     }
-  }, [activeTab, filters, loadRevenue, loadInvoices, loadPayments, loadExpenses, loadClients, loadTax, loadProfitLoss]);
+  }, [activeTab, filters, loadRevenue, loadInvoices, loadPayments, loadClients, loadTax, loadProfitLoss]);
 
   const handleTabChange = (tab: ReportTab) => {
     setActiveTab(tab);
@@ -296,7 +271,6 @@ export default function Reports() {
     setRevenueData(null);
     setInvoicesData(null);
     setPaymentsData(null);
-    setExpensesData(null);
     setClientsData(null);
     setTaxData(null);
     setProfitLossData(null);
@@ -343,15 +317,6 @@ export default function Reports() {
             loading={isLoading("payments")}
             currency={currency}
             onExport={() => handleExport("payments")}
-          />
-        );
-      case "expenses":
-        return (
-          <ExpensesReport
-            data={expensesData}
-            loading={isLoading("expenses")}
-            currency={currency}
-            onExport={() => handleExport("expenses")}
           />
         );
       case "clients":

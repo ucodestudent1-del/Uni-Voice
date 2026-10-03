@@ -13,13 +13,6 @@ import type {
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
-  ApiExpense,
-  ApiExpenseSummary,
-  ExpenseSearchParams,
-  ExpenseCategory,
-  ApiExpenseCategoryBreakdown,
-  ApiExpenseMonthlyTrend,
-  ApiExpenseBudgetSettings,
   ApiPaymentWithInvoice,
   ApiPaymentSummary,
   ApiPaymentDetail,
@@ -29,7 +22,6 @@ import type {
   ApiRevenueReport,
   ApiInvoicesReport,
   ApiPaymentsReport,
-  ApiExpensesReport,
   ApiClientsReport,
   ApiTaxSummaryReport,
   ApiProfitLossReport,
@@ -47,13 +39,6 @@ export type {
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
-  ApiExpense,
-  ApiExpenseSummary,
-  ExpenseSearchParams,
-  ExpenseCategory,
-  ApiExpenseCategoryBreakdown,
-  ApiExpenseMonthlyTrend,
-  ApiExpenseBudgetSettings,
   ApiPaymentWithInvoice,
   ApiPaymentSummary,
   ApiPaymentDetail,
@@ -63,7 +48,6 @@ export type {
   ApiRevenueReport,
   ApiInvoicesReport,
   ApiPaymentsReport,
-  ApiExpensesReport,
   ApiClientsReport,
   ApiTaxSummaryReport,
   ApiProfitLossReport,
@@ -1275,242 +1259,6 @@ export async function exportInvoicesJson() {
 }
 
 // ============================================================================
-// EXPENSE TRACKING (Business plan)
-// ============================================================================
-
-export async function getExpenses(params?: {
-  limit?: number;
-  offset?: number;
-  customerId?: string;
-  projectId?: string;
-  category?: string;
-  isBillable?: boolean;
-  isReimbursable?: boolean;
-  isReimbursed?: boolean;
-  dateFrom?: string;
-  dateTo?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  search?: string;
-  vendor?: string;
-  paymentMethod?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number }> {
-  const res = await api.get("/expenses", { params });
-  return res.data;
-}
-
-export async function getExpense(id: string): Promise<{ expense: ApiExpense }> {
-  const res = await api.get(`/expenses/${id}`);
-  return res.data;
-}
-
-export interface ExpenseCreatePayload {
-  customerId?: string | null;
-  projectId?: string | null;
-  description: string;
-  amount: string | number;
-  taxAmount?: string | number;
-  currency?: string;
-  category?: string;
-  expenseDate?: string | Date;
-  paymentMethod?: string;
-  vendor?: string | null;
-  receiptUrl?: string | null;
-  notes?: string | null;
-  isBillable?: boolean;
-  isReimbursable?: boolean;
-}
-
-export interface ExpenseUpdatePayload {
-  customerId?: string | null;
-  projectId?: string | null;
-  invoiceId?: string | null;
-  description?: string;
-  amount?: string | number;
-  taxAmount?: string | number;
-  currency?: string;
-  category?: string;
-  expenseDate?: string | Date;
-  paymentMethod?: string;
-  vendor?: string | null;
-  receiptUrl?: string | null;
-  notes?: string | null;
-  isBillable?: boolean;
-  isReimbursable?: boolean;
-  isReimbursed?: boolean;
-}
-
-export async function createExpense(data: ExpenseCreatePayload): Promise<{ expense: ApiExpense }> {
-  const res = await api.post("/expenses", data);
-  return res.data;
-}
-
-export async function updateExpense(id: string, data: ExpenseUpdatePayload): Promise<{ expense: ApiExpense }> {
-  const res = await api.patch(`/expenses/${id}`, data);
-  return res.data;
-}
-
-export async function deleteExpense(id: string): Promise<void> {
-  const res = await api.delete(`/expenses/${id}`);
-  return res.data;
-}
-
-export async function getExpenseSummary(params?: {
-  limit?: number;
-  offset?: number;
-  customerId?: string;
-  projectId?: string;
-  category?: string;
-  isBillable?: boolean;
-  isReimbursable?: boolean;
-  isReimbursed?: boolean;
-  dateFrom?: string;
-  dateTo?: string;
-  vendor?: string;
-  paymentMethod?: string;
-}): Promise<{ summary: ApiExpenseSummary }> {
-  const res = await api.get("/expenses/summary", { params });
-  return res.data;
-}
-
-export function buildExpenseSearchParams(params: ExpenseSearchParams): Record<string, any> {
-  const result: Record<string, any> = {};
-  if (params.limit !== undefined) result.limit = params.limit;
-  if (params.offset !== undefined) result.offset = params.offset;
-  if (params.customerId !== undefined) result.customerId = params.customerId;
-  if (params.projectId !== undefined) result.projectId = params.projectId;
-  if (params.category !== undefined) result.category = params.category;
-  if (params.isBillable !== undefined) result.isBillable = params.isBillable;
-  if (params.isReimbursable !== undefined) result.isReimbursable = params.isReimbursable;
-  if (params.isReimbursed !== undefined) result.isReimbursed = params.isReimbursed;
-  if (params.dateFrom !== undefined) result.dateFrom = params.dateFrom;
-  if (params.dateTo !== undefined) result.dateTo = params.dateTo;
-  if (params.minAmount !== undefined) result.minAmount = params.minAmount;
-  if (params.maxAmount !== undefined) result.maxAmount = params.maxAmount;
-  if (params.search !== undefined) result.search = params.search;
-  if (params.vendor !== undefined) result.vendor = params.vendor;
-  if (params.paymentMethod !== undefined) result.paymentMethod = params.paymentMethod;
-  if (params.customerName !== undefined) result.customerName = params.customerName;
-  if (params.projectName !== undefined) result.projectName = params.projectName;
-  if (params.sortBy !== undefined) result.sortBy = params.sortBy;
-  if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
-  return result;
-}
-
-export async function getExpensesWithSummary(params?: {
-  limit?: number;
-  offset?: number;
-  customerId?: string;
-  projectId?: string;
-  category?: string;
-  isBillable?: boolean;
-  isReimbursable?: boolean;
-  isReimbursed?: boolean;
-  dateFrom?: string;
-  dateTo?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  search?: string;
-  vendor?: string;
-  paymentMethod?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}): Promise<{ expenses: ApiExpense[]; total: number; limit: number; offset: number; summary: ApiExpenseSummary }> {
-  const res = await api.get("/expenses/with-summary", { params });
-  return res.data;
-}
-
-export async function getExpenseCategoryBreakdown(params?: {
-  dateFrom?: string;
-  dateTo?: string;
-}): Promise<{ breakdown: ApiExpenseCategoryBreakdown[] }> {
-  const res = await api.get("/expenses/category-breakdown", { params });
-  return res.data;
-}
-
-export async function getExpenseMonthlyTrend(params?: {
-  months?: number;
-  dateFrom?: string;
-  dateTo?: string;
-}): Promise<{ trend: ApiExpenseMonthlyTrend[] }> {
-  const res = await api.get("/expenses/monthly-trend", { params });
-  return res.data;
-}
-
-export async function getExpenseBudgetSettings(): Promise<{ budget: ApiExpenseBudgetSettings | null }> {
-  const res = await api.get("/businesses/current/expense-settings");
-  return res.data;
-}
-
-export async function updateExpenseBudgetSettings(data: Partial<ApiExpenseBudgetSettings>): Promise<{ budget: ApiExpenseBudgetSettings }> {
-  const res = await api.patch("/businesses/current/expense-settings", data);
-  return res.data;
-}
-
-export async function assignExpenseToInvoice(expenseId: string, invoiceId: string | null): Promise<{ expense: ApiExpense }> {
-  const res = await api.patch(`/expenses/${expenseId}/assign-invoice`, { invoiceId });
-  return res.data;
-}
-
-export async function getExpenseInvoiceOptions(): Promise<{ invoices: Array<{ id: string; invoice_number: string; customer_name?: string | null; total: string; status: string }> }> {
-  const res = await api.get("/expenses/invoice-options");
-  return res.data;
-}
-
-export interface ApiExpenseCustomCategory {
-  id: string;
-  name: string;
-  color: string;
-  icon?: string | null;
-  is_active: boolean;
-  sort_order: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export async function getExpenseCustomCategories(): Promise<{ categories: ApiExpenseCustomCategory[] }> {
-  const res = await api.get("/expenses/categories/custom");
-  return res.data;
-}
-
-export async function createExpenseCustomCategory(data: {
-  name: string;
-  color?: string;
-  icon?: string | null;
-}): Promise<{ category: ApiExpenseCustomCategory }> {
-  const res = await api.post("/expenses/categories/custom", data);
-  return res.data;
-}
-
-export async function updateExpenseCustomCategory(
-  id: string,
-  data: {
-    name?: string;
-    color?: string;
-    icon?: string | null;
-    is_active?: boolean;
-  }
-): Promise<{ category: ApiExpenseCustomCategory }> {
-  const res = await api.patch(`/expenses/categories/custom/${id}`, data);
-  return res.data;
-}
-
-export async function deleteExpenseCustomCategory(id: string): Promise<void> {
-  await api.delete(`/expenses/categories/custom/${id}`);
-}
-
-export async function uploadExpenseReceipt(expenseId: string, file: File): Promise<{ receipts: Array<{ id: string; file_name: string; file_path: string; file_size: number; mime_type: string | null; created_at: string }> }> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await api.post(`/expenses/${expenseId}/receipts`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-  return res.data;
-}
-
-// ============================================================================
 // RECEIPTS
 // ============================================================================
 
@@ -1855,7 +1603,7 @@ export async function getStripeConfigTyped(): Promise<StripeConfig> {
 }
 
 // ============================================================================
-// ENHANCED REPORTS — dashboard, revenue, invoices, payments, expenses,
+// ENHANCED REPORTS — dashboard, revenue, invoices, payments,
 // clients, tax summary, profit & loss, aging
 // ============================================================================
 
@@ -1876,11 +1624,6 @@ export async function getInvoicesReport(params?: ReportFiltersParams): Promise<A
 
 export async function getPaymentsReport(params?: ReportFiltersParams): Promise<ApiPaymentsReport> {
   const res = await api.get("/reports/payments", { params: buildReportParams(params) });
-  return res.data;
-}
-
-export async function getExpensesReport(params?: ReportFiltersParams): Promise<ApiExpensesReport> {
-  const res = await api.get("/reports/expenses", { params: buildReportParams(params) });
   return res.data;
 }
 

@@ -1,29 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import ExpensesReport from "../components/reports/ExpensesReport";
 import InvoicesReport from "../components/reports/InvoicesReport";
 import PaymentsReport from "../components/reports/PaymentsReport";
-import type { ApiExpensesReport, ApiInvoicesReport, ApiPaymentsReport } from "@/types/api";
-
-const mockExpensesReport: ApiExpensesReport = {
-  expenses: [],
-  summary: {
-    total_amount: "1500.00",
-    total_expenses: 12,
-    billable_amount: "500.00",
-    reimbursable_amount: "420.00",
-    reimbursed_amount: "300.00",
-    non_reimbursed_billable: "200.00",
-    currency: "USD",
-    category_breakdown: [
-      { category: "supplies", total: "800.00", count: 5, percentage: 53.3 },
-      { category: "software", total: "700.00", count: 7, percentage: 46.7 },
-    ],
-    monthly_trend: [
-      { period: "2026-09", amount: "1500.00", count: 12 },
-    ],
-  },
-};
+import type { ApiInvoicesReport, ApiPaymentsReport } from "@/types/api";
 
 const mockInvoicesReport: ApiInvoicesReport = {
   invoices: [],
@@ -69,69 +48,6 @@ const mockPaymentsReport: ApiPaymentsReport = {
     ],
   },
 };
-
-describe("ExpensesReport", () => {
-  it("renders KPI cards with correct values", () => {
-    render(
-      <ExpensesReport
-        data={mockExpensesReport}
-        loading={false}
-        currency="USD"
-        onExport={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText("Total Expenses")).toBeInTheDocument();
-    expect(screen.getAllByText("$1,500.00").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Billable").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("$500.00").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Reimbursable").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("$420.00").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Non-Reimbursed Billable").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("$200.00").length).toBeGreaterThan(0);
-  });
-
-  it("renders empty state when data is null", () => {
-    render(
-      <ExpensesReport
-        data={null}
-        loading={false}
-        currency="USD"
-        onExport={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText("No expense data available")).toBeInTheDocument();
-  });
-
-  it("shows loading placeholders when loading", () => {
-    const { container } = render(
-      <ExpensesReport
-        data={null}
-        loading={true}
-        currency="USD"
-        onExport={vi.fn()}
-      />
-    );
-
-    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
-  });
-
-  it("calls onExport when export button is clicked", async () => {
-    const onExport = vi.fn();
-    render(
-      <ExpensesReport
-        data={mockExpensesReport}
-        loading={false}
-        currency="USD"
-        onExport={onExport}
-      />
-    );
-
-    await fireEvent.click(screen.getByText("Export CSV"));
-    expect(onExport).toHaveBeenCalledTimes(1);
-  });
-});
 
 describe("InvoicesReport", () => {
   it("renders KPI cards with summary values", () => {

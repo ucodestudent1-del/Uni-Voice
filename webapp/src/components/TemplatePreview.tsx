@@ -61,7 +61,6 @@ const SAMPLE_CUSTOM_FIELDS: Record<string, string> = {
   court_costs: "350.00",
   retainer_balance: "2000.00",
   retainer: "2000.00",
-  expenses: "450.00",
   milestone: "Design",
   case_number: "CV-2024-1234",
   project: "Website Redesign",

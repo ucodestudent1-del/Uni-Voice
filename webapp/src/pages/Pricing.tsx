@@ -22,7 +22,6 @@ const PLAN_FEATURES: PlanFeature[] = [
   { label: "Online payment collection", free: false, pro: true, footnote: "Stripe & other providers." },
   { label: "Recurring invoices", free: false, pro: true },
   { label: "Payment reminders & auto-followups", free: false, pro: true },
-  { label: "Expense tracking", free: false, pro: true },
   { label: "Time tracking", free: false, pro: true },
   { label: "Project management", free: false, pro: true },
   { label: "Custom branding (logo, colors)", free: false, pro: true },
@@ -39,7 +38,7 @@ const TIER_COPY: Record<TierKey, { tagline: string; description: string }> = {
   pro: {
     tagline: "All features. Billed monthly.",
     description:
-      "Full automation, expense tracking, multi-currency, and everything in Free — plus advanced project management, quotes, and financial reporting.",
+      "Full automation, multi-currency, and everything in Free — plus advanced project management, quotes, and financial reporting.",
   },
 };
 

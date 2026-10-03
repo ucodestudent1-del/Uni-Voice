@@ -3,7 +3,6 @@ import { Calendar, Filter, Search, X, Users, Tag, LayoutGrid } from "lucide-reac
 import { Button } from "@/components/ui/Button";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import type { ReportFiltersParams } from "@/types/api";
-import { EXPENSE_CATEGORY_OPTIONS } from "@/components/expenses/ExpenseCategoryBadge";
 
 export type ReportFilterPreset = "custom" | "last_7" | "last_30" | "last_quarter" | "ytd" | "last_12";
 
@@ -120,11 +119,6 @@ export default function ReportFilters({
     onChange({ ...filters, status: val || undefined, offset: 0 });
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    onChange({ ...filters, category: val || undefined, offset: 0 });
-  };
-
   const handleReset = () => {
     onReset();
   };
@@ -135,7 +129,6 @@ export default function ReportFilters({
     !!filters.customerId ||
     !!filters.projectId ||
     !!filters.status ||
-    !!filters.category ||
     !!filters.provider ||
     !!filters.search;
 
@@ -238,24 +231,6 @@ export default function ReportFilters({
               >
                 <option value="">All statuses</option>
                 {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {availableFilters.showCategory && (
-            <div className="space-y-1.5">
-              <label className="form-label-secondary">Category</label>
-              <select
-                value={filters.category ?? ""}
-                onChange={handleCategoryChange}
-                className="form-select"
-              >
-                <option value="">All categories</option>
-                {EXPENSE_CATEGORY_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>

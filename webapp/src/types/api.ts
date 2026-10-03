@@ -515,7 +515,6 @@ export interface ApiDashboardSummary {
   totalOutstanding: string;
   totalOverdue: string;
   paymentsReceived: string;
-  expenses: string;
   netIncome: string;
   totalPaidThisMonth: string;
   draftCount: number;
@@ -889,104 +888,6 @@ export interface ApiProjectNote {
   updated_at: string;
 }
 
-export type ExpenseCategory =
-  | "supplies"
-  | "software"
-  | "meals"
-  | "travel"
-  | "office"
-  | "marketing"
-  | "utilities"
-  | "professional_fees"
-  | "taxes"
-  | "insurance"
-  | "equipment"
-  | "other";
-
-export interface ApiExpense {
-  id: string;
-  business_id: string;
-  user_id?: string | null;
-  customer_id?: string | null;
-  project_id?: string | null;
-  invoice_id?: string | null;
-  description: string;
-  amount: string;
-  tax_amount: string;
-  currency: string;
-  category: ExpenseCategory;
-  expense_date: string;
-  payment_method: string;
-  vendor?: string | null;
-  receipt_url?: string | null;
-  notes?: string | null;
-  is_billable: boolean;
-  is_reimbursable: boolean;
-  is_reimbursed: boolean;
-  created_at: string;
-  updated_at: string;
-  customer_name?: string | null;
-  project_name?: string | null;
-  invoice_number?: string | null;
-  invoice_status?: string | null;
-}
-
-export interface ApiExpenseSummary {
-  total_amount: string;
-  billable_amount: string;
-  reimbursable_amount: string;
-  reimbursed_amount: string;
-  non_reimbursed_billable: string;
-  count: number;
-  currency: string;
-  period_start?: string | null;
-  period_end?: string | null;
-}
-
-export interface ExpenseSearchParams {
-  limit?: number;
-  offset?: number;
-  customerId?: string;
-  projectId?: string;
-  category?: string;
-  isBillable?: boolean;
-  isReimbursable?: boolean;
-  isReimbursed?: boolean;
-  dateFrom?: string;
-  dateTo?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  search?: string;
-  vendor?: string;
-  paymentMethod?: string;
-  customerName?: string;
-  projectName?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}
-
-export interface ApiExpenseCategoryBreakdown {
-  category: ExpenseCategory;
-  total: string;
-  count: number;
-  percentage: number;
-}
-
-export interface ApiExpenseMonthlyTrend {
-  period: string;
-  amount: string;
-  count: number;
-}
-
-export interface ApiExpenseBudgetSettings {
-  monthly_budget: string;
-  monthly_budget_currency: string;
-  budget_period: "calendar_month" | "rolling_30";
-  budget_notifications: boolean;
-  budget_warning_threshold: number;
-  budget_over_threshold: number;
-}
-
 // ============================================================================
 // REPORTS
 // ============================================================================
@@ -1107,41 +1008,6 @@ export interface ApiPaymentsReport {
   payments: ApiPaymentReportItem[];
 }
 
-export interface ApiExpenseReportItem {
-  id: string;
-  description: string;
-  amount: string;
-  tax_amount: string;
-  currency: string;
-  category: string;
-  expense_date: string;
-  payment_method: string;
-  vendor: string | null;
-  is_billable: boolean;
-  is_reimbursable: boolean;
-  is_reimbursed: boolean;
-  customer_name?: string | null;
-  project_name?: string | null;
-  invoice_number?: string | null;
-}
-
-export interface ApiExpenseReportSummary {
-  total_expenses: number;
-  total_amount: string;
-  billable_amount: string;
-  reimbursable_amount: string;
-  reimbursed_amount: string;
-  non_reimbursed_billable: string;
-  currency: string;
-  category_breakdown: Array<{ category: string; total: string; count: number; percentage: number }>;
-  monthly_trend: Array<{ period: string; amount: string; count: number }>;
-}
-
-export interface ApiExpensesReport {
-  summary: ApiExpenseReportSummary;
-  expenses: ApiExpenseReportItem[];
-}
-
 export interface ApiClientReportItem {
   id: string;
   name: string;
@@ -1207,12 +1073,6 @@ export interface ApiProfitLossReport {
   revenue: {
     total: string;
     count: number;
-    byMonth: Array<{ period: string; amount: string; count: number }>;
-  };
-  expenses: {
-    total: string;
-    count: number;
-    byCategory: Array<{ category: string; total: string; count: number }>;
     byMonth: Array<{ period: string; amount: string; count: number }>;
   };
   netIncome: string;

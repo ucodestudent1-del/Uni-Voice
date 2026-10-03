@@ -1070,7 +1070,7 @@ Industry presets already encode service-type-specific layouts:
 |---|---|---|---|---|
 | Professional services | `professional` | Description, Qty, Rate, Amount | (none) | "Net 30" |
 | Construction | `construction` | Description, Hours, Rate, Amount | (none) | "Net 30" |
-| Consulting | `consulting` | Description, Hours, Rate, Amount | Expense reimbursement note | "Net 15" |
+| Consulting | `consulting` | Description, Hours, Rate, Amount | (none) | "Net 15" |
 | Photography | `photography` | Package, Usage Rights, Qty, Price, Total | Copyright retention | License expiry terms |
 | Freelancing | `freelancing` | Task, Hours, Rate, Total | Thank you message | "Net 30" |
 | Legal services | `legal` | Description, Time, Rate, Total | (none) | Privilege disclaimer |

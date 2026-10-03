@@ -7,14 +7,14 @@ describe("KPICard", () => {
   it("renders title and formatted value", () => {
     render(
       <KPICard
-        title="Total Expenses"
+        title="Total Revenue"
         value="1234.56"
         currency="USD"
         icon={<DollarSign className="w-5 h-5" />}
         iconBackground="status-info-bg status-info-text"
       />
     );
-    expect(screen.getByText("Total Expenses")).toBeInTheDocument();
+    expect(screen.getByText("Total Revenue")).toBeInTheDocument();
     expect(screen.getByText("$1,234.56")).toBeInTheDocument();
   });
 
@@ -140,7 +140,7 @@ describe("KPICard", () => {
     const onClick = vi.fn();
     render(
       <KPICard
-        title="Total Expenses"
+        title="Total Revenue"
         value="1234.56"
         currency="USD"
         icon={<DollarSign className="w-5 h-5" />}
@@ -149,7 +149,7 @@ describe("KPICard", () => {
         onClick={onClick}
       />
     );
-    const card = screen.getByText("Total Expenses").closest(".cursor-pointer");
+    const card = screen.getByText("Total Revenue").closest(".cursor-pointer");
     fireEvent.click(card!);
     expect(onClick).toHaveBeenCalledTimes(1);
   });

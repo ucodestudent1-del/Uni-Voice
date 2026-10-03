@@ -88,15 +88,6 @@ describe("Reports endpoints (integration)", () => {
     expect(res.body.summary).toHaveProperty("methodBreakdown");
   }, 60000);
 
-  it("GET /api/reports/expenses returns category and monthly breakdowns", async () => {
-    const res = await agent.get("/api/reports/expenses").set(headers);
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("expenses");
-    expect(res.body).toHaveProperty("summary");
-    expect(res.body.summary).toHaveProperty("totalAmount");
-    expect(res.body.summary).toHaveProperty("categoryBreakdown");
-  }, 60000);
-
   it("GET /api/reports/clients returns client metrics", async () => {
     const customerId = await createTestCustomer(businessId, "Client Report Customer");
     const invoiceId = await invoiceService.createDraft(
@@ -143,11 +134,10 @@ describe("Reports endpoints (integration)", () => {
     expect(res.body.byRate[0]).toHaveProperty("tax_collected");
   }, 60000);
 
-  it("GET /api/reports/profit-loss returns income and expense data", async () => {
+  it("GET /api/reports/profit-loss returns revenue and net income data", async () => {
     const res = await agent.get("/api/reports/profit-loss").set(headers);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("revenue");
-    expect(res.body).toHaveProperty("expenses");
     expect(res.body).toHaveProperty("netIncome");
   }, 60000);
 
@@ -188,12 +178,12 @@ describe("Reports endpoints (integration)", () => {
     expect(res.headers["content-type"]).toContain("text/csv");
   }, 60000);
 
-  it("Returns 403 for users without reports.expenses entitlement", async () => {
+  it("Returns 403 for users without reports.revenue entitlement", async () => {
     const freePlan = await subscriptionService.getPlan("free");
     if (!freePlan) throw new Error("free plan not found");
     await subscriptionRepository.updateSubscriptionByBusinessId(businessId, { planId: freePlan.id, status: "active", currentPeriodStart: new Date(), currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) });
 
-    const res = await agent.get("/api/reports/expenses").set(headers);
+    const res = await agent.get("/api/reports/revenue").set(headers);
     expect(res.status).toBe(403);
   }, 60000);
 });

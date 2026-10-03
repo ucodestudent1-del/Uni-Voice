@@ -11,7 +11,6 @@ const PLAN_FEATURES: Record<string, { label: string; available: boolean }[]> = {
     { label: "Basic templates", available: true },
     { label: "Online payments", available: false },
     { label: "Recurring invoices", available: false },
-    { label: "Expense tracking", available: false },
   ],
   pro: [
     { label: "Unlimited invoices", available: true },
@@ -19,7 +18,6 @@ const PLAN_FEATURES: Record<string, { label: string; available: boolean }[]> = {
     { label: "All templates", available: true },
     { label: "Online payments", available: true },
     { label: "Recurring invoices", available: true },
-    { label: "Expense tracking", available: true },
   ],
 };
 

@@ -330,8 +330,6 @@ function consultingInvoice(businessId: string): InvoiceDocument {
   addSpacer(b);
   addTotalsBlock(b, { discount: true, tax: true });
   addSpacer(b);
-  addCustomField(b, b.root, "expenses", "Expense Reimbursement", "0.00", "number");
-  addNotes(b, "Reimbursable expenses are billed separately upon receipt of receipts.", "Notes");
   addPaymentTerms(b, "Net 15");
   addSignature(b);
   return b.build();
@@ -582,7 +580,6 @@ function professionalServicesInvoice(businessId: string): InvoiceDocument {
   addSpacer(b);
   addTotalsBlock(b, { discount: true, tax: true, fees: true });
   addSpacer(b);
-  addNotes(b, "Reimbursable expenses are subject to a 10% markup. Please retain all receipts.", "Notes");
   addPaymentTerms(b, "Upon Receipt");
   addSignature(b);
   return b.build();
@@ -590,7 +587,7 @@ function professionalServicesInvoice(businessId: string): InvoiceDocument {
 
 export const INDUSTRY_PRESETS: PresetTemplate[] = [
   { metadata: { key: "construction", name: "Construction Invoice", description: "Job-site billing with labor and materials sections, deposit, and retention", category: "industry", industry: "construction" },   build: constructionInvoice },
-  { metadata: { key: "consulting", name: "Consulting Invoice", description: "Milestone billing with hours/rate table, retainer, and expense reimbursement", category: "industry", industry: "consulting" },   build: consultingInvoice },
+  { metadata: { key: "consulting", name: "Consulting Invoice", description: "Milestone billing with hours/rate table and retainer", category: "industry", industry: "consulting" },   build: consultingInvoice },
   { metadata: { key: "photography", name: "Photography Invoice", description: "Package-based line items with usage rights notes and delivery date", category: "industry", industry: "photography" },   build: photographyInvoice },
   { metadata: { key: "freelancing", name: "Freelance Invoice", description: "Project-based billing with hours breakdown and platform fee field", category: "industry", industry: "freelancing" },   build: freelancingInvoice },
   { metadata: { key: "legal", name: "Legal Services Invoice", description: "Time entry table with court costs, retainer balance, and case number", category: "industry", industry: "legal" },   build: legalServicesInvoice },
@@ -598,7 +595,7 @@ export const INDUSTRY_PRESETS: PresetTemplate[] = [
   { metadata: { key: "cleaning", name: "Cleaning Invoice", description: "Recurring schedule with frequency field and property access notes", category: "industry", industry: "cleaning" },   build: cleaningInvoice },
   { metadata: { key: "automotive", name: "Automotive Service Invoice", description: "VIN-based service with type dropdown and warranty info", category: "industry", industry: "automotive" },   build: automotiveInvoice },
   { metadata: { key: "retail", name: "Retail Invoice", description: "SKU-based pricing with discount tiers and returns policy", category: "industry", industry: "retail" },   build: retailInvoice },
-  { metadata: { key: "professional-services", name: "Professional Services Invoice", description: "Retainer and milestone billing with expense markup and project code", category: "industry", industry: "professional services" },   build: professionalServicesInvoice },
+  { metadata: { key: "professional-services", name: "Professional Services Invoice", description: "Retainer and milestone billing with project code", category: "industry", industry: "professional services" },   build: professionalServicesInvoice },
 ];
 
 export const ALL_PRESETS: PresetTemplate[] = [BLANK_PRESET, PROFESSIONAL_PRESET, ...INDUSTRY_PRESETS];

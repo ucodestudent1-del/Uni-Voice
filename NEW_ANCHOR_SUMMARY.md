@@ -51,7 +51,7 @@ A full-stack SaaS invoice generator (Express + TypeScript + PostgreSQL backend; 
 - All `requireAuth` routes enforce `req.user.businessId` for tenant isolation. Errors funneled through final async handler.
 
 ### 5. Frontend Layout (`webapp/src/`)
-- `App.tsx` — router: Landing → Login/Register/AuthCallback → OnboardingWizard → (Protected) Dashboard → Invoices (list, editor/:id, public/:id), Customers, Products, Templates, Plans, Settings, Reports, Expenses.
+- `App.tsx` — router: Landing → Login/Register/AuthCallback → OnboardingWizard → (Protected) Dashboard → Invoices (list, editor/:id, public/:id), Customers, Products, Templates, Plans, Settings, Reports.
 - `components/` — UpgradePrompt, Layout, TemplateGallery, Section, PricingTable, icons, FeaturesSection, FaqSection, TwoFactorManager, TemplateSelector, TaxSelector, SubscriptionCard, OnboardingProgress, InvoiceEditor, InvoicePreview, CustomerSelector, FeatureGate.
 - `document-model/` — the structured document engine: `types.ts`, `schemas.ts` (zod), `document-operations.ts`, `converter.ts`, `DocumentPreview.tsx`, `editor/DocumentEditor.tsx`, `editor/ComponentPalette.tsx`, `editor/EditorContext.tsx`, `editor/PropertyInspector.tsx`, `registry/index.ts`, `registry/components.tsx` (1300+ line custom component library).
 - `lib/api.ts` — thin HTTP client wrapper hitting backend `:4000`.

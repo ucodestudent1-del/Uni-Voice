@@ -13,11 +13,9 @@ export function invalidateReportsCache(businessId: string): void {
   invalidateReportCacheByPattern(`revenue-report:${businessId}:*`);
   invalidateReportCacheByPattern(`invoices-report:${businessId}:*`);
   invalidateReportCacheByPattern(`payments-report:${businessId}:*`);
-  invalidateReportCacheByPattern(`expenses-report:${businessId}:*`);
   invalidateReportCacheByPattern(`clients-report:${businessId}:*`);
   invalidateReportCacheByPattern(`tax-summary-report:${businessId}:*`);
   invalidateReportCacheByPattern(`profit-loss:${businessId}:*`);
-  invalidateReportCacheByPattern(`expenses:${businessId}:*`);
 }
 
 export function invalidateReportCacheByPattern(pattern: string): void {

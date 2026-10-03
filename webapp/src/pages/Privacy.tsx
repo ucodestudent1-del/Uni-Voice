@@ -30,7 +30,7 @@ export default function Privacy() {
         </li>
         <li>
           <strong>Content you create:</strong> Invoices, quotes, customers,
-          products, expenses, projects, templates, and related data that you
+          products, projects, templates, and related data that you
           enter or upload.
         </li>
         <li>
