@@ -241,16 +241,19 @@ const [searchTerm, setSearchTerm] = useState("");
     issueDateFrom || issueDateTo || dueDateFrom || dueDateTo;
 
   const getPaymentState = (inv: ApiInvoice): string => {
-    const due = Number(inv.amount_due || 0);
-    const total = Number(inv.total || 0);
-    const paid = Number(inv.amount_paid || 0);
-    const depositDue = Number(inv.deposit_due || 0);
+     if (inv.status === "draft" || inv.status === "void" || inv.status === "cancelled") {
+       return "unpaid";
+     }
+     const due = Number(inv.amount_due || 0);
+     const total = Number(inv.total || 0);
+     const paid = Number(inv.amount_paid || 0);
+     const depositDue = Number(inv.deposit_due || 0);
 
-    if (depositDue > 0) return "deposit_due";
-    if (paid >= total && total > 0) return "paid";
-    if (paid > 0) return "partial";
-    return "unpaid";
-  };
+     if (depositDue > 0) return "deposit_due";
+     if (paid >= total && total > 0) return "paid";
+     if (paid > 0) return "partial";
+     return "unpaid";
+   };
 
   const getPaymentStateLabel = (state: string) => {
     const labels: Record<string, string> = {
@@ -337,7 +340,7 @@ const [searchTerm, setSearchTerm] = useState("");
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
           <div className="lg:col-span-5">
             <label className="form-label">Search</label>
             <input
@@ -471,48 +474,49 @@ const [searchTerm, setSearchTerm] = useState("");
 
       <div className="bg-surface rounded-xl border border-color-subtle border-color overflow-hidden">
         <table className="w-full">
-          <thead>
-            <tr className="border-b border-color-subtle border-color bg-surface-alt dark:bg-surface-alt">
-               <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface">
-                 Invoice
-                 {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
-               </th>
-               <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                 onClick={() => handleSort("customer_name")}>
-                 Customer
-                 {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
-               </th>
-               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">
-                 Payment State
-               </th>
-               <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                 onClick={() => handleSort("total")}>
-                 Total
-                 {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
-               </th>
-               <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                 onClick={() => handleSort("amount_due")}>
-                 Amount Due
-                 {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
-               </th>
-               <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                 onClick={() => handleSort("due_date")}>
-                 Due Date
-                 {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
-               </th>
-               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                 onClick={() => handleSort("issue_date")}>
-                 Issue Date
-                 {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
-               </th>
-               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                 onClick={() => handleSort("status")}>
-                 Status
-                 {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
-               </th>
-               <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Actions</th>
-            </tr>
-          </thead>
+           <thead>
+             <tr className="border-b border-color-subtle border-color bg-surface-alt dark:bg-surface-alt">
+                <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("invoice_number")}>
+                  Invoice
+                  {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("customer_name")}>
+                  Customer
+                  {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">
+                  Payment State
+                </th>
+                <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("total")}>
+                  Total
+                  {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("amount_due")}>
+                  Amount Due
+                  {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("due_date")}>
+                  Due Date
+                  {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("issue_date")}>
+                  Issue Date
+                  {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("status")}>
+                  Status
+                  {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Actions</th>
+             </tr>
+           </thead>
           <tbody>
             {invoices.length === 0 ? (
               <tr>
@@ -537,15 +541,15 @@ const [searchTerm, setSearchTerm] = useState("");
                 return (
                   <tr key={inv.id} className="border-b border-color-subtle border-color last:border-b-0 hover:bg-hover">
                    <td className="py-3.5 px-4">
-                       <div className="flex flex-col">
-                         <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
-                           {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
-                         </Link>
-                         <span className="text-xs text-secondary">
-                           {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
-                         </span>
-                       </div>
-                     </td>
+                        <div className="flex flex-col leading-tight">
+                          <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
+                            {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
+                          </Link>
+                          <span className="text-xs text-secondary">
+                            {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
+                          </span>
+                        </div>
+                      </td>
                      <td className="py-3.5 px-4 text-sm text-secondary">
                        {inv.customer_name || "—"}
                        {inv.customer_email && <span className="text-xs text-secondary block">{inv.customer_email}</span>}
@@ -561,12 +565,14 @@ const [searchTerm, setSearchTerm] = useState("");
                     <td className="py-3.5 px-4 text-right text-sm font-medium text-primary">
                       {Number(inv.amount_due || 0) > 0
                         ? formatCurrency(inv.amount_due, inv.currency)
-                        : <span className="status-success-text">Paid</span>}
+                        : Number(inv.total || 0) > 0
+                          ? <span className="status-success-text">Paid</span>
+                          : formatCurrency(inv.amount_due || 0, inv.currency)}
                     </td>
                     <td className="py-3.5 px-4 text-right text-sm text-secondary">
                       {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-center text-sm text-secondary">
+                    <td className="py-3.5 px-4 text-center text-sm text-secondary pr-6">
                       {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                     </td>
                     <td className="py-3.5 px-4 text-center">
