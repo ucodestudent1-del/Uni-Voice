@@ -9,7 +9,7 @@ import {
   archiveInvoiceTemplate,
   getBusiness,
 } from "../api/client";
-import { Plus, Trash2, Archive, Copy, MousePointerClick, Settings2 } from "lucide-react";
+import { Trash2, Archive, Copy, MousePointerClick, Settings2 } from "lucide-react";
 import { initializeRegistry, type InvoiceDocument } from "../document-model";
 import TemplatePreview from "../components/TemplatePreview";
 import DocumentTemplateGallery from "../components/DocumentTemplateGallery";
@@ -123,14 +123,6 @@ export default function Templates() {
             Choose a preset to get started or customize an existing template.
           </p>
         </div>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => setShowPresetGallery(true)}
-        >
-          New Template
-        </Button>
       </div>
 
       <div className="flex items-center gap-3">
@@ -151,14 +143,6 @@ export default function Templates() {
       {templates.length === 0 && !showPresetGallery && (
         <div className="text-center py-16 bg-surface-alt dark:bg-surface-alt rounded-xl border border-color-subtle border-color">
           <p className="text-tertiary mb-4">No templates yet</p>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => setShowPresetGallery(true)}
-        >
-          Create from preset
-        </Button>
         </div>
       )}
 

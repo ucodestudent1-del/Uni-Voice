@@ -1,11 +1,11 @@
-import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useState } from "react";
 import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
-import { Menu, Plus } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import type { PlanTier } from "@/types/app";
 
@@ -123,13 +123,6 @@ export default function Layout() {
             <span className="text-sm text-tertiary truncate">
               {user?.email}
             </span>
-            <Link
-              to="/app/invoices/new"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-3 py-1.5 text-sm font-medium text-on-primary focus:outline-none focus:ring-2 focus:ring-2 focus:ring-primary transition-colors min-h-[44px]"
-            >
-              <Plus className="w-4 h-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Create Invoice</span>
-            </Link>
           </header>
 
           {/* Desktop header - hidden on mobile, visible on desktop */}
@@ -147,13 +140,6 @@ export default function Layout() {
             </div>
             <div className="flex items-center gap-4">
               <ThemeToggle />
-            <Link
-              to="/app/invoices/new"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2.5 text-sm font-medium text-on-primary focus:outline-none focus:ring-2 focus:ring-primary transition-colors min-h-[44px]"
-            >
-              <Plus className="w-4 h-4" aria-hidden="true" />
-              Create Invoice
-            </Link>
             </div>
           </header>
         <main className="flex-1 overflow-y-auto p-6 bg-page">

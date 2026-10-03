@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import {
   getProjects,
   archiveProject,
@@ -160,14 +160,6 @@ const [search, setSearch] = useState("");
     <div className="space-y-6">
       <div className="flex items-center justify-between">
          <h1 className="text-2xl font-bold text-inverse">Projects</h1>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<Plus className="w-4 h-4" />}
-          onClick={handleCreate}
-        >
-          New Project
-        </Button>
       </div>
 
       {error && (
@@ -233,14 +225,6 @@ const [search, setSearch] = useState("");
           {projects.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-tertiary mb-4">No projects found</p>
-              <Button
-                variant="primary"
-                size="md"
-                icon={<Plus className="w-4 h-4" />}
-                onClick={handleCreate}
-              >
-                Create Your First Project
-              </Button>
             </div>
           ) : (
             <table className="w-full text-left">

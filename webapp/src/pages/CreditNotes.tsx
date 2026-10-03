@@ -222,12 +222,6 @@ export default function CreditNotes() {
           <h1 className="text-2xl font-bold text-primary">Credit Notes</h1>
           <p className="text-sm text-secondary mt-1">{total} credit notes total</p>
         </div>
-        <button
-          onClick={() => setShowCreateDialog(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-        >
-          New Credit Note
-        </button>
       </div>
 
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
@@ -362,15 +356,7 @@ export default function CreditNotes() {
             {creditNotes.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-16 text-center text-secondary">
-                  {hasActiveFilters ? "No credit notes match your filters" : "No credit notes yet"}
-                  {!hasActiveFilters && (
-                    <button
-                      onClick={() => setShowCreateDialog(true)}
-                      className="ml-2 inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-                    >
-                      Create your first credit note
-                    </button>
-                  )}
+                {hasActiveFilters ? "No credit notes match your filters" : "No credit notes yet"}
                 </td>
               </tr>
             ) : (
