@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
+import ChunkErrorBoundary from "./components/ErrorBoundary";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Pricing = lazy(() => import("./pages/Pricing"));
@@ -80,6 +81,7 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <ChunkErrorBoundary>
     <Routes>
        <Route path="/" element={<Suspense fallback={<Fallback />}><Landing /></Suspense>} />
        <Route path="/pricing" element={<Suspense fallback={<Fallback />}><Pricing /></Suspense>} />
@@ -128,7 +130,8 @@ export default function App() {
          <Route path="security" element={<Navigate to="/app/settings/security" replace />} />
        </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </ChunkErrorBoundary>
   );
 }

@@ -12,6 +12,35 @@ import "./index.css";
 
 initSentry();
 
+function isChunkLoadError(err: unknown): boolean {
+	if (err instanceof Error) {
+		const m = err.message.toLowerCase();
+		return (
+			m.includes("failed to fetch dynamically imported module") ||
+			m.includes("loading chunk") ||
+			(m.includes("chunk") && m.includes("not found"))
+		);
+	}
+	return false;
+}
+
+if (typeof window !== "undefined") {
+	window.addEventListener("error", (event) => {
+		if (isChunkLoadError(event.error)) {
+			event.preventDefault();
+			const existing = document.getElementById("chunk-error-overlay");
+			if (existing) return;
+			const overlay = document.createElement("div");
+			overlay.id = "chunk-error-overlay";
+			overlay.style.cssText =
+				"position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(15,15,23,0.9);display:flex;align-items:center;justify-content:center;z-index:9999";
+			overlay.innerHTML =
+				'<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:0.75rem;padding:1.5rem;max-width:512px;text-align:center"><h3 style="color:#991b1b;font-size:1.125rem;margin-bottom:0.5rem">Update Required</h3><p style="color:#4b5563;font-size:0.875rem;margin-bottom:1rem">A new version is available. Refresh to load it.</p><button onclick="location.reload()" style="background:#2563eb;color:#fff;border:none;border-radius:0.5rem;padding:0.5rem 1rem;cursor:pointer">Refresh Now</button></div>';
+			document.body.appendChild(overlay);
+		}
+	});
+}
+
 const App = React.lazy(() => import("./App"));
 
 try {
