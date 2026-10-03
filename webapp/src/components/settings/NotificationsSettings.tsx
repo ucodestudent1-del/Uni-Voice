@@ -87,7 +87,7 @@ export default function NotificationsSettings() {
           </label>
         </div>
 
-        <div className="border-t border-color-subtle pt-4 space-y-4">
+        <div className="border-t border-color-subtle pt-4 space-y-3">
           <FormField
             label="Payment Confirmations"
             description="Send an email when a customer pays an invoice."

@@ -505,7 +505,7 @@ export default function Receipts() {
 
       {/* Filters */}
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
           <div className="lg:col-span-4">
             <label className="form-label">Search</label>
             <div className="relative">

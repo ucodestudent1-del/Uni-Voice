@@ -236,7 +236,7 @@ export default function ProjectDetail() {
         <div className="p-4">
           {activeTab === "overview" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="border border-color-subtle rounded-lg p-4 bg-surface-alt">
                   <p className="text-xs text-secondary uppercase">Budget</p>
                   <p className="mt-1 text-lg font-semibold text-primary">

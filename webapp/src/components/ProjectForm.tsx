@@ -185,14 +185,14 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
           </h3>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+         <form onSubmit={handleSubmit} className="p-6 space-y-3">
           {error && (
             <div className="p-3 status-error-bg border status-error-border rounded-lg">
               <p className="text-sm status-error-text">{error}</p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="md:col-span-2">
               <label className="form-label">Project Name *</label>
               <input

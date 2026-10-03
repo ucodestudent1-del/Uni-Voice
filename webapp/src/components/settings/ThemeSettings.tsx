@@ -19,7 +19,7 @@ export default function ThemeSettings() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-color bg-surface p-6 space-y-4">
+       <div className="rounded-xl border border-color bg-surface p-6 space-y-3">
         <div className="space-y-2">
           <label className="text-sm font-medium text-secondary">Theme</label>
           <p className="text-xs text-tertiary">

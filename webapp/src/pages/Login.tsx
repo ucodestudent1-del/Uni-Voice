@@ -102,7 +102,7 @@ export default function Login() {
             </div>
 
                {step === "credentials" && (
-               <form onSubmit={handleCredentialsSubmit} className="space-y-5">
+               <form onSubmit={handleCredentialsSubmit} className="space-y-4">
                  {error && (
                    <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
                  )}
@@ -160,7 +160,7 @@ export default function Login() {
              )}
 
             {step === "two-factor" && (
-              <form onSubmit={handleTwoFactorSubmit} className="space-y-5">
+               <form onSubmit={handleTwoFactorSubmit} className="space-y-4">
                 {error && (
                   <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">{error}</div>
                 )}

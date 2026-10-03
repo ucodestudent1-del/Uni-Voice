@@ -517,7 +517,7 @@ function PaymentDialog({
               Amount: {formatCurrency(payAmount || amountDue, invoice.currency)}
             </p>
           </div>
-          <div className="p-6 space-y-4">
+          <div className="p-6 space-y-3">
             <StripePaymentElement
               clientSecret={paymentIntent.clientSecret}
               onPaymentSuccess={onPaymentSuccess}
@@ -545,7 +545,7 @@ function PaymentDialog({
             Amount due: {formatCurrency(amountDue, invoice.currency)}
           </p>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-3">
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">Amount</label>
             <input
@@ -611,7 +611,7 @@ function DepositDialog({
             Deposit due: {formatCurrency(depositDue, invoice.currency)}
           </p>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-3">
           <div>
             <label className="block text-sm font-medium text-secondary mb-1">Amount</label>
             <input

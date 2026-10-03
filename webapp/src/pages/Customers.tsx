@@ -236,7 +236,7 @@ export default function Customers() {
       </div>
 
           <div className="bg-surface rounded-xl border border-color-subtle border-color p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
               <div className="lg:col-span-4">
                 <label className="form-label">Search</label>
                 <input

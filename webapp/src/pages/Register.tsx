@@ -89,7 +89,7 @@ export default function Register() {
             </div>
 
             {step === "account" ? (
-              <form onSubmit={handleAccountSubmit} className="space-y-5">
+               <form onSubmit={handleAccountSubmit} className="space-y-4">
                 {error && (
                   <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">
                     {error}
@@ -135,7 +135,7 @@ export default function Register() {
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleBusinessSubmit} className="space-y-5">
+               <form onSubmit={handleBusinessSubmit} className="space-y-4">
                 {error && (
                   <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text">
                     {error}

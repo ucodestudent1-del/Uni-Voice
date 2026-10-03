@@ -341,7 +341,7 @@ export default function Payments() {
 
       {/* Filters */}
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="sm:col-span-2">
             <label className="form-label">Search</label>
             <div className="relative">

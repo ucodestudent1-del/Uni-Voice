@@ -508,7 +508,7 @@ function TemplateDialog({
             {isEditing ? "Edit Template" : "New Template"}
           </h3>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="p-6 space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="p-6 space-y-3">
           <div>
             <label className="form-label">Template Name *</label>
             <input

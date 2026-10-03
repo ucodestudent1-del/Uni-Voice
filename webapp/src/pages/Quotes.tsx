@@ -262,7 +262,7 @@ export default function Quotes() {
       />
 
       <div className="bg-surface rounded-xl border border-color-subtle p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="form-label">Search</label>
             <div className="relative">

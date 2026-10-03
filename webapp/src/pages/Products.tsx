@@ -97,8 +97,8 @@ export default function Products() {
                 {editingProduct ? "Edit Product" : "Add Product"}
               </h3>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-secondary mb-1">Name *</label>
                   <input

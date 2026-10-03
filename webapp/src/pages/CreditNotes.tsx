@@ -253,7 +253,7 @@ export default function CreditNotes() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
           <div className="lg:col-span-5">
             <label className="form-label">Search</label>
             <input
@@ -289,7 +289,7 @@ export default function CreditNotes() {
         </div>
 
         {showAdvancedFilters && (
-          <div className="mt-4 border-t border-color-subtle pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="mt-4 border-t border-color-subtle pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="lg:col-span-4">
               <label className="form-label">Customer</label>
               <select
@@ -591,8 +591,8 @@ function CreateCreditNoteDialog({
           <h2 className="text-2xl font-bold text-primary">Create Credit Note</h2>
           <p className="text-sm text-secondary mt-1">Fill in the details below</p>
         </div>
-         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+         <form onSubmit={handleSubmit} className="p-6 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="form-label">Customer *</label>
               <select

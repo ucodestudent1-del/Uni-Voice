@@ -118,7 +118,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
           </h3>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-3">
           {error && (
             <div className="p-3 status-error-bg border status-error-border rounded-lg">
               <p className="text-sm status-error-text">{error}</p>
@@ -175,7 +175,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="form-label">Payment Terms (Days)</label> Net
               <input

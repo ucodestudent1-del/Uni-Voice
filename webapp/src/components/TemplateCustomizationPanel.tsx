@@ -103,7 +103,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
     <div className="h-full overflow-y-auto">
       <div className="p-5 space-y-1 divide-y divide-color-subtle">
         <CollapseSection title="Brand" defaultOpen={false}>
-          <div className="px-4 pb-3 space-y-4">
+          <div className="px-4 pb-3 space-y-3">
             <div>
               <label className="block text-sm font-medium text-secondary mb-1">Primary Color</label>
               <div className="flex gap-2">

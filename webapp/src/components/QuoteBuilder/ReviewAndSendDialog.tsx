@@ -63,7 +63,7 @@ Best regards`
           </p>
         </div>
 
-        <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+        <div className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
           {/* Customer info */}
           <div className="bg-surface-alt rounded-lg border border-color-subtle p-4">
             <h3 className="text-xs font-medium text-tertiary uppercase mb-2">Customer</h3>

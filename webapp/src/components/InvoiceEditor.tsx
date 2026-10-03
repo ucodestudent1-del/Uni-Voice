@@ -952,9 +952,9 @@ function InvoiceEditorContent() {
               <h3 className="text-lg font-semibold text-primary">Send Invoice</h3>
               <p className="text-sm text-secondary">Review before sending</p>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-secondary">To</label>
+             <div className="p-6 space-y-3">
+               <div className="space-y-2">
+                 <label className="block text-sm font-medium text-secondary">To</label>
                 <p className="text-sm text-primary">
                   {editorData?.customerId ? customers.find((c) => c.id === editorData.customerId)?.email ?? "No email set" : "No customer selected"}
                 </p>

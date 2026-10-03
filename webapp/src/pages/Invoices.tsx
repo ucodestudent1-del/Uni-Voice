@@ -337,7 +337,7 @@ const [searchTerm, setSearchTerm] = useState("");
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
           <div className="lg:col-span-5">
             <label className="form-label">Search</label>
             <input
@@ -375,7 +375,7 @@ const [searchTerm, setSearchTerm] = useState("");
         </div>
 
         {showAdvancedFilters && (
-          <div className="mt-4 border-t border-color-subtle border-color pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+          <div className="mt-4 border-t border-color-subtle border-color pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
             <div className="lg:col-span-3">
               <label className="form-label">Customer</label>
               <select

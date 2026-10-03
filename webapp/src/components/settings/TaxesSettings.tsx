@@ -116,7 +116,7 @@ export default function TaxesSettings() {
         <h3 className="text-md font-semibold text-primary mb-4">
           {editingId ? "Edit Tax Rate" : "Add Tax Rate"}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Name" description="A descriptive name for this tax rate.">
             <input
               type="text"
@@ -179,7 +179,7 @@ export default function TaxesSettings() {
               className="form-control w-full"
             />
           </FormField>
-          <div className="flex items-end gap-6">
+          <div className="flex items-end gap-3">
             <FormField label="" description="">
               <label className="flex items-center gap-2 text-sm text-secondary">
                 <input

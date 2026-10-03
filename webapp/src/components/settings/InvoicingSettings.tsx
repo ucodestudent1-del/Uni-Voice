@@ -160,7 +160,7 @@ export default function InvoicingSettings() {
 
       <div className="rounded-xl border border-color-subtle bg-surface p-6">
         <h3 className="text-md font-semibold text-primary mb-4">Invoice Defaults</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField label="Default Tax Rate" description="Applied when no line-item rate is specified.">
             <input
               type="number"

@@ -220,7 +220,7 @@ export default function ReportFilters({
       </div>
 
       {advancedOpen && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
           {availableFilters.showStatus && (
             <div className="space-y-1.5">
               <label className="form-label-secondary">Status</label>

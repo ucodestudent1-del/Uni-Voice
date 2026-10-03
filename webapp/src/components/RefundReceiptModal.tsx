@@ -117,7 +117,7 @@ export default function RefundReceiptModal({
           </p>
         </div>
 
-        <div className="px-6 pb-4 space-y-4">
+        <div className="px-6 pb-4 space-y-3">
           {error && (
             <div className="p-3 status-error-bg border status-error-border rounded-lg">
               <p className="text-sm status-error-text">{error}</p>

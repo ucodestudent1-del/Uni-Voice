@@ -12,7 +12,7 @@ export function QuoteDetailsForm({ data, onChange, currencyLocked }: QuoteDetail
     <div className="space-y-5">
       <h3 className="text-sm font-medium text-secondary">Quote Details</h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Currency</label>
           <select

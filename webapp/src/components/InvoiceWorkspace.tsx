@@ -1209,7 +1209,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
   customers: ApiCustomer[];
 }) {
   return (
-    <div className="flex flex-wrap items-end gap-4 p-6">
+    <div className="flex flex-wrap items-end gap-3 p-6">
       <div className="flex flex-col">
         <label className="text-xs font-semibold text-tertiary uppercase">Customer</label>
         <div className="mt-0.5 w-64">
@@ -1777,7 +1777,7 @@ const NotesSection = React.memo(function NotesSection({
   onRemoveAttachment: (category: "attachment" | "before" | "after", id: string) => void;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
         <label className="block text-sm font-semibold text-secondary">Job notes</label>
         <textarea
@@ -1789,7 +1789,7 @@ const NotesSection = React.memo(function NotesSection({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div>
           <label className="block text-sm font-semibold text-secondary">Payment instructions</label>
           <textarea
