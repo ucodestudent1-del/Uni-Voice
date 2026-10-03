@@ -1649,6 +1649,42 @@ app.get("/api/reports/clients/csv", requireAuth, requireEntitlement("export.csv"
   res.send(rows.join("\n"));
 });
 
+app.get("/api/reports/tax-summary/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const filters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+  };
+  const report = await reportsService.getTaxSummaryReport(req.user!.businessId, filters);
+  const headers = ["period", "tax_collected", "taxable_amount", "invoice_count", "currency"];
+  const rows = [headers.join(",")];
+  for (const r of report.byPeriod) {
+    rows.push(headers.map((h) => JSON.stringify(String((r as any)[h] ?? ""))).join(","));
+  }
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=tax-summary-report.csv");
+  res.send(rows.join("\n"));
+});
+
+app.get("/api/reports/profit-loss/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const filters = {
+    dateFrom: req.query.dateFrom as string | undefined,
+    dateTo: req.query.dateTo as string | undefined,
+  };
+  const report = await reportsService.getProfitLossReport(req.user!.businessId, filters);
+  const headers = ["category", "amount", "count"];
+  const rows = [headers.join(",")];
+  rows.push(headers.map((h) => JSON.stringify(String((report.revenue as any)[h] ?? ""))).join(","));
+  for (const r of report.expenses.byCategory) {
+    rows.push(["expense", String(r.total ?? ""), String(r.count ?? 0)].join(","));
+  }
+  rows.push(["net_income", report.netIncome ?? "", ""].join(","));
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=profit-loss-report.csv");
+  res.send(rows.join("\n"));
+});
+
 // ============================================================================
 // EXPORTS (Pro/Business tier)
 // ============================================================================

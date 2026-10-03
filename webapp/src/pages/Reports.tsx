@@ -294,6 +294,10 @@ export default function Reports() {
   const handleResetFilters = () => {
     setFilters({});
     setRevenueData(null);
+    setInvoicesData(null);
+    setPaymentsData(null);
+    setExpensesData(null);
+    setClientsData(null);
     setTaxData(null);
     setProfitLossData(null);
   };

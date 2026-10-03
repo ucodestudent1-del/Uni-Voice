@@ -249,25 +249,6 @@ function toPercentDisplay(rate: string | undefined | null): string {
   return `${v.toFixed(2)}%`;
 }
 
-function lineTotalDisplay(item: WorkspaceLineItem, currency: string, calc?: any): string | null {
-  if (calc?.lineItems) {
-    const idx = calc.lineItems.findIndex((li: any) => li.description === item.description && li.lineTotal != null);
-    if (idx >= 0) {
-      return fmt(calc.lineItems[idx].lineTotal, currency);
-    }
-  }
-  const qty = new Decimal(item.quantity || 1);
-  const price = new Decimal(item.unitPrice || 0);
-  let total = qty.mul(price);
-  if (item.discount && !parseDecimal(item.discount).isZero()) {
-    if (item.discountType === "percentage") {
-      total = total.minus(total.mul(parseDecimal(item.discount).div(100)));
-    } else {
-      total = total.minus(parseDecimal(item.discount));
-    }
-  }
-  return fmt(total, currency);
-}
 
 export default function InvoiceWorkspace() {
   const { id } = useParams<{ id: string }>();
@@ -423,7 +404,7 @@ export default function InvoiceWorkspace() {
 
   useEffect(() => {
     if (isNew || invoiceId || loadedInvoiceId === id) return;
-    const cancelled = false;
+     let cancelled = false;
     async function loadInvoice() {
       setLoading(true);
       try {
@@ -527,9 +508,9 @@ export default function InvoiceWorkspace() {
     saveTimerRef.current = setTimeout(() => doSave(), AUTOSAVE_DELAY);
   }
 
-  async function doSave() {
+  async function doSave(): Promise<boolean> {
     const { invoice: cur, invoiceId: curId, isNew: newFlag } = latestRef.current;
-    if (!cur) return;
+    if (!cur) return false;
     setSaveState("saving");
     try {
       const metaPayload = {
@@ -551,47 +532,60 @@ export default function InvoiceWorkspace() {
         fees: cur.fees,
       };
 
-      if (!curId) {
-        const res = await createInvoice(metaPayload);
-        setInvoiceId(res.invoiceId);
-        setLoadedInvoiceId(res.invoiceId);
-        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
-        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
-        if (newFlag) {
-          navigate(`/app/invoices/${res.invoiceId}/edit`, { replace: true });
-        }
-      } else {
-        const itemsChanged = JSON.stringify(metaPayload.items) !== lastSavedItemsRef.current;
-        const feesChanged = JSON.stringify(metaPayload.fees) !== lastSavedFeesRef.current;
-        if (itemsChanged || feesChanged) {
-          const payload: Record<string, unknown> = { ...metaPayload };
-          if (!itemsChanged) delete payload.items;
-          if (!feesChanged) delete payload.fees;
-          await updateInvoice(curId, payload);
-        } else {
-          await updateInvoice(curId, metaPayload);
-        }
-        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
-        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
+       if (!curId) {
+         const res = await createInvoice(metaPayload);
+         setInvoiceId(res.invoiceId);
+         setLoadedInvoiceId(res.invoiceId);
+         lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
+         lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
+         if (newFlag) {
+           navigate(`/app/invoices/${res.invoiceId}/edit`, { replace: true });
+         }
+         analytics.trackInvoiceCreated({
+           invoiceId: res.invoiceId,
+           currency: cur.currency,
+           itemCount: cur.items.length,
+         });
+       } else {
+         const itemsChanged = JSON.stringify(metaPayload.items) !== lastSavedItemsRef.current;
+         const feesChanged = JSON.stringify(metaPayload.fees) !== lastSavedFeesRef.current;
+         if (itemsChanged || feesChanged) {
+           const payload: Record<string, unknown> = { ...metaPayload };
+           if (!itemsChanged) delete payload.items;
+           if (!feesChanged) delete payload.fees;
+           await updateInvoice(curId, payload);
+         } else {
+           await updateInvoice(curId, metaPayload);
+         }
+         lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
+         lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
+        analytics.track("invoice_saved", {
+          invoiceId: curId,
+          currency: cur.currency,
+          itemCount: cur.items.length,
+        });
       }
       setSaveState("saved");
       setDirty(false);
-      analytics.trackInvoiceCreated({
-        invoiceId: curId ?? latestRef.current.invoiceId,
-        currency: cur.currency,
-        itemCount: cur.items.length,
-      });
+      return true;
     } catch (err: any) {
       setSaveState("error");
       setActionMessage(err?.response?.data?.error || "Failed to save invoice");
+      return false;
     }
   }
 
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (invoice) {
+        const all = [...invoice.attachments, ...invoice.beforePhotos, ...invoice.afterPhotos];
+        all.forEach((a) => {
+          if (a.url) URL.revokeObjectURL(a.url);
+        });
+      }
     };
-  }, []);
+  }, [invoice]);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -695,6 +689,11 @@ export default function InvoiceWorkspace() {
   function removeAttachment(category: "attachment" | "before" | "after", id: string) {
     setInvoice((prev) => {
       if (!prev) return prev;
+      const listKey = category === "attachment" ? "attachments" : category === "before" ? "beforePhotos" : "afterPhotos";
+      const removed = prev[listKey]?.find((a) => a.id === id);
+      if (removed?.url) {
+        URL.revokeObjectURL(removed.url);
+      }
       const rm = (list: WorkspaceAttachment[]) => list.filter((a) => a.id !== id);
       return {
         ...prev,
@@ -787,8 +786,10 @@ export default function InvoiceWorkspace() {
       );
       if (!ok) return;
     }
-    await doSave();
-    navigate("/app/invoices/new", { replace: true });
+    const saved = await doSave();
+    if (saved) {
+      navigate("/app/invoices/new", { replace: true });
+    }
   }
 
   async function handleDuplicate() {

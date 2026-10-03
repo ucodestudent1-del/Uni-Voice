@@ -356,6 +356,8 @@ export async function voidInvoice(id: string, data?: { reason?: string }) {
 
 export async function deleteInvoice(id: string) {
   const res = await api.delete(`/invoices/${id}`);
+  invalidateCache("/invoices?");
+  invalidateCacheByKey(`/invoices/${id}`);
   return res.data;
 }
 

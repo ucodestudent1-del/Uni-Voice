@@ -60,7 +60,7 @@ export default function RecurringInvoices() {
 
   const loadCustomers = useCallback(async () => {
     try {
-      const data = await getCustomers({ limit: 500, enrich: false });
+      const data = await getCustomers({ limit: 100, enrich: false });
       setCustomers(data.data ?? []);
     } catch {
       setCustomers([]);
