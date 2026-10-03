@@ -108,7 +108,6 @@ export default function Templates() {
   const DOCUMENT_TYPE_LABEL: Record<string, string> = {
     invoice: "Invoice",
     quote: "Quote",
-    recurring_invoice: "Recurring",
   };
 
   if (loading) {
@@ -146,7 +145,6 @@ export default function Templates() {
           <option value="">All document types</option>
           <option value="invoice">Invoice</option>
           <option value="quote">Quote</option>
-          <option value="recurring_invoice">Recurring Invoice</option>
         </select>
       </div>
 

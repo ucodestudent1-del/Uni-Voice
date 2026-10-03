@@ -10,14 +10,12 @@ const PLAN_FEATURES: Record<string, { label: string; available: boolean }[]> = {
     { label: "Up to 5 customers", available: true },
     { label: "Basic templates", available: true },
     { label: "Online payments", available: false },
-    { label: "Recurring invoices", available: false },
   ],
   pro: [
     { label: "Unlimited invoices", available: true },
     { label: "Unlimited customers", available: true },
     { label: "All templates", available: true },
     { label: "Online payments", available: true },
-    { label: "Recurring invoices", available: true },
   ],
 };
 

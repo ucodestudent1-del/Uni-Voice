@@ -37,7 +37,6 @@ const Receipts = lazy(() => import("./pages/Receipts"));
 const ReceiptDetail = lazy(() => import("./pages/ReceiptDetail"));
 const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
 const Reports = lazy(() => import("./pages/Reports"));
-const RecurringInvoices = lazy(() => import("./pages/RecurringInvoices"));
 
 const Fallback = () => (
   <div className="flex items-center justify-center h-64 text-secondary">Loading…</div>
@@ -121,7 +120,6 @@ export default function App() {
          <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />
          <Route path="report" element={<Suspense fallback={<Fallback />}><ReportSection /></Suspense>} />
           <Route path="reminders" element={<Suspense fallback={<Fallback />}><ReminderAutomation /></Suspense>} />
-          <Route path="recurring-invoices" element={<Suspense fallback={<Fallback />}><RecurringInvoices /></Suspense>} />
           <Route path="plans" element={<Suspense fallback={<Fallback />}><Plans /></Suspense>} />
          <Route path="settings">
            <Route index element={<Navigate to="/app/settings/business" replace />} />

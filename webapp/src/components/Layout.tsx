@@ -39,7 +39,6 @@ export default function Layout() {
      { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" as PlanTier },
      { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "pro" as PlanTier },
     { name: "Credit Notes", to: "/app/credit-notes", feature: "credit_notes.create", requiredPlan: "pro" as PlanTier },
-    { name: "Recurring", to: "/app/recurring-invoices", feature: "invoices.recurring", requiredPlan: "pro" as PlanTier },
     { name: "Plans", to: "/app/plans" },
     { name: "Settings", to: "/app/settings" },
   ];

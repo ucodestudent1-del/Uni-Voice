@@ -47,7 +47,6 @@ export class SubscriptionService {
       { code: "templates.premium", name: "Premium Templates", category: "templates", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
       { code: "templates.custom_branding", name: "Custom Branding (Logo, Colors, Fonts)", category: "templates", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
       { code: "templates.no_branding", name: "Remove App Branding", category: "templates", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
-      { code: "invoices.recurring", name: "Recurring Invoices", category: "automation", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
       { code: "invoices.scheduled", name: "Scheduled Invoices", category: "automation", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
       { code: "invoices.duplicate", name: "Duplicate Invoices", category: "automation", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
       { code: "reminders.automated", name: "Automated Payment Reminders", category: "automation", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },

@@ -51,11 +51,11 @@ export const pricingFeatures: FeatureItem[] = [
   },
   {
     title: "Smart automations",
-    description: "Recurring invoices, scheduled sends, and automatic payment reminders save you hours each month.",
+    description: "Scheduled sends and automatic payment reminders save you hours each month.",
     icon: "clock-arrow",
     details: (
       <ul className="mt-2 space-y-1 text-sm text-tertiary">
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Recurring & scheduled invoices</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Scheduled invoice sends</li>
         <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Smart payment reminders</li>
         <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Auto-followups for overdue invoices</li>
       </ul>

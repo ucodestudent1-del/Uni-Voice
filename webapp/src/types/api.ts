@@ -388,7 +388,7 @@ export interface InvoiceTemplateDTO {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
-  documentType: "invoice" | "quote" | "recurring_invoice";
+  documentType: "invoice" | "quote";
   lifecycle: "draft" | "published" | "archived";
   publishedAt?: string | null;
   archivedAt?: string | null;
@@ -657,45 +657,6 @@ export interface CreditNoteSearchParams {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
-
-export interface ApiRecurringInvoice {
-  id: string;
-  business_id: string;
-  customer_id?: string | null;
-  customer_name?: string | null;
-  name: string;
-  frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
-  interval_count: number;
-  next_generation_at?: string | null;
-  end_date?: string | null;
-  currency: string;
-  total?: string | null;
-  notes?: string | null;
-  terms?: string | null;
-  template_id?: string | null;
-  is_active: boolean;
-  auto_send: boolean;
-  created_at: string;
-  updated_at: string;
-  generated_invoices?: ApiInvoiceListItem[];
-}
-
-export interface RecurringInvoiceCreateInput {
-  customerId?: string;
-  name: string;
-  frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
-  intervalCount?: number;
-  nextGenerationAt?: string;
-  endDate?: string;
-  currency?: string;
-  notes?: string;
-  terms?: string;
-  templateId?: string;
-  isActive?: boolean;
-  autoSend?: boolean;
-}
-
-export type RecurringInvoiceUpdateInput = Partial<RecurringInvoiceCreateInput>;
 
 export interface ApiReminderConfig {
   enabled: boolean;

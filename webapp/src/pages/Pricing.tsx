@@ -20,7 +20,6 @@ const PLAN_FEATURES: PlanFeature[] = [
   { label: "Core invoice templates", free: true, pro: true },
   { label: "Multi-currency support", free: false, pro: true },
   { label: "Online payment collection", free: false, pro: true, footnote: "Stripe & other providers." },
-  { label: "Recurring invoices", free: false, pro: true },
   { label: "Payment reminders & auto-followups", free: false, pro: true },
   { label: "Time tracking", free: false, pro: true },
   { label: "Project management", free: false, pro: true },

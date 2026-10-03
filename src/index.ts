@@ -20,7 +20,6 @@ import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
 import { creditNoteService } from "./services/credit-note-service.js";
-import { recurringService } from "./services/recurring-service.js";
 import { quoteService } from "./services/quote-service.js";
 import { receiptService } from "./services/receipt-service.js";
 
@@ -1326,29 +1325,6 @@ app.post("/api/invoices/:id/receipts", requireAuth, requireEntitlement("receipts
   if (!payment) return res.status(404).json({ error: "No payment found for invoice" });
   const receipt = await receiptService.issueReceipt(req.user!.businessId, invoice.id, payment);
   res.status(201).json({ receiptId: receipt.id, receiptNumber: receipt.receiptNumber });
-});
-
-// ============================================================================
-// RECURRING INVOICES (Pro tier)
-// ============================================================================
-app.get("/api/recurring", requireAuth, requireEntitlement("invoices.recurring"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await query("SELECT * FROM recurring_invoices WHERE business_id = $1 ORDER BY created_at DESC LIMIT 200", [req.user!.businessId]);
-  res.json({ recurringInvoices: result.rows });
-});
-
-app.post("/api/recurring", requireAuth, requireEntitlement("invoices.recurring"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
-  await query(
-    `INSERT INTO recurring_invoices (id, business_id, customer_id, name, frequency, interval_count, next_generation_at, end_date, currency, notes, terms, is_active, created_at, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$13)`,
-    [id, req.user!.businessId, req.body.customerId, req.body.name, req.body.frequency, req.body.intervalCount ?? 1,
-     req.body.nextGenerationAt?.toISOString(), req.body.endDate?.toISOString(), req.body.currency ?? "USD",
-     req.body.notes, req.body.terms, req.body.isActive ?? true, now]
-  );
-  res.status(201).json({ recurringInvoiceId: id });
 });
 
 // ============================================================================
@@ -2981,7 +2957,6 @@ async function start() {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
     subscriptionService.ensureDefaults().catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
     processOverdueJob();
-    processRecurringJob();
   });
 }
 
@@ -2999,17 +2974,6 @@ function processOverdueJob() {
   
   overdueJobRunning = false;
   setTimeout(processOverdueJob, 15 * 60 * 1000);
-}
-
-let recurringJobRunning = false;
-function processRecurringJob() {
-  if (recurringJobRunning) return;
-  recurringJobRunning = true;
-  recurringService.processDue().then((result) => {
-    if (result.generated > 0) logger.info(`Generated ${result.generated} recurring invoices`);
-  }).catch((e) => logger.error({ err: e }, "Recurring generation failed"));
-  recurringJobRunning = false;
-  setTimeout(processRecurringJob, 15 * 60 * 1000);
 }
 
 if (!isTest) {

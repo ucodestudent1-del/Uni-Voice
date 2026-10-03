@@ -225,10 +225,9 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
              }}
              className="border border-input-border rounded px-2 py-0.5 bg-surface text-xs focus:outline-none focus:ring-1 focus:ring-primary"
            >
-             <option value="invoice">Invoice</option>
-             <option value="quote">Estimate / Quote</option>
-             <option value="recurring_invoice">Recurring Invoice</option>
-           </select>
+              <option value="invoice">Invoice</option>
+              <option value="quote">Estimate / Quote</option>
+            </select>
          </div>
         <div className="flex items-center gap-3">
           {existingTemplate && (

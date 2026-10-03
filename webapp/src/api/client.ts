@@ -7,9 +7,6 @@ import type {
   RecoveryCodeSummary,
   InvoiceSearchParams,
   CreditNoteSearchParams,
-  RecurringInvoiceCreateInput,
-  RecurringInvoiceUpdateInput,
-  ApiRecurringInvoice,
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
@@ -25,7 +22,7 @@ import type {
   ApiClientsReport,
   ApiTaxSummaryReport,
   ApiProfitLossReport,
-   ApiAgingReport,
+  ApiAgingReport,
   ApiPaymentMetrics,
 } from "../types/api";
 
@@ -33,9 +30,6 @@ import type {
 export type {
   InvoiceSearchParams,
   CreditNoteSearchParams,
-  RecurringInvoiceCreateInput,
-  RecurringInvoiceUpdateInput,
-  ApiRecurringInvoice,
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
@@ -485,16 +479,6 @@ export async function createQuote(data: any) {
 
 export async function convertQuote(id: string) {
   const res = await api.post(`/quotes/${id}/convert`);
-  return res.data;
-}
-
-export async function getRecurring() {
-  const res = await api.get("/recurring");
-  return res.data;
-}
-
-export async function createRecurring(data: any) {
-  const res = await api.post("/recurring", data);
   return res.data;
 }
 
@@ -1141,45 +1125,6 @@ export function buildCreditNoteSearchParams(params: CreditNoteSearchParams): Rec
   if (params.sortBy !== undefined) result.sort_by = params.sortBy;
   if (params.sortOrder !== undefined) result.sort_order = params.sortOrder;
   return result;
-}
-
-// ============================================================================
-// RECURRING INVOICES
-// ============================================================================
-
-export async function getRecurringInvoices(): Promise<{ recurringInvoices: ApiRecurringInvoice[] | null }> {
-  const res = await api.get("/recurring");
-  return res.data;
-}
-
-export async function getRecurringInvoice(id: string) {
-  const res = await api.get(`/recurring/${id}`);
-  return res.data;
-}
-
-export async function createRecurringInvoice(data: RecurringInvoiceCreateInput) {
-  const res = await api.post("/recurring", data);
-  return res.data;
-}
-
-export async function updateRecurringInvoice(id: string, data: RecurringInvoiceUpdateInput) {
-  const res = await api.patch(`/recurring/${id}`, data);
-  return res.data;
-}
-
-export async function pauseRecurringInvoice(id: string) {
-  const res = await api.post(`/recurring/${id}/pause`);
-  return res.data;
-}
-
-export async function resumeRecurringInvoice(id: string) {
-  const res = await api.post(`/recurring/${id}/resume`);
-  return res.data;
-}
-
-export async function deleteRecurringInvoice(id: string) {
-  const res = await api.delete(`/recurring/${id}`);
-  return res.data;
 }
 
 // ============================================================================
