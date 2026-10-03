@@ -236,55 +236,31 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
           </div>
         </div>
 
-        {/* === Two-column: Bill To | Invoice Details (fallback for fields not in metadata) === */}
-        <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2">
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-tertiary">Bill To</h3>
-            {invoice.customerName ? (
-              <div className="mt-2 space-y-0.5">
-                <p className="text-base font-semibold text-primary">{invoice.customerName}</p>
-                {invoice.customerCompanyName && (
-                  <p className="text-sm text-secondary">{invoice.customerCompanyName}</p>
-                )}
-                {invoice.customerEmail && (
-                  <a
-                    href={`mailto:${invoice.customerEmail}`}
-                    className="text-sm text-secondary hover:text-primary-brand"
-                  >
-                    {invoice.customerEmail}
-                  </a>
-                )}
-                {invoice.customerPhone && <p className="text-sm text-secondary">{invoice.customerPhone}</p>}
-                {invoice.customerAddress && (
-                  <p className="text-sm text-secondary whitespace-pre-line">{invoice.customerAddress}</p>
-                )}
-              </div>
-            ) : (
-              <p className="mt-2 text-sm italic text-tertiary">No customer selected</p>
-            )}
-          </div>
-          <div className="text-right sm:text-right">
-            <div className="inline-block text-left">
-              {invoice.invoiceNumber && (
-                <div className="mt-0.5">
-                  <span className="text-xs text-tertiary">Invoice #:</span>{" "}
-                  <span className="text-sm font-medium text-primary">{invoice.invoiceNumber}</span>
-                </div>
+        {/* === Bill To section === */}
+        <div className="mt-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-tertiary">Bill To</h3>
+          {invoice.customerName ? (
+            <div className="mt-2 space-y-0.5">
+              <p className="text-base font-semibold text-primary">{invoice.customerName}</p>
+              {invoice.customerCompanyName && (
+                <p className="text-sm text-secondary">{invoice.customerCompanyName}</p>
               )}
-              {invoice.issueDate && (
-                <div className="mt-0.5">
-                  <span className="text-xs text-tertiary">Issue date:</span>{" "}
-                  <span className="text-sm font-medium text-primary">{formatDateLong(invoice.issueDate)}</span>
-                </div>
+              {invoice.customerEmail && (
+                <a
+                  href={`mailto:${invoice.customerEmail}`}
+                  className="text-sm text-secondary hover:text-primary-brand"
+                >
+                  {invoice.customerEmail}
+                </a>
               )}
-              {invoice.dueDate && (
-                <div className="mt-0.5">
-                  <span className="text-xs text-tertiary">Due date:</span>{" "}
-                  <span className="text-sm font-medium text-primary">{formatDateLong(invoice.dueDate)}</span>
-                </div>
+              {invoice.customerPhone && <p className="text-sm text-secondary">{invoice.customerPhone}</p>}
+              {invoice.customerAddress && (
+                <p className="text-sm text-secondary whitespace-pre-line">{invoice.customerAddress}</p>
               )}
             </div>
-          </div>
+          ) : (
+            <p className="mt-2 text-sm italic text-tertiary">No customer selected</p>
+          )}
         </div>
 
         {/* === Line items table === */}
