@@ -94,6 +94,7 @@ interface WorkspaceInvoiceData {
   issueDate?: string | null;
   dueDate?: string | null;
   currency: string;
+  poNumber?: string | null;
   items: WorkspaceLineItem[];
   fees: WorkspaceFee[];
   notes?: string | null;
@@ -107,6 +108,7 @@ interface WorkspaceInvoiceData {
   depositPaymentPurpose?: string | null;
   lateFeeType?: "none" | "fixed" | "percentage";
   lateFeeValue?: string | null;
+  lateFeeDueDate?: string | null;
   templateId?: string | null;
   status: string;
   isFinalized: boolean;
@@ -277,7 +279,7 @@ export default function InvoiceWorkspace() {
   const [reviewSending, setReviewSending] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewWidth, setPreviewWidth] = useState(560);
+  const [previewWidth, setPreviewWidth] = useState(480);
   const [previewMobileOpen, setPreviewMobileOpen] = useState(false);
 
   const analytics = useAnalytics();
@@ -371,40 +373,42 @@ export default function InvoiceWorkspace() {
 
   useEffect(() => {
     if (!isNew) return;
-    setInvoice({
-      customerId: undefined,
-      customer: null,
-      invoiceNumber: null,
-      issueDate: todayISO(),
-      dueDate: addDaysISO(todayISO(), 30),
-      currency: defaultCurrency,
-      items: [],
-      fees: [],
-      notes: settings.default_notes ?? "",
-      terms: settings.default_terms ?? "Net 30",
-      paymentInstructions: settings.default_payment_instructions ?? "",
-      taxRate: settings.default_tax_rate ?? "0",
-      amountPaid: "0",
-      depositType: "none",
-      depositValue: "0",
-      depositDueDate: null,
-      depositPaymentPurpose: null,
-      lateFeeType: "none",
-      lateFeeValue: "0",
-      templateId: null,
-      status: "draft",
-      isFinalized: false,
-      publicToken: null,
-      attachments: [],
-      beforePhotos: [],
-      afterPhotos: [],
-    });
+     setInvoice({
+       customerId: undefined,
+       customer: null,
+       invoiceNumber: null,
+       issueDate: todayISO(),
+       dueDate: addDaysISO(todayISO(), 30),
+       currency: defaultCurrency,
+       poNumber: null,
+       items: [],
+       fees: [],
+       notes: settings.default_notes ?? "",
+       terms: settings.default_terms ?? "Net 30",
+       paymentInstructions: settings.default_payment_instructions ?? "",
+       taxRate: settings.default_tax_rate ?? "0",
+       amountPaid: "0",
+       depositType: "none",
+       depositValue: "0",
+       depositDueDate: null,
+       depositPaymentPurpose: null,
+       lateFeeType: "none",
+       lateFeeValue: "0",
+       lateFeeDueDate: null,
+       templateId: null,
+       status: "draft",
+       isFinalized: false,
+       publicToken: null,
+       attachments: [],
+       beforePhotos: [],
+       afterPhotos: [],
+     });
     setLoadedInvoiceId("new");
   }, [isNew, defaultCurrency, settings]);
 
   useEffect(() => {
     if (isNew || invoiceId || loadedInvoiceId === id) return;
-     let cancelled = false;
+     const cancelled = false;
     async function loadInvoice() {
       setLoading(true);
       try {
@@ -424,50 +428,52 @@ export default function InvoiceWorkspace() {
             }
           }
         }
-        const mapped: WorkspaceInvoiceData = {
-          customerId: inv.customer_id ?? null,
-          customer: cust,
-          invoiceNumber: inv.invoice_number ?? null,
-          issueDate: inv.issue_date ? inv.issue_date.split("T")[0] : null,
-          dueDate: inv.due_date ? inv.due_date.split("T")[0] : null,
-          currency: inv.currency,
-          items: (inv.items ?? []).map((it): WorkspaceLineItem => ({
-            id: it.id,
-            type: "service",
-            description: it.description,
-            quantity: it.quantity,
-            unit: it.unit || "each",
-            unitPrice: it.unit_price,
-            discount: it.discount ? String(it.discount) : "",
-            discountType: it.discount_type ?? "fixed",
-            taxRate: it.tax_rate,
-            isTaxInclusive: it.is_tax_inclusive ?? false,
-            productId: it.product_id ?? null,
-          })),
-          fees: (inv.fees ?? []).map((f): WorkspaceFee => ({
-            description: f.description,
-            amount: f.amount,
-            taxRate: f.tax_rate,
-          })),
-          notes: inv.notes ?? "",
-          terms: inv.terms ?? "",
-          paymentInstructions: inv.payment_instructions ?? "",
-          taxRate: settings.default_tax_rate ?? "0",
-          amountPaid: inv.amount_paid ?? "0",
-          depositType: inv.deposit_type ?? "none",
-          depositValue: inv.deposit_value ?? "0",
-          depositDueDate: inv.deposit_due_date ?? null,
-          depositPaymentPurpose: inv.deposit_payment_purpose ?? null,
-          lateFeeType: inv.late_fee_type ?? "none",
-          lateFeeValue: inv.late_fee_value ?? "0",
-          templateId: inv.template_id ?? null,
-          status: inv.status,
-          isFinalized: inv.is_finalized ?? false,
-          publicToken: inv.public_token ?? null,
-          attachments: [],
-          beforePhotos: [],
-          afterPhotos: [],
-        };
+         const mapped: WorkspaceInvoiceData = {
+           customerId: inv.customer_id ?? null,
+           customer: cust,
+           invoiceNumber: inv.invoice_number ?? null,
+           issueDate: inv.issue_date ? inv.issue_date.split("T")[0] : null,
+           dueDate: inv.due_date ? inv.due_date.split("T")[0] : null,
+           currency: inv.currency,
+           poNumber: inv.po_number ?? null,
+           items: (inv.items ?? []).map((it): WorkspaceLineItem => ({
+             id: it.id,
+             type: "service",
+             description: it.description,
+             quantity: it.quantity,
+             unit: it.unit || "each",
+             unitPrice: it.unit_price,
+             discount: it.discount ? String(it.discount) : "",
+             discountType: it.discount_type ?? "fixed",
+             taxRate: it.tax_rate,
+             isTaxInclusive: it.is_tax_inclusive ?? false,
+             productId: it.product_id ?? null,
+           })),
+           fees: (inv.fees ?? []).map((f): WorkspaceFee => ({
+             description: f.description,
+             amount: f.amount,
+             taxRate: f.tax_rate,
+           })),
+           notes: inv.notes ?? "",
+           terms: inv.terms ?? "",
+           paymentInstructions: inv.payment_instructions ?? "",
+           taxRate: settings.default_tax_rate ?? "0",
+           amountPaid: inv.amount_paid ?? "0",
+           depositType: inv.deposit_type ?? "none",
+           depositValue: inv.deposit_value ?? "0",
+           depositDueDate: inv.deposit_due_date ?? null,
+           depositPaymentPurpose: inv.deposit_payment_purpose ?? null,
+           lateFeeType: inv.late_fee_type ?? "none",
+           lateFeeValue: inv.late_fee_value ?? "0",
+           lateFeeDueDate: inv.late_fee_due_date ?? null,
+           templateId: inv.template_id ?? null,
+           status: inv.status,
+           isFinalized: inv.is_finalized ?? false,
+           publicToken: inv.public_token ?? null,
+           attachments: [],
+           beforePhotos: [],
+           afterPhotos: [],
+         };
         if (!cancelled) {
           setInvoice(mapped);
           setInvoiceId(inv.id);
@@ -518,6 +524,7 @@ export default function InvoiceWorkspace() {
         currency: cur.currency,
         issueDate: cur.issueDate,
         dueDate: cur.dueDate,
+        poNumber: cur.poNumber,
         notes: cur.notes,
         terms: cur.terms,
         paymentInstructions: cur.paymentInstructions,
@@ -528,6 +535,7 @@ export default function InvoiceWorkspace() {
         depositPaymentPurpose: cur.depositPaymentPurpose,
         lateFeeType: cur.lateFeeType || "none",
         lateFeeValue: cur.lateFeeValue || "0",
+        lateFeeDueDate: cur.lateFeeDueDate,
         items: cur.items.map(toApiItem),
         fees: cur.fees,
       };
@@ -745,16 +753,21 @@ export default function InvoiceWorkspace() {
       businessEmail: business?.email ?? undefined,
       businessPhone: business?.phone ?? undefined,
       businessWebsite: business?.website ?? undefined,
+      businessAddress: businessAddressString(business),
       businessLogo: business?.logoUrl ?? undefined,
+      businessTaxId: business?.taxId ?? undefined,
+      businessRegistrationNumber: business?.registrationNumber ?? undefined,
       customerName: invoice.customer?.name ?? customers.find((c) => c.id === invoice.customerId)?.name ?? undefined,
       customerCompanyName:
         invoice.customer?.companyName ?? customers.find((c) => c.id === invoice.customerId)?.companyName ?? undefined,
       customerEmail: invoice.customer?.email ?? customers.find((c) => c.id === invoice.customerId)?.email ?? undefined,
+      customerPhone: invoice.customer?.phone ?? customers.find((c) => c.id === invoice.customerId)?.phone ?? undefined,
       customerAddress: invoice.customer ? customerAddressString(invoice.customer) : undefined,
       invoiceNumber: invoice.invoiceNumber ?? (invoiceId ? "Draft" : undefined),
-      issueDate: invoice.issueDate ? formatDate(invoice.issueDate) : undefined,
-      dueDate: invoice.dueDate ? formatDate(invoice.dueDate) : undefined,
+       issueDate: invoice.issueDate ?? undefined,
+       dueDate: invoice.dueDate ?? undefined,
       currency: invoice.currency,
+      poNumber: invoice.poNumber ?? undefined,
       notes: invoice.notes ?? undefined,
       terms: invoice.terms ?? undefined,
       paymentInstructions,
@@ -768,6 +781,7 @@ export default function InvoiceWorkspace() {
       amountPaid: calc.amountPaid.toFixed(2),
       amountDue: calc.amountDue.toFixed(2),
       status: invoice.isFinalized ? invoice.status : "draft",
+      isFinalized: invoice.isFinalized,
       paymentLink:
         invoice.isFinalized && invoice.publicToken
           ? `${window.location.origin}/invoice/${invoice.publicToken}`
@@ -1012,16 +1026,16 @@ export default function InvoiceWorkspace() {
       />
 
       {/* Preview sidebar - responsive */}
-      <aside
-        className={`${previewMobileOpen ? "block" : "hidden"} lg:flex lg:flex-col lg:overflow-y-auto bg-surface-alt`}
-        style={{ width: `${previewWidth}px`, minWidth: "320px" }}
-      >
-        <div className="border-b border-color bg-surface px-6 py-3 text-center text-xs text-tertiary">
-          {invoice.isFinalized ? "Customer view" : "Live preview (not yet sent)"}
-        </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          {previewInvoice ? <InvoicePreview invoice={previewInvoice} /> : null}
-        </div>
+       <aside
+         className={`${previewMobileOpen ? "block" : "hidden"} lg:flex lg:flex-col lg:overflow-y-auto bg-surface-alt`}
+         style={{ width: `${previewWidth}px`, minWidth: "320px" }}
+       >
+         <div className="border-b border-color bg-surface px-4 py-2 text-center text-xs text-tertiary">
+           {invoice.isFinalized ? "Customer view" : "Live preview (not yet sent)"}
+         </div>
+         <div className="flex-1 overflow-y-auto p-4">
+           {previewInvoice ? <InvoicePreview invoice={previewInvoice} /> : null}
+         </div>
         {previewInvoice && previewInvoice.amountDue && Number(parseDecimal(previewInvoice.amountDue).toFixed(2)) > 0 && (
           <div className="border-t border-color p-6 text-center">
             <a
@@ -1263,6 +1277,18 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           value={toPercent(invoice.taxRate ?? "0")}
           onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
           placeholder="e.g. 8.5"
+          className="form-control mt-1 w-36"
+        />
+      </div>
+
+      <div className="flex flex-col">
+        <label className="text-xs font-semibold text-tertiary uppercase">P.O. #</label>
+        <input
+          type="text"
+          value={invoice.poNumber ?? ""}
+          onChange={(e) => onField("poNumber", e.target.value || null)}
+          placeholder="Reference #"
+          disabled={invoice.isFinalized}
           className="form-control mt-1 w-36"
         />
       </div>

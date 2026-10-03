@@ -157,6 +157,7 @@ export interface ApiInvoice {
   status: string;
   issue_date?: string | null;
   due_date?: string | null;
+  po_number?: string | null;
   currency: string;
   subtotal: string;
   discount_total: string;
@@ -173,6 +174,7 @@ export interface ApiInvoice {
   deposit_payment_purpose?: string | null;
   late_fee_type?: "none" | "fixed" | "percentage" | null;
   late_fee_value?: string | null;
+  late_fee_due_date?: string | null;
   late_fee_applied?: boolean | null;
   late_fee_applied_amount?: string | null;
   notes?: string | null;

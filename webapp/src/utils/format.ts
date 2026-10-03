@@ -34,6 +34,18 @@ export function formatDate(dateString: string | Date | undefined): string {
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
+export function formatDateLong(dateString: string | Date | undefined): string {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function parseDecimal(value: string | number | undefined | null): Decimal {
   return new Decimal(value ?? 0);
 }
