@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
-  getInvoice, createInvoice, updateInvoice, setInvoiceItems, setInvoiceFees,
+  getInvoice, createInvoice, updateInvoice,
   finalizeInvoice, sendInvoice, getInvoicePdf, getCustomers, getBusiness, getProducts
 } from "../api/client";
 import { calculationEngine, type LineItemInput, type FeeInput, type InvoiceCalculationInput } from "../utils/calculation";
@@ -493,25 +493,25 @@ function InvoiceEditorContent() {
           depositDueDate: editorData?.depositDueDate,
           lateFeeType: editorData?.lateFeeType || "none",
           lateFeeValue: editorData?.lateFeeValue || "0",
+          items: (editorData?.items || []).map((it) => ({
+            id: it.id,
+            productId: it.productId,
+            description: it.description,
+            quantity: it.quantity,
+            unit: it.unit || "each",
+            unitPrice: it.unitPrice,
+            discount: it.discount,
+            discountType: it.discountType,
+            taxRate: it.taxRate,
+            isTaxInclusive: it.isTaxInclusive,
+            catalogName: it.catalogName,
+            catalogSku: it.catalogSku,
+            catalogTaxCategory: it.catalogTaxCategory,
+            catalogUnitPrice: it.catalogUnitPrice,
+            catalogTaxRate: it.catalogTaxRate,
+          })),
+          fees: editorData?.fees || [],
         });
-        await setInvoiceItems(id!, (editorData?.items || []).map((it) => ({
-          id: it.id,
-          productId: it.productId,
-          description: it.description,
-          quantity: it.quantity,
-          unit: it.unit || "each",
-          unitPrice: it.unitPrice,
-          discount: it.discount,
-          discountType: it.discountType,
-          taxRate: it.taxRate,
-          isTaxInclusive: it.isTaxInclusive,
-          catalogName: it.catalogName,
-          catalogSku: it.catalogSku,
-          catalogTaxCategory: it.catalogTaxCategory,
-          catalogUnitPrice: it.catalogUnitPrice,
-          catalogTaxRate: it.catalogTaxRate,
-        })));
-        await setInvoiceFees(id!, editorData?.fees || []);
         analytics.track("invoice_saved", { invoiceId: id });
       }
       markSaved();

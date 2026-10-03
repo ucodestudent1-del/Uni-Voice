@@ -99,19 +99,19 @@ export default function Reports() {
     }
   }, [filters, toast]);
 
-  const loadDashboard = useCallback(async () => {
+   const loadDashboard = useCallback(async () => {
     setLoading("dashboard", true);
     try {
       const [summaryRes, dashRes, trendRes] = await Promise.all([
         getDashboardSummary().catch(() => null),
-        getEnhancedDashboard().catch(() => ({ summary: null, agingBuckets: [], paymentMetrics: null, volumeTrend: [] })),
+        getEnhancedDashboard(),
         getVolumeTrendReport({ period: "month", months: 3 }).catch(() => []),
       ]);
 
       const dash = dashRes as any;
-      setDashboardSummary(summaryRes ?? dash.summary ?? null);
-      setPaymentMetrics(dash.paymentMetrics ?? null);
-      setVolumeTrend(dash.volumeTrend ?? (Array.isArray(trendRes) ? trendRes : []));
+      setDashboardSummary(summaryRes ?? dash?.summary ?? null);
+      setPaymentMetrics(dash?.paymentMetrics ?? null);
+      setVolumeTrend(dash?.volumeTrend ?? (Array.isArray(trendRes) ? trendRes : []));
       setError(null);
     } catch (err: any) {
       if (err.response?.status === 403) {

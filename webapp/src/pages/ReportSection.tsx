@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { Decimal } from "decimal.js";
 import { AlertCircle, Download, RefreshCw } from "lucide-react";
-import { getEnhancedDashboard, getInvoices } from "../api/client";
+import { getEnhancedDashboard, getInvoices, getAgingReport, getPaymentMetricsReport } from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
 import EmptyState from "@/components/ui/EmptyState";
 import type {
@@ -21,7 +21,7 @@ interface ReportState {
   volumeTrend: ApiVolumeTrend[];
   paymentMetrics: ApiPaymentMetrics | null;
   agingBuckets: ApiAgingBucket[];
-  dashboardSummary: {
+   dashboardSummary: {
     totalOutstanding: string;
     totalOverdue: string;
     totalPaidThisMonth: string;
@@ -31,6 +31,7 @@ interface ReportState {
     sentCount: number;
     paidCount: number;
     totalInvoices: number;
+    currency: string;
   } | null;
   invoices: ApiInvoiceListItem[];
   currency: string;
@@ -53,24 +54,15 @@ export default function ReportSection() {
     setError(null);
     try {
       const [dashRes, invoicesRes] = await Promise.all([
-        getEnhancedDashboard().catch(() => ({
-          summary: null,
-          agingBuckets: [],
-          paymentMetrics: null,
-          volumeTrend: [],
-        })),
+        loadDashboardWithFallback(),
         getInvoices({ limit: 50 }).catch(() => ({ invoices: [] })),
       ]);
 
-      const dash = dashRes as any;
-      const trendData = Array.isArray(dash.volumeTrend)
-        ? dash.volumeTrend
-        : Array.isArray((dashRes as any).report)
-          ? (dashRes as any).report
-          : [];
-      const metrics = (dash.paymentMetrics ?? null) as ApiPaymentMetrics | null;
-      const agingBuckets = Array.isArray(dash.agingBuckets) ? dash.agingBuckets : [];
-      const dashSummary = dash.summary ?? null;
+      const dash = dashRes;
+      const metrics = dash.paymentMetrics;
+      const agingBuckets = dash.agingBuckets;
+      const dashSummary = dash.summary;
+      const trendData = dash.volumeTrend;
       const invoices = Array.isArray(invoicesRes.invoices) ? invoicesRes.invoices : [];
 
       setData({
@@ -79,12 +71,41 @@ export default function ReportSection() {
         agingBuckets,
         dashboardSummary: dashSummary,
         invoices,
-        currency: dash.summary?.currency ?? "USD",
+        currency: dashSummary?.currency ?? "USD",
       });
     } catch (err: any) {
       setError(err.response?.data?.error || "Could not load report data");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadDashboardWithFallback() {
+    try {
+      const dash = await getEnhancedDashboard();
+      return {
+        summary: dash.summary ?? null,
+        agingBuckets: Array.isArray(dash.agingBuckets) ? dash.agingBuckets : [],
+        paymentMetrics: dash.paymentMetrics ?? null,
+        volumeTrend: Array.isArray(dash.volumeTrend) ? dash.volumeTrend : [],
+      };
+    } catch (dashErr: any) {
+      const status = dashErr?.response?.status;
+      if (status === 403 || status === 404) {
+        const [agingRes, metricsRes] = await Promise.allSettled([
+          getAgingReport().catch(() => null),
+          getPaymentMetricsReport().catch(() => null),
+        ]);
+        const aging = agingRes.status === "fulfilled" ? agingRes.value : null;
+        const metrics = metricsRes.status === "fulfilled" ? metricsRes.value : null;
+        return {
+          summary: aging?.summary ?? null,
+          agingBuckets: aging?.buckets ?? [],
+          paymentMetrics: metrics,
+          volumeTrend: [],
+        };
+      }
+      throw dashErr;
     }
   }
 
