@@ -142,7 +142,7 @@ function registerTextComponent() {
               <input
                 type="number"
                 value={component.style.fontSize || 14}
-                onChange={(e) => onChange({}, { fontSize: parseInt(e.target.value) || 14 })}
+                onChange={(e) => onChange({}, { fontSize: parseInt(e.target.value, 10) || 14 })}
                 className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -493,7 +493,7 @@ function registerInvoiceNumberComponent() {
             <input
               type="number"
               value={component.style.fontSize || 14}
-              onChange={(e) => onChange({}, { fontSize: parseInt(e.target.value) || 14 })}
+              onChange={(e) => onChange({}, { fontSize: parseInt(e.target.value, 10) || 14 })}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -1834,7 +1834,7 @@ function registerSpacerComponent() {
             <input
               type="number"
               value={component.props.height || 16}
-              onChange={(e) => onChange({ height: parseInt(e.target.value) || 16 }, {})}
+              onChange={(e) => onChange({ height: parseInt(e.target.value, 10) || 16 }, {})}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -1892,7 +1892,7 @@ function registerDividerComponent() {
             <input
               type="number"
               value={component.props.thickness || 1}
-              onChange={(e) => onChange({ thickness: parseInt(e.target.value) || 1 }, {})}
+              onChange={(e) => onChange({ thickness: parseInt(e.target.value, 10) || 1 }, {})}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -2048,7 +2048,7 @@ function registerRowComponent() {
               min={1}
               max={4}
               value={component.props.columns}
-              onChange={(e) => onChange({ columns: parseInt(e.target.value) || 2 }, {})}
+              onChange={(e) => onChange({ columns: parseInt(e.target.value, 10) || 2 }, {})}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -2058,7 +2058,7 @@ function registerRowComponent() {
               type="number"
               min={0}
               value={typeof component.props.columnGap === "number" ? component.props.columnGap : 16}
-              onChange={(e) => onChange({ columnGap: parseInt(e.target.value) || 16 }, {})}
+              onChange={(e) => onChange({ columnGap: parseInt(e.target.value, 10) || 16 }, {})}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -2126,7 +2126,7 @@ function registerColumnComponent() {
               min={1}
               max={12}
               value={component.props.span || 1}
-              onChange={(e) => onChange({ span: parseInt(e.target.value) || 1 }, {})}
+              onChange={(e) => onChange({ span: parseInt(e.target.value, 10) || 1 }, {})}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>

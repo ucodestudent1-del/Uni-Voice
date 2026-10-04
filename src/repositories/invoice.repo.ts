@@ -564,7 +564,7 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
       vals.push(term, term, term);
       i++;
     }
-    const limit = opts.limit ?? 50;
+    const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
     const offset = opts.offset ?? 0;
     const res = await query(
       `SELECT i.*, c.name as customer_name, c.email as customer_email
@@ -633,12 +633,14 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
     return buckets;
   }
 
-async getVolumeTrend(businessId: string, months: number): Promise<Array<{
+async getVolumeTrend(businessId: string, months: number, period: "day" | "week" | "month" = "month"): Promise<Array<{
     period: string;
     invoiced: string;
     paid: string;
     count: number;
   }>> {
+    const dateTrunc = period === "day" ? "day" : period === "week" ? "week" : "month";
+    const format = period === "day" ? "YYYY-MM-DD" : period === "week" ? "IYYY-IW" : "YYYY-MM";
     const cutoff = new Date();
     cutoff.setDate(1);
     cutoff.setMonth(cutoff.getMonth() - months + 1);
@@ -654,32 +656,32 @@ async getVolumeTrend(businessId: string, months: number): Promise<Array<{
     //   3. issue_date < cutoff AND created_at >= cutoff (uses idx_invoices_business_created)
     const res = await query(
       `SELECT
-          TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
-          COUNT(*)::int AS count,
-          COALESCE(SUM(i.total), 0) AS invoiced,
-          COALESCE(SUM(i.amount_paid), 0) AS paid
-        FROM invoices i
-        WHERE i.business_id = $1 AND i.issue_date >= $2
-        GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
-        UNION ALL
-        SELECT
-          TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
-          COUNT(*)::int AS count,
-          COALESCE(SUM(i.total), 0) AS invoiced,
-          COALESCE(SUM(i.amount_paid), 0) AS paid
-        FROM invoices i
-        WHERE i.business_id = $1 AND i.issue_date IS NULL
-        GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
-        UNION ALL
-        SELECT
-          TO_CHAR(DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at)), 'YYYY-MM') AS period,
-          COUNT(*)::int AS count,
-          COALESCE(SUM(i.total), 0) AS invoiced,
-          COALESCE(SUM(i.amount_paid), 0) AS paid
-        FROM invoices i
-        WHERE i.business_id = $1 AND i.issue_date < $2 AND i.created_at >= $2
-        GROUP BY DATE_TRUNC('month', COALESCE(i.issue_date, i.created_at))
-        ORDER BY period ASC`,
+           TO_CHAR(DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at)), '${format}') AS period,
+           COUNT(*)::int AS count,
+           COALESCE(SUM(i.total), 0) AS invoiced,
+           COALESCE(SUM(i.amount_paid), 0) AS paid
+         FROM invoices i
+         WHERE i.business_id = $1 AND i.issue_date >= $2
+         GROUP BY DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at))
+         UNION ALL
+         SELECT
+           TO_CHAR(DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at)), '${format}') AS period,
+           COUNT(*)::int AS count,
+           COALESCE(SUM(i.total), 0) AS invoiced,
+           COALESCE(SUM(i.amount_paid), 0) AS paid
+         FROM invoices i
+         WHERE i.business_id = $1 AND i.issue_date IS NULL
+         GROUP BY DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at))
+         UNION ALL
+         SELECT
+           TO_CHAR(DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at)), '${format}') AS period,
+           COUNT(*)::int AS count,
+           COALESCE(SUM(i.total), 0) AS invoiced,
+           COALESCE(SUM(i.amount_paid), 0) AS paid
+         FROM invoices i
+         WHERE i.business_id = $1 AND i.issue_date < $2 AND i.created_at >= $2
+         GROUP BY DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at))
+         ORDER BY period ASC`,
       [businessId, cutoff.toISOString()]
     );
 
@@ -706,7 +708,7 @@ async getVolumeTrend(businessId: string, months: number): Promise<Array<{
     return Array.from(merged.values()).sort((a, b) => a.period.localeCompare(b.period));
   }
 
-  async getPaymentMetrics(businessId: string, monthStart: Date): Promise<{
+  async getPaymentMetrics(businessId: string, _monthStart: Date): Promise<{
     totalInvoiced: string;
     totalPaid: string;
     totalOutstanding: string;

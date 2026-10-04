@@ -554,7 +554,7 @@ function PaymentDialog({
               value={payAmount}
               onChange={(e) => onAmountChange(e.target.value)}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder={amountDue.toFixed()}
+              placeholder={amountDue.toFixed(2)}
             />
           </div>
           <button
@@ -620,7 +620,7 @@ function DepositDialog({
               value={depositAmount}
               onChange={(e) => onAmountChange(e.target.value)}
               className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder={depositDue.toFixed()}
+              placeholder={depositDue.toFixed(2)}
             />
           </div>
           <button

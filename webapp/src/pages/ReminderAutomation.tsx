@@ -13,6 +13,15 @@ import UpgradePrompt from "../components/UpgradePrompt";
 import { formatDate } from "../utils/format";
 import type { ApiReminderConfig, ApiReminderTemplate, ReminderSequence } from "../types/api";
 
+function safeJsonParse<T>(value: unknown, fallback: T): T {
+  try {
+    if (typeof value === "string") return JSON.parse(value) as T;
+    return value as T;
+  } catch {
+    return fallback;
+  }
+}
+
 const DEFAULT_REMINDER_CONFIG: ApiReminderConfig = {
   enabled: false,
   beforeDue: [
@@ -50,8 +59,12 @@ export default function ReminderAutomation() {
       if (data.settings?.reminders_enabled !== undefined) {
         const reminderConfig: ApiReminderConfig = {
           enabled: data.settings.reminders_enabled,
-          beforeDue: data.settings.reminders_before_due ? JSON.parse(data.settings.reminders_before_due as string) : DEFAULT_REMINDER_CONFIG.beforeDue,
-          afterDue: data.settings.reminders_after_due ? JSON.parse(data.settings.reminders_after_due as string) : DEFAULT_REMINDER_CONFIG.afterDue,
+          beforeDue: data.settings.reminders_before_due
+            ? safeJsonParse(data.settings.reminders_before_due, DEFAULT_REMINDER_CONFIG.beforeDue)
+            : DEFAULT_REMINDER_CONFIG.beforeDue,
+          afterDue: data.settings.reminders_after_due
+            ? safeJsonParse(data.settings.reminders_after_due, DEFAULT_REMINDER_CONFIG.afterDue)
+            : DEFAULT_REMINDER_CONFIG.afterDue,
         };
         setConfig(reminderConfig);
       }

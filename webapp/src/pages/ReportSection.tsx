@@ -55,7 +55,10 @@ export default function ReportSection() {
     try {
       const [dashRes, invoicesRes] = await Promise.all([
         loadDashboardWithFallback(),
-        getInvoices({ limit: 50 }).catch(() => ({ invoices: [] })),
+        getInvoices({ limit: 50 }).catch((err) => {
+          console.error("Failed to load invoices for report", err);
+          return { invoices: [] };
+        }),
       ]);
 
       const dash = dashRes;
@@ -93,8 +96,14 @@ export default function ReportSection() {
       const status = dashErr?.response?.status;
       if (status === 403 || status === 404) {
         const [agingRes, metricsRes] = await Promise.allSettled([
-          getAgingReport().catch(() => null),
-          getPaymentMetricsReport().catch(() => null),
+          getAgingReport().catch((err) => {
+            console.error("Failed to load aging report", err);
+            return null;
+          }),
+          getPaymentMetricsReport().catch((err) => {
+            console.error("Failed to load payment metrics report", err);
+            return null;
+          }),
         ]);
         const aging = agingRes.status === "fulfilled" ? agingRes.value : null;
         const metrics = metricsRes.status === "fulfilled" ? metricsRes.value : null;

@@ -179,6 +179,11 @@ export interface ProfitLossReport {
     count: number;
     byMonth: Array<{ period: string; amount: string; count: number }>;
   };
+  expenses: {
+    total: string;
+    count: number;
+    byMonth: Array<{ period: string; amount: string; count: number }>;
+  };
   netIncome: string;
   grossMargin: number;
 }
@@ -984,6 +989,7 @@ export class ReportsService {
     const currency = currencyRow.rows[0]?.currency ?? "USD";
 
     const revenueTotal = revenue.rows.reduce((sum: number, r: any) => sum + Number(r.amount ?? 0), 0);
+    const expenseTotal = 0;
 
     const result: ProfitLossReport = {
       periodStart: dateFrom,
@@ -998,7 +1004,12 @@ export class ReportsService {
           count: Number(r.count ?? 0),
         })),
       },
-      netIncome: new Decimal(revenueTotal).toFixed(2),
+      expenses: {
+        total: new Decimal(expenseTotal).toFixed(2),
+        count: 0,
+        byMonth: [],
+      },
+      netIncome: new Decimal(revenueTotal - expenseTotal).toFixed(2),
       grossMargin: revenueTotal > 0 ? 100 : 0,
     };
 

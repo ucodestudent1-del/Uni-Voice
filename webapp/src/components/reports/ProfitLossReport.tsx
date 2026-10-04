@@ -36,6 +36,7 @@ interface ProfitLossReportProps {
 
 export default function ProfitLossReport({ data, loading, currency, onExport }: ProfitLossReportProps) {
   const revenue = data?.revenue ?? null;
+  const expenses = data?.expenses ?? null;
   const netIncome = data?.netIncome ?? "0";
   const grossMargin = data?.grossMargin ?? 0;
 
@@ -92,10 +93,18 @@ export default function ProfitLossReport({ data, loading, currency, onExport }: 
           iconBackground="bg-success-bg text-success-text"
         />
         <KPICard
+          title="Total Expenses"
+          value={expenses?.total ?? "0"}
+          currency={currency}
+          subtitle={`${expenses?.count ?? 0} items`}
+          icon={<DollarSign className="w-5 h-5" />}
+          iconBackground="bg-error-bg text-error-text"
+        />
+        <KPICard
           title="Net Income"
           value={netIncome}
           currency={currency}
-          subtitle="Total revenue earned"
+          subtitle="Revenue minus expenses"
           icon={<TrendingUp className="w-5 h-5" />}
           iconBackground={Number(netIncome) >= 0 ? "bg-success-bg text-success-text" : "bg-error-bg text-error-text"}
         />

@@ -883,7 +883,9 @@ export default function InvoiceWorkspace() {
   }
 
   function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text).catch(() => {});
+    navigator.clipboard.writeText(text).catch((err) => {
+      console.error("Failed to copy to clipboard", err);
+    });
   }
 
   if (!invoice) {

@@ -275,7 +275,7 @@ export default function PaymentsSettings() {
             min="1"
             max="120"
             value={form.overdueReminderDays}
-            onChange={(e) => setForm({ ...form, overdueReminderDays: parseInt(e.target.value) || 7 })}
+            onChange={(e) => setForm({ ...form, overdueReminderDays: parseInt(e.target.value, 10) || 7 })}
             className="form-control"
           />
         </FormField>

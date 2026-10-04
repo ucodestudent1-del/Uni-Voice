@@ -320,13 +320,13 @@ function InvoiceEditorContent() {
 
   const calculations = useMemo(() => calcResult
     ? {
-        subtotal: calcResult.subtotal.toFixed(),
-        discountTotal: calcResult.discountTotal.toFixed(),
-        taxTotal: calcResult.taxTotal.toFixed(),
-        feeTotal: calcResult.feeTotal.toFixed(),
-        total: calcResult.total.toFixed(),
-        amountDue: calcResult.amountDue.toFixed(),
-        amountPaid: calcResult.amountPaid.toFixed(),
+        subtotal: calcResult.subtotal.toFixed(2),
+        discountTotal: calcResult.discountTotal.toFixed(2),
+        taxTotal: calcResult.taxTotal.toFixed(2),
+        feeTotal: calcResult.feeTotal.toFixed(2),
+        total: calcResult.total.toFixed(2),
+        amountDue: calcResult.amountDue.toFixed(2),
+        amountPaid: calcResult.amountPaid.toFixed(2),
         formatCurrency: (value: any, currency: string) => formatCurrency(new Decimal(value), currency as any),
         computeLineTotal: (item: EditorLineItem, currency: string) => {
           const qty = new Decimal(item.quantity || 1);
@@ -335,16 +335,16 @@ function InvoiceEditorContent() {
         },
         lineItems: calcResult.lineItems.map((li) => ({
           ...li,
-          lineTotal: li.lineTotal.toFixed(),
-          lineSubtotal: li.lineSubtotal.toFixed(),
-          discountAmount: li.discountAmount.toFixed(),
-          taxAmount: li.taxAmount.toFixed(),
+          lineTotal: li.lineTotal.toFixed(2),
+          lineSubtotal: li.lineSubtotal.toFixed(2),
+          discountAmount: li.discountAmount.toFixed(2),
+          taxAmount: li.taxAmount.toFixed(2),
         })),
         fees: calcResult.fees.map((f) => ({
           ...f,
-          amount: f.amount.toFixed(),
-          feeTotal: f.feeTotal.toFixed(),
-          taxAmount: f.taxAmount.toFixed(),
+          amount: f.amount.toFixed(2),
+          feeTotal: f.feeTotal.toFixed(2),
+          taxAmount: f.taxAmount.toFixed(2),
         })),
       }
     : null, [calcResult]);

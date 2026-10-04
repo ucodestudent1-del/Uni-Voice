@@ -1037,6 +1037,11 @@ export interface ApiProfitLossReport {
     count: number;
     byMonth: Array<{ period: string; amount: string; count: number }>;
   };
+  expenses: {
+    total: string;
+    count: number;
+    byMonth: Array<{ period: string; amount: string; count: number }>;
+  };
   netIncome: string;
   grossMargin: number;
 }

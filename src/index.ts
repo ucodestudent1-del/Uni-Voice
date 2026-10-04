@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express, { NextFunction } from "express";
 import rateLimit from "express-rate-limit";
 import compression from "compression";
 import cors from "cors";
@@ -27,7 +27,6 @@ const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
 import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
-import { customerRepository } from "./repositories/customer.repo.js";
 import { productRepository } from "./repositories/product.repo.js";
 import { productServiceRepository } from "./repositories/product-service.repo.js";
 import { productServiceService } from "./services/product-service/product-service.js";
@@ -56,7 +55,6 @@ import {
   CustomerUpdateSchema,
   CustomerSearchQuerySchema,
   CustomerImportSchema,
-  CustomerSchema,
 } from "./domain/schemas/customer.js";
 import {
   CreateProductServiceSchema,
@@ -312,7 +310,7 @@ app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
 
 app.patch("/api/auth/profile", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized" });
-  const { email, name } = req.body;
+  const { email } = req.body;
   try {
     const updates: string[] = [];
     const values: unknown[] = [req.user!.id];
@@ -1406,7 +1404,9 @@ app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) 
   const cached = reportsCache.get(cacheKey);
   if (cached) return res.json(cached);
   const months = Math.min(Number(req.query.months ?? 3), 12);
-  const result = await invoiceRepository.getVolumeTrend(req.user!.businessId, months);
+  const period = (req.query.period as string) ?? "month";
+  const validPeriod = period === "day" || period === "week" || period === "month" ? period : "month";
+  const result = await invoiceRepository.getVolumeTrend(req.user!.businessId, months, validPeriod);
   reportsCache.set(cacheKey, result);
   res.json(result);
 });
@@ -1633,9 +1633,101 @@ app.get("/api/export/invoices/csv", requireAuth, requireEntitlement("export.csv"
   res.send(csv);
 });
 
+app.get("/api/export/invoices/json", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query("SELECT * FROM invoices WHERE business_id = $1 ORDER BY created_at DESC LIMIT 1000", [req.user!.businessId]);
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Content-Disposition", "attachment; filename=invoices.json");
+  res.send(JSON.stringify(result.rows, null, 2));
+});
+
 // ============================================================================
-// FEATURE FLAGS
+// REMINDER TEMPLATES
 // ============================================================================
+app.get("/api/reminder-templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    "SELECT id, business_id, name, subject_template AS subject, body_template AS message, is_default, created_at, updated_at FROM email_templates WHERE business_id = $1 ORDER BY created_at DESC",
+    [req.user!.businessId]
+  );
+  res.json({ templates: result.rows });
+});
+
+app.post("/api/reminder-templates", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { name, subject, message } = req.body;
+  if (!name || !subject || !message) return res.status(400).json({ error: "name, subject, and message are required" });
+  const result = await query(
+    `INSERT INTO email_templates (id, business_id, template_type, name, subject_template, body_template, locale, is_active, is_default, created_at, updated_at)
+     VALUES (gen_random_uuid(), $1, 'reminder', $2, $3, $4, 'en-US', true, false, NOW(), NOW())
+     RETURNING id, business_id, name, subject_template AS subject, body_template AS message, is_default, created_at, updated_at`,
+    [req.user!.businessId, name, subject, message]
+  );
+  res.status(201).json({ template: result.rows[0] });
+});
+
+app.patch("/api/reminder-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { name, subject, message } = req.body;
+  const updates: string[] = [];
+  const values: unknown[] = [req.user!.businessId, req.params.id];
+  let i = 3;
+  if (name !== undefined) { updates.push(`name = $${i++}`); values.push(name); }
+  if (subject !== undefined) { updates.push(`subject_template = $${i++}`); values.push(subject); }
+  if (message !== undefined) { updates.push(`body_template = $${i++}`); values.push(message); }
+  if (updates.length === 0) return res.status(400).json({ error: "No fields to update" });
+  const result = await query(
+    `UPDATE email_templates SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $${i++} AND business_id = $1
+     RETURNING id, business_id, name, subject_template AS subject, body_template AS message, is_default, created_at, updated_at`,
+    [...values, req.params.id]
+  );
+  if (!result.rows.length) return res.status(404).json({ error: "Template not found" });
+  res.json({ template: result.rows[0] });
+});
+
+app.delete("/api/reminder-templates/:id", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await query(
+    "DELETE FROM email_templates WHERE id = $1 AND business_id = $2 AND template_type = 'reminder' RETURNING id",
+    [req.params.id, req.user!.businessId]
+  );
+  if (!result.rows.length) return res.status(404).json({ error: "Template not found" });
+  res.json({ deleted: true });
+});
+
+// ============================================================================
+// INVOICE DEPOSITS
+// ============================================================================
+app.patch("/api/invoices/:id/deposit", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { depositType, depositValue, depositDueDate, depositPaymentPurpose } = req.body;
+  if (!depositType || depositType !== "none" && !depositValue) return res.status(400).json({ error: "Invalid deposit configuration" });
+  const updateFields: string[] = [];
+  const updateValues: unknown[] = [req.params.id, req.user!.businessId];
+  let idx = 3;
+  if (depositType !== undefined) { updateFields.push(`deposit_type = $${idx++}`); updateValues.push(depositType); }
+  if (depositValue !== undefined) { updateFields.push(`deposit_amount = $${idx++}`); updateValues.push(depositValue); }
+  if (depositDueDate !== undefined) { updateFields.push(`deposit_due_date = $${idx++}`); updateValues.push(depositDueDate); }
+  if (depositPaymentPurpose !== undefined) { updateFields.push(`deposit_payment_purpose = $${idx++}`); updateValues.push(depositPaymentPurpose); }
+  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
+  if (invoice.isFinalized) return res.status(400).json({ error: "Cannot modify a finalized invoice" });
+  await query(
+    `UPDATE invoices SET ${updateFields.join(", ")}, updated_at = NOW() WHERE id = $1 AND business_id = $2 RETURNING id`,
+    updateValues
+  );
+  invalidateReportsCache(req.user!.businessId);
+  res.json({ invoiceId: req.params.id });
+});
+
+app.post("/api/invoices/:id/deposit/pay", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { amount, provider = "stub", idempotencyKey } = req.body;
+  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Valid amount required" });
+  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
+  await invoiceService.recordPayment(req.user!.businessId, req.params.id, Number(amount), provider, idempotencyKey, req.user!.id);
+  invalidateReportsCache(req.user!.businessId);
+  res.status(201).json({ ok: true });
+});
 app.get("/api/features", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const ctx = await subscriptionService.getSubscriptionContext(req.user!.businessId);

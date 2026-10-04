@@ -126,7 +126,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
                 id="prop-font-size"
                 type="number"
                 value={component.style.fontSize || ""}
-                onChange={(e) => handleStyleChange({ fontSize: e.target.value ? parseInt(e.target.value) : undefined })}
+                onChange={(e) => handleStyleChange({ fontSize: e.target.value ? parseInt(e.target.value, 10) : undefined })}
                 placeholder="14"
                 className="w-full text-sm border border-input-border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
               />

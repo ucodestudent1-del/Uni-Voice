@@ -41,7 +41,7 @@ fi
 
 # Start nginx
 echo "Starting nginx..."
-nginx -g "daemon off;" &
+nginx -c /app/nginx.conf -g "daemon off;" &
 NGINX_PID=$!
 
 # If either process dies, exit

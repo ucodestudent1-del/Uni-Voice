@@ -133,7 +133,7 @@ export default function InvoicingSettings() {
               min="1"
               max="10"
               value={numberingData.padding}
-              onChange={(e) => setNumberingData({ ...numberingData, padding: parseInt(e.target.value) || 6 })}
+              onChange={(e) => setNumberingData({ ...numberingData, padding: parseInt(e.target.value, 10) || 6 })}
               className="form-control w-full"
             />
           </FormField>
@@ -193,7 +193,7 @@ export default function InvoicingSettings() {
               min="1"
               max="120"
               value={settingsForm.overdueReminderDays}
-              onChange={(e) => setSettingsForm({ ...settingsForm, overdueReminderDays: parseInt(e.target.value) || 7 })}
+              onChange={(e) => setSettingsForm({ ...settingsForm, overdueReminderDays: parseInt(e.target.value, 10) || 7 })}
               className="form-control w-full"
             />
           </FormField>

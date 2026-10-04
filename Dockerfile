@@ -97,9 +97,10 @@ RUN npm run build
 # —………………………………
 FROM node:22-bookworm-slim AS production
 
-# Copy system libraries needed at runtime (Chrome/Puppeteer)
-# Reinstall the specific libs needed at runtime
+# Install nginx and system libraries needed at runtime (Chrome/Puppeteer)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    nginx \
     libnss3 \
     libgbm1 \
     libgtk-3-0 \
@@ -141,13 +142,21 @@ COPY --from=frontend-builder /app/webapp/dist/ /app/webapp/dist/
 # Copy migrations
 COPY --from=backend-builder /app/dist/db/migrations/ /app/dist/db/migrations/
 
+# Copy nginx config
+COPY nginx.conf /app/nginx.conf
+
 WORKDIR /app
 
 # Production environment variables
+# Override APP_PUBLIC_BASE_URL and SECRET_KEY at deployment time
 ENV NODE_ENV=production
 ENV APP_ENV=production
 ENV PORT=4000
-ENV APP_PUBLIC_BASE_URL=https://uni-voice-production.up.railway.app
+ENV APP_PUBLIC_BASE_URL=http://localhost:4000
+ENV APP_FRONTEND_URL=
+ENV GOOGLE_CLIENT_ID=
+ENV GOOGLE_CLIENT_SECRET=
+ENV GOOGLE_CALLBACK_URL=
 ENV EMAIL_FROM=noreply@example.com
 ENV EMAIL_PROVIDER=stub
 ENV SENDGRID_API_KEY=
