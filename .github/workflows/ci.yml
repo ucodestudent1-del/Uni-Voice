@@ -136,7 +136,7 @@ jobs:
 
   build:
     name: Build
-    needs: [typecheck, lint, frontend-typecheck, test, frontend-test]
+    needs: [typecheck, lint, frontend-typecheck, frontend-lint, test, frontend-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -203,7 +203,7 @@ jobs:
 
   docker-build:
     name: Docker Build
-    needs: [build, frontend-lint]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

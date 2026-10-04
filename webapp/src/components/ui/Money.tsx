@@ -18,8 +18,8 @@ function formatValue(value: Decimal.Value, currency: string, decimalPlaces: numb
   return formatCurrency(value, currency, decimalPlaces);
 }
 
-export function formatMoneyValue(value: Decimal.Value, currency?: string, decimalPlaces = 2): string {
-  return formatValue(value, currency ?? "USD", decimalPlaces);
+export function formatMoneyValue(value: Decimal.Value | null | undefined, currency?: string, decimalPlaces = 2): string {
+  return formatValue(value ?? 0, currency ?? "USD", decimalPlaces);
 }
 
 export const Money = forwardRef<HTMLSpanElement, MoneyProps>(function Money(

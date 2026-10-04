@@ -8,7 +8,7 @@ export type { EmptyStateProps };
 type EmptyStateVariant = "default" | "compact" | "sidebar" | "loading" | "error";
 
 export default function EmptyState({
-  title = "No items yet",
+  title,
   description,
   icon,
   actionLabel = "Create first",
@@ -17,9 +17,9 @@ export default function EmptyState({
   variant = "default",
 }: EmptyStateProps & { variant?: EmptyStateVariant }) {
   const inner = (
-    <div className="flex flex-col items-center justify-center py-10 text-center">
+    <div className={cn("flex flex-col items-center justify-center py-10 text-center", className)}>
       {icon && <div className="mb-4 text-tertiary">{icon}</div>}
-      <h3 className="text-lg font-medium text-primary leading-tight">{title}</h3>
+      <h3 className="text-lg font-medium text-primary leading-tight">{title || "No items yet"}</h3>
       {description && <p className="mt-2 max-w-sm text-sm text-secondary leading-relaxed">{description}</p>}
       {onAction && (
         <Button variant="primary" size="md" className="mt-4" onClick={onAction}>
@@ -33,7 +33,7 @@ export default function EmptyState({
     return (
       <div className={cn("text-center py-6", className)}>
         {icon && <div className="mb-2 text-tertiary inline-flex">{icon}</div>}
-        <p className="text-sm font-medium text-primary">{title}</p>
+        <p className="text-sm font-medium text-primary">{title || "No items yet"}</p>
         {description && <p className="text-xs text-secondary mt-1 leading-relaxed">{description}</p>}
         {onAction && (
           <Button variant="primary" size="sm" className="mt-2" onClick={onAction}>
@@ -48,7 +48,7 @@ export default function EmptyState({
     return (
       <div className={cn("py-8 text-center", className)}>
         {icon && <div className="mb-3 text-tertiary inline-flex">{icon}</div>}
-        <p className="text-sm text-tertiary">{title}</p>
+        <p className="text-sm text-tertiary">{title || "No items yet"}</p>
         {onAction && (
           <Button variant="link" size="sm" className="mt-2" onClick={onAction}>
             {actionLabel}
@@ -72,7 +72,7 @@ export default function EmptyState({
     return (
       <div className={cn("flex flex-col items-center justify-center py-10 text-center", className)}>
         {icon && <div className="mb-4 text-error-text">{icon}</div>}
-        <h3 className="text-lg font-medium text-error-text leading-tight">{title}</h3>
+        <h3 className="text-lg font-medium text-error-text leading-tight">{title || "Something went wrong"}</h3>
         {description && <p className="mt-2 max-w-sm text-sm text-secondary leading-relaxed">{description}</p>}
         {onAction && (
           <Button variant="primary" size="md" className="mt-4" onClick={onAction}>

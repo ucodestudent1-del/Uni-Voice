@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ForwardRefExoticComponent, HTMLAttributes, ReactNode, Ref, SVGProps } from "react";
 import type { LucideIcon } from "lucide-react";
+import type { Decimal } from "decimal.js";
 
 export type {
   ButtonHTMLAttributes,
@@ -23,7 +24,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export interface MoneyProps extends HTMLAttributes<HTMLSpanElement> {
-  amount: number | string;
+  amount: number | string | Decimal.Value;
   currency?: string;
   decimalPlaces?: number;
   signed?: boolean;

@@ -17,8 +17,8 @@ export default function ConfirmationDialog({
   destructive = false,
   showInput = false,
   inputLabel,
-  inputPlaceholder = "",
-  inputValue = "",
+   inputPlaceholder = "",
+   inputValue,
   onInputChange,
   inputRequiredMatch,
   isLoading = false,
@@ -27,7 +27,8 @@ export default function ConfirmationDialog({
 
   if (!open) return null;
 
-  const canConfirm = inputRequiredMatch ? localInput === inputRequiredMatch : true;
+  const effectiveInput = inputValue ?? localInput;
+  const canConfirm = inputRequiredMatch ? effectiveInput === inputRequiredMatch : true;
 
   const handleConfirm = () => {
     const data: Record<string, string> = {};
@@ -65,10 +66,11 @@ export default function ConfirmationDialog({
           </label>
           <input
             type="text"
-            value={inputValue ?? localInput}
+            value={effectiveInput}
             onChange={(e) => {
-              onInputChange?.(e.target.value);
-              setLocalInput(e.target.value);
+              const val = e.target.value;
+              onInputChange?.(val);
+              setLocalInput(val);
             }}
             disabled={!!inputValue}
             className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder-target disabled:opacity-50"

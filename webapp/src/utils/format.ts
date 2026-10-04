@@ -1,4 +1,5 @@
 import { Decimal } from "decimal.js";
+import { getCurrencyMetadata } from "@/types/currency";
 
 // Cache Intl.NumberFormat instances per currency/locale to avoid the overhead
 // of constructing a new formatter on every formatCurrency call.
@@ -19,10 +20,19 @@ function getCurrencyFormatter(currency: string, decimalPlaces = 2): Intl.NumberF
   return formatter;
 }
 
+function isSupportedCurrency(currency: string): boolean {
+  try {
+    getCurrencyMetadata(currency);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function formatCurrency(amount: Decimal.Value, currency: string, decimalPlaces = 2): string {
   const d = new Decimal(amount || 0);
   const rounded = d.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
-  const safeCurrency = currency && currency.length >= 3 ? currency : "USD";
+  const safeCurrency = currency && currency.length >= 3 && isSupportedCurrency(currency) ? currency : "USD";
   const formatter = getCurrencyFormatter(safeCurrency, decimalPlaces);
   return formatter.format(Number(rounded.toNumber()));
 }
@@ -31,7 +41,7 @@ export function formatDate(dateString: string | Date | undefined): string {
   if (!dateString) return "";
   const d = new Date(dateString);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
 export function formatDateLong(dateString: string | Date | undefined): string {

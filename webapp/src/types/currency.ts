@@ -51,9 +51,10 @@ const CURRENCY_METADATA: Record<string, CurrencyMetadata> = {
 };
 
 export function getCurrencyMetadata(code: string): CurrencyMetadata {
-  const meta = CURRENCY_METADATA[code.toUpperCase()];
+  const upper = code.toUpperCase();
+  const meta = CURRENCY_METADATA[upper];
   if (!meta) {
-    throw new Error(`Unsupported currency: ${code}`);
+    throw new Error(`Unsupported currency: ${upper}`);
   }
   return meta;
 }

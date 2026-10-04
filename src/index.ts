@@ -3110,6 +3110,13 @@ if (!isDev) {
 // ============================================================================
 // ERROR HANDLING
 // ============================================================================
+app.use((_req: express.Request, _res: express.Response, next: express.NextFunction) => {
+  const err = new Error("Resource not found") as Error & { statusCode: number; code: string };
+  err.statusCode = 404;
+  err.code = "NOT_FOUND";
+  next(err);
+});
+
 app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   const requestId = (req.headers["x-request-id"] as string | undefined) ?? "unknown";
   if (err instanceof Error && "statusCode" in err) {
@@ -3126,7 +3133,7 @@ app.use((err: Error, req: express.Request, res: express.Response, _next: express
     return res.status(400).json({ error: "Validation failed", code: "VALIDATION_ERROR", issues: (err as any).issues });
   }
   logger.error({ err, requestId, url: req.url, method: req.method }, "Unhandled error");
-  res.status(500).json({ error: "Internal server error" });
+  res.status(500).json({ error: "Internal server error", code: "INTERNAL_ERROR" });
 });
 
 process.on("unhandledRejection", (reason) => {

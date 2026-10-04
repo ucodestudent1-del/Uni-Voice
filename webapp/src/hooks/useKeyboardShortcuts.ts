@@ -169,8 +169,21 @@ function buildKeyCombo(e: KeyboardEvent): string {
   return parts.join("+");
 }
 
+const SHORTCUT_ENTRIES = Object.entries(SHORTCUTS).map(([k, v]) => [
+  k.toLowerCase(),
+  k.toUpperCase(),
+  k,
+  v,
+] as const);
+
 function getAction(keyCombo: string): KeyboardAction | undefined {
-  return SHORTCUTS[keyCombo] ?? SHORTCUTS[keyCombo.toLowerCase()] ?? SHORTCUTS[keyCombo.toUpperCase()];
+  const key = keyCombo.toLowerCase();
+  for (const [lower, upper, original, action] of SHORTCUT_ENTRIES) {
+    if (lower === key || upper === keyCombo) {
+      return action;
+    }
+  }
+  return SHORTCUTS[keyCombo];
 }
 
 export function getShortcutsHelp(): Array<{ keys: string; action: KeyboardAction; description: string }> {
