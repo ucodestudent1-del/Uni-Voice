@@ -14,7 +14,7 @@ import {
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
-import { Plus, FileText, Send, Copy, Search } from "lucide-react";
+import { Plus, FileText, Send, Copy } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
 import InvoiceStatus, { isOverdueStatus } from "../components/ui/InvoiceStatus";
@@ -344,13 +344,12 @@ const [searchTerm, setSearchTerm] = useState("");
           <div className="lg:col-span-5">
             <label className="filter-label">Search</label>
             <div className="relative">
-              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Invoice #, customer name, email..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="filter-input pl-12"
+                className="filter-input pl-4"
               />
             </div>
           </div>

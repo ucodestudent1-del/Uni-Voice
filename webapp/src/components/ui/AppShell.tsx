@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Search, Bell, HelpCircle, User, LogOut, Settings as SettingsIcon, Moon, Sun, AlertCircle } from "lucide-react";
+import { Bell, HelpCircle, User, LogOut, Settings as SettingsIcon, Moon, Sun, AlertCircle } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import type { TopBarProps, AppShellProps } from "@/types/components";

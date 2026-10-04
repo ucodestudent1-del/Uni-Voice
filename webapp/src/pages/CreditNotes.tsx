@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Search } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCreditNotes,
@@ -260,13 +260,12 @@ export default function CreditNotes() {
           <div className="lg:col-span-5">
             <label className="filter-label">Search</label>
             <div className="relative">
-              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Credit #, customer name..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="filter-input pl-12"
+                className="filter-input pl-4"
               />
             </div>
           </div>

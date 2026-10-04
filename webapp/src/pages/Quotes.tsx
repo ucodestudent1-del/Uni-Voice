@@ -12,7 +12,7 @@ import {
 } from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
 import { Button } from "../components/ui/Button";
-import { Download, Search, Eye, Send, Copy, Trash2, Plus } from "lucide-react";
+import { Download, Eye, Send, Copy, Trash2, Plus } from "lucide-react";
 import PageHeader from "../components/ui/PageHeader";
 import { DataTable, type ColumnDef } from "../components/ui/DataTable";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
@@ -266,13 +266,12 @@ export default function Quotes() {
           <div>
             <label className="filter-label">Search</label>
             <div className="relative">
-              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Quote #, customer name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="filter-input pl-12"
+                className="filter-input pl-4"
               />
             </div>
           </div>

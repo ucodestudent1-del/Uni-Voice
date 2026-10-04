@@ -13,7 +13,6 @@ import {
   Download,
   RefreshCw,
   ExternalLink,
-  Search,
   Clock,
   CheckCircle,
   XCircle,
@@ -345,13 +344,12 @@ export default function Payments() {
           <div className="sm:col-span-2">
             <label className="filter-label">Search</label>
             <div className="relative">
-              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Search by invoice number, customer name, or provider reference..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="filter-input pl-12"
+                className="filter-input pl-4"
               />
             </div>
           </div>

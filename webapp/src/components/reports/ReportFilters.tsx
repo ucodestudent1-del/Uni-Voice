@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Filter, Search, X, Users, Tag, LayoutGrid } from "lucide-react";
+import { Calendar, Filter, X, Users, Tag, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import type { ReportFiltersParams } from "@/types/api";
@@ -184,13 +184,12 @@ export default function ReportFilters({
 
           {availableFilters.showSearch && (
             <div className="relative">
-              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Search..."
                 defaultValue={filters.search ?? ""}
                 onChange={(e) => debouncedSetSearch(e.target.value)}
-                className="filter-input pl-12"
+                className="filter-input pl-4"
               />
             </div>
           )}

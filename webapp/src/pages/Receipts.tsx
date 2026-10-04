@@ -15,7 +15,6 @@ import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
 import {
   Download,
-  Search,
   Eye,
   ExternalLink,
   Mail,
@@ -509,13 +508,12 @@ export default function Receipts() {
           <div className="lg:col-span-4">
             <label className="filter-label">Search</label>
             <div className="relative">
-              <Search className="search-icon" />
               <input
                 type="text"
                 placeholder="Receipt #, invoice #, customer name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="filter-input pl-12"
+                className="filter-input pl-4"
               />
             </div>
           </div>

@@ -15,7 +15,7 @@ import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import CustomerImport from "../components/CustomerImport";
 import CustomerQuickView from "../components/CustomerQuickView";
-import { Plus, FileText, Upload, Download, Eye, Edit2, Archive, RefreshCw, MoreVertical, Search, Clock, Mail, Phone, Users } from "lucide-react";
+import { Plus, FileText, Upload, Download, Eye, Edit2, Archive, RefreshCw, MoreVertical, Clock, Mail, Phone, Users } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import { getCustomerPrimaryContact, customerHasBalance, customerHasOverdue } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
@@ -366,13 +366,12 @@ export default function Customers() {
               <div className="lg:col-span-4">
                 <label className="filter-label-secondary">Search</label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" />
                   <input
                     type="text"
                     placeholder="Search by name, email, or company…"
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-                    className="filter-input pl-12"
+                    className="filter-input pl-4"
                   />
                 </div>
               </div>
