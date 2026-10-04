@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Plus } from "lucide-react";
 import {
   getProjects,
   archiveProject,
@@ -16,6 +16,7 @@ import ProjectForm from "../components/ProjectForm";
 import ProjectTagManager from "../components/ProjectTagManager";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
+import EmptyState from "../components/ui/EmptyState";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 interface ProjectsProps {
@@ -159,7 +160,15 @@ const [search, setSearch] = useState("");
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-         <h1 className="text-2xl font-bold text-inverse">Projects</h1>
+        <h1 className="text-2xl font-bold text-inverse">Projects</h1>
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
+          onClick={handleCreate}
+        >
+          New Project
+        </Button>
       </div>
 
       {error && (
@@ -229,11 +238,14 @@ const [search, setSearch] = useState("");
         </div>
       ) : (
         <div className="overflow-x-auto">
-          {projects.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-tertiary mb-4">No projects found</p>
-            </div>
-          ) : (
+            {projects.length === 0 ? (
+              <EmptyState
+                title="No projects found"
+                description="Create a project to organize your invoices and track work."
+                actionLabel="New Project"
+                onAction={handleCreate}
+              />
+            ) : (
             <table className="w-full text-left">
               <thead className="bg-surface-alt dark:bg-surface-alt border-b border-color-subtle border-color">
                 <tr>

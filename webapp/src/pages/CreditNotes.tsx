@@ -20,6 +20,7 @@ import {
 import FeatureGate from "../components/FeatureGate";
 import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
 import { Button } from "../components/ui/Button";
+import EmptyState from "../components/ui/EmptyState";
 import { formatCurrency, formatDate } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 import { LINE_ITEM_UNITS } from "../types/quote-builder";
@@ -222,6 +223,14 @@ export default function CreditNotes() {
           <h1 className="text-2xl font-bold text-primary">Credit Notes</h1>
           <p className="text-sm text-secondary mt-1">{total} credit notes total</p>
         </div>
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
+          onClick={() => setShowCreateDialog(true)}
+        >
+          New Credit Note
+        </Button>
       </div>
 
       <div className="filter-container">
@@ -358,8 +367,13 @@ export default function CreditNotes() {
           <tbody>
             {creditNotes.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-16 text-center text-secondary">
-                {hasActiveFilters ? "No credit notes match your filters" : "No credit notes yet"}
+                <td colSpan={7} className="py-4">
+                  <EmptyState
+                    title={hasActiveFilters ? "No credit notes match your filters" : "No credit notes yet"}
+                    description={hasActiveFilters ? "Try adjusting your search or filter criteria." : "Create a credit note to issue refunds, correct invoices, or apply adjustments."}
+                    actionLabel={hasActiveFilters ? "Clear Filters" : "New Credit Note"}
+                    onAction={hasActiveFilters ? clearFilters : () => setShowCreateDialog(true)}
+                  />
                 </td>
               </tr>
             ) : (

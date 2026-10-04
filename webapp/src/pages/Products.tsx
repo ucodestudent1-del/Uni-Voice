@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Plus } from "lucide-react";
 import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from "../api/client";
 import type { ApiProduct } from "../types/api";
 import { Button } from "../components/ui/Button";
+import EmptyState from "../components/ui/EmptyState";
 
 export default function Products() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -79,6 +80,14 @@ export default function Products() {
           <h1 className="text-2xl font-bold text-primary">Products / Services</h1>
           <p className="text-sm text-secondary mt-1">{products.length} products</p>
         </div>
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Plus className="w-4 h-4" />}
+          onClick={() => setShowForm(true)}
+        >
+          Add Product
+        </Button>
       </div>
 
       {showForm && (
@@ -193,9 +202,12 @@ export default function Products() {
       )}
 
       {products.length === 0 ? (
-        <div className="text-center py-16 bg-surface rounded-xl border border-color-subtle">
-          <p className="mt-4 text-tertiary">No products yet</p>
-        </div>
+        <EmptyState
+          title="No products yet"
+          description="Add your first product or service to start building your catalog."
+          actionLabel="Add Product"
+          onAction={() => setShowForm(true)}
+        />
       ) : (
         <div className="bg-surface rounded-xl border border-color-subtle overflow-hidden">
           <table className="w-full">

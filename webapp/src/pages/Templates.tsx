@@ -9,12 +9,14 @@ import {
   archiveInvoiceTemplate,
   getBusiness,
 } from "../api/client";
-import { Trash2, Archive, Copy, MousePointerClick, Settings2 } from "lucide-react";
+import { Trash2, Archive, Copy, MousePointerClick, Settings2, Plus } from "lucide-react";
 import { initializeRegistry, type InvoiceDocument } from "../document-model";
 import TemplatePreview from "../components/TemplatePreview";
 import DocumentTemplateGallery from "../components/DocumentTemplateGallery";
 import type { ApiBusiness, InvoiceTemplateDTO } from "../types/api";
 import { Button } from "../components/ui/Button";
+import PageHeader from "../components/ui/PageHeader";
+import EmptyState from "../components/ui/EmptyState";
 
 interface PresetChoiceState {
   isOpen: boolean;
@@ -116,14 +118,21 @@ export default function Templates() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-inverse">Templates</h1>
-          <p className="mt-1 text-sm text-tertiary">
-            Choose a preset to get started or customize an existing template.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Templates"
+        breadcrumbs={[{ label: "Home", to: "/app" }, { label: "Templates" }]}
+        description="Choose a preset to get started or customize an existing template."
+        primaryAction={
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => setShowPresetGallery(true)}
+          >
+            New Template
+          </Button>
+        }
+      />
 
       <div className="flex items-center gap-3">
         <select
@@ -141,9 +150,12 @@ export default function Templates() {
       </div>
 
       {templates.length === 0 && !showPresetGallery && (
-        <div className="text-center py-16 bg-surface-alt dark:bg-surface-alt rounded-xl border border-color-subtle border-color">
-          <p className="text-tertiary mb-4">No templates yet</p>
-        </div>
+        <EmptyState
+          title="No templates yet"
+          description="Create a template to start invoicing with a professional design."
+          actionLabel="New Template"
+          onAction={() => setShowPresetGallery(true)}
+        />
       )}
 
       {templates.length > 0 && (

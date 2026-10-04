@@ -11,6 +11,8 @@ import {
 import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
 import { formatDate } from "../utils/format";
+import { Plus } from "lucide-react";
+import { Button } from "../components/ui/Button";
 import type { ApiReminderConfig, ApiReminderTemplate, ReminderSequence } from "../types/api";
 
 function safeJsonParse<T>(value: unknown, fallback: T): T {
@@ -208,13 +210,14 @@ export default function ReminderAutomation() {
         <FeatureGate feature="reminders.automated" requiredPlan="pro" fallback={
           <UpgradePrompt feature="Automated Reminders" requiredPlan="pro" />
         }>
-          <button
-            onClick={saveConfig}
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save Settings"}
-          </button>
+        <Button
+          variant="primary"
+          size="md"
+          onClick={saveConfig}
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Save Settings"}
+        </Button>
         </FeatureGate>
       </div>
 
@@ -287,12 +290,14 @@ export default function ReminderAutomation() {
         <h2 className="text-lg font-semibold text-primary mb-4">Email Templates</h2>
         <p className="text-sm text-secondary mb-4">Create reusable email templates for your reminders</p>
         <div className="flex justify-end mb-4">
-          <button
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
             onClick={() => openTemplateDialog()}
-            className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
           >
-            + New Template
-          </button>
+            New Template
+          </Button>
         </div>
         {templates.length === 0 ? (
           <p className="text-sm text-secondary">No templates yet. Create one to use in your reminder sequences.</p>
@@ -305,18 +310,21 @@ export default function ReminderAutomation() {
                   <p className="text-sm text-secondary">Subject: {template.subject}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={() => openTemplateDialog(template)}
-                    className="text-sm text-primary-brand hover:text-primary-brand"
                   >
                     Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="link"
+                    size="sm"
                     onClick={() => handleTemplateDelete(template.id)}
-                    className="text-sm status-error-text hover:status-error-text"
+                    className="status-error-text"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -367,12 +375,14 @@ function ReminderSection({
           <h3 className="text-lg font-semibold text-primary">{title}</h3>
           <p className="text-sm text-secondary">{description}</p>
         </div>
-        <button
+        <Button
+          variant="link"
+          size="sm"
+          icon={<Plus className="w-3.5 h-3.5" />}
           onClick={onAdd}
-          className="text-sm text-primary-brand hover:text-primary-brand font-medium"
         >
-          + Add Reminder
-        </button>
+          <span>Add Reminder</span>
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -423,42 +433,50 @@ function ReminderSection({
                     />
                   </div>
                   <div className="flex items-end gap-2">
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => onTest(seq.id)}
                       disabled={isTesting === seq.id}
-                      className="flex-1 rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
+                      className="flex-1"
                     >
                       {isTesting === seq.id ? "Sending..." : "Test"}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() => onRemove(index)}
                       disabled={sequences.length <= 1}
-                      className="rounded-lg border status-error-border px-3 py-2 text-sm font-medium status-error-text hover:status-error-bg disabled:opacity-50"
+                      className="flex-1"
                     >
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
 
               <div className="flex gap-2">
                 {index > 0 && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onMove(index, "up")}
-                    className="text-xs text-secondary hover:text-primary"
                     title="Move up"
+                    className="text-xs"
                   >
                     ↑ Up
-                  </button>
+                  </Button>
                 )}
                 {index < sequences.length - 1 && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onMove(index, "down")}
-                    className="text-xs text-secondary hover:text-primary"
                     title="Move down"
+                    className="text-xs"
                   >
                     ↓ Down
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -560,19 +578,20 @@ function TemplateDialog({
             <p>{"{{invoice_number}}, {{customer_name}}, {{amount_due}}, {{due_date}}, {{issue_date}}, {{business_name}}, {{invoice_url}}, {{days_until_due}}, {{days_overdue}}"}</p>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-color-subtle">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="md"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover"
             >
               {isEditing ? "Save Changes" : "Create Template"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
