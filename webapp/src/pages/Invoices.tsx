@@ -350,7 +350,7 @@ const [searchTerm, setSearchTerm] = useState("");
                 placeholder="Invoice #, customer name, email..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="filter-input pl-10"
+                className="filter-input pl-12"
               />
             </div>
           </div>

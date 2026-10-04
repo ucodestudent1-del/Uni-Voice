@@ -372,7 +372,7 @@ export default function Customers() {
                     placeholder="Search by name, email, or company…"
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-                    className="filter-input pl-10"
+                    className="filter-input pl-12"
                   />
                 </div>
               </div>

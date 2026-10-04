@@ -272,7 +272,7 @@ export default function Quotes() {
                 placeholder="Quote #, customer name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="filter-input pl-10"
+                className="filter-input pl-12"
               />
             </div>
           </div>

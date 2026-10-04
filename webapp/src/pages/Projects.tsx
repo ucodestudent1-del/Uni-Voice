@@ -178,7 +178,7 @@ const [search, setSearch] = useState("");
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search projects..."
-                className="filter-input pl-10"
+                className="filter-input pl-12"
               />
               <svg
                 className="search-icon"

@@ -190,7 +190,7 @@ export default function ReportFilters({
                 placeholder="Search..."
                 defaultValue={filters.search ?? ""}
                 onChange={(e) => debouncedSetSearch(e.target.value)}
-                className="filter-input pl-10"
+                className="filter-input pl-12"
               />
             </div>
           )}

@@ -351,7 +351,7 @@ export default function Payments() {
                 placeholder="Search by invoice number, customer name, or provider reference..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="filter-input pl-10"
+                className="filter-input pl-12"
               />
             </div>
           </div>

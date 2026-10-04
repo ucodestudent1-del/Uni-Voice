@@ -257,7 +257,7 @@ export default function CreditNotes() {
                 placeholder="Credit #, customer name..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="filter-input pl-10"
+                className="filter-input pl-12"
               />
             </div>
           </div>

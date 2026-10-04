@@ -562,12 +562,12 @@
     ring-color: rgb(var(--color-focus-ring));
   }
   .search-icon {
-    @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4;
+    @apply absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5;
     color: rgb(var(--color-text-tertiary));
   }
   /* Search input in a group that also has a button — narrower min-width but still roomy */
   .search-input-inline {
-    @apply min-w-[16rem] rounded-lg border px-3 py-2 pl-10 text-sm focus:outline-none focus:ring-2 box-border;
+     @apply min-w-[16rem] rounded-lg border px-3 py-2 pl-12 text-sm focus:outline-none focus:ring-2 box-border;
     min-height: 2.75rem;
     font-size: 0.9375rem;
     letter-spacing: -0.01em;
