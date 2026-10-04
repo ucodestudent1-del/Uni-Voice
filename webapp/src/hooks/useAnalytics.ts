@@ -8,6 +8,16 @@ export interface UseAnalyticsReturn {
   trackTemplateSelected: (properties?: Record<string, unknown>) => void;
   trackInvoiceSent: (properties?: Record<string, unknown>) => void;
   trackDraftAbandoned: (properties?: Record<string, unknown>) => void;
+  trackAiParseAttempted: (properties?: Record<string, unknown>) => void;
+  trackAiParseSuccess: (properties?: Record<string, unknown>) => void;
+  trackAiParseFailed: (properties?: Record<string, unknown>) => void;
+  trackQuickCreateStarted: (properties?: Record<string, unknown>) => void;
+  trackQuickCreateCompleted: (properties?: Record<string, unknown>) => void;
+  trackCustomerSelected: (properties?: Record<string, unknown>) => void;
+  trackItemAdded: (properties?: Record<string, unknown>) => void;
+  trackItemRemoved: (properties?: Record<string, unknown>) => void;
+  trackDocumentDuplicateStarted: (properties?: Record<string, unknown>) => void;
+  trackDocumentConvertStarted: (properties?: Record<string, unknown>) => void;
 }
 
 export function useAnalytics(): UseAnalyticsReturn {
@@ -54,6 +64,76 @@ export function useAnalytics(): UseAnalyticsReturn {
     [track]
   );
 
+  const trackAiParseAttempted = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("ai_parse_attempted", properties);
+    },
+    [track]
+  );
+
+  const trackAiParseSuccess = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("ai_parse_success", properties);
+    },
+    [track]
+  );
+
+  const trackAiParseFailed = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("ai_parse_failed", properties);
+    },
+    [track]
+  );
+
+  const trackQuickCreateStarted = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("quick_create_started", properties);
+    },
+    [track]
+  );
+
+  const trackQuickCreateCompleted = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("quick_create_completed", properties);
+    },
+    [track]
+  );
+
+  const trackCustomerSelected = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("customer_selected", properties);
+    },
+    [track]
+  );
+
+  const trackItemAdded = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("item_added", properties);
+    },
+    [track]
+  );
+
+  const trackItemRemoved = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("item_removed", properties);
+    },
+    [track]
+  );
+
+  const trackDocumentDuplicateStarted = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("document_duplicate_started", properties);
+    },
+    [track]
+  );
+
+  const trackDocumentConvertStarted = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("document_convert_started", properties);
+    },
+    [track]
+  );
+
   return {
     track,
     trackInvoiceCreated,
@@ -61,6 +141,16 @@ export function useAnalytics(): UseAnalyticsReturn {
     trackTemplateSelected,
     trackInvoiceSent,
     trackDraftAbandoned,
+    trackAiParseAttempted,
+    trackAiParseSuccess,
+    trackAiParseFailed,
+    trackQuickCreateStarted,
+    trackQuickCreateCompleted,
+    trackCustomerSelected,
+    trackItemAdded,
+    trackItemRemoved,
+    trackDocumentDuplicateStarted,
+    trackDocumentConvertStarted,
   };
 }
 

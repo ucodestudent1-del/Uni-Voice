@@ -1624,3 +1624,52 @@ function buildReportParams(params?: ReportFiltersParams): Record<string, any> {
   return result;
 }
 
+// ============================================================================
+// AI DOCUMENT PARSING (natural-language to structured fields)
+// ============================================================================
+
+export interface ApiParsedLineItem {
+  description: string;
+  quantity: number;
+  unit?: string;
+  unitPrice: number;
+  taxRate?: number;
+  isTaxInclusive?: boolean;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
+}
+
+export interface ApiParsedFee {
+  description: string;
+  amount: number;
+  taxRate?: number;
+}
+
+export interface ApiParsedDocumentFields {
+  customerId?: string | null;
+  currency?: string;
+  issueDate?: string | null;
+  dueDate?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  items: ApiParsedLineItem[];
+  fees: ApiParsedFee[];
+  taxRate?: number;
+}
+
+export interface ApiParsedDocumentResult {
+  fields: ApiParsedDocumentFields;
+  confidence: number;
+  matchedCustomer: { id: string; name: string; email: string | null } | null;
+  matchedProducts: { id: string; name: string; sku: string | null }[];
+  suggestions: string[];
+}
+
+export async function parseDocument(text: string, documentType?: string): Promise<ApiParsedDocumentResult> {
+  const res = await api.post("/ai/parse-document", { text, documentType });
+  return res.data;
+}
+

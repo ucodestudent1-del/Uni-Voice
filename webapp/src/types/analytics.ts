@@ -10,6 +10,16 @@ export const ANALYTICS_EVENTS = [
   "draft_abandoned",
   "undo_performed",
   "redo_performed",
+  "ai_parse_attempted",
+  "ai_parse_success",
+  "ai_parse_failed",
+  "quick_create_started",
+  "quick_create_completed",
+  "customer_selected",
+  "item_added",
+  "item_removed",
+  "document_duplicate_started",
+  "document_convert_started",
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];

@@ -22,10 +22,12 @@ import {
   sendInvoice,
 } from "../api/client";
 import CustomerSelector from "../components/CustomerSelector";
+import { AiInput } from "../components/AiInput";
 import { formatCurrency } from "../utils/format";
 import EmptyState from "@/components/ui/EmptyState";
 import { FileText, AlertCircle } from "lucide-react";
 import type { ApiBusiness, ApiCustomer, ApiProduct } from "../types/api";
+import type { ApiParsedDocumentResult } from "../api/client";
 
 type FlowStep = "details" | "review" | "done";
 type ActionState = {
@@ -61,6 +63,7 @@ export default function QuickInvoicePage() {
   const [dueDate, setDueDate] = useState(defaultDueValue());
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("Pay securely using the payment link on this invoice.");
+  const [currencyOverride, setCurrencyOverride] = useState<string | null>(null);
   const [step, setStep] = useState<FlowStep>("details");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -68,6 +71,7 @@ export default function QuickInvoicePage() {
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
   const [paymentLink, setPaymentLink] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [aiParsed, setAiParsed] = useState<ApiParsedDocumentResult | null>(null);
 
   useEffect(() => {
     loadDependencies();
@@ -90,7 +94,7 @@ export default function QuickInvoicePage() {
     }
   }
 
-  const currency = business?.defaultCurrency || customer?.defaultCurrency || "USD";
+  const currency = currencyOverride || business?.defaultCurrency || customer?.defaultCurrency || "USD";
   const selectedProduct = products.find((product) => product.id === serviceId);
 
   // Safe decimal parsing helper
@@ -124,6 +128,36 @@ export default function QuickInvoicePage() {
   function selectCustomer(nextCustomer: ApiCustomer | undefined) {
     setCustomer(nextCustomer ?? null);
   }
+
+  function handleAiParsed(parsed: ApiParsedDocumentResult) {
+    setAiParsed(parsed);
+    if (parsed.fields.customerId) {
+      // Customer was auto-matched by AI — find and set it
+      // The CustomerSelector will show it
+    }
+    // Apply parsed items to form fields
+    if (parsed.fields.items.length > 0) {
+      const firstItem = parsed.fields.items[0];
+      setDescription(firstItem.description);
+      setQuantity(String(firstItem.quantity));
+      setUnitPrice(String(firstItem.unitPrice));
+      if (firstItem.taxRate !== undefined) setTaxRate(String(firstItem.taxRate));
+      if (parsed.fields.currency) setCurrencyOverride(parsed.fields.currency);
+      if (parsed.fields.notes) setNotes(parsed.fields.notes);
+    }
+  }
+
+  function clearAiParsed() {
+    setAiParsed(null);
+    setDescription("");
+    setQuantity("1");
+    setUnitPrice("0.00");
+    setTaxRate("0");
+    setNotes("");
+    setServiceId("");
+  }
+
+
 
   function validateDetails() {
     if (!customer) return "Select a customer";
@@ -348,6 +382,12 @@ if (loading) {
               </div>
             )}
           </section>
+
+          <AiInput
+            onParsed={handleAiParsed}
+            onClear={clearAiParsed}
+            hasParsedData={!!aiParsed}
+          />
 
           <section className="rounded-xl border border-color-subtle bg-surface p-4 sm:p-6">
             <div className="mb-4 flex items-center gap-2">

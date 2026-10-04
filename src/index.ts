@@ -70,6 +70,7 @@ import {
   InvoiceTemplateListParamsSchema,
 } from "./schemas/invoice-template-dto.js";
 import { invoiceTemplateService } from "./services/templates/invoice-template-service.js";
+import { aiService } from "./services/ai-service.js";
 import { projectService } from "./services/project-service.js";
 import { projectTimeEntryService } from "./services/project-time-service.js";
 import {
@@ -1889,6 +1890,25 @@ app.post("/api/document-templates/:id/set-default", requireAuth, async (req: Aut
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const template = await documentTemplateRepository.setDefault(req.user!.businessId, req.params.id);
   res.json({ template });
+});
+
+// ============================================================================
+// AI DOCUMENT PARSING (natural-language to structured fields)
+// ============================================================================
+app.post("/api/ai/parse-document", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+
+  const text = req.body?.text;
+  if (!text || typeof text !== "string" || text.trim().length === 0) {
+    return res.status(400).json({ error: "text is required" });
+  }
+
+  const result = await aiService.parseDocument(text, {
+    businessId: req.user!.businessId,
+    documentType: req.body?.documentType ?? "invoice",
+  });
+
+  res.json(result);
 });
 
 // ============================================================================
