@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { query, getClient } from "../db/pool.js";
 import { Decimal } from "decimal.js";
 import type { CreditNote, CreditNoteLineItem, CreditNoteApplication } from "../domain/models/index.js";
@@ -87,7 +87,51 @@ export interface CreditNoteListOptions {
   offset?: number;
 }
 
+export interface CreditNoteEvent {
+  id?: string;
+  creditNoteId?: string;
+  eventType: string;
+  actorType?: string | null;
+  actorId?: string | null;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
+}
+
+export interface CreditNoteCreateInput {
+  customerId?: string | null;
+  referenceInvoiceId?: string | null;
+  currency?: string;
+  issueDate?: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  templateId?: string | null;
+  items?: CreditNoteItemInput[];
+  fees?: CreditNoteFeeInput[];
+}
+
 export class CreditNoteRepository {
+  /**
+   * Create a new draft credit note row, scoped to the business.
+   * Returns the new credit note's UUID.
+   */
+  async create(businessId: string, input: CreditNoteCreateInput, userId?: string): Promise<string> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    await query(
+      `INSERT INTO credit_notes
+         (id, business_id, customer_id, reference_invoice_id, currency, status,
+          issue_date, reason, notes, terms, template_id, created_by, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8,$9,$10,$11,$12,$12)`,
+      [
+        id, businessId, input.customerId ?? null, input.referenceInvoiceId ?? null,
+        input.currency ?? "USD", input.issueDate ?? null, input.reason ?? null,
+        input.notes ?? null, input.terms ?? null, input.templateId ?? null, userId ?? null, now,
+      ]
+    );
+    return id;
+  }
+
   /**
    * Fetch a single credit note with its line items, fees, and applications.
    * Tenant-isolated: scoped to businessId.
@@ -116,6 +160,100 @@ export class CreditNoteRepository {
       customerName: r.customer_name ?? null,
       customerEmail: r.customer_email ?? null,
     };
+  }
+
+  /**
+   * Update editable fields of a draft credit note (non-finalized).
+   * Accepts partial fields and optional new items/fees.
+   */
+  async update(businessId: string, id: string, input: Partial<CreditNoteCreateInput>): Promise<void> {
+    const fields: string[] = [];
+    const vals: unknown[] = [];
+    let i = 1;
+    if (input.customerId !== undefined) { fields.push(`customer_id = $${i++}`); vals.push(input.customerId ?? null); }
+    if (input.referenceInvoiceId !== undefined) { fields.push(`reference_invoice_id = $${i++}`); vals.push(input.referenceInvoiceId ?? null); }
+    if (input.currency !== undefined) { fields.push(`currency = $${i++}`); vals.push(input.currency); }
+    if (input.issueDate !== undefined) { fields.push(`issue_date = $${i++}`); vals.push(input.issueDate ?? null); }
+    if (input.reason !== undefined) { fields.push(`reason = $${i++}`); vals.push(input.reason ?? null); }
+    if (input.notes !== undefined) { fields.push(`notes = $${i++}`); vals.push(input.notes ?? null); }
+    if (input.terms !== undefined) { fields.push(`terms = $${i++}`); vals.push(input.terms ?? null); }
+    if (input.templateId !== undefined) { fields.push(`template_id = $${i++}`); vals.push(input.templateId ?? null); }
+    vals.push(id, businessId);
+    if (fields.length) {
+      await query(`UPDATE credit_notes SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $${i} AND business_id = $${i + 1}`, vals);
+    }
+    if (input.items !== undefined || input.fees !== undefined) {
+      const client = await getClient();
+      try {
+        await client.query("BEGIN");
+        if (input.items !== undefined) {
+          await this.setItems(id, input.items, client);
+        }
+        if (input.fees !== undefined) {
+          await this.setFees(id, input.fees, client);
+        }
+        await this.persistTotals(id, client);
+        await client.query("COMMIT");
+      } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+      } finally {
+        client.release();
+      }
+    } else {
+      await this.persistTotals(id);
+    }
+  }
+
+  /**
+   * Retrieve a timeline of events for a credit note, derived from audit timestamps
+   * and application records. No dedicated events table exists, so we synthesize
+   * events from the row's history.
+   */
+  async getEvents(creditNoteId: string, businessId: string): Promise<CreditNoteEvent[]> {
+    const creditNote = await this.findById(businessId, creditNoteId);
+    const events: CreditNoteEvent[] = [];
+    if (creditNote.createdAt) events.push({ eventType: "created", createdAt: creditNote.createdAt, actorType: "system" });
+    if (creditNote.finalizedAt) events.push({ eventType: "finalized", createdAt: creditNote.finalizedAt, actorType: "system" });
+    if (creditNote.cancelledAt) events.push({ eventType: "cancelled", createdAt: creditNote.cancelledAt, actorType: "system", metadata: { reason: creditNote.cancelledReason } });
+    if (creditNote.voidedAt) events.push({ eventType: "voided", createdAt: creditNote.voidedAt, actorType: "system", metadata: { reason: creditNote.voidReason } });
+    for (const app of creditNote.applications) {
+      events.push({ eventType: "applied", createdAt: app.appliedAt, actorType: "system", metadata: { invoiceId: app.invoiceId, amount: app.amount } });
+    }
+    events.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return events;
+  }
+
+  /**
+   * Persist totals columns on the credit_notes row from items + fees.
+   */
+  async persistTotals(creditNoteId: string, client?: any): Promise<void> {
+    const exec = client ? client.query.bind(client) : query;
+    const res = await exec(
+      `SELECT COALESCE(SUM(line_subtotal),0) AS subtotal,
+              COALESCE(SUM(discount),0) AS discount_total,
+              COALESCE(SUM(tax_amount),0) AS tax_total,
+              COALESCE(SUM(line_total),0) AS total
+       FROM credit_note_items WHERE credit_note_id = $1`,
+      [creditNoteId]
+    );
+    const feesRes = await exec(
+      `SELECT COALESCE(SUM(amount),0) AS fee_total FROM credit_note_fees WHERE credit_note_id = $1`,
+      [creditNoteId]
+    );
+    const subtotal = new Decimal(res.rows[0]?.subtotal ?? 0);
+    const discountTotal = new Decimal(res.rows[0]?.discount_total ?? 0);
+    const taxTotal = new Decimal(res.rows[0]?.tax_amount ?? 0);
+    const lineTotal = new Decimal(res.rows[0]?.total ?? 0);
+    const feeTotal = new Decimal(feesRes.rows[0]?.fee_total ?? 0);
+    const calcTotal = lineTotal.plus(feeTotal);
+    await exec(
+      `UPDATE credit_notes
+       SET subtotal = $1, discount_total = $2, tax_total = $3, fee_total = $4,
+           total = $5, updated_at = NOW()
+       WHERE id = $6`,
+      [subtotal.toFixed(6), discountTotal.toFixed(6), taxTotal.toFixed(6), feeTotal.toFixed(6), calcTotal.toFixed(6), creditNoteId]
+    );
   }
 
   /**
@@ -253,73 +391,89 @@ export class CreditNoteRepository {
   /**
    * Persist line items for a credit note (insert or replace).
    */
-  async setItems(creditNoteId: string, items: CreditNoteItemInput[]): Promise<void> {
-    const client = await getClient();
+  async setItems(creditNoteId: string, items: CreditNoteItemInput[], client?: any): Promise<void> {
     const now = new Date().toISOString();
-    try {
-      await client.query("BEGIN");
-      await client.query("DELETE FROM credit_note_items WHERE credit_note_id = $1", [creditNoteId]);
-
-      for (let i = 0; i < items.length; i++) {
-        const it = items[i];
-        await client.query(
-          `INSERT INTO credit_note_items (
-             id, credit_note_id, product_id, description, quantity, unit, unit_price,
-             discount, discount_type, tax_rate, tax_amount, line_subtotal, line_total,
-             sort_order, is_tax_inclusive,
-             catalog_name, catalog_sku, catalog_tax_category,
-             catalog_unit_price, catalog_tax_rate, created_at
-           ) VALUES (
-             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-             $14, $15, $16, $17, $18, $19, $20, $21
-           )`,
-          [
-            it.id ?? crypto.randomUUID(), creditNoteId, it.productId, it.description,
-            it.quantity, it.unit ?? "each", it.unitPrice,
-            it.discount ?? 0, it.discountType ?? "fixed",
-            it.taxRate ?? 0, 0, 0, 0,
-            it.sortOrder ?? i, it.isTaxInclusive ?? false,
-            it.catalogName ?? null, it.catalogSku ?? null, it.catalogTaxCategory ?? null,
-            it.catalogUnitPrice ?? null, it.catalogTaxRate ?? null, now,
-          ]
-        );
+    if (!client) {
+      const cl = await getClient();
+      try {
+        await cl.query("BEGIN");
+        await this._setItems(creditNoteId, items, cl, now);
+        await cl.query("COMMIT");
+      } catch (e) {
+        await cl.query("ROLLBACK");
+        throw e;
+      } finally {
+        cl.release();
       }
-      await client.query("COMMIT");
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    } finally {
-      client.release();
+    } else {
+      await this._setItems(creditNoteId, items, client, now);
+    }
+  }
+
+  private async _setItems(creditNoteId: string, items: CreditNoteItemInput[], client: any, now: string): Promise<void> {
+    await client.query("DELETE FROM credit_note_items WHERE credit_note_id = $1", [creditNoteId]);
+
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      await client.query(
+        `INSERT INTO credit_note_items (
+           id, credit_note_id, product_id, description, quantity, unit, unit_price,
+           discount, discount_type, tax_rate, tax_amount, line_subtotal, line_total,
+           sort_order, is_tax_inclusive,
+           catalog_name, catalog_sku, catalog_tax_category,
+           catalog_unit_price, catalog_tax_rate, created_at
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+           $14, $15, $16, $17, $18, $19, $20, $21
+         )`,
+        [
+          it.id ?? randomUUID(), creditNoteId, it.productId, it.description,
+          it.quantity, it.unit ?? "each", it.unitPrice,
+          it.discount ?? 0, it.discountType ?? "fixed",
+          it.taxRate ?? 0, 0, 0, 0,
+          it.sortOrder ?? i, it.isTaxInclusive ?? false,
+          it.catalogName ?? null, it.catalogSku ?? null, it.catalogTaxCategory ?? null,
+          it.catalogUnitPrice ?? null, it.catalogTaxRate ?? null, now,
+        ]
+      );
     }
   }
 
   /**
    * Persist fees for a credit note (replace all existing).
    */
-  async setFees(creditNoteId: string, fees: CreditNoteFeeInput[]): Promise<void> {
-    const client = await getClient();
+  async setFees(creditNoteId: string, fees: CreditNoteFeeInput[], client?: any): Promise<void> {
     const now = new Date().toISOString();
-    try {
-      await client.query("BEGIN");
-      await client.query("DELETE FROM credit_note_fees WHERE credit_note_id = $1", [creditNoteId]);
+    if (!client) {
+      const cl = await getClient();
+      try {
+        await cl.query("BEGIN");
+        await this._setFees(creditNoteId, fees, cl, now);
+        await cl.query("COMMIT");
+      } catch (e) {
+        await cl.query("ROLLBACK");
+        throw e;
+      } finally {
+        cl.release();
+      }
+    } else {
+      await this._setFees(creditNoteId, fees, client, now);
+    }
+  }
 
-      for (let i = 0; i < fees.length; i++) {
-        const f = fees[i];
-        const taxRate = new Decimal(f.taxRate ?? 0);
-        const amount = new Decimal(f.amount);
-        const taxAmount = amount.mul(taxRate);
+  private async _setFees(creditNoteId: string, fees: CreditNoteFeeInput[], client: any, now: string): Promise<void> {
+    await client.query("DELETE FROM credit_note_fees WHERE credit_note_id = $1", [creditNoteId]);
+
+    for (let i = 0; i < fees.length; i++) {
+      const f = fees[i];
+      const taxRate = new Decimal(f.taxRate ?? 0);
+      const amount = new Decimal(f.amount);
+      const taxAmount = amount.mul(taxRate);
         await client.query(
           `INSERT INTO credit_note_fees (id, credit_note_id, description, amount, tax_rate, tax_amount, sort_order, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [crypto.randomUUID(), creditNoteId, f.description, f.amount, f.taxRate ?? 0, taxAmount.toFixed(6), i, now]
+          [randomUUID(), creditNoteId, f.description, f.amount, f.taxRate ?? 0, taxAmount.toFixed(6), i, now]
         );
-      }
-      await client.query("COMMIT");
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    } finally {
-      client.release();
     }
   }
 

@@ -1,7 +1,7 @@
 import { Decimal } from "decimal.js";
 import { query } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
-import { creditNoteRepository, type CreditNoteWithDetails } from "../repositories/credit-note.repo.js";
+import { creditNoteRepository, type CreditNoteWithDetails, type CreditNoteCreateInput, type CreditNoteEvent } from "../repositories/credit-note.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
 import {
@@ -15,8 +15,147 @@ import {
 } from "./templates/credit-note-template-renderer.js";
 import { pdfService } from "./pdf/pdf-service.js";
 import type { CurrencyCode } from "../domain/value-objects/currency.js";
+import { BusinessLogicError } from "../domain/errors.js";
+
+export interface CreateCreditNoteInput {
+  customerId?: string | null;
+  referenceInvoiceId?: string | null;
+  currency?: string;
+  issueDate?: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  templateId?: string | null;
+  items?: CreditNoteItemInput[];
+  fees?: CreditNoteFeeInput[];
+}
+
+export interface CreditNoteItemInput {
+  id?: string;
+  productId?: string | null;
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice: string | number;
+  discount?: string | number;
+  discountType?: "fixed" | "percentage";
+  taxRate?: string | number;
+  isTaxInclusive?: boolean;
+  sortOrder?: number;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
+}
+
+export interface CreditNoteFeeInput {
+  description: string;
+  amount: string | number;
+  taxRate?: string | number;
+  sortOrder?: number;
+}
 
 export class CreditNoteService {
+  async create(input: CreateCreditNoteInput, businessId: string, userId?: string): Promise<string> {
+    if (input.customerId) {
+      await customerRepository.findById(businessId, input.customerId);
+    }
+    const cnId = await creditNoteRepository.create(businessId, input as CreditNoteCreateInput, userId);
+    const cn = await creditNoteRepository.findById(businessId, cnId);
+    const calc = this.recalculate(cn);
+    await creditNoteRepository.updateTotals(cnId, calc);
+    return cnId;
+  }
+
+  async update(businessId: string, id: string, input: Partial<CreateCreditNoteInput>): Promise<void> {
+    const cn = await creditNoteRepository.findById(businessId, id);
+    if (cn.isFinalized) throw new BusinessLogicError("Cannot modify a finalized credit note");
+    await creditNoteRepository.update(businessId, id, input as Partial<CreditNoteCreateInput>);
+  }
+
+  async finalize(businessId: string, id: string, _userId?: string): Promise<{ creditNoteNumber?: string | null }> {
+    const cn = await creditNoteRepository.findById(businessId, id);
+    if (cn.isFinalized) throw new BusinessLogicError("Credit note is already finalized");
+    const creditNoteNumber = await this.generateNumber(businessId, id, cn);
+    await creditNoteRepository.finalize(id, businessId, new Date());
+    const fresh = await creditNoteRepository.findById(businessId, id);
+    await this.captureSnapshot(fresh);
+    return { creditNoteNumber };
+  }
+
+  async cancel(businessId: string, id: string, reason: string, _userId?: string): Promise<void> {
+    await creditNoteRepository.cancel(id, businessId, new Date(), reason);
+  }
+
+  async applyCreditNote(
+    businessId: string,
+    creditNoteId: string,
+    invoiceId: string,
+    amount?: string
+  ): Promise<void> {
+    const cn = await creditNoteRepository.findById(businessId, creditNoteId);
+    if (!cn.isFinalized) throw new BusinessLogicError("Credit note must be finalized before applying");
+    const idempotencyKey = `cn-apply:${creditNoteId}:${invoiceId}:${amount ?? "full"}`;
+    const applyAmount = new Decimal(amount ?? cn.amountDue);
+    await creditNoteRepository.recordApplication(creditNoteId, invoiceId, businessId, applyAmount.toFixed(6), idempotencyKey);
+    const newAppliedTotal = new Decimal(cn.appliedTotal).plus(applyAmount);
+    const newAmountDue = new Decimal(cn.total).minus(newAppliedTotal);
+    const total = new Decimal(cn.total);
+    const finalApplied = newAppliedTotal.gt(total) ? total : newAppliedTotal;
+    const finalDue = finalApplied.gt(total) ? new Decimal(0) : newAmountDue;
+    const status = finalDue.lte(0) ? "applied" : "finalized";
+    await query(
+      `UPDATE credit_notes SET applied_total = $1, amount_due = $2, status = $3, updated_at = NOW()
+       WHERE id = $4 AND business_id = $5`,
+      [finalApplied.toFixed(6), finalDue.isNegative() ? "0" : finalDue.toFixed(6), status, creditNoteId, businessId]
+    );
+  }
+
+  async getEvents(businessId: string, id: string): Promise<CreditNoteEvent[]> {
+    return creditNoteRepository.getEvents(id, businessId);
+  }
+
+  private recalculate(cn: CreditNoteWithDetails): {
+    subtotal: string;
+    discountTotal: string;
+    taxTotal: string;
+    feeTotal: string;
+    total: string;
+    appliedTotal: string;
+    amountDue: string;
+  } {
+    const subtotal = cn.items.reduce((sum, it) => sum.plus(new Decimal(it.lineSubtotal)), new Decimal(0));
+    const discountTotal = cn.items.reduce((sum, it) => sum.plus(new Decimal(it.discount)), new Decimal(0));
+    const taxTotal = cn.items.reduce((sum, it) => sum.plus(new Decimal(it.taxAmount)), new Decimal(0));
+    const feeTotal = cn.fees.reduce((sum, f) => sum.plus(new Decimal(f.amount)), new Decimal(0));
+    const total = subtotal.plus(feeTotal);
+    const appliedTotal = new Decimal(cn.appliedTotal ?? 0);
+    const amountDue = total.minus(appliedTotal).isNegative() ? new Decimal(0) : total.minus(appliedTotal);
+    return {
+      subtotal: subtotal.toFixed(6),
+      discountTotal: discountTotal.toFixed(6),
+      taxTotal: taxTotal.toFixed(6),
+      feeTotal: feeTotal.toFixed(6),
+      total: total.toFixed(6),
+      appliedTotal: appliedTotal.toFixed(6),
+      amountDue: amountDue.toFixed(6),
+    };
+  }
+
+  private async generateNumber(_businessId: string, cnId: string, _cn: CreditNoteWithDetails): Promise<string | null> {
+    return "CN-" + cnId.slice(0, 8).toUpperCase();
+  }
+
+  private async captureSnapshot(cn: CreditNoteWithDetails): Promise<void> {
+    await query(
+      `INSERT INTO credit_note_snapshots (credit_note_id, snapshot, snapshot_hash)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (credit_note_id) DO UPDATE SET snapshot = $2, snapshot_hash = $3`,
+      [cn.id, JSON.stringify(cn), cn.version.toString()]
+    );
+  }
+
   async generatePdf(businessId: string, id: string): Promise<Buffer> {
     const cn = await creditNoteRepository.findById(businessId, id);
 

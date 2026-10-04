@@ -181,7 +181,8 @@ export default function CreditNotes() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `credit-note-${creditNotes.find(c => c.id === id)?.credit_number ?? id}.pdf`;
+      const creditNote = creditNotes.find(c => c.id === id);
+      a.download = `credit-note-${creditNote?.credit_note_number ?? id}.pdf`;;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
@@ -381,7 +382,7 @@ export default function CreditNotes() {
                   <td className="py-3 px-4">
                      <div className="flex flex-col">
                        <span className="text-sm font-medium text-primary">
-                         {cn.credit_number || `Draft #${cn.id.slice(0, 8)}`}
+                         {cn.credit_note_number || `Draft #${cn.id.slice(0, 8)}`}
                        </span>
                       <span className="text-xs text-secondary">
                         {cn.issue_date ? new Date(cn.issue_date).toLocaleDateString() : "—"}
@@ -399,10 +400,10 @@ export default function CreditNotes() {
                     {formatCurrency(cn.total, cn.currency)}
                   </td>
                   <td className="py-3 px-4 text-right text-sm font-medium text-primary">
-                    {Number(cn.amount_remaining || 0) > 0
-                      ? formatCurrency(cn.amount_remaining, cn.currency)
+                    {Number(cn.amount_due || 0) > 0
+                      ? formatCurrency(cn.amount_due, cn.currency)
                       : <span className="status-success-text">Fully Applied</span>}
-                  </td>
+                   </td>
                   <td className="py-3 px-4 text-center">
                     <InvoiceStatusBadge status={cn.status} />
                   </td>
@@ -418,7 +419,7 @@ export default function CreditNotes() {
                            Finalize
                          </Button>
                        )}
-                       {cn.status === "finalized" && Number(cn.amount_remaining || 0) > 0 && (
+                        {cn.status === "finalized" && Number(cn.amount_due || 0) > 0 && (
                          <Button
                            variant="ghost"
                            size="sm"

@@ -595,31 +595,48 @@ export interface InvoiceSearchParams {
 export interface ApiCreditNote {
   id: string;
   business_id: string;
-  invoice_id?: string | null;
+  reference_invoice_id?: string | null;
   customer_id?: string | null;
   customer_name?: string | null;
   customer_email?: string | null;
-  credit_number?: string | null;
+  credit_note_number?: string | null;
   status: string;
   issue_date?: string | null;
   currency: string;
   subtotal: string;
   discount_total: string;
   tax_total: string;
+  fee_total: string;
   total: string;
+  applied_total: string;
+  amount_due: string;
   amount_applied: string;
   amount_remaining: string;
   notes?: string | null;
+  terms?: string | null;
+  reason?: string | null;
   template_id?: string | null;
   is_finalized: boolean;
   finalized_at?: string | null;
+  cancelled_at?: string | null;
+  cancelled_reason?: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  public_token?: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
+  created_by?: string | null;
+  updated_by?: string | null;
   items: ApiCreditNoteItem[];
+  fees: ApiCreditNoteFee[];
+  applications: ApiCreditNoteApplication[];
 }
 
 export interface ApiCreditNoteItem {
   id: string;
+  credit_note_id: string;
+  product_id?: string | null;
   description: string;
   quantity: string;
   unit: string;
@@ -630,22 +647,59 @@ export interface ApiCreditNoteItem {
   tax_amount: string;
   line_subtotal: string;
   line_total: string;
-  is_tax_inclusive: boolean;
   sort_order: number;
+  is_tax_inclusive: boolean;
+  catalog_name?: string | null;
+  catalog_sku?: string | null;
+  catalog_tax_category?: string | null;
+  catalog_unit_price?: string | null;
+  catalog_tax_rate?: string | null;
+}
+
+export interface ApiCreditNoteFee {
+  id: string;
+  credit_note_id: string;
+  description: string;
+  amount: string;
+  tax_rate: string;
+  tax_amount: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiCreditNoteApplication {
+  id: string;
+  credit_note_id: string;
+  invoice_id: string;
+  business_id?: string;
+  amount: string;
+  idempotency_key?: string | null;
+  metadata?: Record<string, unknown>;
+  applied_at: string;
 }
 
 export interface ApiCreditNoteListItem {
   id: string;
-  credit_number?: string | null;
-  customer_name?: string | null;
-  customer_email?: string | null;
+  business_id: string;
+  customer_id: string | null;
+  credit_note_number?: string | null;
   status: string;
   issue_date?: string | null;
   currency: string;
   total: string;
+  applied_total: string;
+  amount_due: string;
   amount_applied: string;
   amount_remaining: string;
+  reason?: string | null;
+  notes?: string | null;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  cancelled_at?: string | null;
   created_at: string;
+  updated_at: string;
+  customer_name: string | null;
+  customer_email: string | null;
 }
 
 export interface CreditNoteSearchParams {

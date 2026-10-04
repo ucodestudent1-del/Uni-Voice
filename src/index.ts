@@ -1338,6 +1338,8 @@ app.post("/api/invoices/:id/receipts", requireAuth, requireEntitlement("receipts
 // ============================================================================
 // CREDIT NOTES (Business tier)
 // ============================================================================
+// CREDIT NOTES
+// ============================================================================
 app.get("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await creditNoteRepository.findManyPage(req.user!.businessId, {
@@ -1351,17 +1353,50 @@ app.get("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"),
     offset: req.query.offset ? Number(req.query.offset) : undefined,
   });
   res.json({
-    creditNotes: result.data,
+    creditNotes: result.data.map(camelToSnake),
     total: result.total,
     limit: result.limit,
     offset: result.offset,
   });
 });
 
+app.post("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cnId = await creditNoteService.create(req.body, req.user!.businessId, req.user.id);
+  res.status(201).json({ creditNoteId: cnId });
+});
+
 app.get("/api/credit-notes/:id", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const cn = await creditNoteRepository.findById(req.user!.businessId, req.params.id);
-  res.json({ creditNote: cn });
+  res.json({ creditNote: camelToSnake(cn) });
+});
+
+app.patch("/api/credit-notes/:id", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await creditNoteService.update(req.user!.businessId, req.params.id, req.body);
+  res.json({ ok: true });
+});
+
+app.post("/api/credit-notes/:id/finalize", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await creditNoteService.finalize(req.user!.businessId, req.params.id, req.user.id);
+  res.json(result);
+});
+
+app.post("/api/credit-notes/:id/cancel", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { reason } = req.body;
+  await creditNoteService.cancel(req.user!.businessId, req.params.id, reason ?? "Cancelled by user", req.user.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/credit-notes/:id/apply", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { invoiceId, amount } = req.body;
+  if (!invoiceId) return res.status(400).json({ error: "invoiceId is required" });
+  await creditNoteService.applyCreditNote(req.user!.businessId, req.params.id, invoiceId, amount);
+  res.json({ ok: true });
 });
 
 app.get("/api/credit-notes/:id/pdf", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
@@ -1370,6 +1405,18 @@ app.get("/api/credit-notes/:id/pdf", requireAuth, requireEntitlement("invoices.c
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename=credit-note-${req.params.id}.pdf`);
   res.send(pdf);
+});
+
+app.get("/api/credit-notes/:id/events", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const events = await creditNoteRepository.getEvents(req.params.id, req.user!.businessId);
+  res.json({ events: camelToSnake(events) });
+});
+
+app.delete("/api/credit-notes/:id", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await creditNoteRepository.delete(req.user!.businessId, req.params.id);
+  res.status(204).send();
 });
 
 // ============================================================================
