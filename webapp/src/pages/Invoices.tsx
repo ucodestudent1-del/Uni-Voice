@@ -317,7 +317,7 @@ const [searchTerm, setSearchTerm] = useState("");
         }
       />
 
-      <div className="bg-surface rounded-xl border border-color-subtle border-color p-4">
+      <div className="filter-container">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-inverse">Filters</h3>
           <div className="flex items-center gap-3">
@@ -342,21 +342,24 @@ const [searchTerm, setSearchTerm] = useState("");
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
           <div className="lg:col-span-5">
-            <label className="form-label">Search</label>
-            <input
-              type="text"
-              placeholder="Invoice #, customer name, email..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="form-control"
-            />
+            <label className="filter-label">Search</label>
+            <div className="relative">
+              <Search className="search-icon" />
+              <input
+                type="text"
+                placeholder="Invoice #, customer name, email..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="filter-input pl-10"
+              />
+            </div>
           </div>
           <div className="lg:col-span-3">
-            <label className="form-label">Status</label>
+            <label className="filter-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s} value={s}>{s === "partially_paid" ? "Partially Paid" : s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -364,11 +367,11 @@ const [searchTerm, setSearchTerm] = useState("");
             </select>
           </div>
           <div className="lg:col-span-4">
-            <label className="form-label">Payment State</label>
+            <label className="filter-label">Payment State</label>
             <select
               value={paymentStateFilter}
               onChange={(e) => { setPaymentStateFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {PAYMENT_STATE_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -378,13 +381,13 @@ const [searchTerm, setSearchTerm] = useState("");
         </div>
 
         {showAdvancedFilters && (
-          <div className="mt-4 border-t border-color-subtle border-color pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+          <div className="mt-4 border-t border-color-subtle pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
             <div className="lg:col-span-3">
-              <label className="form-label">Customer</label>
+              <label className="filter-label">Customer</label>
               <select
                 value={customerFilter}
                 onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-                className="form-select"
+                className="filter-select"
               >
                 <option value="">All Customers</option>
                 {customers.map((c) => (
@@ -393,17 +396,17 @@ const [searchTerm, setSearchTerm] = useState("");
               </select>
             </div>
             <div className="lg:col-span-2">
-              <label className="form-label">Currency</label>
+              <label className="filter-label">Currency</label>
               <input
                 type="text"
                 placeholder="USD, EUR, etc."
                 value={currencyFilter}
                 onChange={(e) => { setCurrencyFilter(e.target.value.toUpperCase()); setPage(1); }}
-                className="form-control"
+                className="filter-input"
               />
             </div>
             <div className="lg:col-span-2">
-              <label className="form-label">Min Amount</label>
+              <label className="filter-label">Min Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -411,11 +414,11 @@ const [searchTerm, setSearchTerm] = useState("");
                 placeholder="0.00"
                 value={minAmount}
                 onChange={(e) => { setMinAmount(e.target.value); setPage(1); }}
-                className="form-control"
+                className="filter-input"
               />
             </div>
             <div className="lg:col-span-2">
-              <label className="form-label">Max Amount</label>
+              <label className="filter-label">Max Amount</label>
               <input
                 type="number"
                 step="0.01"
@@ -423,43 +426,43 @@ const [searchTerm, setSearchTerm] = useState("");
                 placeholder="999999.99"
                 value={maxAmount}
                 onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }}
-                className="form-control"
+                className="filter-input"
               />
             </div>
             <div className="lg:col-span-1.5">
-              <label className="form-label">Issue Date From</label>
+              <label className="filter-label">Issue Date From</label>
               <input
                 type="date"
                 value={issueDateFrom}
                 onChange={(e) => { setIssueDateFrom(e.target.value); setPage(1); }}
-                className="form-control"
+                className="filter-input"
               />
             </div>
             <div className="lg:col-span-1.5">
-              <label className="form-label">Issue Date To</label>
+              <label className="filter-label">Issue Date To</label>
               <input
                 type="date"
                 value={issueDateTo}
                 onChange={(e) => { setIssueDateTo(e.target.value); setPage(1); }}
-                className="form-control"
+                className="filter-input"
               />
             </div>
             <div className="lg:col-span-1.5">
-              <label className="form-label">Due Date From</label>
+              <label className="filter-label">Due Date From</label>
               <input
                 type="date"
                 value={dueDateFrom}
                 onChange={(e) => { setDueDateFrom(e.target.value); setPage(1); }}
-                className="form-control"
+                className="filter-input"
               />
             </div>
             <div className="lg:col-span-1.5">
-              <label className="form-label">Due Date To</label>
+              <label className="filter-label">Due Date To</label>
               <input
                 type="date"
                 value={dueDateTo}
                 onChange={(e) => { setDueDateTo(e.target.value); setPage(1); }}
-                className="form-control"
+                className="filter-input"
               />
             </div>
           </div>

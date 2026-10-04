@@ -133,167 +133,167 @@ export default function ReportFilters({
     !!filters.search;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3">
-        {presets && (
-          <>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-tertiary uppercase">Quick range:</span>
-              {PRESETS.map((p) => (
-                <button
-                  key={p.value}
-                  type="button"
-                  onClick={() => handlePresetChange(p.value)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    activePreset() === p.value
-                      ? "bg-primary-bg text-on-primary"
-                      : "text-tertiary hover:text-secondary hover:bg-surface-alt"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <div className="h-8 w-px bg-color-subtle self-center" />
-          </>
-        )}
-
-        {availableFilters.showDateRange && (
-          <>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-tertiary" />
-              <input
-                type="date"
-                value={filters.dateFrom ?? ""}
-                onChange={handleDateFromChange}
-                className="form-control-sm"
-                placeholder="From date"
-              />
-              <span className="text-xs text-tertiary">to</span>
-              <input
-                type="date"
-                value={filters.dateTo ?? ""}
-                onChange={handleDateToChange}
-                className="form-control-sm"
-                placeholder="To date"
-              />
-            </div>
-            <div className="h-8 w-px bg-color-subtle self-center" />
-          </>
-        )}
-
-        {availableFilters.showSearch && (
-          <div className="relative">
-            <Search className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search..."
-              defaultValue={filters.search ?? ""}
-              onChange={(e) => debouncedSetSearch(e.target.value)}
-              className="search-input"
-            />
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setAdvancedOpen(!advancedOpen)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-color px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt transition-colors h-10"
-        >
-          <Filter className="w-4 h-4" />
-          Filters
-          {hasActiveFilters && (
-            <span className="inline-flex items-center justify-center w-1.5 h-1.5 rounded-full bg-primary-action text-on-primary" />
+      <div className="filter-container">
+        <div className="flex flex-wrap items-end gap-3">
+          {presets && (
+            <>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-medium text-tertiary uppercase">Quick range:</span>
+                {PRESETS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => handlePresetChange(p.value)}
+                    className={`filter-preset-btn ${
+                      activePreset() === p.value
+                        ? "preset-active"
+                        : "preset-inactive"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="h-8 w-px bg-color-subtle self-center" />
+            </>
           )}
-        </button>
 
-        {hasActiveFilters && (
+          {availableFilters.showDateRange && (
+            <>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-tertiary" />
+                <input
+                  type="date"
+                  value={filters.dateFrom ?? ""}
+                  onChange={handleDateFromChange}
+                  className="filter-input-sm"
+                  placeholder="From date"
+                />
+                <span className="text-xs text-tertiary">to</span>
+                <input
+                  type="date"
+                  value={filters.dateTo ?? ""}
+                  onChange={handleDateToChange}
+                  className="filter-input-sm"
+                  placeholder="To date"
+                />
+              </div>
+              <div className="h-8 w-px bg-color-subtle self-center" />
+            </>
+          )}
+
+          {availableFilters.showSearch && (
+            <div className="relative">
+              <Search className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search..."
+                defaultValue={filters.search ?? ""}
+                onChange={(e) => debouncedSetSearch(e.target.value)}
+                className="filter-input pl-10"
+              />
+            </div>
+          )}
+
           <button
             type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-1 rounded-lg text-sm font-medium text-secondary hover:text-primary hover:bg-surface-alt transition-colors h-10 px-3"
+            onClick={() => setAdvancedOpen(!advancedOpen)}
+            className="filter-toggle"
           >
-            <X className="w-4 h-4" />
-            Reset
+            <Filter className="w-4 h-4" />
+            Filters
+            {hasActiveFilters && (
+              <span className="inline-flex items-center justify-center w-1.5 h-1.5 rounded-full bg-primary-action text-on-primary" />
+            )}
           </button>
-        )}
-      </div>
 
-      {advancedOpen && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
-          {availableFilters.showStatus && (
-            <div className="space-y-1.5">
-              <label className="form-label-secondary">Status</label>
-              <select
-                value={filters.status ? (Array.isArray(filters.status) ? filters.status[0] : filters.status) : ""}
-                onChange={handleStatusChange}
-                className="form-select"
-              >
-                <option value="">All statuses</option>
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {availableFilters.showCustomer && (
-            <div className="space-y-1.5">
-              <label className="form-label-secondary flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                Customer
-              </label>
-              <input
-                type="text"
-                placeholder="Customer name"
-                value={filters.customerId ?? ""}
-                onChange={(e) =>
-                  onChange({ ...filters, customerId: e.target.value || undefined, offset: 0 })
-                }
-                className="form-control"
-              />
-            </div>
-          )}
-
-          {availableFilters.showProject && (
-            <div className="space-y-1.5">
-              <label className="form-label-secondary flex items-center gap-1">
-                <LayoutGrid className="w-3.5 h-3.5" />
-                Project
-              </label>
-              <input
-                type="text"
-                placeholder="Project name"
-                value={filters.projectId ?? ""}
-                onChange={(e) =>
-                  onChange({ ...filters, projectId: e.target.value || undefined, offset: 0 })
-                }
-                className="form-control"
-              />
-            </div>
-          )}
-
-          {availableFilters.showProvider && (
-            <div className="space-y-1.5">
-              <label className="form-label-secondary flex items-center gap-1">
-                <Tag className="w-3.5 h-3.5" />
-                Provider
-              </label>
-              <input
-                type="text"
-                placeholder="Payment provider"
-                value={filters.provider ?? ""}
-                onChange={(e) =>
-                  onChange({ ...filters, provider: e.target.value || undefined, offset: 0 })
-                }
-                className="form-control"
-              />
-            </div>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="filter-clear"
+            >
+              <X className="w-4 h-4" />
+              Reset
+            </button>
           )}
         </div>
-      )}
-    </div>
+
+        {advancedOpen && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+            {availableFilters.showStatus && (
+              <div className="space-y-1.5">
+                <label className="filter-label-secondary">Status</label>
+                <select
+                  value={filters.status ? (Array.isArray(filters.status) ? filters.status[0] : filters.status) : ""}
+                  onChange={handleStatusChange}
+                  className="filter-select"
+                >
+                  <option value="">All statuses</option>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {availableFilters.showCustomer && (
+              <div className="space-y-1.5">
+                <label className="filter-label-secondary flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5" />
+                  Customer
+                </label>
+                <input
+                  type="text"
+                  placeholder="Customer name"
+                  value={filters.customerId ?? ""}
+                  onChange={(e) =>
+                    onChange({ ...filters, customerId: e.target.value || undefined, offset: 0 })
+                  }
+                  className="filter-input"
+                />
+              </div>
+            )}
+
+            {availableFilters.showProject && (
+              <div className="space-y-1.5">
+                <label className="filter-label-secondary flex items-center gap-1">
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  Project
+                </label>
+                <input
+                  type="text"
+                  placeholder="Project name"
+                  value={filters.projectId ?? ""}
+                  onChange={(e) =>
+                    onChange({ ...filters, projectId: e.target.value || undefined, offset: 0 })
+                  }
+                  className="filter-input"
+                />
+              </div>
+            )}
+
+            {availableFilters.showProvider && (
+              <div className="space-y-1.5">
+                <label className="filter-label-secondary flex items-center gap-1">
+                  <Tag className="w-3.5 h-3.5" />
+                  Provider
+                </label>
+                <input
+                  type="text"
+                  placeholder="Payment provider"
+                  value={filters.provider ?? ""}
+                  onChange={(e) =>
+                    onChange({ ...filters, provider: e.target.value || undefined, offset: 0 })
+                  }
+                  className="filter-input"
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
   );
 }

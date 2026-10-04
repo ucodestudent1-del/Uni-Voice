@@ -69,17 +69,17 @@ function CustomerActionMenu({
           data-action-menu={customer.id}
           role="menu"
           aria-label={`Actions for ${customer.name}`}
-          className={cn(
-            "absolute z-10 mt-1 w-44 origin-top rounded-lg bg-surface border border-color-subtle shadow-lg focus:outline-none",
-            align === "right" ? "right-0" : "left-0"
-          )}
+           className={cn(
+             "menu-box min-w-[14rem]",
+             align === "right" ? "right-0" : "left-0"
+           )}
         >
           <div className="py-1">
             <button
               type="button"
               role="menuitem"
               onClick={() => { onClose(); onNavigate(`/app/customers/${customer.id}`); }}
-              className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-hover hover:text-primary flex items-center gap-2"
+              className="menu-item"
             >
               <Eye className="h-4 w-4" />
               View Profile
@@ -88,30 +88,30 @@ function CustomerActionMenu({
               type="button"
               role="menuitem"
               onClick={() => { onClose(); onEdit(customer); }}
-              className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-hover hover:text-primary flex items-center gap-2"
+              className="menu-item"
             >
               <Edit2 className="h-4 w-4" />
               Edit
             </button>
-            <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
+            <FeatureGate feature="invoices.create" requiredPlan="pro" fallback={null}>
               <button
                 type="button"
                 role="menuitem"
                 onClick={() => { onClose(); onCreateInvoice(customer); }}
                 disabled={isCreating}
-                className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-hover hover:text-primary disabled:opacity-50 flex items-center gap-2"
+                className="menu-item disabled:opacity-50"
               >
                 <FileText className="h-4 w-4" />
                 {isCreating ? "Creating…" : "Create Invoice"}
               </button>
             </FeatureGate>
-            <div className="border-t border-color-subtle my-1"></div>
+            <div className="menu-divider border-t" />
             {customer.status === "archived" ? (
               <button
                 type="button"
                 role="menuitem"
                 onClick={() => { onClose(); onRestore(customer); }}
-                className="w-full text-left px-3 py-2 text-sm status-error-text hover:bg-error-bg/50 flex items-center gap-2"
+                className="menu-item menu-item-danger"
               >
                 <RefreshCw className="h-4 w-4" />
                 Restore
@@ -121,7 +121,7 @@ function CustomerActionMenu({
                 type="button"
                 role="menuitem"
                 onClick={() => { onClose(); onArchive(customer); }}
-                className="w-full text-left px-3 py-2 text-sm status-error-text hover:bg-error-bg/50 flex items-center gap-2"
+                className="menu-item menu-item-danger"
               >
                 <Archive className="h-4 w-4" />
                 Archive
@@ -361,10 +361,10 @@ export default function Customers() {
         </div>
       </div>
 
-          <div className="bg-surface rounded-xl border border-color-subtle p-3">
+          <div className="filter-container">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5">
               <div className="lg:col-span-4">
-                <label className="form-label-secondary">Search</label>
+                <label className="filter-label-secondary">Search</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tertiary" />
                   <input
@@ -372,16 +372,16 @@ export default function Customers() {
                     placeholder="Search by name, email, or company…"
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-                    className="form-control pl-10"
+                    className="filter-input pl-10"
                   />
                 </div>
               </div>
               <div className="lg:col-span-3">
-                <label className="form-label-secondary">Status</label>
+                <label className="filter-label-secondary">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-                  className="form-select"
+                  className="filter-select"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -389,11 +389,11 @@ export default function Customers() {
                 </select>
               </div>
               <div className="lg:col-span-2">
-                <label className="form-label-secondary">Sort By</label>
+                <label className="filter-label-secondary">Sort By</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="form-select"
+                  className="filter-select"
                 >
                   {SORT_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -401,11 +401,11 @@ export default function Customers() {
                 </select>
               </div>
               <div className="lg:col-span-1.5">
-                <label className="form-label-secondary">Direction</label>
+                <label className="filter-label-secondary">Direction</label>
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as any)}
-                  className="form-select"
+                  className="filter-select"
                 >
                   <option value="asc">Ascending</option>
                   <option value="desc">Descending</option>

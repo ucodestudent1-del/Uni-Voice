@@ -55,7 +55,7 @@ export default function ProjectSelector({ value, onChange, placeholder = "Select
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer hover:bg-surface-alt focus-within:ring-2 focus-within:ring-primary transition-colors h-10"
+        className="dropdown-toggle"
         onClick={() => setOpen(!open)}
       >
         <span className="truncate" title={selectedProject ? selectedProject.name : placeholder}>
@@ -74,11 +74,11 @@ export default function ProjectSelector({ value, onChange, placeholder = "Select
             ×
           </button>
         )}
-        {!value && <ChevronDown className="w-4 h-4 text-tertiary shrink-0" />}
+        {!value && <ChevronDown className="dropdown-chevron" />}
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-surface border border-color-subtle rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="dropdown-content">
           <div className="p-2 border-b border-color-subtle">
             <input
               type="text"

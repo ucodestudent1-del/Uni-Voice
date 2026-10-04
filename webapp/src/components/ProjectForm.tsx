@@ -240,7 +240,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
               <label className="form-label">Customer</label>
               <div className="relative">
                 <div
-                  className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer focus-within:ring-2 focus-within:ring-primary transition-colors h-10"
+                  className="dropdown-toggle"
                   onClick={() => setCustomerDropdownOpen(!customerDropdownOpen)}
                 >
                   <span className="truncate">
@@ -248,7 +248,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                       ? `${selectedCustomer.name}${selectedCustomer.companyName ? ` (${selectedCustomer.companyName})` : ""}`
                       : "Select a customer"}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-tertiary shrink-0 ml-2" />
+                   <ChevronDown className="dropdown-chevron" />
                 </div>
                 {formData.customerId && (
                   <button
@@ -263,32 +263,32 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                     ×
                   </button>
                 )}
-                {customerDropdownOpen && (
-                  <div className="absolute z-50 mt-1 w-full bg-surface border border-color-subtle rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {loadingCustomers ? (
-                      <div className="p-3 text-sm text-secondary">Loading customers...</div>
-                    ) : (
-                      filteredCustomers.map((c) => (
-                        <div
-                          key={c.id}
-                          className="p-3 cursor-pointer hover:bg-surface-alt border-b border-color-subtle last:border-b-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleChange("customerId", c.id);
-                            setCustomerDropdownOpen(false);
-                          }}
-                        >
-                          <p className="font-medium text-sm text-primary">{c.name}</p>
-                          {c.companyName && <p className="text-xs text-secondary">{c.companyName}</p>}
-                          {c.email && <p className="text-xs text-tertiary">{c.email}</p>}
-                        </div>
-                      ))
-                    )}
-                    {filteredCustomers.length === 0 && !loadingCustomers && (
-                      <div className="p-3 text-sm text-secondary">No customers found</div>
-                    )}
-                  </div>
-                )}
+                 {customerDropdownOpen && (
+                   <div className="dropdown-content max-h-60">
+                     {loadingCustomers ? (
+                       <div className="p-3 text-sm text-secondary">Loading customers...</div>
+                     ) : (
+                       filteredCustomers.map((c) => (
+                         <div
+                           key={c.id}
+                           className="p-3 cursor-pointer hover:bg-surface-alt border-b border-color-subtle last:border-b-0"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleChange("customerId", c.id);
+                             setCustomerDropdownOpen(false);
+                           }}
+                         >
+                           <p className="font-medium text-sm text-primary">{c.name}</p>
+                           {c.companyName && <p className="text-xs text-secondary">{c.companyName}</p>}
+                           {c.email && <p className="text-xs text-tertiary">{c.email}</p>}
+                         </div>
+                       ))
+                     )}
+                     {filteredCustomers.length === 0 && !loadingCustomers && (
+                       <div className="p-3 text-sm text-secondary">No customers found</div>
+                     )}
+                   </div>
+                 )}
               </div>
             </div>
 
@@ -391,15 +391,15 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
                 </Button>
               </div>
               {tagDropdownOpen && (
-                <div className="absolute z-50 mt-1 bg-surface border border-color-subtle rounded-lg shadow-lg">
+                <div className="absolute z-50 mt-1 min-w-[180px] menu-box py-1">
                   {PRESET_TAGS.map((t) => (
                     <div
                       key={t.name}
-                      className="px-3 py-2 cursor-pointer hover:bg-surface-alt flex items-center gap-2"
+                      className="p-3 cursor-pointer hover:bg-surface-alt border-b border-color-subtle last:border-b-0 flex items-center gap-2"
                       onClick={() => handleTagToggle(t)}
                     >
                       <span
-                        className="w-3 h-3 rounded-full"
+                        className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: t.color }}
                       />
                       <span className="text-sm">{t.name}</span>

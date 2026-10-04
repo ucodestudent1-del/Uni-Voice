@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Search } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCreditNotes,
@@ -224,7 +224,7 @@ export default function CreditNotes() {
         </div>
       </div>
 
-      <div className="bg-surface rounded-xl border border-color-subtle p-4">
+      <div className="filter-container">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-primary">Filters</h3>
           <div className="flex items-center gap-3">
@@ -249,21 +249,24 @@ export default function CreditNotes() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
           <div className="lg:col-span-5">
-            <label className="form-label">Search</label>
-            <input
-              type="text"
-              placeholder="Credit #, customer name..."
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="form-control"
-            />
+            <label className="filter-label">Search</label>
+            <div className="relative">
+              <Search className="search-icon" />
+              <input
+                type="text"
+                placeholder="Credit #, customer name..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                className="filter-input pl-10"
+              />
+            </div>
           </div>
           <div className="lg:col-span-3">
-            <label className="form-label">Status</label>
+            <label className="filter-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -271,13 +274,13 @@ export default function CreditNotes() {
             </select>
           </div>
           <div className="lg:col-span-4">
-            <label className="form-label">Currency</label>
+            <label className="filter-label">Currency</label>
             <input
               type="text"
               placeholder="USD, EUR, etc."
               value={currencyFilter}
               onChange={(e) => { setCurrencyFilter(e.target.value.toUpperCase()); setPage(1); }}
-              className="form-control"
+              className="filter-input"
             />
           </div>
         </div>
@@ -285,11 +288,11 @@ export default function CreditNotes() {
         {showAdvancedFilters && (
           <div className="mt-4 border-t border-color-subtle pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="lg:col-span-4">
-              <label className="form-label">Customer</label>
+              <label className="filter-label">Customer</label>
               <select
                 value={customerFilter}
                 onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }}
-                className="form-select"
+                className="filter-select"
               >
                 <option value="">All Customers</option>
                 {customers.map((c) => (

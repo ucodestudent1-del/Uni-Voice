@@ -964,7 +964,7 @@ case "ArrowUp":
 
         {contextMenu && (
           <div
-            className="fixed z-50 bg-surface border border-color-subtle rounded-lg shadow-lg py-1 min-w-[160px]"
+            className="fixed z-50 bg-surface border border-color-subtle rounded-lg shadow-lg py-1 min-w-[14rem] menu-box"
             style={{ left: contextMenu.x, top: contextMenu.y }}
             role="menu"
             aria-label="Component context menu"
@@ -974,7 +974,7 @@ case "ArrowUp":
                 handleDuplicate(contextMenu.componentId);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary"
+              className="menu-item"
             >
               Duplicate
             </button>
@@ -983,7 +983,7 @@ case "ArrowUp":
                 handleDelete(contextMenu.componentId);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-2 text-sm status-error-text hover:status-error-bg focus:outline-none focus:ring-1 focus:ring-error"
+              className="menu-item menu-item-danger"
             >
               Delete
             </button>

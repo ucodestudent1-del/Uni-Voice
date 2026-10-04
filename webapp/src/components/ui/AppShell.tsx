@@ -87,27 +87,27 @@ export function TopBar({
             </button>
             <div
               role="menu"
-              className="invisible absolute right-0 top-full z-40 hidden min-w-48 flex-col gap-1 rounded-lg border border-color bg-surface p-1.5 shadow-lg group-hover:flex"
+              className="invisible absolute right-0 top-full z-40 hidden min-w-[14rem] flex-col gap-1 rounded-lg border border-color-subtle bg-surface p-1.5 shadow-lg group-hover:flex menu-box"
             >
               <a
                 href="#profile"
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-surface-alt"
+                className="menu-item"
                 role="menuitem"
               >
                 <User className="h-4 w-4" /> Profile
               </a>
               <a
                 href="#settings"
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-surface-alt"
+                className="menu-item"
                 role="menuitem"
                 onClick={onSettings}
               >
                 <SettingsIcon className="h-4 w-4" /> Settings
               </a>
-              <div className="my-1 h-px bg-color-subtle" />
+              <div className="menu-divider border-t" />
               <button
                 onClick={onLogout}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-error-text hover:bg-error-bg"
+                className="menu-item menu-item-danger"
                 role="menuitem"
               >
                 <LogOut className="h-4 w-4" /> Sign out

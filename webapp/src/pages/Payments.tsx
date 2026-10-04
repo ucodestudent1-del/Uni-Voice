@@ -340,10 +340,10 @@ export default function Payments() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface rounded-xl border border-color-subtle p-4">
+      <div className="filter-container">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="sm:col-span-2">
-            <label className="form-label">Search</label>
+            <label className="filter-label">Search</label>
             <div className="relative">
               <Search className="search-icon" />
               <input
@@ -351,16 +351,16 @@ export default function Payments() {
                 placeholder="Search by invoice number, customer name, or provider reference..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="search-input"
+                className="filter-input pl-10"
               />
             </div>
           </div>
           <div>
-            <label className="form-label">Status</label>
+            <label className="filter-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -370,11 +370,11 @@ export default function Payments() {
             </select>
           </div>
           <div>
-            <label className="form-label">Provider</label>
+            <label className="filter-label">Provider</label>
             <select
               value={providerFilter}
               onChange={(e) => { setProviderFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {PROVIDER_OPTIONS.map((p) => (
                 <option key={p.value} value={p.value}>

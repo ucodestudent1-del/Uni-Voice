@@ -271,30 +271,30 @@ export default function ReceiptDetail() {
         </div>
       )}
 
-      {/* Action Menu (Dropdown) */}
+       {/* Action Menu (Dropdown) */}
       {showActionMenu !== "closed" && (
         <div className="fixed inset-0 z-10" onClick={() => setShowActionMenu("closed")}>
           <div
-            className="absolute top-20 right-4 z-20 w-48 bg-surface border border-color-subtle rounded-lg shadow-lg py-1"
+            className="absolute top-20 right-4 z-20 min-w-[14rem] menu-box py-1"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => { setShowEmailModal(true); setShowActionMenu("closed"); }}
-              className="flex items-center w-full px-3 py-2 text-sm text-secondary hover:text-primary hover:bg-surface-alt"
+              className="menu-item"
             >
               <Mail className="h-4 w-4 mr-2" />
               Email Receipt
             </button>
             <button
               onClick={handleCopyReceiptNumber}
-              className="flex items-center w-full px-3 py-2 text-sm text-secondary hover:text-primary hover:bg-surface-alt"
+              className="menu-item"
             >
               <Copy className="h-4 w-4 mr-2" />
               Copy Receipt Number
             </button>
             <button
               onClick={handleViewInvoice}
-              className="flex items-center w-full px-3 py-2 text-sm text-secondary hover:text-primary hover:bg-surface-alt"
+              className="menu-item"
             >
               <FileText className="h-4 w-4 mr-2" />
               View Invoice
@@ -302,17 +302,17 @@ export default function ReceiptDetail() {
             {receipt.provider_receipt_url && (
               <button
                 onClick={handleViewInProvider}
-                className="flex items-center w-full px-3 py-2 text-sm text-secondary hover:text-primary hover:bg-surface-alt"
+                className="menu-item"
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Open in Provider
               </button>
             )}
-            <hr className="my-1 border-color-subtle" />
+            <div className="menu-divider border-t" />
             {canRefund && (
               <button
                 onClick={() => { setShowRefundModal(true); setShowActionMenu("closed"); }}
-                className="flex items-center w-full px-3 py-2 text-sm text-secondary hover:text-primary hover:bg-surface-alt"
+                className="menu-item"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Request Refund
@@ -320,7 +320,7 @@ export default function ReceiptDetail() {
             )}
             <button
               onClick={handleDelete}
-              className="flex items-center w-full px-3 py-2 text-sm status-error-text hover:bg-surface-alt"
+              className="menu-item menu-item-danger"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Receipt

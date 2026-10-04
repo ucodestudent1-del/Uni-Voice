@@ -504,10 +504,10 @@ export default function Receipts() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface rounded-xl border border-color-subtle p-4">
+      <div className="filter-container">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
           <div className="lg:col-span-4">
-            <label className="form-label">Search</label>
+            <label className="filter-label">Search</label>
             <div className="relative">
               <Search className="search-icon" />
               <input
@@ -515,16 +515,16 @@ export default function Receipts() {
                 placeholder="Receipt #, invoice #, customer name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="search-input"
+                className="filter-input pl-10"
               />
             </div>
           </div>
           <div className="lg:col-span-2">
-            <label className="form-label">Status</label>
+            <label className="filter-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -532,11 +532,11 @@ export default function Receipts() {
             </select>
           </div>
           <div className="lg:col-span-2">
-            <label className="form-label">Provider</label>
+            <label className="filter-label">Provider</label>
             <select
               value={providerFilter}
               onChange={(e) => { setProviderFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {PROVIDER_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -544,29 +544,29 @@ export default function Receipts() {
             </select>
           </div>
           <div className="lg:col-span-2">
-            <label className="form-label">Date Range</label>
+            <label className="filter-label">Date Range</label>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                className="form-control-sm"
+                className="filter-input"
               />
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                className="form-control-sm"
+                className="filter-input"
               />
             </div>
           </div>
       <div className="lg:col-span-2 flex items-end">
         <div className="relative w-full">
-          <label className="form-label">Sort By</label>
+          <label className="filter-label">Sort By</label>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="form-select"
+            className="filter-select"
           >
             {SORT_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -578,13 +578,12 @@ export default function Receipts() {
 
         {hasActiveFilters && (
           <div className="mt-3 flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={clearFilters}
+              className="filter-clear"
             >
               Clear All
-            </Button>
+            </button>
           </div>
         )}
 

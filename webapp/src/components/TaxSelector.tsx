@@ -55,17 +55,17 @@ export default function TaxSelector({ value, onChange, allowNone = true, placeho
   return (
     <div ref={containerRef} className="relative">
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer focus-within:ring-2 focus-within:ring-primary transition-colors h-10"
+        className="dropdown-toggle"
         onClick={() => setOpen(!open)}
       >
         <span className="truncate">
           {selected ? `${selected.name} (${formatRate(selected.rate)})` : placeholder}
         </span>
-        <ChevronDown className="w-4 h-4 text-tertiary shrink-0 ml-2" />
+        <ChevronDown className="dropdown-chevron" />
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-surface border border-color-subtle rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="dropdown-content max-h-60">
           {loading ? (
             <div className="p-3 text-sm text-secondary">Loading tax rates...</div>
           ) : (

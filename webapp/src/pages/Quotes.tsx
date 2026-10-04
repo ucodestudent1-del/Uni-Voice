@@ -261,10 +261,10 @@ export default function Quotes() {
         }
       />
 
-      <div className="bg-surface rounded-xl border border-color-subtle p-4">
+      <div className="filter-container">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="form-label">Search</label>
+            <label className="filter-label">Search</label>
             <div className="relative">
               <Search className="search-icon" />
               <input
@@ -272,16 +272,16 @@ export default function Quotes() {
                 placeholder="Quote #, customer name..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="search-input"
+                className="filter-input pl-10"
               />
             </div>
           </div>
           <div>
-            <label className="form-label">Status</label>
+            <label className="filter-label">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-              className="form-select"
+              className="filter-select"
             >
               {STATUS_FILTERS.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
@@ -294,7 +294,7 @@ export default function Quotes() {
           <div className="mt-3 flex justify-end">
             <button
               onClick={clearFilters}
-              className="text-sm font-medium text-secondary hover:text-primary"
+              className="filter-clear"
             >
               Clear All
             </button>

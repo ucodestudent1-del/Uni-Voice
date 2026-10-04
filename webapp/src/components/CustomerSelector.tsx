@@ -119,17 +119,17 @@ export default function CustomerSelector({
   return (
     <div ref={containerRef} className="relative">
       <div
-        className="flex items-center justify-between w-full px-3 py-2 border border-input-border rounded-lg bg-input text-sm text-primary cursor-pointer focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-colors h-10"
+        className="dropdown-toggle"
         onClick={() => { setOpen(!open); setCreateMode(false); }}
       >
         <span className="truncate" title={selectedDisplay}>
           {selectedDisplay}
         </span>
-        <ChevronDown className="w-4 h-4 text-tertiary shrink-0 ml-2" />
+        <ChevronDown className="dropdown-chevron" />
       </div>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-surface border border-color-subtle rounded-lg shadow-lg max-h-96 overflow-y-auto">
+        <div className="dropdown-content max-h-80">
           {createMode ? (
             <div className="p-3 border-b border-color-subtle">
               <form onSubmit={handleCreate} className="space-y-2">
@@ -175,20 +175,20 @@ export default function CustomerSelector({
             <div className="p-3 text-sm text-secondary">Loading customers...</div>
           ) : (
             customers.map((c) => (
-              <div
-                key={c.id}
-                className="p-3 cursor-pointer hover:bg-surface-alt border-b border-color-subtle last:border-b-0"
-                onClick={() => {
-                  onChange(c.id);
-                  onCustomerChange?.(c);
-                  setOpen(false);
-                }}
-              >
-                <p className="font-medium text-sm text-primary">{c.name}</p>
-                {c.companyName && <p className="text-xs text-secondary">{c.companyName}</p>}
-                {c.email && <p className="text-xs text-tertiary">{c.email}</p>}
-              </div>
-            ))
+               <div
+                 key={c.id}
+                 className="p-3 cursor-pointer hover:bg-surface-alt border-b border-color-subtle last:border-b-0"
+                 onClick={() => {
+                   onChange(c.id);
+                   onCustomerChange?.(c);
+                   setOpen(false);
+                 }}
+               >
+                 <p className="font-medium text-sm text-primary">{c.name}</p>
+                 {c.companyName && <p className="text-xs text-secondary">{c.companyName}</p>}
+                 {c.email && <p className="text-xs text-tertiary">{c.email}</p>}
+               </div>
+             ))
           )}
 
           {!createMode && (

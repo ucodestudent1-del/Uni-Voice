@@ -646,30 +646,30 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
 
       {contextMenu && (
         <div
-          className="fixed z-50 bg-surface border border-color-subtle rounded-lg shadow-lg py-1 min-w-[160px]"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-          role="menu"
-          aria-label="Component context menu"
-        >
-          <button
-            type="button"
-            onClick={() => {
-              onDuplicate(contextMenu.componentId);
-              closeContextMenu();
-            }}
-            className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-surface-alt focus:outline-none focus:ring-1 focus:ring-primary"
+            className="fixed z-50 bg-surface border border-color-subtle rounded-lg shadow-lg py-1 min-w-[14rem] menu-box"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            role="menu"
+            aria-label="Component context menu"
           >
-            Duplicate
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onDelete(contextMenu.componentId);
-              closeContextMenu();
-            }}
-            className="w-full text-left px-3 py-2 text-sm status-error-text hover:status-error-bg focus:outline-none focus:ring-1 focus:ring-error"
-          >
-            Delete
+            <button
+              type="button"
+              onClick={() => {
+                onDuplicate(contextMenu.componentId);
+                closeContextMenu();
+              }}
+              className="menu-item"
+            >
+              Duplicate
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onDelete(contextMenu.componentId);
+                closeContextMenu();
+              }}
+              className="menu-item menu-item-danger"
+            >
+              Delete
           </button>
         </div>
       )}
