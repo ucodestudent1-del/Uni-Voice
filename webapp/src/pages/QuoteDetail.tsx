@@ -5,6 +5,7 @@ import {
   sendQuote,
   getQuotePdf,
   convertQuote,
+  convertAndSendQuote,
   type ApiQuote,
 } from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
@@ -70,6 +71,20 @@ export default function QuoteDetail() {
     }
   }
 
+  async function handleConvertAndSend() {
+    if (!id) return;
+    if (!window.confirm("Convert this quote to an invoice and send it to the customer?")) return;
+    setSaving(true);
+    try {
+      const result = await convertAndSendQuote(id);
+      setActionMessage(`Converted and sent! Invoice #${result.invoiceId?.slice(0, 8)}`);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to convert and send quote");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleDownloadPdf() {
     if (!id) return;
     try {
@@ -115,8 +130,11 @@ export default function QuoteDetail() {
           <Button variant="secondary" size="sm" icon={<Send className="w-4 h-4" />} onClick={handleSend} disabled={saving}>
             Send
           </Button>
-          <Button variant="primary" size="sm" icon={<Copy className="w-4 h-4" />} onClick={handleConvert} disabled={saving}>
+          <Button variant="secondary" size="sm" icon={<Copy className="w-4 h-4" />} onClick={handleConvert} disabled={saving}>
             Convert
+          </Button>
+          <Button variant="primary" size="sm" icon={<Send className="w-4 h-4" />} onClick={handleConvertAndSend} disabled={saving}>
+            Convert &amp; Send
           </Button>
         </div>
       </div>

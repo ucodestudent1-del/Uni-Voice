@@ -1203,6 +1203,15 @@ app.post("/api/quotes/:id/convert", requireAuth, requireEntitlement("quotes.conv
   res.status(201).json({ invoiceId: result.invoiceId, quoteNumber: result.quoteNumber });
 });
 
+app.post("/api/quotes/:id/convert-and-send", requireAuth, requireEntitlement("quotes.convert"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await quoteService.convertToInvoice(req.user!.businessId, req.params.id, req.user.id);
+  invalidateReportsCache(req.user!.businessId);
+  const finalizeRes = await invoiceService.finalize(req.user!.businessId, result.invoiceId, req.user.id);
+  await invoiceService.send(req.user!.businessId, result.invoiceId, req.user.id);
+  res.status(201).json({ invoiceId: result.invoiceId, quoteNumber: result.quoteNumber, invoiceNumber: finalizeRes.invoiceNumber });
+});
+
 app.delete("/api/quotes/:id", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await quoteService.delete(req.user!.businessId, req.params.id);
@@ -1422,6 +1431,29 @@ app.get("/api/reports/payment-metrics", requireAuth, async (req: AuthRequest, re
   const result = await invoiceRepository.getPaymentMetrics(req.user!.businessId, monthStart);
   reportsCache.set(cacheKey, result);
   res.json(result);
+});
+
+app.get("/api/reports/aging", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cacheKey = `aging:${req.user!.businessId}`;
+  const cached = reportsCache.get(cacheKey);
+  if (cached) return res.json(cached);
+  const now = new Date();
+  const [buckets, summary, business] = await Promise.all([
+    invoiceRepository.getAgingBuckets(req.user!.businessId, now),
+    invoiceRepository.getDashboardSummary(req.user!.businessId),
+    businessRepository.findById(req.user!.businessId),
+  ]);
+  const response = {
+    buckets,
+    summary: {
+      totalOutstanding: new Decimal(summary.totalOutstanding).toFixed(2),
+      totalOverdue: new Decimal(summary.totalOverdue).toFixed(2),
+      currency: business.defaultCurrency ?? "USD",
+    },
+  };
+  reportsCache.set(cacheKey, response);
+  res.json(response);
 });
 
 app.get("/api/reports/revenue", requireAuth, requireEntitlement("reports.revenue"), async (req: AuthRequest, res) => {

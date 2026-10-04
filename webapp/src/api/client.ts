@@ -482,6 +482,11 @@ export async function convertQuote(id: string) {
   return res.data;
 }
 
+export async function convertAndSendQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/convert-and-send`);
+  return res.data;
+}
+
 export async function exportInvoicesCsv() {
   const res = await api.get("/export/invoices/csv", { responseType: "blob" });
   return res.data;
@@ -1188,7 +1193,12 @@ export async function getPaymentMetricsReport(): Promise<ApiPaymentMetrics | nul
   try {
     const res = await api.get("/reports/payment-metrics");
     return res.data;
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("404")) {
+      console.warn("Payment metrics report endpoint not available");
+    } else {
+      console.error("Failed to load payment metrics:", err);
+    }
     return null;
   }
 }

@@ -554,19 +554,10 @@ export default function InvoiceWorkspace() {
            currency: cur.currency,
            itemCount: cur.items.length,
          });
-       } else {
-         const itemsChanged = JSON.stringify(metaPayload.items) !== lastSavedItemsRef.current;
-         const feesChanged = JSON.stringify(metaPayload.fees) !== lastSavedFeesRef.current;
-         if (itemsChanged || feesChanged) {
-           const payload: Record<string, unknown> = { ...metaPayload };
-           if (!itemsChanged) delete payload.items;
-           if (!feesChanged) delete payload.fees;
-           await updateInvoice(curId, payload);
-         } else {
-           await updateInvoice(curId, metaPayload);
-         }
-         lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
-         lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
+        } else {
+          await updateInvoice(curId, metaPayload);
+          lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
+          lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
         analytics.track("invoice_saved", {
           invoiceId: curId,
           currency: cur.currency,
