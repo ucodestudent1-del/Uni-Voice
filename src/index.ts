@@ -207,6 +207,15 @@ const generalRateLimiter = rateLimit({
   skip: isDev ? () => true : undefined,
 });
 
+const aiRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: isDev ? 100 : 30,
+  message: { error: "Too many AI parse requests. Please try again later.", code: "AI_RATE_LIMITED" },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isDev ? () => true : undefined,
+});
+
 app.use(generalRateLimiter);
 
 app.get("/api/health", (_req, res) => {
@@ -1942,7 +1951,7 @@ app.post("/api/document-templates/:id/set-default", requireAuth, async (req: Aut
 // ============================================================================
 // AI DOCUMENT PARSING (natural-language to structured fields)
 // ============================================================================
-app.post("/api/ai/parse-document", requireAuth, async (req: AuthRequest, res) => {
+app.post("/api/ai/parse-document", requireAuth, aiRateLimiter, requireEntitlement("ai.document_parsing"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
 
   const text = req.body?.text;

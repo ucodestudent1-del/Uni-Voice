@@ -125,23 +125,30 @@ export class AiService {
 
     const itemPatterns = [
       /(\d+(?:\.\d+)?)\s*(?:x|units?|qty)?\s*([a-zA-Z\s]+?)\s*(?:at|@)\s*\$?(\d+(?:\.\d+)?)/gi,
-      /(\d+(?:\.\d+)?)\s*(?:x|units?|qty)?\s*([a-zA-Z\s]+?)\s*\$(\d+(?:\.\d+)?)/gi,
       /([a-zA-Z\s]+?)\s*:\s*\$(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/gi,
     ];
+
+    const descriptions = new Set<string>();
 
     for (const pattern of itemPatterns) {
       let match: RegExpExecArray | null;
       while ((match = pattern.exec(text)) !== null) {
-        const qty = this.tryParseQty(match[1], match[3]);
-        if (qty !== null && qty > 0) {
-          let desc = match[2]?.trim() ?? match[1]?.trim() ?? "";
-          let price: number;
-          if (match[3] !== undefined) {
-            desc = match[2]?.trim() ?? "";
-            price = parseFloat(match[3]);
-          } else {
-            price = parseFloat(match[3] ?? match[2] ?? "0");
-          }
+        let desc: string;
+        let qty: number;
+        let price: number;
+
+        if (pattern === itemPatterns[1]) {
+          desc = match[1]?.trim() ?? "";
+          price = parseFloat(match[2]);
+          qty = parseFloat(match[3]);
+        } else {
+          qty = parseFloat(match[1]);
+          desc = match[2]?.trim() ?? "";
+          price = parseFloat(match[3]);
+        }
+
+        if (qty > 0 && price >= 0 && desc && !descriptions.has(desc.toLowerCase())) {
+          descriptions.add(desc.toLowerCase());
           fields.items.push({
             description: desc,
             quantity: qty,
@@ -160,7 +167,7 @@ export class AiService {
         const qty = parseFloat(altMatch[1]);
         const desc = altMatch[2].trim();
         const total = parseFloat(altMatch[3].replace(/,/g, ""));
-        if (qty > 0) {
+        if (qty > 0 && desc && !descriptions.has(desc.toLowerCase())) {
           fields.items.push({
             description: desc,
             quantity: qty,
@@ -188,12 +195,6 @@ export class AiService {
     }
 
     return fields;
-  }
-
-  private tryParseQty(q1: string, q3: string | undefined): number | null {
-    const candidate = (q3 !== undefined ? q3 : q1);
-    const parsed = parseFloat(candidate);
-    return isNaN(parsed) ? null : parsed;
   }
 
   private inferUnit(description: string): string {

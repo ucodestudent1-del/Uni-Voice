@@ -91,8 +91,9 @@ export class SubscriptionService {
        { code: "projects.unlimited", name: "Unlimited Projects", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: { freeLimit: 5 } },
        { code: "projects.budget_tracking", name: "Project Budget & Financial Tracking", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
        { code: "projects.team_assignment", name: "Project Team Assignment", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
-       { code: "projects.invoicing", name: "Create Invoices from Projects", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
-    ];
+        { code: "projects.invoicing", name: "Create Invoices from Projects", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
+        { code: "ai.document_parsing", name: "AI Document Parsing", category: "ai", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
+      ];
 
     await subscriptionRepository.bulkUpsertFeatureFlags(featureFlags);
   }
