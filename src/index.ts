@@ -1782,12 +1782,6 @@ app.get("/api/reports/profit-loss", requireAuth, requireEntitlement("reports.pro
   res.json(result);
 });
 
-app.get("/api/reports/aging", requireAuth, requireEntitlement("reports.aging"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await reportsService.getAgingReport(req.user!.businessId);
-  res.json(result);
-});
-
 // ============================================================================
 // PAYMENT RISK SCORING API (Autonomous AR)
 // ============================================================================

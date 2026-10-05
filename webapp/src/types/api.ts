@@ -267,6 +267,7 @@ export interface ApiCustomerSummary {
   totalPaid: string;
   totalOutstanding: string;
   totalOverdue: string;
+  averagePaymentDays?: number | null;
 }
 
 export interface ApiProduct {

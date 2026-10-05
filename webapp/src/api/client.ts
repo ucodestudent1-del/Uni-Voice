@@ -260,18 +260,6 @@ export async function updateInvoice(id: string, data: any) {
   return res.data;
 }
 
-export async function setInvoiceItems(id: string, items: any[]) {
-  const res = await api.put(`/invoices/${id}/items`, items);
-  invalidateCacheByKey(`/invoices/${id}`);
-  return res.data;
-}
-
-export async function setInvoiceFees(id: string, fees: any[]) {
-  const res = await api.put(`/invoices/${id}/fees`, fees);
-  invalidateCacheByKey(`/invoices/${id}`);
-  return res.data;
-}
-
 export interface FinalizeInvoiceResult {
   invoiceNumber: string;
   publicToken?: string | null;

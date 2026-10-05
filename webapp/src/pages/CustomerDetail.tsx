@@ -237,6 +237,9 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
     : invoices.filter((i) => displayStatus(i) === invoiceStatusFilter);
 
   const currency = invoices[0]?.currency || summary?.customer.defaultCurrency || customer.defaultCurrency || "USD";
+  const totalInvoiceCount = summary?.totalInvoiceCount ?? invoices.filter((i) => getInvoiceDisplayStatus(i) !== "draft").length;
+  const finalizedCount = summary?.finalizedInvoiceCount ?? invoices.filter((i) => getInvoiceDisplayStatus(i) !== "draft").length;
+  const averagePaymentDays = summary?.averagePaymentDays ?? undefined;
 
   return (
     <>
@@ -246,7 +249,7 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
         </div>
       )}
 
-      {renderFinancialSummary(summary, loadingSummary, currency)}
+      {renderFinancialSummary(summary, loadingSummary, currency, totalInvoiceCount, finalizedCount, averagePaymentDays)}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
@@ -439,7 +442,14 @@ function FinancialSummaryCard({
   );
 }
 
-function renderFinancialSummary(summary: ApiCustomerSummary | null, loading: boolean, currency: string) {
+function renderFinancialSummary(
+  summary: ApiCustomerSummary | null,
+  loading: boolean,
+  currency: string,
+  totalInvoiceCount: number,
+  finalizedCount: number,
+  averagePaymentDays?: number
+) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -470,19 +480,19 @@ function renderFinancialSummary(summary: ApiCustomerSummary | null, loading: boo
       <FinancialSummaryCard
         title="Total Invoiced"
         value={formatCurrency(summary.totalBilled, currency)}
-        subtitle={`${summary.totalInvoiceCount} invoice${summary.totalInvoiceCount !== 1 ? "s" : ""}`}
+        subtitle={`${totalInvoiceCount} invoice${totalInvoiceCount !== 1 ? "s" : ""}`}
         color="primary"
       />
       <FinancialSummaryCard
         title="Total Paid"
         value={formatCurrency(summary.totalPaid, currency)}
-        subtitle={`${summary.finalizedInvoiceCount} finalized invoices`}
+        subtitle={`${finalizedCount} finalized invoices`}
         color="green"
       />
       <FinancialSummaryCard
         title="Outstanding Balance"
         value={formatCurrency(summary.totalOutstanding || "0", currency)}
-        subtitle={hasOutstanding ? `${summary.totalInvoiceCount - summary.finalizedInvoiceCount} unpaid invoices` : "All paid"}
+        subtitle={hasOutstanding ? "Awaiting payment" : "All paid"}
         color={hasOutstanding ? "red" : "slate"}
       />
       <FinancialSummaryCard
@@ -491,6 +501,14 @@ function renderFinancialSummary(summary: ApiCustomerSummary | null, loading: boo
         subtitle={hasOverdue ? "Past due" : "None overdue"}
         color={hasOverdue ? "red" : "slate"}
       />
+      {averagePaymentDays !== undefined && (
+        <FinancialSummaryCard
+          title="Avg. Payment Time"
+          value={`${averagePaymentDays} days`}
+          subtitle="Time to receive payment"
+          color="slate"
+        />
+      )}
     </div>
   );
 }

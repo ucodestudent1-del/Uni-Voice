@@ -375,6 +375,7 @@ export class CustomerRepository {
     totalPaid: string;
     totalOutstanding: string;
     totalOverdue: string;
+    averagePaymentDays: number | null;
   }> {
     const now = new Date();
     const res = await query(
@@ -384,7 +385,8 @@ export class CustomerRepository {
          COALESCE(SUM(total), 0) AS total_billed,
          COALESCE(SUM(amount_paid), 0) AS total_paid,
          COALESCE(SUM(CASE WHEN amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_outstanding,
-         COALESCE(SUM(CASE WHEN (status = 'overdue' OR (due_date < $2 AND amount_due > 0)) AND amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_overdue
+         COALESCE(SUM(CASE WHEN (status = 'overdue' OR (due_date < $2 AND amount_due > 0)) AND amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_overdue,
+         COALESCE(AVG(CASE WHEN status = 'paid' AND paid_at IS NOT NULL THEN EXTRACT(EPOCH FROM (paid_at - issue_date)) / 86400 END), 0) AS average_payment_days
        FROM invoices
        WHERE business_id = $1 AND customer_id = $3`,
       [businessId, now.toISOString(), customerId]
@@ -397,6 +399,7 @@ export class CustomerRepository {
       totalPaid: String(row.total_paid ?? "0"),
       totalOutstanding: String(row.total_outstanding ?? "0"),
       totalOverdue: String(row.total_overdue ?? "0"),
+      averagePaymentDays: row.average_payment_days !== null ? Number(row.average_payment_days) : null,
     };
   }
 

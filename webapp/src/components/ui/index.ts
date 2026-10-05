@@ -8,6 +8,14 @@ export type { ColumnDef } from "@/types/components";
 export { default as ConfirmationDialog, type ConfirmationDialogProps } from "./ConfirmationDialog";
 export { default as EmptyState, type EmptyStateProps } from "./EmptyState";
 export { default as InvoiceStatus, type InvoiceStatusType, type InvoiceStatusProps, isOverdueStatus } from "./InvoiceStatus";
+export {
+  InvoiceLifecycle,
+  type InvoiceLifecycleProps,
+  type LifecycleStep,
+  getLifecycleStatus,
+  INVOICE_LIFECYCLE_STEPS,
+  INVOICE_LIFECYCLE_ALTERNATE_STEPS,
+} from "./InvoiceLifecycle";
 export { default as PaymentStatus, type PaymentStatusType, type PaymentStatusProps, getPaymentStatusConfig } from "./PaymentStatus";
 export { default as StatusBadge, type StatusBadgeProps, type StatusConfig, invoiceStatusConfig, paymentStatusConfig, projectStatusConfig, customerStatusConfig, getStatusBadgeClassName } from "./StatusBadge";
 export { default as PageHeader, type BreadcrumbItem, type PageHeaderProps } from "./PageHeader";

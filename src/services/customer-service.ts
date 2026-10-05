@@ -15,6 +15,7 @@ export interface CustomerSummary {
   totalPaid: string;
   totalOutstanding: string;
   totalOverdue: string;
+  averagePaymentDays: number | null;
 }
 
 export interface CustomerSearchInput {
@@ -242,8 +243,9 @@ export class CustomerService {
       finalizedInvoiceCount: financial.finalizedInvoiceCount,
       totalBilled: financial.totalBilled,
       totalPaid: financial.totalPaid,
-      totalOutstanding: financial.totalOutstanding,
+       totalOutstanding: financial.totalOutstanding,
       totalOverdue: financial.totalOverdue,
+      averagePaymentDays: financial.averagePaymentDays,
     };
   }
 

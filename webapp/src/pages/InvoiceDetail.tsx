@@ -20,9 +20,13 @@ import {
 import { formatCurrency, formatDate } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
 import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
-import InvoiceStatus, { isOverdueStatus } from "../components/ui/InvoiceStatus";
+import { InvoiceLifecycle, isOverdueStatus } from "@/components/ui";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 import StripePaymentElement from "../components/StripePaymentElement";
+import { AlertCircle, Check } from "lucide-react";
+
+const AlertCircleIcon = AlertCircle;
+const CheckIcon = Check;
 
 export default function InvoiceDetail() {
   const { id } = useParams<{ id: string }>();
@@ -226,20 +230,77 @@ export default function InvoiceDetail() {
 
   const isOverdue = isOverdueStatus(invoice.status, invoice.due_date);
 
+  const renderContextualAction = () => {
+    if (invoice.status === "draft") {
+      return (
+        <Link
+          to={`/app/invoices/${invoice.id}/edit`}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
+          Edit &amp; Send
+        </Link>
+      );
+    }
+
+    if (invoice.status === "paid" && isFullyPaid) {
+      return (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center justify-center h-8 w-8 rounded-full status-success-bg">
+            <CheckIcon className="h-5 w-5 status-success-text" />
+          </span>
+          <div>
+            <p className="text-lg font-semibold status-success-text">Paid in full</p>
+            <p className="text-sm text-tertiary">
+              {invoice.paid_at ? formatDate(invoice.paid_at) : "—"}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (isOverdue) {
+      const daysOverdue = invoice.due_date
+        ? Math.floor((Date.now() - new Date(invoice.due_date).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+      return (
+        <div className="flex items-center gap-3">
+          <AlertCircleIcon className="h-5 w-5 text-error-text" />
+          <div>
+            <p className="text-lg font-semibold text-error-text">
+              {formatCurrencyValue(invoice.amount_due, invoice.currency)} is {daysOverdue} {daysOverdue === 1 ? "day" : "days"} overdue
+            </p>
+            <p className="text-sm text-tertiary">Due {invoice.due_date ? formatDate(invoice.due_date) : "—"}</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!isFullyPaid && amountDue.gt(0)) {
+      return (
+        <button
+          onClick={() => setShowPayDialog(true)}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
+          Record Payment
+        </button>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/app/invoices" className="text-secondary hover:text-secondary">
-            &larr; Back to Invoices
+        <div className="flex items-center gap-4 min-w-0">
+          <Link to="/app/invoices" className="text-tertiary hover:text-primary flex-shrink-0">
+            &larr; Invoices
           </Link>
-          <h1 className="text-2xl font-bold text-primary">
+          <h1 className="text-2xl font-bold text-primary truncate">
             {invoice.invoice_number || `Draft #${invoice.id.slice(0, 8)}`}
           </h1>
-          <InvoiceStatus status={invoice.status} isOverdue={isOverdue} showIcon />
         </div>
-
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Link
             to={`/app/invoices/${invoice.id}/edit`}
             className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
@@ -272,14 +333,6 @@ export default function InvoiceDetail() {
               className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
             >
               Send Reminder
-            </button>
-          )}
-          {!isFullyPaid && amountDue.gt(0) && invoice.status !== "draft" && invoice.status !== "cancelled" && invoice.status !== "void" && (
-            <button
-              onClick={() => setShowPayDialog(true)}
-              className="rounded-lg bg-primary-action px-3 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
-            >
-              Record Payment
             </button>
           )}
           {canCancel && (
@@ -321,42 +374,25 @@ export default function InvoiceDetail() {
         </div>
 
         <div className="space-y-6">
-          <SummaryCard
-            title="Total"
-            value={formatCurrency(invoice.total, invoice.currency)}
-            subtitle="Invoice total"
-          />
-          <SummaryCard
-            title="Paid"
-            value={formatCurrency(invoice.amount_paid, invoice.currency)}
-            subtitle="Amount received"
-          />
-          <SummaryCard
-            title="Outstanding"
-            value={formatCurrency(invoice.amount_due, invoice.currency)}
-            subtitle="Still due"
-          />
-          {hasDeposit && (
-            <>
-              <SummaryCard
-                title="Deposit Due"
-                value={formatCurrency(depositDue, invoice.currency)}
-                subtitle="Deposit outstanding"
-              />
-              <SummaryCard
-                title="Deposit Paid"
-                value={formatCurrency(depositPaid, invoice.currency)}
-                subtitle="Deposit received"
-              />
-              <InfoRow label="Deposit Type" value={depositType === "fixed" ? "Fixed Amount" : depositType === "percentage" ? `${depositValue}%` : "None"} />
-              {depositDueDate && <InfoRow label="Deposit Due Date" value={formatDate(depositDueDate)} />}
-            </>
-          )}
-          <InfoRow label="Issue date" value={invoice.issue_date ? formatDate(invoice.issue_date) : "—"} />
-          <InfoRow label="Due date" value={invoice.due_date ? formatDate(invoice.due_date) : "—"} />
-          <InfoRow label="Currency" value={invoice.currency} />
-          {invoice.sent_at && <InfoRow label="Sent" value={formatDate(invoice.sent_at)} />}
-          {invoice.paid_at && <InfoRow label="Paid" value={formatDate(invoice.paid_at)} />}
+          <div className="bg-surface rounded-xl border border-color-subtle p-5 space-y-4">
+            <div className="text-center">
+              {renderContextualAction()}
+            </div>
+
+            <div className="pt-4 border-t border-color-subtle space-y-3">
+              <InfoRow label="Issue date" value={invoice.issue_date ? formatDate(invoice.issue_date) : "—"} />
+              <InfoRow label="Due date" value={invoice.due_date ? formatDate(invoice.due_date) : "—"} />
+              <InfoRow label="Currency" value={invoice.currency} />
+              {invoice.sent_at && <InfoRow label="Sent" value={formatDate(invoice.sent_at)} />}
+              {invoice.paid_at && <InfoRow label="Paid" value={formatDate(invoice.paid_at)} />}
+              {hasDeposit && (
+                <>
+                  <InfoRow label="Deposit Type" value={depositType === "fixed" ? "Fixed Amount" : depositType === "percentage" ? `${depositValue}%` : "None"} />
+                  {depositDueDate && <InfoRow label="Deposit Due Date" value={formatDate(depositDueDate)} />}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -369,10 +405,10 @@ export default function InvoiceDetail() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-color-subtle">
-                  <th className="text-left text-xs font-medium text-secondary uppercase py-2">Date</th>
-                  <th className="text-left text-xs font-medium text-secondary uppercase py-2">Amount</th>
-                  <th className="text-left text-xs font-medium text-secondary uppercase py-2">Method</th>
-                  <th className="text-left text-xs font-medium text-secondary uppercase py-2">Status</th>
+                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Date</th>
+                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Amount</th>
+                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Method</th>
+                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -464,17 +500,6 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-function SummaryCard({ title, value, subtitle }: { title: string; value: string; subtitle: string }) {
-  return (
-    <div className="bg-surface rounded-xl border border-color-subtle p-4">
-      <p className="text-xs font-medium text-secondary uppercase">{title}</p>
-      <p className="text-xl font-bold text-primary mt-1">{value}</p>
-      <p className="text-xs text-secondary mt-1">{subtitle}</p>
-    </div>
-  );
-}
-
 function TimelineItem({ event }: { event: ApiInvoiceEvent }) {
   const label = (event.event_type ?? "").replace(/_/g, " ");
   const actor = event.actor_type === "customer" ? "Customer" : event.actor_type === "payment" ? "Payment" : event.actor_type === "system" ? "System" : "User";
@@ -650,14 +675,18 @@ function DepositDialog({
 
 function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
   const isOverdue = isOverdueStatus(invoice.status, invoice.due_date);
+  const amountDue = new Decimal(invoice.amount_due ?? 0);
+
   return (
     <div className="bg-surface rounded-xl border border-color-subtle p-8">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-primary">
             {invoice.invoice_number || "Draft Invoice"}
           </h2>
-          <InvoiceStatus status={invoice.status} isOverdue={isOverdue} showIcon className="mt-1" />
+          <div className="mt-3">
+            <InvoiceLifecycle status={invoice.status} isOverdue={isOverdue} />
+          </div>
         </div>
       </div>
 
@@ -703,7 +732,7 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
             {Number(invoice.discount_total) > 0 && (
               <tr>
                 <td className="py-2.5 text-sm text-secondary">Discount</td>
-                <td className="py-2.5 text-right text-sm text-success-text">-{formatCurrency(invoice.discount_total, invoice.currency)}</td>
+                <td className="py-2.5 text-right text-sm status-success-text">-{formatCurrency(invoice.discount_total, invoice.currency)}</td>
               </tr>
             )}
             <tr>
@@ -726,7 +755,7 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
             </tr>
             <tr className="border-t border-color-subtle pt-2.5">
               <td className="pt-2.5 text-base font-semibold text-primary-brand">Amount Due</td>
-              <td className="pt-2.5 text-right text-2xl font-bold text-primary-brand">{formatCurrency(invoice.amount_due, invoice.currency)}</td>
+              <td className="pt-2.5 text-right text-2xl font-bold text-primary-brand">{formatCurrency(amountDue, invoice.currency)}</td>
             </tr>
             <tr>
               <td className="py-2 text-sm text-secondary">Paid</td>
