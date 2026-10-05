@@ -18,6 +18,12 @@ export interface UseAnalyticsReturn {
   trackItemRemoved: (properties?: Record<string, unknown>) => void;
   trackDocumentDuplicateStarted: (properties?: Record<string, unknown>) => void;
   trackDocumentConvertStarted: (properties?: Record<string, unknown>) => void;
+  trackCommandBarUsed: (properties?: Record<string, unknown>) => void;
+  trackCatalogChipUsed: (properties?: Record<string, unknown>) => void;
+  trackLastInvoiceUsed: (properties?: Record<string, unknown>) => void;
+  trackFrequentlyInvoicedUsed: (properties?: Record<string, unknown>) => void;
+  trackSpeedMetricsRecorded: (properties?: Record<string, unknown>) => void;
+  trackAdvancedDetailsOpened: (properties?: Record<string, unknown>) => void;
 }
 
 export function useAnalytics(): UseAnalyticsReturn {
@@ -134,6 +140,48 @@ export function useAnalytics(): UseAnalyticsReturn {
     [track]
   );
 
+  const trackCommandBarUsed = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("command_bar_used", properties);
+    },
+    [track]
+  );
+
+  const trackCatalogChipUsed = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("catalog_chip_used", properties);
+    },
+    [track]
+  );
+
+  const trackLastInvoiceUsed = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("last_invoice_used", properties);
+    },
+    [track]
+  );
+
+  const trackFrequentlyInvoicedUsed = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("frequently_invoiced_used", properties);
+    },
+    [track]
+  );
+
+  const trackSpeedMetricsRecorded = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("speed_metrics_recorded", properties);
+    },
+    [track]
+  );
+
+  const trackAdvancedDetailsOpened = useCallback(
+    (properties: Record<string, unknown> = {}) => {
+      track("advanced_details_opened", properties);
+    },
+    [track]
+  );
+
   return {
     track,
     trackInvoiceCreated,
@@ -151,6 +199,12 @@ export function useAnalytics(): UseAnalyticsReturn {
     trackItemRemoved,
     trackDocumentDuplicateStarted,
     trackDocumentConvertStarted,
+    trackCommandBarUsed,
+    trackCatalogChipUsed,
+    trackLastInvoiceUsed,
+    trackFrequentlyInvoicedUsed,
+    trackSpeedMetricsRecorded,
+    trackAdvancedDetailsOpened,
   };
 }
 

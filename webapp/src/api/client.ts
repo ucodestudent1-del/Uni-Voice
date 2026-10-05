@@ -1688,3 +1688,178 @@ export async function parseDocument(text: string, documentType?: string): Promis
   return res.data;
 }
 
+// ============================================================================
+// Speed Optimization API (Predictive UX)
+// ============================================================================
+
+export interface ApiCommandLineItem {
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  taxRate: number;
+  productId?: string | null;
+  catalogMatch?: {
+    name: string;
+    unitPrice: string;
+    taxRate: string;
+    confidence: number;
+  } | null;
+}
+
+export interface ApiQuickActions {
+  lastInvoice: ApiLastInvoice | null;
+  frequentlyInvoiced: ApiFrequentlyInvoicedItem[];
+  recentCustomers: ApiRecentCustomer[];
+  hasDraft: boolean;
+  draftInfo: { id: string; customerId?: string | null; itemCount: number } | null;
+}
+
+export interface ApiLastInvoice {
+  invoiceId: string;
+  invoiceNumber?: string | null;
+  customer: { id: string; name: string; email?: string | null };
+  items: Array<{
+    description: string;
+    quantity: string;
+    unit: string;
+    unitPrice: string;
+    taxRate: string;
+    productId?: string | null;
+    catalogName?: string | null;
+  }>;
+  currency: string;
+  terms?: string | null;
+  notes?: string | null;
+  paymentInstructions?: string | null;
+  templateId?: string | null;
+  total: string;
+  sentAt?: string | null;
+  isDraft: boolean;
+}
+
+export interface ApiFrequentlyInvoicedItem {
+  id: string | null;
+  name: string;
+  description: string | null;
+  unitPrice: string;
+  unit: string;
+  taxRate: string;
+  frequencyScore: number;
+  lastUsed: Date | null;
+}
+
+export interface ApiRecentCustomer {
+  id: string;
+  name: string;
+  email?: string | null;
+}
+
+export interface ApiProgressiveAutofill {
+  customerId?: string | null;
+  currency?: string;
+  issueDate?: string;
+  dueDate?: string;
+  notes?: string | null;
+  terms?: string | null;
+  paymentInstructions?: string | null;
+  templateId?: string | null;
+  taxRate?: string;
+  depositType?: "none" | "fixed" | "percentage";
+  depositValue?: string;
+  depositDueDate?: string | null;
+  depositPaymentPurpose?: string | null;
+  lateFeeType?: "none" | "fixed" | "percentage";
+  lateFeeValue?: string;
+  lateFeeDueDate?: string | null;
+  poNumber?: string | null;
+}
+
+export async function getSuggestedActions(): Promise<ApiQuickActions> {
+  const res = await cachedGet("/suggested-actions", undefined, { ttlMs: 15 * 1000 });
+  return res;
+}
+
+export async function parseCommandLineItem(input: string): Promise<{ parsed: ApiCommandLineItem }> {
+  const res = await api.post("/parse-command-line", { input });
+  return res.data;
+}
+
+export async function getProgressiveAutofill(customerId?: string): Promise<ApiProgressiveAutofill> {
+  const res = await cachedGet("/progressive-autofill", customerId ? { customerId } : undefined, { ttlMs: 10 * 1000 });
+  return res;
+}
+
+export async function getFrequentlyInvoiced(limit = 12): Promise<{ items: ApiFrequentlyInvoicedItem[] }> {
+  const res = await cachedGet("/frequently-invoiced", { limit }, { ttlMs: 60 * 1000 });
+  return res;
+}
+
+export async function getLastInvoice(customerId?: string): Promise<ApiLastInvoice | null> {
+  const params = customerId ? { customerId } : undefined;
+  const res = await cachedGet("/last-invoice", params, { ttlMs: 15 * 1000 });
+  return res;
+}
+
+export async function recordSpeedMetrics(data: {
+  invoiceId: string;
+  creationSeconds: number;
+  customerSelectedVia: string;
+  usedLastInvoice: boolean;
+  commandBarItems: number;
+  catalogChipItems: number;
+  manualItems: number;
+  itemsCount: number;
+  isReturningCustomer: boolean;
+  isMobile: boolean;
+  sessionId?: string;
+}): Promise<{ ok: boolean }> {
+  const res = await api.post("/speed-metrics", data);
+  return res.data;
+}
+
+export async function logInteraction(data: {
+  actionType: string;
+  targetField?: string;
+  invoiceId?: string;
+  durationMs?: number;
+  valueFrom?: string;
+  valueTo?: string;
+  sessionId?: string;
+}): Promise<{ ok: boolean }> {
+  const res = await api.post("/interaction-log", data);
+  return res.data;
+}
+
+export async function createCreditNoteFromItems(
+  invoiceId: string,
+  itemIds: string[],
+  reason?: string
+): Promise<{ creditNoteId: string }> {
+  const res = await api.post(`/invoices/${invoiceId}/credit-notes`, { itemIds, reason });
+  return res.data;
+}
+
+export interface CreditNoteForSelect {
+  id: string;
+  description: string;
+  quantity: string;
+  unit: string;
+  unitPrice: string;
+  taxRate: string;
+  lineTotal: string;
+}
+
+export async function getInvoiceItemsForCredit(invoiceId: string): Promise<CreditNoteForSelect[]> {
+  const invoice = await getInvoice(invoiceId);
+  return invoice.items.map((it: any) => ({
+    id: it.id,
+    description: it.description,
+    quantity: it.quantity,
+    unit: it.unit || "each",
+    unitPrice: it.unit_price,
+    taxRate: it.tax_rate,
+    lineTotal: it.line_total,
+  }));
+}
+

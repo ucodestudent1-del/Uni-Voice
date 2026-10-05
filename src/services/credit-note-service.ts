@@ -4,6 +4,7 @@ import { logger } from "../utils/logger.js";
 import { creditNoteRepository, type CreditNoteWithDetails, type CreditNoteCreateInput, type CreditNoteEvent } from "../repositories/credit-note.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
+import { invoiceRepository } from "../repositories/invoice.repo.js";
 import {
   creditNoteTemplateRenderer,
   buildCreditNoteTemplateData,
@@ -66,6 +67,58 @@ export class CreditNoteService {
     const calc = this.recalculate(cn);
     await creditNoteRepository.updateTotals(cnId, calc);
     return cnId;
+  }
+
+  /**
+   * Create a credit note from selected invoice items (partial credit).
+   * Used by the Invoice → Credit Note partial-credit workflow.
+   */
+  async createFromInvoiceItems(
+    businessId: string,
+    invoiceId: string,
+    selectedItems: Array<{
+      id: string;
+      description: string;
+      quantity: any;
+      unit: string;
+      unitPrice: any;
+      taxRate: any;
+      taxAmount: any;
+      lineSubtotal: any;
+      lineTotal: any;
+      discount: any;
+      discountType: "fixed" | "percentage";
+      isTaxInclusive?: boolean;
+      productId?: string | null;
+      catalogName?: string | null;
+    }>,
+    reason?: string,
+    userId?: string
+  ): Promise<string> {
+    const invoice = await invoiceRepository.findById(businessId, invoiceId);
+    const input: CreateCreditNoteInput = {
+      customerId: invoice.customerId,
+      referenceInvoiceId: invoiceId,
+      currency: invoice.currency,
+      issueDate: new Date().toISOString().split("T")[0],
+      reason: reason ?? null,
+      notes: null,
+      terms: invoice.notes ?? invoice.terms,
+      templateId: null,
+      items: selectedItems.map((it) => ({
+        description: it.description,
+        quantity: it.quantity,
+        unit: it.unit,
+        unitPrice: it.unitPrice,
+        discount: it.discount,
+        discountType: it.discountType,
+        taxRate: it.taxRate,
+        isTaxInclusive: it.isTaxInclusive ?? false,
+        sortOrder: 0,
+        catalogName: it.catalogName,
+      })),
+    };
+    return this.create(input, businessId, userId);
   }
 
   async update(businessId: string, id: string, input: Partial<CreateCreditNoteInput>): Promise<void> {

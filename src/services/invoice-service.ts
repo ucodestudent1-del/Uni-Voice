@@ -21,6 +21,7 @@ import { getClient, query } from "../db/pool.js";
 import { env } from "../config/index.js";
 import { invalidateReportsCache } from "./reports-cache.js";
 import { TtlCache } from "../utils/ttl-cache.js";
+import { speedOptimizationService } from "./speed-optimization-service.js";
 
 export type RepoInvoice = Awaited<ReturnType<typeof invoiceRepository.findById>>;
 
@@ -486,6 +487,16 @@ export class InvoiceService {
     invalidateReportsCache(businessId);
     invalidateInvoiceDetailCache(businessId, id);
     await invoiceRepository.clearPdfCache(id);
+
+    // Update customer invoice patterns cache (for predictive features)
+    if (invoice.customerId) {
+      try {
+        await speedOptimizationService.updateCustomerPattern(businessId, invoice.customerId, id);
+      } catch (err) {
+        logger.debug({ err, invoiceId: id }, "Failed to update customer pattern after finalize");
+      }
+    }
+
     return { invoiceNumber: invoice.invoiceNumber ?? generatedNumber, publicToken: invoice.publicToken };
   }
 

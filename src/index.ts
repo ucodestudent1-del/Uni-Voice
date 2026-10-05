@@ -22,6 +22,7 @@ import { invoiceService } from "./services/invoice-service.js";
 import { creditNoteService } from "./services/credit-note-service.js";
 import { quoteService } from "./services/quote-service.js";
 import { receiptService } from "./services/receipt-service.js";
+import { speedOptimizationService } from "./services/speed-optimization-service.js";
 
 const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
@@ -1211,6 +1212,101 @@ app.post("/api/invoices/:id/duplicate", requireAuth, requireEntitlement("invoice
 });
 
 // ============================================================================
+// SPEED OPTIMIZATION API (Predictive UX)
+// ============================================================================
+
+app.get("/api/suggested-actions", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const actions = await speedOptimizationService.getQuickActions(req.user!.businessId, req.user!.id);
+  res.json(actions);
+});
+
+app.post("/api/parse-command-line", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { input } = req.body;
+  if (!input || typeof input !== "string") {
+    return res.status(400).json({ error: "Input text is required" });
+  }
+
+  let products: any[] = [];
+  try {
+    const productsRes = await productRepository.findMany(req.user!.businessId, 200, 0);
+    products = productsRes || [];
+  } catch {
+    products = [];
+  }
+
+  const parsed = speedOptimizationService.parseCommandLineItem(input, products as any);
+  res.json({ parsed });
+});
+
+app.get("/api/progressive-autofill", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { customerId } = req.query;
+  const autofill = await speedOptimizationService.getProgressiveAutofill(
+    req.user!.businessId,
+    customerId as string | undefined
+  );
+  res.json(autofill);
+});
+
+app.get("/api/frequently-invoiced", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = req.query.limit ? Number(req.query.limit) : 12;
+  const items = await speedOptimizationService.getFrequentlyInvoiced(req.user!.businessId, limit);
+  res.json({ items });
+});
+
+app.get("/api/last-invoice", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { customerId } = req.query;
+  const lastInvoice = await speedOptimizationService.getLastInvoice(
+    req.user!.businessId,
+    customerId as string | undefined
+  );
+  res.json(lastInvoice);
+});
+
+// Record speed metrics for an invoice creation session
+app.post("/api/speed-metrics", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { invoiceId, ...metrics } = req.body;
+  try {
+    await speedOptimizationService.recordSpeedMetrics(
+      req.user!.businessId,
+      req.user!.id,
+      invoiceId,
+      metrics
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to record metrics" });
+  }
+});
+
+// Record a user interaction for adaptive UI learning
+app.post("/api/interaction-log", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { actionType, targetField, invoiceId, durationMs, valueFrom, valueTo, sessionId } = req.body;
+  try {
+    await speedOptimizationService.logInteraction(
+      req.user!.businessId,
+      req.user!.id,
+      actionType,
+      targetField,
+      invoiceId,
+      durationMs,
+      valueFrom,
+      valueTo,
+      sessionId
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to log interaction" });
+  }
+});
+
+// ============================================================================
 // QUOTES (Business tier)
 // ============================================================================
 app.get("/api/quotes", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
@@ -1430,6 +1526,32 @@ app.post("/api/credit-notes", requireAuth, requireEntitlement("invoices.create")
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const cnId = await creditNoteService.create(req.body, req.user!.businessId, req.user.id);
   res.status(201).json({ creditNoteId: cnId });
+});
+
+// Create a credit note from selected invoice items (partial credit)
+app.post("/api/invoices/:id/credit-notes", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { itemIds, reason } = req.body;
+  if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+    return res.status(400).json({ error: "itemIds array is required" });
+  }
+  try {
+    const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
+    const selectedItems = invoice.items.filter((it) => itemIds.includes(it.id));
+    if (selectedItems.length === 0) {
+      return res.status(400).json({ error: "No matching items found on the invoice" });
+    }
+    const creditNoteId = await creditNoteService.createFromInvoiceItems(
+      req.user!.businessId,
+      req.params.id,
+      selectedItems,
+      reason || undefined,
+      req.user!.id
+    );
+    res.status(201).json({ creditNoteId });
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : "Failed to create credit note" });
+  }
 });
 
 app.get("/api/credit-notes/:id", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {

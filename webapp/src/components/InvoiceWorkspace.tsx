@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
@@ -33,6 +33,10 @@ import {
   getInvoice,
   getInvoicePdf,
   getProducts,
+  getSuggestedActions,
+  getProgressiveAutofill,
+  parseCommandLineItem,
+  recordSpeedMetrics as apiRecordSpeedMetrics,
   sendInvoice,
   updateInvoice,
 } from "../api/client";
@@ -47,6 +51,10 @@ import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
 import CustomerSelector from "./CustomerSelector";
+import CommandLineItemInput from "./CommandLineItemInput";
+import FrequentlyInvoicedChips from "./FrequentlyInvoicedChips";
+import QuickRepeatBanner from "./QuickRepeatBanner";
+import AdvancedDetailsAccordion from "./AdvancedDetailsAccordion";
 import { Button } from "./ui/Button";
 import InvoicePreview, {
   type PreviewAttachment,
@@ -56,9 +64,9 @@ import InvoicePreview, {
 } from "./InvoicePreview";
 import type { ApiBusiness, ApiCustomer, ApiInvoice, ApiProduct } from "../types/api";
 
-type LineItemType = "service" | "labor" | "material" | "part" | "other";
+export type LineItemType = "service" | "labor" | "material" | "part" | "other";
 
-interface WorkspaceLineItem {
+export interface WorkspaceLineItem {
   id?: string;
   type: LineItemType;
   description: string;
@@ -72,13 +80,13 @@ interface WorkspaceLineItem {
   productId?: string | null;
 }
 
-interface WorkspaceFee {
+export interface WorkspaceFee {
   description: string;
   amount: string;
   taxRate?: string;
 }
 
-interface WorkspaceAttachment {
+export interface WorkspaceAttachment {
   id: string;
   name: string;
   size: number;
@@ -87,7 +95,7 @@ interface WorkspaceAttachment {
   category: "attachment" | "before" | "after";
 }
 
-interface WorkspaceInvoiceData {
+export interface WorkspaceInvoiceData {
   customerId?: string | null;
   customer?: ApiCustomer | null;
   invoiceNumber?: string | null;
@@ -116,6 +124,12 @@ interface WorkspaceInvoiceData {
   attachments: WorkspaceAttachment[];
   beforePhotos: WorkspaceAttachment[];
   afterPhotos: WorkspaceAttachment[];
+  invoiceCategory?: string | null;
+  invoiceTerms?: string | null;
+  sourceUrl?: string | null;
+  paymentReference?: string | null;
+  paymentPortalUrl?: string | null;
+  bankDetails?: string | null;
 }
 
 const LINE_ITEM_UNITS = ["each", "hour", "day", "week", "month", "fixed"] as const;
@@ -282,6 +296,11 @@ export default function InvoiceWorkspace() {
   const [previewWidth, setPreviewWidth] = useState(480);
   const [previewMobileOpen, setPreviewMobileOpen] = useState(false);
 
+  const [quickActionsLoading, setQuickActionsLoading] = useState(isNew);
+  const [quickActions, setQuickActions] = useState<any>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const creationStartTimeRef = useRef<number | null>(null);
+
   const analytics = useAnalytics();
 
   const latestRef = useRef<{
@@ -342,15 +361,12 @@ export default function InvoiceWorkspace() {
     let cancelled = false;
     async function loadContext() {
       try {
-        // Only fetch business + settings eagerly; these are needed for new-invoice
-        // defaults (currency, notes, terms, tax rate) and the live preview.
-        // Customers and products are deferred to avoid blocking the editor load —
-        // CustomerSelector lazy-loads on open and can accept preloaded data.
-        const [bizRes, settingsRes, customersRes, productsRes] = await Promise.allSettled([
+        const [bizRes, settingsRes, customersRes, productsRes, quickActionsRes] = await Promise.allSettled([
           getBusiness().catch(() => null),
           getBusinessSettings().catch(() => ({ settings: {} })),
           getCustomers({ limit: 100, includeArchived: false }).catch(() => ({ data: [] })),
           getProducts({ limit: 200 }).catch(() => ({ products: [] })),
+          getSuggestedActions().catch(() => null),
         ]);
         if (cancelled) return;
         if (bizRes.status === "fulfilled" && bizRes.value) setBusiness(bizRes.value.business ?? null);
@@ -358,8 +374,13 @@ export default function InvoiceWorkspace() {
         setSettings(s.settings ?? {});
         if (customersRes.status === "fulfilled") setCustomers(customersRes.value.data ?? []);
         if (productsRes.status === "fulfilled") setProducts(productsRes.value.products ?? []);
+        if (quickActionsRes.status === "fulfilled" && quickActionsRes.value) {
+          setQuickActions(quickActionsRes.value);
+        }
       } catch {
         // context failed — workspace still usable with defaults
+      } finally {
+        if (!cancelled) setQuickActionsLoading(false);
       }
     }
     loadContext();
@@ -607,6 +628,55 @@ export default function InvoiceWorkspace() {
         : { [field]: value };
     updateData(patch);
   };
+
+  const handlePopulateFromQuickActions = (data: Partial<WorkspaceInvoiceData>) => {
+    updateData(data);
+  };
+
+  const handleQuickAddItem = (item: Omit<WorkspaceLineItem, "id">) => {
+    const newItem: WorkspaceLineItem = {
+      ...item,
+      id: `li_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    };
+    setInvoice((prev) => (prev ? { ...prev, items: [...prev.items, newItem] } : prev));
+    markDirtyAndSchedule();
+  };
+
+  const handleDismissBanner = () => {
+    setBannerDismissed(true);
+  };
+
+  const recordSpeedMetrics = useCallback(() => {
+    if (!invoiceId || !invoice || !isNew) return;
+    const creationSeconds = creationStartTimeRef.current
+      ? Math.round((Date.now() - creationStartTimeRef.current) / 1000)
+      : 0;
+    const hasCatalogItems = invoice.items.some((it) => it.productId);
+    const hasManualItems = invoice.items.some((it) => !it.productId);
+    apiRecordSpeedMetrics({
+      invoiceId,
+      creationSeconds,
+      customerSelectedVia: invoice.customerId ? "selector" : "none",
+      usedLastInvoice: false,
+      commandBarItems: 0,
+      catalogChipItems: invoice.items.filter((it) => it.productId).length,
+      manualItems: invoice.items.filter((it) => !it.productId).length,
+      itemsCount: invoice.items.length,
+      isReturningCustomer: !!invoice.customerId,
+      isMobile: /Mobi|Android/i.test(navigator.userAgent),
+      sessionId: invoiceId,
+    }).catch(() => {});
+  }, [invoiceId, invoice, isNew]);
+
+  useEffect(() => {
+    creationStartTimeRef.current = creationStartTimeRef.current ?? Date.now();
+  }, []);
+
+  useEffect(() => {
+    if (invoice?.isFinalized) {
+      recordSpeedMetrics();
+    }
+  }, [invoice?.isFinalized, recordSpeedMetrics]);
 
   const handleItemChange = (itemId: string, patch: Partial<WorkspaceLineItem>) => {
     setInvoice((prev) =>
@@ -939,6 +1009,27 @@ export default function InvoiceWorkspace() {
           {validation.hasErrors && (
             <ValidationBanner issues={validation.issues} />
           )}
+
+          {isNew && !bannerDismissed && (
+            <QuickRepeatBanner
+              businessId={business?.id || ""}
+              customerId={invoice?.customerId ?? undefined}
+              onPopulate={handlePopulateFromQuickActions}
+              onDismiss={handleDismissBanner}
+            />
+          )}
+
+          {isNew && invoice.items.length === 0 && (
+            <CommandLineItemInput
+              key="command-input"
+              onAddItem={handleQuickAddItem}
+              products={products}
+              recentEntries={quickActions?.recentEntries ?? []}
+              autoFocus={isNew}
+              compact={false}
+            />
+          )}
+
           {invoice.items.length === 0 ? (
             <div className="mb-6 rounded-xl border border-dashed border-color bg-surface-alt py-12 text-center">
               <FileText className="mx-auto h-12 w-12 text-tertiary/40" />
@@ -968,6 +1059,13 @@ export default function InvoiceWorkspace() {
                   </Button>
                 )}
               </div>
+              <div className="mt-6">
+                <FrequentlyInvoicedChips
+                  businessId={business?.id || ""}
+                  customerId={invoice?.customerId ?? undefined}
+                  onAddItem={handleQuickAddItem}
+                />
+              </div>
               {products.length > 1 && (
                 <SavedServicesBar products={products} onSelect={addFromProduct} />
               )}
@@ -988,6 +1086,16 @@ export default function InvoiceWorkspace() {
             <SavedServicesBar products={products} onSelect={addFromProduct} />
           )}
 
+          {isNew && invoice.items.length > 0 && (
+            <div className="mb-4">
+              <FrequentlyInvoicedChips
+                businessId={business?.id || ""}
+                customerId={invoice?.customerId ?? undefined}
+                onAddItem={handleQuickAddItem}
+              />
+            </div>
+          )}
+
           <FeesSection
             fees={invoice.fees}
             onChange={(fees) => updateData({ fees })}
@@ -1006,6 +1114,13 @@ export default function InvoiceWorkspace() {
             beforePhotos={invoice.beforePhotos}
             afterPhotos={invoice.afterPhotos}
             onRemoveAttachment={removeAttachment}
+          />
+
+          <AdvancedDetailsAccordion
+            data={invoice}
+            onChange={handlePopulateFromQuickActions}
+            defaultOpen={false}
+            compact={false}
           />
         </div>
       </aside>

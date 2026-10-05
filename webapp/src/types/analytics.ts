@@ -20,6 +20,15 @@ export const ANALYTICS_EVENTS = [
   "item_removed",
   "document_duplicate_started",
   "document_convert_started",
+  "command_bar_used",
+  "command_bar_parsed",
+  "catalog_chip_used",
+  "last_invoice_used",
+  "frequently_invoiced_used",
+  "advanced_details_opened",
+  "express_mode_toggled",
+  "speed_metrics_recorded",
+  "interaction_logged",
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];
