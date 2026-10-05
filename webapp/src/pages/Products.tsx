@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { Edit2, Trash2, Plus } from "lucide-react";
-import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from "../api/client";
+import { Edit2, Trash2, Plus, FileText, Receipt, CreditCard } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct, createInvoiceFromProduct, createQuoteFromProduct, createCreditNoteFromProduct } from "../api/client";
 import type { ApiProduct } from "../types/api";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
+import { useToast } from "../components/ui/ToastProvider";
 
 export default function Products() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -14,6 +17,36 @@ export default function Products() {
     name: "", description: "", sku: "", defaultUnitPrice: 0,
     defaultTaxRate: 0, unit: "each", defaultCurrency: "USD",
   });
+
+  const { toast } = useToast();
+
+  const handleCreateInvoice = async (product: ApiProduct) => {
+    try {
+      const res = await createInvoiceFromProduct(product.id);
+      navigate(`/app/invoices/${res.invoiceId}/edit`);
+    } catch {
+      toast("Failed to create invoice from product", { type: "error" });
+    }
+  };
+
+  const handleCreateQuote = async (product: ApiProduct) => {
+    try {
+      const res = await createQuoteFromProduct(product.id);
+      navigate(`/app/quotes/${res.quoteId}`);
+    } catch {
+      toast("Failed to create quote from product", { type: "error" });
+    }
+  };
+
+  const handleCreateCreditNote = async (product: ApiProduct) => {
+    try {
+      await createCreditNoteFromProduct(product.id);
+      toast("Credit note created. You can edit it from the Credit Notes page.", { type: "success" });
+      navigate(`/app/credit-notes`);
+    } catch {
+      toast("Failed to create credit note from product", { type: "error" });
+    }
+  };
 
   useEffect(() => {
     loadProducts();
@@ -231,20 +264,43 @@ export default function Products() {
                   <td className="py-3 px-4 text-right text-sm font-medium text-primary">${parseFloat(p.defaultUnitPrice).toFixed(2)}</td>
                   <td className="py-3 px-4 text-right text-sm text-secondary">{(parseFloat(p.defaultTaxRate) * 100).toFixed(0)}%</td>
                   <td className="py-3 px-4 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={<Edit2 className="w-3.5 h-3.5" />}
-                      onClick={() => handleEdit(p)}
-                      title="Edit product"
-                    />
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      icon={<Trash2 className="w-3.5 h-3.5" />}
-                      onClick={() => handleDelete(p.id)}
-                      title="Delete product"
-                    />
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<FileText className="w-3.5 h-3.5" />}
+                        onClick={() => handleCreateInvoice(p)}
+                        title="Create invoice from this product"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Receipt className="w-3.5 h-3.5" />}
+                        onClick={() => handleCreateQuote(p)}
+                        title="Create quote from this product"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<CreditCard className="w-3.5 h-3.5" />}
+                        onClick={() => handleCreateCreditNote(p)}
+                        title="Create credit note from this product"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={<Edit2 className="w-3.5 h-3.5" />}
+                        onClick={() => handleEdit(p)}
+                        title="Edit product"
+                      />
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        icon={<Trash2 className="w-3.5 h-3.5" />}
+                        onClick={() => handleDelete(p.id)}
+                        title="Delete product"
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

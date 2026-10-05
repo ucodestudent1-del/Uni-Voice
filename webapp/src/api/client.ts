@@ -462,6 +462,21 @@ export async function deleteProduct(id: string) {
   return res.data;
 }
 
+export async function createInvoiceFromProduct(productId: string): Promise<{ invoiceId: string }> {
+  const res = await api.post(`/products/${productId}/use-as-line-item?type=invoice`);
+  return res.data;
+}
+
+export async function createQuoteFromProduct(productId: string): Promise<{ quoteId: string }> {
+  const res = await api.post(`/products/${productId}/use-as-line-item?type=quote`);
+  return res.data;
+}
+
+export async function createCreditNoteFromProduct(productId: string): Promise<{ creditNoteId: string }> {
+  const res = await api.post(`/products/${productId}/use-as-line-item?type=credit-note`);
+  return res.data;
+}
+
 export async function getBusiness() {
   const res = await api.get("/businesses/current");
   return res.data;

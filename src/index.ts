@@ -845,6 +845,63 @@ app.delete("/api/products/:id", requireAuth, async (req: AuthRequest, res) => {
   res.status(204).send();
 });
 
+app.post("/api/products/:id/use-as-line-item", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const businessId = req.user!.businessId;
+  try {
+    const product = await productRepository.findById(businessId, req.params.id);
+    const docType = (req.query.type as string | undefined) ?? "invoice";
+    const currency = product.defaultCurrency ?? req.body?.currency ?? "USD";
+    const lineItemDescription = product.description ?? product.name;
+    const unitPrice = new Decimal(product.defaultUnitPrice).toString();
+    const taxRate = new Decimal(product.defaultTaxRate ?? 0).toString();
+    if (docType === "invoice") {
+      const invoiceId = await invoiceService.createDraft({
+        currency,
+        items: [{
+          productId: product.id,
+          description: lineItemDescription,
+          quantity: 1,
+          unit: product.unit ?? "each",
+          unitPrice,
+          taxRate,
+        }],
+      }, businessId, req.user!.id);
+      res.status(201).json({ invoiceId });
+    } else if (docType === "quote") {
+      const quoteId = await quoteService.create({
+        currency,
+        items: [{
+          productId: product.id,
+          description: lineItemDescription,
+          quantity: 1,
+          unit: product.unit ?? "each",
+          unitPrice,
+          taxRate,
+        }],
+      }, businessId, req.user!.id);
+      res.status(201).json({ quoteId });
+    } else if (docType === "credit-note") {
+      const creditNoteId = await creditNoteService.create({
+        currency,
+        items: [{
+          productId: product.id,
+          description: lineItemDescription,
+          quantity: 1,
+          unit: product.unit ?? "each",
+          unitPrice,
+          taxRate,
+        }],
+      }, businessId, req.user!.id);
+      res.status(201).json({ creditNoteId });
+    } else {
+      res.status(400).json({ error: "Invalid type. Must be 'invoice', 'quote', or 'credit-note'." });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ============================================================================
 // CATALOG (Product/Service domain)
 // ============================================================================
