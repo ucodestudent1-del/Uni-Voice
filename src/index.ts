@@ -23,6 +23,7 @@ import { creditNoteService } from "./services/credit-note-service.js";
 import { quoteService } from "./services/quote-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
+import { paymentRiskService } from "./services/payment-risk-service.js";
 
 const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
@@ -1045,15 +1046,18 @@ app.get("/api/invoices", requireAuth, async (req: AuthRequest, res) => {
     template_id: inv.templateId ?? null,
     public_token: inv.publicToken ?? null,
     public_token_expires_at: inv.publicTokenExpiresAt ?? null,
-    payment_instructions: inv.paymentInstructions ?? null,
-    is_finalized: inv.isFinalized ?? false,
-    finalized_at: inv.finalizedAt ?? null,
-    sent_at: inv.sentAt ?? null,
-    viewed_at: inv.viewedAt ?? null,
-    paid_at: inv.paidAt ?? null,
-    cancelled_at: inv.cancelledAt ?? null,
-    cancelled_reason: inv.cancelledReason ?? null,
-    version: inv.version ?? 1,
+     payment_instructions: inv.paymentInstructions ?? null,
+     is_finalized: inv.isFinalized ?? false,
+     finalized_at: inv.finalizedAt ?? null,
+     sent_at: inv.sentAt ?? null,
+     viewed_at: inv.viewedAt ?? null,
+     paid_at: inv.paidAt ?? null,
+     cancelled_at: inv.cancelledAt ?? null,
+     cancelled_reason: inv.cancelledReason ?? null,
+     payment_risk_score: inv.paymentRiskScore ?? null,
+     payment_risk_factors: inv.paymentRiskFactors ?? null,
+     payment_risk_scored_at: inv.paymentRiskScoredAt ?? null,
+     version: inv.version ?? 1,
     created_at: inv.createdAt instanceof Date ? inv.createdAt.toISOString() : inv.createdAt,
     updated_at: inv.updatedAt instanceof Date ? inv.updatedAt.toISOString() : inv.updatedAt,
     created_by: inv.createdBy ?? null,
@@ -1781,6 +1785,33 @@ app.get("/api/reports/profit-loss", requireAuth, requireEntitlement("reports.pro
 app.get("/api/reports/aging", requireAuth, requireEntitlement("reports.aging"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await reportsService.getAgingReport(req.user!.businessId);
+  res.json(result);
+});
+
+// ============================================================================
+// PAYMENT RISK SCORING API (Autonomous AR)
+// ============================================================================
+app.get("/api/reports/payment-risk", requireAuth, requireEntitlement("ai.risk_scoring"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const limit = Math.min(Number(req.query.limit ?? 50), 200);
+  const invoices = await paymentRiskService.getRiskScoredInvoices(req.user!.businessId, limit);
+  res.json({ invoices });
+});
+
+app.post("/api/reports/payment-risk/score/:invoiceId", requireAuth, requireEntitlement("ai.risk_scoring"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.invoiceId);
+  const result = await paymentRiskService.scoreInvoice(
+    req.user!.businessId,
+    req.params.invoiceId,
+    invoice.customerId
+  );
+  res.json(result);
+});
+
+app.post("/api/reports/payment-risk/batch", requireAuth, requireEntitlement("ai.risk_scoring"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await paymentRiskService.batchScoreBusiness(req.user!.businessId);
   res.json(result);
 });
 
@@ -3352,14 +3383,42 @@ function processOverdueJob() {
   overdueJobRunning = true;
   invoiceService.processOverdueInvoices().then((count) => {
     if (count > 0) logger.info(`Processed ${count} overdue invoices`);
-  }).catch((e) => logger.error({ err: e }, "Overdue processing failed"));
+   }).catch((e) => logger.error({ err: e }, "Overdue processing failed"));
+   
+   invoiceService.processAutomatedReminders().then((count) => {
+     if (count > 0) logger.info(`Sent ${count} automated reminders`);
+   }).catch((e) => logger.error({ err: e }, "Automated reminder processing failed"));
   
-  invoiceService.processAutomatedReminders().then((count) => {
-    if (count > 0) logger.info(`Sent ${count} automated reminders`);
-  }).catch((e) => logger.error({ err: e }, "Automated reminder processing failed"));
-  
-  overdueJobRunning = false;
-  setTimeout(processOverdueJob, 15 * 60 * 1000);
+   overdueJobRunning = false;
+   setTimeout(processOverdueJob, 15 * 60 * 1000);
+ }
+
+// Nightly payment risk scoring job (runs every 24h)
+let riskScoringJobRunning = false;
+async function runPaymentRiskScoringJob() {
+  if (riskScoringJobRunning) return;
+  riskScoringJobRunning = true;
+  try {
+    const businessIds = await invoiceRepository.getAllBusinessIdsWithOutstandingInvoices();
+    let totalScored = 0;
+    let totalFailed = 0;
+    for (const bizId of businessIds) {
+      const result = await paymentRiskService.batchScoreBusiness(bizId);
+      totalScored += result.scored;
+      totalFailed += result.failed;
+    }
+    if (totalScored > 0) logger.info(`Risk scoring: scored ${totalScored} invoices (${totalFailed} failed)`);
+  } catch (e) {
+    logger.error({ err: e }, "Payment risk scoring job failed");
+  } finally {
+    riskScoringJobRunning = false;
+    setTimeout(runPaymentRiskScoringJob, 24 * 60 * 60 * 1000);
+  }
+}
+
+// Start the nightly job shortly after server start
+if (!isTest && !isDev) {
+  setTimeout(runPaymentRiskScoringJob, 60 * 1000);
 }
 
 if (!isTest) {

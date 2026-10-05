@@ -3,6 +3,7 @@ import { formatCurrency } from "../../utils/format";
 import type { ApiInvoiceListItem } from "../../types/api";
 import SectionCard from "../SectionCard";
 import InvoiceStatus, { isOverdueStatus } from "../ui/InvoiceStatus";
+import RiskBadge from "../ui/RiskBadge";
 import { formatCurrencyValue } from "../../lib/utils";
 
 interface InvoiceTableProps {
@@ -28,8 +29,9 @@ export default function InvoiceTable({ items: propItems, title = "Recent Invoice
               <th className="text-left text-xs font-medium text-tertiary uppercase py-3.5 px-4">Customer</th>
               <th className="text-right text-xs font-medium text-tertiary uppercase py-3.5 px-4">Amount</th>
               <th className="text-right text-xs font-medium text-tertiary uppercase py-3.5 px-4">Due Date</th>
-              <th className="text-center text-xs font-medium text-tertiary uppercase py-3.5 px-4">Status</th>
-            </tr>
+               <th className="text-center text-xs font-medium text-tertiary uppercase py-3.5 px-4">Status</th>
+               <th className="text-center text-xs font-medium text-tertiary uppercase py-3.5 px-4">Risk</th>
+             </tr>
           </thead>
           <tbody>
             {(propItems ?? []).map((inv) => (
@@ -49,9 +51,16 @@ export default function InvoiceTable({ items: propItems, title = "Recent Invoice
                 <td className={`py-3.5 px-4 text-right text-sm ${isOverdueStatus(inv.status, inv.due_date) ? "text-error-text font-medium" : "text-secondary"}`}>
                   {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}
                 </td>
-                <td className="py-3.5 px-4 text-center">
-                  <InvoiceStatus status={inv.status} isOverdue={isOverdueStatus(inv.status, inv.due_date)} showIcon={false} />
-                </td>
+                 <td className="py-3.5 px-4 text-center">
+                   <InvoiceStatus status={inv.status} isOverdue={isOverdueStatus(inv.status, inv.due_date)} showIcon={false} />
+                 </td>
+                 <td className="py-3.5 px-4 text-center">
+                   {inv.payment_risk_score !== null && inv.payment_risk_score !== undefined ? (
+                     <RiskBadge score={inv.payment_risk_score} showScore showLabel size="sm" />
+                   ) : (
+                     <span className="text-xs text-tertiary">—</span>
+                   )}
+                 </td>
               </tr>
             ))}
           </tbody>

@@ -543,6 +543,9 @@ export interface ApiInvoiceListItem {
   deposit_total?: string | null;
   deposit_paid?: string | null;
   deposit_due?: string | null;
+  payment_risk_score?: number | null;
+  payment_risk_factors?: Record<string, unknown> | null;
+  payment_risk_scored_at?: string | null;
   created_at: string;
   sent_at?: string | null;
   paid_at?: string | null;

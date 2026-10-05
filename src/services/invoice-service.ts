@@ -22,6 +22,7 @@ import { env } from "../config/index.js";
 import { invalidateReportsCache } from "./reports-cache.js";
 import { TtlCache } from "../utils/ttl-cache.js";
 import { speedOptimizationService } from "./speed-optimization-service.js";
+import { paymentRiskService } from "./payment-risk-service.js";
 
 export type RepoInvoice = Awaited<ReturnType<typeof invoiceRepository.findById>>;
 
@@ -492,6 +493,13 @@ export class InvoiceService {
     if (invoice.customerId) {
       try {
         await speedOptimizationService.updateCustomerPattern(businessId, invoice.customerId, id);
+        // Score risk for newly finalized invoice
+        try {
+          const score = await paymentRiskService.scoreInvoice(businessId, id, invoice.customerId);
+          await invoiceRepository.updateRiskScore(id, businessId, score.score, score.factors);
+        } catch (riskErr) {
+          logger.debug({ err: riskErr, invoiceId: id }, "Failed to score payment risk after finalize");
+        }
       } catch (err) {
         logger.debug({ err, invoiceId: id }, "Failed to update customer pattern after finalize");
       }

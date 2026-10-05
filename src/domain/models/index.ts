@@ -186,6 +186,9 @@ export interface Invoice {
   pdfCache?: Buffer | null;
   pdfCacheHash?: string | null;
   pdfCachedAt?: Date | null;
+  paymentRiskScore?: number | null;
+  paymentRiskFactors?: Record<string, unknown> | null;
+  paymentRiskScoredAt?: Date | null;
 }
 
 export interface InvoiceSnapshot {

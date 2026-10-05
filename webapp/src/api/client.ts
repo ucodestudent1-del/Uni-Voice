@@ -1863,3 +1863,43 @@ export async function getInvoiceItemsForCredit(invoiceId: string): Promise<Credi
   }));
 }
 
+// ============================================================================
+// Payment Risk Scoring API
+// ============================================================================
+
+export interface ApiPaymentRiskInvoice {
+  id: string;
+  invoiceNumber: string | null;
+  customerId: string | null;
+  customerName: string | null;
+  total: string;
+  amountDue: string;
+  dueDate: string | null;
+  sentAt: string | null;
+  status: string;
+  paymentRiskScore: number | null;
+  paymentRiskFactors: Record<string, unknown> | null;
+}
+
+export interface ApiRiskScoreResult {
+  score: number;
+  factors: Record<string, unknown>;
+  confidence: number;
+  modelVersion: string;
+}
+
+export async function getPaymentRiskInvoices(limit = 50): Promise<{ invoices: ApiPaymentRiskInvoice[] }> {
+  const res = await api.get(`/reports/payment-risk?limit=${limit}`);
+  return res.data;
+}
+
+export async function scoreInvoiceRisk(invoiceId: string): Promise<ApiRiskScoreResult> {
+  const res = await api.post(`/reports/payment-risk/score/${invoiceId}`);
+  return res.data;
+}
+
+export async function batchScorePaymentRisk(): Promise<{ scored: number; failed: number }> {
+  const res = await api.post(`/reports/payment-risk/batch`);
+  return res.data;
+}
+

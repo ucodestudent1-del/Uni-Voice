@@ -898,6 +898,160 @@ async getVolumeTrend(businessId: string, months: number, period: "day" | "week" 
     return res.rows;
   }
 
+  async getRiskScoredInvoices(businessId: string, limit = 50): Promise<Array<{
+    id: string;
+    invoiceNumber: string | null;
+    customerId: string | null;
+    customerName: string | null;
+    total: string;
+    amountDue: string;
+    dueDate: Date | null;
+    sentAt: Date | null;
+    status: string;
+    paymentRiskScore: number | null;
+    paymentRiskFactors: Record<string, unknown> | null;
+  }>> {
+    const res = await query(
+      `SELECT i.id, i.invoice_number, i.customer_id, i.total, i.amount_due,
+              i.due_date, i.sent_at, i.status,
+              i.payment_risk_score, i.payment_risk_factors
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE i.business_id = $1
+         AND i.amount_due > 0
+         AND i.status IN ('sent', 'viewed', 'partially_paid', 'overdue')
+         AND i.payment_risk_score IS NOT NULL
+       ORDER BY i.payment_risk_score DESC, i.created_at DESC
+       LIMIT $2`,
+      [businessId, limit]
+    );
+    return res.rows.map(r => ({
+      id: r.id,
+      invoiceNumber: r.invoice_number,
+      customerId: r.customer_id,
+      customerName: r.customer_name,
+      total: String(r.total ?? "0"),
+      amountDue: String(r.amount_due ?? "0"),
+      dueDate: r.due_date ? new Date(r.due_date) : null,
+      sentAt: r.sent_at ? new Date(r.sent_at) : null,
+      status: r.status,
+      paymentRiskScore: r.payment_risk_score,
+      paymentRiskFactors: r.payment_risk_factors,
+    }));
+  }
+
+  async updateRiskScore(invoiceId: string, businessId: string, score: number, factors: Record<string, unknown> | null): Promise<void> {
+    await query(
+      `UPDATE invoices
+       SET payment_risk_score = $1,
+           payment_risk_factors = $2,
+           payment_risk_scored_at = NOW()
+       WHERE id = $3 AND business_id = $4`,
+      [score, factors ? JSON.stringify(factors) : null, invoiceId, businessId]
+    );
+  }
+
+  async getCustomerPaymentProfile(businessId: string, customerId: string): Promise<{
+    avgPaymentDays: number;
+    medianPaymentDays: number;
+    paymentStdDev: number;
+    collectionRate: number;
+    disputeRate: number;
+    invoiceCount: number;
+    paidInvoiceCount: number;
+    lastPaidAt: Date | null;
+  } | null> {
+    const res = await query(
+      `SELECT avg_payment_days, median_payment_days, payment_std_dev,
+              collection_rate_pct, dispute_rate_pct,
+              invoice_count, paid_invoice_count, last_paid_at
+       FROM customer_payment_profiles
+       WHERE business_id = $1 AND customer_id = $2`,
+      [businessId, customerId]
+    );
+    if (!res.rows.length) return null;
+    const row = res.rows[0];
+    return {
+      avgPaymentDays: Number(row.avg_payment_days ?? 0),
+      medianPaymentDays: Number(row.median_payment_days ?? 0),
+      paymentStdDev: Number(row.payment_std_dev ?? 0),
+      collectionRate: Number(row.collection_rate_pct ?? 0),
+      disputeRate: Number(row.dispute_rate_pct ?? 0),
+      invoiceCount: Number(row.invoice_count ?? 0),
+      paidInvoiceCount: Number(row.paid_invoice_count ?? 0),
+      lastPaidAt: row.last_paid_at ? new Date(row.last_paid_at) : null,
+    };
+  }
+
+  async upsertCustomerPaymentProfile(
+    businessId: string,
+    customerId: string,
+    profile: {
+      avgPaymentDays: number;
+      medianPaymentDays: number;
+      paymentStdDev: number;
+      collectionRate: number;
+      disputeRate: number;
+      invoiceCount: number;
+      paidInvoiceCount: number;
+      lastPaidAt: Date | null;
+    }
+  ): Promise<void> {
+    await query(
+      `INSERT INTO customer_payment_profiles
+         (business_id, customer_id, avg_payment_days, median_payment_days, payment_std_dev,
+          collection_rate_pct, dispute_rate_pct, invoice_count, paid_invoice_count, last_paid_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+       ON CONFLICT (business_id, customer_id) DO UPDATE SET
+         avg_payment_days = EXCLUDED.avg_payment_days,
+         median_payment_days = EXCLUDED.median_payment_days,
+         payment_std_dev = EXCLUDED.payment_std_dev,
+         collection_rate_pct = EXCLUDED.collection_rate_pct,
+         dispute_rate_pct = EXCLUDED.dispute_rate_pct,
+         invoice_count = EXCLUDED.invoice_count,
+         paid_invoice_count = EXCLUDED.paid_invoice_count,
+         last_paid_at = EXCLUDED.last_paid_at,
+         updated_at = NOW()`,
+      [
+        businessId, customerId,
+        profile.avgPaymentDays, profile.medianPaymentDays, profile.paymentStdDev,
+        profile.collectionRate, profile.disputeRate,
+        profile.invoiceCount, profile.paidInvoiceCount, profile.lastPaidAt,
+      ]
+    );
+  }
+
+  async getOutstandingInvoicesForScoring(businessId: string): Promise<Array<{
+    id: string;
+    customerId: string | null;
+    total: string;
+    amountDue: string;
+    dueDate: Date | null;
+    sentAt: Date | null;
+    status: string;
+    createdAt: Date;
+  }>> {
+    const res = await query(
+      `SELECT id, customer_id, total, amount_due, due_date, sent_at, status, created_at
+       FROM invoices
+       WHERE business_id = $1
+         AND amount_due > 0
+         AND status IN ('sent', 'viewed', 'partially_paid', 'overdue')
+       ORDER BY created_at DESC`,
+      [businessId]
+    );
+    return res.rows.map(r => ({
+      id: r.id,
+      customerId: r.customer_id,
+      total: String(r.total ?? "0"),
+      amountDue: String(r.amount_due ?? "0"),
+      dueDate: r.due_date ? new Date(r.due_date) : null,
+      sentAt: r.sent_at ? new Date(r.sent_at) : null,
+      status: r.status,
+      createdAt: r.created_at ? new Date(r.created_at) : new Date(),
+    }));
+  }
+
   async getReminderRules(businessId: string): Promise<Array<{
     id: string;
     name: string;
@@ -1115,6 +1269,16 @@ async getVolumeTrend(businessId: string, months: number, period: "day" | "week" 
     );
   }
 
+  async getAllBusinessIdsWithOutstandingInvoices(): Promise<string[]> {
+    const res = await query(
+      `SELECT DISTINCT business_id FROM invoices
+       WHERE status IN ('sent', 'viewed', 'partially_paid', 'overdue')
+       AND amount_due > 0
+       AND is_finalized = true`
+    );
+    return res.rows.map((r: { business_id: string }) => r.business_id);
+  }
+
   /**
    * Computes a deterministic hash of the invoice's current state so that a
    * cached PDF can be reused only when the invoice has not changed.
@@ -1186,6 +1350,9 @@ async getVolumeTrend(businessId: string, months: number, period: "day" | "week" 
       lateFeeValue: r.late_fee_value as string ?? "0",
       lateFeeApplied: Boolean(r.late_fee_applied),
       lateFeeAppliedAmount: r.late_fee_applied_amount as string ?? "0",
+      paymentRiskScore: r.payment_risk_score ? Number(r.paymentRiskScore) : null,
+      paymentRiskFactors: r.payment_risk_factors as Record<string, unknown> | null,
+      paymentRiskScoredAt: rowToDate(r.payment_risk_scored_at),
     };
   }
 

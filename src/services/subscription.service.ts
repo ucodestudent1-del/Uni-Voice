@@ -93,6 +93,8 @@ export class SubscriptionService {
        { code: "projects.team_assignment", name: "Project Team Assignment", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
         { code: "projects.invoicing", name: "Create Invoices from Projects", category: "projects", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
         { code: "ai.document_parsing", name: "AI Document Parsing", category: "ai", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
+        { code: "ai.risk_scoring", name: "Payment Risk Scoring", category: "ai", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
+        { code: "ai.smart_reminders", name: "Smart Reminder Timing", category: "ai", isPremium: true, requiresPlan: "pro" as PlanCode, metadata: {} },
       ];
 
     await subscriptionRepository.bulkUpsertFeatureFlags(featureFlags);
