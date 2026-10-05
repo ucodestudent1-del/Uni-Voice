@@ -22,7 +22,8 @@ import { formatCurrencyValue } from "../lib/utils";
 import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
 import { InvoiceLifecycle, isOverdueStatus } from "@/components/ui";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
-import StripePaymentElement from "../components/StripePaymentElement";
+import PaymentDialog from "../components/payments/PaymentDialog";
+import DepositDialog from "../components/payments/DepositDialog";
 import { AlertCircle, Check } from "lucide-react";
 
 const AlertCircleIcon = AlertCircle;
@@ -363,7 +364,11 @@ export default function InvoiceDetail() {
       </div>
 
       {actionMessage && (
-        <div className="rounded-lg border border-color-subtle bg-surface-alt px-3 py-2 text-sm text-secondary">
+        <div
+          className="rounded-lg border status-error-border status-error-bg px-3 py-2 text-sm status-error-text"
+          role="alert"
+          aria-live="polite"
+        >
           {actionMessage}
         </div>
       )}
@@ -466,6 +471,7 @@ export default function InvoiceDetail() {
 
       {showPayDialog && (
         <PaymentDialog
+          open={showPayDialog}
           invoice={invoice}
           amountDue={amountDue}
           payAmount={payAmount}
@@ -480,6 +486,7 @@ export default function InvoiceDetail() {
 
       {showDepositDialog && (
         <DepositDialog
+          open={showDepositDialog}
           invoice={invoice}
           depositDue={depositDue}
           depositAmount={depositAmount}
@@ -496,7 +503,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between py-2 border-b border-color-subtle">
       <span className="text-sm text-secondary">{label}</span>
-      <span className="text-sm text-primary">{value}</span>
+      <span className="text-sm text-primary" aria-label={label}>{value}</span>
     </div>
   );
 }
@@ -504,172 +511,17 @@ function TimelineItem({ event }: { event: ApiInvoiceEvent }) {
   const label = (event.event_type ?? "").replace(/_/g, " ");
   const actor = event.actor_type === "customer" ? "Customer" : event.actor_type === "payment" ? "Payment" : event.actor_type === "system" ? "System" : "User";
   return (
-    <div className="flex gap-3">
-      <div className="w-2 h-2 rounded-full bg-primary-action mt-1 flex-shrink-0"></div>
+    <li className="flex gap-3">
+      <div className="w-2 h-2 rounded-full bg-primary-action mt-1 flex-shrink-0" aria-hidden="true"></div>
       <div className="flex-1">
-        <p className="text-sm font-medium text-primary capitalize">{label}</p>
+        <p className="text-sm font-medium text-primary capitalize" aria-label={`${label} by ${actor}`}>
+          {label}
+        </p>
         <p className="text-xs text-secondary">
           {actor} · {formatDate(event.created_at)}
         </p>
       </div>
-    </div>
-  );
-}
-
-function PaymentDialog({
-  invoice, amountDue, payAmount, onAmountChange, paymentIntent, onCreatePaymentIntent, onPaymentSuccess, onPaymentError, onCancel
-}: {
-  invoice: ApiInvoice;
-  amountDue: Decimal;
-  payAmount: string;
-  onAmountChange: (value: string) => void;
-  paymentIntent: ApiPaymentIntent | null;
-  onCreatePaymentIntent: () => void;
-  onPaymentSuccess: () => void;
-  onPaymentError: (error: string) => void;
-  onCancel: () => void;
-}) {
-  const isFull = new Decimal(payAmount || 0).eq(amountDue);
-  const isStripeAvailable = paymentIntent?.provider === "stripe" && !!paymentIntent?.clientSecret;
-
-  if (paymentIntent && isStripeAvailable) {
-    return (
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="bg-surface rounded-xl shadow-xl w-full max-w-lg mx-4">
-          <div className="p-6 border-b border-color-subtle">
-            <h3 className="text-lg font-semibold text-primary">Pay Invoice #{invoice.invoice_number || invoice.id.slice(0, 8)}</h3>
-            <p className="text-sm text-secondary mt-1">
-              Amount: {formatCurrency(payAmount || amountDue, invoice.currency)}
-            </p>
-          </div>
-          <div className="p-6 space-y-3">
-            <StripePaymentElement
-              clientSecret={paymentIntent.clientSecret}
-              onPaymentSuccess={onPaymentSuccess}
-              onPaymentError={onPaymentError}
-            />
-          </div>
-          <div className="p-6 border-t border-color-subtle flex justify-end">
-            <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg">
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const isCreatingIntent = paymentIntent && !isStripeAvailable;
-
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
-        <div className="p-6 border-b border-color-subtle">
-          <h3 className="text-lg font-semibold text-primary">Record Payment</h3>
-          <p className="text-sm text-secondary mt-1">
-            Amount due: {formatCurrency(amountDue, invoice.currency)}
-          </p>
-        </div>
-        <div className="p-6 space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Amount</label>
-            <input
-              type="number"
-              step="0.01"
-              value={payAmount}
-              onChange={(e) => onAmountChange(e.target.value)}
-              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder={amountDue.toFixed(2)}
-            />
-          </div>
-          <button
-            onClick={() => onAmountChange(amountDue.toFixed(2))}
-            className="text-sm text-primary-brand hover:text-primary-brand"
-          >
-            Pay full amount ({formatCurrency(amountDue, invoice.currency)})
-          </button>
-          {isFull && <p className="text-xs status-success-text">This will fully pay the invoice.</p>}
-        </div>
-        <div className="p-6 border-t border-color-subtle flex justify-end gap-3">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg">
-            Cancel
-          </button>
-          {!paymentIntent ? (
-            <button
-              onClick={onCreatePaymentIntent}
-              disabled={!payAmount || Number(payAmount) <= 0}
-              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover disabled:opacity-50"
-            >
-              Pay with Card
-            </button>
-          ) : (
-            <button
-              onClick={onPaymentSuccess}
-              className="px-4 py-2 text-sm font-medium text-on-primary bg-primary-action rounded-lg hover:bg-primary-hover"
-            >
-              Complete Stub Payment
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DepositDialog({
-  invoice, depositDue, depositAmount, onAmountChange, onConfirm, onCancel
-}: {
-  invoice: ApiInvoice;
-  depositDue: Decimal;
-  depositAmount: string;
-  onAmountChange: (value: string) => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const isFull = new Decimal(depositAmount || 0).eq(depositDue);
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-xl shadow-xl w-full max-w-md mx-4">
-        <div className="p-6 border-b border-color-subtle">
-          <h3 className="text-lg font-semibold text-primary">Record Deposit Payment</h3>
-          <p className="text-sm text-secondary mt-1">
-            Deposit due: {formatCurrency(depositDue, invoice.currency)}
-          </p>
-        </div>
-        <div className="p-6 space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Amount</label>
-            <input
-              type="number"
-              step="0.01"
-              value={depositAmount}
-              onChange={(e) => onAmountChange(e.target.value)}
-              className="w-full text-sm border border-input-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder={depositDue.toFixed(2)}
-            />
-          </div>
-          <button
-            onClick={() => onAmountChange(depositDue.toFixed(2))}
-            className="text-sm text-primary-brand hover:text-primary-brand"
-          >
-            Pay full deposit ({formatCurrency(depositDue, invoice.currency)})
-          </button>
-          {isFull && <p className="text-xs status-success-text">This will fully pay the deposit.</p>}
-        </div>
-        <div className="p-6 border-t border-color-subtle flex justify-end gap-3">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt rounded-lg">
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={!depositAmount || Number(depositAmount) <= 0}
-            className="px-4 py-2 text-sm font-medium text-on-primary bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50"
-          >
-            Record Deposit
-          </button>
-        </div>
-      </div>
-    </div>
+    </li>
   );
 }
 

@@ -7,6 +7,20 @@ import type { TopBarProps, AppShellProps } from "@/types/components";
 
 export type { TopBarProps, AppShellProps };
 
+export function SkipLink({ href = "#main-content", label = "Skip to main content" }: { href?: string; label?: string }) {
+  return (
+    <a
+      href={href}
+      className={cn(
+        "sr-only focus:not-sr-focusable fixed top-0 left-0 z-50 rounded-lg bg-primary-action px-4 py-2.5 text-sm font-medium text-on-primary",
+        "focus:not-sr-focusable:sr-unfocusable"
+      )}
+    >
+      {label}
+    </a>
+  );
+}
+
 export function TopBar({
   onSearchFocus,
   onCommandPalette,
@@ -129,10 +143,11 @@ export function AppShell({ children, topBar, sidebar, bottomBar, className }: Ap
         className
       )}
     >
+      <SkipLink />
       {topBar && <TopBar {...topBar} />}
       <div className="flex flex-1 overflow-hidden">
         {sidebar && <aside className="flex-shrink-0 overflow-y-auto border-r border-color bg-surface">{sidebar}</aside>}
-        <main className="flex-1 overflow-y-auto bg-page p-6">{children}</main>
+        <main id="main-content" className="flex-1 overflow-y-auto bg-page p-6">{children}</main>
       </div>
       {bottomBar && <div className="flex-shrink-0 md:hidden">{bottomBar}</div>}
     </div>

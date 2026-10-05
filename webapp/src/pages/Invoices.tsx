@@ -319,7 +319,7 @@ const [searchTerm, setSearchTerm] = useState("");
 
       <div className="filter-container">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-inverse">Filters</h3>
+          <h3 className="text-lg font-semibold text-primary">Filters</h3>
           <div className="flex items-center gap-3">
             <Button
               variant={showAdvancedFilters ? "secondary" : "ghost"}

@@ -44,7 +44,7 @@ export default function FaqSection({
                 className="flex w-full items-center gap-3 px-5 py-4 text-left text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <span className="text-sm font-medium text-primary-brand text-primary-brand">Q{index + 1}</span>
-                <span className="flex-1 font-medium text-inverse">{item.question}</span>
+                <span className="flex-1 font-medium text-primary">{item.question}</span>
                 <span className={`text-sm text-tertiary transition-transform ${isOpen ? "rotate-180" : ""}`}>▼</span>
               </button>
               <div

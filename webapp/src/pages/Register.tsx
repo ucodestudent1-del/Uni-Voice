@@ -81,7 +81,7 @@ export default function Register() {
         <div className="flex justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-inverse">Create your account</h1>
+              <h1 className="text-3xl font-bold text-primary">Create your account</h1>
               <p className="text-tertiary mt-2">Start creating professional invoices in under two minutes</p>
             </div>
 

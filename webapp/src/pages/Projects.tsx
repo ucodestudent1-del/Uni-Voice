@@ -160,7 +160,7 @@ const [search, setSearch] = useState("");
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-inverse">Projects</h1>
+        <h1 className="text-2xl font-bold text-primary">Projects</h1>
         <Button
           variant="primary"
           size="md"
@@ -256,19 +256,19 @@ const [search, setSearch] = useState("");
                 {projects.map((project) => (
                   <tr key={project.id} className="hover:bg-hover">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-inverse">{project.name}</p>
+                      <p className="font-medium text-primary">{project.name}</p>
                       {project.description && (
                         <p className="text-sm text-tertiary line-clamp-1">{project.description}</p>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-inverse">{project.customer?.name || project.customer_name || "-"}</p>
+                      <p className="text-sm text-secondary">{project.customer?.name || project.customer_name || "-"}</p>
                     </td>
                     <td className="px-4 py-3">
                       <ProjectStatusBadge status={project.status} />
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-sm text-inverse">
+                      <p className="text-sm text-secondary">
                         {project.due_date ? formatDate(project.due_date) : "-"}
                       </p>
                     </td>

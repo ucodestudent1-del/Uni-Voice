@@ -20,42 +20,42 @@ export default function SettingsSidebar({ sections, accountSection }: SettingsSi
             <ul className="space-y-1">
               {group.items.map((item) => (
                 <li key={item.id}>
-                  <NavLink
-                    to={`/app/settings/${item.id}`}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-primary-bg text-on-primary"
-                          : "text-secondary hover:bg-hover hover:text-primary"
-                      }`
-                    }
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
-      <div className="border-t border-color pt-4">
-        <p className="px-3 text-xs font-semibold uppercase tracking-wider text-tertiary mb-2">
-          Account
-        </p>
-        <ul className="space-y-1">
-          {accountSection.items.map((item) => (
-            <li key={item.id}>
-              <NavLink
-                to={`/app/settings/${item.id}`}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary-bg text-on-primary"
-                      : "text-secondary hover:bg-surface-alt hover:text-primary"
-                  }`
-                }
-              >
+                 <NavLink
+                     to={`/app/settings/${item.id}`}
+                     className={({ isActive }) =>
+                       `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                         isActive
+                           ? "border-l-2 border-primary bg-primary-bg text-primary-brand"
+                           : "text-secondary hover:bg-hover hover:text-primary"
+                       }`
+                     }
+                   >
+                     {item.icon}
+                     <span>{item.label}</span>
+                   </NavLink>
+                 </li>
+               ))}
+             </ul>
+           </div>
+         ))}
+       </nav>
+       <div className="border-t border-color pt-4">
+         <p className="px-3 text-xs font-semibold uppercase tracking-wider text-tertiary mb-2">
+           Account
+         </p>
+         <ul className="space-y-1">
+           {accountSection.items.map((item) => (
+             <li key={item.id}>
+               <NavLink
+                 to={`/app/settings/${item.id}`}
+                 className={({ isActive }) =>
+                   `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                     isActive
+                       ? "border-l-2 border-primary bg-primary-bg text-primary-brand"
+                       : "text-secondary hover:bg-surface-alt hover:text-primary"
+                   }`
+                 }
+               >
                 {item.icon}
                 <span>{item.label}</span>
               </NavLink>

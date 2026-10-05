@@ -190,6 +190,7 @@ function DataTableInner<TData extends Record<string, any>>(
               variant="secondary"
               size="sm"
               icon={<ChevronsLeft className="h-4 w-4" />}
+              aria-label="First page"
               onClick={() => onPageChange(1)}
               disabled={currentPage === 1}
               className="px-2"
@@ -198,6 +199,7 @@ function DataTableInner<TData extends Record<string, any>>(
               variant="secondary"
               size="sm"
               icon={<ChevronLeft className="h-4 w-4" />}
+              aria-label="Previous page"
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className="px-2"
@@ -206,6 +208,7 @@ function DataTableInner<TData extends Record<string, any>>(
               variant="secondary"
               size="sm"
               icon={<ChevronRight className="h-4 w-4" />}
+              aria-label="Next page"
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage >= totalPages}
               className="px-2"
@@ -214,6 +217,7 @@ function DataTableInner<TData extends Record<string, any>>(
               variant="secondary"
               size="sm"
               icon={<ChevronsRight className="h-4 w-4" />}
+              aria-label="Last page"
               onClick={() => onPageChange(totalPages)}
               disabled={currentPage >= totalPages}
               className="px-2"

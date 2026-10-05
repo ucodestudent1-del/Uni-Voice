@@ -12,7 +12,7 @@ export type {
   LucideIcon,
 };
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "link";
+export type ButtonVariant = "primary" | "secondary" | "danger" | "warning" | "ghost" | "link";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,6 +20,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   icon?: ReactNode;
   iconPosition?: "left" | "right";
+  loading?: boolean;
   children?: ReactNode;
 }
 

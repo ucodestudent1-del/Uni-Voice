@@ -10,12 +10,12 @@ interface RecentActivityProps {
 }
 
 const eventColors: Record<string, string> = {
-  payment_received: "bg-success-text",
-  invoice_sent: "bg-info-text",
-  invoice_viewed: "bg-info-text",
-  reminder_sent: "bg-warning-text",
-  invoice_created: "bg-primary-brand",
-  invoice_overdue: "bg-error-text",
+  payment_received: "bg-success-text-bg",
+  invoice_sent: "bg-info-text-bg",
+  invoice_viewed: "bg-info-text-bg",
+  reminder_sent: "bg-warning-text-bg",
+  invoice_created: "bg-primary-action",
+  invoice_overdue: "bg-error-text-bg",
 };
 
 const eventLabels: Record<string, string> = {
@@ -82,51 +82,54 @@ export default function RecentActivity({ eventLimit = 8 }: RecentActivityProps) 
 
   return (
     <SectionCard title="Recent Activity">
-      <div className="relative">
+      <ul className="relative">
         <div className="absolute left-[5px] top-4 w-px h-full bg-color-subtle" aria-hidden="true" />
-        <div className="space-y-0">
-          {events.map((evt) => {
-            const metadata = evt.metadata as Record<string, string | undefined | null>;
-            const color = eventColors[evt.event_type] || "bg-primary-brand";
-            const label = eventLabels[evt.event_type] || evt.event_type;
-            const icon = eventIcons[evt.event_type] || "•";
-            return (
-              <div key={evt.id} className="relative flex items-start gap-3 py-3 border-b border-color-subtle last:border-b-0">
-                <div
-                  className={`relative z-10 w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${color}`}
-                  aria-hidden="true"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="text-sm text-secondary truncate">
-                      <span className="inline-flex items-center gap-1.5 mr-1">
-                        <span className="text-xs font-mono opacity-60">{icon}</span>
-                        {label}
-                      </span>
-                      {metadata.invoice_number ? (
-                        <Link
-                          to={`/app/invoices/${metadata.invoice_id ?? ""}`}
-                          className="text-primary-brand hover:text-primary hover:underline font-medium"
-                        >
-                          {metadata.invoice_number}
-                        </Link>
-                      ) : (
-                        <span className="text-secondary"> — {evt.event_type}</span>
-                      )}
-                    </p>
-                    <span className="text-xs text-secondary whitespace-nowrap flex-shrink-0">{evt._relativeTime}</span>
-                  </div>
-                  {metadata.amount && (
-                    <p className="text-xs text-secondary mt-0.5">
-                      {metadata.currency ? `${metadata.currency} ` : ""}{metadata.amount}
-                    </p>
-                  )}
+        {events.map((evt) => {
+          const metadata = evt.metadata as Record<string, string | undefined | null>;
+          const color = eventColors[evt.event_type] || "bg-primary-action";
+          const label = eventLabels[evt.event_type] || evt.event_type;
+          const icon = eventIcons[evt.event_type] || "•";
+          return (
+            <li
+              key={evt.id}
+              className="relative flex items-start gap-3 py-3 border-b border-color-subtle last:border-b-0"
+            >
+              <div
+                className={`relative z-10 w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${color}`}
+                aria-hidden="true"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-sm text-secondary truncate" aria-label={`${label} by ${metadata.actor ?? "System"}`}>
+                    <span className="inline-flex items-center gap-1.5 mr-1">
+                      <span className="text-xs font-mono opacity-60" aria-hidden="true">{icon}</span>
+                      {label}
+                    </span>
+                    {metadata.invoice_number ? (
+                      <Link
+                        to={`/app/invoices/${metadata.invoice_id ?? ""}`}
+                        className="text-primary-brand hover:text-primary hover:underline font-medium"
+                      >
+                        {metadata.invoice_number}
+                      </Link>
+                    ) : (
+                      <span className="text-secondary"> — {evt.event_type}</span>
+                    )}
+                  </p>
+                  <span className="text-xs text-secondary whitespace-nowrap flex-shrink-0" aria-label="Time">
+                    {evt._relativeTime}
+                  </span>
                 </div>
+                {metadata.amount && (
+                  <p className="text-xs text-secondary mt-0.5">
+                    {metadata.currency ? `${metadata.currency} ` : ""}{metadata.amount}
+                  </p>
+                )}
               </div>
-            );
-          })}
-        </div>
-      </div>
+            </li>
+          );
+        })}
+      </ul>
     </SectionCard>
   );
 }

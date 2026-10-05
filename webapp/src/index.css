@@ -260,19 +260,54 @@
   h6 { @apply text-xs font-semibold; }
 
   p { margin: 0 0 0.5rem; }
+
+  /* Screen-reader utilities */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .sr-focusable:not(:focus) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+  .sr-unfocusable:not(:focus) {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+  }
   
 
   /* ================ Semantic utility classes ================ */
 
-  /* Backgrounds */
-  .bg-page { background-color: rgb(var(--color-page-bg)); }
-  .bg-page-alt { background-color: rgb(var(--color-page-bg-alt)); }
-  .bg-surface { background-color: rgb(var(--color-surface)); }
-  .bg-surface-alt { background-color: rgb(var(--color-surface-alt)); }
-  .bg-surface-elevated {
-    background-color: rgb(var(--color-surface-elevation));
-    box-shadow: var(--color-shadow);
-  }
+   /* Backgrounds */
+   .bg-page { background-color: rgb(var(--color-page-bg)); }
+   .bg-page-alt { background-color: rgb(var(--color-page-bg-alt)); }
+   .bg-surface { background-color: rgb(var(--color-surface)); }
+   .bg-surface-alt { background-color: rgb(var(--color-surface-alt)); }
+   .bg-surface-elevated {
+     background-color: rgb(var(--color-surface-elevation));
+     box-shadow: var(--color-shadow);
+   }
+   .bg-overlay { background-color: rgb(var(--color-overlay)); }
 
   /* Text colors */
   .text-primary { color: rgb(var(--color-text)); }
@@ -476,10 +511,16 @@
   }
 
   /* Standardized button classes — consistent height, padding, and hit area */
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none;
-    min-height: 44px;
-  }
+   .btn {
+     @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none;
+     min-height: 44px;
+   }
+   .btn:disabled {
+     cursor: wait;
+   }
+   .btn-loading {
+     pointer-events: none;
+   }
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium text-white transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none;
     min-height: 44px;
@@ -630,6 +671,13 @@
   .border-info-border { border-color: rgb(var(--color-info-border)); }
   .hover-bg-error-bg:hover { background-color: rgb(var(--color-error-bg)); }
   .hover-bg-success-bg:hover { background-color: rgb(var(--color-success-bg)); }
+
+   /* Status text colors used as solid backgrounds (e.g. risk badge dots) */
+   .bg-error-text-bg { background-color: rgb(var(--color-error-text)); }
+   .bg-warning-text-bg { background-color: rgb(var(--color-warning-text)); }
+   .bg-success-text-bg { background-color: rgb(var(--color-success-text)); }
+   .bg-info-text-bg { background-color: rgb(var(--color-info-text)); }
+   .bg-tertiary-text-bg { background-color: rgb(var(--color-text-tertiary)); }
 
    /* Primary background shorthand (used by expense & invoice components) */
    .bg-primary-bg { background-color: rgb(var(--color-primary-bg)); }

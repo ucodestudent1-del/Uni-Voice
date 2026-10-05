@@ -136,7 +136,7 @@ export default function GeneralSettings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-inverse">General</h2>
+        <h2 className="text-lg font-semibold text-primary">General</h2>
         <p className="text-sm text-tertiary mt-1">
           Configure app-level preferences for your business.
         </p>

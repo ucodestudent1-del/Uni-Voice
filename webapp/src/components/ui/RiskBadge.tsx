@@ -27,10 +27,10 @@ export function getRiskLabel(score: number | null | undefined): string {
 
 const riskClasses: Record<RiskLevel, string> = {
   none: "status-tertiary-bg status-tertiary-text",
-  low: "bg-green-100 text-green-800",
-  medium: "bg-amber-100 text-amber-800",
-  high: "bg-orange-100 text-orange-800",
-  critical: "bg-red-100 text-red-800",
+  low: "status-success-subtle-bg status-success-subtle-text",
+  medium: "status-warning-bg status-warning-text",
+  high: "status-error-bg status-error-text",
+  critical: "status-error-bg status-error-text",
 };
 
 export const RiskBadge = forwardRef<HTMLSpanElement, RiskBadgeProps>(
@@ -61,14 +61,14 @@ export const RiskBadge = forwardRef<HTMLSpanElement, RiskBadgeProps>(
       >
         {showScore && score !== null && score !== undefined && score > 0 && (
           <span
-            className={cn(
-              "inline-flex items-center justify-center rounded-full font-semibold",
-              level === "critical" ? "bg-red-800 text-white" :
-              level === "high" ? "bg-orange-800 text-white" :
-              level === "medium" ? "bg-amber-800 text-white" :
-              level === "low" ? "bg-green-800 text-white" :
-              "bg-gray-400 text-white"
-            )}
+             className={cn(
+               "inline-flex items-center justify-center rounded-full font-semibold",
+               level === "critical" ? "bg-error-text-bg text-on-primary" :
+               level === "high" ? "bg-error-text-bg text-on-primary" :
+               level === "medium" ? "bg-warning-text-bg text-on-primary" :
+               level === "low" ? "bg-success-text-bg text-on-primary" :
+               "bg-tertiary-text-bg text-on-primary"
+             )}
             style={{ width: size === "sm" ? "1rem" : "1.125rem", height: size === "sm" ? "1rem" : "1.125rem" }}
           >
             {score}

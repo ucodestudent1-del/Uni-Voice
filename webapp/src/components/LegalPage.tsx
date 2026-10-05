@@ -11,10 +11,10 @@ export default function LegalPage({ title, children }: LegalPageProps) {
   const year = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-surface-alt text-inverse flex flex-col">
+    <div className="min-h-screen bg-surface-alt text-primary flex flex-col">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center justify-between h-16 py-4">
-          <Link to="/" className="text-xl font-bold text-inverse">InvoiceFlow</Link>
+          <Link to="/" className="text-xl font-bold text-primary">InvoiceFlow</Link>
           <div className="hidden md:flex items-center gap-8">
             <Link to="/privacy" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Privacy</Link>
             <Link to="/terms" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Terms</Link>
@@ -43,7 +43,7 @@ export default function LegalPage({ title, children }: LegalPageProps) {
 
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 max-w-3xl">
         <article className="prose prose-slate dark:prose-invert max-w-none">
-          <h1 className="text-3xl font-bold text-inverse md:text-4xl mb-8">{title}</h1>
+          <h1 className="text-3xl font-bold text-primary md:text-4xl mb-8">{title}</h1>
           {children}
         </article>
       </main>

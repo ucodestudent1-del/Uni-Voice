@@ -303,14 +303,15 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-2 ml-4">
-                    <button
-                      type="button"
-                      onClick={() => handleSendReminder(inv.id)}
-                      disabled={sendingReminderId === inv.id}
-                      className={cn(
-                        "text-xs font-medium text-primary-brand hover:text-primary-hover",
-                        sendingReminderId === inv.id && "opacity-50 cursor-wait",
-                      )}
+                     <button
+                       type="button"
+                       onClick={() => handleSendReminder(inv.id)}
+                       disabled={sendingReminderId === inv.id}
+                       aria-busy={sendingReminderId === inv.id || undefined}
+                       className={cn(
+                         "text-xs font-medium text-primary-brand hover:text-primary-hover",
+                         sendingReminderId === inv.id && "opacity-50 cursor-wait",
+                       )}
                     >
                       {sendingReminderId === inv.id ? "Sending…" : "Send reminder →"}
                     </button>

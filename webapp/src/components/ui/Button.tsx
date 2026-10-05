@@ -1,6 +1,8 @@
 import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "link";
+type ButtonVariant = "primary" | "secondary" | "danger" | "warning" | "ghost" | "link";
 type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -8,6 +10,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   icon?: ReactNode;
   iconPosition?: "left" | "right";
+  loading?: boolean;
   children?: ReactNode;
 }
 
@@ -21,6 +24,8 @@ const variantClasses: Record<ButtonVariant, string> = {
     "border border-input-border text-secondary hover:bg-hover focus:ring-primary",
   danger:
     "border border-error-border text-error-text bg-error-bg hover:bg-error-bg focus:ring-error",
+  warning:
+    "border border-warning-border text-warning-text bg-warning-bg hover:bg-warning-bg focus:ring-warning",
   ghost:
     "text-secondary hover:text-primary hover:bg-hover focus:ring-primary",
   link:
@@ -42,22 +47,37 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       icon,
       iconPosition = "left",
+      loading = false,
+      disabled,
       ...props
     },
     ref,
   ) => {
-    const isIconOnly = icon && !children;
+    const isIconOnly = (icon || loading) && !children;
+    const isDisabled = disabled || loading;
     const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${isIconOnly ? "px-2" : ""} ${className ?? ""}`;
 
     return (
-      <button ref={ref} className={classes} type="button" {...props}>
-        {icon && iconPosition === "left" && (
+      <button
+        ref={ref}
+        className={classes}
+        type="button"
+        disabled={isDisabled}
+        aria-busy={loading || undefined}
+        {...props}
+      >
+        {loading && iconPosition === "left" && (
+          <span aria-hidden="true" className="flex items-center">
+            <Loader2 className="animate-spin" />
+          </span>
+        )}
+        {!loading && icon && iconPosition === "left" && (
           <span aria-hidden="true" className="flex items-center">
             {icon}
           </span>
         )}
         {children}
-        {icon && iconPosition === "right" && (
+        {!loading && icon && iconPosition === "right" && (
           <span aria-hidden="true" className="flex items-center">
             {icon}
           </span>

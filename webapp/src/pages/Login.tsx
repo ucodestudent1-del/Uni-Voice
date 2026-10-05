@@ -95,7 +95,7 @@ export default function Login() {
         <div className="flex justify-center">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-inverse">
+              <h1 className="text-3xl font-bold text-primary">
                 {step === "two-factor" ? "Two-factor authentication" : "Sign in to your account"}
               </h1>
                <p className="text-xs text-tertiary mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
@@ -181,7 +181,7 @@ export default function Login() {
                      required
                      value={code}
                      onChange={(e) => handleCodeChange(e.target.value)}
-                     className="w-full rounded-lg border border-input-border bg-surface-alt px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+                     className="w-full rounded-lg border border-input-border bg-surface-alt px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-primary focus:outline-none focus:ring-2 focus: ring-primary"
                      placeholder="—— ——"
                      maxLength={7}
                    />
