@@ -1,4 +1,4 @@
-import { type ReactNode, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export type FormFieldVariant = "default" | "filter";
@@ -12,6 +12,8 @@ export interface FormFieldProps
   labelClassName?: string;
   inputClassName?: string;
   errorIcon?: ReactNode;
+  select?: boolean;
+  children?: ReactNode;
 }
 
 export interface FormTextareaFieldProps
@@ -37,6 +39,8 @@ export function FormField({
   className,
   labelClassName,
   inputClassName,
+  select,
+  children,
   disabled,
   id,
   ...props
@@ -44,6 +48,14 @@ export function FormField({
   const inputId = id ?? `form-field-${Math.random().toString(36).slice(2, 11)}`;
   const hasError = Boolean(error);
   const describedBy = helperText || error ? `${inputId}-description` : undefined;
+
+  const inputClasses = cn(
+    variantClasses[variant],
+    "w-full",
+    hasError && "border-error-border focus:ring-error",
+    disabled && "disabled-state",
+    inputClassName
+  );
 
   return (
     <div className={cn("flex flex-col gap-1", className)}>
@@ -59,20 +71,27 @@ export function FormField({
           {label}
         </label>
       )}
-      <input
-        {...props}
-        id={inputId}
-        disabled={disabled}
-        aria-invalid={hasError || undefined}
-        aria-describedby={describedBy}
-        className={cn(
-          variantClasses[variant],
-          "w-full",
-          hasError && "border-error-border focus:ring-error",
-          disabled && "disabled-state",
-          inputClassName
-        )}
-      />
+      {select ? (
+        <select
+          {...props as SelectHTMLAttributes<HTMLSelectElement>}
+          id={inputId}
+          disabled={disabled}
+          aria-invalid={hasError || undefined}
+          aria-describedby={describedBy}
+          className={cn(inputClasses, "appearance-none")}
+        >
+          {children}
+        </select>
+      ) : (
+        <input
+          {...props}
+          id={inputId}
+          disabled={disabled}
+          aria-invalid={hasError || undefined}
+          aria-describedby={describedBy}
+          className={inputClasses}
+        />
+      )}
       {helperText && (
         <p id={`${inputId}-description`} className="text-xs text-tertiary">
           {helperText}

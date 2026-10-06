@@ -24,7 +24,7 @@ import { InvoiceLifecycle, isOverdueStatus } from "@/components/ui";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 import PaymentDialog from "../components/payments/PaymentDialog";
 import DepositDialog from "../components/payments/DepositDialog";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle, Check, Copy } from "lucide-react";
 
 const AlertCircleIcon = AlertCircle;
 const CheckIcon = Check;
@@ -292,7 +292,7 @@ export default function InvoiceDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4 min-w-0">
           <Link to="/app/invoices" className="text-tertiary hover:text-primary flex-shrink-0">
             &larr; Invoices
@@ -301,7 +301,7 @@ export default function InvoiceDetail() {
             {invoice.invoice_number || `Draft #${invoice.id.slice(0, 8)}`}
           </h1>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
+        <div className="flex flex-wrap gap-2">
           <Link
             to={`/app/invoices/${invoice.id}/edit`}
             className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
@@ -347,7 +347,7 @@ export default function InvoiceDetail() {
           {canVoid && (
             <button
               onClick={() => setShowVoidDialog(true)}
-              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium status-error-text hover:status-error-bg"
+              className="rounded-lg border border-error-border px-3 py-2 text-sm font-medium status-error-text hover:status-error-bg"
             >
               Void
             </button>
@@ -373,18 +373,19 @@ export default function InvoiceDetail() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <InvoiceDetailView invoice={invoice} />
         </div>
 
         <div className="space-y-6">
-          <div className="bg-surface rounded-xl border border-color-subtle p-5 space-y-4">
-            <div className="text-center">
-              {renderContextualAction()}
-            </div>
+          <div className="rounded-xl border border-color bg-surface p-5 text-center shadow-sm">
+            {renderContextualAction()}
+          </div>
 
-            <div className="pt-4 border-t border-color-subtle space-y-3">
+          <div className="rounded-xl border border-color bg-surface p-5 shadow-sm">
+            <h3 className="invoice-section-title mb-3">Invoice details</h3>
+            <div className="space-y-2">
               <InfoRow label="Issue date" value={invoice.issue_date ? formatDate(invoice.issue_date) : "—"} />
               <InfoRow label="Due date" value={invoice.due_date ? formatDate(invoice.due_date) : "—"} />
               <InfoRow label="Currency" value={invoice.currency} />
@@ -401,37 +402,43 @@ export default function InvoiceDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface rounded-xl border border-color-subtle p-5">
-          <h3 className="text-lg font-semibold text-primary mb-4">Payment History</h3>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-color bg-surface p-5 shadow-sm">
+          <h3 className="invoice-section-title mb-3">Payment History</h3>
           {payments.length === 0 ? (
             <p className="text-sm text-secondary">No payments recorded yet.</p>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-color-subtle">
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Date</th>
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Amount</th>
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Method</th>
-                  <th className="text-left text-xs font-medium text-tertiary uppercase py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((p) => (
-                  <tr key={p.id} className="border-b border-color-subtle last:border-b-0">
-                    <td className="py-2 text-sm text-secondary">{p.paid_at ? formatDate(p.paid_at) : formatDate(p.created_at)}</td>
-                    <td className="py-2 text-sm font-medium text-primary">{formatCurrency(p.amount, p.currency)}</td>
-                    <td className="py-2 text-sm text-secondary">{p.method || p.provider || "-"}</td>
-                    <td className="py-2 text-sm text-secondary capitalize">{p.status}</td>
+            <div className="overflow-x-auto rounded-lg border border-color">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-surface-alt">
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">Date</th>
+                    <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase text-tertiary">Method</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase text-tertiary">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {payments.map((p) => (
+                    <tr key={p.id} className="border-t border-color-subtle last:border-b-0">
+                      <td className="px-4 py-2.5 text-sm text-secondary">
+                        {p.paid_at ? formatDate(p.paid_at) : formatDate(p.created_at)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-sm font-medium text-primary font-tabular-nums">
+                        {formatCurrency(p.amount, p.currency)}
+                      </td>
+                      <td className="px-3 py-2.5 text-sm text-secondary">{p.method || p.provider || "—"}</td>
+                      <td className="px-3 py-2.5 text-sm text-secondary capitalize">{p.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
-        <div className="bg-surface rounded-xl border border-color-subtle p-5">
-          <h3 className="text-lg font-semibold text-primary mb-4">Activity Timeline</h3>
+        <div className="rounded-xl border border-color bg-surface p-5 shadow-sm">
+          <h3 className="invoice-section-title mb-3">Activity Timeline</h3>
           {events.length === 0 ? (
             <p className="text-sm text-secondary">No activity yet.</p>
           ) : (
@@ -501,9 +508,9 @@ export default function InvoiceDetail() {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between py-2 border-b border-color-subtle">
-      <span className="text-sm text-secondary">{label}</span>
-      <span className="text-sm text-primary" aria-label={label}>{value}</span>
+    <div className="flex justify-between py-2.5 border-b border-color-subtle last:border-b-0">
+      <span className="text-sm text-tertiary">{label}</span>
+      <span className="text-sm font-medium text-primary" aria-label={label}>{value}</span>
     </div>
   );
 }
@@ -512,12 +519,12 @@ function TimelineItem({ event }: { event: ApiInvoiceEvent }) {
   const actor = event.actor_type === "customer" ? "Customer" : event.actor_type === "payment" ? "Payment" : event.actor_type === "system" ? "System" : "User";
   return (
     <li className="flex gap-3">
-      <div className="w-2 h-2 rounded-full bg-primary-action mt-1 flex-shrink-0" aria-hidden="true"></div>
+      <div className="h-2 w-2 flex-shrink-0 rounded-full bg-primary-action mt-1" aria-hidden="true"></div>
       <div className="flex-1">
         <p className="text-sm font-medium text-primary capitalize" aria-label={`${label} by ${actor}`}>
           {label}
         </p>
-        <p className="text-xs text-secondary">
+        <p className="text-xs text-tertiary">
           {actor} · {formatDate(event.created_at)}
         </p>
       </div>
@@ -530,108 +537,116 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
   const amountDue = new Decimal(invoice.amount_due ?? 0);
 
   return (
-    <div className="bg-surface rounded-xl border border-color-subtle p-8">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-primary">
-            {invoice.invoice_number || "Draft Invoice"}
-          </h2>
-          <div className="mt-3">
-            <InvoiceLifecycle status={invoice.status} isOverdue={isOverdue} />
+    <div className="rounded-xl border border-color bg-surface shadow-sm">
+      <div className="p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="invoice-title">{invoice.invoice_number || "Draft Invoice"}</h2>
+            <div className="mt-3">
+              <InvoiceLifecycle status={invoice.status} isOverdue={isOverdue} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-color-subtle">
-              <th className="text-left text-xs font-semibold text-tertiary uppercase py-2">#</th>
-              <th className="text-left text-xs font-semibold text-tertiary uppercase py-2">Description</th>
-              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Qty</th>
-              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Rate</th>
-              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Tax Rate</th>
-              <th className="text-right text-xs font-semibold text-tertiary uppercase py-2">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice.items.map((item, i) => {
-              const lineTotal = new Decimal(item.quantity || 1).mul(item.unit_price || 0);
-              return (
-                <tr key={item.id || i} className="border-b border-color-subtle">
-                  <td className="py-2 text-sm text-tertiary font-tabular-nums">{i + 1}</td>
-                  <td className="py-2 text-sm text-primary">{item.description || "—"}</td>
-                  <td className="py-2 text-sm text-secondary text-right font-tabular-nums">{item.quantity} {item.unit}</td>
-                  <td className="py-2 text-sm text-secondary text-right font-tabular-nums">{formatCurrency(item.unit_price, invoice.currency)}</td>
-                  <td className="py-2 text-sm text-tertiary text-right font-tabular-nums">
-                    {Number(item.tax_rate) > 0 ? `${new Decimal(item.tax_rate).mul(100).toFixed(2)}%` : "0%"}
-                  </td>
-                  <td className="py-2 text-right text-sm font-medium text-primary font-tabular-nums">{formatCurrency(lineTotal, invoice.currency)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-6 flex justify-end">
-        <table className="w-72 border-collapse font-tabular-nums">
-          <tbody>
-            <tr>
-              <td className="py-2.5 text-sm text-secondary">Subtotal</td>
-              <td className="py-2.5 text-right text-sm text-primary">{formatCurrency(invoice.subtotal, invoice.currency)}</td>
-            </tr>
-            {Number(invoice.discount_total) > 0 && (
-              <tr>
-                <td className="py-2.5 text-sm text-secondary">Discount</td>
-                <td className="py-2.5 text-right text-sm status-success-text">-{formatCurrency(invoice.discount_total, invoice.currency)}</td>
+        <div className="mt-6 overflow-x-auto rounded-lg border border-color">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-surface-alt">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Rate</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
               </tr>
+            </thead>
+            <tbody>
+              {invoice.items.map((item, i) => {
+                const lineTotal = new Decimal(item.quantity || 1).mul(item.unit_price || 0);
+                return (
+                  <tr key={item.id || i} className="border-t border-color-subtle">
+                    <td className="px-4 py-3 text-center text-sm text-tertiary font-tabular-nums">{i + 1}</td>
+                    <td className="px-4 py-3 text-sm text-primary">{item.description || "—"}</td>
+                    <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
+                      {item.quantity} {item.unit}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
+                      {formatCurrency(item.unit_price, invoice.currency)}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-tertiary text-right font-tabular-nums">
+                      {Number(item.tax_rate) > 0 ? `${new Decimal(item.tax_rate).mul(100).toFixed(2)}%` : "0%"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-medium text-primary font-tabular-nums">
+                      {formatCurrency(lineTotal, invoice.currency)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <div className="w-72 space-y-1 font-tabular-nums">
+            <div className="flex justify-between py-2.5 text-sm">
+              <span className="text-tertiary">Subtotal</span>
+              <span className="text-primary">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
+            </div>
+            {Number(invoice.discount_total) > 0 && (
+              <div className="flex justify-between py-2.5 text-sm">
+                <span className="text-tertiary">Discount</span>
+                <span className="text-success-text">−{formatCurrency(invoice.discount_total, invoice.currency)}</span>
+              </div>
             )}
-            <tr>
-              <td className="py-2.5 text-sm text-secondary">Tax</td>
-              <td className="py-2.5 text-right text-sm text-primary">
+            <div className="flex justify-between py-2.5 text-sm">
+              <span className="text-tertiary">Tax</span>
+              <span className="text-primary">
                 {Number(invoice.tax_total) > 0
                   ? formatCurrency(invoice.tax_total, invoice.currency)
                   : formatCurrency(0, invoice.currency)}
-              </td>
-            </tr>
+              </span>
+            </div>
             {Number(invoice.fee_total) > 0 && (
-              <tr>
-                <td className="py-2.5 text-sm text-secondary">Fees</td>
-                <td className="py-2.5 text-right text-sm text-primary">{formatCurrency(invoice.fee_total, invoice.currency)}</td>
-              </tr>
+              <div className="flex justify-between py-2.5 text-sm">
+                <span className="text-tertiary">Fees</span>
+                <span className="text-primary">{formatCurrency(invoice.fee_total, invoice.currency)}</span>
+              </div>
             )}
-            <tr className="border-t-2 border-color-subtle pt-3">
-              <td className="pt-3 text-lg font-semibold text-secondary">Total</td>
-              <td className="pt-3 text-right text-2xl font-bold text-primary">{formatCurrency(invoice.total, invoice.currency)}</td>
-            </tr>
-            <tr className="border-t border-color-subtle pt-2.5">
-              <td className="pt-2.5 text-base font-semibold text-primary-brand">Amount Due</td>
-              <td className="pt-2.5 text-right text-2xl font-bold text-primary-brand">{formatCurrency(amountDue, invoice.currency)}</td>
-            </tr>
-            <tr>
-              <td className="py-2 text-sm text-secondary">Paid</td>
-              <td className="py-2 text-right text-sm text-primary">{formatCurrency(invoice.amount_paid, invoice.currency)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-4 flex justify-between items-center pt-4 border-t border-color-subtle">
-        <div className="flex gap-6">
-          <InfoRow label="Issue date" value={invoice.issue_date ? formatDate(invoice.issue_date) : "—"} />
-          <InfoRow label="Due date" value={invoice.due_date ? formatDate(invoice.due_date) : "—"} />
+            <div className="border-t-2 border-color pt-3">
+              <div className="flex justify-between">
+                <span className="text-base font-semibold text-secondary">Total</span>
+                <span className="text-2xl font-bold text-primary">{formatCurrency(invoice.total, invoice.currency)}</span>
+              </div>
+            </div>
+            <div className="border-t border-color pt-2.5">
+              <div className="flex justify-between">
+                <span className="text-base font-semibold text-primary-brand">Amount Due</span>
+                <span className="text-2xl font-bold text-primary-brand">{formatCurrency(amountDue, invoice.currency)}</span>
+              </div>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-tertiary">Paid</span>
+              <span className="text-primary">{formatCurrency(invoice.amount_paid, invoice.currency)}</span>
+            </div>
+          </div>
         </div>
-        <InfoRow label="Currency" value={invoice.currency} />
-      </div>
 
-      {invoice.notes && <p className="mt-6 text-sm text-secondary whitespace-pre-line">{invoice.notes}</p>}
-      {invoice.payment_instructions && (
-        <div className="mt-4 rounded-lg bg-surface-alt p-4">
-          <h4 className="text-xs font-semibold text-tertiary uppercase mb-1">Payment Instructions</h4>
-          <p className="text-sm text-secondary whitespace-pre-line">{invoice.payment_instructions}</p>
+        <div className="mt-6 flex justify-between items-center pt-4 border-t border-color">
+          <div className="flex gap-6">
+            <InfoRow label="Issue date" value={invoice.issue_date ? formatDate(invoice.issue_date) : "—"} />
+            <InfoRow label="Due date" value={invoice.due_date ? formatDate(invoice.due_date) : "—"} />
+          </div>
+          <InfoRow label="Currency" value={invoice.currency} />
         </div>
-      )}
+
+        {invoice.notes && <p className="mt-6 text-sm text-secondary whitespace-pre-line">{invoice.notes}</p>}
+        {invoice.payment_instructions && (
+          <div className="mt-4 rounded-lg bg-surface-alt p-4">
+            <h4 className="invoice-section-title mb-1">Payment Instructions</h4>
+            <p className="text-sm text-secondary whitespace-pre-line">{invoice.payment_instructions}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

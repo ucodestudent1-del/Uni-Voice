@@ -261,6 +261,48 @@
 
   p { margin: 0 0 0.5rem; }
 
+  /* === Invoice typography system === */
+  .invoice-title {
+    @apply text-2xl font-bold leading-tight;
+    color: rgb(var(--color-text));
+  }
+  .invoice-section-title {
+    @apply text-sm font-semibold uppercase tracking-wider;
+    color: rgb(var(--color-text-tertiary));
+  }
+  .invoice-section-heading {
+    @apply text-base font-semibold;
+    color: rgb(var(--color-text));
+  }
+  .invoice-body-text {
+    @apply text-sm leading-relaxed;
+    color: rgb(var(--color-text-secondary));
+  }
+  .invoice-caption {
+    @apply text-xs;
+    color: rgb(var(--color-text-tertiary));
+  }
+  .invoice-amount {
+    @apply text-base font-medium;
+    color: rgb(var(--color-text));
+    font-variant-numeric: tabular-nums;
+  }
+  .invoice-amount-bold {
+    @apply text-xl font-bold;
+    color: rgb(var(--color-text));
+    font-variant-numeric: tabular-nums;
+  }
+  .invoice-amount-strong {
+    @apply text-2xl font-extrabold;
+    color: rgb(var(--color-text));
+    font-variant-numeric: tabular-nums;
+  }
+  .invoice-amount-due {
+    @apply text-2xl font-bold;
+    color: rgb(var(--color-primary));
+    font-variant-numeric: tabular-nums;
+  }
+
   /* Screen-reader utilities */
   .sr-only {
     position: absolute;

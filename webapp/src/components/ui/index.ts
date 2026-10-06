@@ -7,6 +7,7 @@ export { default as DataTable } from "./DataTable";
 export type { ColumnDef } from "@/types/components";
 export { default as ConfirmationDialog, type ConfirmationDialogProps } from "./ConfirmationDialog";
 export { default as EmptyState, type EmptyStateProps } from "./EmptyState";
+export { default as InvoiceCard, type InvoiceCardProps } from "./InvoiceCard";
 export { default as InvoiceStatus, type InvoiceStatusType, type InvoiceStatusProps, isOverdueStatus } from "./InvoiceStatus";
 export {
   InvoiceLifecycle,

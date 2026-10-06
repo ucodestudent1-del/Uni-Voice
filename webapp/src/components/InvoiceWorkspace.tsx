@@ -56,6 +56,7 @@ import FrequentlyInvoicedChips from "./FrequentlyInvoicedChips";
 import QuickRepeatBanner from "./QuickRepeatBanner";
 import AdvancedDetailsAccordion from "./AdvancedDetailsAccordion";
 import { Button } from "./ui/Button";
+import { FormField } from "./ui/FormField";
 import InvoicePreview, {
   type PreviewAttachment,
   type PreviewFee,
@@ -1034,7 +1035,7 @@ export default function InvoiceWorkspace() {
             <div className="mb-6 rounded-xl border border-dashed border-color bg-surface-alt py-12 text-center">
               <FileText className="mx-auto h-12 w-12 text-tertiary/40" />
               <h3 className="mt-4 text-lg font-semibold text-primary">No line items added yet</h3>
-              <p className="mt-2 max-w-sm text-sm text-tertiary">
+              <p className="mt-2 max-w-sm text-center text-sm text-tertiary">
                 Add a product or service so your invoice has something to bill for.
               </p>
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
@@ -1317,89 +1318,77 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
   customers: ApiCustomer[];
 }) {
   return (
-    <div className="flex flex-wrap items-end gap-3 p-6">
-      <div className="flex flex-col">
-        <label className="text-xs font-semibold text-tertiary uppercase">Customer</label>
-        <div className="mt-0.5 w-64">
-          <CustomerSelector
-            value={invoice.customerId ?? undefined}
-            onChange={(cid) => onField("customerId", cid)}
-            onCustomerChange={(c) => onField("customer", c ?? null)}
-            placeholder="Select a customer"
-            preloadedCustomers={customers}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col">
-        <label className="text-xs font-semibold text-tertiary uppercase">Invoice #</label>
-        <input
-          type="text"
-          value={invoice.invoiceNumber ?? ""}
-          onChange={(e) => onField("invoiceNumber", e.target.value || null)}
-          placeholder="Auto-assigned"
-          disabled={invoice.isFinalized}
-          className="form-control mt-0.5 w-36"
+    <div className="grid grid-cols-1 gap-x-6 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <FormField
+        label="Customer"
+        labelClassName="uppercase"
+        className="sm:col-span-2 lg:col-span-2 xl:col-span-2"
+        inputClassName="w-full"
+      >
+        <CustomerSelector
+          value={invoice.customerId ?? undefined}
+          onChange={(cid) => onField("customerId", cid)}
+          onCustomerChange={(c) => onField("customer", c ?? null)}
+          placeholder="Select a customer"
+          preloadedCustomers={customers}
         />
-      </div>
+      </FormField>
 
-      <div className="flex flex-col">
-        <label className="text-xs font-semibold text-tertiary uppercase">Issue date</label>
-        <input
-          type="date"
-          value={invoice.issueDate ?? ""}
-          onChange={(e) => onField("issueDate", e.target.value || null)}
-          className="form-control mt-0.5 w-36"
-        />
-      </div>
+      <FormField
+        label="Invoice #"
+        labelClassName="uppercase"
+        placeholder="Auto-assigned"
+        disabled={invoice.isFinalized}
+        value={invoice.invoiceNumber ?? ""}
+        onChange={(e) => onField("invoiceNumber", e.target.value || null)}
+      />
 
-      <div className="flex flex-col">
-        <label className="text-xs font-semibold text-tertiary uppercase">Due date</label>
-        <input
-          type="date"
-          value={invoice.dueDate ?? ""}
-          onChange={(e) => onField("dueDate", e.target.value || null)}
-          className="form-control mt-0.5 w-36"
-        />
-      </div>
+      <FormField
+        label="Issue date"
+        labelClassName="uppercase"
+        type="date"
+        value={invoice.issueDate ?? ""}
+        onChange={(e) => onField("issueDate", e.target.value || null)}
+      />
 
-      <div className="flex flex-col">
-        <label className="text-xs font-semibold text-tertiary uppercase">Currency</label>
-        <select
-          value={invoice.currency}
-          onChange={(e) => onField("currency", e.target.value)}
-          className="form-control mt-0.5 w-36"
-        >
-          {["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CNY"].map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
+      <FormField
+        label="Due date"
+        labelClassName="uppercase"
+        type="date"
+        value={invoice.dueDate ?? ""}
+        onChange={(e) => onField("dueDate", e.target.value || null)}
+      />
 
-      <div className="flex flex-col">
-        <label className="text-xs font-semibold text-tertiary uppercase">Tax rate</label>
-        <input
-          type="text"
-          value={toPercent(invoice.taxRate ?? "0")}
-          onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
-          placeholder="e.g. 8.5"
-          className="form-control mt-0.5 w-36"
-        />
-      </div>
+      <FormField
+        label="Currency"
+        labelClassName="uppercase"
+        value={invoice.currency}
+        onChange={(e) => onField("currency", e.target.value)}
+        select
+      >
+        {["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CNY"].map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </FormField>
 
-      <div className="flex flex-col">
-        <label className="text-xs font-semibold text-tertiary uppercase">P.O. #</label>
-        <input
-          type="text"
-          value={invoice.poNumber ?? ""}
-          onChange={(e) => onField("poNumber", e.target.value || null)}
-          placeholder="Reference #"
-          disabled={invoice.isFinalized}
-          className="form-control mt-0.5 w-36"
-        />
-      </div>
+      <FormField
+        label="Tax rate"
+        labelClassName="uppercase"
+        placeholder="e.g. 8.5"
+        value={toPercent(invoice.taxRate ?? "0")}
+        onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
+      />
+
+      <FormField
+        label="P.O. #"
+        labelClassName="uppercase"
+        placeholder="Reference #"
+        disabled={invoice.isFinalized}
+        value={invoice.poNumber ?? ""}
+        onChange={(e) => onField("poNumber", e.target.value || null)}
+      />
     </div>
   );
 });
@@ -1422,40 +1411,47 @@ const TotalsCard = React.memo(function TotalsCard({
   const subtotal = calc?.subtotal ?? 0;
 
   return (
-    <div className="border-t border-color px-6 py-4">
-      <div className="mx-auto grid max-w-2xl grid-cols-2 gap-x-6 gap-y-2 text-sm font-tabular-nums">
-        <div className="text-secondary">Subtotal</div>
-        <div className="text-right font-medium text-primary">{fmt(subtotal, c)}</div>
-        {Number(new Decimal(discount ?? 0).toString()) > 0 && (
-          <>
-            <div className="text-secondary">Discount</div>
-            <div className="text-right font-medium text-success-text">−{fmt(discount, c)}</div>
-          </>
-        )}
-        <div className="text-secondary">Tax</div>
-        <div className="text-right font-medium text-primary">{fmt(tax, c)}</div>
-        {Number(new Decimal(fees ?? 0).toString()) > 0 && (
-          <>
-            <div className="text-secondary">Fees</div>
-            <div className="text-right font-medium text-primary">{fmt(fees, c)}</div>
-          </>
-        )}
-        <div className="border-t-2 border-color pt-3 text-sm font-semibold text-secondary">Total</div>
-        <div className="border-t-2 border-color pt-3 text-right text-xl font-bold text-primary">
-          {fmt(total, c)}
-        </div>
+    <div className="border-t border-color bg-surface-alt px-6 py-5">
+      <div className="mx-auto max-w-2xl">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm font-tabular-nums">
+          <div className="text-tertiary">Subtotal</div>
+          <div className="text-right font-medium text-primary">{fmt(subtotal, c)}</div>
 
-        <div className="border-t border-color pt-2 text-secondary">Amount paid</div>
-        <div className="border-t border-color pt-2 text-right">
-          <input
-            type="number"
-            value={invoice.amountPaid ?? "0"}
-            onChange={(e) => onField("amountPaid", e.target.value || null)}
-            className="form-control-sm w-28 text-right"
-          />
+          {Number(new Decimal(discount ?? 0).toString()) > 0 && (
+            <>
+              <div className="text-tertiary">Discount</div>
+              <div className="text-right font-medium text-success-text">−{fmt(discount, c)}</div>
+            </>
+          )}
+
+          <div className="text-tertiary">Tax</div>
+          <div className="text-right font-medium text-primary">{fmt(tax, c)}</div>
+
+          {Number(new Decimal(fees ?? 0).toString()) > 0 && (
+            <>
+              <div className="text-tertiary">Fees</div>
+              <div className="text-right font-medium text-primary">{fmt(fees, c)}</div>
+            </>
+          )}
+
+          <div className="border-t-2 border-color pt-3 text-sm font-semibold text-secondary">Total</div>
+          <div className="border-t-2 border-color pt-3 text-right text-xl font-bold text-primary">
+            {fmt(total, c)}
+          </div>
+
+          <div className="border-t border-color pt-2 text-tertiary">Amount paid</div>
+          <div className="border-t border-color pt-2 text-right">
+            <input
+              type="number"
+              value={invoice.amountPaid ?? "0"}
+              onChange={(e) => onField("amountPaid", e.target.value || null)}
+              className="form-control-sm w-28 text-right font-tabular-nums"
+            />
+          </div>
+
+          <div className="pt-1 text-tertiary">Balance due</div>
+          <div className="pt-1 text-right text-xl font-bold text-primary-brand">{fmt(due, c)}</div>
         </div>
-        <div className="pt-1 text-secondary">Balance due</div>
-        <div className="pt-1 text-right text-xl font-bold text-primary-brand">{fmt(due, c)}</div>
       </div>
     </div>
   );
@@ -1469,9 +1465,9 @@ const SavedServicesBar = React.memo(function SavedServicesBar({
   onSelect: (p: ApiProduct) => void;
 }) {
   return (
-    <div className="mb-6 border border-color rounded-xl bg-surface p-4">
+    <div className="mb-6 overflow-x-auto rounded-xl border border-color bg-surface p-4">
       <p className="mb-2 text-xs font-semibold text-tertiary uppercase">Saved services</p>
-      <div className="flex gap-2 overflow-x-auto">
+      <div className="flex gap-2">
         {products.map((p) => (
           <button
             key={p.id}
@@ -1511,20 +1507,20 @@ const LineItemsTable = React.memo(function LineItemsTable({
   const lineTotals = calc?.lineItems ?? [];
 
   return (
-    <div className="mb-6 overflow-x-auto rounded-xl border border-color bg-surface">
+    <div className="mb-6 overflow-x-auto rounded-xl border border-color bg-surface shadow-sm">
       <table className="w-full table-fixed border-collapse text-sm">
         <thead>
-          <tr className="bg-surface-alt text-left text-xs font-semibold text-tertiary uppercase">
-            <th className="w-[20%] px-4 py-3">Description</th>
-            <th className="w-[6%] px-2 py-3 text-right">Qty</th>
-            <th className="w-[8%] px-2 py-3">Unit</th>
-            <th className="w-[12%] px-2 py-3 text-right">Rate</th>
-            <th className="w-[7%] px-2 py-3">Disc.</th>
-            <th className="w-[7%] px-2 py-3">Type</th>
-            <th className="w-[7%] px-2 py-3 text-right">Tax %</th>
-            <th className="w-[5%] px-2 py-3 text-center">Inc.</th>
-            <th className="w-[12%] px-2 py-3 text-right">Total</th>
-            <th className="w-[8%] px-4 py-3 text-center">Actions</th>
+          <tr className="bg-surface-alt">
+            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+            <th className="px-2 py-3 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
+            <th className="px-2 py-3 text-left text-xs font-semibold uppercase text-tertiary">Unit</th>
+            <th className="px-2 py-3 text-right text-xs font-semibold uppercase text-tertiary">Rate</th>
+            <th className="px-2 py-3 text-right text-xs font-semibold uppercase text-tertiary">Disc.</th>
+            <th className="px-2 py-3 text-center text-xs font-semibold uppercase text-tertiary">Disc.<br/>Type</th>
+            <th className="px-2 py-3 text-right text-xs font-semibold uppercase text-tertiary">Tax %</th>
+            <th className="px-2 py-3 text-center text-xs font-semibold uppercase text-tertiary">Inc.</th>
+            <th className="px-2 py-3 text-right text-xs font-semibold uppercase text-tertiary">Total</th>
+            <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-tertiary">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -1538,7 +1534,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) => onItemChange(item.id ?? String(i), { description: e.target.value })}
                     placeholder="What did you do?"
                     rows={2}
-                    className="form-control-sm resize-y min-h-[40px]"
+                    className="form-control-sm resize-y min-h-[40px] w-full"
                   />
                 </td>
                 <td className="px-2 py-3">
@@ -1550,7 +1546,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     }
                     min={1}
                     step="any"
-                    className="form-control-sm text-right"
+                    className="form-control-sm w-full text-right font-tabular-nums"
                   />
                 </td>
                 <td className="px-2 py-3">
@@ -1559,7 +1555,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) =>
                       onItemChange(item.id ?? String(i), { unit: e.target.value })
                     }
-                    className="form-control-sm"
+                    className="form-control-sm w-full"
                     title="Unit"
                   >
                     {LINE_ITEM_UNITS.map((u) => (
@@ -1582,7 +1578,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                       }
                       min={0}
                       step={step}
-                      className="form-control-sm text-right"
+                      className="form-control-sm w-full text-right font-tabular-nums"
                     />
                   </div>
                 </td>
@@ -1595,7 +1591,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     }
                     min={0}
                     step={step}
-                    className="form-control-sm text-right"
+                    className="form-control-sm w-full text-right font-tabular-nums"
                     placeholder="0.00"
                   />
                 </td>
@@ -1605,7 +1601,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     onChange={(e) =>
                       onItemChange(item.id ?? String(i), { discountType: e.target.value as "fixed" | "percentage" })
                     }
-                    className="form-control-sm"
+                    className="form-control-sm w-full"
                     title="Discount type"
                   >
                     <option value="fixed">Fixed</option>
@@ -1624,7 +1620,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     min={0}
                     max={100}
                     step="0.01"
-                    className="form-control-sm text-right"
+                    className="form-control-sm w-full text-right font-tabular-nums"
                     title="Tax rate %"
                   />
                 </td>
@@ -1641,7 +1637,7 @@ const LineItemsTable = React.memo(function LineItemsTable({
                     />
                   </div>
                 </td>
-                <td className="px-2 py-3 text-right text-sm font-medium text-primary">
+                <td className="px-2 py-3 text-right text-sm font-medium text-primary font-tabular-nums">
                   {lineTotal !== null ? fmt(lineTotal, c) : ""}
                 </td>
                 <td className="px-4 py-3">
@@ -1721,7 +1717,7 @@ const FeesSection = React.memo(function FeesSection({
   }
   return (
     <div className="mb-6 space-y-2">
-      <p className="text-xs font-semibold text-tertiary uppercase"> Fees &amp; charges</p>
+      <p className="text-xs font-semibold text-tertiary uppercase">Fees &amp; charges</p>
       {fees.map((fee, i) => (
         <div key={i} className="flex items-end gap-2 rounded-lg border border-color bg-surface p-2">
           <input
@@ -1774,12 +1770,12 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
 
   return (
     <div className="mb-6 rounded-xl border border-color bg-surface p-4">
-      <h3 className="text-sm font-semibold text-secondary uppercase mb-3">Payment Configuration</h3>
+      <h3 className="invoice-section-title mb-3">Payment Configuration</h3>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
           <label className="form-label-secondary">Deposit</label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <select
               value={depositType}
               onChange={(e) => {
@@ -1808,35 +1804,39 @@ const PaymentConfigurationSection = React.memo(function PaymentConfigurationSect
                 </span>
               </div>
             )}
-            <input
-              type="date"
-              value={invoice.depositDueDate?.split("T")[0] ?? ""}
-              onChange={(e) => onField("depositDueDate", e.target.value || null)}
-              className="form-control"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                value={invoice.depositDueDate?.split("T")[0] ?? ""}
+                onChange={(e) => onField("depositDueDate", e.target.value || null)}
+                className="form-control"
+              />
+            </div>
           </div>
           {depositType !== "none" && (
-            <input
-              type="text"
-              value={invoice.depositPaymentPurpose ?? ""}
-              onChange={(e) => onField("depositPaymentPurpose", e.target.value || null)}
-              placeholder="Payment purpose (e.g. 'Booking deposit')"
-              className="form-control"
-            />
+            <div className="mt-2">
+              <input
+                type="text"
+                value={invoice.depositPaymentPurpose ?? ""}
+                onChange={(e) => onField("depositPaymentPurpose", e.target.value || null)}
+                placeholder="Payment purpose (e.g. 'Booking deposit')"
+                className="form-control"
+              />
+            </div>
           )}
         </div>
 
         <div className="border-t border-color pt-3">
-           <label className="form-label-secondary">Late Fee</label>
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-             <select
-               value={lateFeeType}
-               onChange={(e) => {
-                 onField("lateFeeType", e.target.value);
-                 onField("lateFeeValue", e.target.value === "none" ? "0" : lateFeeValue);
-               }}
-               className="form-select"
-             >
+          <label className="form-label-secondary">Late Fee</label>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <select
+              value={lateFeeType}
+              onChange={(e) => {
+                onField("lateFeeType", e.target.value);
+                onField("lateFeeValue", e.target.value === "none" ? "0" : lateFeeValue);
+              }}
+              className="form-select"
+            >
               <option value="none">No late fee</option>
               <option value="fixed">Fixed amount</option>
               <option value="percentage">Percentage of total</option>
@@ -1885,38 +1885,38 @@ const NotesSection = React.memo(function NotesSection({
   onRemoveAttachment: (category: "attachment" | "before" | "after", id: string) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="mb-6 space-y-4">
       <div>
-        <label className="block text-sm font-semibold text-secondary">Job notes</label>
+        <label className="form-label-secondary">Job notes</label>
         <textarea
           value={invoice.notes ?? ""}
           onChange={(e) => onField("notes", e.target.value || null)}
           rows={3}
           placeholder="Add a note for the customer…"
-          className="form-control"
+          className="form-control resize-y"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-semibold text-secondary">Payment instructions</label>
+          <label className="form-label-secondary">Payment instructions</label>
           <textarea
             value={invoice.paymentInstructions ?? ""}
             onChange={(e) => onField("paymentInstructions", e.target.value || null)}
             rows={3}
             placeholder="Bank transfer, PayPal, etc.…"
-            className="form-control"
+            className="form-control resize-y"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-secondary">Terms</label>
+          <label className="form-label-secondary">Terms &amp; conditions</label>
           <textarea
             value={invoice.terms ?? ""}
             onChange={(e) => onField("terms", e.target.value || null)}
             rows={3}
             placeholder="Payment terms (e.g. Net 30)…"
-            className="form-control"
+            className="form-control resize-y"
           />
         </div>
       </div>
@@ -1959,7 +1959,7 @@ const PhotoUploadSection = React.memo(function PhotoUploadSection({
 }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-secondary">{label}</label>
+      <label className="form-label-secondary">{label}</label>
       {items.length === 0 ? (
         <label className="mt-1 flex h-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-color bg-surface text-tertiary hover:border-color-strong">
           <input
@@ -2054,47 +2054,40 @@ const ActionFooter = React.memo(function ActionFooter({
   return (
     <footer className="flex h-16 items-center justify-between border-t border-color bg-surface px-6">
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onCreateAnother}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover"
-        >
+        <Button variant="secondary" size="sm" onClick={onCreateAnother}>
           Create another
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={onDuplicate}
           disabled={!hasInvoiceId}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
         >
           Duplicate
-        </button>
-        <button
-          type="button"
-          onClick={onPreview}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover"
-        >
+        </Button>
+        <Button variant="secondary" size="sm" onClick={onPreview}>
           Preview
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={<Save className="h-4 w-4" />}
           onClick={onSaveDraft}
           disabled={saveState === "saving" || saveState === "saved"}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-2 text-sm font-medium text-secondary hover:bg-hover disabled:opacity-50"
         >
-          <Save className="h-4 w-4" />
           Save draft
-        </button>
+        </Button>
       </div>
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="md"
+        icon={<Send className="h-4 w-4" />}
+        iconPosition="left"
         onClick={onReviewAndSend}
         disabled={validation.hasErrors}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-5 py-2.5 text-sm font-semibold text-on-primary focus:ring-2 focus:ring-primary disabled:opacity-50"
       >
-        <Send className="h-4 w-4" />
         Review &amp; Send
-      </button>
+      </Button>
     </footer>
   );
 });
@@ -2207,7 +2200,7 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
                 icon={sending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 iconPosition="left"
               >
-                {sending ? "Finalizing…" : "Finalize & send by email"}
+                {sending ? "Finalizing…" : "Finalize &amp; send by email"}
               </Button>
             </div>
           </>
@@ -2224,7 +2217,7 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
             </div>
             <div className="p-6 text-center">
               <p className="text-sm text-secondary">What would you like to do next?</p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row justify-center">
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row justify-center">
                 <Button
                   variant="secondary"
                   size="md"

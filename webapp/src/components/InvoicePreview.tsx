@@ -168,20 +168,22 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
             )}
             <div>
               <h2 className="text-xl font-bold text-primary">{invoice.businessName || "Your Business"}</h2>
-              {invoice.businessEmail && <p className="text-sm text-secondary">{invoice.businessEmail}</p>}
-              {invoice.businessPhone && <p className="text-sm text-secondary">{invoice.businessPhone}</p>}
-              {invoice.businessWebsite && (
-                <a
-                  href={invoice.businessWebsite.startsWith("http") ? invoice.businessWebsite : `https://${invoice.businessWebsite}`}
-                  className="text-sm text-primary-brand hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {invoice.businessWebsite}
-                </a>
-              )}
+              <div className="mt-1 space-y-0.5">
+                {invoice.businessEmail && <p className="text-sm text-secondary">{invoice.businessEmail}</p>}
+                {invoice.businessPhone && <p className="text-sm text-secondary">{invoice.businessPhone}</p>}
+                {invoice.businessWebsite && (
+                  <a
+                    href={invoice.businessWebsite.startsWith("http") ? invoice.businessWebsite : `https://${invoice.businessWebsite}`}
+                    className="text-sm text-primary-brand hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {invoice.businessWebsite}
+                  </a>
+                )}
+              </div>
               {(invoice.businessTaxId || invoice.businessRegistrationNumber) && (
-                <p className="mt-1 text-sm text-secondary">
+                <p className="mt-2 text-sm text-secondary">
                   Tax ID: {invoice.businessTaxId || invoice.businessRegistrationNumber}
                 </p>
               )}
@@ -201,35 +203,35 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
           <div className="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {invoice.invoiceNumber && (
               <div>
-                <span className="block text-xs font-semibold uppercase text-tertiary">Invoice #</span>
+                <span className="invoice-section-title block">Invoice #</span>
                 <p className="mt-0.5 text-sm font-medium text-primary">{invoice.invoiceNumber}</p>
               </div>
             )}
             {invoice.issueDate && (
               <div>
-                <span className="block text-xs font-semibold uppercase text-tertiary">Issue date</span>
+                <span className="invoice-section-title block">Issue date</span>
                 <p className="mt-0.5 text-sm font-medium text-primary">{formatDateLong(invoice.issueDate)}</p>
               </div>
             )}
             {invoice.dueDate && (
               <div>
-                <span className="block text-xs font-semibold uppercase text-tertiary">Due date</span>
+                <span className="invoice-section-title block">Due date</span>
                 <p className="mt-0.5 text-sm font-medium text-primary">{formatDateLong(invoice.dueDate)}</p>
               </div>
             )}
             <div>
-              <span className="block text-xs font-semibold uppercase text-tertiary">Currency</span>
+              <span className="invoice-section-title block">Currency</span>
               <p className="mt-0.5 text-sm font-medium text-primary">{cur} ({meta.symbol})</p>
             </div>
             {invoice.poNumber && (
               <div>
-                <span className="block text-xs font-semibold uppercase text-tertiary">P.O. / Ref #</span>
+                <span className="invoice-section-title block">P.O. / Ref #</span>
                 <p className="mt-0.5 text-sm font-medium text-primary">{invoice.poNumber}</p>
               </div>
             )}
             {invoice.terms && (
               <div>
-                <span className="block text-xs font-semibold uppercase text-tertiary">Payment terms</span>
+                <span className="invoice-section-title block">Payment terms</span>
                 <p className="mt-0.5 text-sm font-medium text-primary">{invoice.terms}</p>
               </div>
             )}
@@ -238,7 +240,7 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
 
         {/* === Bill To section === */}
         <div className="mt-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-tertiary">Bill To</h3>
+          <h3 className="invoice-section-title">Bill To</h3>
           {invoice.customerName ? (
             <div className="mt-2 space-y-0.5">
               <p className="text-base font-semibold text-primary">{invoice.customerName}</p>
@@ -263,103 +265,103 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
           )}
         </div>
 
-         {/* === Line items table === */}
-         <div className="mt-6 overflow-x-auto rounded-lg border border-color">
-           <table className="w-full border-collapse text-sm">
-             <thead>
-               <tr className="bg-surface-alt">
-                 <th className="py-3 pl-4 pr-2 text-left text-xs font-semibold uppercase text-tertiary">#</th>
-                 <th className="py-3 pl-3 pr-2 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
-                 <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
-                 <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Unit Price</th>
-                 <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
-                 <th className="py-3 pl-3 pr-4 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
-               </tr>
-             </thead>
-             <tbody>
-               {invoice.items.map((item, i) => {
-                 const lineTotal = lineTotals[i];
-                 const hasRate = new Decimal(item.unitPrice || 0).gt(0);
-                 const taxPct = new Decimal(item.taxRate ?? 0).mul(100);
-                 const showTaxNote = !taxPct.isZero() || item.isTaxInclusive;
-                 return (
-                   <tr key={i} className="border-t border-color-subtle">
-                     <td className="py-3 pl-4 pr-2 text-center text-sm text-tertiary font-tabular-nums">{i + 1}</td>
-                     <td className="py-3 pl-3 pr-2 align-top text-sm text-primary break-words">
-                       {item.description || <span className="italic text-tertiary">Untitled item</span>}
-                       {showTaxNote && (
-                         <span className="mt-0.5 block text-xs text-tertiary">
-                           {item.isTaxInclusive ? `incl. ${taxPct.toFixed(2)}% tax` : `${taxPct.toFixed(2)}% tax`}
-                         </span>
-                       )}
-                     </td>
-                     <td className="py-3 pl-3 pr-3 text-sm text-secondary text-right font-tabular-nums">
-                       {fmtQuantity(item.quantity)}
-                     </td>
-                     <td className="py-3 pl-3 pr-3 text-sm text-secondary text-right font-tabular-nums">
-                       {hasRate ? fmtNumber(item.unitPrice, cur) : "—"}
-                     </td>
-                     <td className="py-3 pl-3 pr-3 align-top text-sm text-tertiary text-right font-tabular-nums">
-                       <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
-                         {fmtRate(item.taxRate)}
-                       </span>
-                     </td>
-                     <td className="py-3 pl-3 pr-4 text-sm font-medium text-primary text-right font-tabular-nums">
-                       {lineTotal}
-                     </td>
-                   </tr>
-                 );
-               })}
-               {invoice.items.length === 0 && (
-                 <tr>
-                   <td colSpan={6} className="py-10 text-center text-sm text-tertiary">
-                     No line items added yet
-                   </td>
-                 </tr>
-               )}
-             </tbody>
-           </table>
+        {/* === Line items table === */}
+        <div className="mt-6 overflow-x-auto rounded-lg border border-color">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-surface-alt">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">#</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Unit Price</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.items.map((item, i) => {
+                const lineTotal = lineTotals[i];
+                const hasRate = new Decimal(item.unitPrice || 0).gt(0);
+                const taxPct = new Decimal(item.taxRate ?? 0).mul(100);
+                const showTaxNote = !taxPct.isZero() || item.isTaxInclusive;
+                return (
+                  <tr key={i} className="border-t border-color-subtle">
+                    <td className="px-4 py-3 text-center font-tabular-nums text-tertiary">{i + 1}</td>
+                    <td className="px-3 py-3 align-top text-sm text-primary break-words">
+                      {item.description || <span className="italic text-tertiary">Untitled item</span>}
+                      {showTaxNote && (
+                        <span className="mt-0.5 block text-xs text-tertiary">
+                          {item.isTaxInclusive ? `incl. ${taxPct.toFixed(2)}% tax` : `${taxPct.toFixed(2)}% tax`}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
+                      {fmtQuantity(item.quantity)}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
+                      {hasRate ? fmtNumber(item.unitPrice, cur) : "—"}
+                    </td>
+                    <td className="px-3 py-3 align-top text-sm text-tertiary text-right font-tabular-nums">
+                      <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
+                        {fmtRate(item.taxRate)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-primary text-right font-tabular-nums">
+                      {lineTotal}
+                    </td>
+                  </tr>
+                );
+              })}
+              {invoice.items.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-sm text-tertiary">
+                    No line items added yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
-           {itemTaxRates.length > 0 && (
-             <div className="px-4 pb-3 text-xs text-tertiary">
-               Tax rate: {itemTaxRates.join(", ")}
-             </div>
-           )}
-         </div>
+          {itemTaxRates.length > 0 && (
+            <div className="px-4 pb-3 text-xs text-tertiary">
+              Tax rate: {itemTaxRates.join(", ")}
+            </div>
+          )}
+        </div>
 
-         {/* === Fees table === */}
-         {invoice.fees.length > 0 && (
-           <div className="mt-2 overflow-x-auto rounded-lg border border-color">
-             <table className="w-full border-collapse text-sm">
-               <thead>
-                 <tr className="bg-surface-alt">
-                   <th className="py-3 pl-4 pr-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
-                   <th className="py-3 pl-3 pr-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
-                   <th className="py-3 pl-3 pr-4 text-right text-xs font-semibold uppercase text-tertiary">Fee</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {invoice.fees.map((fee, i) => (
-                   <tr key={i} className="border-t border-color-subtle">
-                     <td className="py-3 pl-4 pr-3 align-top text-sm text-primary break-words">
-                       {fee.description || <span className="italic text-tertiary">Untitled fee</span>}
-                     </td>
-                     <td className="py-3 pl-3 pr-3 text-sm text-tertiary text-right font-tabular-nums">
-                       <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
-                         {fmtRate(fee.taxRate)}
-                       </span>
-                     </td>
-                     <td className="py-3 pl-3 pr-4 text-sm font-medium text-primary text-right font-tabular-nums">
-                       {fmtNumber(fee.amount, cur)}
-                     </td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
-           </div>
-         )}
+        {/* === Fees table === */}
+        {invoice.fees.length > 0 && (
+          <div className="mt-2 overflow-x-auto rounded-lg border border-color">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-surface-alt">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-tertiary">Fee</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.fees.map((fee, i) => (
+                  <tr key={i} className="border-t border-color-subtle">
+                    <td className="px-4 py-3 align-top text-sm text-primary break-words">
+                      {fee.description || <span className="italic text-tertiary">Untitled fee</span>}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-tertiary text-right font-tabular-nums">
+                      <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
+                        {fmtRate(fee.taxRate)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-primary text-right font-tabular-nums">
+                      {fmtNumber(fee.amount, cur)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-         {/* === Totals === */}
+        {/* === Totals === */}
         <div className="mt-6 flex justify-end">
           <div className="w-64 space-y-1 font-tabular-nums">
             <div className="flex justify-between py-2 text-sm">
@@ -411,14 +413,14 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
       {/* === Footer: notes, payment instructions, terms, attachments, payment CTA === */}
       {invoice.notes && invoice.notes.length > 0 && (
         <div className="border-t border-color px-8 py-6">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-tertiary">Notes</h4>
+          <h4 className="invoice-section-title">Notes</h4>
           <p className="mt-2 text-sm text-secondary whitespace-pre-line">{invoice.notes}</p>
         </div>
       )}
 
       {invoice.paymentInstructions && invoice.paymentInstructions.length > 0 && (
         <div className="border-t border-color px-8 py-6">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-tertiary">Payment Instructions</h4>
+          <h4 className="invoice-section-title">Payment Instructions</h4>
           <div className="mt-2 rounded-lg bg-surface-alt p-4">
             <p className="text-sm text-secondary whitespace-pre-line">{invoice.paymentInstructions}</p>
           </div>
@@ -427,14 +429,14 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
 
       {invoice.terms && invoice.terms.length > 0 && (
         <div className="border-t border-color px-8 py-6">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-tertiary">Terms &amp; Conditions</h4>
+          <h4 className="invoice-section-title">Terms &amp; Conditions</h4>
           <p className="mt-2 text-xs text-tertiary whitespace-pre-line">{invoice.terms}</p>
         </div>
       )}
 
       {invoice.attachments && invoice.attachments.length > 0 && (
         <div className="border-t border-color px-8 py-6">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-tertiary">Photos &amp; Attachments</h4>
+          <h4 className="invoice-section-title">Photos &amp; Attachments</h4>
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {invoice.attachments.map((a) => (
               <div key={a.id} className="group">

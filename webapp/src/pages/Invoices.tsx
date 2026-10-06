@@ -474,56 +474,58 @@ const [searchTerm, setSearchTerm] = useState("");
         </div>
       )}
 
-      <div className="bg-surface rounded-xl border border-color-subtle border-color overflow-hidden">
+      <div className="rounded-xl border border-color bg-surface shadow-sm overflow-hidden">
         <table className="w-full">
-           <thead>
-             <tr className="border-b border-color-subtle border-color bg-surface-alt dark:bg-surface-alt">
-                <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                  onClick={() => handleSort("invoice_number")}>
-                  Invoice
-                  {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
-                </th>
-                <th className="text-left text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                  onClick={() => handleSort("customer_name")}>
-                  Customer
-                  {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
-                </th>
-                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">
-                  Payment State
-                </th>
-                <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                  onClick={() => handleSort("total")}>
-                  Total
-                  {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
-                </th>
-                <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                  onClick={() => handleSort("amount_due")}>
-                  Amount Due
-                  {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
-                </th>
-                <th className="text-right text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                  onClick={() => handleSort("due_date")}>
-                  Due Date
-                  {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
-                </th>
-                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                  onClick={() => handleSort("issue_date")}>
-                  Issue Date
-                  {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
-                </th>
-                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4 cursor-pointer hover:bg-surface"
-                  onClick={() => handleSort("status")}>
-                  Status
-                  {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
-                </th>
-                <th className="text-center text-xs font-medium text-secondary uppercase py-3.5 px-4">Actions</th>
-             </tr>
-           </thead>
+          <thead>
+            <tr className="border-b border-color bg-surface-alt">
+              <th className="th cursor-pointer hover:bg-surface"
+                onClick={() => handleSort("invoice_number")}>
+                Invoice
+                {sortBy === "invoice_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th className="th cursor-pointer hover:bg-surface"
+                onClick={() => handleSort("customer_name")}>
+                Customer
+                {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th className="th text-center">
+                Payment State
+              </th>
+              <th className="th text-right cursor-pointer hover:bg-surface"
+                onClick={() => handleSort("total")}>
+                Total
+                {sortBy === "total" && (sortOrder === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th className="th text-right cursor-pointer hover:bg-surface"
+                onClick={() => handleSort("amount_due")}>
+                Amount Due
+                {sortBy === "amount_due" && (sortOrder === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th className="th text-right cursor-pointer hover:bg-surface"
+                onClick={() => handleSort("due_date")}>
+                Due Date
+                {sortBy === "due_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th className="th text-center cursor-pointer hover:bg-surface"
+                onClick={() => handleSort("issue_date")}>
+                Issue Date
+                {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th className="th text-center cursor-pointer hover:bg-surface"
+                onClick={() => handleSort("status")}>
+                Status
+                {sortBy === "status" && (sortOrder === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th className="th text-center">Actions</th>
+            </tr>
+          </thead>
           <tbody>
             {invoices.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-secondary">
-                  {hasActiveFilters ? "No invoices match your filters" : "No invoices yet"}
+                <td colSpan={9} className="py-16 text-center">
+                  <p className="text-sm text-secondary">
+                    {hasActiveFilters ? "No invoices match your filters" : "No invoices yet"}
+                  </p>
                   {!hasActiveFilters && (
                     <Button
                       variant="primary"
@@ -541,46 +543,46 @@ const [searchTerm, setSearchTerm] = useState("");
               invoices.map((inv) => {
                 const paymentState = getPaymentState(inv);
                 return (
-                  <tr key={inv.id} className="border-b border-color-subtle border-color last:border-b-0 hover:bg-hover">
-                   <td className="py-3.5 px-4">
-                        <div className="flex flex-col leading-tight">
-                          <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
-                            {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
-                          </Link>
-                          <span className="text-xs text-secondary">
-                            {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
-                          </span>
-                        </div>
-                      </td>
-                     <td className="py-3.5 px-4 text-sm text-secondary">
-                       {inv.customer_name || "—"}
-                       {inv.customer_email && <span className="text-xs text-secondary block">{inv.customer_email}</span>}
-                     </td>
-                    <td className="py-3.5 px-4 text-center">
+                  <tr key={inv.id} className="border-t border-color-subtle last:border-b-0 hover:bg-hover">
+                    <td className="td">
+                      <div className="flex flex-col leading-tight">
+                        <Link to={`/app/invoices/${inv.id}`} className="text-sm font-medium text-primary hover:text-primary-brand">
+                          {inv.invoice_number || `Draft #${inv.id.slice(0, 8)}`}
+                        </Link>
+                        <span className="text-xs text-tertiary">
+                          {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="td text-sm text-secondary">
+                      {inv.customer_name || "—"}
+                      {inv.customer_email && <span className="text-xs text-tertiary block">{inv.customer_email}</span>}
+                    </td>
+                    <td className="td text-center">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getPaymentStateColor(paymentState)}`}>
                         {getPaymentStateLabel(paymentState)}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right text-sm font-medium text-primary">
+                    <td className="td text-right text-sm font-medium text-primary font-tabular-nums">
                       {formatCurrency(inv.total, inv.currency)}
                     </td>
-                    <td className="py-3.5 px-4 text-right text-sm font-medium text-primary">
+                    <td className="td text-right font-medium font-tabular-nums">
                       {Number(inv.amount_due || 0) > 0
                         ? formatCurrency(inv.amount_due, inv.currency)
                         : Number(inv.total || 0) > 0
                           ? <span className="status-success-text">Paid</span>
                           : formatCurrency(inv.amount_due || 0, inv.currency)}
                     </td>
-                    <td className="py-3.5 px-4 text-right text-sm text-secondary">
+                    <td className="td text-right text-sm text-secondary font-tabular-nums">
                       {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-center text-sm text-secondary pr-6">
+                    <td className="td text-center text-sm text-secondary font-tabular-nums">
                       {inv.issue_date ? new Date(inv.issue_date).toLocaleDateString() : "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="td text-center">
                       <InvoiceStatus status={inv.status} isOverdue={isOverdueStatus(inv.status, inv.due_date)} showIcon />
                     </td>
-                     <td className="py-3.5 px-4 text-center">
+                    <td className="td text-center">
                       <div className="flex items-center justify-center gap-2">
                         <FeatureGate feature="invoices.duplicate" requiredPlan="pro" fallback={null}>
                           <Button
@@ -603,12 +605,12 @@ const [searchTerm, setSearchTerm] = useState("");
                           </FeatureGate>
                         )}
                         {inv.status === "draft" && (
-                         <Button
-                             variant="ghost"
-                             size="sm"
-                             icon={<FileText className="w-3.5 h-3.5" />}
-                             onClick={() => handleFinalize(inv.id)}
-                             title="Finalize"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<FileText className="w-3.5 h-3.5" />}
+                            onClick={() => handleFinalize(inv.id)}
+                            title="Finalize"
                           />
                         )}
                       </div>
@@ -621,20 +623,20 @@ const [searchTerm, setSearchTerm] = useState("");
         </table>
 
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-color-subtle border-color flex items-center justify-between">
+          <div className="border-t border-color px-4 py-3 flex items-center justify-between">
             <p className="text-sm text-secondary">
-              Page {page} of {totalPages} • {total} invoices
+              Page {page} of {totalPages} · {total} invoices
             </p>
-             <div className="flex items-center gap-2">
-                <select
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                  className="form-control-sm"
-                >
-                  {PAGE_SIZE_OPTIONS.map((size) => (
-                    <option key={size} value={size}>{size} per page</option>
-                  ))}
-                </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                className="form-control-sm"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{size} per page</option>
+                ))}
+              </select>
               <Button
                 variant="secondary"
                 size="sm"
