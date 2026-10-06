@@ -260,6 +260,25 @@ export async function updateInvoice(id: string, data: any) {
   return res.data;
 }
 
+export interface InvoiceAttachmentPayload {
+  name: string;
+  size: number;
+  type?: string | null;
+  category: "attachment" | "before" | "after";
+  dataUrl?: string | null;
+}
+
+export async function setInvoiceAttachments(id: string, attachments: InvoiceAttachmentPayload[]) {
+  const res = await api.put(`/invoices/${id}/attachments`, { attachments });
+  invalidateCacheByKey(`/invoices/${id}`);
+  return res.data;
+}
+
+export async function sendInvoiceSms(id: string, to?: string) {
+  const res = await api.post(`/invoices/${id}/sms`, to ? { to } : {});
+  return res.data;
+}
+
 export interface FinalizeInvoiceResult {
   invoiceNumber: string;
   publicToken?: string | null;

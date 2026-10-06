@@ -9,6 +9,7 @@ import { renderDefaultTerms } from "../services/terms.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService, type InvoiceEmailData } from "../services/email/email-service.js";
 import { invoiceRepository } from "../repositories/invoice.repo.js";
+import { invoiceAttachmentRepository, type AttachmentInput, type InvoiceAttachment } from "../repositories/invoice-attachment.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
 import { productServiceRepository } from "../repositories/product-service.repo.js";
@@ -102,6 +103,7 @@ export interface InvoiceSummary {
   invoice: RepoInvoice;
   items: RepoInvoice["items"];
   fees: RepoInvoice["fees"];
+  attachments: InvoiceAttachment[];
   totals: {
     subtotal: string;
     discountTotal: string;
@@ -160,13 +162,14 @@ export class InvoiceService {
     }, client);
   }
 
-  private summarize(invoice: RepoInvoice, calc: CalculationResult): InvoiceSummary {
+  private summarize(invoice: RepoInvoice, calc: CalculationResult, attachments: InvoiceAttachment[] = []): InvoiceSummary {
     const fmt = (v: Decimal.Value) => new Decimal(v).toFixed(2);
     return {
       invoiceId: invoice.id,
       invoice,
       items: invoice.items,
       fees: invoice.fees,
+      attachments,
       totals: {
         subtotal: fmt(calc.subtotal),
         discountTotal: fmt(calc.discountTotal),
@@ -246,6 +249,7 @@ export class InvoiceService {
 
   async getInvoice(businessId: string, id: string): Promise<InvoiceSummary> {
     const invoice = await invoiceRepository.findById(businessId, id);
+    const attachments = await invoiceAttachmentRepository.listByInvoice(businessId, id);
     if (invoice.isFinalized) {
       const cached = invoiceDetailCache.get(`${businessId}:${id}`);
       if (cached) {
@@ -254,6 +258,7 @@ export class InvoiceService {
           invoice,
           items: invoice.items,
           fees: invoice.fees,
+          attachments,
           totals: cached.totals,
         };
       }
@@ -267,7 +272,7 @@ export class InvoiceService {
         amountDue: String(invoice.amountDue ?? 0),
       };
       invoiceDetailCache.set(`${businessId}:${id}`, { invoice, totals });
-      return { invoiceId: invoice.id, invoice, items: invoice.items, fees: invoice.fees, totals };
+      return { invoiceId: invoice.id, invoice, items: invoice.items, fees: invoice.fees, attachments, totals };
     }
     // Only recalculate for drafts when line items or fees have changed since
     // the last persisted totals. Compare the current sum of line totals + fees
@@ -276,13 +281,14 @@ export class InvoiceService {
     if (needsRecalc) {
       const calc = await this.recalculate(invoice);
       await this.persistCalculationResults(invoice.id, invoice, calc);
-      return this.summarize(invoice, calc);
+      return this.summarize(invoice, calc, attachments);
     }
     return {
       invoiceId: invoice.id,
       invoice,
       items: invoice.items,
       fees: invoice.fees,
+      attachments,
       totals: {
         subtotal: String(invoice.subtotal ?? 0),
         discountTotal: String(invoice.discountTotal ?? 0),
@@ -357,6 +363,24 @@ export class InvoiceService {
     await this.persistCalculationResults(id, fresh, calc);
     invalidateInvoiceDetailCache(businessId, id);
     await invoiceRepository.recordEvent(id, { eventType: "line_item_updated", actorId: userId });
+  }
+
+  async setAttachments(
+    businessId: string,
+    id: string,
+    attachments: AttachmentInput[],
+    userId?: string
+  ): Promise<void> {
+    const invoice = await invoiceRepository.findById(businessId, id);
+    if (invoice.isFinalized) throw new BusinessLogicError("Cannot modify a finalized invoice");
+    await invoiceAttachmentRepository.replaceAll(businessId, id, attachments);
+    invalidateInvoiceDetailCache(businessId, id);
+    await invoiceRepository.recordEvent(id, {
+      eventType: "attachments_updated",
+      actorId: userId,
+      actorType: userId ? "user" : "system",
+      metadata: { count: attachments.length },
+    });
   }
 
   async setFees(businessId: string, id: string, fees: DraftFee[], userId?: string): Promise<void> {
@@ -459,13 +483,14 @@ export class InvoiceService {
     }
 
     const { number: generatedNumber } = await invoiceNumberService.generate(businessId);
+    const attachments = await invoiceAttachmentRepository.listByInvoice(businessId, id);
     const client = await getClient();
     try {
       await client.query("BEGIN");
       await client.query("SAVEPOINT sp1");
       await invoiceRepository.assignNumber(businessId, id, generatedNumber, client);
       await this.persistCalculationResults(id, invoice, res, client);
-      const { snapshot, hash } = await snapshotService.build(invoice, businessId);
+      const { snapshot, hash } = await snapshotService.build(invoice, businessId, { attachments });
       await invoiceRepository.createSnapshot(id, snapshot, hash, { client });
       await invoiceRepository.finalize(businessId, id, { finalizedAt: new Date() }, client);
       await client.query("RELEASE SAVEPOINT sp1");
@@ -1255,15 +1280,17 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     invalidateReportsCache(businessId);
   }
 
-  async getPublicInvoice(token: string): Promise<{ invoice: RepoInvoice; html: string; pdfUrl: string }> {
+  async getPublicInvoice(token: string): Promise<{ invoice: RepoInvoice; html: string; pdfUrl: string; attachments: InvoiceAttachment[] }> {
     const invoice = await invoiceRepository.findByPublicToken(undefined, token);
     const snapshot = await invoiceRepository.getSnapshot(invoice.id);
     const templateData = this.buildSnapshotTemplateData(invoice, snapshot);
     const html = templateRenderer.render(templateData);
+    const attachments = await invoiceAttachmentRepository.listByInvoice(invoice.businessId, invoice.id);
     return {
       invoice,
       html,
       pdfUrl: `${env.APP_PUBLIC_BASE_URL}/api/public/invoices/${token}/pdf`,
+      attachments,
     };
   }
 

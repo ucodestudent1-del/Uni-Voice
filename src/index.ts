@@ -19,6 +19,7 @@ import { reportsService, type ReportFilters } from "./services/reports-service.j
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { creditNoteService } from "./services/credit-note-service.js";
 import { quoteService } from "./services/quote-service.js";
 import { receiptService } from "./services/receipt-service.js";
@@ -1111,6 +1112,15 @@ app.put("/api/invoices/:id/fees", requireAuth, async (req: AuthRequest, res) => 
   res.json({ ok: true });
 });
 
+app.put("/api/invoices/:id/attachments", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const body = req.body ?? {};
+  const attachments = Array.isArray(body) ? body : body.attachments;
+  if (!Array.isArray(attachments)) return res.status(400).json({ error: "Attachments array required" });
+  await invoiceService.setAttachments(req.user!.businessId, req.params.id, attachments as any, req.user.id);
+  res.json({ ok: true });
+});
+
 app.post("/api/invoices/:id/finalize", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await invoiceService.finalize(req.user!.businessId, req.params.id, req.user.id);
@@ -1128,6 +1138,44 @@ app.post("/api/invoices/:id/send-reminder", requireAuth, requireEntitlement("rem
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await invoiceService.sendReminder(req.user!.businessId, req.params.id, req.user.id);
   res.json({ ok: true });
+});
+
+app.post("/api/invoices/:id/sms", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
+    if (!invoice.isFinalized) return res.status(400).json({ error: "Invoice must be finalized before sending an SMS" });
+    if (!invoice.customerId) return res.status(400).json({ error: "Invoice has no customer" });
+    const customer = await customerService.getById(req.user!.businessId, invoice.customerId).catch(() => null);
+    const phone = customer?.phone ?? req.body?.to;
+    if (!phone) return res.status(400).json({ error: "Customer has no phone number" });
+    const amountDue = new Decimal(invoice.amountDue ?? invoice.total ?? 0).toFixed(2);
+    const paymentUrl = invoice.publicToken
+      ? `${env.APP_PUBLIC_BASE_URL}/invoice/${invoice.publicToken}`
+      : env.APP_PUBLIC_BASE_URL;
+    const business = await businessRepository.findById(req.user!.businessId);
+    const message = buildPaymentLinkSms({
+      businessName: business.name,
+      invoiceNumber: invoice.invoiceNumber,
+      amountDue,
+      currency: invoice.currency,
+      paymentUrl,
+    });
+    const result = await smsService.send(phone, message);
+    await invoiceRepository.recordEvent(req.params.id, {
+      eventType: "sms_sent",
+      actorId: req.user.id,
+      actorType: "user",
+      metadata: { to: phone, provider: smsService.provider.name, messageId: result.messageId, status: result.status },
+    });
+    res.json({ ok: true, provider: smsService.provider.name, status: result.status });
+  } catch (err: any) {
+    if (err.statusCode) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+    } else {
+      res.status(400).json({ error: err.message || "Failed to send SMS" });
+    }
+  }
 });
 
 app.post("/api/invoices/:id/cancel", requireAuth, requireEntitlement("invoices.cancel"), async (req: AuthRequest, res) => {
@@ -3114,8 +3162,8 @@ app.delete("/api/tax-rates/:id", requireAuth, async (req: AuthRequest, res) => {
 // PUBLIC INVOICE VIEW (customer-facing, no auth required)
 // ============================================================================
 app.get("/api/public/invoices/:token", optionalAuth, async (req: AuthRequest, res) => {
-  const { invoice, html } = await invoiceService.getPublicInvoice(req.params.token);
-  res.json({ invoice, html });
+  const { invoice, html, attachments } = await invoiceService.getPublicInvoice(req.params.token);
+  res.json({ invoice, html, attachments });
 });
 
 app.get("/api/public/invoices/:token/pdf", optionalAuth, async (req: AuthRequest, res) => {

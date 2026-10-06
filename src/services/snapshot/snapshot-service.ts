@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { InvoiceWithDetails } from "../../repositories/invoice.repo.js";
+import type { InvoiceAttachment } from "../../repositories/invoice-attachment.repo.js";
 import type { Customer } from "../../domain/models/index.js";
 import type { Template } from "../../domain/models/index.js";
 import { businessRepository } from "../../repositories/business.repo.js";
@@ -21,6 +22,7 @@ export interface SnapshotBuildOptions {
   createdBy?: string;
   templateSchemaVersion?: string | null;
   templateRevision?: number | null;
+  attachments?: InvoiceAttachment[];
 }
 
 /**
@@ -50,6 +52,15 @@ export class SnapshotService {
   private mapFees(invoice: InvoiceWithDetails) {
     return invoice.fees.map((f) => ({
       description: f.description, amount: f.amount, taxRate: f.taxRate, taxAmount: f.taxAmount,
+    }));
+  }
+
+  private mapAttachments(attachments: InvoiceAttachment[]) {
+    return attachments.map((a) => ({
+      name: a.name,
+      size: a.size,
+      mimeType: a.mimeType,
+      category: a.category,
     }));
   }
 
@@ -86,6 +97,7 @@ export class SnapshotService {
     const items = this.mapItems(invoice);
     const fees = this.mapFees(invoice);
     const totals = this.mapTotals(invoice);
+    const attachments = this.mapAttachments(opts?.attachments ?? []);
 
     const templateData = buildTemplateData(
       {
@@ -175,6 +187,7 @@ export class SnapshotService {
         : null,
       items,
       fees,
+      attachments,
       template: template
         ? {
             id: template.id,

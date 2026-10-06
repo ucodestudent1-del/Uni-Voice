@@ -146,6 +146,18 @@ export interface ApiInvoiceFee {
   sort_order: number;
 }
 
+export interface ApiInvoiceAttachment {
+  id: string;
+  business_id: string;
+  invoice_id: string;
+  category: "attachment" | "before" | "after";
+  name: string;
+  size: number;
+  mime_type?: string | null;
+  data_url?: string | null;
+  created_at: string;
+}
+
 export interface ApiInvoice {
   id: string;
   business_id: string;
@@ -194,6 +206,7 @@ export interface ApiInvoice {
   updated_at: string;
   items: ApiInvoiceItem[];
   fees: ApiInvoiceFee[];
+  attachments?: ApiInvoiceAttachment[];
 }
 
 export interface ApiTaxIdentifier {

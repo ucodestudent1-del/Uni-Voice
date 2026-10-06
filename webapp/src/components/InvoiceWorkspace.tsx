@@ -14,10 +14,11 @@ import {
   Package,
   Plus,
   Receipt,
-  RefreshCw,
-  Save,
-  Send,
-  Trash2,
+   RefreshCw,
+   Save,
+   Send,
+   Smartphone,
+   Trash2,
   Upload,
   Wrench,
   X,
@@ -38,6 +39,8 @@ import {
   parseCommandLineItem,
   recordSpeedMetrics as apiRecordSpeedMetrics,
   sendInvoice,
+  sendInvoiceSms,
+  setInvoiceAttachments,
   updateInvoice,
 } from "../api/client";
 import {
@@ -63,7 +66,7 @@ import InvoicePreview, {
   type PreviewInvoice,
   type PreviewLineItem,
 } from "./InvoicePreview";
-import type { ApiBusiness, ApiCustomer, ApiInvoice, ApiProduct } from "../types/api";
+import type { ApiBusiness, ApiCustomer, ApiInvoice, ApiInvoiceAttachment, ApiProduct } from "../types/api";
 
 export type LineItemType = "service" | "labor" | "material" | "part" | "other";
 
@@ -93,6 +96,7 @@ export interface WorkspaceAttachment {
   size: number;
   type: string;
   url: string;
+  dataUrl?: string;
   category: "attachment" | "before" | "after";
 }
 
@@ -239,14 +243,43 @@ function customerAddressString(c: ApiCustomer | null): string | undefined {
   return joined || undefined;
 }
 
-function fileToAttachment(file: File, category: WorkspaceAttachment["category"]): WorkspaceAttachment {
+// Files above this size are persisted as metadata only (no data URL)
+// to keep the attachment payload small.
+const MAX_ATTACHMENT_DATA_URL_BYTES = 4 * 1024 * 1024;
+
+async function readFileDataUrl(file: File): Promise<string | undefined> {
+  if (file.size > MAX_ATTACHMENT_DATA_URL_BYTES) return undefined;
+  if (typeof FileReader === "undefined") return undefined;
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : undefined);
+    reader.onerror = () => resolve(undefined);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function fileToAttachment(file: File, category: WorkspaceAttachment["category"]): Promise<WorkspaceAttachment> {
+  const dataUrl = await readFileDataUrl(file);
   return {
     id: `att_${Date.now()}_${Math.random().toString(36).slice(2)}`,
     name: file.name,
     size: file.size,
     type: file.type,
     url: URL.createObjectURL(file),
+    dataUrl,
     category,
+  };
+}
+
+function fromApiAttachment(a: ApiInvoiceAttachment): WorkspaceAttachment {
+  return {
+    id: a.id,
+    name: a.name,
+    size: a.size,
+    type: a.mime_type ?? "",
+    url: a.data_url ?? "",
+    dataUrl: a.data_url ?? undefined,
+    category: a.category,
   };
 }
 
@@ -286,6 +319,7 @@ export default function InvoiceWorkspace() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedItemsRef = useRef<string | null>(null);
   const lastSavedFeesRef = useRef<string | null>(null);
+  const lastSavedAttachmentsRef = useRef<string | null>(null);
 
   const [loading, setLoading] = useState(!isNew);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -489,12 +523,18 @@ export default function InvoiceWorkspace() {
            lateFeeValue: inv.late_fee_value ?? "0",
            lateFeeDueDate: inv.late_fee_due_date ?? null,
            templateId: inv.template_id ?? null,
-           status: inv.status,
-           isFinalized: inv.is_finalized ?? false,
-           publicToken: inv.public_token ?? null,
-           attachments: [],
-           beforePhotos: [],
-           afterPhotos: [],
+            status: inv.status,
+            isFinalized: inv.is_finalized ?? false,
+            publicToken: inv.public_token ?? null,
+            attachments: (inv.attachments ?? [])
+              .filter((a) => a.category === "attachment")
+              .map(fromApiAttachment),
+            beforePhotos: (inv.attachments ?? [])
+              .filter((a) => a.category === "before")
+              .map(fromApiAttachment),
+            afterPhotos: (inv.attachments ?? [])
+              .filter((a) => a.category === "after")
+              .map(fromApiAttachment),
          };
         if (!cancelled) {
           setInvoice(mapped);
@@ -504,6 +544,15 @@ export default function InvoiceWorkspace() {
           setDirty(false);
           lastSavedItemsRef.current = JSON.stringify(mapped.items);
           lastSavedFeesRef.current = JSON.stringify(mapped.fees);
+          lastSavedAttachmentsRef.current = JSON.stringify(
+            [...mapped.beforePhotos, ...mapped.afterPhotos, ...mapped.attachments].map((a) => ({
+              name: a.name,
+              size: a.size,
+              type: a.type,
+              category: a.category,
+              dataUrl: a.dataUrl ?? null,
+            }))
+          );
         }
       } catch (err: any) {
         if (!cancelled) {
@@ -562,24 +611,42 @@ export default function InvoiceWorkspace() {
         fees: cur.fees,
       };
 
+      const attachmentPayload = [...cur.beforePhotos, ...cur.afterPhotos, ...cur.attachments].map(
+        (a) => ({
+          name: a.name,
+          size: a.size,
+          type: a.type,
+          category: a.category,
+          dataUrl: a.dataUrl ?? null,
+        })
+      );
+      const attachmentSignature = JSON.stringify(attachmentPayload);
+      const syncAttachments = async (invoiceId: string) => {
+        if (attachmentSignature === lastSavedAttachmentsRef.current) return;
+        await setInvoiceAttachments(invoiceId, attachmentPayload);
+        lastSavedAttachmentsRef.current = attachmentSignature;
+      };
+
        if (!curId) {
-         const res = await createInvoice(metaPayload);
-         setInvoiceId(res.invoiceId);
-         setLoadedInvoiceId(res.invoiceId);
-         lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
-         lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
-         if (newFlag) {
-           navigate(`/app/invoices/${res.invoiceId}/edit`, { replace: true });
-         }
-         analytics.trackInvoiceCreated({
-           invoiceId: res.invoiceId,
-           currency: cur.currency,
-           itemCount: cur.items.length,
-         });
-        } else {
-          await updateInvoice(curId, metaPayload);
-          lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
-          lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
+        const res = await createInvoice(metaPayload);
+        setInvoiceId(res.invoiceId);
+        setLoadedInvoiceId(res.invoiceId);
+        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
+        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
+        await syncAttachments(res.invoiceId);
+        if (newFlag) {
+          navigate(`/app/invoices/${res.invoiceId}/edit`, { replace: true });
+        }
+        analytics.trackInvoiceCreated({
+          invoiceId: res.invoiceId,
+          currency: cur.currency,
+          itemCount: cur.items.length,
+        });
+       } else {
+        await updateInvoice(curId, metaPayload);
+        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
+        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
+        await syncAttachments(curId);
         analytics.track("invoice_saved", {
           invoiceId: curId,
           currency: cur.currency,
@@ -743,9 +810,9 @@ export default function InvoiceWorkspace() {
     markDirtyAndSchedule();
   }
 
-  function handleFilesSelected(files: FileList | null, category: "attachment" | "before" | "after") {
+  async function handleFilesSelected(files: FileList | null, category: "attachment" | "before" | "after") {
     if (!files?.length || !invoice) return;
-    const additions = Array.from(files).map((f) => fileToAttachment(f, category));
+    const additions = await Promise.all(Array.from(files).map((f) => fileToAttachment(f, category)));
     setInvoice((prev) => {
       if (!prev) return prev;
       if (category === "attachment")
@@ -904,7 +971,7 @@ export default function InvoiceWorkspace() {
       setActionMessage("Please fix the highlighted issues before sending.");
       return;
     }
-    if (!latestRef.current.invoiceId) {
+    if (!latestRef.current.invoiceId || dirty) {
       await doSave();
     }
     setReviewStep("review");
@@ -1201,6 +1268,15 @@ export default function InvoiceWorkspace() {
           }
         }}
         onDownloadPdf={downloadPdf}
+        onSendSms={async () => {
+          if (!invoiceId) return;
+          try {
+            await sendInvoiceSms(invoiceId);
+            setActionMessage("SMS with payment link sent to customer");
+          } catch (err: any) {
+            setActionMessage(err?.response?.data?.error || "Failed to send SMS");
+          }
+        }}
       />
     )}
 
@@ -2104,6 +2180,7 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
   onClose,
   onCopyPaymentLink,
   onDownloadPdf,
+  onSendSms,
 }: {
   invoice: WorkspaceInvoiceData;
   invoiceId: string | null;
@@ -2116,6 +2193,7 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
   onClose: () => void;
   onCopyPaymentLink: () => void;
   onDownloadPdf: () => void;
+  onSendSms: () => void;
 }) {
   const c = invoice.currency;
   const total = calc?.total ?? 0;
@@ -2226,6 +2304,16 @@ const ReviewAndSendDialog = React.memo(function ReviewAndSendDialog({
                   onClick={onCopyPaymentLink}
                 >
                   Copy payment link
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  icon={<Smartphone className="h-4 w-4" />}
+                  iconPosition="left"
+                  onClick={onSendSms}
+                  disabled={!invoiceId}
+                >
+                  Send SMS
                 </Button>
                 <Button
                   variant="secondary"

@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Check,
   Download,
+  Paperclip,
 } from "lucide-react";
 import {
   getPublicInvoice,
@@ -47,6 +48,15 @@ interface PublicInvoiceData {
   late_fee_applied_amount?: string | null;
 }
 
+interface PublicAttachment {
+  id: string;
+  category: "attachment" | "before" | "after";
+  name: string;
+  size: number;
+  mime_type?: string | null;
+  data_url?: string | null;
+}
+
 export default function PublicInvoice() {
   const { token } = useParams<{ token: string }>();
   const [invoice, setInvoice] = useState<PublicInvoiceData | null>(null);
@@ -66,6 +76,7 @@ export default function PublicInvoice() {
   const [stripeElements, setStripeElements] = useState<StripeElements | null>(null);
   const [paymentElementReady, setPaymentElementReady] = useState(false);
   const [stripeAvailable, setStripeAvailable] = useState(false);
+  const [attachments, setAttachments] = useState<PublicAttachment[]>([]);
 
   useEffect(() => {
     if (!token) {
@@ -85,6 +96,7 @@ export default function PublicInvoice() {
         if (!cancelled) {
           setInvoice(data.invoice);
           setHtml(data.html || "");
+          setAttachments(data.attachments ?? []);
         }
       })
       .catch((err) => {
@@ -276,6 +288,10 @@ if (loading) return <EmptyState variant="loading" title="Loading invoice..." cla
           </div>
 
           <div className="px-8 py-6" dangerouslySetInnerHTML={{ __html: html }} />
+
+          {attachments.length > 0 && (
+            <AttachmentsSection attachments={attachments} />
+          )}
 
           {hasDeposit && (
             <div className="border-t border-color-subtle px-8 py-6 status-warning-bg">
@@ -491,6 +507,93 @@ if (loading) return <EmptyState variant="loading" title="Loading invoice..." cla
         <div className="text-center mt-8 text-sm text-secondary">
           <p>Powered by InvoiceFlow</p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function formatAttachmentSize(bytes: number): string {
+  if (!bytes || bytes <= 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isImageAttachment(a: PublicAttachment): boolean {
+  const mime = a.mime_type ?? "";
+  const name = a.name.toLowerCase();
+  return (
+    mime.startsWith("image/") ||
+    /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)
+  );
+}
+
+function AttachmentsSection({ attachments }: { attachments: PublicAttachment[] }) {
+  const labelFor = (category: string) =>
+    category === "before" ? "Before photos" : category === "after" ? "After photos" : "Attachments";
+
+  const grouped: Array<{ label: string; items: PublicAttachment[] }> = [];
+  for (const category of ["before", "after", "attachment"] as const) {
+    const items = attachments.filter((a) => a.category === category);
+    if (items.length > 0) grouped.push({ label: labelFor(category), items });
+  }
+
+  return (
+    <div className="border-t border-color-subtle px-8 py-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Paperclip className="w-4 h-4 text-secondary" />
+        <h3 className="text-base font-semibold text-primary">
+          Attachments ({attachments.length})
+        </h3>
+      </div>
+      <div className="space-y-6">
+        {grouped.map((group) => (
+          <div key={group.label}>
+            <p className="text-sm font-medium text-secondary mb-2">{group.label}</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {group.items.map((a) => {
+                const image = isImageAttachment(a);
+                const src = a.data_url ?? "";
+                if (image && src) {
+                  return (
+                    <a
+                      key={a.id}
+                      href={src}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative overflow-hidden rounded-lg border border-color-subtle bg-surface-alt"
+                    >
+                      <img
+                        src={src}
+                        alt={a.name}
+                        className="h-32 w-full object-cover transition-transform group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <span className="absolute inset-x-0 bottom-0 truncate bg-overlay px-2 py-1 text-left text-[11px] text-primary">
+                        {a.name}
+                      </span>
+                    </a>
+                  );
+                }
+                return (
+                  <a
+                    key={a.id}
+                    href={src || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-lg border border-color-subtle bg-surface-alt px-3 py-3 hover:bg-hover"
+                  >
+                    <Paperclip className="h-5 w-5 shrink-0 text-secondary" />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-primary">{a.name}</span>
+                      <span className="block text-xs text-tertiary">{formatAttachmentSize(a.size)}</span>
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

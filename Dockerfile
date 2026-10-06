@@ -145,6 +145,11 @@ COPY --from=backend-builder /app/dist/db/migrations/ /app/dist/db/migrations/
 # Copy nginx config
 COPY nginx.conf /app/nginx.conf
 
+# Container entrypoint (migrations, backend, nginx supervision)
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+
 WORKDIR /app
 
 # Production environment variables
@@ -171,6 +176,6 @@ ENV AUTH_MODE=dev
 ENV AUTH_JWT_SECRET=dev-secret-change-me
 ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/invoice_dev
 
-EXPOSE 4000
+EXPOSE 80 4000
 
-CMD ["node", "dist/index.js"]
+CMD ["/app/docker-entrypoint.sh"]
