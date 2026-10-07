@@ -108,16 +108,68 @@ export function QuoteDetailsForm({ data, onChange, currencyLocked }: QuoteDetail
         />
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Payment Instructions</label>
-        <textarea
-          value={data.paymentInstructions}
-          onChange={(e) => onChange("paymentInstructions", e.target.value)}
-          placeholder="How the customer should pay"
-          rows={2}
-          className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
-        />
-      </div>
+        <div>
+          <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Payment Instructions</label>
+          <textarea
+            value={data.paymentInstructions}
+            onChange={(e) => onChange("paymentInstructions", e.target.value)}
+            placeholder="How the customer should pay"
+            rows={2}
+            className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Scope of Work</label>
+          <textarea
+            value={data.scopeOfWork}
+            onChange={(e) => onChange("scopeOfWork", e.target.value)}
+            placeholder="Detailed description of work, materials, deliverables, and timeline"
+            rows={4}
+            className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Deposit Required</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <select
+              value={data.depositType}
+              onChange={(e) => onChange("depositType", e.target.value as any)}
+              className="rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="none">None</option>
+              <option value="percentage">Percentage</option>
+              <option value="fixed">Fixed Amount</option>
+            </select>
+            {data.depositType !== "none" && (
+              <>
+                <input
+                  type="number"
+                  min="0"
+                  step={data.depositType === "percentage" ? "0.01" : "0.01"}
+                  max={data.depositType === "percentage" ? "100" : undefined}
+                  value={data.depositValue}
+                  onChange={(e) => onChange("depositValue", e.target.value)}
+                  placeholder={data.depositType === "percentage" ? "50" : "0.00"}
+                  className="rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                {data.depositType === "percentage" && <span className="text-xs text-tertiary self-center">%</span>}
+              </>
+            )}
+          </div>
+          {data.depositType !== "none" && (
+            <div className="mt-2">
+              <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Deposit Due Date</label>
+              <input
+                type="date"
+                value={data.depositDueDate ?? ""}
+                onChange={(e) => onChange("depositDueDate", e.target.value || null)}
+                className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          )}
+        </div>
     </div>
   );
 }

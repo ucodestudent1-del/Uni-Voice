@@ -107,6 +107,19 @@ export async function createTestCustomer(businessId: string, name = "Test Custom
   return id;
 }
 
+export async function createTestSubscription(businessId: string, planCode = "pro"): Promise<void> {
+  const planRes = await query(`SELECT id FROM plans WHERE code = $1`, [planCode]);
+  const planId = planRes.rows[0]?.id;
+  if (!planId) throw new Error(`Plan ${planCode} not found`);
+  const now = new Date().toISOString();
+  await query(
+    `INSERT INTO business_subscriptions (business_id, plan_id, status, billing_cycle, current_period_start, current_period_end, created_at, updated_at)
+     VALUES ($1, $2, 'active', 'monthly', $3, $4, $3, $3)
+     ON CONFLICT (business_id) DO UPDATE SET plan_id = EXCLUDED.plan_id, status = 'active', current_period_end = EXCLUDED.current_period_end`,
+    [businessId, planId, now, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()]
+  );
+}
+
 export async function createTestCustomerById(
   businessId: string,
   overrides?: Partial<{

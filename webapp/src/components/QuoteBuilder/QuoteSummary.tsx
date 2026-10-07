@@ -97,7 +97,7 @@ export function QuoteSummary({ calcResult, currency, itemsCount, onSaveDraft, sa
         )}
 
         <div className="flex justify-between pt-4 border-t-2 border-color-strong mt-2">
-          <span className="text-secondary font-medium">Total</span>
+          <span className="text-secondary font-medium">Estimated Total</span>
           <span className="text-primary-brand text-xl font-bold font-tabular-nums">{formatCurrency(calcResult.total, currency)}</span>
         </div>
       </div>

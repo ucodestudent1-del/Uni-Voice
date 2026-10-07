@@ -1397,10 +1397,30 @@ app.post("/api/quotes/:id/finalize", requireAuth, requireEntitlement("quotes.cre
   res.json({ ok: true, quoteNumber: number });
 });
 
+app.post("/api/quotes/:id/accept", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await quoteService.accept(req.user!.businessId, req.params.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/quotes/:id/reject", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  await quoteService.reject(req.user!.businessId, req.params.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/quotes/:id/deposit", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { amount, provider = "stub", idempotencyKey } = req.body;
+  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Valid amount required" });
+  const result = await quoteService.recordDepositPayment(req.user!.businessId, req.params.id, amount, provider, idempotencyKey);
+  res.json(result);
+});
+
 app.post("/api/quotes/:id/send", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await quoteService.send(req.user!.businessId, req.params.id, req.user.id);
-  res.json({ sent: true });
+  const token = await quoteService.send(req.user!.businessId, req.params.id, req.user.id);
+  res.json({ sent: true, publicToken: token });
 });
 
 app.get("/api/quotes/:id/pdf", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
@@ -3209,6 +3229,58 @@ app.post("/api/public/invoices/:token/payment-intent", optionalAuth, async (req:
       res.status(err.statusCode).json({ error: err.message, code: err.code });
     } else {
       res.status(400).json({ error: err.message || "Could not create payment intent" });
+    }
+  }
+});
+
+// ============================================================================
+// PUBLIC QUOTE VIEW (customer-facing, no auth required)
+// ============================================================================
+app.get("/api/public/quotes/:token", optionalAuth, async (req: AuthRequest, res) => {
+  const { quote, html, pdfUrl } = await quoteService.getPublicQuote(req.params.token);
+  res.json({ quote, html, pdfUrl });
+});
+
+app.get("/api/public/quotes/:token/pdf", optionalAuth, async (req: AuthRequest, res) => {
+  const quote = await quoteService.findByPublicToken(req.params.token);
+  const pdf = await quoteService.generatePdf(quote.businessId, quote.id);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename=quote-${quote.quoteNumber ?? quote.id}.pdf`);
+  res.send(pdf);
+});
+
+app.post("/api/public/quotes/:token/view", optionalAuth, async (req: AuthRequest, res) => {
+  const quoteId = await quoteService.recordQuoteView(req.params.token);
+  res.json({ quoteId });
+});
+
+app.post("/api/public/quotes/:token/accept", optionalAuth, async (req: AuthRequest, res) => {
+  const quote = await quoteService.findByPublicToken(req.params.token);
+  await quoteService.accept(quote.businessId, quote.id);
+  invalidateReportsCache(quote.businessId);
+  res.json({ ok: true });
+});
+
+app.post("/api/public/quotes/:token/reject", optionalAuth, async (req: AuthRequest, res) => {
+  const quote = await quoteService.findByPublicToken(req.params.token);
+  await quoteService.reject(quote.businessId, quote.id);
+  invalidateReportsCache(quote.businessId);
+  res.json({ ok: true });
+});
+
+app.post("/api/public/quotes/:token/deposit", optionalAuth, async (req: AuthRequest, res) => {
+  const { amount, provider = "stub", idempotencyKey } = req.body;
+  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Valid amount required" });
+  try {
+    const quote = await quoteService.findByPublicToken(req.params.token);
+    const result = await quoteService.recordDepositPayment(quote.businessId, quote.id, amount, provider, idempotencyKey);
+    invalidateReportsCache(quote.businessId);
+    res.json(result);
+  } catch (err: any) {
+    if (err.statusCode) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+    } else {
+      res.status(400).json({ error: err.message || "Payment failed" });
     }
   }
 });

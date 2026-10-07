@@ -81,6 +81,7 @@ export interface ApiBusiness {
   phone?: string | null;
   website?: string | null;
   defaultCurrency: string;
+  defaultQuoteValidityDays?: number;
   countryCode?: string;
   logoUrl?: string | null;
   addressLine1?: string | null;

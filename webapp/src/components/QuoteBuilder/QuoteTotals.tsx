@@ -76,7 +76,7 @@ export function QuoteTotals({ calcResult, currency }: QuoteTotalsProps) {
       )}
 
       <div className="flex justify-between text-lg font-bold pt-3 border-t border-color-subtle">
-        <span className="text-primary">Total</span>
+          <span className="text-primary">Estimated Total</span>
         <span className="text-primary-brand">{formatCurrency(calcResult.total, currency)}</span>
       </div>
     </div>

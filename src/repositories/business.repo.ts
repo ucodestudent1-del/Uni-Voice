@@ -264,6 +264,7 @@ export class BusinessRepository {
       },
       countryCode: r.country_code as string,
       defaultCurrency: (r.default_currency as string) as Business["defaultCurrency"],
+      defaultQuoteValidityDays: r.default_quote_validity_days ? Number(r.default_quote_validity_days) : undefined,
       logoUrl: r.logo_url as string | null,
       createdAt: rowToDate(r.created_at)!,
       updatedAt: rowToDate(r.updated_at)!,

@@ -43,8 +43,13 @@ export interface QuoteCreateInput {
   expiryDate?: string | null;
   notes?: string | null;
   terms?: string | null;
+  paymentInstructions?: string | null;
+  scopeOfWork?: string | null;
   items?: QuoteItemInput[];
   fees?: QuoteFeeInput[];
+  depositType?: "none" | "percentage" | "fixed";
+  depositValue?: string | number;
+  depositDueDate?: string | null;
 }
 
 export interface QuoteRow {
@@ -66,6 +71,12 @@ export interface QuoteRow {
   amountDue: string;
   notes: string | null;
   terms: string | null;
+  paymentInstructions: string | null;
+  scopeOfWork: string | null;
+  depositType: string;
+  depositValue: string;
+  depositDueDate: Date | null;
+  depositPaid: boolean;
   isFinalized: boolean;
   finalizedAt: Date | null;
   sentAt: Date | null;
@@ -173,17 +184,28 @@ export class QuoteService {
       await customerRepository.findById(businessId, input.customerId);
     }
     const id = crypto.randomUUID();
+    let expiryDate = input.expiryDate;
+    if (!expiryDate && input.issueDate) {
+      const business = await businessRepository.findById(businessId);
+      const validityDays = business.defaultQuoteValidityDays ?? 30;
+      const base = new Date(input.issueDate);
+      base.setDate(base.getDate() + validityDays);
+      expiryDate = base.toISOString().split("T")[0];
+    }
     const client = await getClient();
     try {
       await client.query("BEGIN");
       await client.query(
         `INSERT INTO quotes (id, business_id, customer_id, currency, issue_date, due_date, expiry_date,
-          notes, terms, created_by, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())`,
+          notes, terms, payment_instructions, scope_of_work, deposit_type, deposit_value,
+          deposit_due_date, created_by, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,NOW(),NOW())`,
         [
           id, businessId, input.customerId ?? null, input.currency ?? "USD",
-          input.issueDate ?? null, input.dueDate ?? null, input.expiryDate ?? null,
-          input.notes ?? null, input.terms ?? null, userId ?? null,
+          input.issueDate ?? null, input.dueDate ?? null, expiryDate ?? null,
+          input.notes ?? null, input.terms ?? null, input.paymentInstructions ?? null,
+          input.scopeOfWork ?? null, input.depositType ?? "none", input.depositValue ?? 0,
+          input.depositDueDate ?? null, userId ?? null,
         ]
       );
       await this.persistItems(id, input.items ?? [], client);
@@ -299,6 +321,11 @@ export class QuoteService {
     if (input.expiryDate !== undefined) { fields.push(`expiry_date = $${i++}`); vals.push(input.expiryDate ?? null); }
     if (input.notes !== undefined) { fields.push(`notes = $${i++}`); vals.push(input.notes ?? null); }
     if (input.terms !== undefined) { fields.push(`terms = $${i++}`); vals.push(input.terms ?? null); }
+    if (input.paymentInstructions !== undefined) { fields.push(`payment_instructions = $${i++}`); vals.push(input.paymentInstructions ?? null); }
+    if (input.scopeOfWork !== undefined) { fields.push(`scope_of_work = $${i++}`); vals.push(input.scopeOfWork ?? null); }
+    if (input.depositType !== undefined) { fields.push(`deposit_type = $${i++}`); vals.push(input.depositType ?? "none"); }
+    if (input.depositValue !== undefined) { fields.push(`deposit_value = $${i++}`); vals.push(input.depositValue ?? 0); }
+    if (input.depositDueDate !== undefined) { fields.push(`deposit_due_date = $${i++}`); vals.push(input.depositDueDate ?? null); }
     vals.push(id, businessId);
     if (fields.length) {
       await query(`UPDATE quotes SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $${i} AND business_id = $${i + 1}`, vals);
@@ -353,8 +380,8 @@ export class QuoteService {
     if (!res.rows.length) throw new NotFoundError(`Quote ${id} not found`);
     const r = res.rows[0];
 
-    const items: QuoteItemRow[] = (r.items_json ? JSON.parse(r.items_json as string) : []).map(this.itemRowToModel);
-    const fees: QuoteFeeRow[] = (r.fees_json ? JSON.parse(r.fees_json as string) : []).map(this.feeRowToModel);
+    const items: QuoteItemRow[] = (Array.isArray(r.items_json) ? r.items_json : []).map(this.itemRowToModel);
+    const fees: QuoteFeeRow[] = (Array.isArray(r.fees_json) ? r.fees_json : []).map(this.feeRowToModel);
     return { ...this.rowToModel(r), items, fees };
   }
 
@@ -412,6 +439,68 @@ export class QuoteService {
     return token;
   }
 
+  async findByPublicToken(token: string): Promise<QuoteWithDetails> {
+    const res = await query(
+      `SELECT q.*, c.name as customer_name, c.email as customer_email
+       FROM quotes q
+       LEFT JOIN customers c ON c.id = q.customer_id
+       WHERE q.public_token = $1`,
+      [token]
+    );
+    if (!res.rows.length) throw new NotFoundError(`Quote with token not found`);
+    const r = res.rows[0];
+
+    const itemsRes = await query(
+      `SELECT id, quote_id, product_id, description,
+              quantity::text AS quantity, unit, unit_price::text AS unit_price,
+              discount::text AS discount, discount_type, tax_rate::text AS tax_rate,
+              tax_amount::text AS tax_amount, line_subtotal::text AS line_subtotal,
+              line_total::text AS line_total, sort_order, is_tax_inclusive, created_at
+       FROM quote_items WHERE quote_id = $1 ORDER BY sort_order, created_at`,
+      [r.id]
+    );
+    const feesRes = await query(
+      `SELECT id, quote_id, description,
+              amount::text AS amount, tax_rate::text AS tax_rate,
+              tax_amount::text AS tax_amount, sort_order, created_at
+       FROM quote_fees WHERE quote_id = $1 ORDER BY sort_order, created_at`,
+      [r.id]
+    );
+
+    const items: QuoteItemRow[] = (itemsRes.rows ?? []).map(this.itemRowToModel);
+    const fees: QuoteFeeRow[] = (feesRes.rows ?? []).map(this.feeRowToModel);
+    return { ...this.rowToModel(r), items, fees };
+  }
+
+  async getPublicQuote(token: string): Promise<{ quote: QuoteWithDetails; html: string; pdfUrl: string }> {
+    const quote = await this.findByPublicToken(token);
+    if (quote.publicTokenExpiresAt && quote.publicTokenExpiresAt < new Date()) {
+      throw new NotFoundError("Quote link has expired");
+    }
+    const business = await businessRepository.findById(quote.businessId);
+    const customer = quote.customerId ? await customerRepository.findById(quote.businessId, quote.customerId) : null;
+    const html = await this.renderQuoteHtml(quote, business, customer);
+    return {
+      quote,
+      html,
+      pdfUrl: `${process.env.APP_PUBLIC_BASE_URL ?? ""}/api/public/quotes/${token}/pdf`,
+    };
+  }
+
+  async recordQuoteView(token: string): Promise<string> {
+    const quote = await this.findByPublicToken(token);
+    if (quote.status === "sent" || quote.status === "viewed") {
+      const target = "viewed";
+      if (target !== quote.status) {
+        await query(`UPDATE quotes SET status = $1, viewed_at = NOW(), updated_at = NOW() WHERE id = $2`, [target, quote.id]);
+      }
+    }
+    await query(`INSERT INTO quote_view_log (id, quote_id, business_id, viewed_at) VALUES ($1, $2, $3, NOW())`, [
+      crypto.randomUUID(), quote.id, quote.businessId,
+    ]);
+    return quote.id;
+  }
+
   async finalize(businessId: string, id: string, userId?: string, existingQuote?: QuoteWithDetails): Promise<string> {
     const quote = existingQuote ?? await this.findById(businessId, id);
     if (quote.isFinalized) return quote.quoteNumber ?? "";
@@ -426,6 +515,110 @@ export class QuoteService {
       [id, businessId]
     );
     return number;
+  }
+
+  async accept(businessId: string, id: string): Promise<void> {
+    const res = await query(
+      `UPDATE quotes SET status = 'accepted', is_accepted = TRUE, accepted_at = NOW(), updated_at = NOW()
+       WHERE id = $1 AND business_id = $2 AND status IN ('sent', 'viewed')
+       RETURNING id`,
+      [id, businessId]
+    );
+    if (!res.rows.length) throw new NotFoundError(`Quote ${id} not found or cannot be accepted`);
+    logger.info(`Quote ${id} accepted`);
+  }
+
+  async reject(businessId: string, id: string): Promise<void> {
+    const res = await query(
+      `UPDATE quotes SET status = 'rejected', rejected_at = NOW(), updated_at = NOW()
+       WHERE id = $1 AND business_id = $2 AND status IN ('sent', 'viewed')
+       RETURNING id`,
+      [id, businessId]
+    );
+    if (!res.rows.length) throw new NotFoundError(`Quote ${id} not found or cannot be rejected`);
+    logger.info(`Quote ${id} rejected`);
+  }
+
+  async recordDepositPayment(businessId: string, id: string, amount: string | number, provider = "stub", idempotencyKey?: string): Promise<{ remainingDeposit: string; depositPaid: boolean }> {
+    if (!idempotencyKey) {
+      idempotencyKey = `quote-deposit:${id}:${amount}`;
+    }
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+      const existing = await client.query(
+        `SELECT id FROM quote_deposit_payments WHERE idempotency_key = $1 AND quote_id = $2 LIMIT 1`,
+        [idempotencyKey, id]
+      );
+      if (existing.rows.length > 0) {
+        await client.query("ROLLBACK");
+        const quote = await this.findById(businessId, id);
+        return {
+          remainingDeposit: quote.depositPaid ? "0" : this.computeRemainingDeposit(quote, amount).toFixed(2),
+          depositPaid: Boolean(quote.depositPaid),
+        };
+      }
+
+      await client.query(
+        `INSERT INTO quote_deposit_payments (id, quote_id, business_id, amount, provider, idempotency_key, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+        [crypto.randomUUID(), id, businessId, new Decimal(amount).toFixed(6), provider, idempotencyKey]
+      );
+
+      const quote = await this.findById(businessId, id);
+      const depositDue = this.computeDepositDue(quote);
+      const newAmountPaid = new Decimal(quote.amountPaid).plus(amount);
+      const depositPaid = newAmountPaid.gte(depositDue);
+
+      await client.query(
+        `UPDATE quotes SET amount_paid = $1, deposit_paid = $2, updated_at = NOW() WHERE id = $3`,
+        [newAmountPaid.toFixed(6), depositPaid, id]
+      );
+
+      await client.query("COMMIT");
+      logger.info(`Deposit payment of ${amount} recorded for quote ${id}`);
+      return {
+        remainingDeposit: depositPaid ? "0" : this.computeRemainingDeposit(quote, newAmountPaid.toFixed(2)).toFixed(2),
+        depositPaid,
+      };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  private computeDepositDue(quote: QuoteWithDetails): Decimal {
+    if (quote.depositType === "percentage") {
+      return new Decimal(quote.total).mul(new Decimal(quote.depositValue).div(100));
+    }
+    if (quote.depositType === "fixed") {
+      return new Decimal(quote.depositValue);
+    }
+    return new Decimal(0);
+  }
+
+   private computeRemainingDeposit(quote: QuoteWithDetails, amountPaid: string | number): Decimal {
+    const due = this.computeDepositDue(quote);
+    const remaining = due.minus(new Decimal(amountPaid));
+    return remaining.isNegative() ? new Decimal(0) : remaining;
+  }
+
+  async expireQuotes(businessId: string): Promise<number> {
+    const res = await query(
+      `UPDATE quotes SET status = 'expired', updated_at = NOW()
+       WHERE business_id = $1
+         AND expiry_date IS NOT NULL
+         AND expiry_date < NOW()
+         AND status IN ('sent', 'viewed')
+       RETURNING id`,
+      [businessId]
+    );
+    if (res.rows.length > 0) {
+      logger.info(`Expired ${res.rows.length} quotes for business ${businessId}`);
+    }
+    return res.rows.length;
   }
 
   async convertToInvoice(businessId: string, id: string, userId?: string): Promise<{ invoiceId: string; quoteNumber: string }> {
@@ -469,7 +662,7 @@ export class QuoteService {
     return { invoiceId, quoteNumber: quote.quoteNumber ?? id };
   }
 
-  async send(businessId: string, id: string, userId?: string): Promise<void> {
+  async send(businessId: string, id: string, userId?: string): Promise<string> {
     const quote = await this.findById(businessId, id);
     const business = await businessRepository.findById(businessId);
     const customer = quote.customerId ? await customerRepository.findById(businessId, quote.customerId) : null;
@@ -485,6 +678,8 @@ export class QuoteService {
     const idempotencyKey = `quote-send:${id}:${token}`;
     const emailData: InvoiceEmailData = {
       invoiceId: id,
+      quoteId: id,
+      documentType: "quote",
       businessId,
       recipient: { email: customerEmail, name: customer?.name ?? undefined },
       subject: `Quote ${number} from ${business.name}`,
@@ -498,6 +693,7 @@ export class QuoteService {
       [token, id]
     );
     logger.info(`Quote ${number} sent to ${customerEmail}`);
+    return token;
   }
 
 async generatePdf(businessId: string, id: string): Promise<Buffer> {
@@ -627,10 +823,11 @@ async generatePdf(businessId: string, id: string): Promise<Buffer> {
         invoiceNumber: quote.quoteNumber ?? null,
         status: quote.status,
         issueDate: quote.issueDate,
-        dueDate: quote.dueDate,
+        dueDate: quote.expiryDate ?? quote.dueDate,
         currency: quote.currency as CurrencyCode,
-        notes: quote.notes,
+        notes: quote.scopeOfWork ?? quote.notes,
         terms: quote.terms,
+        paymentInstructions: quote.paymentInstructions,
       },
       businessData,
       customerData,
@@ -639,7 +836,7 @@ async generatePdf(businessId: string, id: string): Promise<Buffer> {
       totals,
       { htmlTemplate: undefined }
     );
-    return templateRenderer.render(templateData);
+    return templateRenderer.renderQuote(templateData);
   }
 
   async delete(businessId: string, id: string): Promise<void> {
@@ -667,6 +864,12 @@ async generatePdf(businessId: string, id: string): Promise<Buffer> {
       amountDue: r.amount_due as string,
       notes: r.notes as string | null,
       terms: r.terms as string | null,
+      paymentInstructions: r.payment_instructions as string | null,
+      scopeOfWork: r.scope_of_work as string | null,
+      depositType: r.deposit_type as string,
+      depositValue: r.deposit_value as string,
+      depositDueDate: r.deposit_due_date ? new Date(r.deposit_due_date as string) : null,
+      depositPaid: Boolean(r.deposit_paid),
       isFinalized: Boolean(r.is_finalized) || ["sent","accepted","expired"].includes(r.status as string),
       finalizedAt: r.finalized_at ? new Date(r.finalized_at as string) : null,
       sentAt: r.sent_at ? new Date(r.sent_at as string) : null,

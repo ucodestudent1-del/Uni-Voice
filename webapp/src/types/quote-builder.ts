@@ -35,10 +35,14 @@ export interface QuoteBuilderData {
   notes: string;
   terms: string;
   paymentInstructions: string;
+  scopeOfWork: string;
   discount: BuilderDiscount;
   items: BuilderLineItem[];
   fees: BuilderFee[];
   savedQuoteId: string | null;
+  depositType: "none" | "percentage" | "fixed";
+  depositValue: string;
+  depositDueDate: string | null;
 }
 
 export type SaveState = "saved" | "saving" | "unsaved" | "error";

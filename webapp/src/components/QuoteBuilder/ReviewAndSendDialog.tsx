@@ -140,7 +140,7 @@ Best regards`
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-bold pt-3 border-t border-color-subtle">
-                    <span className="text-primary">Total</span>
+                    <span className="text-primary">Estimated Total</span>
                     <span className="text-primary-brand font-tabular-nums">{formatCurrency(calcResult.total, data.currency)}</span>
                   </div>
                 </div>

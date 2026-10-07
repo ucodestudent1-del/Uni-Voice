@@ -12,7 +12,7 @@ export type Status =
   | "cancelled"
   | "void";
 
-export type QuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired" | "cancelled";
+export type QuoteStatus = "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired" | "cancelled";
 
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "cancelled" | "refunded" | "partially_refunded";
 
@@ -29,6 +29,7 @@ export interface Business {
   address: Address;
   countryCode: string;
   defaultCurrency: CurrencyCode;
+  defaultQuoteValidityDays?: number;
   logoUrl?: string | null;
   version: number;
   createdAt: Date;

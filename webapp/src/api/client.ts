@@ -1432,6 +1432,11 @@ export interface ApiQuote {
   terms?: string | null;
   template_id?: string | null;
   payment_instructions?: string | null;
+  scope_of_work?: string | null;
+  deposit_type?: string | null;
+  deposit_value?: string | null;
+  deposit_due_date?: string | null;
+  deposit_paid?: boolean | null;
   is_finalized: boolean;
   finalized_at?: string | null;
   sent_at?: string | null;
@@ -1513,6 +1518,58 @@ export async function getQuotePdf(id: string) {
 
 export async function deleteQuote(id: string) {
   const res = await api.delete(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function acceptQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/accept`);
+  return res.data;
+}
+
+export async function rejectQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/reject`);
+  return res.data;
+}
+
+export async function recordQuoteDeposit(id: string, amount: string | number, provider = "stub", idempotencyKey?: string) {
+  const res = await api.post(`/quotes/${id}/deposit`, { amount, provider, idempotencyKey });
+  return res.data;
+}
+
+// ============================================================================
+// PUBLIC QUOTE VIEW (customer-facing, no auth required)
+// ============================================================================
+
+export interface PublicQuoteDeposit {
+  type?: string | null;
+  value?: string | null;
+  due_date?: string | null;
+  paid?: boolean | null;
+  due?: string | null;
+}
+
+export async function getPublicQuote(token: string) {
+  const res = await api.get(`/public/quotes/${token}`);
+  return res.data as { quote: ApiQuote; html: string; pdfUrl: string };
+}
+
+export async function recordPublicQuoteView(token: string) {
+  const res = await api.post(`/public/quotes/${token}/view`);
+  return res.data;
+}
+
+export async function acceptPublicQuote(token: string) {
+  const res = await api.post(`/public/quotes/${token}/accept`);
+  return res.data;
+}
+
+export async function rejectPublicQuote(token: string) {
+  const res = await api.post(`/public/quotes/${token}/reject`);
+  return res.data;
+}
+
+export async function getPublicQuotePdf(token: string) {
+  const res = await api.get(`/public/quotes/${token}/pdf`, { responseType: "blob" });
   return res.data;
 }
 

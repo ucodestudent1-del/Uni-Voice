@@ -42,13 +42,17 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
     issueDate: todayISO(),
     dueDate: addDaysISO(todayISO(), 30),
     expiryDate: addDaysISO(todayISO(), 60),
-    notes: "",
+       notes: "",
     terms: "",
     paymentInstructions: "",
+    scopeOfWork: "",
     discount: { ...DEFAULT_DISCOUNT },
     items: [{ ...DEFAULT_LINE_ITEM, id: generateRowId() }],
     fees: [],
     savedQuoteId: null,
+    depositType: "none",
+    depositValue: "",
+    depositDueDate: null,
   });
 
   const [business, setBusiness] = useState<ApiBusiness | null>(null);
@@ -126,9 +130,10 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
         issueDate: quote.issue_date ? quote.issue_date.split("T")[0] : todayISO(),
         dueDate: quote.due_date ? quote.due_date.split("T")[0] : addDaysISO(todayISO(), 30),
         expiryDate: quote.expiry_date ? quote.expiry_date.split("T")[0] : addDaysISO(todayISO(), 60),
-        notes: quote.notes ?? "",
+         notes: quote.notes ?? "",
         terms: quote.terms ?? "",
         paymentInstructions: quote.payment_instructions ?? "",
+        scopeOfWork: quote.scope_of_work ?? "",
         discount: { type: "none", value: "0" },
         items: (quote.items ?? []).map(item => ({
           id: item.id,
@@ -149,6 +154,9 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
           taxRate: fee.tax_rate || "0",
         })),
         savedQuoteId: quote.id,
+        depositType: (quote.deposit_type as "none" | "percentage" | "fixed") || "none",
+        depositValue: quote.deposit_value ?? "",
+        depositDueDate: quote.deposit_due_date ? quote.deposit_due_date.split("T")[0] ?? null : null,
       });
       setSaveState("saved");
     } catch (err: any) {
@@ -240,6 +248,10 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
         notes: currentData.notes || undefined,
         terms: currentData.terms || undefined,
         paymentInstructions: currentData.paymentInstructions || undefined,
+        scopeOfWork: currentData.scopeOfWork || undefined,
+        depositType: currentData.depositType || "none",
+        depositValue: currentData.depositValue || "0",
+        depositDueDate: currentData.depositDueDate ?? undefined,
         items: currentData.items.map(item => ({
           id: item.id,
           productId: item.productId ?? null,

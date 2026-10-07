@@ -18,6 +18,7 @@ const Templates = lazy(() => import("./pages/Templates"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
 const Settings = lazy(() => import("./pages/Settings"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
+const PublicQuote = lazy(() => import("./pages/PublicQuote"));
 const Payments = lazy(() => import("./pages/Payments"));
 const PaymentDetail = lazy(() => import("./pages/PaymentDetail"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
@@ -89,7 +90,8 @@ export default function App() {
       <Route path="/register" element={<Suspense fallback={<Fallback />}><PublicOnly><Register /></PublicOnly></Suspense>} />
       <Route path="/auth/callback" element={<Suspense fallback={<Fallback />}><PublicOnly><AuthCallback /></PublicOnly></Suspense>} />
        <Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
-       <Route path="/public/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
+        <Route path="/public/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
+        <Route path="/public/quote/:token" element={<Suspense fallback={<Fallback />}><PublicQuote /></Suspense>} />
 
       <Route path="/privacy" element={<Suspense fallback={<Fallback />}><Privacy /></Suspense>} />
       <Route path="/terms" element={<Suspense fallback={<Fallback />}><Terms /></Suspense>} />
