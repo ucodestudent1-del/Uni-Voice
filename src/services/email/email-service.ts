@@ -21,6 +21,16 @@ export interface InvoiceEmailData {
   quoteId?: string;
 }
 
+export interface CreditNoteEmailData {
+  creditNoteId: string;
+  businessId: string;
+  recipient: EmailRecipient;
+  subject: string;
+  htmlBody: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
+  idempotencyKey?: string;
+}
+
 export type EmailStatus = "pending" | "sent" | "delivered" | "opened" | "failed";
 
 export interface EmailProvider {
@@ -267,7 +277,40 @@ export class EmailService {
     return result;
   }
 
-  async updateDeliveryState(messageId: string, status: EmailStatus, metadata: Record<string, unknown> = {}): Promise<void> {
+  async sendCreditNoteEmail(data: CreditNoteEmailData): Promise<{ messageId: string; status: EmailStatus }> {
+    if (data.idempotencyKey) {
+      const existing = await query(
+        `SELECT message_id, status FROM email_log
+         WHERE idempotency_key = $1 AND credit_note_id = $2`,
+        [data.idempotencyKey, data.creditNoteId]
+      );
+      if (existing.rows.length) {
+        logger.info(`Email already sent (idempotent), msgId=${existing.rows[0].message_id}`);
+        return { messageId: existing.rows[0].message_id, status: existing.rows[0].status };
+      }
+    }
+
+    const result = await this.provider.send({
+      to: data.recipient,
+      subject: data.subject,
+      html: data.htmlBody,
+      attachments: data.attachments,
+    });
+
+    await query(
+      `INSERT INTO email_log (credit_note_id, business_id, provider, status, recipient, subject, message_id, idempotency_key, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())`,
+      [
+        data.creditNoteId, data.businessId, this.provider.name, result.status,
+        data.recipient.email, data.subject, result.messageId, data.idempotencyKey ?? null,
+      ]
+    );
+
+    logger.info(`Credit note email sent: to=${data.recipient.email} creditNoteId=${data.creditNoteId} msgId=${result.messageId}`);
+    return result;
+  }
+
+  async updateDeliveryState(messageId: string, status: EmailStatus, metadata: Record<string, string> = {}): Promise<void> {
     await query(
       `UPDATE email_log SET status = $2, metadata = metadata || $3::jsonb, updated_at = NOW()
        WHERE message_id = $1`,

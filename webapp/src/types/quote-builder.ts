@@ -33,6 +33,7 @@ export interface QuoteBuilderData {
   dueDate: string;
   expiryDate: string | null;
   notes: string;
+  internalNotes: string;
   terms: string;
   paymentInstructions: string;
   scopeOfWork: string;

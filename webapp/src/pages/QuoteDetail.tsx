@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   getQuoteById,
   sendQuote,
   getQuotePdf,
   convertQuote,
   convertAndSendQuote,
+  getQuoteEvents,
   type ApiQuote,
 } from "../api/client";
 import { formatCurrencyValue } from "../lib/utils";
@@ -13,11 +14,22 @@ import { Button } from "../components/ui/Button";
 import { Download, Send, Copy, ArrowLeft } from "lucide-react";
 import QuoteBuilder from "../components/QuoteBuilder/QuoteBuilder";
 
+export interface ApiQuoteEvent {
+  id?: string;
+  quote_id?: string;
+  event_type: string;
+  actor_type?: string | null;
+  actor_id?: string | null;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}
+
 export default function QuoteDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isNew = !id;
   const [quote, setQuote] = useState<ApiQuote | null>(null);
+  const [events, setEvents] = useState<ApiQuoteEvent[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -34,8 +46,12 @@ export default function QuoteDetail() {
     if (!id) return;
     setLoading(true);
     try {
-      const { quote } = await getQuoteById(id);
-      setQuote(quote);
+      const [quoteRes, eventsRes] = await Promise.allSettled([
+        getQuoteById(id),
+        getQuoteEvents(id),
+      ]);
+      if (quoteRes.status === "fulfilled") setQuote(quoteRes.value.quote);
+      if (eventsRes.status === "fulfilled") setEvents(eventsRes.value.events ?? []);
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load quote");
     } finally {
@@ -177,21 +193,76 @@ export default function QuoteDetail() {
         </div>
       </div>
 
-      <div className="bg-surface rounded-xl border border-color-subtle p-6">
-        <h3 className="text-sm font-medium text-secondary mb-3">Details</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><span className="text-tertiary">Status</span><span className="text-primary ml-2">{quote.status}</span></div>
-          <div><span className="text-tertiary">Currency</span><span className="text-primary ml-2">{quote.currency}</span></div>
-          <div><span className="text-tertiary">Issue Date</span><span className="text-primary ml-2">{quote.issue_date}</span></div>
-          <div><span className="text-tertiary">Due Date</span><span className="text-primary ml-2">{quote.due_date}</span></div>
-        </div>
-        {quote.notes && (
-          <div className="mt-3">
-            <span className="text-tertiary text-sm">Notes</span>
-            <p className="text-primary mt-1">{quote.notes}</p>
+        <div className="bg-surface rounded-xl border border-color-subtle p-6">
+          <h3 className="text-sm font-medium text-secondary mb-3">Details</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div><span className="text-tertiary">Status</span><span className="text-primary ml-2">{quote.status}</span></div>
+            <div><span className="text-tertiary">Currency</span><span className="text-primary ml-2">{quote.currency}</span></div>
+            <div><span className="text-tertiary">Issue Date</span><span className="text-primary ml-2">{quote.issue_date}</span></div>
+            <div><span className="text-tertiary">Due Date</span><span className="text-primary ml-2">{quote.due_date}</span></div>
+            {quote.expiry_date && (
+              <div><span className="text-tertiary">Expiry Date</span><span className="text-primary ml-2">{quote.expiry_date}</span></div>
+            )}
+            {quote.converted_invoice_id && (
+              <div>
+                <span className="text-tertiary">Converted to Invoice</span>
+                <Link
+                  to={`/app/invoices/${quote.converted_invoice_id}`}
+                  className="text-primary ml-2 text-primary-action hover:underline"
+                >
+                  View invoice
+                </Link>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  );
+         {quote.notes && (
+           <div className="mt-3">
+             <span className="text-tertiary text-sm">Notes</span>
+             <p className="text-primary mt-1">{quote.notes}</p>
+           </div>
+         )}
+       </div>
+
+       <div className="bg-surface rounded-xl border border-color-subtle p-6">
+         <h3 className="text-sm font-medium text-secondary mb-3">Activity Timeline</h3>
+         {events.length === 0 ? (
+           <p className="text-sm text-secondary">No activity yet.</p>
+         ) : (
+           <ul className="space-y-3">
+             {events.map((e) => (
+               <QuoteTimelineItem key={e.id ?? `${e.event_type}-${e.created_at}`} event={e} />
+             ))}
+           </ul>
+         )}
+       </div>
+     </div>
+   );
+ }
+
+function QuoteTimelineItem({ event }: { event: ApiQuoteEvent }) {
+   const label = (event.event_type ?? "").replace(/_/g, " ");
+   const actor =
+     event.actor_type === "customer" ? "Customer"
+     : event.actor_type === "payment" ? "Payment"
+     : event.actor_type === "system" ? "System"
+     : event.actor_type === "user" ? "User"
+     : "System";
+   return (
+     <li className="flex gap-3">
+       <div className="h-2 w-2 flex-shrink-0 rounded-full bg-primary-action mt-1" aria-hidden="true"></div>
+       <div className="flex-1">
+         <p className="text-sm font-medium text-primary capitalize" aria-label={`${label} by ${actor}`}>
+           {label}
+         </p>
+         <p className="text-xs text-tertiary">
+           {actor} · {formatDate(event.created_at)}
+         </p>
+       </div>
+     </li>
+   );
+}
+
+function formatDate(dateStr: string | undefined): string {
+   if (!dateStr) return "—";
+   return new Date(dateStr).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }

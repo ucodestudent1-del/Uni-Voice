@@ -624,6 +624,7 @@ export interface ApiCreditNote {
   id: string;
   business_id: string;
   reference_invoice_id?: string | null;
+  reference_invoice_number?: string | null;
   customer_id?: string | null;
   customer_name?: string | null;
   customer_email?: string | null;
@@ -641,6 +642,7 @@ export interface ApiCreditNote {
   amount_applied: string;
   amount_remaining: string;
   notes?: string | null;
+  internal_notes?: string | null;
   terms?: string | null;
   reason?: string | null;
   template_id?: string | null;

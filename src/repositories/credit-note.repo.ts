@@ -48,6 +48,7 @@ export interface CreditNoteWithDetails extends CreditNote {
   applications: CreditNoteApplication[];
   customerName?: string | null;
   customerEmail?: string | null;
+  referenceInvoiceNumber?: string | null;
 }
 
 export interface CreditNoteListItem {
@@ -67,6 +68,7 @@ export interface CreditNoteListItem {
   amountDue: string;
   reason: string | null;
   notes: string | null;
+  internalNotes: string | null;
   isFinalized: boolean;
   finalizedAt: Date | null;
   cancelledAt: Date | null;
@@ -104,6 +106,7 @@ export interface CreditNoteCreateInput {
   issueDate?: string | null;
   reason?: string | null;
   notes?: string | null;
+  internalNotes?: string | null;
   terms?: string | null;
   templateId?: string | null;
   items?: CreditNoteItemInput[];
@@ -121,12 +124,13 @@ export class CreditNoteRepository {
     await query(
       `INSERT INTO credit_notes
          (id, business_id, customer_id, reference_invoice_id, currency, status,
-          issue_date, reason, notes, terms, template_id, created_by, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8,$9,$10,$11,$12,$12)`,
+          issue_date, reason, notes, internal_notes, terms, template_id, created_by, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8,$9,$10,$11,$12,$13,$13)`,
       [
         id, businessId, input.customerId ?? null, input.referenceInvoiceId ?? null,
         input.currency ?? "USD", input.issueDate ?? null, input.reason ?? null,
-        input.notes ?? null, input.terms ?? null, input.templateId ?? null, userId ?? null, now,
+        input.notes ?? null, input.internalNotes ?? null, input.terms ?? null,
+        input.templateId ?? null, userId ?? null, now,
       ]
     );
     return id;
@@ -152,6 +156,15 @@ export class CreditNoteRepository {
     const fees = await this.findFees(id);
     const applications = await this.findApplications(id, businessId);
 
+    let referenceInvoiceNumber: string | null = null;
+    if (creditNote.referenceInvoiceId) {
+      const refRes = await query(
+        `SELECT invoice_number FROM invoices WHERE id = $1 AND business_id = $2`,
+        [creditNote.referenceInvoiceId, businessId]
+      );
+      referenceInvoiceNumber = refRes.rows[0]?.invoice_number ?? null;
+    }
+
     return {
       ...creditNote,
       items,
@@ -159,6 +172,7 @@ export class CreditNoteRepository {
       applications,
       customerName: r.customer_name ?? null,
       customerEmail: r.customer_email ?? null,
+      referenceInvoiceNumber,
     };
   }
 
@@ -176,6 +190,7 @@ export class CreditNoteRepository {
     if (input.issueDate !== undefined) { fields.push(`issue_date = $${i++}`); vals.push(input.issueDate ?? null); }
     if (input.reason !== undefined) { fields.push(`reason = $${i++}`); vals.push(input.reason ?? null); }
     if (input.notes !== undefined) { fields.push(`notes = $${i++}`); vals.push(input.notes ?? null); }
+    if (input.internalNotes !== undefined) { fields.push(`internal_notes = $${i++}`); vals.push(input.internalNotes ?? null); }
     if (input.terms !== undefined) { fields.push(`terms = $${i++}`); vals.push(input.terms ?? null); }
     if (input.templateId !== undefined) { fields.push(`template_id = $${i++}`); vals.push(input.templateId ?? null); }
     vals.push(id, businessId);
@@ -646,6 +661,7 @@ export class CreditNoteRepository {
       currency: (r.currency as CurrencyCode) ?? "USD",
       reason: r.reason as string | null,
       notes: r.notes as string | null,
+      internalNotes: r.internal_notes as string | null,
       terms: r.terms as string | null,
       templateId: r.template_id as string | null,
       subtotal: r.subtotal as string,
@@ -688,6 +704,7 @@ export class CreditNoteRepository {
       amountDue: r.amount_due as string,
       reason: r.reason as string | null,
       notes: r.notes as string | null,
+      internalNotes: r.internal_notes as string | null,
       isFinalized: Boolean(r.is_finalized),
       finalizedAt: rowToDate(r.finalized_at),
       cancelledAt: rowToDate(r.cancelled_at),

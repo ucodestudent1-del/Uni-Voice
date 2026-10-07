@@ -86,18 +86,29 @@ export function QuoteDetailsForm({ data, onChange, currencyLocked }: QuoteDetail
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Notes</label>
-        <textarea
-          value={data.notes}
-          onChange={(e) => onChange("notes", e.target.value)}
-          placeholder="Additional notes for the customer"
-          rows={3}
-          className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
-        />
-      </div>
+       <div>
+         <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Notes</label>
+         <textarea
+           value={data.notes}
+           onChange={(e) => onChange("notes", e.target.value)}
+           placeholder="Additional notes for the customer"
+           rows={3}
+           className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+         />
+       </div>
 
-      <div>
+       <div>
+         <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Internal Notes</label>
+         <textarea
+           value={data.internalNotes}
+           onChange={(e) => onChange("internalNotes", e.target.value)}
+           placeholder="Internal notes visible only to your team"
+           rows={3}
+           className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+         />
+       </div>
+
+       <div>
         <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Terms</label>
         <textarea
           value={data.terms}

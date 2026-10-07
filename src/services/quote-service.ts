@@ -42,6 +42,7 @@ export interface QuoteCreateInput {
   dueDate?: string | null;
   expiryDate?: string | null;
   notes?: string | null;
+  internalNotes?: string | null;
   terms?: string | null;
   paymentInstructions?: string | null;
   scopeOfWork?: string | null;
@@ -70,6 +71,7 @@ export interface QuoteRow {
   amountPaid: string;
   amountDue: string;
   notes: string | null;
+  internalNotes: string | null;
   terms: string | null;
   paymentInstructions: string | null;
   scopeOfWork: string | null;
@@ -197,13 +199,13 @@ export class QuoteService {
       await client.query("BEGIN");
       await client.query(
         `INSERT INTO quotes (id, business_id, customer_id, currency, issue_date, due_date, expiry_date,
-          notes, terms, payment_instructions, scope_of_work, deposit_type, deposit_value,
+          notes, internal_notes, terms, payment_instructions, scope_of_work, deposit_type, deposit_value,
           deposit_due_date, created_by, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,NOW(),NOW())`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,NOW(),NOW())`,
         [
           id, businessId, input.customerId ?? null, input.currency ?? "USD",
           input.issueDate ?? null, input.dueDate ?? null, expiryDate ?? null,
-          input.notes ?? null, input.terms ?? null, input.paymentInstructions ?? null,
+          input.notes ?? null, input.internalNotes ?? null, input.terms ?? null, input.paymentInstructions ?? null,
           input.scopeOfWork ?? null, input.depositType ?? "none", input.depositValue ?? 0,
           input.depositDueDate ?? null, userId ?? null,
         ]
@@ -212,6 +214,7 @@ export class QuoteService {
       await this.persistFees(id, input.fees ?? [], client);
       await this.persistTotals(id, client);
       await client.query("COMMIT");
+      await this.recordEvent(id, { eventType: "created", actorId: userId, actorType: userId ? "user" : "system" });
       logger.info(`Quote ${id} created for business ${businessId}`);
       return id;
     } catch (e) {
@@ -320,6 +323,7 @@ export class QuoteService {
     if (input.dueDate !== undefined) { fields.push(`due_date = $${i++}`); vals.push(input.dueDate ?? null); }
     if (input.expiryDate !== undefined) { fields.push(`expiry_date = $${i++}`); vals.push(input.expiryDate ?? null); }
     if (input.notes !== undefined) { fields.push(`notes = $${i++}`); vals.push(input.notes ?? null); }
+    if (input.internalNotes !== undefined) { fields.push(`internal_notes = $${i++}`); vals.push(input.internalNotes ?? null); }
     if (input.terms !== undefined) { fields.push(`terms = $${i++}`); vals.push(input.terms ?? null); }
     if (input.paymentInstructions !== undefined) { fields.push(`payment_instructions = $${i++}`); vals.push(input.paymentInstructions ?? null); }
     if (input.scopeOfWork !== undefined) { fields.push(`scope_of_work = $${i++}`); vals.push(input.scopeOfWork ?? null); }
@@ -411,6 +415,35 @@ export class QuoteService {
       limit,
       offset,
     };
+  }
+
+  async recordEvent(quoteId: string, event: { eventType: string; actorId?: string; actorType?: string; metadata?: Record<string, unknown> }): Promise<void> {
+    await query(
+      `INSERT INTO quote_events (quote_id, event_type, actor_id, actor_type, metadata)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [quoteId, event.eventType, event.actorId ?? null, event.actorType ?? null, JSON.stringify(event.metadata ?? {})]
+    );
+  }
+
+  async getEvents(quoteId: string, businessId: string, limit = 100): Promise<QuoteEvent[]> {
+    const res = await query(
+      `SELECT e.id, e.event_type, e.actor_id, e.actor_type, e.metadata, e.created_at
+       FROM quote_events e
+       JOIN quotes q ON q.id = e.quote_id
+       WHERE e.quote_id = $1 AND q.business_id = $2
+       ORDER BY e.created_at DESC
+       LIMIT $3`,
+      [quoteId, businessId, limit]
+    );
+    return res.rows.map((r) => ({
+      id: r.id as string,
+      quoteId: quoteId,
+      eventType: r.event_type as string,
+      actorId: r.actor_id as string | null,
+      actorType: r.actor_type as string | null,
+      metadata: (r.metadata as Record<string, unknown>) ?? {},
+      createdAt: new Date(r.created_at as string),
+    }));
   }
 
   async generateNumber(businessId: string, id: string): Promise<string> {
@@ -514,6 +547,7 @@ export class QuoteService {
         WHERE id = $1 AND business_id = $2`,
       [id, businessId]
     );
+    await this.recordEvent(id, { eventType: "finalized", actorId: userId, actorType: userId ? "user" : "system" });
     return number;
   }
 
@@ -525,6 +559,7 @@ export class QuoteService {
       [id, businessId]
     );
     if (!res.rows.length) throw new NotFoundError(`Quote ${id} not found or cannot be accepted`);
+    await this.recordEvent(id, { eventType: "accepted", actorType: "customer" });
     logger.info(`Quote ${id} accepted`);
   }
 
@@ -536,6 +571,7 @@ export class QuoteService {
       [id, businessId]
     );
     if (!res.rows.length) throw new NotFoundError(`Quote ${id} not found or cannot be rejected`);
+    await this.recordEvent(id, { eventType: "rejected", actorType: "customer" });
     logger.info(`Quote ${id} rejected`);
   }
 
@@ -659,6 +695,7 @@ export class QuoteService {
        WHERE id = $2 AND business_id = $3`,
       [invoiceId, id, businessId]
     );
+    await this.recordEvent(id, { eventType: "converted", actorId: userId, actorType: userId ? "user" : "system", metadata: { invoiceId } });
     return { invoiceId, quoteNumber: quote.quoteNumber ?? id };
   }
 
@@ -692,6 +729,7 @@ export class QuoteService {
       `UPDATE quotes SET status = 'sent', sent_at = NOW(), public_token = $1, updated_at = NOW() WHERE id = $2`,
       [token, id]
     );
+    await this.recordEvent(id, { eventType: "sent", actorId: userId, actorType: userId ? "user" : "system" });
     logger.info(`Quote ${number} sent to ${customerEmail}`);
     return token;
   }
@@ -863,6 +901,7 @@ async generatePdf(businessId: string, id: string): Promise<Buffer> {
       amountPaid: r.amount_paid as string,
       amountDue: r.amount_due as string,
       notes: r.notes as string | null,
+      internalNotes: r.internal_notes as string | null,
       terms: r.terms as string | null,
       paymentInstructions: r.payment_instructions as string | null,
       scopeOfWork: r.scope_of_work as string | null,
@@ -931,6 +970,16 @@ export interface QuoteWithDetails extends QuoteRow {
   customerEmail?: string | null;
   items: QuoteItemRow[];
   fees: QuoteFeeRow[];
+}
+
+export interface QuoteEvent {
+  id: string;
+  quoteId: string;
+  eventType: string;
+  actorId?: string | null;
+  actorType?: string | null;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
 }
 
 export const quoteService = new QuoteService();

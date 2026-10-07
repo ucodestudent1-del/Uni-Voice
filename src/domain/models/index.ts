@@ -252,6 +252,7 @@ export interface CreditNote {
   currency: CurrencyCode;
   reason?: string | null;
   notes?: string | null;
+  internalNotes?: string | null;
   terms?: string | null;
   templateId?: string | null;
   subtotal: Decimal.Value;

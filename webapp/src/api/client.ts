@@ -427,6 +427,11 @@ export async function getCustomerSummary(customerId: string) {
   return res.data;
 }
 
+export async function getCustomerBalance(customerId: string) {
+  const res = await api.get(`/customers/${customerId}/balance`);
+  return res.data;
+}
+
 export async function getCustomerEvents(customerId: string, params?: { limit?: number }) {
   const res = await api.get(`/customers/${customerId}/events`, { params });
   return res.data;
@@ -1131,6 +1136,11 @@ export async function applyCreditNote(id: string, invoiceId: string, amount?: st
   return res.data;
 }
 
+export async function sendCreditNote(id: string) {
+  const res = await api.post(`/credit-notes/${id}/send`);
+  return res.data;
+}
+
 export async function getCreditNotePdf(id: string) {
   const res = await api.get(`/credit-notes/${id}/pdf`, { responseType: "blob" });
   return res.data;
@@ -1429,8 +1439,8 @@ export interface ApiQuote {
   amount_paid: string;
   amount_due: string;
   notes?: string | null;
+  internal_notes?: string | null;
   terms?: string | null;
-  template_id?: string | null;
   payment_instructions?: string | null;
   scope_of_work?: string | null;
   deposit_type?: string | null;
@@ -1528,6 +1538,11 @@ export async function acceptQuote(id: string) {
 
 export async function rejectQuote(id: string) {
   const res = await api.post(`/quotes/${id}/reject`);
+  return res.data;
+}
+
+export async function getQuoteEvents(id: string) {
+  const res = await api.get(`/quotes/${id}/events`);
   return res.data;
 }
 

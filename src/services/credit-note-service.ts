@@ -18,6 +18,8 @@ import {
 import { pdfService } from "./pdf/pdf-service.js";
 import type { CurrencyCode } from "../domain/value-objects/currency.js";
 import { BusinessLogicError } from "../domain/errors.js";
+import { emailService, type CreditNoteEmailData } from "./email/email-service.js";
+import { generatePublicInvoiceToken } from "../utils/crypto.js";
 
 export interface CreateCreditNoteInput {
   customerId?: string | null;
@@ -26,6 +28,7 @@ export interface CreateCreditNoteInput {
   issueDate?: string | null;
   reason?: string | null;
   notes?: string | null;
+  internalNotes?: string | null;
   terms?: string | null;
   templateId?: string | null;
   items?: CreditNoteItemInput[];
@@ -140,6 +143,43 @@ export class CreditNoteService {
 
   async cancel(businessId: string, id: string, reason: string, _userId?: string): Promise<void> {
     await creditNoteRepository.cancel(id, businessId, new Date(), reason);
+  }
+
+  async send(businessId: string, id: string, userId?: string): Promise<{ publicToken: string; status: string }> {
+    const cn = await creditNoteRepository.findById(businessId, id);
+    if (!cn.isFinalized) throw new BusinessLogicError("Cannot send a credit note that is not finalized");
+
+    const business = await businessRepository.findById(businessId);
+    const customer = cn.customerId ? await customerRepository.findById(businessId, cn.customerId) : null;
+    const customerEmail = customer?.email ?? null;
+    if (!customerEmail) throw new BusinessLogicError("Customer has no email address");
+
+    const referenceInvoiceNumber = await this.fetchReferenceInvoiceNumber(cn, businessId);
+
+    const html = await this.renderCreditNoteHtml(cn, business, customer, referenceInvoiceNumber);
+    const templateData = this.buildTemplateData(cn, business, customer, referenceInvoiceNumber);
+    const pdf = await pdfService.generatePdfFromHtml(html, templateData as any);
+
+    const token = cn.publicToken ?? generatePublicInvoiceToken();
+    const idempotencyKey = `cn-send:${id}:${token}`;
+    const emailData: CreditNoteEmailData = {
+      creditNoteId: id,
+      businessId,
+      recipient: { email: customerEmail, name: customer?.name ?? undefined },
+      subject: `Credit Note ${cn.creditNoteNumber ?? ""} from ${business.name}`,
+      htmlBody: html,
+      attachments: [{ filename: `CreditNote-${cn.creditNoteNumber ?? id}.pdf`, content: pdf }],
+      idempotencyKey,
+    };
+
+    await emailService.sendCreditNoteEmail(emailData);
+
+    await query(
+      `UPDATE credit_notes SET status = 'sent', public_token = $1, updated_at = NOW() WHERE id = $2`,
+      [token, id]
+    );
+    logger.info(`Credit note ${cn.creditNoteNumber} sent to ${customerEmail}`);
+    return { publicToken: token, status: "sent" };
   }
 
   async applyCreditNote(

@@ -1,4 +1,5 @@
 import { query, getClient } from "../db/pool.js";
+import { Decimal } from "decimal.js";
 import type { Customer, CustomerAddress, TaxIdentifier, CustomerStatus } from "../domain/models/index.js";
 import type { Address } from "../domain/value-objects/address.js";
 import { NotFoundError } from "../domain/errors.js";
@@ -250,6 +251,32 @@ export class CustomerRepository {
     const res = await query(`SELECT * FROM customers WHERE id = $1`, [publicId]);
     if (!res.rows.length) return null;
     return this.rowToModel(res.rows[0]);
+  }
+
+  async getBalance(businessId: string, customerId: string): Promise<{ balance: string; totalOutstanding: string; totalPaid: string; totalCredit: string }> {
+    const res = await query(
+      `SELECT
+         COALESCE(SUM(i.total), 0) AS total_outstanding,
+         COALESCE(SUM(i.amount_paid), 0) AS total_paid,
+         COALESCE(SUM(cna.amount), 0) AS total_credit_applied
+       FROM customers c
+       LEFT JOIN invoices i ON i.customer_id = c.id AND i.business_id = $1
+         AND i.status NOT IN ('draft', 'void', 'cancelled')
+       LEFT JOIN credit_note_applications cna ON cna.invoice_id = i.id AND cna.business_id = $1
+       WHERE c.id = $2 AND c.business_id = $1`,
+      [businessId, customerId]
+    );
+    const r = res.rows[0];
+    const totalOutstanding = new Decimal(r.total_outstanding ?? 0);
+    const totalPaid = new Decimal(r.total_paid ?? 0);
+    const totalCreditApplied = new Decimal(r.total_credit_applied ?? 0);
+    const balance = totalOutstanding.minus(totalPaid).minus(totalCreditApplied);
+    return {
+      balance: balance.toFixed(6),
+      totalOutstanding: totalOutstanding.toFixed(6),
+      totalPaid: totalPaid.toFixed(6),
+      totalCredit: totalCreditApplied.toFixed(6),
+    };
   }
 
   async update(businessId: string, id: string, input: CustomerUpdateInput, updatedBy?: string): Promise<Customer> {

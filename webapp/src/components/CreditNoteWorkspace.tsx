@@ -11,6 +11,7 @@ import {
   Plus,
   RefreshCw,
   Save,
+  Send,
   Trash2,
   X,
 } from "lucide-react";
@@ -72,6 +73,7 @@ export interface WorkspaceCreditNoteData {
   items: CreditNoteLineItemInput[];
   fees: WorkspaceFee[];
   notes?: string | null;
+  internalNotes?: string | null;
   terms?: string | null;
   templateId?: string | null;
   status: string;
@@ -294,6 +296,7 @@ export default function CreditNoteWorkspace() {
       items: [],
       fees: [],
       notes: settings.default_notes ?? "",
+      internalNotes: "",
       terms: settings.default_terms ?? "",
       templateId: null,
       status: "draft",
@@ -352,6 +355,7 @@ export default function CreditNoteWorkspace() {
             taxRate: f.tax_rate,
           })),
           notes: cn.notes ?? "",
+          internalNotes: cn.internal_notes ?? "",
           terms: cn.terms ?? "",
           templateId: cn.template_id ?? null,
           status: cn.status,
@@ -406,6 +410,7 @@ export default function CreditNoteWorkspace() {
         issueDate: cur.issueDate,
         reason: cur.reason,
         notes: cur.notes,
+        internalNotes: cur.internalNotes,
         terms: cur.terms,
         templateId: cur.templateId,
         referenceInvoiceId: cur.referenceInvoiceId,
@@ -644,13 +649,34 @@ export default function CreditNoteWorkspace() {
       setCreditNote((prev) =>
         prev ? { ...prev, status: "cancelled" } : prev
       );
-      setActionMessage("Credit note cancelled.");
-    } catch (err: any) {
-      setActionMessage(err?.response?.data?.error || "Failed to cancel credit note");
-    }
-  }
+       setActionMessage("Credit note cancelled.");
+     } catch (err: any) {
+       setActionMessage(err?.response?.data?.error || "Failed to cancel credit note");
+     }
+   }
 
-  async function handleApplyToInvoice(invoiceId: string, amount?: string) {
+  async function handleSend() {
+     const { creditNoteId: curId } = latestRef.current;
+     if (!curId) return;
+     try {
+       const { sendCreditNote } = await import("../api/client");
+       await sendCreditNote(curId);
+       setActionMessage("Credit note sent successfully!");
+       const updated = await getCreditNote(curId);
+       setCreditNote((prev) => {
+         if (!prev || !updated.creditNote) return prev;
+         const cn = updated.creditNote;
+         return {
+           ...prev,
+           status: cn.status,
+         };
+       });
+     } catch (err: any) {
+       setActionMessage(err?.response?.data?.error || "Failed to send credit note");
+     }
+   }
+
+   async function handleApplyToInvoice(invoiceId: string, amount?: string) {
     const { creditNoteId: curId } = latestRef.current;
     if (!curId) return;
     try {
@@ -886,9 +912,10 @@ export default function CreditNoteWorkspace() {
         onDuplicate={handleDuplicate}
         onCreateAnother={handleCreateAnother}
         onPreview={() => setPreviewOpen(true)}
-        onFinalize={handleFinalize}
-        onCancel={handleCancel}
-        validation={validation}
+         onFinalize={handleFinalize}
+         onCancel={handleCancel}
+         onSend={handleSend}
+         validation={validation}
         creditNote={creditNote}
         onApplyToInvoice={handleApplyToInvoice}
       />
@@ -1458,6 +1485,17 @@ const CreditNoteNotesSection = React.memo(function CreditNoteNotesSection({
         />
       </div>
 
+      <div>
+        <label className="form-label-secondary">Internal Notes</label>
+        <textarea
+          value={creditNote.internalNotes ?? ""}
+          onChange={(e) => onField("internalNotes", e.target.value || null)}
+          rows={3}
+          placeholder="Internal notes visible only to your team…"
+          className="form-control resize-y"
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label className="form-label-secondary">Terms &amp; Conditions</label>
@@ -1516,6 +1554,7 @@ const CreditNoteActionFooter = React.memo(function CreditNoteActionFooter({
   onPreview,
   onFinalize,
   onCancel,
+  onSend,
   validation,
   creditNote,
   onApplyToInvoice,
@@ -1529,6 +1568,7 @@ const CreditNoteActionFooter = React.memo(function CreditNoteActionFooter({
   onPreview: () => void;
   onFinalize: () => void;
   onCancel: (reason: string) => void;
+  onSend: () => void;
   validation: ReturnType<typeof useInvoiceValidation>;
   creditNote: WorkspaceCreditNoteData;
   onApplyToInvoice: (invoiceId: string, amount?: string) => void;
@@ -1601,6 +1641,17 @@ const CreditNoteActionFooter = React.memo(function CreditNoteActionFooter({
           >
             View PDF
           </Button>
+          {creditNote.status === "finalized" && !isCancelled && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Send className="h-4 w-4" />}
+              iconPosition="left"
+              onClick={onSend}
+            >
+              Send
+            </Button>
+          )}
         </div>
       )}
       <ConfirmationDialog

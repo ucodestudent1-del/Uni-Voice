@@ -35,6 +35,7 @@ import { productServiceRepository } from "./repositories/product-service.repo.js
 import { productServiceService } from "./services/product-service/product-service.js";
 import { invoiceRepository, type InvoiceListOptions, type InvoiceListItem } from "./repositories/invoice.repo.js";
 import { creditNoteRepository } from "./repositories/credit-note.repo.js";
+import { customerRepository } from "./repositories/customer.repo.js";
 import { receiptRepository } from "./repositories/receipt.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { documentTemplateRepository } from "./repositories/document-template.repo.js";
@@ -798,6 +799,12 @@ app.get("/api/customers/:id/summary", requireAuth, async (req: AuthRequest, res)
   res.json({ summary });
 });
 
+app.get("/api/customers/:id/balance", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const balance = await customerRepository.getBalance(req.user!.businessId, req.params.id);
+  res.json({ balance });
+});
+
 app.get("/api/customers/:id/events", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const limit = Math.min(Number(req.query.limit ?? 50), 200);
@@ -1453,6 +1460,12 @@ app.delete("/api/quotes/:id", requireAuth, requireEntitlement("quotes.create"), 
   res.status(204).send();
 });
 
+app.get("/api/quotes/:id/events", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const events = await quoteService.getEvents(req.params.id, req.user!.businessId);
+  res.json({ events: camelToSnake(events) });
+});
+
 // ============================================================================
 // RECEIPTS (Business tier)
 // ============================================================================
@@ -1657,6 +1670,12 @@ app.post("/api/credit-notes/:id/apply", requireAuth, requireEntitlement("invoice
   if (!invoiceId) return res.status(400).json({ error: "invoiceId is required" });
   await creditNoteService.applyCreditNote(req.user!.businessId, req.params.id, invoiceId, amount);
   res.json({ ok: true });
+});
+
+app.post("/api/credit-notes/:id/send", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const result = await creditNoteService.send(req.user!.businessId, req.params.id, req.user.id);
+  res.json({ sent: true, publicToken: result.publicToken, status: result.status });
 });
 
 app.get("/api/credit-notes/:id/pdf", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {

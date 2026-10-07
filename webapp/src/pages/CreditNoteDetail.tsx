@@ -7,12 +7,13 @@ import {
   getCreditNoteEvents,
   finalizeCreditNote,
   cancelCreditNote,
+  sendCreditNote,
 } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import type { ApiCreditNote, ApiCreditNoteItem, ApiCreditNoteFee } from "../types/api";
 import { CreditNoteLifecycle } from "@/components/ui";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
-import { Download } from "lucide-react";
+import { Download, Send } from "lucide-react";
 
 export interface ApiCreditNoteEvent {
   id?: string;
@@ -33,6 +34,7 @@ export default function CreditNoteDetail() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [finalizeLoading, setFinalizeLoading] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
 
   useEffect(() => {
     if (id) loadCreditNote();
@@ -103,6 +105,23 @@ export default function CreditNoteDetail() {
     }
   }
 
+  async function handleSend() {
+    if (!id) return;
+    setSendLoading(true);
+    try {
+      const res = await sendCreditNote(id);
+      setCreditNote((prev) =>
+        prev ? { ...prev, status: res.status ?? "sent" } : prev
+      );
+      setActionMessage("Credit note sent successfully!");
+      loadCreditNote();
+    } catch (err: any) {
+      setActionMessage(err.response?.data?.error || "Failed to send credit note");
+    } finally {
+      setSendLoading(false);
+    }
+  }
+
   async function handleDownloadPdf() {
     if (!id) return;
     try {
@@ -123,6 +142,7 @@ export default function CreditNoteDetail() {
   const canCancel = creditNote && ["finalized", "applied"].includes(creditNote.status);
   const isCancelled = creditNote && creditNote.status === "cancelled";
   const isVoid = creditNote && creditNote.status === "void";
+  const canSend = creditNote && creditNote.is_finalized && !isCancelled && !isVoid && creditNote.status !== "sent";
 
   if (loading) return <div className="text-center py-20 text-secondary">Loading credit note…</div>;
   if (!creditNote) return <div className="text-center py-20 text-secondary">Credit note not found</div>;
@@ -155,6 +175,16 @@ export default function CreditNoteDetail() {
             <Download className="h-4 w-4 inline mr-1" />
             Download PDF
           </button>
+          {canSend && (
+            <button
+              onClick={handleSend}
+              disabled={sendLoading}
+              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt disabled:opacity-50"
+            >
+              <Send className="h-4 w-4 inline mr-1" />
+              {sendLoading ? "Sending…" : "Send"}
+            </button>
+          )}
           {canCancel && !isCancelled && !isVoid && (
             <button
               onClick={() => setShowCancelDialog(true)}
@@ -224,7 +254,7 @@ export default function CreditNoteDetail() {
               <InfoRow label="Currency" value={creditNote.currency} />
               {creditNote.credit_note_number && <InfoRow label="Credit Note #" value={creditNote.credit_note_number} />}
               {creditNote.reference_invoice_id && (
-                <InfoRow label="Original Invoice #" value={creditNote.reference_invoice_id.slice(0, 8)} />
+                <InfoRow label="Original Invoice #" value={creditNote.reference_invoice_number ?? creditNote.reference_invoice_id.slice(0, 8)} />
               )}
               {creditNote.reason && <InfoRow label="Reason" value={creditNote.reason} />}
               {creditNote.finalized_at && <InfoRow label="Finalized" value={formatDate(creditNote.finalized_at)} />}
@@ -455,6 +485,13 @@ function CreditNoteDetailView({ creditNote }: { creditNote: ApiCreditNote }) {
         )}
 
         {creditNote.notes && <p className="mt-6 text-sm text-secondary whitespace-pre-line">{creditNote.notes}</p>}
+
+        {creditNote.internal_notes && (
+          <div className="mt-6 rounded-lg bg-surface-alt border border-color p-4">
+            <h4 className="invoice-section-title mb-1">Internal Notes</h4>
+            <p className="text-sm text-secondary whitespace-pre-line">{creditNote.internal_notes}</p>
+          </div>
+        )}
 
         {(creditNote.applications ?? []).length > 0 && (
           <div className="mt-6">
