@@ -140,10 +140,22 @@ export interface InvoiceFee {
 export interface Invoice {
   id: string;
   businessId: string;
-  customerId?: string | null;
+   customerId?: string | null;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  customerCompanyName?: string | null;
+  customerTaxId?: string | null;
+  customerAddressLine1?: string | null;
+  customerAddressLine2?: string | null;
+  customerCity?: string | null;
+  customerStateOrRegion?: string | null;
+  customerPostalCode?: string | null;
+  customerCountryCode?: string | null;
   projectId?: string | null;
-  invoiceNumber?: string | null;
-  status: Status;
+   invoiceNumber?: string | null;
+   poNumber?: string | null;
+   status: Status;
   issueDate?: Date | null;
   dueDate?: Date | null;
   currency: CurrencyCode;

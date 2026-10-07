@@ -75,6 +75,7 @@ export interface InvoiceTemplateData {
     issueDate: string | null;
     dueDate: string | null;
     currency: CurrencyCode;
+    poNumber?: string | null;
     notes?: string | null;
     terms?: string | null;
     paymentInstructions?: string | null;
@@ -162,11 +163,22 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
       {{#if invoice.notes}}<p class="muted">{{{invoice.notes}}}</p>{{/if}}
     </div>
      {{#if business.logoUrl}}<img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}">{{/if}}
-    <div style="text-align:right">
-      {{#if business.logoUrl}}{{else}}<h2 style="margin:0">{{business.name}}</h2>{{/if}}
-      <p class="muted">{{business.email}}</p>
-      <p class="muted">{{business.phone}}</p>
-    </div>
+     <div style="text-align:right">
+       {{#if business.logoUrl}}{{else}}<h2 style="margin:0">{{business.name}}</h2>{{/if}}
+       {{#if business.legalName}}<p class="muted">{{business.legalName}}</p>{{/if}}
+       {{#if business.address}}
+       <p class="muted" style="margin:0">
+         {{business.address.addressLine1}}<br>
+         {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br>{{/if}}
+         {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br>
+         {{business.address.countryCode}}
+       </p>
+       {{/if}}
+       {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
+       {{#if business.phone}}<p class="muted">{{business.phone}}</p>{{/if}}
+       {{#if business.website}}<p class="muted">{{business.website}}</p>{{/if}}
+       {{#if business.taxId}}<p class="muted">Tax ID: {{business.taxId}}</p>{{/if}}
+     </div>
   </div>
 
   <div class="grid">
@@ -182,30 +194,35 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         {{customer.address.countryCode}}
       </p>
       {{/if}}
-      {{#if customer.email}}<p class="muted">{{customer.email}}</p>{{/if}}
-    </div>
+       {{#if customer.email}}<p class="muted">{{customer.email}}</p>{{/if}}
+       {{#if customer.phone}}<p class="muted">{{customer.phone}}</p>{{/if}}
+       {{#if customer.taxId}}<p class="muted">Tax ID: {{customer.taxId}}</p>{{/if}}
+     </div>
     <div style="text-align:right">
       <p class="muted">{{meta.localeKey}}</p>
       <p><span class="muted">Issue date:</span> {{invoice.issueDate}}</p>
       <p><span class="muted">Due date:</span> {{invoice.dueDate}}</p>
-      <p><span class="muted">Currency:</span> {{meta.code}}</p>
-      <p><span class="muted">Status:</span> <span class="status">{{invoice.status}}</span></p>
+      {{#if invoice.poNumber}}<p><span class="muted">PO #:</span> {{invoice.poNumber}}</p>{{/if}}
+       <p><span class="muted">Currency:</span> {{meta.code}}</p>
+       {{#if invoice.terms}}<p><span class="muted">Payment Terms:</span> {{invoice.terms}}</p>{{/if}}
+       <p><span class="muted">Status:</span> <span class="status">{{invoice.status}}</span></p>
     </div>
   </div>
 
   <table>
     <thead>
-      <tr><th>#</th><th>Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit price</th><th style="text-align:right">Tax</th><th style="text-align:right">Line total</th></tr>
-    </thead>
-    <tbody>
-      {{#each lineItems}}
-      <tr>
-        <td>{{add @index 1}}</td><td>{{description}}</td>
-        <td style="text-align:right">{{quantity}} {{unit}}</td>
-        <td style="text-align:right">{{formatMoney unitPrice}}</td>
-        <td style="text-align:right">{{formatRate taxRate}}</td>
-        <td style="text-align:right">{{formatMoney lineTotal}}</td>
-      </tr>
+      <tr><th>#</th><th>Description</th><th>SKU</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit price</th><th style="text-align:right">Tax</th><th style="text-align:right">Line total</th></tr>
+     </thead>
+     <tbody>
+       {{#each lineItems}}
+       <tr>
+         <td>{{add @index 1}}</td><td>{{description}}</td>
+         <td>{{catalogSku}}</td>
+         <td style="text-align:right">{{quantity}} {{unit}}</td>
+         <td style="text-align:right">{{formatMoney unitPrice}}</td>
+         <td style="text-align:right">{{formatRate taxRate}}</td>
+         <td style="text-align:right">{{formatMoney lineTotal}}</td>
+       </tr>
       {{/each}}
     </tbody>
   </table>
@@ -222,13 +239,19 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     </table>
   </div>
 
-   {{#if invoice.paymentInstructions}}
-   <div class="footer">
-     <h3 style="font-size:13px">Payment instructions</h3>
-     <p>{{{invoice.paymentInstructions}}}</p>
-   </div>
-   {{/if}}
-   {{#if invoice.terms}}
+    {{#if invoice.paymentInstructions}}
+    <div class="footer">
+      <h3 style="font-size:13px">Payment instructions</h3>
+      <p>{{{invoice.paymentInstructions}}}</p>
+    </div>
+    {{/if}}
+    {{#if invoice.notes}}
+    <div class="footer" style="margin-top:24px">
+      <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#666;">Notes</h3>
+      <p>{{{nl2br invoice.notes}}}</p>
+    </div>
+    {{/if}}
+    {{#if invoice.terms}}
    <div class="footer" style="margin-top:24px">
      <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#666;">Terms &amp; Conditions</h3>
      <div class="terms-content">{{{nl2br invoice.terms}}}</div>
@@ -440,7 +463,8 @@ export function buildTemplateData(
     status: string;
     issueDate?: Date | null;
     dueDate?: Date | null;
-    currency: CurrencyCode;
+     currency: CurrencyCode;
+    poNumber?: string | null;
     notes?: string | null;
     terms?: string | null;
     paymentInstructions?: string | null;
@@ -461,7 +485,8 @@ export function buildTemplateData(
       status: invoice.status,
       issueDate: invoice.issueDate ? invoice.issueDate.toISOString().slice(0, 10) : null,
       dueDate: invoice.dueDate ? invoice.dueDate.toISOString().slice(0, 10) : null,
-      currency: invoice.currency,
+       currency: invoice.currency,
+      poNumber: invoice.poNumber,
       notes: invoice.notes,
       terms: invoice.terms,
       paymentInstructions: invoice.paymentInstructions,

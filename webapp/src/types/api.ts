@@ -176,6 +176,7 @@ export interface ApiInvoice {
   customer_state_or_region?: string | null;
   customer_postal_code?: string | null;
   customer_country_code?: string | null;
+  customer_tax_id?: string | null;
   invoice_number?: string | null;
   status: string;
   issue_date?: string | null;

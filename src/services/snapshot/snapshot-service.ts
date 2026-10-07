@@ -107,6 +107,7 @@ export class SnapshotService {
         issueDate: invoice.issueDate,
         dueDate: invoice.dueDate,
         currency: invoice.currency,
+        poNumber: invoice.poNumber,
         notes: invoice.notes,
         terms: invoice.terms,
         paymentInstructions: invoice.paymentInstructions,

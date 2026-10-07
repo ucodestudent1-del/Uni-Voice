@@ -17,6 +17,8 @@ export interface InvoiceDisplayProps {
   businessWebsite?: string;
   customerCompanyName?: string;
   customerAddress?: string;
+  customerTaxId?: string;
+  paymentTerms?: string;
   showLifecycle?: boolean;
   compactTaxes?: boolean;
   className?: string;
@@ -64,6 +66,8 @@ export default React.memo(function InvoiceDisplay({
   businessWebsite,
   customerCompanyName,
   customerAddress,
+  customerTaxId,
+  paymentTerms,
   showLifecycle = true,
   compactTaxes = false,
   className,
@@ -207,6 +211,12 @@ export default React.memo(function InvoiceDisplay({
               <p className="mt-0.5 text-sm font-medium text-primary">{invoice.po_number}</p>
             </div>
           )}
+          {paymentTerms && (
+            <div>
+              <span className="invoice-section-title block">Payment Terms</span>
+              <p className="mt-0.5 text-sm font-medium text-primary">{paymentTerms}</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -228,6 +238,7 @@ export default React.memo(function InvoiceDisplay({
               </a>
             )}
             {invoice.customer_phone && <p className="text-sm text-secondary">{invoice.customer_phone}</p>}
+            {customerTaxId && <p className="text-sm text-secondary">Tax ID: {customerTaxId}</p>}
             {customerAddress && (
               <p className="text-sm text-secondary whitespace-pre-line">{customerAddress}</p>
             )}
@@ -248,14 +259,15 @@ export default React.memo(function InvoiceDisplay({
       <div className="mt-6 overflow-x-auto rounded-lg border border-color">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-surface-alt">
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">#</th>
-              <th className="px-3 py-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
-              <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
-              <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Rate</th>
-              <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
-            </tr>
+              <tr className="bg-surface-alt">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">#</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold uppercase text-tertiary">SKU</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Qty</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Rate</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
+              </tr>
           </thead>
           <tbody>
             {invoice.items.map((item, i) => {
@@ -264,18 +276,21 @@ export default React.memo(function InvoiceDisplay({
               return (
                 <tr key={item.id || i} className="border-t border-color-subtle">
                   <td className="px-4 py-3 text-center font-tabular-nums text-tertiary">{i + 1}</td>
-                  <td className="px-3 py-3 align-top text-sm text-primary break-words">
-                    {item.description || <span className="italic text-tertiary">Untitled item</span>}
-                    {item.tax_rate && Number(new Decimal(item.tax_rate).mul(100)) > 0 && (
-                      <span className="mt-0.5 block text-xs text-tertiary">
-                        {item.is_tax_inclusive
-                          ? `incl. ${new Decimal(item.tax_rate).mul(100).toFixed(2)}% tax`
-                          : `${new Decimal(item.tax_rate).mul(100).toFixed(2)}% tax`}
-                        {item.tax_name && ` (${item.tax_name})`}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
+                   <td className="px-3 py-3 align-top text-sm text-primary break-words">
+                     {item.description || <span className="italic text-tertiary">Untitled item</span>}
+                     {item.tax_rate && Number(new Decimal(item.tax_rate).mul(100)) > 0 && (
+                       <span className="mt-0.5 block text-xs text-tertiary">
+                         {item.is_tax_inclusive
+                           ? `incl. ${new Decimal(item.tax_rate).mul(100).toFixed(2)}% tax`
+                           : `${new Decimal(item.tax_rate).mul(100).toFixed(2)}% tax`}
+                         {item.tax_name && ` (${item.tax_name})`}
+                       </span>
+                     )}
+                   </td>
+                   <td className="px-3 py-3 text-sm text-tertiary font-tabular-nums">
+                     {item.catalog_sku || "—"}
+                   </td>
+                   <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
                     {fmtQuantity(item.quantity)} {item.unit}
                   </td>
                   <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
@@ -294,7 +309,7 @@ export default React.memo(function InvoiceDisplay({
             })}
             {invoice.items.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-10 text-center text-sm text-tertiary">
+                 <td colSpan={7} className="py-10 text-center text-sm text-tertiary">
                   No line items
                 </td>
               </tr>
@@ -351,58 +366,82 @@ export default React.memo(function InvoiceDisplay({
         </div>
       )}
 
-      {/* Totals Summary */}
-      <div className="mt-6 flex justify-end">
-        <div className="w-64 space-y-1 font-tabular-nums">
-          <div className="flex justify-between py-2 text-sm">
-            <span className="text-tertiary">Subtotal</span>
-            <span className="text-primary">{fmtNumber(invoice.subtotal, currency)}</span>
-          </div>
-          {hasDiscount && (
-            <div className="flex justify-between py-2 text-sm">
-              <span className="text-tertiary">Discount</span>
-              <span className="text-success-text">−{fmtNumber(invoice.discount_total, currency)}</span>
-            </div>
-          )}
-          {hasTax && (
-            <div className="flex justify-between py-2 text-sm">
-              <span className="text-tertiary">Tax</span>
-              <span className="text-primary">{fmtNumber(invoice.tax_total, currency)}</span>
-            </div>
-          )}
-          {hasFees && (
-            <div className="flex justify-between py-2 text-sm">
-              <span className="text-tertiary">Fees</span>
-              <span className="text-primary">{fmtNumber(invoice.fee_total, currency)}</span>
-            </div>
-          )}
-          <div className="border-t-2 border-color pt-3">
-            <div className="flex justify-between">
-              <span className="text-base font-semibold text-secondary">Total</span>
-              <span className="text-xl font-bold text-primary">{fmtNumber(invoice.total, currency)}</span>
-            </div>
-          </div>
-          {hasAmountPaid && (
-            <div className="flex justify-between py-2 text-sm">
-              <span className="text-tertiary">Paid</span>
-              <span className="text-success-text">+{fmtNumber(invoice.amount_paid, currency)}</span>
-            </div>
-          )}
-          <div className="border-t-2 border-color pt-3">
-            <div className="flex justify-between">
-              <span className="text-lg font-semibold text-primary-brand">
-                {amountDue.lte(0) ? "Paid in Full" : "Amount Due"}
-              </span>
-              <span className={cn(
-                "text-2xl font-extrabold",
-                amountDue.lte(0) ? "text-success-text" : "text-primary-brand"
-              )}>
-                {amountDue.lte(0) ? "✓" : fmtNumber(amountDue, currency)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+       {/* Totals Summary */}
+       <div className="mt-6 flex justify-end">
+         <div className="w-64 space-y-1 font-tabular-nums">
+           <div className="flex justify-between py-2 text-sm">
+             <span className="text-tertiary">Subtotal</span>
+             <span className="text-primary">{fmtNumber(invoice.subtotal, currency)}</span>
+           </div>
+           {hasDiscount && (
+             <div className="flex justify-between py-2 text-sm">
+               <span className="text-tertiary">Discount</span>
+               <span className="text-success-text">−{fmtNumber(invoice.discount_total, currency)}</span>
+             </div>
+           )}
+           {hasTax && (
+             <div className="flex justify-between py-2 text-sm">
+               <span className="text-tertiary">Tax</span>
+               <span className="text-primary">{fmtNumber(invoice.tax_total, currency)}</span>
+             </div>
+           )}
+           {hasFees && (
+             <div className="flex justify-between py-2 text-sm">
+               <span className="text-tertiary">Fees</span>
+               <span className="text-primary">{fmtNumber(invoice.fee_total, currency)}</span>
+             </div>
+           )}
+           <div className="border-t-2 border-color pt-3">
+             <div className="flex justify-between">
+               <span className="text-base font-semibold text-secondary">Total</span>
+               <span className="text-xl font-bold text-primary">{fmtNumber(invoice.total, currency)}</span>
+             </div>
+           </div>
+           {hasAmountPaid && (
+             <div className="flex justify-between py-2 text-sm">
+               <span className="text-tertiary">Paid</span>
+               <span className="text-success-text">+{fmtNumber(invoice.amount_paid, currency)}</span>
+             </div>
+           )}
+           <div className="border-t-2 border-color pt-3">
+             <div className="flex justify-between">
+               <span className="text-lg font-semibold text-primary-brand">
+                 {amountDue.lte(0) ? "Paid in Full" : "Amount Due"}
+               </span>
+               <span className={cn(
+                 "text-2xl font-extrabold",
+                 amountDue.lte(0) ? "text-success-text" : "text-primary-brand"
+               )}>
+                 {amountDue.lte(0) ? "✓" : fmtNumber(amountDue, currency)}
+               </span>
+             </div>
+           </div>
+         </div>
+       </div>
+
+       {/* Notes */}
+       {invoice.notes && invoice.notes.length > 0 && (
+         <div className="mt-6 border-t border-color pt-4">
+           <h4 className="invoice-section-title mb-1.5">Notes</h4>
+           <p className="whitespace-pre-line text-sm text-secondary">{invoice.notes}</p>
+         </div>
+       )}
+
+       {/* Payment Instructions */}
+       {invoice.payment_instructions && invoice.payment_instructions.length > 0 && (
+         <div className="mt-4 border-t border-color pt-4">
+           <h4 className="invoice-section-title mb-1.5">Payment Instructions</h4>
+           <div className="whitespace-pre-line text-sm text-secondary">{invoice.payment_instructions}</div>
+         </div>
+       )}
+
+       {/* Terms & Conditions */}
+       {invoice.terms && invoice.terms.length > 0 && (
+         <div className="mt-4 border-t border-color pt-4">
+           <h4 className="invoice-section-title mb-1.5">Terms &amp; Conditions</h4>
+           <p className="whitespace-pre-line text-xs text-tertiary">{invoice.terms}</p>
+         </div>
+       )}
     </div>
   );
 });

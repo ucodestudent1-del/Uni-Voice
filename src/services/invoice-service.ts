@@ -50,6 +50,7 @@ function invalidateInvoiceDetailCache(businessId: string, id?: string): void {
 export interface CreateInvoiceDraftInput {
   customerId?: string | null;
   projectId?: string | null;
+  poNumber?: string | null;
   currency?: string;
   issueDate?: Date | null;
   dueDate?: Date | null;
@@ -324,7 +325,8 @@ export class InvoiceService {
     const invoice = await invoiceRepository.findById(businessId, id);
     if (invoice.isFinalized) throw new BusinessLogicError("Cannot modify a finalized invoice");
     await invoiceRepository.update(businessId, id, {
-      customer_id: input.customerId,
+       customer_id: input.customerId,
+      po_number: input.poNumber,
       currency: input.currency,
       issue_date:
         input.issueDate instanceof Date
@@ -587,7 +589,8 @@ export class InvoiceService {
         status: invoice.status,
         issueDate: invoice.issueDate,
         dueDate: invoice.dueDate,
-        currency: invoice.currency,
+         currency: invoice.currency,
+        poNumber: invoice.poNumber,
         notes: invoice.notes,
         terms: invoice.terms,
         paymentInstructions: invoice.paymentInstructions,

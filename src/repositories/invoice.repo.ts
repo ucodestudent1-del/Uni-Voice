@@ -34,6 +34,7 @@ export interface InvoiceFeeInput {
 export interface CreateInvoiceInput {
   customerId?: string | null;
   projectId?: string | null;
+  poNumber?: string | null;
   currency: string;
   issueDate?: Date | null;
   dueDate?: Date | null;
@@ -111,7 +112,7 @@ const INVOICE_SORT_COLUMNS: Record<string, string> = {
 };
 
 const INVOICE_ALLOWED_COLUMNS = new Set([
-  "customer_id", "project_id", "invoice_number", "status", "issue_date", "due_date", "currency",
+  "customer_id", "project_id", "invoice_number", "po_number", "status", "issue_date", "due_date", "currency",
   "exchange_rate", "subtotal", "discount_total", "tax_total", "fee_total", "total",
   "amount_paid", "amount_due", "credit_applied", "deposit_amount", "deposit_type",
   "deposit_due_date", "deposit_payment_purpose", "late_fee_type", "late_fee_value",
@@ -129,13 +130,13 @@ export class InvoiceRepository {
     try {
       await client.query("BEGIN");
       await client.query(
-        `INSERT INTO invoices (id, business_id, customer_id, project_id, currency, issue_date, due_date, notes, terms,
+        `INSERT INTO invoices (id, business_id, customer_id, project_id, po_number, currency, issue_date, due_date, notes, terms,
           template_id, payment_instructions, deposit_amount, deposit_type, deposit_due_date, deposit_payment_purpose,
           late_fee_type, late_fee_value, late_fee_applied, late_fee_applied_amount,
           created_at, updated_at, created_by, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$20,$21,$21)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$21,$22,$22)`,
         [
-          id, businessId, input.customerId, input.projectId, input.currency,
+          id, businessId, input.customerId, input.projectId, input.poNumber, input.currency,
           input.issueDate instanceof Date ? input.issueDate.toISOString() : input.issueDate,
           input.dueDate instanceof Date ? input.dueDate.toISOString() : input.dueDate,
           input.notes, input.terms, input.templateId, input.paymentInstructions,
@@ -302,6 +303,11 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
     // decimal representation (trailing zeros) instead of coercing to JSON numbers.
     const res = await query(
       `SELECT i.*,
+              c.name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
+              c.company_name AS customer_company_name, c.tax_id AS customer_tax_id,
+              c.address_line_1 AS customer_address_line_1, c.address_line_2 AS customer_address_line_2,
+              c.city AS customer_city, c.state_or_region AS customer_state_or_region,
+              c.postal_code AS customer_postal_code, c.country_code AS customer_country_code,
               COALESCE((SELECT json_agg(row_to_json(items)) FROM (
                 SELECT id, invoice_id, product_id, description,
                        quantity::text AS quantity, unit, unit_price::text AS unit_price,
@@ -319,6 +325,7 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
                   FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order
               ) fees), '[]'::json) AS fees_json
        FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
        WHERE i.id = $1 AND i.business_id = $2`,
       [id, businessId]
     );
@@ -340,6 +347,17 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
 
     return {
       ...invoice,
+      customerName: r.customer_name as string | null,
+      customerEmail: r.customer_email as string | null,
+      customerPhone: r.customer_phone as string | null,
+      customerCompanyName: r.customer_company_name as string | null,
+      customerTaxId: r.customer_tax_id as string | null,
+      customerAddressLine1: r.customer_address_line_1 as string | null,
+      customerAddressLine2: r.customer_address_line_2 as string | null,
+      customerCity: r.customer_city as string | null,
+      customerStateOrRegion: r.customer_state_or_region as string | null,
+      customerPostalCode: r.customer_postal_code as string | null,
+      customerCountryCode: r.customer_country_code as string | null,
       items: (itemsJson as Record<string, unknown>[]).map((item) => this.itemRowToModel(item)),
       fees: (feesJson as Record<string, unknown>[]).map((fee) => this.feeRowToModel(fee)),
     };
@@ -350,6 +368,11 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
     const params = businessId ? [token, businessId] : [token];
     const res = await query(
       `SELECT i.*,
+              c.name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
+              c.company_name AS customer_company_name, c.tax_id AS customer_tax_id,
+              c.address_line_1 AS customer_address_line_1, c.address_line_2 AS customer_address_line_2,
+              c.city AS customer_city, c.state_or_region AS customer_state_or_region,
+              c.postal_code AS customer_postal_code, c.country_code AS customer_country_code,
               COALESCE((SELECT json_agg(row_to_json(items)) FROM (
                 SELECT id, invoice_id, product_id, description,
                        quantity::text AS quantity, unit, unit_price::text AS unit_price,
@@ -367,6 +390,7 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
                   FROM invoice_fees WHERE invoice_id = i.id ORDER BY sort_order
               ) fees), '[]'::json) AS fees_json
        FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
        ${where}`,
       params
     );
@@ -387,6 +411,17 @@ async setItems(businessId: string, invoiceId: string, items: InvoiceItemInput[],
 
     return {
       ...invoice,
+      customerName: r.customer_name as string | null,
+      customerEmail: r.customer_email as string | null,
+      customerPhone: r.customer_phone as string | null,
+      customerCompanyName: r.customer_company_name as string | null,
+      customerTaxId: r.customer_tax_id as string | null,
+      customerAddressLine1: r.customer_address_line_1 as string | null,
+      customerAddressLine2: r.customer_address_line_2 as string | null,
+      customerCity: r.customer_city as string | null,
+      customerStateOrRegion: r.customer_state_or_region as string | null,
+      customerPostalCode: r.customer_postal_code as string | null,
+      customerCountryCode: r.customer_country_code as string | null,
       items: (itemsJson as Record<string, unknown>[]).map((item) => this.itemRowToModel(item)),
       fees: (feesJson as Record<string, unknown>[]).map((fee) => this.feeRowToModel(fee)),
     };
@@ -1288,6 +1323,7 @@ async getVolumeTrend(businessId: string, months: number, period: "day" | "week" 
       invoice.id,
       invoice.version,
       invoice.invoiceNumber,
+      invoice.poNumber,
       invoice.status,
       invoice.issueDate instanceof Date ? invoice.issueDate.toISOString() : invoice.issueDate,
       invoice.dueDate instanceof Date ? invoice.dueDate.toISOString() : invoice.dueDate,
@@ -1325,7 +1361,7 @@ async getVolumeTrend(businessId: string, months: number, period: "day" | "week" 
     return {
       id: r.id as string, businessId: r.business_id as string, customerId: r.customer_id as string | null,
       projectId: r.project_id as string | null,
-      invoiceNumber: r.invoice_number as string | null, status: r.status as Invoice["status"],
+       invoiceNumber: r.invoice_number as string | null, poNumber: r.po_number as string | null, status: r.status as Invoice["status"],
       issueDate: rowToDate(r.issue_date), dueDate: rowToDate(r.due_date),
       currency: r.currency as Invoice["currency"], exchangeRate: r.exchange_rate as string | null,
       subtotal: r.subtotal as string, discountTotal: r.discount_total as string, taxTotal: r.tax_total as string,
