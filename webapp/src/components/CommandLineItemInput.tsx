@@ -2,17 +2,16 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Search, Plus, X, Zap, AlertCircle } from "lucide-react";
 import { parseCommandLineItem } from "../api/client";
 import { useAnalytics } from "../hooks/useAnalytics";
-import type { WorkspaceLineItem } from "./InvoiceWorkspace";
 
-interface CommandLineItemInputProps {
-  onAddItem: (item: Omit<WorkspaceLineItem, "id">) => void;
+interface CommandLineItemInputProps<T> {
+  onAddItem: (item: Omit<T, "id">) => void;
   products?: any[];
   recentEntries?: string[];
   autoFocus?: boolean;
   compact?: boolean;
 }
 
-interface ParsedResult {
+type ParsedResult = {
   description: string;
   quantity: number;
   unit: string;
@@ -20,15 +19,15 @@ interface ParsedResult {
   taxRate: number;
   productId?: string | null;
   catalogMatch: { name: string; unitPrice: string; taxRate: string; confidence: number } | null;
-}
+};
 
-export function CommandLineItemInput({
+export function CommandLineItemInput<T extends { id?: string }>({
   onAddItem,
   products = [],
   recentEntries = [],
   autoFocus = false,
   compact = false,
-}: CommandLineItemInputProps) {
+}: CommandLineItemInputProps<T>) {
   const [input, setInput] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [parsedResult, setParsedResult] = useState<ParsedResult | null>(
@@ -83,8 +82,7 @@ export function CommandLineItemInput({
 
   const handleAddItem = () => {
     if (!parsedResult) return;
-    const newItem: Omit<WorkspaceLineItem, "id"> = {
-      type: "service",
+    const newItem = {
       description: parsedResult.description,
       quantity: String(parsedResult.quantity),
       unit: parsedResult.unit,
@@ -94,7 +92,7 @@ export function CommandLineItemInput({
       taxRate: String(parsedResult.taxRate),
       isTaxInclusive: false,
       productId: parsedResult.productId ?? null,
-    };
+    } as unknown as Omit<T, "id">;
     onAddItem(newItem);
     setInput("");
     setParsedResult(null);

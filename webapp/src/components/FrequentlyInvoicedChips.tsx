@@ -3,10 +3,9 @@ import { Tag, Plus, DollarSign, Clock, AlertCircle } from "lucide-react";
 import { getFrequentlyInvoiced } from "../api/client";
 import { useAnalytics } from "../hooks/useAnalytics";
 import type { ApiFrequentlyInvoicedItem } from "../api/client";
-import type { WorkspaceLineItem } from "./InvoiceWorkspace";
 
-interface FrequentlyInvoicedChipsProps {
-  onAddItem: (item: Omit<WorkspaceLineItem, "id">) => void;
+interface FrequentlyInvoicedChipsProps<T> {
+  onAddItem: (item: Omit<T, "id">) => void;
   businessId: string;
   customerId?: string;
   limit?: number;
@@ -26,13 +25,13 @@ const formatFrequency = (score: number): string => {
   return "Occasional";
 };
 
-export function FrequentlyInvoicedChips({
+export function FrequentlyInvoicedChips<T extends { id?: string }>({
   onAddItem,
   businessId,
   customerId,
   limit = 12,
   maxVisible = 8,
-}: FrequentlyInvoicedChipsProps) {
+}: FrequentlyInvoicedChipsProps<T>) {
   const [items, setItems] = useState<ApiFrequentlyInvoicedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +65,7 @@ export function FrequentlyInvoicedChips({
     if (addingIds.has(itemKey)) return;
     setAddingIds((prev) => new Set([...prev, itemKey]));
     try {
-      const newItem: Omit<WorkspaceLineItem, "id"> = {
+      const newItem = {
         type: "service",
         description: item.name,
         quantity: "1",
@@ -77,7 +76,7 @@ export function FrequentlyInvoicedChips({
         taxRate: item.taxRate,
         isTaxInclusive: false,
         productId: item.id,
-      };
+      } as unknown as Omit<T, "id">;
       onAddItem(newItem);
       trackFrequentlyInvoicedUsed({
         itemId: item.id,

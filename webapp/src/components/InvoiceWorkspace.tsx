@@ -1086,16 +1086,16 @@ export default function InvoiceWorkspace() {
           )}
 
           {isNew && !bannerDismissed && (
-            <QuickRepeatBanner
-              businessId={business?.id || ""}
-              customerId={invoice?.customerId ?? undefined}
-              onPopulate={handlePopulateFromQuickActions}
-              onDismiss={handleDismissBanner}
-            />
+           <QuickRepeatBanner<WorkspaceInvoiceData>
+               businessId={business?.id || ""}
+               customerId={invoice?.customerId ?? undefined}
+               onPopulate={handlePopulateFromQuickActions}
+               onDismiss={handleDismissBanner}
+             />
           )}
 
           {isNew && invoice.items.length === 0 && (
-            <CommandLineItemInput
+            <CommandLineItemInput<WorkspaceLineItem>
               key="command-input"
               onAddItem={handleQuickAddItem}
               products={products}
@@ -1135,11 +1135,11 @@ export default function InvoiceWorkspace() {
                 )}
               </div>
               <div className="mt-6">
-                <FrequentlyInvoicedChips
-                  businessId={business?.id || ""}
-                  customerId={invoice?.customerId ?? undefined}
-                  onAddItem={handleQuickAddItem}
-                />
+                <FrequentlyInvoicedChips<WorkspaceLineItem>
+                   businessId={business?.id || ""}
+                   customerId={invoice?.customerId ?? undefined}
+                   onAddItem={handleQuickAddItem}
+                 />
               </div>
               {products.length > 1 && (
                 <SavedServicesBar products={products} onSelect={addFromProduct} />
@@ -1163,11 +1163,11 @@ export default function InvoiceWorkspace() {
 
           {isNew && invoice.items.length > 0 && (
             <div className="mb-4">
-              <FrequentlyInvoicedChips
-                businessId={business?.id || ""}
-                customerId={invoice?.customerId ?? undefined}
-                onAddItem={handleQuickAddItem}
-              />
+              <FrequentlyInvoicedChips<WorkspaceLineItem>
+                 businessId={business?.id || ""}
+                 customerId={invoice?.customerId ?? undefined}
+                 onAddItem={handleQuickAddItem}
+               />
             </div>
           )}
 

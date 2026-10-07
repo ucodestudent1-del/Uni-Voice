@@ -1,14 +1,13 @@
 import React, { useState, useCallback } from "react";
-import { FileText, Clock, User, Copy, Trash2, Send } from "lucide-react";
+import { Clock, Copy, Trash2 } from "lucide-react";
 import { getProgressiveAutofill, getFrequentlyInvoiced } from "../api/client";
 import { useAnalytics } from "../hooks/useAnalytics";
-import type { ApiLastInvoice, ApiProgressiveAutofill, ApiFrequentlyInvoicedItem } from "../api/client";
-import type { WorkspaceInvoiceData } from "./InvoiceWorkspace";
+import type { ApiLastInvoice, ApiProgressiveAutofill } from "../api/client";
 
-interface QuickRepeatBannerProps {
+interface QuickRepeatBannerProps<T> {
   businessId: string;
   customerId?: string;
-  onPopulate: (data: Partial<WorkspaceInvoiceData>) => void;
+  onPopulate: (data: Partial<T>) => void;
   onDismiss?: () => void;
 }
 
@@ -33,14 +32,13 @@ const formatDate = (dateStr: string | Date): string => {
   }
 };
 
-export function QuickRepeatBanner({
+export function QuickRepeatBanner<T>({
   businessId,
   customerId,
   onPopulate,
   onDismiss,
-}: QuickRepeatBannerProps) {
+}: QuickRepeatBannerProps<T>) {
   const [lastInvoice, setLastInvoice] = useState<ApiLastInvoice | null>(null);
-  const [autofillData, setAutofillData] = useState<ApiProgressiveAutofill | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<"none" | "populate" | "dismiss">("none");
@@ -51,16 +49,13 @@ export function QuickRepeatBanner({
     setLoading(true);
     setError(null);
     try {
-      const [lastInv, autofill] = await Promise.all([
-        getProgressiveAutofill(customerId).catch(() => null as any),
-        getFrequentlyInvoiced(5).catch(() => null as any),
-      ]);
+      const autofill = await getProgressiveAutofill(customerId).catch(() => null as ApiProgressiveAutofill | null);
+      const frequent = await getFrequentlyInvoiced(5).catch(() => ({ items: [] }));
 
-      setLastInvoice(lastInv);
-      setAutofillData(autofill);
+      setLastInvoice(null);
 
-      const populateData: Partial<WorkspaceInvoiceData> = {
-        currency: autofill?.currency || "USD",
+      const populateData: Record<string, any> = {
+        currency: (autofill?.currency || "USD"),
         notes: autofill?.notes || undefined,
         terms: autofill?.terms || undefined,
         paymentInstructions: autofill?.paymentInstructions || undefined,
@@ -71,12 +66,13 @@ export function QuickRepeatBanner({
         populateData.customerId = autofill.customerId;
       }
 
-      onPopulate(populateData);
+      onPopulate(populateData as Partial<T>);
 
       trackLastInvoiceUsed({
         source: "quick_repeat_banner",
         customerId: autofill?.customerId,
       });
+
       track("quick_create_started", { source: "quick_repeat_banner" });
     } catch (err: any) {
       setError(err?.message || "Failed to load last invoice");
@@ -86,18 +82,18 @@ export function QuickRepeatBanner({
   }, [action, customerId, onPopulate, track, trackLastInvoiceUsed]);
 
   const handlePopulate = () => {
-    if (!lastInvoice && !autofillData) return;
-    const populateData: Partial<WorkspaceInvoiceData> = {
-      currency: lastInvoice?.currency || autofillData?.currency || "USD",
-      notes: lastInvoice?.notes || autofillData?.notes,
-      terms: lastInvoice?.terms || autofillData?.terms,
-      paymentInstructions: lastInvoice?.paymentInstructions || autofillData?.paymentInstructions,
-      taxRate: lastInvoice?.items?.[0]?.taxRate || autofillData?.taxRate || "0",
+    if (!lastInvoice) return;
+    const populateData: Record<string, any> = {
+      currency: lastInvoice.currency || "USD",
+      notes: lastInvoice.notes,
+      terms: lastInvoice.terms,
+      paymentInstructions: lastInvoice.paymentInstructions,
+      taxRate: lastInvoice.items?.[0]?.taxRate || "0",
     };
-    if (lastInvoice?.customer.id) {
+    if (lastInvoice.customer?.id) {
       populateData.customerId = lastInvoice.customer.id;
     }
-    onPopulate(populateData);
+    onPopulate(populateData as Partial<T>);
     trackLastInvoiceUsed({ source: "quick_repeat_populate" });
   };
 
@@ -131,7 +127,7 @@ export function QuickRepeatBanner({
                     Last invoice: {(
                       lastInvoice as any
                     )?.invoiceNumber ||
-                      formatDate(lastInvoice?.sentAt || new Date())}
+                    formatDate(lastInvoice?.sentAt || new Date())}
                   </span>
                 )}
               </div>

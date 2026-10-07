@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Copy, Download } from "lucide-react";
 import { useQuoteBuilder } from "./useQuoteBuilder";
@@ -9,7 +9,9 @@ import { QuoteDetailsForm } from "./QuoteDetailsForm";
 import { ReviewAndSendDialog } from "./ReviewAndSendDialog";
 import { ValidationPanel } from "@/components/ValidationPanel";
 import { Button } from "@/components/ui/Button";
+import CommandLineItemInput from "@/components/CommandLineItemInput";
 import { finalizeQuote, sendQuote, getQuotePdf, convertQuote } from "@/api/client";
+import type { BuilderLineItem } from "@/types/quote-builder";
 
 interface QuoteBuilderProps {
   quoteId?: string | null;
@@ -23,6 +25,7 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     data,
     isNew,
     customers,
+    products,
     loading,
     saveState,
     calcResult,
@@ -79,6 +82,14 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     }
     setReviewOpen(false);
   }
+
+  const handleQuickAddItem = useCallback((item: Omit<BuilderLineItem, "id">) => {
+    const newItem: BuilderLineItem = {
+      ...item,
+      id: `row_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    };
+    setItems([...data.items, newItem]);
+  }, [data.items, setItems]);
 
   async function handleDownloadPdf() {
     const quoteId = data.savedQuoteId;
@@ -233,6 +244,14 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
           {/* Line items */}
           <div className="bg-surface rounded-xl border border-color-subtle p-6 shadow-sm">
             <h3 className="text-sm font-medium text-secondary mb-3">Line Items</h3>
+            {isNew && data.items.length === 0 && (
+              <CommandLineItemInput<BuilderLineItem>
+                onAddItem={handleQuickAddItem}
+                products={products}
+                autoFocus={true}
+                compact={false}
+              />
+            )}
             <LineItemsTable
               items={data.items}
               currency={data.currency}

@@ -37,6 +37,9 @@ import { formatCurrency, formatDate, parseDecimal } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import CustomerSelector from "./CustomerSelector";
+import CommandLineItemInput from "./CommandLineItemInput";
+import FrequentlyInvoicedChips from "./FrequentlyInvoicedChips";
+import QuickRepeatBanner from "./QuickRepeatBanner";
 import { Button } from "./ui/Button";
 import { FormField } from "./ui/FormField";
 import { ConfirmationDialog } from "./ui/ConfirmationDialog";
@@ -78,6 +81,9 @@ export interface WorkspaceCreditNoteData {
   templateId?: string | null;
   status: string;
   isFinalized: boolean;
+  publicToken?: string | null;
+  appliedTotal?: string;
+  amountDue?: string;
 }
 
 export interface WorkspaceFee {
@@ -200,6 +206,7 @@ export default function CreditNoteWorkspace() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewWidth, setPreviewWidth] = useState(480);
   const [previewMobileOpen, setPreviewMobileOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const latestRef = useRef<{
     creditNote: WorkspaceCreditNoteData | null;
@@ -470,6 +477,14 @@ export default function CreditNoteWorkspace() {
     updateData(patch);
   };
 
+  const handlePopulateFromQuickActions = (data: Partial<WorkspaceCreditNoteData>) => {
+    updateData(data);
+  };
+
+  const handleDismissBanner = () => {
+    setBannerDismissed(true);
+  };
+
   const handleQuickAddItem = (item: Omit<CreditNoteLineItemInput, "id">) => {
     const newItem: CreditNoteLineItemInput = {
       ...item,
@@ -655,23 +670,23 @@ export default function CreditNoteWorkspace() {
      }
    }
 
-  async function handleSend() {
-     const { creditNoteId: curId } = latestRef.current;
-     if (!curId) return;
-     try {
-       const { sendCreditNote } = await import("../api/client");
-       await sendCreditNote(curId);
-       setActionMessage("Credit note sent successfully!");
-       const updated = await getCreditNote(curId);
-       setCreditNote((prev) => {
-         if (!prev || !updated.creditNote) return prev;
-         const cn = updated.creditNote;
-         return {
-           ...prev,
-           status: cn.status,
-         };
-       });
-     } catch (err: any) {
+   async function handleSend() {
+      const { creditNoteId: curId } = latestRef.current;
+      if (!curId) return;
+      try {
+        const { sendCreditNote } = await import("../api/client");
+        const sendRes = await sendCreditNote(curId);
+        setActionMessage("Credit note sent successfully!");
+        setCreditNote((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: sendRes.status ?? prev.status,
+                ...(sendRes.publicToken ? { publicToken: sendRes.publicToken } : {}),
+              }
+            : prev
+        );
+      } catch (err: any) {
        setActionMessage(err?.response?.data?.error || "Failed to send credit note");
      }
    }
@@ -824,6 +839,25 @@ export default function CreditNoteWorkspace() {
               <ValidationBanner issues={validation.issues} />
             )}
 
+            {isNew && !bannerDismissed && (
+              <QuickRepeatBanner<WorkspaceCreditNoteData>
+                businessId={business?.id || ""}
+                customerId={creditNote?.customerId ?? undefined}
+                onPopulate={handlePopulateFromQuickActions}
+                onDismiss={handleDismissBanner}
+              />
+            )}
+
+            {isNew && creditNote.items.length === 0 && (
+              <CommandLineItemInput<CreditNoteLineItemInput>
+                key="command-input"
+                onAddItem={handleQuickAddItem}
+                products={products}
+                autoFocus={isNew}
+                compact={false}
+              />
+            )}
+
             {creditNote.items.length === 0 ? (
               <div className="mb-6 rounded-xl border border-dashed border-color bg-surface-alt py-12 text-center">
                 <FileText className="mx-auto h-12 w-12 text-tertiary/40" />
@@ -853,6 +887,13 @@ export default function CreditNoteWorkspace() {
                     </Button>
                   )}
                 </div>
+                <div className="mt-6">
+                  <FrequentlyInvoicedChips<CreditNoteLineItemInput>
+                    businessId={business?.id || ""}
+                    customerId={creditNote?.customerId ?? undefined}
+                    onAddItem={handleQuickAddItem}
+                  />
+                </div>
               </div>
             ) : (
               <CreditNoteLineItemsTable
@@ -868,6 +909,16 @@ export default function CreditNoteWorkspace() {
 
             {products.length > 0 && creditNote.items.length > 0 && (
               <SavedServicesBar products={products} onSelect={addFromProduct} />
+            )}
+
+            {isNew && creditNote.items.length > 0 && (
+              <div className="mb-4">
+                <FrequentlyInvoicedChips<CreditNoteLineItemInput>
+                  businessId={business?.id || ""}
+                  customerId={creditNote?.customerId ?? undefined}
+                  onAddItem={handleQuickAddItem}
+                />
+              </div>
             )}
 
             <CreditNoteFeesSection
