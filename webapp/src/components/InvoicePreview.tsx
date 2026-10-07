@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { Decimal } from "decimal.js";
 import { CreditCard, FileText } from "lucide-react";
-import { formatCurrency, formatDateLong } from "../utils/format";
+import { formatCurrency, formatDateLong, formatTaxRate, formatTaxRateWithName } from "../utils/format";
+import { formatCurrencyValue } from "../lib/utils";
 import { getCurrencyMetadata } from "../types/currency";
 import { cn } from "../lib/utils";
 
@@ -13,6 +14,7 @@ export interface PreviewLineItem {
   discount?: string;
   discountType?: "fixed" | "percentage";
   taxRate?: string;
+  tax_name?: string | null;
   isTaxInclusive?: boolean;
 }
 
@@ -20,6 +22,7 @@ export interface PreviewFee {
   description: string;
   amount: string;
   taxRate?: string;
+  tax_name?: string | null;
 }
 
 export interface PreviewAttachment {
@@ -74,9 +77,11 @@ function fmtNumber(v: string | number | undefined, currency: string): string {
 }
 
 function fmtRate(rate: string | undefined | null): string {
-  const v = new Decimal(rate ?? 0).mul(100);
-  if (v.isZero()) return "0.00%";
-  return `${v.toFixed(2)}%`;
+  return formatTaxRate(rate);
+}
+
+function fmtRateWithName(rate: string | undefined | null, name?: string | null): string {
+  return formatTaxRateWithName(rate, name);
 }
 
 function fmtQuantity(qty: string | undefined | null): string {
@@ -141,13 +146,53 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
   const hasTax = hasNonZero(invoice.taxTotal);
 
   const itemTaxRates = useMemo(() => {
-    const set = new Set<string>();
+    const seen = new Map<string, string>();
     invoice.items.forEach((item) => {
       if (!new Decimal(item.taxRate ?? 0).isZero()) {
-        set.add(fmtRate(item.taxRate));
+        const key = `${item.taxRate}`;
+        const label = fmtRateWithName(item.taxRate, item.tax_name);
+        if (!seen.has(key)) {
+          seen.set(key, label);
+        }
       }
     });
-    return Array.from(set);
+    return Array.from(seen.values());
+  }, [invoice.items]);
+
+  const taxBreakdown = useMemo(() => {
+    const map = new Map<string, { label: string; taxable: Decimal; tax: Decimal }>();
+    invoice.items.forEach((item) => {
+      const rate = item.taxRate ?? "0";
+      if (new Decimal(rate).isZero()) return;
+      const key = `${rate}-${item.tax_name ?? ""}`;
+      const qty = new Decimal(item.quantity || 1);
+      const price = new Decimal(item.unitPrice || 0);
+      let lineSubtotal = qty.mul(price);
+      if (item.discount && Number(item.discount) > 0) {
+        if (item.discountType === "percentage") {
+          lineSubtotal = lineSubtotal.minus(lineSubtotal.mul(new Decimal(item.discount).div(100)));
+        } else {
+          lineSubtotal = lineSubtotal.minus(new Decimal(item.discount));
+        }
+      }
+      const taxable = item.isTaxInclusive
+        ? lineSubtotal.minus(lineSubtotal.mul(new Decimal(rate).div(new Decimal(1).plus(new Decimal(rate)))))
+        : lineSubtotal;
+      const taxAmount = new Decimal(lineTotalForItem(item)).minus(taxable);
+      const label = fmtRateWithName(rate, item.tax_name);
+      const existing = map.get(key);
+      if (existing) {
+        existing.taxable = existing.taxable.plus(taxable);
+        existing.tax = existing.tax.plus(taxAmount);
+      } else {
+        map.set(key, { label, taxable, tax: taxAmount });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => {
+      const ra = new Decimal(a.label.match(/^([\d.]+)%/)?.[1] ?? 0);
+      const rb = new Decimal(b.label.match(/^([\d.]+)%/)?.[1] ?? 0);
+      return ra.comparedTo(rb);
+    });
   }, [invoice.items]);
 
   const effectiveStatus = overdue && invoice.status !== "paid" ? "overdue" : invoice.status;
@@ -301,11 +346,11 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
                     <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
                       {hasRate ? fmtNumber(item.unitPrice, cur) : "—"}
                     </td>
-                    <td className="px-3 py-3 align-top text-sm text-tertiary text-right font-tabular-nums">
-                      <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
-                        {fmtRate(item.taxRate)}
-                      </span>
-                    </td>
+                     <td className="px-3 py-3 align-top text-sm text-tertiary text-right font-tabular-nums">
+                       <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
+                         {fmtRateWithName(item.taxRate, item.tax_name)}
+                       </span>
+                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-primary text-right font-tabular-nums">
                       {lineTotal}
                     </td>
@@ -329,6 +374,26 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
           )}
         </div>
 
+        {/* === Tax Breakdown (per rate) === */}
+        {hasTax && itemTaxRates.length > 0 && taxBreakdown.length > 0 && (
+          <div className="mt-2 rounded-lg border border-color-subtle bg-surface-alt px-4 py-2.5">
+            <div className="text-xs font-medium text-tertiary uppercase">Tax Breakdown</div>
+            <div className="mt-1.5 space-y-1.5">
+              {taxBreakdown.map((group, idx) => (
+                <div key={idx} className="flex justify-between">
+                  <span className="text-sm text-secondary">{group.label}</span>
+                  <div className="text-right font-tabular-nums">
+                    <span className="text-sm text-tertiary">
+                      {formatCurrencyValue(group.taxable, cur)} /{" "}
+                    </span>
+                    <span className="text-sm text-primary">{formatCurrencyValue(group.tax, cur)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* === Fees table === */}
         {invoice.fees.length > 0 && (
           <div className="mt-2 overflow-x-auto rounded-lg border border-color">
@@ -346,11 +411,11 @@ export default React.memo(function InvoicePreview({ invoice }: { invoice: Previe
                     <td className="px-4 py-3 align-top text-sm text-primary break-words">
                       {fee.description || <span className="italic text-tertiary">Untitled fee</span>}
                     </td>
-                    <td className="px-3 py-3 text-sm text-tertiary text-right font-tabular-nums">
-                      <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
-                        {fmtRate(fee.taxRate)}
-                      </span>
-                    </td>
+                     <td className="px-3 py-3 text-sm text-tertiary text-right font-tabular-nums">
+                       <span className="inline-block rounded bg-surface px-1.5 py-0.5 text-xs font-medium">
+                         {fmtRateWithName(fee.taxRate, fee.tax_name)}
+                       </span>
+                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-primary text-right font-tabular-nums">
                       {fmtNumber(fee.amount, cur)}
                     </td>

@@ -101,6 +101,22 @@ export function getStatusBadgeClassName(config: InternalStatusConfig, size: "sm"
   );
 }
 
+const STATUS_DOT_COLORS: Record<string, string> = {
+  draft: "rgb(var(--color-warning))",
+  sent: "rgb(var(--color-info))",
+  viewed: "rgb(var(--color-info))",
+  partially_paid: "rgb(var(--color-warning))",
+  paid: "rgb(var(--color-success))",
+  overdue: "rgb(var(--color-error))",
+  cancelled: "rgb(var(--color-text-tertiary))",
+  void: "rgb(var(--color-text-tertiary))",
+  pending: "rgb(var(--color-info))",
+  failed: "rgb(var(--color-error))",
+  refunded: "rgb(var(--color-text-tertiary))",
+};
+
+const DEFAULT_DOT_COLOR = "rgb(var(--color-text-tertiary))";
+
 interface StatusBadgeComponentProps extends StatusBadgeProps {
   config?: StatusBadgeConfig;
   showLabel?: boolean;
@@ -123,6 +139,7 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeComponentProps
     const configItem = config.getConfig(effectiveStatus);
     const sizeClasses = size === "sm" ? "px-2 py-1 text-xs" : "px-2.5 py-1 text-xs";
     const iconClass = size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4";
+    const dotColor = STATUS_DOT_COLORS[effectiveStatus] ?? DEFAULT_DOT_COLOR;
 
     return (
       <span
@@ -136,6 +153,11 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeComponentProps
         title={configItem.description}
         aria-label={`${status} ${configItem.description}`}
       >
+        <span
+          className="block h-1.5 w-1.5 min-w-[6px] rounded-full"
+          style={{ color: dotColor }}
+          aria-hidden="true"
+        />
         {showIcon && configItem.icon && <configItem.icon className={iconClass} aria-hidden="true" />}
         {showLabel && configItem.label}
       </span>

@@ -63,6 +63,7 @@ export class CalculationEngine {
         unitPrice: round(unitPrice),
         discountAmount: lineDiscount,
         taxRate: roundRate(taxRate),
+        tax_name: item.tax_name,
         isTaxInclusive: item.isTaxInclusive,
         lineSubtotal,
         taxableAmount: new Decimal(0),
@@ -138,6 +139,7 @@ export class CalculationEngine {
         description: fee.description,
         amount: feeBase,
         taxRate: roundRate(feeTaxRate),
+        tax_name: fee.tax_name,
         taxAmount: feeTaxAmount,
         feeTotal: feeLineTotal,
       });

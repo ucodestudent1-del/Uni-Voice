@@ -15,6 +15,7 @@ export interface LineItemInput {
   unitPrice: Decimal.Value;
   discount?: DiscountDefinition;
   taxRate: Decimal.Value;
+  tax_name?: string | null;
   isTaxInclusive: boolean;
   sortOrder?: number;
 }
@@ -23,6 +24,7 @@ export interface FeeInput {
   description: string;
   amount: Decimal.Value;
   taxRate?: Decimal.Value;
+  tax_name?: string | null;
   sortOrder?: number;
 }
 
@@ -41,6 +43,7 @@ export interface CalculatedLineItem {
   unitPrice: Decimal;
   discountAmount: Decimal;
   taxRate: Decimal;
+  tax_name?: string | null;
   isTaxInclusive: boolean;
   lineSubtotal: Decimal;
   taxableAmount: Decimal;
@@ -52,6 +55,7 @@ export interface CalculatedFee {
   description: string;
   amount: Decimal;
   taxRate: Decimal;
+  tax_name?: string | null;
   taxAmount: Decimal;
   feeTotal: Decimal;
 }

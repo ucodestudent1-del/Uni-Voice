@@ -15,7 +15,8 @@ import {
   createPaymentIntentPublic,
   getStripeConfig,
 } from "../api/client";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, formatDate } from "../utils/format";
+import { StatusBadge, invoiceStatusConfig, isOverdueStatus } from "@/components/ui";
 import { Decimal } from "decimal.js";
 import { loadStripe } from "@stripe/stripe-js";
 import type { Stripe, StripeElements } from "@stripe/stripe-js";
@@ -144,19 +145,7 @@ if (loading) return <EmptyState variant="loading" title="Loading invoice..." cla
   const lateFeeAppliedAmount = new Decimal(invoice.late_fee_applied_amount || "0");
   const hasLateFee = lateFeeApplied && lateFeeAppliedAmount.gt(0);
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      draft: "bg-surface-alt text-tertiary",
-      sent: "status-info-bg status-info-text",
-      viewed: "status-info-bg status-info-text",
-      partially_paid: "status-warning-bg status-warning-text",
-      paid: "status-success-bg status-success-text",
-      overdue: "status-error-bg status-error-text",
-      cancelled: "bg-surface-alt text-tertiary",
-      void: "bg-surface-alt text-tertiary",
-    };
-    return colors[status] || colors.draft;
-  };
+  const isOverdue = isOverdueStatus(invoice.status, invoice.due_date);
 
   async function handlePay(isDeposit = false) {
     if (!token || !payAmount || Number(payAmount) <= 0) return;
@@ -271,7 +260,7 @@ if (loading) return <EmptyState variant="loading" title="Loading invoice..." cla
           <div className="border-b border-color-subtle px-8 py-6 bg-gradient-to-r from-primary-50 to-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-<div className="w-10 h-10 rounded-lg bg-primary-action flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-primary-action flex items-center justify-center">
                   <FileText className="w-6 h-6 text-on-primary" />
                 </div>
                 <div>
@@ -281,9 +270,13 @@ if (loading) return <EmptyState variant="loading" title="Loading invoice..." cla
                   <p className="text-sm text-secondary">Professional invoice from your business</p>
                 </div>
               </div>
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(invoice.status)}`}>
-                {invoice.status}
-              </span>
+              <StatusBadge
+                status={invoice.status}
+                isOverdue={isOverdue}
+                showLabel={true}
+                config={invoiceStatusConfig}
+                className="ml-2"
+              />
             </div>
           </div>
 
@@ -473,7 +466,7 @@ if (loading) return <EmptyState variant="loading" title="Loading invoice..." cla
                 </span>
                 {invoice.paid_at && (
                   <p className="text-xs text-secondary mt-1">
-                    Paid on {new Date(invoice.paid_at).toLocaleDateString()}
+                    Paid on {formatDate(invoice.paid_at)}
                   </p>
                 )}
               </div>

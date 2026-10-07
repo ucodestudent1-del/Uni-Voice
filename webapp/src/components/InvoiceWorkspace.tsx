@@ -49,7 +49,7 @@ import {
   type InvoiceCalculationInput,
   type LineItemInput,
 } from "../utils/calculation";
-import { formatCurrency, formatDate, parseDecimal } from "../utils/format";
+import { formatCurrency, formatDate, formatTaxRate, parseDecimal } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
@@ -80,6 +80,7 @@ export interface WorkspaceLineItem {
   discount?: string;
   discountType?: "fixed" | "percentage";
   taxRate?: string;
+  taxName?: string | null;
   isTaxInclusive?: boolean;
   productId?: string | null;
 }
@@ -88,6 +89,7 @@ export interface WorkspaceFee {
   description: string;
   amount: string;
   taxRate?: string;
+  taxName?: string | null;
 }
 
 export interface WorkspaceAttachment {
@@ -185,6 +187,7 @@ function toApiItem(item: WorkspaceLineItem) {
         : undefined,
     discountType: item.discount ? (item.discountType ?? "fixed") : undefined,
     taxRate: item.taxRate ?? "0",
+    taxName: item.taxName ?? null,
     isTaxInclusive: item.isTaxInclusive ?? false,
   };
 }
@@ -200,12 +203,14 @@ function buildCalcInput(data: WorkspaceInvoiceData): InvoiceCalculationInput {
         ? { type: it.discountType ?? "fixed", value: it.discount }
         : undefined,
     taxRate: it.taxRate ?? data.taxRate ?? "0",
+    tax_name: it.taxName,
     isTaxInclusive: it.isTaxInclusive ?? false,
   }));
   const fees: FeeInput[] = data.fees.map((f) => ({
     description: f.description,
     amount: f.amount,
     taxRate: f.taxRate ?? "0",
+    tax_name: f.taxName,
   }));
   return {
     currency: data.currency as any,
@@ -294,9 +299,7 @@ function toPercent(rate: string | undefined | null): string {
 }
 
 function toPercentDisplay(rate: string | undefined | null): string {
-  const v = new Decimal(rate ?? 0).mul(100);
-  if (v.isZero()) return "-";
-  return `${v.toFixed(2)}%`;
+  return formatTaxRate(rate);
 }
 
 
@@ -492,24 +495,26 @@ export default function InvoiceWorkspace() {
            dueDate: inv.due_date ? inv.due_date.split("T")[0] : null,
            currency: inv.currency,
            poNumber: inv.po_number ?? null,
-           items: (inv.items ?? []).map((it): WorkspaceLineItem => ({
-             id: it.id,
-             type: "service",
-             description: it.description,
-             quantity: it.quantity,
-             unit: it.unit || "each",
-             unitPrice: it.unit_price,
-             discount: it.discount ? String(it.discount) : "",
-             discountType: it.discount_type ?? "fixed",
-             taxRate: it.tax_rate,
-             isTaxInclusive: it.is_tax_inclusive ?? false,
-             productId: it.product_id ?? null,
-           })),
-           fees: (inv.fees ?? []).map((f): WorkspaceFee => ({
-             description: f.description,
-             amount: f.amount,
-             taxRate: f.tax_rate,
-           })),
+            items: (inv.items ?? []).map((it): WorkspaceLineItem => ({
+              id: it.id,
+              type: "service",
+              description: it.description,
+              quantity: it.quantity,
+              unit: it.unit || "each",
+              unitPrice: it.unit_price,
+              discount: it.discount ? String(it.discount) : "",
+              discountType: it.discount_type ?? "fixed",
+              taxRate: it.tax_rate,
+              taxName: it.tax_name ?? null,
+              isTaxInclusive: it.is_tax_inclusive ?? false,
+              productId: it.product_id ?? null,
+            })),
+            fees: (inv.fees ?? []).map((f): WorkspaceFee => ({
+              description: f.description,
+              amount: f.amount,
+              taxRate: f.tax_rate,
+              taxName: f.tax_name ?? null,
+            })),
            notes: inv.notes ?? "",
            terms: inv.terms ?? "",
            paymentInstructions: inv.payment_instructions ?? "",
@@ -857,12 +862,14 @@ export default function InvoiceWorkspace() {
       discount: it.discount && Number(it.discount) > 0 ? it.discount : undefined,
       discountType: it.discountType,
       taxRate: it.taxRate,
+      tax_name: it.taxName,
       isTaxInclusive: it.isTaxInclusive ?? false,
     }));
     const previewFees: PreviewFee[] = invoice.fees.map((f) => ({
       description: f.description,
       amount: f.amount,
       taxRate: f.taxRate,
+      tax_name: f.taxName,
     }));
     const attachments: PreviewAttachment[] = allAttachments.map((a) => ({
       id: a.id,

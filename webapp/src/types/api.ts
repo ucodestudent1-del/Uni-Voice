@@ -125,6 +125,7 @@ export interface ApiInvoiceItem {
   discount: string;
   discount_type: "fixed" | "percentage";
   tax_rate: string;
+  tax_name?: string | null;
   tax_amount: string;
   line_subtotal: string;
   line_total: string;
@@ -143,6 +144,7 @@ export interface ApiInvoiceFee {
   description: string;
   amount: string;
   tax_rate: string;
+  tax_name?: string | null;
   tax_amount: string;
   sort_order: number;
 }
@@ -166,6 +168,14 @@ export interface ApiInvoice {
   project_id?: string | null;
   customer_name?: string | null;
   customer_email?: string | null;
+  customer_phone?: string | null;
+  customer_company_name?: string | null;
+  customer_address_line_1?: string | null;
+  customer_address_line_2?: string | null;
+  customer_city?: string | null;
+  customer_state_or_region?: string | null;
+  customer_postal_code?: string | null;
+  customer_country_code?: string | null;
   invoice_number?: string | null;
   status: string;
   issue_date?: string | null;

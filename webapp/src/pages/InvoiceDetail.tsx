@@ -20,7 +20,7 @@ import {
 import { formatCurrency, formatDate } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
 import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
-import { InvoiceLifecycle, isOverdueStatus } from "@/components/ui";
+import { InvoiceLifecycle, StatusBadge, invoiceStatusConfig, isOverdueStatus } from "@/components/ui";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 import PaymentDialog from "../components/payments/PaymentDialog";
 import DepositDialog from "../components/payments/DepositDialog";
@@ -300,6 +300,13 @@ export default function InvoiceDetail() {
           <h1 className="text-2xl font-bold text-primary truncate">
             {invoice.invoice_number || `Draft #${invoice.id.slice(0, 8)}`}
           </h1>
+          <StatusBadge
+            status={invoice.status}
+            isOverdue={isOverdue}
+            showLabel={true}
+            config={invoiceStatusConfig}
+            size="sm"
+          />
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -375,6 +382,7 @@ export default function InvoiceDetail() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
+          <CustomerBillingSection invoice={invoice} />
           <InvoiceDetailView invoice={invoice} />
         </div>
 
@@ -532,6 +540,69 @@ function TimelineItem({ event }: { event: ApiInvoiceEvent }) {
   );
 }
 
+function CustomerBillingSection({ invoice }: { invoice: ApiInvoice }) {
+  const hasCustomer =
+    invoice.customer_name ||
+    invoice.customer_email ||
+    invoice.customer_phone ||
+    invoice.customer_address_line_1;
+
+  return (
+    <div className="rounded-xl border border-color bg-surface p-6 shadow-sm mb-6">
+      <h3 className="invoice-section-title mb-4">Customer / Billing</h3>
+
+      {hasCustomer ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-primary">
+              {invoice.customer_name || "Unknown Customer"}
+            </p>
+            {invoice.customer_company_name && (
+              <p className="text-sm text-secondary">{invoice.customer_company_name}</p>
+            )}
+            {invoice.customer_email && (
+              <a
+                href={`mailto:${invoice.customer_email}`}
+                className="text-sm text-primary-brand hover:text-primary-hover"
+              >
+                {invoice.customer_email}
+              </a>
+            )}
+            {invoice.customer_phone && (
+              <p className="text-sm text-secondary">{invoice.customer_phone}</p>
+            )}
+          </div>
+          {invoice.customer_address_line_1 && (
+            <div>
+              <address className="text-sm text-secondary not-italic">
+                {invoice.customer_address_line_1}
+                {invoice.customer_address_line_2 && <br />}
+                {invoice.customer_address_line_2}
+                <br />
+                {[
+                  invoice.customer_city,
+                  invoice.customer_state_or_region,
+                  invoice.customer_postal_code,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+                {invoice.customer_country_code && (
+                  <>
+                    <br />
+                    {invoice.customer_country_code}
+                  </>
+                )}
+              </address>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm italic text-tertiary">No customer information available.</p>
+      )}
+    </div>
+  );
+}
+
 function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
   const isOverdue = isOverdueStatus(invoice.status, invoice.due_date);
   const amountDue = new Decimal(invoice.amount_due ?? 0);
@@ -541,7 +612,16 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
       <div className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="invoice-title">{invoice.invoice_number || "Draft Invoice"}</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="invoice-title">{invoice.invoice_number || "Draft Invoice"}</h2>
+              <StatusBadge
+                status={invoice.status}
+                isOverdue={isOverdue}
+                showLabel={true}
+                config={invoiceStatusConfig}
+                size="md"
+              />
+            </div>
             <div className="mt-3">
               <InvoiceLifecycle status={invoice.status} isOverdue={isOverdue} />
             </div>
@@ -562,19 +642,30 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
             </thead>
             <tbody>
               {invoice.items.map((item, i) => {
-                const lineTotal = new Decimal(item.quantity || 1).mul(item.unit_price || 0);
+                const lineTotal = new Decimal(item.line_total ?? 0);
                 return (
                   <tr key={item.id || i} className="border-t border-color-subtle">
                     <td className="px-4 py-3 text-center text-sm text-tertiary font-tabular-nums">{i + 1}</td>
-                    <td className="px-4 py-3 text-sm text-primary">{item.description || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-primary">
+                      {item.description || "—"}
+                      {item.tax_rate && Number(new Decimal(item.tax_rate).mul(100)) > 0 && (
+                        <span className="mt-0.5 block text-xs text-tertiary">
+                          {item.is_tax_inclusive
+                            ? `incl. ${new Decimal(item.tax_rate).mul(100).toFixed(2)}% tax${item.tax_name ? ` (${item.tax_name})` : ""}`
+                            : `${new Decimal(item.tax_rate).mul(100).toFixed(2)}% tax${item.tax_name ? ` (${item.tax_name})` : ""}`}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
-                      {item.quantity} {item.unit}
+                      {formatQuantity(item.quantity)} {item.unit}
                     </td>
                     <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
                       {formatCurrency(item.unit_price, invoice.currency)}
                     </td>
                     <td className="px-3 py-3 text-sm text-tertiary text-right font-tabular-nums">
-                      {Number(item.tax_rate) > 0 ? `${new Decimal(item.tax_rate).mul(100).toFixed(2)}%` : "0%"}
+                      {Number(item.tax_rate) > 0
+                        ? `${new Decimal(item.tax_rate).mul(100).toFixed(2)}%${item.tax_name ? ` (${item.tax_name})` : ""}`
+                        : "0%"}
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium text-primary font-tabular-nums">
                       {formatCurrency(lineTotal, invoice.currency)}
@@ -618,7 +709,11 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
                 <span className="text-2xl font-bold text-primary">{formatCurrency(invoice.total, invoice.currency)}</span>
               </div>
             </div>
-            <div className="border-t border-color pt-2.5">
+            <div className="flex justify-between py-2.5 text-sm">
+              <span className="text-tertiary">Paid</span>
+              <span className="text-success-text">+{formatCurrency(invoice.amount_paid, invoice.currency)}</span>
+            </div>
+            <div className="border-t-2 border-color pt-3">
               <div className="flex justify-between">
                 <span className="text-base font-semibold text-primary-brand">Amount Due</span>
                 <span className="text-2xl font-bold text-primary-brand">{formatCurrency(amountDue, invoice.currency)}</span>
@@ -649,6 +744,12 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
       </div>
     </div>
   );
+}
+
+function formatQuantity(qty: string | undefined | null): string {
+  const d = new Decimal(qty ?? 0);
+  if (d.isZero()) return "0";
+  return d.toFixed(2).replace(/\.?0+$/, "");
 }
 
 
