@@ -4,9 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCreditNotes,
-  getCreditNote,
   createCreditNote,
-  updateCreditNote,
   finalizeCreditNote,
   cancelCreditNote,
   applyCreditNote,
@@ -18,7 +16,7 @@ import {
   buildCreditNoteSearchParams,
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
-import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
+import CreditNoteStatusBadge from "../components/CreditNoteStatusBadge";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import { formatCurrency, formatDate } from "../utils/format";
@@ -379,16 +377,19 @@ export default function CreditNotes() {
             ) : (
               creditNotes.map((cn) => (
                 <tr key={cn.id} className="border-b border-color-subtle last:border-b-0 hover:bg-surface-alt">
-                  <td className="py-3 px-4">
+                   <td className="py-3 px-4">
                      <div className="flex flex-col">
-                       <span className="text-sm font-medium text-primary">
+                       <button
+                         onClick={() => navigate(`/app/credit-notes/${cn.id}`)}
+                         className="text-left text-sm font-medium text-primary-brand hover:text-primary-brand-hover"
+                       >
                          {cn.credit_note_number || `Draft #${cn.id.slice(0, 8)}`}
-                       </span>
+                       </button>
                       <span className="text-xs text-secondary">
                         {cn.issue_date ? new Date(cn.issue_date).toLocaleDateString() : "—"}
                       </span>
                     </div>
-                  </td>
+                   </td>
                   <td className="py-3 px-4 text-sm text-secondary">
                     {cn.customer_name || "—"}
                     {cn.customer_email && <span className="text-xs text-tertiary block">{cn.customer_email}</span>}
@@ -405,7 +406,7 @@ export default function CreditNotes() {
                       : <span className="status-success-text">Fully Applied</span>}
                    </td>
                   <td className="py-3 px-4 text-center">
-                    <InvoiceStatusBadge status={cn.status} />
+                     <CreditNoteStatusBadge status={cn.status} />
                   </td>
                    <td className="py-3 px-4 text-center">
                      <div className="flex items-center justify-center gap-2">
@@ -441,14 +442,22 @@ export default function CreditNotes() {
                            Cancel
                          </Button>
                        )}
-                       <Button
-                         variant="ghost"
-                         size="sm"
-                         onClick={() => handleDownloadPdf(cn.id)}
-                         title="Download PDF"
-                       >
-                         PDF
-                       </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/app/credit-notes/${cn.id}/edit`)}
+                          title="Edit"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownloadPdf(cn.id)}
+                          title="Download PDF"
+                        >
+                          PDF
+                        </Button>
                      </div>
                    </td>
                 </tr>

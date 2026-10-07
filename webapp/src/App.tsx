@@ -27,6 +27,8 @@ const ReportSection = lazy(() => import("./pages/ReportSection"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const CreditNotes = lazy(() => import("./pages/CreditNotes"));
+const CreditNoteEditorPage = lazy(() => import("./pages/CreditNoteEditorPage"));
+const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
 const Plans = lazy(() => import("./pages/Plans"));
 
 const Invoices = lazy(() => import("./pages/Invoices"));
@@ -119,6 +121,9 @@ export default function App() {
          <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
         <Route path="quotes/:id" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
         <Route path="credit-notes" element={<Suspense fallback={<Fallback />}><CreditNotes /></Suspense>} />
+          <Route path="credit-notes/new" element={<Suspense fallback={<Fallback />}><CreditNoteEditorPage /></Suspense>} />
+          <Route path="credit-notes/:id" element={<Suspense fallback={<Fallback />}><CreditNoteDetail /></Suspense>} />
+          <Route path="credit-notes/:id/edit" element={<Suspense fallback={<Fallback />}><CreditNoteEditorPage /></Suspense>} />
          <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
          <Route path="receipts/:id" element={<Suspense fallback={<Fallback />}><ReceiptDetail /></Suspense>} />
          <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />

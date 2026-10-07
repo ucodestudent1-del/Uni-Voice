@@ -5,6 +5,7 @@ import { creditNoteRepository, type CreditNoteWithDetails, type CreditNoteCreate
 import { businessRepository } from "../repositories/business.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
 import { invoiceRepository } from "../repositories/invoice.repo.js";
+import { creditNoteNumberService } from "../services/numbering/service.js";
 import {
   creditNoteTemplateRenderer,
   buildCreditNoteTemplateData,
@@ -196,8 +197,9 @@ export class CreditNoteService {
     };
   }
 
-  private async generateNumber(_businessId: string, cnId: string, _cn: CreditNoteWithDetails): Promise<string | null> {
-    return "CN-" + cnId.slice(0, 8).toUpperCase();
+  private async generateNumber(businessId: string, _cnId: string, _cn: CreditNoteWithDetails): Promise<string | null> {
+    const result = await creditNoteNumberService.generate(businessId);
+    return result.number;
   }
 
   private async captureSnapshot(cn: CreditNoteWithDetails): Promise<void> {

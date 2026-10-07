@@ -24,7 +24,7 @@ function pad(num: number, size: number): string {
   return num.toString().padStart(size, "0");
 }
 
-function formatNumber(assignedNumber: number, config: NumberSequenceConfig, date: Date): string {
+function formatNumber(assignedNumber: number, config: NumberSequenceConfig | CreditNoteNumberSequenceConfig, date: Date): string {
   const year = date.getFullYear().toString();
   const padded = pad(assignedNumber, config.padding);
   if (config.includesYear) {
@@ -121,5 +121,89 @@ export class InvoiceNumberService {
     return formatNumber(assignedNumber, _existingConfig, date);
   }
 }
+
+export interface GeneratedCreditNoteNumber {
+  number: string;
+  assignedNumber: number;
+  config: CreditNoteNumberSequenceConfig;
+}
+
+export interface CreditNoteNumberSequenceConfig {
+  prefix: string;
+  nextNumber: number;
+  padding: number;
+  includesYear: boolean;
+}
+
+const DEFAULT_CREDIT_NOTE_CONFIG: Omit<CreditNoteNumberSequenceConfig, "nextNumber"> = {
+  prefix: "CN",
+  padding: 6,
+  includesYear: true,
+};
+
+export class CreditNoteNumberService {
+  async ensureSequence(businessId: string, config?: Partial<CreditNoteNumberSequenceConfig>): Promise<void> {
+    const mergedPrefix = config?.prefix ?? DEFAULT_CREDIT_NOTE_CONFIG.prefix;
+    const mergedPadding = config?.padding ?? DEFAULT_CREDIT_NOTE_CONFIG.padding;
+    const mergedIncludesYear = config?.includesYear ?? DEFAULT_CREDIT_NOTE_CONFIG.includesYear;
+    await query(
+      `INSERT INTO credit_note_number_sequences (business_id, prefix, next_number, padding, includes_year)
+       VALUES ($1, $2, 1, $3, $4)
+       ON CONFLICT (business_id) DO NOTHING`,
+      [businessId, mergedPrefix, mergedPadding, mergedIncludesYear]
+    );
+  }
+
+  async generate(businessId: string, date: Date = new Date()): Promise<GeneratedCreditNoteNumber> {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      await client.query(
+        `INSERT INTO credit_note_number_sequences (business_id, prefix, next_number, padding, includes_year)
+         VALUES ($1, $2, 1, $3, $4)
+         ON CONFLICT (business_id) DO NOTHING`,
+        [businessId, DEFAULT_CREDIT_NOTE_CONFIG.prefix, DEFAULT_CREDIT_NOTE_CONFIG.padding, DEFAULT_CREDIT_NOTE_CONFIG.includesYear]
+      );
+
+      const res = await client.query(
+        `UPDATE credit_note_number_sequences
+         SET next_number = next_number + 1
+         WHERE business_id = $1
+         RETURNING prefix, next_number - 1 AS assigned_number, padding, includes_year`,
+        [businessId]
+      );
+
+      if (res.rowCount === 0) {
+        throw new Error(`Failed to generate credit note number for business ${businessId}`);
+      }
+
+      const row = res.rows[0];
+      const config: CreditNoteNumberSequenceConfig = {
+        prefix: row.prefix,
+        nextNumber: Number(row.assigned_number),
+        padding: Number(row.padding),
+        includesYear: Boolean(row.includes_year),
+      };
+
+      await client.query("COMMIT");
+      const number = formatNumber(config.nextNumber, config, date);
+      logger.info(`Generated credit note number ${number} for business ${businessId}`);
+      return { number, assignedNumber: config.nextNumber, config };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      logger.error({ err: e }, `Credit note number generation failed for business ${businessId}`);
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  format(_existingConfig: CreditNoteNumberSequenceConfig, assignedNumber: number, date: Date): string {
+    return formatNumber(assignedNumber, _existingConfig, date);
+  }
+}
+
+export const creditNoteNumberService = new CreditNoteNumberService();
 
 export const invoiceNumberService = new InvoiceNumberService();
