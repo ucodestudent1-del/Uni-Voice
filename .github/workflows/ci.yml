@@ -228,10 +228,25 @@ jobs:
 
       - name: Run image tests
         run: |
-          docker create --name test-container universal-invoice-generator:latest
+          # Start a PostgreSQL database for the test container
+          docker run -d --name postgres-test \
+            -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=invoice_dev \
+            -p 5432:5432 postgres:16-alpine
+          # Wait for PostgreSQL to be ready
+          timeout 30 sh -c 'until docker exec postgres-test pg_isready -U postgres; do sleep 1; done'
+          # Create and start the test container with proper environment
+          docker create --name test-container \
+            -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/invoice_dev \
+            -e APP_ENV=production \
+            -e APP_PUBLIC_BASE_URL=https://example.com \
+            -e AUTH_JWT_SECRET=test-secret \
+            -p 8080:80 \
+            universal-invoice-generator:latest
           docker start test-container
-          # Verify backend health endpoint
-          sleep 5
-          curl -f http://localhost:4000/api/health || true
+          # Wait for the backend to be healthy
+          timeout 60 sh -c 'until curl -sf http://localhost:8080/api/health >/dev/null 2>&1; do sleep 2; done'
+          curl -f http://localhost:8080/api/health
           docker stop test-container || true
           docker rm test-container || true
+          docker stop postgres-test || true
+          docker rm postgres-test || true

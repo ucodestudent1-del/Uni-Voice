@@ -153,11 +153,14 @@ ENTRYPOINT ["/app/docker-entrypoint.sh"]
 WORKDIR /app
 
 # Production environment variables
-# Override APP_PUBLIC_BASE_URL and SECRET_KEY at deployment time
+# Override APP_PUBLIC_BASE_URL and SECRET_KEY at deployment time.
+# APP_PUBLIC_BASE_URL MUST be set to your public HTTPS domain in production.
+# The empty default below is intentionally insecure-for-local-only; the app
+# will log a warning if it is not overridden, but will still start.
 ENV NODE_ENV=production
 ENV APP_ENV=production
 ENV PORT=4000
-ENV APP_PUBLIC_BASE_URL=http://localhost:4000
+ENV APP_PUBLIC_BASE_URL=
 ENV APP_FRONTEND_URL=
 ENV GOOGLE_CLIENT_ID=
 ENV GOOGLE_CLIENT_SECRET=

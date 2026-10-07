@@ -5,9 +5,20 @@ echo "Starting Universal Invoice Generator..."
 
 cd /app
 
-# Run database migrations on startup (non-fatal if DB not yet ready)
+# Run database migrations on startup with retry (handles DB not being ready yet)
 echo "Running database migrations..."
-node dist/db/migrate.js || echo "Migrations skipped or already applied"
+MIGRATE_ATTEMPT=0
+MIGRATE_MAX_ATTEMPTS=30
+until node dist/db/migrate.js 2>/dev/null; do
+  MIGRATE_ATTEMPT=$((MIGRATE_ATTEMPT + 1))
+  if [ $MIGRATE_ATTEMPT -ge $MIGRATE_MAX_ATTEMPTS ]; then
+    echo "ERROR: Database migrations failed after ${MIGRATE_MAX_ATTEMPTS} attempts."
+    exit 1
+  fi
+  echo "Migrations failed (attempt $MIGRATE_ATTEMPT/$MIGRATE_MAX_ATTEMPTS), retrying in 2s..."
+  sleep 2
+done
+echo "Migrations completed successfully."
 
 # Start the backend API server
 echo "Starting backend API server..."
@@ -24,7 +35,7 @@ while [ $WAITED -lt $MAX_WAIT ]; do
     echo "Backend process exited unexpectedly."
     exit 1
   fi
-  if curl -s http://127.0.0.1:4000/api/health >/dev/null 2>&1; then
+  if curl -sf http://127.0.0.1:4000/api/health >/dev/null 2>&1; then
     echo "Backend is ready."
     BACKEND_READY=true
     break
@@ -39,15 +50,24 @@ if [ "$BACKEND_READY" = false ]; then
   exit 1
 fi
 
-# Start nginx
+# Start nginx (foreground mode, daemon off)
 echo "Starting nginx..."
 nginx -c /app/nginx.conf -g "daemon off;" &
 NGINX_PID=$!
 
-# If either process dies, exit
-wait -n $BACKEND_PID $NGINX_PID
+# Clean up on exit — ensure both processes are terminated
+cleanup() {
+  echo "Shutting down..."
+  kill $BACKEND_PID 2>/dev/null || true
+  kill $NGINX_PID 2>/dev/null || true
+  wait $BACKEND_PID 2>/dev/null || true
+  wait $NGINX_PID 2>/dev/null || true
+  exit 1
+}
 
-# If we get here, a process died — clean up
-kill $BACKEND_PID 2>/dev/null || true
-kill $NGINX_PID 2>/dev/null || true
-exit 1
+trap cleanup INT TERM
+
+# If either process dies, clean up and exit so the container restarts
+wait $BACKEND_PID
+cleanup
+
