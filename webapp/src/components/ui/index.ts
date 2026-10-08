@@ -29,6 +29,7 @@ export { default as PageHeader, type BreadcrumbItem, type PageHeaderProps } from
 export { PageSection, type PageSectionProps } from "./PageSection";
 export { default as Dialog, type DialogProps } from "./Dialog";
 export { FormField, type FormFieldProps, FormTextareaField, type FormTextareaFieldProps } from "./FormField";
+export { DisclosureSection, type DisclosureSectionProps } from "./DisclosureSection";
 export { Section, SectionHeader } from "./Section";
 export { default as KPICard, type KPICardProps, type KpiCardVariant, type KpiCardState, type SparklinePoint } from "./KPICard";
 export { default as FeaturesSection } from "./FeaturesSection";

@@ -1,6 +1,6 @@
 import { Decimal } from "decimal.js";
 import { calculationEngine } from "../domain/calculation.js";
-import type { InvoiceCalculationInput, CalculationResult } from "../domain/calculation.js";
+import type { InvoiceCalculationInput, CalculationResult, FeeInput } from "../domain/calculation.js";
 import { invoiceStateMachine } from "../services/state-machine/invoice-state-machine.js";
 import { invoiceNumberService } from "../services/numbering/service.js";
 import { snapshotService } from "../services/snapshot/snapshot-service.js";
@@ -64,6 +64,11 @@ export interface CreateInvoiceDraftInput {
   depositPaymentPurpose?: string | null;
   lateFeeType?: "none" | "fixed" | "percentage";
   lateFeeValue?: string | number;
+  invoiceDiscount?: string | number | null;
+  invoiceDiscountType?: "fixed" | "percentage";
+  shippingDescription?: string | null;
+  shippingAmount?: string | number;
+  shippingTaxRate?: string | number;
   items?: DraftLineItem[];
   fees?: DraftFee[];
 }
@@ -133,10 +138,27 @@ export class InvoiceService {
         isTaxInclusive: it.isTaxInclusive,
       };
     });
+    const fees: FeeInput[] = [
+      ...invoice.fees.map((f) => ({ description: f.description, amount: f.amount, taxRate: f.taxRate })),
+    ];
+    if (invoice.shippingAmount && !new Decimal(invoice.shippingAmount).isZero()) {
+      fees.push({
+        description: invoice.shippingDescription ?? "Shipping",
+        amount: invoice.shippingAmount,
+        taxRate: invoice.shippingTaxRate,
+      });
+    }
     return {
       currency: invoice.currency,
       lineItems,
-      fees: invoice.fees.map((f) => ({ description: f.description, amount: f.amount, taxRate: f.taxRate })),
+      fees,
+      invoiceDiscount:
+        invoice.invoiceDiscount && !new Decimal(invoice.invoiceDiscount).isZero()
+          ? {
+              type: invoice.invoiceDiscountType as "fixed" | "percentage",
+              value: invoice.invoiceDiscount,
+            }
+          : undefined,
       amountPaid: invoice.amountPaid,
     };
   }
@@ -344,8 +366,13 @@ export class InvoiceService {
       deposit_type: input.depositType,
       deposit_due_date: input.depositDueDate instanceof Date ? input.depositDueDate.toISOString() : input.depositDueDate,
       deposit_payment_purpose: input.depositPaymentPurpose,
-      late_fee_type: input.lateFeeType,
-      late_fee_value: input.lateFeeValue,
+       late_fee_type: input.lateFeeType,
+       late_fee_value: input.lateFeeValue,
+       invoice_discount_value: input.invoiceDiscount,
+       invoice_discount_type: input.invoiceDiscountType,
+       shipping_description: input.shippingDescription,
+       shipping_amount: input.shippingAmount,
+       shipping_tax_rate: input.shippingTaxRate,
     });
     await invoiceRepository.clearPdfCache(id);
     await invoiceRepository.recordEvent(id, {
@@ -425,6 +452,11 @@ export class InvoiceService {
         deposit_payment_purpose: input.depositPaymentPurpose,
         late_fee_type: input.lateFeeType,
         late_fee_value: input.lateFeeValue,
+        invoice_discount_value: input.invoiceDiscount,
+        invoice_discount_type: input.invoiceDiscountType,
+        shipping_description: input.shippingDescription,
+        shipping_amount: input.shippingAmount,
+        shipping_tax_rate: input.shippingTaxRate,
       };
 
       const updatedInvoice = await invoiceRepository.update(businessId, id, metaInput, client);
@@ -437,6 +469,10 @@ export class InvoiceService {
       }
       if (input.fees !== undefined) {
         await invoiceRepository.setFees(businessId, id, input.fees as any, client, now);
+        needsRecalc = true;
+      }
+      if (input.invoiceDiscount !== undefined || input.invoiceDiscountType !== undefined ||
+          input.shippingDescription !== undefined || input.shippingAmount !== undefined || input.shippingTaxRate !== undefined) {
         needsRecalc = true;
       }
 

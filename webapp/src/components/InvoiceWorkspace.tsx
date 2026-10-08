@@ -37,12 +37,11 @@ import {
   getProducts,
   getSuggestedActions,
   getProgressiveAutofill,
-  parseCommandLineItem,
-  recordSpeedMetrics as apiRecordSpeedMetrics,
-  sendInvoice,
-  sendInvoiceSms,
-  setInvoiceAttachments,
-  updateInvoice,
+    parseCommandLineItem,
+    recordSpeedMetrics as apiRecordSpeedMetrics,
+    sendInvoice,
+    sendInvoiceSms,
+    updateInvoice,
 } from "../api/client";
 import { PaymentTermsField, PaymentTermsWithCustomField, computeDueDateFromTerms, resolveTermsFromDueDate } from "./ui/PaymentTermsField";
 import { ServiceAutocomplete } from "./ServiceAutocomplete";
@@ -56,7 +55,7 @@ import {
   type InvoiceCalculationInput,
   type LineItemInput,
 } from "../utils/calculation";
-import { formatCurrency, formatDate, formatTaxRate, parseDecimal } from "../utils/format";
+import { formatCurrency, formatDate, formatTaxRate, fromPercentage, parseDecimal, toPercent } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 import { useInvoiceValidation, type ValidationInput } from "../hooks/useInvoiceValidation";
 import { useAnalytics } from "../hooks/useAnalytics";
@@ -64,7 +63,8 @@ import CustomerSelector from "./CustomerSelector";
 import CommandLineItemInput from "./CommandLineItemInput";
 import FrequentlyInvoicedChips from "./FrequentlyInvoicedChips";
 import QuickRepeatBanner from "./QuickRepeatBanner";
-import AdvancedDetailsAccordion from "./AdvancedDetailsAccordion";
+import InvoiceDetailsSections from "./InvoiceDetailsSections";
+import SmartDefaultsBar from "./SmartDefaultsBar";
 import { Button } from "./ui/Button";
 import { FormField } from "./ui/FormField";
 import InvoicePreviewV2, {
@@ -132,8 +132,13 @@ export interface WorkspaceInvoiceData {
   depositPaymentPurpose?: string | null;
   lateFeeType?: "none" | "fixed" | "percentage";
   lateFeeValue?: string | null;
-  lateFeeDueDate?: string | null;
-  templateId?: string | null;
+   lateFeeDueDate?: string | null;
+   invoiceDiscount?: string | null;
+   invoiceDiscountType?: "fixed" | "percentage";
+   shippingDescription?: string | null;
+   shippingAmount?: string | null;
+   shippingTaxRate?: string | null;
+   templateId?: string | null;
   status: string;
   isFinalized: boolean;
   publicToken?: string | null;
@@ -221,10 +226,23 @@ function buildCalcInput(data: WorkspaceInvoiceData): InvoiceCalculationInput {
     taxRate: f.taxRate ?? "0",
     tax_name: f.taxName,
   }));
+  if (data.shippingAmount && !parseDecimal(data.shippingAmount).isZero()) {
+    fees.push({
+      description: data.shippingDescription ?? "Shipping",
+      amount: data.shippingAmount,
+      taxRate: data.shippingTaxRate ?? "0",
+      tax_name: null,
+    });
+  }
+  const invoiceDiscount =
+    data.invoiceDiscount && !parseDecimal(data.invoiceDiscount).isZero()
+      ? { type: data.invoiceDiscountType ?? "fixed", value: data.invoiceDiscount }
+      : undefined;
   return {
     currency: data.currency as any,
     lineItems,
     fees: fees.length ? fees : undefined,
+    invoiceDiscount,
     amountPaid: data.amountPaid ?? "0",
   };
 }
@@ -295,16 +313,6 @@ function fromApiAttachment(a: ApiInvoiceAttachment): WorkspaceAttachment {
     dataUrl: a.data_url ?? undefined,
     category: a.category,
   };
-}
-
-function fromPercentage(pct: string): string {
-  if (pct === "") return "0";
-  return new Decimal(pct).div(100).toFixed(6);
-}
-
-function toPercent(rate: string | undefined | null): string {
-  const v = new Decimal(rate ?? 0).mul(100);
-  return v.isZero() ? "" : v.toFixed(2);
 }
 
 function toPercentDisplay(rate: string | undefined | null): string {
@@ -466,7 +474,12 @@ export default function InvoiceWorkspace() {
         lateFeeType: "none",
         lateFeeValue: "0",
         lateFeeDueDate: null,
-        templateId: null,
+        invoiceDiscount: null,
+        invoiceDiscountType: "fixed",
+        shippingDescription: null,
+        shippingAmount: "0",
+        shippingTaxRate: "0",
+        templateId: settings.pdf_template_id ?? null,
         status: "draft",
         isFinalized: false,
         publicToken: null,
@@ -541,8 +554,13 @@ export default function InvoiceWorkspace() {
            depositPaymentPurpose: inv.deposit_payment_purpose ?? null,
            lateFeeType: inv.late_fee_type ?? "none",
            lateFeeValue: inv.late_fee_value ?? "0",
-           lateFeeDueDate: inv.late_fee_due_date ?? null,
-           templateId: inv.template_id ?? null,
+            lateFeeDueDate: inv.late_fee_due_date ?? null,
+            invoiceDiscount: inv.invoice_discount ?? null,
+            invoiceDiscountType: inv.invoice_discount_type ?? "fixed",
+            shippingDescription: inv.shipping_description ?? null,
+            shippingAmount: inv.shipping_amount ?? null,
+            shippingTaxRate: inv.shipping_tax_rate ?? "0",
+            templateId: inv.template_id ?? null,
             status: inv.status,
             isFinalized: inv.is_finalized ?? false,
             publicToken: inv.public_token ?? null,
@@ -610,7 +628,18 @@ export default function InvoiceWorkspace() {
     if (!cur) return false;
     setSaveState("saving");
     try {
-      const metaPayload = {
+      const attachmentsPayload = [...cur.beforePhotos, ...cur.afterPhotos, ...cur.attachments].map(
+        (a) => ({
+          name: a.name,
+          size: a.size,
+          type: a.type,
+          category: a.category,
+          dataUrl: a.dataUrl ?? null,
+        })
+      );
+      const attachmentSignature = JSON.stringify(attachmentsPayload);
+
+      const payload = {
         customerId: cur.customerId,
         currency: cur.currency,
         issueDate: cur.issueDate,
@@ -627,33 +656,23 @@ export default function InvoiceWorkspace() {
         lateFeeType: cur.lateFeeType || "none",
         lateFeeValue: cur.lateFeeValue || "0",
         lateFeeDueDate: cur.lateFeeDueDate,
+        invoiceDiscount: cur.invoiceDiscount,
+        invoiceDiscountType: cur.invoiceDiscountType,
+        shippingDescription: cur.shippingDescription,
+        shippingAmount: cur.shippingAmount,
+        shippingTaxRate: cur.shippingTaxRate,
         items: cur.items.map(toApiItem),
         fees: cur.fees,
+        attachments: attachmentsPayload,
       };
 
-      const attachmentPayload = [...cur.beforePhotos, ...cur.afterPhotos, ...cur.attachments].map(
-        (a) => ({
-          name: a.name,
-          size: a.size,
-          type: a.type,
-          category: a.category,
-          dataUrl: a.dataUrl ?? null,
-        })
-      );
-      const attachmentSignature = JSON.stringify(attachmentPayload);
-      const syncAttachments = async (invoiceId: string) => {
-        if (attachmentSignature === lastSavedAttachmentsRef.current) return;
-        await setInvoiceAttachments(invoiceId, attachmentPayload);
-        lastSavedAttachmentsRef.current = attachmentSignature;
-      };
-
-       if (!curId) {
-        const res = await createInvoice(metaPayload);
+      if (!curId) {
+        const res = await createInvoice(payload);
         setInvoiceId(res.invoiceId);
         setLoadedInvoiceId(res.invoiceId);
-        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
-        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
-        await syncAttachments(res.invoiceId);
+        lastSavedItemsRef.current = JSON.stringify(payload.items);
+        lastSavedFeesRef.current = JSON.stringify(payload.fees);
+        lastSavedAttachmentsRef.current = attachmentSignature;
         if (newFlag) {
           navigate(`/app/invoices/${res.invoiceId}/edit`, { replace: true });
         }
@@ -662,11 +681,11 @@ export default function InvoiceWorkspace() {
           currency: cur.currency,
           itemCount: cur.items.length,
         });
-       } else {
-        await updateInvoice(curId, metaPayload);
-        lastSavedItemsRef.current = JSON.stringify(metaPayload.items);
-        lastSavedFeesRef.current = JSON.stringify(metaPayload.fees);
-        await syncAttachments(curId);
+      } else {
+        await updateInvoice(curId, payload);
+        lastSavedItemsRef.current = JSON.stringify(payload.items);
+        lastSavedFeesRef.current = JSON.stringify(payload.fees);
+        lastSavedAttachmentsRef.current = attachmentSignature;
         analytics.track("invoice_saved", {
           invoiceId: curId,
           currency: cur.currency,
@@ -1214,135 +1233,137 @@ export default function InvoiceWorkspace() {
         </button>
       </div>
 
-      <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
-        <div className="flex-shrink-0 border-b border-color bg-surface">
-          <CustomerHeaderSection invoice={invoice} onField={handleField} customers={customers} />
-          <TotalsCard invoice={invoice} calc={calc} onField={handleField} />
-        </div>
-        <div className="overflow-y-auto px-6 py-5">
-          {validation.hasErrors && (
-            <ValidationBanner issues={validation.issues} />
-          )}
-
-          {isNew && !bannerDismissed && (
-           <QuickRepeatBanner<WorkspaceInvoiceData>
-               businessId={business?.id || ""}
-               customerId={invoice?.customerId ?? undefined}
-               onPopulate={handlePopulateFromQuickActions}
-               onDismiss={handleDismissBanner}
-             />
-          )}
-
-          {isNew && invoice.items.length === 0 && (
-            <div className="mb-6">
-              <AiInput
-                onParsed={handleParsedFromAi}
-                businessName={business?.name || business?.legalName}
-                currency={invoice.currency}
-                customerId={invoice.customerId ?? undefined}
-              />
-            </div>
-          )}
-
-          {invoice.items.length === 0 ? (
-            <div className="mb-6 rounded-xl border border-dashed border-color bg-surface-alt py-12 text-center">
-              <FileText className="mx-auto h-12 w-12 text-tertiary/40" />
-              <h3 className="mt-4 text-lg font-semibold text-primary">No line items added yet</h3>
-              <p className="mt-2 max-w-sm text-center text-sm text-tertiary">
-                Add a product or service so your invoice has something to bill for.
-              </p>
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
-                <Button
-                  variant="primary"
-                  size="md"
-                  icon={<Plus className="h-4 w-4" />}
-                  onClick={() => addItem("service")}
-                >
-                  Add a line item
-                </Button>
-                {products.length > 0 && (
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    icon={<Package className="h-4 w-4" />}
-                    onClick={() => {
-                      if (products.length === 1) addFromProduct(products[0]);
-                    }}
-                  >
-                    Add from saved product
-                  </Button>
-                )}
-              </div>
-              {products.length > 0 && (
-                <div className="mt-6 max-w-sm px-4">
-                  <ServiceAutocomplete
-                    products={products}
-                    onSelect={addFromProduct}
-                    placeholder="Search saved services..."
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <LineItemsTable
-              invoice={invoice}
-              calc={calc}
-              onItemChange={handleItemChange}
-              onAdd={addItem}
-              onDuplicate={duplicateItem}
-              onRemove={removeItem}
-              defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
+       <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
+         <div className="flex-shrink-0 border-b border-color bg-surface">
+           <CustomerHeaderSection invoice={invoice} onField={handleField} customers={customers} />
+            <SmartDefaultsBar
+              currency={invoice.currency}
+              taxRate={invoice.taxRate ?? defaultTaxRate}
+              invoiceNumber={invoice.invoiceNumber ?? null}
+              business={business}
+              settings={settings}
+              onCurrencyChange={(v) => handleField("currency", v)}
+              onTaxRateChange={(v) => handleField("taxRate", v)}
             />
-          )}
+           <TotalsCard invoice={invoice} calc={calc} onField={handleField} />
+         </div>
+         <div className="overflow-y-auto px-6 py-5">
+           {validation.hasErrors && (
+             <ValidationBanner issues={validation.issues} />
+           )}
 
-          {products.length > 0 && invoice.items.length > 0 && (
-            <div className="mb-4">
-              <ServiceAutocomplete
-                products={products}
-                onSelect={addFromProduct}
-                placeholder="Search and add another service..."
+           {isNew && !bannerDismissed && (
+            <QuickRepeatBanner<WorkspaceInvoiceData>
+                businessId={business?.id || ""}
+                customerId={invoice?.customerId ?? undefined}
+                onPopulate={handlePopulateFromQuickActions}
+                onDismiss={handleDismissBanner}
               />
-            </div>
-          )}
+           )}
 
-          {isNew && invoice.items.length > 0 && (
-            <div className="mb-4">
-              <FrequentlyInvoicedChips<WorkspaceLineItem>
-                 businessId={business?.id || ""}
-                 customerId={invoice?.customerId ?? undefined}
-                 onAddItem={handleQuickAddItem}
+           {isNew && invoice.items.length === 0 && (
+             <div className="mb-6">
+               <AiInput
+                 onParsed={handleParsedFromAi}
+                 businessName={business?.name || business?.legalName}
+                 currency={invoice.currency}
+                 customerId={invoice.customerId ?? undefined}
                />
-            </div>
-          )}
+             </div>
+           )}
 
-          <FeesSection
-            fees={invoice.fees}
-            onChange={(fees) => updateData({ fees })}
-          />
+           {invoice.items.length === 0 ? (
+             <div className="mb-6 rounded-xl border border-dashed border-color bg-surface-alt py-12 text-center">
+               <FileText className="mx-auto h-12 w-12 text-tertiary/40" />
+               <h3 className="mt-4 text-lg font-semibold text-primary">No line items added yet</h3>
+               <p className="mt-2 max-w-sm text-center text-sm text-tertiary">
+                 Add a product or service so your invoice has something to bill for.
+               </p>
+               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
+                 <Button
+                   variant="primary"
+                   size="md"
+                   icon={<Plus className="h-4 w-4" />}
+                   onClick={() => addItem("service")}
+                 >
+                   Add a line item
+                 </Button>
+                 {products.length > 0 && (
+                   <Button
+                     variant="secondary"
+                     size="md"
+                     icon={<Package className="h-4 w-4" />}
+                     onClick={() => {
+                       if (products.length === 1) addFromProduct(products[0]);
+                     }}
+                   >
+                     Add from saved product
+                   </Button>
+                 )}
+               </div>
+               {products.length > 0 && (
+                 <div className="mt-6 max-w-sm px-4">
+                   <ServiceAutocomplete
+                     products={products}
+                     onSelect={addFromProduct}
+                     placeholder="Search saved services..."
+                   />
+                 </div>
+               )}
+             </div>
+           ) : (
+             <LineItemsTable
+               invoice={invoice}
+               calc={calc}
+               onItemChange={handleItemChange}
+               onAdd={addItem}
+               onDuplicate={duplicateItem}
+               onRemove={removeItem}
+               defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
+             />
+           )}
 
-          <PaymentConfigurationSection
-            invoice={invoice}
-            onField={handleField}
-          />
+           {products.length > 0 && invoice.items.length > 0 && (
+             <div className="mb-4">
+               <ServiceAutocomplete
+                 products={products}
+                 onSelect={addFromProduct}
+                 placeholder="Search and add another service..."
+               />
+             </div>
+           )}
 
-          <NotesSection
-            invoice={invoice}
-            onField={handleField}
-            onFiles={handleFilesSelected}
-            attachments={invoice.attachments}
-            beforePhotos={invoice.beforePhotos}
-            afterPhotos={invoice.afterPhotos}
-            onRemoveAttachment={removeAttachment}
-          />
+           {isNew && invoice.items.length > 0 && (
+             <div className="mb-4">
+               <FrequentlyInvoicedChips<WorkspaceLineItem>
+                  businessId={business?.id || ""}
+                  customerId={invoice?.customerId ?? undefined}
+                  onAddItem={handleQuickAddItem}
+                />
+             </div>
+           )}
 
-          <AdvancedDetailsAccordion
-            data={invoice}
-            onChange={handlePopulateFromQuickActions}
-            defaultOpen={false}
-            compact={false}
-          />
-        </div>
-      </aside>
+           <FeesSection
+             fees={invoice.fees}
+             onChange={(fees) => updateData({ fees })}
+           />
+
+           <InvoiceDetailsSections
+             data={invoice}
+             onField={handleField}
+           />
+
+           <NotesSection
+             invoice={invoice}
+             onField={handleField}
+             onFiles={handleFilesSelected}
+             attachments={invoice.attachments}
+             beforePhotos={invoice.beforePhotos}
+             afterPhotos={invoice.afterPhotos}
+             onRemoveAttachment={removeAttachment}
+           />
+         </div>
+       </aside>
 
       {/* Resize handle - only show on lg+ when preview is visible */}
       <div
@@ -1609,23 +1630,6 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
           </option>
         ))}
       </FormField>
-
-      <FormField
-        label="Tax rate"
-        labelClassName="uppercase"
-        placeholder="e.g. 8.5"
-        value={toPercent(invoice.taxRate ?? "0")}
-        onChange={(e) => onField("taxRate", fromPercentage(e.target.value.replace(/[^\d.]/g, "")))}
-      />
-
-      <FormField
-        label="P.O. #"
-        labelClassName="uppercase"
-        placeholder="Reference #"
-        disabled={invoice.isFinalized}
-        value={invoice.poNumber ?? ""}
-        onChange={(e) => onField("poNumber", e.target.value || null)}
-      />
     </div>
   );
 });
@@ -1989,117 +1993,6 @@ const FeesSection = React.memo(function FeesSection({
         <Plus className="h-3.5 w-3.5" />
         Add another fee
       </button>
-    </div>
-  );
-});
-
-const PaymentConfigurationSection = React.memo(function PaymentConfigurationSection({
-  invoice,
-  onField,
-}: {
-  invoice: WorkspaceInvoiceData;
-  onField: (field: keyof WorkspaceInvoiceData, value: any) => void;
-}) {
-  const depositType = invoice.depositType ?? "none";
-  const depositValue = invoice.depositValue ?? "0";
-  const lateFeeType = invoice.lateFeeType ?? "none";
-  const lateFeeValue = invoice.lateFeeValue ?? "0";
-
-  return (
-    <div className="mb-6 rounded-xl border border-color bg-surface p-4">
-      <h3 className="invoice-section-title mb-3">Payment Configuration</h3>
-
-      <div className="space-y-4">
-        <div>
-          <label className="form-label-secondary">Deposit</label>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <select
-              value={depositType}
-              onChange={(e) => {
-                onField("depositType", e.target.value);
-                onField("depositValue", e.target.value === "none" ? "0" : depositValue);
-              }}
-              className="form-select"
-            >
-              <option value="none">No deposit</option>
-              <option value="fixed">Fixed amount</option>
-              <option value="percentage">Percentage</option>
-            </select>
-            {depositType !== "none" && (
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={depositValue}
-                  onChange={(e) => onField("depositValue", e.target.value)}
-                  placeholder="0.00"
-                  className="input-with-suffix w-full"
-                />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
-                  {depositType === "percentage" ? "%" : invoice.currency}
-                </span>
-              </div>
-            )}
-            <div className="relative">
-              <input
-                type="date"
-                value={invoice.depositDueDate?.split("T")[0] ?? ""}
-                onChange={(e) => onField("depositDueDate", e.target.value || null)}
-                className="form-control"
-              />
-            </div>
-          </div>
-          {depositType !== "none" && (
-            <div className="mt-2">
-              <input
-                type="text"
-                value={invoice.depositPaymentPurpose ?? ""}
-                onChange={(e) => onField("depositPaymentPurpose", e.target.value || null)}
-                placeholder="Payment purpose (e.g. 'Booking deposit')"
-                className="form-control"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-color pt-3">
-          <label className="form-label-secondary">Late Fee</label>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <select
-              value={lateFeeType}
-              onChange={(e) => {
-                onField("lateFeeType", e.target.value);
-                onField("lateFeeValue", e.target.value === "none" ? "0" : lateFeeValue);
-              }}
-              className="form-select"
-            >
-              <option value="none">No late fee</option>
-              <option value="fixed">Fixed amount</option>
-              <option value="percentage">Percentage of total</option>
-            </select>
-            {lateFeeType !== "none" && (
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={lateFeeValue}
-                  onChange={(e) => onField("lateFeeValue", e.target.value)}
-                  placeholder="0.00"
-                  className="input-with-suffix w-full"
-                />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-tertiary">
-                  {lateFeeType === "percentage" ? "%" : invoice.currency}
-                </span>
-              </div>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-tertiary">
-            Applied automatically when the invoice becomes overdue and online payments are available.
-          </p>
-        </div>
-      </div>
     </div>
   );
 });

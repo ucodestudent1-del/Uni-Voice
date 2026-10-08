@@ -48,6 +48,11 @@ export interface CreateInvoiceInput {
   depositPaymentPurpose?: string | null;
   lateFeeType?: "none" | "fixed" | "percentage";
   lateFeeValue?: string | number;
+  invoiceDiscount?: string | number | null;
+  invoiceDiscountType?: "fixed" | "percentage";
+  shippingDescription?: string | null;
+  shippingAmount?: string | number;
+  shippingTaxRate?: string | number;
   items?: InvoiceItemInput[];
   fees?: InvoiceFeeInput[];
   createdBy?: string;
@@ -133,8 +138,9 @@ export class InvoiceRepository {
         `INSERT INTO invoices (id, business_id, customer_id, project_id, po_number, currency, issue_date, due_date, notes, terms,
           template_id, payment_instructions, deposit_amount, deposit_type, deposit_due_date, deposit_payment_purpose,
           late_fee_type, late_fee_value, late_fee_applied, late_fee_applied_amount,
+          invoice_discount_value, invoice_discount_type, shipping_description, shipping_amount, shipping_tax_rate,
           created_at, updated_at, created_by, updated_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$21,$22,$22)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$26,$27,$27)`,
         [
           id, businessId, input.customerId, input.projectId, input.poNumber, input.currency,
           input.issueDate instanceof Date ? input.issueDate.toISOString() : input.issueDate,
@@ -145,6 +151,8 @@ export class InvoiceRepository {
           input.depositPaymentPurpose,
           input.lateFeeType ?? "none", input.lateFeeValue ?? 0,
           false, 0,
+          input.invoiceDiscount ?? 0, input.invoiceDiscountType ?? "fixed",
+          input.shippingDescription ?? null, input.shippingAmount ?? 0, input.shippingTaxRate ?? 0,
           now, input.createdBy,
         ]
       );
@@ -1389,6 +1397,11 @@ async getVolumeTrend(businessId: string, months: number, period: "day" | "week" 
       paymentRiskScore: r.payment_risk_score ? Number(r.paymentRiskScore) : null,
       paymentRiskFactors: r.payment_risk_factors as Record<string, unknown> | null,
       paymentRiskScoredAt: rowToDate(r.payment_risk_scored_at),
+      invoiceDiscount: r.invoice_discount_value as string ?? "0",
+      invoiceDiscountType: (r.invoice_discount_type as "fixed" | "percentage") ?? "fixed",
+      shippingDescription: r.shipping_description as string | null,
+      shippingAmount: r.shipping_amount as string ?? "0",
+      shippingTaxRate: r.shipping_tax_rate as string ?? "0",
     };
   }
 

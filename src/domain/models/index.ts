@@ -199,9 +199,14 @@ export interface Invoice {
   pdfCache?: Buffer | null;
   pdfCacheHash?: string | null;
   pdfCachedAt?: Date | null;
-  paymentRiskScore?: number | null;
-  paymentRiskFactors?: Record<string, unknown> | null;
-  paymentRiskScoredAt?: Date | null;
+   paymentRiskScore?: number | null;
+   paymentRiskFactors?: Record<string, unknown> | null;
+   paymentRiskScoredAt?: Date | null;
+   invoiceDiscount: Decimal.Value;
+   invoiceDiscountType: "fixed" | "percentage";
+   shippingDescription: string | null;
+   shippingAmount: Decimal.Value;
+   shippingTaxRate: Decimal.Value;
 }
 
 export interface InvoiceSnapshot {

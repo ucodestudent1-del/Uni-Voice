@@ -84,3 +84,17 @@ export function parseDecimal(value: string | number | undefined | null): Decimal
 export function decimalToString(d: Decimal): string {
   return d.toFixed(2);
 }
+
+export function fromPercentage(pct: string): string {
+  if (pct === "") return "0";
+  return new Decimal(pct).div(100).toFixed(6);
+}
+
+export function toPercent(rate: string | undefined | null): string {
+  const v = new Decimal(rate ?? 0).mul(100);
+  return v.isZero() ? "" : v.toFixed(2);
+}
+
+export function toPercentDisplay(rate: string | undefined | null): string {
+  return formatTaxRate(rate);
+}

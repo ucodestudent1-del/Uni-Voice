@@ -199,8 +199,13 @@ export interface ApiInvoice {
   late_fee_type?: "none" | "fixed" | "percentage" | null;
   late_fee_value?: string | null;
   late_fee_due_date?: string | null;
-  late_fee_applied?: boolean | null;
+   late_fee_applied?: boolean | null;
   late_fee_applied_amount?: string | null;
+  invoice_discount?: string | null;
+  invoice_discount_type?: "fixed" | "percentage" | null;
+  shipping_description?: string | null;
+  shipping_amount?: string | null;
+  shipping_tax_rate?: string | null;
   notes?: string | null;
   terms?: string | null;
   template_id?: string | null;

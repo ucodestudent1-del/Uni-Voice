@@ -522,6 +522,24 @@
     @apply ring-2;
     ring-color: rgb(var(--color-focus-ring));
   }
+  .form-select-sm {
+    @apply h-8 appearance-none rounded-lg border px-2.5 pr-8 py-1 text-sm focus:outline-none focus:ring-2 box-border;
+    min-height: 2rem;
+    background-color: rgb(var(--color-input-bg));
+    border-color: rgb(var(--color-input-border));
+    color: rgb(var(--color-text));
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23647484' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    padding-right: 2rem;
+  }
+  .form-select-sm::placeholder {
+    color: rgb(var(--color-input-placeholder));
+  }
+  .form-select-sm:focus-visible {
+    @apply ring-2;
+    ring-color: rgb(var(--color-focus-ring));
+  }
   .form-label {
     @apply block text-xs font-medium mb-0.5;
     color: rgb(var(--color-text-secondary));
