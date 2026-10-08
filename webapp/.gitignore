@@ -13,6 +13,9 @@ dist/
 .env.development
 .env.production
 
+# Stale compiled JS artifacts in src/ (should only be in dist/)
+src/**/*.js
+
 # IDE
 .vscode/
 .idea/

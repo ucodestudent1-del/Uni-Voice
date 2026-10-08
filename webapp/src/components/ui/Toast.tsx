@@ -19,7 +19,7 @@ const typeClasses: Record<ToastType, string> = {
   warning: "border-warning-border bg-warning-bg text-warning-text",
 };
 
-export default function Toast({ id, type = "info", title, message, actionLabel, onAction, duration = 5000 }: ToastProps) {
+function Toast({ id, type = "info", title, message, actionLabel, onAction, duration = 5000 }: ToastProps) {
   const [visible, setVisible] = useState(true);
   const Icon = iconMap[type];
 
@@ -66,3 +66,5 @@ export default function Toast({ id, type = "info", title, message, actionLabel, 
     </div>
   );
 }
+
+export default Toast;
