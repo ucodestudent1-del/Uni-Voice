@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
 import { Decimal } from "decimal.js";
-import { CreditCard, FileText, Download, ExternalLink, Check, X, AlertCircle } from "lucide-react";
+import { FileText, ExternalLink, CreditCard } from "lucide-react";
 import { formatCurrency, formatDateLong, formatTaxRateWithName } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
-import type { ApiQuote, ApiQuoteItem, ApiQuoteFee, ApiBusiness, ApiCustomer } from "../types/api";
+import type { ApiQuote, ApiQuoteItem, ApiQuoteFee } from "../api/client";
+import type { ApiBusiness, ApiCustomer } from "../types/api";
 
 export interface PreviewQuoteLineItem {
   description: string;
@@ -49,22 +50,22 @@ export interface PaymentMethod {
 }
 
 export interface PreviewQuote {
-  // Business / Header
+   // Business / Header
   businessName: string;
   businessLegalName?: string | null;
-  businessEmail?: string;
-  businessPhone?: string;
-  businessWebsite?: string;
-  businessAddress?: string;
-  businessLogo?: string;
-  businessTaxId?: string;
-  businessRegistrationNumber?: string;
+  businessEmail?: string | null;
+  businessPhone?: string | null;
+  businessWebsite?: string | null;
+  businessAddress?: string | null;
+  businessLogo?: string | null;
+  businessTaxId?: string | null;
+  businessRegistrationNumber?: string | null;
 
   // Quote metadata
   quoteNumber?: string | null;
   quoteTitle?: string | null;
-  issueDate?: string;
-  dueDate?: string;
+  issueDate?: string | null;
+  dueDate?: string | null;
   expiryDate?: string | null;
   currency: string;
   poNumber?: string | null;
@@ -96,8 +97,8 @@ export interface PreviewQuote {
   scopeOfWork?: string | null;
 
   // Payment
-  paymentMethods?: PaymentMethod[];
-  paymentLink?: string;
+  paymentMethods?: PaymentMethod[] | null;
+  paymentLink?: string | null;
   bankDetails?: string | null;
 
   // Deposit
@@ -124,10 +125,6 @@ const QUOTE_STATUS_CONFIG: Record<string, { label: string; className: string }> 
   rejected: { label: "Rejected", className: "status-error-bg status-error-text" },
   expired: { label: "Expired", className: "status-error-bg status-error-text" },
   converted: { label: "Converted", className: "status-success-bg status-success-text" },
-};
-
-const QUOTE_STATUS_CONFIG_PUBLIC: Record<string, { label: string; className: string }> = {
-  ...QUOTE_STATUS_CONFIG,
 };
 
 function cn(...classes: (string | false | undefined | null)[]): string {
@@ -901,7 +898,7 @@ export function buildPreviewQuote(
     business?.countryCode,
   ]
     .filter(Boolean)
-    .join(", ") || undefined;
+    .join(", ") || null;
 
   const customerAddress = customer
     ? [
@@ -912,9 +909,9 @@ export function buildPreviewQuote(
         customer.address?.postalCode,
         customer.address?.countryCode,
       ]
-      .filter(Boolean)
-      .join(", ") || undefined
-    : undefined;
+    .filter(Boolean)
+    .join(", ") || null
+    : null;
 
   return {
     businessName: business?.name || "Your Business",
@@ -969,7 +966,7 @@ export function buildPreviewQuote(
     scopeOfWork: quote.scope_of_work || null,
     paymentMethods: [],
     paymentLink: undefined,
-    bankDetails: business?.registrationNumber ? null : null,
+    bankDetails: null,
     depositType: (quote.deposit_type as "none" | "fixed" | "percentage") || "none",
     depositValue: quote.deposit_value || null,
     depositDueDate: quote.deposit_due_date || null,
