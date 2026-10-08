@@ -67,12 +67,12 @@ import QuickRepeatBanner from "./QuickRepeatBanner";
 import AdvancedDetailsAccordion from "./AdvancedDetailsAccordion";
 import { Button } from "./ui/Button";
 import { FormField } from "./ui/FormField";
-import InvoicePreview, {
+import InvoicePreviewV2, {
   type PreviewAttachment,
   type PreviewFee,
   type PreviewInvoice,
   type PreviewLineItem,
-} from "./InvoicePreview";
+} from "./InvoicePreviewV2";
 import type { ApiBusiness, ApiCustomer, ApiInvoice, ApiInvoiceAttachment, ApiProduct } from "../types/api";
 
 export type LineItemType = "service" | "labor" | "material" | "part" | "other";
@@ -112,7 +112,9 @@ export interface WorkspaceAttachment {
 export interface WorkspaceInvoiceData {
   customerId?: string | null;
   customer?: ApiCustomer | null;
+  projectId?: string | null;
   invoiceNumber?: string | null;
+  invoiceTitle?: string | null;
   issueDate?: string | null;
    dueDate?: string | null;
    currency: string;
@@ -440,35 +442,37 @@ export default function InvoiceWorkspace() {
   useEffect(() => {
     if (!isNew) return;
      setInvoice({
-       customerId: undefined,
-       customer: null,
-       invoiceNumber: null,
+        customerId: undefined,
+        customer: null,
+        projectId: null,
+        invoiceNumber: null,
+        invoiceTitle: "INVOICE",
         issueDate: todayISO(),
         dueDate: addDaysISO(todayISO(), 30),
         invoiceTerms: "Net 30",
         currency: defaultCurrency,
-       poNumber: null,
-       items: [],
-       fees: [],
-       notes: settings.default_notes ?? "",
-       terms: settings.default_terms ?? "Net 30",
-       paymentInstructions: settings.default_payment_instructions ?? "",
-       taxRate: settings.default_tax_rate ?? "0",
-       amountPaid: "0",
-       depositType: "none",
-       depositValue: "0",
-       depositDueDate: null,
-       depositPaymentPurpose: null,
-       lateFeeType: "none",
-       lateFeeValue: "0",
-       lateFeeDueDate: null,
-       templateId: null,
-       status: "draft",
-       isFinalized: false,
-       publicToken: null,
-       attachments: [],
-       beforePhotos: [],
-       afterPhotos: [],
+        poNumber: null,
+        items: [],
+        fees: [],
+        notes: settings.default_notes ?? "",
+        terms: settings.default_terms ?? "Net 30",
+        paymentInstructions: settings.default_payment_instructions ?? "",
+        taxRate: settings.default_tax_rate ?? "0",
+        amountPaid: "0",
+        depositType: "none",
+        depositValue: "0",
+        depositDueDate: null,
+        depositPaymentPurpose: null,
+        lateFeeType: "none",
+        lateFeeValue: "0",
+        lateFeeDueDate: null,
+        templateId: null,
+        status: "draft",
+        isFinalized: false,
+        publicToken: null,
+        attachments: [],
+        beforePhotos: [],
+        afterPhotos: [],
      });
     setLoadedInvoiceId("new");
   }, [isNew, defaultCurrency, settings]);
@@ -495,10 +499,12 @@ export default function InvoiceWorkspace() {
             }
           }
         }
-         const mapped: WorkspaceInvoiceData = {
-           customerId: inv.customer_id ?? null,
-           customer: cust,
-           invoiceNumber: inv.invoice_number ?? null,
+           const mapped: WorkspaceInvoiceData = {
+            customerId: inv.customer_id ?? null,
+            customer: cust,
+            projectId: inv.project_id ?? null,
+            invoiceNumber: inv.invoice_number ?? null,
+            invoiceTitle: null,
             issueDate: inv.issue_date ? inv.issue_date.split("T")[0] : null,
             dueDate: inv.due_date ? inv.due_date.split("T")[0] : null,
             invoiceTerms: inv.terms && inv.terms.includes('Net') ? inv.terms : (inv.due_date ? resolveTermsFromDueDate(inv.issue_date ? inv.issue_date.split("T")[0] : todayISO(), inv.due_date.split("T")[0]) : "Net 30"),
@@ -983,8 +989,31 @@ export default function InvoiceWorkspace() {
         ? `Please pay ${fmt(calc.amountDue, invoice.currency)} by the due date.`
         : undefined) ??
       undefined;
+
+    const resolvedCustomer =
+      invoice.customer ?? customers.find((c) => c.id === invoice.customerId) ?? null;
+
+    const paymentMethods: PreviewInvoice["paymentMethods"] = [];
+    const bankDetails = invoice.bankDetails ?? undefined;
+    if (bankDetails) {
+      paymentMethods.push({
+        type: "bank",
+        label: "Bank Transfer",
+        details: bankDetails,
+      });
+    }
+    const onlineUrl = invoice.paymentPortalUrl;
+    if (onlineUrl) {
+      paymentMethods.push({
+        type: "custom",
+        label: "Online Payment",
+        url: onlineUrl,
+      });
+    }
+
     return {
       businessName: business?.name || business?.legalName || "Untitled Business",
+      businessLegalName: business?.legalName ?? null,
       businessEmail: business?.email ?? undefined,
       businessPhone: business?.phone ?? undefined,
       businessWebsite: business?.website ?? undefined,
@@ -992,20 +1021,34 @@ export default function InvoiceWorkspace() {
       businessLogo: business?.logoUrl ?? undefined,
       businessTaxId: business?.taxId ?? undefined,
       businessRegistrationNumber: business?.registrationNumber ?? undefined,
-      customerName: invoice.customer?.name ?? customers.find((c) => c.id === invoice.customerId)?.name ?? undefined,
-      customerCompanyName:
-        invoice.customer?.companyName ?? customers.find((c) => c.id === invoice.customerId)?.companyName ?? undefined,
-      customerEmail: invoice.customer?.email ?? customers.find((c) => c.id === invoice.customerId)?.email ?? undefined,
-      customerPhone: invoice.customer?.phone ?? customers.find((c) => c.id === invoice.customerId)?.phone ?? undefined,
-      customerAddress: invoice.customer ? customerAddressString(invoice.customer) : undefined,
+      customerName: resolvedCustomer?.name ?? undefined,
+      customerCompanyName: resolvedCustomer?.companyName ?? undefined,
+      customerEmail: resolvedCustomer?.email ?? undefined,
+      customerPhone: resolvedCustomer?.phone ?? undefined,
+      customerAddress: resolvedCustomer ? customerAddressString(resolvedCustomer) : undefined,
+      customerTaxId: resolvedCustomer?.taxId ?? resolvedCustomer?.address?.taxId ?? undefined,
       invoiceNumber: invoice.invoiceNumber ?? (invoiceId ? "Draft" : undefined),
-       issueDate: invoice.issueDate ?? undefined,
-       dueDate: invoice.dueDate ?? undefined,
+      invoiceTitle: "INVOICE",
+      issueDate: invoice.issueDate ?? undefined,
+      dueDate: invoice.dueDate ?? undefined,
       currency: invoice.currency,
       poNumber: invoice.poNumber ?? undefined,
+      projectName: invoice.projectId || undefined,
+       terms: invoice.invoiceTerms || invoice.terms ? invoice.invoiceTerms || invoice.terms : undefined,
       notes: invoice.notes ?? undefined,
-      terms: invoice.terms ?? undefined,
       paymentInstructions,
+      paymentMethods,
+      paymentLink:
+        invoice.isFinalized && invoice.publicToken
+          ? `${window.location.origin}/invoice/${invoice.publicToken}`
+          : undefined,
+      bankDetails,
+      depositType: invoice.depositType ?? "none",
+      depositValue: invoice.depositValue ?? "0",
+      depositDueDate: invoice.depositDueDate ?? null,
+      depositPaymentPurpose: invoice.depositPaymentPurpose ?? null,
+      depositPaid: invoice.depositType === "none" ? "0" : (invoice.depositValue ?? "0"),
+      depositDue: invoice.depositType === "none" ? "0" : (invoice.depositValue ?? "0"),
       items: previewItems,
       fees: previewFees,
       subtotal: calc.subtotal.toFixed(2),
@@ -1017,10 +1060,7 @@ export default function InvoiceWorkspace() {
       amountDue: calc.amountDue.toFixed(2),
       status: invoice.isFinalized ? invoice.status : "draft",
       isFinalized: invoice.isFinalized,
-      paymentLink:
-        invoice.isFinalized && invoice.publicToken
-          ? `${window.location.origin}/invoice/${invoice.publicToken}`
-          : undefined,
+      attachments: attachments,
     };
   }, [invoice, calc, business, customers, invoiceId, allAttachments]);
 
@@ -1320,9 +1360,9 @@ export default function InvoiceWorkspace() {
          <div className="border-b border-color bg-surface px-4 py-2 text-center text-xs text-tertiary">
            {invoice.isFinalized ? "Customer view" : "Live preview (not yet sent)"}
          </div>
-         <div className="flex-1 overflow-y-auto p-4">
-           {previewInvoice ? <InvoicePreview invoice={previewInvoice} /> : null}
-         </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            {previewInvoice ? <InvoicePreviewV2 invoice={previewInvoice} /> : null}
+          </div>
         {previewInvoice && previewInvoice.amountDue && Number(parseDecimal(previewInvoice.amountDue).toFixed(2)) > 0 && (
           <div className="border-t border-color p-6 text-center">
             <a
@@ -2506,7 +2546,7 @@ const PreviewDialog = React.memo(function PreviewDialog({
           </div>
         </div>
         <div className="p-6">
-          <InvoicePreview invoice={invoice} />
+          <InvoicePreviewV2 invoice={invoice} />
         </div>
       </div>
     </div>
