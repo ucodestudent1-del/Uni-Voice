@@ -6,23 +6,29 @@ import {
   CalendarDays,
   Check,
   Clipboard,
+  Copy,
   CreditCard,
   Download,
   Mail,
   MessageCircle,
   Share2,
+   Sparkles,
 } from "lucide-react";
 import {
   createInvoice,
   finalizeInvoice,
   getBusiness,
+  getCustomers,
   getInvoice,
   getInvoicePdf,
+  getInvoices,
   getProducts,
   sendInvoice,
 } from "../api/client";
 import CustomerSelector from "../components/CustomerSelector";
 import { AiInput } from "../components/AiInput";
+import { PaymentTermsWithCustomField, computeDueDateFromTerms } from "../components/ui/PaymentTermsField";
+import { ServiceAutocomplete } from "../components/ServiceAutocomplete";
 import { formatCurrency } from "../utils/format";
 import EmptyState from "@/components/ui/EmptyState";
 import { FileText, AlertCircle } from "lucide-react";
@@ -51,9 +57,11 @@ function publicInvoiceUrl(token: string) {
 
 export default function QuickInvoicePage() {
   const navigate = useNavigate();
-  const [business, setBusiness] = useState<ApiBusiness | null>(null);
+   const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [customers, setCustomers] = useState<ApiCustomer[]>([]);
   const [customer, setCustomer] = useState<ApiCustomer | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState("");
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -61,6 +69,7 @@ export default function QuickInvoicePage() {
   const [taxRate, setTaxRate] = useState("0");
   const [issueDate, setIssueDate] = useState(todayValue());
   const [dueDate, setDueDate] = useState(defaultDueValue());
+  const [invoiceTerms, setInvoiceTerms] = useState("Net 14");
   const [notes, setNotes] = useState("");
   const [paymentInstructions, setPaymentInstructions] = useState("Pay securely using the payment link on this invoice.");
   const [currencyOverride, setCurrencyOverride] = useState<string | null>(null);
@@ -81,12 +90,14 @@ export default function QuickInvoicePage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const [businessData, productData] = await Promise.all([
-        getBusiness(),
-        getProducts({ limit: 100 }),
-      ]);
-      setBusiness(businessData.business);
-      setProducts(productData.products ?? []);
+       const [businessData, productData, customerData] = await Promise.all([
+         getBusiness(),
+         getProducts({ limit: 100 }),
+         getCustomers({ limit: 100, includeArchived: false }),
+       ]);
+       setBusiness(businessData.business);
+       setProducts(productData.products ?? []);
+       setCustomers(customerData.data ?? []);
     } catch (err: any) {
       setLoadError(err.response?.data?.error || "Could not load invoice details");
     } finally {
@@ -127,6 +138,7 @@ export default function QuickInvoicePage() {
 
   function selectCustomer(nextCustomer: ApiCustomer | undefined) {
     setCustomer(nextCustomer ?? null);
+    setCustomerId(nextCustomer?.id ?? null);
   }
 
   function handleAiParsed(parsed: ApiParsedDocumentResult) {
@@ -142,12 +154,20 @@ export default function QuickInvoicePage() {
       setQuantity(String(firstItem.quantity));
       setUnitPrice(String(firstItem.unitPrice));
       if (firstItem.taxRate !== undefined) setTaxRate(String(firstItem.taxRate));
-      if (parsed.fields.currency) setCurrencyOverride(parsed.fields.currency);
-      if (parsed.fields.notes) setNotes(parsed.fields.notes);
-    }
-  }
+       if (parsed.fields.currency) setCurrencyOverride(parsed.fields.currency);
+       if (parsed.fields.notes) setNotes(parsed.fields.notes);
+     }
+   }
 
-  function clearAiParsed() {
+    const handleTermsChange = (terms: string) => {
+      setInvoiceTerms(terms);
+      if (terms !== "Custom" && issueDate) {
+        const newDue = computeDueDateFromTerms(issueDate, terms);
+        if (newDue) setDueDate(newDue);
+      }
+    };
+
+    function clearAiParsed() {
     setAiParsed(null);
     setDescription("");
     setQuantity("1");
@@ -366,20 +386,54 @@ if (loading) {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-bg text-primary-brand">1</span>
               <h1 className="text-xl font-bold text-primary">Who is this for?</h1>
             </div>
-            <CustomerSelector
-              value={customer?.id}
-              onChange={(customerId) => {
-                if (!customerId) setCustomer(null);
-              }}
-              onCustomerChange={selectCustomer}
-              placeholder="Select or add a customer"
-            />
+             <CustomerSelector
+               value={customer?.id}
+               onChange={(customerId) => {
+                 if (!customerId) setCustomer(null);
+                 else setCustomerId(customerId);
+               }}
+               onCustomerChange={selectCustomer}
+               placeholder="Select or add a customer"
+             />
             {customer && (
               <div className="mt-3 rounded-lg bg-surface-alt p-3 text-sm text-secondary">
                 <span className="font-medium text-primary">{customer.name}</span>
                 {customer.email && <span> • {customer.email}</span>}
                 {customer.phone && <span> • {customer.phone}</span>}
               </div>
+            )}
+            {customerId && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await getInvoices({ customerId: customerId, limit: 1 });
+                    const last = res?.invoices?.[0];
+                    if (last?.id) {
+                      const detail = await getInvoice(last.id);
+                      const inv = detail.invoice;
+                      if (inv) {
+                        setCustomer(customers.find(c => c.id === inv.customer_id) || null);
+                        setDescription(inv.items?.[0]?.description || "");
+                        setQuantity(String(inv.items?.[0]?.quantity || 1));
+                        setUnitPrice(inv.items?.[0]?.unit_price || "0.00");
+                        setTaxRate(inv.items?.[0]?.tax_rate || "0");
+                        setIssueDate(inv.issue_date ? inv.issue_date.split("T")[0] : todayValue());
+                        setDueDate(inv.due_date ? inv.due_date.split("T")[0] : defaultDueValue());
+                        setInvoiceTerms(inv.terms || "Net 30");
+                        setNotes(inv.notes || "");
+                        setCurrencyOverride(inv.currency || null);
+                      }
+                    }
+                  } catch (err: any) {
+                    setAction({ type: "error", text: err.response?.data?.error || "Failed to load previous invoice" });
+                  }
+                }}
+                className="mt-3 flex items-center gap-2 rounded-lg border border-color-subtle bg-surface-alt px-4 py-2.5 text-sm font-medium text-secondary hover:bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <Copy className="h-4 w-4" />
+                Duplicate previous invoice
+              </button>
             )}
           </section>
 
@@ -395,21 +449,18 @@ if (loading) {
               <h2 className="text-xl font-bold text-primary">What did you do?</h2>
             </div>
              <div className="space-y-3">
-               <label className="block">
-                 <span className="mb-1 block text-sm font-medium text-secondary">Saved service</span>
-                <select
-                  value={serviceId}
-                  onChange={(event) => setServiceId(event.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
-                >
-                  <option value="">Custom work description</option>
-                  {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.name} — {formatCurrency(product.defaultUnitPrice, product.defaultCurrency || currency)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+               <div className="mb-4">
+                 <ServiceAutocomplete
+                   products={products}
+                   onSelect={(product) => {
+                     setServiceId(product.id);
+                     setDescription(product.description || product.name);
+                     setUnitPrice(product.defaultUnitPrice || "0.00");
+                     setTaxRate(product.defaultTaxRate || "0");
+                   }}
+                   placeholder="Search saved services..."
+                 />
+               </div>
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-secondary">Work description</span>
                 <textarea
@@ -467,26 +518,29 @@ if (loading) {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-bg text-primary-brand">3</span>
               <h2 className="text-xl font-bold text-primary">When is it due?</h2>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1 flex items-center gap-1.5 text-sm font-medium text-secondary"><CalendarDays className="h-4 w-4" /> Issue date</span>
-                <input
-                  type="date"
-                  value={issueDate}
-                  onChange={(event) => setIssueDate(event.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1 flex items-center gap-1.5 text-sm font-medium text-secondary"><CalendarDays className="h-4 w-4" /> Due date</span>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(event) => setDueDate(event.target.value)}
-                  className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
-                />
-              </label>
-            </div>
+             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+               <label className="block">
+                 <span className="mb-1 flex items-center gap-1.5 text-sm font-medium text-secondary"><CalendarDays className="h-4 w-4" /> Issue date</span>
+                 <input
+                   type="date"
+                   value={issueDate}
+                   onChange={(event) => {
+                     setIssueDate(event.target.value);
+                     setTimeout(() => handleTermsChange(invoiceTerms), 0);
+                   }}
+                   className="w-full rounded-lg border border-input-border px-3 py-2.5 text-sm focus:border-primary-500 focus-ring-primary"
+                 />
+               </label>
+               <div className="block">
+                 <PaymentTermsWithCustomField
+                   issueDate={issueDate}
+                   dueDate={dueDate}
+                   terms={invoiceTerms}
+                   onTermsChange={handleTermsChange}
+                   onDueDateChange={(d) => setDueDate(d ?? defaultDueValue())}
+                 />
+               </div>
+             </div>
             <div className="mt-4 space-y-3">
               <label className="block">
                 <span className="mb-1 block text-sm font-medium text-secondary">Notes for the customer</span>
@@ -560,10 +614,14 @@ if (loading) {
                   <td className="py-2 text-tertiary">Issue date</td>
                   <td className="text-right text-secondary">{issueDate}</td>
                 </tr>
-                <tr>
-                  <td className="py-2 text-tertiary">Due date</td>
-                  <td className="text-right text-secondary">{dueDate}</td>
-                </tr>
+                 <tr>
+                   <td className="py-2 text-tertiary">Payment Terms</td>
+                   <td className="text-right text-secondary">{invoiceTerms}</td>
+                 </tr>
+                 <tr>
+                   <td className="py-2 text-tertiary">Due date</td>
+                   <td className="text-right text-secondary">{dueDate}</td>
+                 </tr>
               </tbody>
             </table>
 

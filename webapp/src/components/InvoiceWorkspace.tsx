@@ -14,14 +14,15 @@ import {
   Package,
   Plus,
   Receipt,
+  Sparkles,
    RefreshCw,
    Save,
    Send,
    Smartphone,
    Trash2,
-  Upload,
-  Wrench,
-  X,
+   Upload,
+   Wrench,
+   X,
 } from "lucide-react";
 import {
   createInvoice,
@@ -43,6 +44,12 @@ import {
   setInvoiceAttachments,
   updateInvoice,
 } from "../api/client";
+import { PaymentTermsField, PaymentTermsWithCustomField, computeDueDateFromTerms, resolveTermsFromDueDate } from "./ui/PaymentTermsField";
+import { ServiceAutocomplete } from "./ServiceAutocomplete";
+import { AiInput } from "./AiInput";
+import type { ApiParsedDocumentResult } from "../api/client";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { getShortcutsHelp } from "../hooks/useKeyboardShortcuts";
 import {
   calculationEngine,
   type FeeInput,
@@ -107,8 +114,8 @@ export interface WorkspaceInvoiceData {
   customer?: ApiCustomer | null;
   invoiceNumber?: string | null;
   issueDate?: string | null;
-  dueDate?: string | null;
-  currency: string;
+   dueDate?: string | null;
+   currency: string;
   poNumber?: string | null;
   items: WorkspaceLineItem[];
   fees: WorkspaceFee[];
@@ -436,9 +443,10 @@ export default function InvoiceWorkspace() {
        customerId: undefined,
        customer: null,
        invoiceNumber: null,
-       issueDate: todayISO(),
-       dueDate: addDaysISO(todayISO(), 30),
-       currency: defaultCurrency,
+        issueDate: todayISO(),
+        dueDate: addDaysISO(todayISO(), 30),
+        invoiceTerms: "Net 30",
+        currency: defaultCurrency,
        poNumber: null,
        items: [],
        fees: [],
@@ -491,8 +499,9 @@ export default function InvoiceWorkspace() {
            customerId: inv.customer_id ?? null,
            customer: cust,
            invoiceNumber: inv.invoice_number ?? null,
-           issueDate: inv.issue_date ? inv.issue_date.split("T")[0] : null,
-           dueDate: inv.due_date ? inv.due_date.split("T")[0] : null,
+            issueDate: inv.issue_date ? inv.issue_date.split("T")[0] : null,
+            dueDate: inv.due_date ? inv.due_date.split("T")[0] : null,
+            invoiceTerms: inv.terms && inv.terms.includes('Net') ? inv.terms : (inv.due_date ? resolveTermsFromDueDate(inv.issue_date ? inv.issue_date.split("T")[0] : todayISO(), inv.due_date.split("T")[0]) : "Net 30"),
            currency: inv.currency,
            poNumber: inv.po_number ?? null,
             items: (inv.items ?? []).map((it): WorkspaceLineItem => ({
@@ -602,7 +611,7 @@ export default function InvoiceWorkspace() {
         dueDate: cur.dueDate,
         poNumber: cur.poNumber,
         notes: cur.notes,
-        terms: cur.terms,
+        terms: cur.invoiceTerms || cur.terms,
         paymentInstructions: cur.paymentInstructions,
         templateId: cur.templateId,
         depositType: cur.depositType || "none",
@@ -715,6 +724,58 @@ export default function InvoiceWorkspace() {
     markDirtyAndSchedule();
   };
 
+  const handleParsedFromAi = (result: ApiParsedDocumentResult) => {
+    const fields = result.fields;
+    if (fields.customerId) {
+      updateData({ customerId: fields.customerId });
+    }
+    if (fields.currency) {
+      updateData({ currency: fields.currency });
+    }
+    if (fields.dueDate) {
+      updateData({ dueDate: fields.dueDate.split("T")[0] });
+    }
+    if (fields.notes) {
+      setInvoice((prev) =>
+        prev ? { ...prev, notes: (prev.notes ?? "") + (prev.notes ? "\n\n" : "") + fields.notes! } : prev
+      );
+    }
+    if (fields.taxRate) {
+      updateData({ taxRate: String(fields.taxRate) });
+    }
+    if (fields.items && fields.items.length > 0) {
+      const newItems: WorkspaceLineItem[] = fields.items.map((item) => ({
+        id: `li_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        type: "service",
+        description: item.description,
+        quantity: String(item.quantity ?? 1),
+        unit: item.unit ?? "each",
+        unitPrice: String(item.unitPrice ?? 0),
+        discount: "",
+        discountType: "fixed",
+        taxRate: item.taxRate ? String(item.taxRate) : undefined,
+        isTaxInclusive: item.isTaxInclusive ?? false,
+        productId: null,
+      }));
+      setInvoice((prev) =>
+        prev ? { ...prev, items: [...prev.items, ...newItems] } : prev
+      );
+      markDirtyAndSchedule();
+    }
+    if (fields.fees && fields.fees.length > 0) {
+      const newFees: WorkspaceFee[] = fields.fees.map((fee) => ({
+        description: fee.description,
+        amount: String(fee.amount),
+        taxRate: fee.taxRate ? String(fee.taxRate) : undefined,
+        taxName: null,
+      }));
+      setInvoice((prev) =>
+        prev ? { ...prev, fees: [...prev.fees, ...newFees] } : prev
+      );
+      markDirtyAndSchedule();
+    }
+  };
+
   const handleDismissBanner = () => {
     setBannerDismissed(true);
   };
@@ -750,6 +811,44 @@ export default function InvoiceWorkspace() {
       recordSpeedMetrics();
     }
   }, [invoice?.isFinalized, recordSpeedMetrics]);
+
+  const serviceAutocompleteRef = useRef<HTMLInputElement>(null);
+  const aiInputRef = useRef<HTMLInputElement>(null);
+
+  useKeyboardShortcuts({
+    enabled: !invoice?.isFinalized && !reviewOpen,
+    onSave: () => saveTimerRef.current !== null ? doSave() : undefined,
+    onFinalize: () => {
+      if (!validation.hasErrors) {
+        setReviewStep("review");
+        setReviewError(null);
+        setReviewOpen(true);
+      }
+    },
+    onSend: () => {
+      if (!validation.hasErrors) {
+        handleReviewAndSend();
+      }
+    },
+    onDuplicate: () => handleDuplicate(),
+    onAddItem: () => addItem("service"),
+    onAddFee: () => {
+      const feeInput = document.querySelector('[data-fee-input="true"]') as HTMLInputElement | null;
+      if (feeInput) {
+        feeInput.focus();
+      }
+    },
+    onFocusSearch: () => {
+      serviceAutocompleteRef.current?.focus();
+    },
+    onTogglePreview: () => setPreviewMobileOpen((p) => !p),
+    onNextField: undefined,
+    onPrevField: undefined,
+    onCancel: () => {
+      if (reviewOpen) setReviewOpen(false);
+    },
+    onDelete: () => undefined,
+  });
 
   const handleItemChange = (itemId: string, patch: Partial<WorkspaceLineItem>) => {
     setInvoice((prev) =>
@@ -1095,14 +1194,14 @@ export default function InvoiceWorkspace() {
           )}
 
           {isNew && invoice.items.length === 0 && (
-            <CommandLineItemInput<WorkspaceLineItem>
-              key="command-input"
-              onAddItem={handleQuickAddItem}
-              products={products}
-              recentEntries={quickActions?.recentEntries ?? []}
-              autoFocus={isNew}
-              compact={false}
-            />
+            <div className="mb-6">
+              <AiInput
+                onParsed={handleParsedFromAi}
+                businessName={business?.name || business?.legalName}
+                currency={invoice.currency}
+                customerId={invoice.customerId ?? undefined}
+              />
+            </div>
           )}
 
           {invoice.items.length === 0 ? (
@@ -1134,15 +1233,14 @@ export default function InvoiceWorkspace() {
                   </Button>
                 )}
               </div>
-              <div className="mt-6">
-                <FrequentlyInvoicedChips<WorkspaceLineItem>
-                   businessId={business?.id || ""}
-                   customerId={invoice?.customerId ?? undefined}
-                   onAddItem={handleQuickAddItem}
-                 />
-              </div>
-              {products.length > 1 && (
-                <SavedServicesBar products={products} onSelect={addFromProduct} />
+              {products.length > 0 && (
+                <div className="mt-6 max-w-sm px-4">
+                  <ServiceAutocomplete
+                    products={products}
+                    onSelect={addFromProduct}
+                    placeholder="Search saved services..."
+                  />
+                </div>
               )}
             </div>
           ) : (
@@ -1158,7 +1256,13 @@ export default function InvoiceWorkspace() {
           )}
 
           {products.length > 0 && invoice.items.length > 0 && (
-            <SavedServicesBar products={products} onSelect={addFromProduct} />
+            <div className="mb-4">
+              <ServiceAutocomplete
+                products={products}
+                onSelect={addFromProduct}
+                placeholder="Search and add another service..."
+              />
+            </div>
           )}
 
           {isNew && invoice.items.length > 0 && (
@@ -1369,8 +1473,8 @@ const WorkspaceHeader = React.memo(function WorkspaceHeader({
           </span>
         )}
         {!invoiceId && isNew && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-warning-bg px-2.5 py-0.5 text-xs font-medium text-warning-text">
-            <AlertCircle className="h-3 w-3" /> Not yet saved
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-bg px-2.5 py-0.5 text-xs font-medium text-primary-brand">
+            <Sparkles className="h-3 w-3" /> AI Quick Entry ready
           </span>
         )}
       </div>
@@ -1434,12 +1538,22 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
         onChange={(e) => onField("issueDate", e.target.value || null)}
       />
 
-      <FormField
-        label="Due date"
-        labelClassName="uppercase"
-        type="date"
-        value={invoice.dueDate ?? ""}
-        onChange={(e) => onField("dueDate", e.target.value || null)}
+      <PaymentTermsWithCustomField
+        issueDate={invoice.issueDate}
+        dueDate={invoice.dueDate}
+        terms={invoice.invoiceTerms ?? invoice.terms ?? "Net 30"}
+        onTermsChange={(terms) => {
+          onField("invoiceTerms", terms);
+          if (terms !== "Custom" && invoice.issueDate) {
+            const newDue = computeDueDateFromTerms(invoice.issueDate, terms);
+            if (newDue) onField("dueDate", newDue);
+          }
+        }}
+        onDueDateChange={(dueDate) => {
+          onField("dueDate", dueDate);
+          onField("invoiceTerms", "Custom");
+        }}
+        disabled={invoice.isFinalized}
       />
 
       <FormField
@@ -2135,7 +2249,7 @@ const ActionFooter = React.memo(function ActionFooter({
   validation: ReturnType<typeof useInvoiceValidation>;
 }) {
   return (
-    <footer className="flex h-16 items-center justify-between border-t border-color bg-surface px-6">
+    <footer className="sticky bottom-0 z-10 flex h-16 items-center justify-between border-t border-color bg-surface px-6 shadow-md">
       <div className="flex items-center gap-2">
         <Button variant="secondary" size="sm" onClick={onCreateAnother}>
           Create another

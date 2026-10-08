@@ -7,9 +7,12 @@ export interface AiInputProps {
   onParsed: (result: ApiParsedDocumentResult) => void;
   onClear?: () => void;
   hasParsedData?: boolean;
+  businessName?: string | null;
+  currency?: string;
+  customerId?: string;
 }
 
-export function AiInput({ onParsed, onClear, hasParsedData }: AiInputProps) {
+export function AiInput({ onParsed, onClear, hasParsedData, businessName, currency, customerId }: AiInputProps) {
   const [text, setText] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [result, setResult] = useState<ApiParsedDocumentResult | null>(null);

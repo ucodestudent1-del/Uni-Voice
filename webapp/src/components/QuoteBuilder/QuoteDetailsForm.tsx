@@ -1,5 +1,6 @@
 import { SUPPORTED_CURRENCIES } from "@/utils/currency";
 import type { QuoteBuilderData } from "./types";
+import { PaymentTermsWithCustomField, computeDueDateFromTerms } from "@/components/ui/PaymentTermsField";
 
 interface QuoteDetailsFormProps {
   data: QuoteBuilderData;
@@ -40,13 +41,23 @@ export function QuoteDetailsForm({ data, onChange, currencyLocked }: QuoteDetail
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Due Date</label>
-          <input
-            type="date"
-            value={data.dueDate}
-            onChange={(e) => onChange("dueDate", e.target.value)}
-            className="w-full rounded-lg border border-input-border bg-surface-alt px-3 py-1.5 text-sm text-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        <div className="block">
+          <label className="block text-xs font-medium text-tertiary uppercase mb-0.5">Payment Terms</label>
+          <PaymentTermsWithCustomField
+            issueDate={data.issueDate}
+            dueDate={data.dueDate}
+            terms={data.invoiceTerms ?? "Net 30"}
+            onTermsChange={(terms) => {
+              onChange("invoiceTerms", terms);
+              if (terms !== "Custom" && data.issueDate) {
+                const newDue = computeDueDateFromTerms(data.issueDate, terms);
+                if (newDue) onChange("dueDate", newDue);
+              }
+            }}
+            onDueDateChange={(dueDate) => {
+              onChange("dueDate", dueDate);
+              onChange("invoiceTerms", "Custom");
+            }}
           />
         </div>
 

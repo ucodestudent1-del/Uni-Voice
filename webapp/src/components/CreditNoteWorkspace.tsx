@@ -8,10 +8,12 @@ import {
   FileText,
   Layers,
   LayoutDashboard,
+  Package,
   Plus,
   RefreshCw,
   Save,
   Send,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -27,6 +29,8 @@ import {
   getProducts,
   updateCreditNote,
 } from "../api/client";
+import type { ApiParsedDocumentResult } from "../api/client";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import {
   calculationEngine,
   type FeeInput,
@@ -40,6 +44,8 @@ import CustomerSelector from "./CustomerSelector";
 import CommandLineItemInput from "./CommandLineItemInput";
 import FrequentlyInvoicedChips from "./FrequentlyInvoicedChips";
 import QuickRepeatBanner from "./QuickRepeatBanner";
+import { AiInput } from "./AiInput";
+import { ServiceAutocomplete } from "./ServiceAutocomplete";
 import { Button } from "./ui/Button";
 import { FormField } from "./ui/FormField";
 import { ConfirmationDialog } from "./ui/ConfirmationDialog";
@@ -69,6 +75,7 @@ export interface WorkspaceCreditNoteData {
   customer?: ApiCustomer | null;
   creditNoteNumber?: string | null;
   issueDate?: string | null;
+  invoiceTerms?: string | null;
   currency: string;
   referenceInvoiceId?: string | null;
   referenceInvoiceNumber?: string | null;
@@ -418,7 +425,7 @@ export default function CreditNoteWorkspace() {
         reason: cur.reason,
         notes: cur.notes,
         internalNotes: cur.internalNotes,
-        terms: cur.terms,
+        terms: cur.invoiceTerms || cur.terms,
         templateId: cur.templateId,
         referenceInvoiceId: cur.referenceInvoiceId,
         items: cur.items.map(toApiItem),
@@ -493,6 +500,79 @@ export default function CreditNoteWorkspace() {
     setCreditNote((prev) => (prev ? { ...prev, items: [...prev.items, newItem] } : prev));
     markDirtyAndSchedule();
   };
+
+  const handleParsedFromAi = (result: ApiParsedDocumentResult) => {
+    const fields = result.fields;
+    if (fields.customerId) {
+      updateData({ customerId: fields.customerId });
+    }
+    if (fields.currency) {
+      updateData({ currency: fields.currency });
+    }
+    if (fields.notes) {
+      setCreditNote((prev) =>
+        prev ? { ...prev, notes: (prev.notes ?? "") + (prev.notes ? "\n\n" : "") + fields.notes! } : prev
+      );
+    }
+    if (fields.items && fields.items.length > 0) {
+      const newItems: CreditNoteLineItemInput[] = fields.items.map((item) => ({
+        id: `li_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        description: item.description,
+        quantity: String(item.quantity ?? 1),
+        unit: item.unit ?? "each",
+        unitPrice: String(item.unitPrice ?? 0),
+        discount: "",
+        discountType: "fixed",
+        taxRate: item.taxRate ? String(item.taxRate) : undefined,
+        isTaxInclusive: item.isTaxInclusive ?? false,
+        productId: null,
+      }));
+      setCreditNote((prev) =>
+        prev ? { ...prev, items: [...prev.items, ...newItems] } : prev
+      );
+      markDirtyAndSchedule();
+    }
+    if (fields.fees && fields.fees.length > 0) {
+      const newFees = fields.fees.map((fee) => ({
+        description: fee.description,
+        amount: String(fee.amount),
+        taxRate: fee.taxRate ? String(fee.taxRate) : undefined,
+      }));
+      setCreditNote((prev) =>
+        prev ? { ...prev, fees: [...prev.fees, ...newFees] } : prev
+      );
+      markDirtyAndSchedule();
+    }
+  };
+
+  const serviceAutocompleteRef = useRef<HTMLInputElement>(null);
+
+  useKeyboardShortcuts({
+    enabled: !creditNote?.isFinalized && !reviewOpen,
+    onSave: () => undefined,
+    onFinalize: () => {
+      if (!validation.hasErrors) {
+        setReviewError(null);
+        setReviewOpen(true);
+      }
+    },
+    onSend: () => {
+      if (!validation.hasErrors) {
+        handleReviewAndFinalize();
+      }
+    },
+    onDuplicate: () => handleDuplicate(),
+    onAddItem: () => addItem("service"),
+    onAddFee: () => undefined,
+    onFocusSearch: () => {
+      serviceAutocompleteRef.current?.focus();
+    },
+    onTogglePreview: () => setPreviewOpen(true),
+    onCancel: () => {
+      if (reviewOpen) setReviewOpen(false);
+    },
+    onDelete: () => undefined,
+  });
 
   const handleItemChange = (itemId: string, patch: Partial<CreditNoteLineItemInput>) => {
     setCreditNote((prev) =>
@@ -848,15 +928,16 @@ export default function CreditNoteWorkspace() {
               />
             )}
 
-            {isNew && creditNote.items.length === 0 && (
-              <CommandLineItemInput<CreditNoteLineItemInput>
-                key="command-input"
-                onAddItem={handleQuickAddItem}
-                products={products}
-                autoFocus={isNew}
-                compact={false}
-              />
-            )}
+             {isNew && creditNote.items.length === 0 && (
+               <div className="mb-6">
+                 <AiInput
+                   onParsed={handleParsedFromAi}
+                   businessName={business?.name || business?.legalName}
+                   currency={creditNote.currency}
+                   customerId={creditNote.customerId ?? undefined}
+                 />
+               </div>
+             )}
 
             {creditNote.items.length === 0 ? (
               <div className="mb-6 rounded-xl border border-dashed border-color bg-surface-alt py-12 text-center">
@@ -887,13 +968,15 @@ export default function CreditNoteWorkspace() {
                     </Button>
                   )}
                 </div>
-                <div className="mt-6">
-                  <FrequentlyInvoicedChips<CreditNoteLineItemInput>
-                    businessId={business?.id || ""}
-                    customerId={creditNote?.customerId ?? undefined}
-                    onAddItem={handleQuickAddItem}
+              {products.length > 0 && (
+                <div className="mt-6 max-w-sm">
+                  <ServiceAutocomplete
+                    products={products}
+                    onSelect={addFromProduct}
+                    placeholder="Search services to credit..."
                   />
                 </div>
+              )}
               </div>
             ) : (
               <CreditNoteLineItemsTable
@@ -907,9 +990,15 @@ export default function CreditNoteWorkspace() {
               />
             )}
 
-            {products.length > 0 && creditNote.items.length > 0 && (
-              <SavedServicesBar products={products} onSelect={addFromProduct} />
-            )}
+             {products.length > 0 && creditNote.items.length > 0 && (
+               <div className="mb-4 max-w-sm">
+                 <ServiceAutocomplete
+                   products={products}
+                   onSelect={addFromProduct}
+                   placeholder="Search and add another service..."
+                 />
+               </div>
+             )}
 
             {isNew && creditNote.items.length > 0 && (
               <div className="mb-4">
@@ -1631,7 +1720,7 @@ const CreditNoteActionFooter = React.memo(function CreditNoteActionFooter({
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   return (
-    <footer className="flex h-16 items-center justify-between border-t border-color bg-surface px-6">
+    <footer className="sticky bottom-0 z-10 flex h-16 items-center justify-between border-t border-color bg-surface px-6 shadow-md">
       <div className="flex items-center gap-2">
         <Button variant="secondary" size="sm" onClick={onCreateAnother}>
           Create another

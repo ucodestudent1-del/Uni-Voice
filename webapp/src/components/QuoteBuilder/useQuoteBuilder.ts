@@ -12,6 +12,7 @@ import { SUPPORTED_CURRENCIES, type CurrencyCode } from "../../utils/currency";
 import { analytics } from "../../lib/analytics";
 import type { ApiCustomer, ApiProduct, ApiBusiness } from "../../types/api";
 import { useInvoiceValidation, type ValidationInput } from "../../hooks/useInvoiceValidation";
+import { resolveTermsFromDueDate, computeDueDateFromTerms } from "@/components/ui/PaymentTermsField";
 import type {
   QuoteBuilderData,
   BuilderLineItem,
@@ -39,8 +40,9 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
     customerId: null,
     customer: null,
     currency: "USD",
-    issueDate: todayISO(),
+     issueDate: todayISO(),
     dueDate: addDaysISO(todayISO(), 30),
+    invoiceTerms: "Net 30",
     expiryDate: addDaysISO(todayISO(), 60),
        notes: "",
      internalNotes: "",
@@ -130,6 +132,7 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
         currency: quote.currency,
         issueDate: quote.issue_date ? quote.issue_date.split("T")[0] : todayISO(),
         dueDate: quote.due_date ? quote.due_date.split("T")[0] : addDaysISO(todayISO(), 30),
+        invoiceTerms: quote.terms && quote.terms.includes("Net") ? quote.terms : (quote.due_date ? resolveTermsFromDueDate(quote.issue_date ? quote.issue_date.split("T")[0] : todayISO(), quote.due_date.split("T")[0]) : "Net 30"),
         expiryDate: quote.expiry_date ? quote.expiry_date.split("T")[0] : addDaysISO(todayISO(), 60),
          notes: quote.notes ?? "",
         internalNotes: quote.internal_notes ?? "",
@@ -246,6 +249,7 @@ export function useQuoteBuilder({ quoteId }: UseQuoteBuilderOptions) {
         currency: currentData.currency,
         issueDate: currentData.issueDate || undefined,
         dueDate: currentData.dueDate || undefined,
+        invoiceTerms: currentData.invoiceTerms ?? undefined,
         expiryDate: currentData.expiryDate ?? undefined,
          notes: currentData.notes || undefined,
         internalNotes: currentData.internalNotes || undefined,

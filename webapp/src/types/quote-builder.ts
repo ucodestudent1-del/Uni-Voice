@@ -31,6 +31,7 @@ export interface QuoteBuilderData {
   currency: string;
   issueDate: string;
   dueDate: string;
+  invoiceTerms?: string | null;
   expiryDate: string | null;
   notes: string;
   internalNotes: string;

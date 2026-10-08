@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Copy, Download } from "lucide-react";
+import { ArrowLeft, Send, Copy, Download, Sparkles } from "lucide-react";
 import { useQuoteBuilder } from "./useQuoteBuilder";
 import { LineItemsTable } from "./LineItemsTable";
 import { FeesSection } from "./FeesSection";
@@ -9,9 +9,13 @@ import { QuoteDetailsForm } from "./QuoteDetailsForm";
 import { ReviewAndSendDialog } from "./ReviewAndSendDialog";
 import { ValidationPanel } from "@/components/ValidationPanel";
 import { Button } from "@/components/ui/Button";
+import { AiInput } from "@/components/AiInput";
+import { ServiceAutocomplete } from "@/components/ServiceAutocomplete";
 import CommandLineItemInput from "@/components/CommandLineItemInput";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { finalizeQuote, sendQuote, getQuotePdf, convertQuote } from "@/api/client";
-import type { BuilderLineItem } from "@/types/quote-builder";
+import type { ApiParsedDocumentResult } from "@/api/client";
+import type { BuilderLineItem, QuoteBuilderData } from "@/types/quote-builder";
 
 interface QuoteBuilderProps {
   quoteId?: string | null;
@@ -35,7 +39,10 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     updateField,
     setItems,
     setFees,
+    addItem,
+    addFee,
     doSave,
+    business,
   } = useQuoteBuilder({ quoteId });
 
   const customerOptions: Array<{ id: string; name: string; email?: string; companyName?: string }> = customers.map((c) => ({
@@ -90,6 +97,40 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
     };
     setItems([...data.items, newItem]);
   }, [data.items, setItems]);
+
+  const handleAiParsed = useCallback((result: ApiParsedDocumentResult) => {
+    const fields = result.fields;
+    if (fields.items && fields.items.length > 0) {
+      const newItems: BuilderLineItem[] = fields.items.map((item) => ({
+        id: `row_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        productId: null,
+        description: item.description,
+        quantity: String(item.quantity ?? 1),
+        unit: item.unit || "each",
+        unitPrice: String(item.unitPrice ?? 0),
+        discount: "0",
+        discountType: "fixed",
+        taxRate: item.taxRate ? String(item.taxRate) : "0",
+        isTaxInclusive: item.isTaxInclusive ?? false,
+      }));
+      setItems([...data.items, ...newItems]);
+    }
+  }, [data.items, setItems]);
+
+  const serviceAutocompleteRef = useRef<HTMLInputElement>(null);
+
+  useKeyboardShortcuts({
+    enabled: !reviewOpen,
+    onSave: doSave,
+    onSend: () => {
+      if (!validation.hasErrors) setReviewOpen(true);
+    },
+    onAddItem: () => addItem(),
+    onFocusSearch: () => serviceAutocompleteRef.current?.focus(),
+    onTogglePreview: () => {},
+    onCancel: () => setReviewOpen(false),
+    onAddFee: addFee,
+  });
 
   async function handleDownloadPdf() {
     const quoteId = data.savedQuoteId;
@@ -245,11 +286,43 @@ export default function QuoteBuilder({ quoteId }: QuoteBuilderProps) {
           <div className="bg-surface rounded-xl border border-color-subtle p-6 shadow-sm">
             <h3 className="text-sm font-medium text-secondary mb-3">Line Items</h3>
             {isNew && data.items.length === 0 && (
-              <CommandLineItemInput<BuilderLineItem>
+              <div className="mb-4">
+                <AiInput onParsed={handleAiParsed} businessName={business?.name || business?.legalName} currency={data.currency} customerId={data.customerId ?? undefined} />
+              </div>
+            )}
+            {isNew && data.items.length > 0 && data.items.every((item) => !item.description) && (
+              <div className="mb-4">
+                <AiInput onParsed={handleAiParsed} businessName={business?.name || business?.legalName} currency={data.currency} customerId={data.customerId ?? undefined} />
+              </div>
+            )}
+            {data.items.length > 0 && products.length > 0 && (
+              <div className="mb-4 max-w-sm">
+                <ServiceAutocomplete
+                  products={products}
+                  onSelect={(product) => {
+                    updateField("items", [...data.items, {
+                      id: `row_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                      productId: product.id,
+                      description: product.description || product.name,
+                      quantity: "1",
+                      unit: product.unit || "each",
+                      unitPrice: product.defaultUnitPrice || "0.00",
+                      discount: "0",
+                      discountType: "fixed",
+                      taxRate: product.defaultTaxRate || "0",
+                      isTaxInclusive: false,
+                    } as BuilderLineItem]);
+                  }}
+                  placeholder="Search and add service..."
+                />
+              </div>
+            )}
+            {data.items.length > 0 && data.items.some((item) => !item.description) && (
+              <CommandLineItemInput
                 onAddItem={handleQuickAddItem}
                 products={products}
                 autoFocus={true}
-                compact={false}
+                compact={true}
               />
             )}
             <LineItemsTable
