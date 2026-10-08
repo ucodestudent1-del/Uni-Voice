@@ -17,6 +17,7 @@ const STEPS: LifecycleStep[] = [
   { key: "draft", label: "Draft", description: "Credit note has been created but not yet finalized" },
   { key: "finalized", label: "Finalized", description: "Credit note has been finalized with a unique number" },
   { key: "applied", label: "Applied", description: "Credit note has been applied to an invoice" },
+  { key: "refunded", label: "Refunded", description: "Credit note has been refunded to the customer" },
 ];
 
 const ALTERNATE_STEPS: LifecycleStep[] = [
@@ -28,6 +29,7 @@ const STEP_COLORS: Record<string, StepColor> = {
   draft: { bg: "status-warning-bg", text: "status-warning-text", dotVar: "--color-warning" },
   finalized: { bg: "status-info-bg", text: "status-info-text", dotVar: "--color-info" },
   applied: { bg: "status-success-bg", text: "status-success-text", dotVar: "--color-success" },
+  refunded: { bg: "status-info-bg", text: "status-info-text", dotVar: "--color-info" },
   cancelled: { bg: "status-tertiary-bg", text: "status-tertiary-text", dotVar: "--color-text-tertiary" },
   void: { bg: "status-tertiary-bg", text: "status-tertiary-text", dotVar: "--color-text-tertiary" },
 };

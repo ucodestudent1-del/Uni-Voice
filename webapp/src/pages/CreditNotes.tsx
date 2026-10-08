@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Plus, Trash2, FileText, CheckCircle, Clock, XCircle } from "lucide-react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getCreditNotes,
@@ -9,7 +9,6 @@ import {
   cancelCreditNote,
   applyCreditNote,
   getCreditNotePdf,
-  getCreditNoteEvents,
   getInvoices,
   getCustomers,
   type CreditNoteSearchParams,
@@ -19,11 +18,13 @@ import FeatureGate from "../components/FeatureGate";
 import CreditNoteStatusBadge from "../components/CreditNoteStatusBadge";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
+import { ApplyCreditNoteDialog } from "../components/ApplyCreditNoteDialog";
+import { ConfirmationDialog, KPICard } from "@/components/ui";
 import { formatCurrency, formatDate } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 import { LINE_ITEM_UNITS } from "../types/quote-builder";
 import { Decimal } from "decimal.js";
-import type { ApiCreditNote, ApiCreditNoteItem, ApiCreditNoteListItem, ApiInvoiceListItem, ApiCustomer } from "../types/api";
+import type { ApiCreditNote, ApiInvoiceListItem, ApiCustomer } from "../types/api";
 
 const STATUS_FILTERS = [
   { value: "all", label: "All" },
@@ -31,15 +32,6 @@ const STATUS_FILTERS = [
   { value: "finalized", label: "Finalized" },
   { value: "applied", label: "Applied" },
   { value: "cancelled", label: "Cancelled" },
-];
-
-const SORT_OPTIONS = [
-  { value: "credit_number", label: "Credit #" },
-  { value: "customer_name", label: "Customer" },
-  { value: "issue_date", label: "Issue Date" },
-  { value: "total", label: "Total" },
-  { value: "amount_remaining", label: "Remaining" },
-  { value: "created_at", label: "Created" },
 ];
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
@@ -65,6 +57,9 @@ export default function CreditNotes() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [creatingCreditNote, setCreatingCreditNote] = useState(false);
+  const [showApplyDialog, setShowApplyDialog] = useState(false);
+  const [creditNoteToApply, setCreditNoteToApply] = useState<ApiCreditNote | null>(null);
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
   const loadCustomers = useCallback(async () => {
@@ -126,7 +121,7 @@ export default function CreditNotes() {
   async function handleCreateCreditNote(data: any) {
     setCreatingCreditNote(true);
     try {
-      const res = await createCreditNote(data);
+      await createCreditNote(data);
       setActionMessage({ type: "success", text: "Credit note created successfully!" });
       setShowCreateDialog(false);
       loadCreditNotes(currentParams);
@@ -148,11 +143,16 @@ export default function CreditNotes() {
     }
   }
 
-  async function handleCancel(id: string) {
-    const reason = window.confirm("Cancel this credit note? This cannot be undone.");
-    if (!reason) return;
+  async function handleCancelOpen(id: string) {
+    setCancelTargetId(id);
+  }
+
+  async function handleCancel(reason?: string) {
+    if (!cancelTargetId) return;
+    const id = cancelTargetId;
+    setCancelTargetId(null);
     try {
-      await cancelCreditNote(id, { reason: "Cancelled by user" });
+      await cancelCreditNote(id, { reason: reason || "Cancelled by user" });
       setActionMessage({ type: "success", text: "Credit note cancelled." });
       loadCreditNotes(currentParams);
     } catch (err: any) {
@@ -160,12 +160,22 @@ export default function CreditNotes() {
     }
   }
 
-  async function handleApply(id: string) {
-    const invoiceId = window.prompt("Enter invoice ID to apply this credit note to:");
-    if (!invoiceId) return;
-    const amount = window.prompt("Enter amount to apply (leave empty for full amount):");
+  async function handleApplyOpen(id: string) {
+    const cn = creditNotes.find((c) => c.id === id);
+    setCreditNoteToApply(cn ?? null);
+    setShowApplyDialog(true);
+  }
+
+  async function handleApply(
+    id: string,
+    invoiceId: string,
+    amount?: string,
+    applicationMethod?: "invoice_offset" | "balance_credit" | "refund",
+  ) {
+    setShowApplyDialog(false);
+    setCreditNoteToApply(null);
     try {
-      await applyCreditNote(id, invoiceId, amount || undefined);
+      await applyCreditNote(id, invoiceId, amount, applicationMethod);
       setActionMessage({ type: "success", text: "Credit note applied successfully!" });
       loadCreditNotes(currentParams);
     } catch (err: any) {
@@ -230,6 +240,64 @@ export default function CreditNotes() {
         >
           New Credit Note
         </Button>
+      </div>
+
+      {/* KPI Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          title="Total Credit Issued"
+          value={formatCurrency(
+            creditNotes.reduce(
+              (sum, cn) => sum.plus(new Decimal(cn.total || 0)),
+              new Decimal(0)
+            ),
+            creditNotes[0]?.currency || "USD"
+          )}
+          subtitle="All credit notes"
+          icon={<FileText className="h-4 w-4" />}
+          iconBackground="bg-info-bg"
+          isLoading={loading}
+        />
+        <KPICard
+          title="Total Applied"
+          value={formatCurrency(
+            creditNotes.reduce(
+              (sum, cn) => sum.plus(new Decimal(cn.applied_total || 0)),
+              new Decimal(0)
+            ),
+            creditNotes[0]?.currency || "USD"
+          )}
+          subtitle="Credited against invoices"
+          icon={<CheckCircle className="h-4 w-4" />}
+          iconBackground="bg-success-bg"
+          isLoading={loading}
+        />
+        <KPICard
+          title="Total Unapplied"
+          value={formatCurrency(
+            creditNotes.reduce(
+              (sum, cn) => sum.plus(new Decimal(cn.amount_due || 0)),
+              new Decimal(0)
+            ),
+            creditNotes[0]?.currency || "USD"
+          )}
+          subtitle="Available to apply"
+          icon={<Clock className="h-4 w-4" />}
+          iconBackground="bg-warning-bg"
+          isLoading={loading}
+        />
+        <KPICard
+          title="Cancelled / Void"
+          value={
+            creditNotes.filter((cn) =>
+              ["cancelled", "void"].includes(cn.status)
+            ).length
+          }
+          subtitle="Inactive credit notes"
+          icon={<XCircle className="h-4 w-4" />}
+          iconBackground="bg-tertiary-bg"
+          isLoading={loading}
+        />
       </div>
 
       <div className="filter-container">
@@ -338,14 +406,17 @@ export default function CreditNotes() {
                 Credit Note
                 {sortBy === "credit_number" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
-              <th className="text-left text-xs font-medium text-secondary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt"
-                  onClick={() => handleSort("customer_name")}>
-                Customer
-                {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
-              </th>
-              <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt"
-                  onClick={() => handleSort("issue_date")}>
-                Issue Date
+               <th className="text-left text-xs font-medium text-secondary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt"
+                   onClick={() => handleSort("customer_name")}>
+                 Customer
+                 {sortBy === "customer_name" && (sortOrder === "asc" ? " ↑" : " ↓")}
+               </th>
+               <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4">
+                 Ref. Invoice
+               </th>
+               <th className="text-center text-xs font-medium text-secondary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt"
+                   onClick={() => handleSort("issue_date")}>
+                 Issue Date
                 {sortBy === "issue_date" && (sortOrder === "asc" ? " ↑" : " ↓")}
               </th>
               <th className="text-right text-xs font-medium text-secondary uppercase py-3 px-4 cursor-pointer hover:bg-surface-alt"
@@ -365,7 +436,7 @@ export default function CreditNotes() {
           <tbody>
             {creditNotes.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-4">
+                <td colSpan={8} className="py-4">
                   <EmptyState
                     title={hasActiveFilters ? "No credit notes match your filters" : "No credit notes yet"}
                     description={hasActiveFilters ? "Try adjusting your search or filter criteria." : "Create a credit note to issue refunds, correct invoices, or apply adjustments."}
@@ -390,10 +461,23 @@ export default function CreditNotes() {
                       </span>
                     </div>
                    </td>
-                  <td className="py-3 px-4 text-sm text-secondary">
-                    {cn.customer_name || "—"}
-                    {cn.customer_email && <span className="text-xs text-tertiary block">{cn.customer_email}</span>}
-                  </td>
+                   <td className="py-3 px-4 text-sm text-secondary">
+                     {cn.customer_name || "—"}
+                     {cn.customer_email && <span className="text-xs text-tertiary block">{cn.customer_email}</span>}
+                   </td>
+                   <td className="py-3 px-4 text-center">
+                     {cn.reference_invoice_id && cn.reference_invoice_number ? (
+                       <Link
+                         to={`/app/invoices/${cn.reference_invoice_id}`}
+                         className="text-sm font-medium text-primary-brand hover:text-primary-hover"
+                         title={`View source invoice ${cn.reference_invoice_number}`}
+                       >
+                         {cn.reference_invoice_number}
+                       </Link>
+                     ) : (
+                       <span className="text-sm text-tertiary">—</span>
+                     )}
+                   </td>
                   <td className="py-3 px-4 text-center text-sm text-secondary">
                     {cn.issue_date ? new Date(cn.issue_date).toLocaleDateString() : "—"}
                   </td>
@@ -420,28 +504,28 @@ export default function CreditNotes() {
                            Finalize
                          </Button>
                        )}
-                        {cn.status === "finalized" && Number(cn.amount_due || 0) > 0 && (
-                         <Button
-                           variant="ghost"
-                           size="sm"
-                           onClick={() => handleApply(cn.id)}
-                           title="Apply to Invoice"
-                           className="status-success-text"
-                         >
-                           Apply
-                         </Button>
-                       )}
-                       {["finalized", "applied"].includes(cn.status) && (
-                         <Button
-                           variant="ghost"
-                           size="sm"
-                           onClick={() => handleCancel(cn.id)}
-                           title="Cancel"
-                           className="status-error-text"
-                         >
-                           Cancel
-                         </Button>
-                       )}
+                         {cn.status === "finalized" && Number(cn.amount_due || 0) > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleApplyOpen(cn.id)}
+                            title="Apply to Invoice"
+                            className="status-success-text"
+                          >
+                            Apply
+                          </Button>
+                        )}
+                        {["finalized", "applied"].includes(cn.status) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCancelOpen(cn.id)}
+                            title="Cancel"
+                            className="status-error-text"
+                          >
+                            Cancel
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -512,6 +596,35 @@ export default function CreditNotes() {
           isLoading={creatingCreditNote}
         />
       )}
+
+      {showApplyDialog && creditNoteToApply && (
+        <ApplyCreditNoteDialog
+          open={showApplyDialog}
+          onClose={() => setShowApplyDialog(false)}
+          onApply={(data) =>
+            handleApply(
+              creditNoteToApply.id,
+              data.invoiceId,
+              data.amount,
+              data.applicationMethod,
+            )
+          }
+          creditNote={creditNoteToApply}
+        />
+      )}
+
+      <ConfirmationDialog
+        open={!!cancelTargetId}
+        onClose={() => setCancelTargetId(null)}
+        onConfirm={(data) => handleCancel(data?.input)}
+        title="Cancel Credit Note"
+        message="Cancelling this credit note will prevent it from being applied to invoices. The credit note will remain in your records but cannot be used."
+        confirmLabel="Cancel Credit Note"
+        destructive
+        showInput
+        inputLabel="Reason"
+        inputPlaceholder="Enter a reason..."
+      />
     </div>
   );
 }

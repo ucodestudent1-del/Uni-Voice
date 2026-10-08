@@ -1666,9 +1666,9 @@ app.post("/api/credit-notes/:id/cancel", requireAuth, requireEntitlement("invoic
 
 app.post("/api/credit-notes/:id/apply", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { invoiceId, amount } = req.body;
+  const { invoiceId, amount, application_method } = req.body;
   if (!invoiceId) return res.status(400).json({ error: "invoiceId is required" });
-  await creditNoteService.applyCreditNote(req.user!.businessId, req.params.id, invoiceId, amount);
+  await creditNoteService.applyCreditNote(req.user!.businessId, req.params.id, invoiceId, amount, application_method);
   res.json({ ok: true });
 });
 

@@ -186,19 +186,30 @@ export class CreditNoteService {
     businessId: string,
     creditNoteId: string,
     invoiceId: string,
-    amount?: string
+    amount?: string,
+    applicationMethod?: "invoice_offset" | "balance_credit" | "refund"
   ): Promise<void> {
     const cn = await creditNoteRepository.findById(businessId, creditNoteId);
     if (!cn.isFinalized) throw new BusinessLogicError("Credit note must be finalized before applying");
-    const idempotencyKey = `cn-apply:${creditNoteId}:${invoiceId}:${amount ?? "full"}`;
+    const idempotencyKey = `cn-apply:${creditNoteId}:${invoiceId}:${amount ?? "full"}:${applicationMethod ?? "invoice_offset"}`;
     const applyAmount = new Decimal(amount ?? cn.amountDue);
-    await creditNoteRepository.recordApplication(creditNoteId, invoiceId, businessId, applyAmount.toFixed(6), idempotencyKey);
+    const metadata: Record<string, unknown> = {
+      application_method: applicationMethod ?? "invoice_offset",
+    };
+    if (applicationMethod === "refund") {
+      metadata.refund_provider = "stub";
+    }
+    await creditNoteRepository.recordApplication(creditNoteId, invoiceId, businessId, applyAmount.toFixed(6), idempotencyKey, metadata);
     const newAppliedTotal = new Decimal(cn.appliedTotal).plus(applyAmount);
     const newAmountDue = new Decimal(cn.total).minus(newAppliedTotal);
     const total = new Decimal(cn.total);
     const finalApplied = newAppliedTotal.gt(total) ? total : newAppliedTotal;
     const finalDue = finalApplied.gt(total) ? new Decimal(0) : newAmountDue;
-    const status = finalDue.lte(0) ? "applied" : "finalized";
+    const status = finalDue.lte(0) && (applicationMethod === "refund" || applicationMethod === "balance_credit")
+      ? "applied"
+      : finalDue.lte(0)
+      ? "applied"
+      : "finalized";
     await query(
       `UPDATE credit_notes SET applied_total = $1, amount_due = $2, status = $3, updated_at = NOW()
        WHERE id = $4 AND business_id = $5`,

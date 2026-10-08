@@ -1131,8 +1131,8 @@ export async function cancelCreditNote(id: string, data?: { reason?: string }) {
   return res.data;
 }
 
-export async function applyCreditNote(id: string, invoiceId: string, amount?: string) {
-  const res = await api.post(`/credit-notes/${id}/apply`, { invoiceId, amount });
+export async function applyCreditNote(id: string, invoiceId: string, amount?: string, applicationMethod?: "invoice_offset" | "balance_credit" | "refund") {
+  const res = await api.post(`/credit-notes/${id}/apply`, { invoiceId, amount, application_method: applicationMethod });
   return res.data;
 }
 

@@ -709,15 +709,24 @@ export interface ApiCreditNoteApplication {
   invoice_id: string;
   business_id?: string;
   amount: string;
+  applied_at: string;
   idempotency_key?: string | null;
   metadata?: Record<string, unknown>;
-  applied_at: string;
+  /**
+   * How the credit was consumed. Stored in metadata.
+   * - "invoice_offset" — applied to reduce an invoice's balance
+   * - "balance_credit" — held on the customer's account for future invoices
+   * - "refund" — returned to the customer's original payment method
+   */
+  application_method?: "invoice_offset" | "balance_credit" | "refund" | null;
 }
 
 export interface ApiCreditNoteListItem {
   id: string;
   business_id: string;
   customer_id: string | null;
+  reference_invoice_id?: string | null;
+  reference_invoice_number?: string | null;
   credit_note_number?: string | null;
   status: string;
   issue_date?: string | null;

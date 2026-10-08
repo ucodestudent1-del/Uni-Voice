@@ -55,14 +55,12 @@ export interface CreditNoteListItem {
   id: string;
   businessId: string;
   customerId: string | null;
+  referenceInvoiceId: string | null;
+  referenceInvoiceNumber: string | null;
   creditNoteNumber: string | null;
   status: string;
   issueDate: Date | null;
   currency: string;
-  subtotal: string;
-  discountTotal: string;
-  taxTotal: string;
-  feeTotal: string;
   total: string;
   appliedTotal: string;
   amountDue: string;
@@ -309,12 +307,14 @@ export class CreditNoteRepository {
 
     const res = await query(
       `SELECT cn.*, c.name AS customer_name, c.email AS customer_email,
+              i.invoice_number AS reference_invoice_number,
               COUNT(*) OVER() AS total_count
-       FROM credit_notes cn
-       LEFT JOIN customers c ON c.id = cn.customer_id
-       WHERE ${conditions.join(" AND ")}
-       ORDER BY ${sortColumn} ${direction}, cn.created_at DESC
-       LIMIT $${i++} OFFSET $${i++}`,
+        FROM credit_notes cn
+        LEFT JOIN customers c ON c.id = cn.customer_id
+        LEFT JOIN invoices i ON i.id = cn.reference_invoice_id AND i.business_id = cn.business_id
+        WHERE ${conditions.join(" AND ")}
+        ORDER BY ${sortColumn} ${direction}, cn.created_at DESC
+        LIMIT $${i++} OFFSET $${i++}`,
       [...vals, limit, offset]
     );
 
@@ -691,14 +691,12 @@ export class CreditNoteRepository {
       id: r.id as string,
       businessId: r.business_id as string,
       customerId: r.customer_id as string | null,
+      referenceInvoiceId: r.reference_invoice_id as string | null,
+      referenceInvoiceNumber: r.reference_invoice_number as string | null,
       creditNoteNumber: r.credit_note_number as string | null,
       status: r.status as string,
       issueDate: rowToDate(r.issue_date),
       currency: r.currency as string,
-      subtotal: r.subtotal as string,
-      discountTotal: r.discount_total as string,
-      taxTotal: r.tax_total as string,
-      feeTotal: r.fee_total as string,
       total: r.total as string,
       appliedTotal: r.applied_total as string,
       amountDue: r.amount_due as string,
