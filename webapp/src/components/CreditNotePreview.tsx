@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import { formatCurrency, formatDateLong } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
@@ -24,7 +25,9 @@ export interface PreviewFee {
 export interface PreviewApplication {
   amount: string;
   invoiceNumber?: string;
+  invoiceId?: string;
   appliedAt?: string;
+  applicationMethod?: string | null;
 }
 
 export interface PreviewCreditNote {
@@ -48,6 +51,7 @@ export interface PreviewCreditNote {
   notes?: string;
   terms?: string;
   referenceInvoiceNumber?: string;
+  referenceInvoiceId?: string | null;
   items: PreviewLineItem[];
   fees: PreviewFee[];
   subtotal: string;
@@ -104,6 +108,18 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text" },
   void: { label: "Void", className: "status-tertiary-bg status-tertiary-text" },
 };
+
+const APPLICATION_METHOD_LABELS: Record<string, string> = {
+  refund: "Refunded to customer",
+  balance_credit: "Credit held on account",
+  invoice_offset: "Applied to invoice",
+  default: "Applied",
+};
+
+function applicationMethodLabel(method?: string | null): string {
+  if (!method) return "Applied";
+  return APPLICATION_METHOD_LABELS[method] ?? APPLICATION_METHOD_LABELS.default;
+}
 
 export default React.memo(function CreditNotePreview({ creditNote }: { creditNote: PreviewCreditNote }) {
   const cur = creditNote.currency;
@@ -182,12 +198,24 @@ export default React.memo(function CreditNotePreview({ creditNote }: { creditNot
                 <p className="mt-0.5 text-sm font-medium text-primary">{formatDateLong(creditNote.issueDate)}</p>
               </div>
             )}
-            {creditNote.referenceInvoiceNumber && (
+            {creditNote.referenceInvoiceId ? (
+              <div>
+                <span className="invoice-section-title block">Reference Invoice</span>
+                <p className="mt-0.5 text-sm font-medium text-primary">
+                  <Link
+                    to={`/app/invoices/${creditNote.referenceInvoiceId}`}
+                    className="text-primary-brand hover:underline"
+                  >
+                    {creditNote.referenceInvoiceNumber || "View invoice"}
+                  </Link>
+                </p>
+              </div>
+            ) : creditNote.referenceInvoiceNumber ? (
               <div>
                 <span className="invoice-section-title block">Original Invoice #</span>
                 <p className="mt-0.5 text-sm font-medium text-primary">{creditNote.referenceInvoiceNumber}</p>
               </div>
-            )}
+            ) : null}
             <div>
               <span className="invoice-section-title block">Currency</span>
               <p className="mt-0.5 text-sm font-medium text-primary">{cur} ({meta.symbol})</p>
@@ -402,6 +430,7 @@ export default React.memo(function CreditNotePreview({ creditNote }: { creditNot
                 <tr className="bg-surface-alt">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-tertiary">Invoice</th>
                   <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Amount Applied</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase text-tertiary">Method</th>
                   <th className="px-3 py-3 text-right text-xs font-semibold uppercase text-tertiary">Date</th>
                 </tr>
               </thead>
@@ -409,10 +438,13 @@ export default React.memo(function CreditNotePreview({ creditNote }: { creditNot
                 {creditNote.applications.map((app, i) => (
                   <tr key={i} className="border-t border-color-subtle">
                     <td className="px-4 py-3 text-sm text-primary">
-                      {app.invoiceNumber || app.invoiceNumber || "—"}
+                      {app.invoiceNumber || "—"}
                     </td>
                     <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
                       {fmtNumber(app.amount, cur)}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-secondary">
+                      {applicationMethodLabel(app.applicationMethod)}
                     </td>
                     <td className="px-3 py-3 text-sm text-secondary text-right font-tabular-nums">
                       {app.appliedAt ? formatDateLong(app.appliedAt) : "—"}

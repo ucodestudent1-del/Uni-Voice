@@ -21,6 +21,7 @@ import { formatCurrency, formatDate } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
 import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
 import { InvoiceLifecycle, StatusBadge, invoiceStatusConfig, isOverdueStatus } from "@/components/ui";
+import { Button } from "../components/ui/Button";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 import PaymentDialog from "../components/payments/PaymentDialog";
 import DepositDialog from "../components/payments/DepositDialog";
@@ -311,61 +312,40 @@ export default function InvoiceDetail() {
         <div className="flex flex-wrap gap-2">
           <Link
             to={`/app/invoices/${invoice.id}/edit`}
-            className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
+            className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt min-h-[40px]"
           >
             Edit
           </Link>
-          <button
-            onClick={handleDuplicate}
-            className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
-          >
+          <Button variant="secondary" size="sm" onClick={handleDuplicate}>
             Duplicate
-          </button>
-          <button
-            onClick={handleDownloadPdf}
-            className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
-          >
+          </Button>
+          <Button variant="secondary" size="sm" icon={<Copy className="h-4 w-4" />} onClick={handleDownloadPdf}>
             Download PDF
-          </button>
+          </Button>
           {invoice.status === "paid" && (
-            <button
-              onClick={handleGenerateReceipt}
-              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
-            >
+            <Button variant="secondary" size="sm" onClick={handleGenerateReceipt}>
               Generate Receipt
-            </button>
+            </Button>
           )}
           {canSendReminder && (
-            <button
-              onClick={handleSendReminder}
-              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
-            >
+            <Button variant="secondary" size="sm" icon={<AlertCircle className="h-4 w-4" />} onClick={handleSendReminder}>
               Send Reminder
-            </button>
+            </Button>
           )}
           {canCancel && (
-            <button
-              onClick={() => setShowCancelDialog(true)}
-              className="rounded-lg border border-input-border px-3 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
-            >
+            <Button variant="secondary" size="sm" onClick={() => setShowCancelDialog(true)}>
               Cancel
-            </button>
+            </Button>
           )}
           {canVoid && (
-            <button
-              onClick={() => setShowVoidDialog(true)}
-              className="rounded-lg border border-error-border px-3 py-2 text-sm font-medium status-error-text hover:status-error-bg"
-            >
+            <Button variant="danger" size="sm" onClick={() => setShowVoidDialog(true)}>
               Void
-            </button>
+            </Button>
           )}
           {hasDeposit && depositDue.gt(0) && invoice.status !== "draft" && invoice.status !== "cancelled" && invoice.status !== "void" && (
-            <button
-              onClick={() => setShowDepositDialog(true)}
-              className="rounded-lg bg-orange-600 px-3 py-2 text-sm font-medium text-on-primary hover:bg-orange-700"
-            >
+            <Button variant="warning" size="sm" onClick={() => setShowDepositDialog(true)}>
               Record Deposit
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getQuoteById,
   sendQuote,
@@ -7,9 +7,13 @@ import {
   convertQuote,
   convertAndSendQuote,
   getQuoteEvents,
+  getBusiness,
+  getCustomer,
   type ApiQuote,
 } from "../api/client";
-import { formatCurrencyValue } from "../lib/utils";
+import type { ApiBusiness, ApiCustomer } from "../types/api";
+import type { PreviewQuote } from "../components/QuotePreviewV2";
+import QuotePreviewV2, { buildPreviewQuote } from "../components/QuotePreviewV2";
 import { Button } from "../components/ui/Button";
 import { Download, Send, Copy, ArrowLeft } from "lucide-react";
 import QuoteBuilder from "../components/QuoteBuilder/QuoteBuilder";
@@ -29,6 +33,8 @@ export default function QuoteDetail() {
   const navigate = useNavigate();
   const isNew = !id;
   const [quote, setQuote] = useState<ApiQuote | null>(null);
+  const [business, setBusiness] = useState<ApiBusiness | null>(null);
+  const [customer, setCustomer] = useState<ApiCustomer | null>(null);
   const [events, setEvents] = useState<ApiQuoteEvent[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -46,12 +52,22 @@ export default function QuoteDetail() {
     if (!id) return;
     setLoading(true);
     try {
-      const [quoteRes, eventsRes] = await Promise.allSettled([
+      const [quoteRes, eventsRes, bizRes] = await Promise.allSettled([
         getQuoteById(id),
         getQuoteEvents(id),
+        getBusiness().catch(() => null),
       ]);
-      if (quoteRes.status === "fulfilled") setQuote(quoteRes.value.quote);
+      if (quoteRes.status === "fulfilled") {
+        const q = quoteRes.value.quote;
+        setQuote(q);
+        if (q?.customer_id) {
+          getCustomer(q.customer_id)
+            .then((res) => setCustomer(res.customer ?? null))
+            .catch(() => setCustomer(null));
+        }
+      }
       if (eventsRes.status === "fulfilled") setEvents(eventsRes.value.events ?? []);
+      if (bizRes.status === "fulfilled" && bizRes.value) setBusiness(bizRes.value.business ?? null);
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load quote");
     } finally {
@@ -116,6 +132,11 @@ export default function QuoteDetail() {
     }
   }
 
+  const previewQuote = useMemo<PreviewQuote | null>(
+    () => (quote ? buildPreviewQuote(quote, business, customer) : null),
+    [quote, business, customer]
+  );
+
   if (isNew) {
     return <QuoteBuilder quoteId={null} />;
   }
@@ -166,78 +187,23 @@ export default function QuoteDetail() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface rounded-xl border border-color-subtle p-6">
-          <h3 className="text-sm font-medium text-secondary mb-3">Line Items</h3>
-          <div className="space-y-2 text-sm">
-            {quote.items?.map((it) => (
-              <div key={it.id} className="flex justify-between">
-                <span className="text-secondary">{it.description} × {it.quantity} {it.unit}</span>
-                <span className="text-primary">{formatCurrencyValue(Number(it.line_total), quote.currency)}</span>
-              </div>
+      {previewQuote ? <QuotePreviewV2 quote={previewQuote} /> : null}
+
+      <div className="bg-surface rounded-xl border border-color-subtle p-6">
+        <h3 className="text-sm font-medium text-secondary mb-3">Activity Timeline</h3>
+        {events.length === 0 ? (
+          <p className="text-sm text-secondary">No activity yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {events.map((e) => (
+              <QuoteTimelineItem key={e.id ?? `${e.event_type}-${e.created_at}`} event={e} />
             ))}
-          </div>
-        </div>
-        <div className="bg-surface rounded-xl border border-color-subtle p-6">
-          <h3 className="text-sm font-medium text-secondary mb-3">Totals</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-secondary">Subtotal</span><span>{formatCurrencyValue(Number(quote.subtotal), quote.currency)}</span></div>
-            <div className="flex justify-between"><span className="text-secondary">Discount</span><span>-{formatCurrencyValue(Number(quote.discount_total), quote.currency)}</span></div>
-            <div className="flex justify-between"><span className="text-secondary">Tax</span><span>{formatCurrencyValue(Number(quote.tax_total), quote.currency)}</span></div>
-            <div className="flex justify-between"><span className="text-secondary">Fees</span><span>{formatCurrencyValue(Number(quote.fee_total), quote.currency)}</span></div>
-            <div className="flex justify-between font-semibold pt-2 border-t border-color-subtle">
-              <span className="text-primary">Total</span>
-              <span className="text-primary">{formatCurrencyValue(Number(quote.total), quote.currency)}</span>
-            </div>
-          </div>
-        </div>
+          </ul>
+        )}
       </div>
-
-        <div className="bg-surface rounded-xl border border-color-subtle p-6">
-          <h3 className="text-sm font-medium text-secondary mb-3">Details</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><span className="text-tertiary">Status</span><span className="text-primary ml-2">{quote.status}</span></div>
-            <div><span className="text-tertiary">Currency</span><span className="text-primary ml-2">{quote.currency}</span></div>
-            <div><span className="text-tertiary">Issue Date</span><span className="text-primary ml-2">{quote.issue_date}</span></div>
-            <div><span className="text-tertiary">Due Date</span><span className="text-primary ml-2">{quote.due_date}</span></div>
-            {quote.expiry_date && (
-              <div><span className="text-tertiary">Expiry Date</span><span className="text-primary ml-2">{quote.expiry_date}</span></div>
-            )}
-            {quote.converted_invoice_id && (
-              <div>
-                <span className="text-tertiary">Converted to Invoice</span>
-                <Link
-                  to={`/app/invoices/${quote.converted_invoice_id}`}
-                  className="text-primary ml-2 text-primary-action hover:underline"
-                >
-                  View invoice
-                </Link>
-              </div>
-            )}
-          </div>
-         {quote.notes && (
-           <div className="mt-3">
-             <span className="text-tertiary text-sm">Notes</span>
-             <p className="text-primary mt-1">{quote.notes}</p>
-           </div>
-         )}
-       </div>
-
-       <div className="bg-surface rounded-xl border border-color-subtle p-6">
-         <h3 className="text-sm font-medium text-secondary mb-3">Activity Timeline</h3>
-         {events.length === 0 ? (
-           <p className="text-sm text-secondary">No activity yet.</p>
-         ) : (
-           <ul className="space-y-3">
-             {events.map((e) => (
-               <QuoteTimelineItem key={e.id ?? `${e.event_type}-${e.created_at}`} event={e} />
-             ))}
-           </ul>
-         )}
-       </div>
-     </div>
-   );
- }
+    </div>
+  );
+}
 
 function QuoteTimelineItem({ event }: { event: ApiQuoteEvent }) {
    const label = (event.event_type ?? "").replace(/_/g, " ");

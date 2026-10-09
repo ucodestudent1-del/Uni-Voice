@@ -76,10 +76,16 @@ export interface InvoiceTemplateData {
     dueDate: string | null;
     currency: CurrencyCode;
     poNumber?: string | null;
-    notes?: string | null;
+     notes?: string | null;
     terms?: string | null;
     paymentInstructions?: string | null;
     language?: string;
+    depositType?: string | null;
+    depositValue?: string | null;
+    depositDueDate?: string | null;
+    depositPaid?: boolean | null;
+    isFinalized?: boolean;
+    depositAmount?: string | null;
   };
   lineItems: TemplateLineItem[];
   fees: TemplateFee[];
@@ -524,6 +530,12 @@ export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
         <td class="totals-value">{{formatMoney totals.feeTotal}}</td>
       </tr>
       {{/if}}
+      {{#if invoice.depositAmount}}
+      <tr class="deposit-row">
+        <td class="totals-label">Deposit Required</td>
+        <td class="totals-value" style="color: #2563eb;">{{formatMoney invoice.depositAmount}}</td>
+      </tr>
+      {{/if}}
       <tr class="big-total-row">
         <td class="big-total-label">Estimated Total</td>
         <td class="big-total-value">{{formatMoney totals.total}}</td>
@@ -586,6 +598,37 @@ export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- ========== ACCEPTANCE ========== -->
+  {{#if invoice.isFinalized}}
+  <div class="section">
+    <div class="section-title">Acceptance</div>
+    <div class="terms-box">
+      <p style="margin: 0 0 12px; font-size: 13px; color: #334155; line-height: 1.5;">
+        By signing below, you accept this quote and authorize work to begin.
+      </p>
+      <table style="width: 100%; margin-bottom: 16px;">
+        <tr>
+          <td style="width: 30%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;">
+            <span style="font-size: 11px; color: #94a3a5;">Signature</span>
+          </td>
+          <td style="width: 30%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;">
+            <span style="font-size: 11px; color: #94a3a5;">Print Name</span>
+          </td>
+          <td style="width: 40%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;">
+            <span style="font-size: 11px; color: #94a3a5;">Date</span>
+          </td>
+        </tr>
+      </table>
+      <div style="display: flex gap: 12px; font-size: 13px; color: #334155;">
+        <span style="display: inline-flex align-middle">Electronic acceptance</span>
+      </div>
+      <p style="margin-top: 8px; font-size: 12px; color: #94a3a5; line-height: 1.5;">
+        This quote is valid until {{invoice.dueDate}}. A deposit is required to begin work unless otherwise agreed.
+      </p>
+    </div>
+  </div>
+  {{/if}}
+
   <!-- ========== FOOTER ========== -->
   <div class="footer">
     <p style="margin: 0;">Quote #{{invoice.invoiceNumber}}. This quote expires on {{invoice.dueDate}}.</p>
@@ -646,7 +689,13 @@ export function buildTemplateData(
     notes?: string | null;
     terms?: string | null;
     paymentInstructions?: string | null;
-  },
+     depositType?: string | null;
+     depositValue?: string | null;
+     depositDueDate?: string | null;
+     depositPaid?: boolean | null;
+     isFinalized?: boolean;
+     depositAmount?: string | null;
+   },
   business: TemplateBusiness,
   customer: TemplateCustomer | null,
   items: TemplateLineItem[],
@@ -668,6 +717,12 @@ export function buildTemplateData(
       notes: invoice.notes,
       terms: invoice.terms,
       paymentInstructions: invoice.paymentInstructions,
+      depositType: invoice.depositType ?? null,
+      depositValue: invoice.depositValue ?? null,
+      depositDueDate: invoice.depositDueDate ?? null,
+      depositPaid: invoice.depositPaid ?? null,
+      isFinalized: invoice.isFinalized ?? false,
+      depositAmount: invoice.depositAmount ?? null,
     },
     lineItems: items,
     fees,

@@ -837,6 +837,7 @@ export default function CreditNoteWorkspace() {
       notes: creditNote.notes ?? undefined,
       terms: creditNote.terms ?? undefined,
       referenceInvoiceNumber: creditNote.referenceInvoiceNumber ?? undefined,
+      referenceInvoiceId: creditNote.referenceInvoiceId ?? null,
       items: previewItems,
       fees: previewFees,
       subtotal: calc.subtotal.toFixed(2),
