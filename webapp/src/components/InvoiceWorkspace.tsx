@@ -63,7 +63,6 @@ import CustomerSelector from "./CustomerSelector";
 import CommandLineItemInput from "./CommandLineItemInput";
 import FrequentlyInvoicedChips from "./FrequentlyInvoicedChips";
 import QuickRepeatBanner from "./QuickRepeatBanner";
-import InvoiceDetailsSections from "./InvoiceDetailsSections";
 import SmartDefaultsBar from "./SmartDefaultsBar";
 import { Button } from "./ui/Button";
 import { FormField } from "./ui/FormField";
@@ -1343,17 +1342,12 @@ export default function InvoiceWorkspace() {
              </div>
            )}
 
-           <FeesSection
-             fees={invoice.fees}
-             onChange={(fees) => updateData({ fees })}
-           />
+            <FeesSection
+              fees={invoice.fees}
+              onChange={(fees) => updateData({ fees })}
+            />
 
-           <InvoiceDetailsSections
-             data={invoice}
-             onField={handleField}
-           />
-
-           <NotesSection
+            <NotesSection
              invoice={invoice}
              onField={handleField}
              onFiles={handleFilesSelected}
