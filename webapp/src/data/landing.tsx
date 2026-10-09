@@ -63,13 +63,13 @@ export const pricingFeatures: FeatureItem[] = [
   },
   {
     title: "Brandable templates",
-    description: "Customizable, print-ready templates that match your brand — for invoices, quotes, and receipts.",
+    description: "Customizable, print-ready templates that match your brand — for invoices and receipts.",
     icon: "document-sparkle",
     details: (
       <ul className="mt-2 space-y-1 text-sm text-tertiary">
         <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Upload your logo & brand colors</li>
         <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Print & PDF export</li>
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Templates for invoices, quotes, receipts</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Templates for invoices, receipts</li>
       </ul>
     ),
   },

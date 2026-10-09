@@ -8,7 +8,6 @@ import {
   formatDuration,
   buildProjectSearchParams,
   buildInvoiceSearchParams,
-  buildCreditNoteSearchParams,
 } from "../api/client";
 
 describe("API client cache utilities", () => {
@@ -196,40 +195,6 @@ describe("buildInvoiceSearchParams", () => {
       issue_date_to: "2024-12-31",
       due_date_from: "2024-02-01",
       due_date_to: "2024-12-30",
-    });
-  });
-});
-
-describe("buildCreditNoteSearchParams", () => {
-  it("returns empty object for empty params", () => {
-    expect(buildCreditNoteSearchParams({})).toEqual({});
-  });
-
-  it("maps camelCase to snake_case for relevant params", () => {
-    const result = buildCreditNoteSearchParams({
-      customerId: "cust-1",
-      sortBy: "date",
-      sortOrder: "asc",
-    });
-    expect(result).toEqual({
-      customer_id: "cust-1",
-      sort_by: "date",
-      sort_order: "asc",
-    });
-  });
-
-  it("includes basic params", () => {
-    const result = buildCreditNoteSearchParams({
-      limit: 25,
-      status: "posted",
-      search: "credit",
-      currency: "EUR",
-    });
-    expect(result).toEqual({
-      limit: 25,
-      status: "posted",
-      search: "credit",
-      currency: "EUR",
     });
   });
 });

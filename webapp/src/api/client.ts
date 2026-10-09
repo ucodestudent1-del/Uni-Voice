@@ -6,7 +6,6 @@ import type {
   TwoFactorStatus,
   RecoveryCodeSummary,
   InvoiceSearchParams,
-  CreditNoteSearchParams,
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
@@ -29,7 +28,6 @@ import type {
 // Re-export types from types/api
 export type {
   InvoiceSearchParams,
-  CreditNoteSearchParams,
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
@@ -479,16 +477,6 @@ export async function createInvoiceFromProduct(productId: string): Promise<{ inv
   return res.data;
 }
 
-export async function createQuoteFromProduct(productId: string): Promise<{ quoteId: string }> {
-  const res = await api.post(`/products/${productId}/use-as-line-item?type=quote`);
-  return res.data;
-}
-
-export async function createCreditNoteFromProduct(productId: string): Promise<{ creditNoteId: string }> {
-  const res = await api.post(`/products/${productId}/use-as-line-item?type=credit-note`);
-  return res.data;
-}
-
 export async function getBusiness() {
   const res = await api.get("/businesses/current");
   return res.data;
@@ -496,21 +484,6 @@ export async function getBusiness() {
 
 export async function updateBusiness(data: any) {
   const res = await api.patch("/businesses/current", data);
-  return res.data;
-}
-
-export async function createQuote(data: any) {
-  const res = await api.post("/quotes", data);
-  return res.data;
-}
-
-export async function convertQuote(id: string) {
-  const res = await api.post(`/quotes/${id}/convert`);
-  return res.data;
-}
-
-export async function convertAndSendQuote(id: string) {
-  const res = await api.post(`/quotes/${id}/convert-and-send`);
   return res.data;
 }
 
@@ -1098,73 +1071,6 @@ export function buildInvoiceSearchParams(params: InvoiceSearchParams): Record<st
 }
 
 // ============================================================================
-// CREDIT NOTES
-// ============================================================================
-
-export async function getCreditNotes(params?: CreditNoteSearchParams) {
-  const res = await api.get("/credit-notes", { params });
-  return res.data;
-}
-
-export async function getCreditNote(id: string) {
-  const res = await api.get(`/credit-notes/${id}`);
-  return res.data;
-}
-
-export async function createCreditNote(data: any) {
-  const res = await api.post("/credit-notes", data);
-  return res.data;
-}
-
-export async function updateCreditNote(id: string, data: any) {
-  const res = await api.patch(`/credit-notes/${id}`, data);
-  return res.data;
-}
-
-export async function finalizeCreditNote(id: string) {
-  const res = await api.post(`/credit-notes/${id}/finalize`);
-  return res.data;
-}
-
-export async function cancelCreditNote(id: string, data?: { reason?: string }) {
-  const res = await api.post(`/credit-notes/${id}/cancel`, data ?? {});
-  return res.data;
-}
-
-export async function applyCreditNote(id: string, invoiceId: string, amount?: string, applicationMethod?: "invoice_offset" | "balance_credit" | "refund") {
-  const res = await api.post(`/credit-notes/${id}/apply`, { invoiceId, amount, application_method: applicationMethod });
-  return res.data;
-}
-
-export async function sendCreditNote(id: string) {
-  const res = await api.post(`/credit-notes/${id}/send`);
-  return res.data;
-}
-
-export async function getCreditNotePdf(id: string) {
-  const res = await api.get(`/credit-notes/${id}/pdf`, { responseType: "blob" });
-  return res.data;
-}
-
-export async function getCreditNoteEvents(id: string) {
-  const res = await api.get(`/credit-notes/${id}/events`);
-  return res.data;
-}
-
-export function buildCreditNoteSearchParams(params: CreditNoteSearchParams): Record<string, any> {
-  const result: Record<string, any> = {};
-  if (params.limit !== undefined) result.limit = params.limit;
-  if (params.offset !== undefined) result.offset = params.offset;
-  if (params.status !== undefined) result.status = params.status;
-  if (params.customerId !== undefined) result.customer_id = params.customerId;
-  if (params.search !== undefined) result.search = params.search;
-  if (params.currency !== undefined) result.currency = params.currency;
-  if (params.sortBy !== undefined) result.sort_by = params.sortBy;
-  if (params.sortOrder !== undefined) result.sort_order = params.sortOrder;
-  return result;
-}
-
-// ============================================================================
 // REMINDERS
 // ============================================================================
 
@@ -1386,205 +1292,6 @@ export async function refundReceipt(
 
 export async function generateInvoiceReceipt(invoiceId: string, data?: { sentTo?: string; provider?: string }) {
   const res = await api.post(`/invoices/${invoiceId}/receipts`, data ?? {});
-  return res.data;
-}
-
-// ============================================================================
-// QUOTE DETAIL
-// ==============================================================================
-
-export interface ApiQuoteItem {
-  id: string;
-  description: string;
-  quantity: string;
-  unit: string;
-  unit_price: string;
-  discount: string;
-  discount_type: "fixed" | "percentage";
-  tax_rate: string;
-  tax_amount: string;
-  line_subtotal: string;
-  line_total: string;
-  is_tax_inclusive: boolean;
-  product_id?: string | null;
-  sort_order: number;
-}
-
-export interface ApiQuoteFee {
-  id: string;
-  description: string;
-  amount: string;
-  tax_rate: string;
-  tax_amount: string;
-  sort_order: number;
-}
-
-export interface ApiQuote {
-  id: string;
-  business_id: string;
-  customer_id?: string | null;
-  customer_name?: string | null;
-  customer_email?: string | null;
-  quote_number?: string | null;
-  status: string;
-  issue_date?: string | null;
-  due_date?: string | null;
-  expiry_date?: string | null;
-  currency: string;
-  subtotal: string;
-  discount_total: string;
-  tax_total: string;
-  fee_total: string;
-  total: string;
-  amount_paid: string;
-  amount_due: string;
-  notes?: string | null;
-  internal_notes?: string | null;
-  terms?: string | null;
-  payment_instructions?: string | null;
-  scope_of_work?: string | null;
-  deposit_type?: string | null;
-  deposit_value?: string | null;
-  deposit_due_date?: string | null;
-  deposit_paid?: boolean | null;
-  is_finalized: boolean;
-  finalized_at?: string | null;
-  sent_at?: string | null;
-  viewed_at?: string | null;
-  accepted_at?: string | null;
-  rejected_at?: string | null;
-  converted_invoice_id?: string | null;
-  public_token?: string | null;
-  public_token_expires_at?: string | null;
-  created_at: string;
-  updated_at: string;
-  items: ApiQuoteItem[];
-  fees: ApiQuoteFee[];
-}
-
-export interface ApiQuoteListItem {
-  id: string;
-  quote_number?: string | null;
-  customer_name?: string | null;
-  customer_email?: string | null;
-  customer_id?: string | null;
-  status: string;
-  issue_date?: string | null;
-  due_date?: string | null;
-  expiry_date?: string | null;
-  currency: string;
-  total: string;
-  amount_paid: string;
-  amount_due: string;
-  is_finalized: boolean;
-  sent_at?: string | null;
-  viewed_at?: string | null;
-  accepted_at?: string | null;
-  converted_invoice_id?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface QuoteSearchParams {
-  limit?: number;
-  offset?: number;
-  status?: string;
-  customerId?: string;
-  search?: string;
-  currency?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}
-
-export async function getQuotes(params?: QuoteSearchParams): Promise<{ quotes: ApiQuoteListItem[]; total: number; limit: number; offset: number }> {
-  const res = await api.get("/quotes", { params });
-  return res.data;
-}
-
-export async function getQuoteById(id: string): Promise<{ quote: ApiQuote }> {
-  const res = await api.get(`/quotes/${id}`);
-  return res.data;
-}
-
-export async function updateQuote(id: string, data: any) {
-  const res = await api.patch(`/quotes/${id}`, data);
-  return res.data;
-}
-
-export async function sendQuote(id: string) {
-  const res = await api.post(`/quotes/${id}/send`);
-  return res.data;
-}
-
-export async function finalizeQuote(id: string) {
-  const res = await api.post(`/quotes/${id}/finalize`);
-  return res.data;
-}
-
-export async function getQuotePdf(id: string) {
-  const res = await api.get(`/quotes/${id}/pdf`, { responseType: "blob" });
-  return res.data;
-}
-
-export async function deleteQuote(id: string) {
-  const res = await api.delete(`/quotes/${id}`);
-  return res.data;
-}
-
-export async function acceptQuote(id: string) {
-  const res = await api.post(`/quotes/${id}/accept`);
-  return res.data;
-}
-
-export async function rejectQuote(id: string) {
-  const res = await api.post(`/quotes/${id}/reject`);
-  return res.data;
-}
-
-export async function getQuoteEvents(id: string) {
-  const res = await api.get(`/quotes/${id}/events`);
-  return res.data;
-}
-
-export async function recordQuoteDeposit(id: string, amount: string | number, provider = "stub", idempotencyKey?: string) {
-  const res = await api.post(`/quotes/${id}/deposit`, { amount, provider, idempotencyKey });
-  return res.data;
-}
-
-// ============================================================================
-// PUBLIC QUOTE VIEW (customer-facing, no auth required)
-// ============================================================================
-
-export interface PublicQuoteDeposit {
-  type?: string | null;
-  value?: string | null;
-  due_date?: string | null;
-  paid?: boolean | null;
-  due?: string | null;
-}
-
-export async function getPublicQuote(token: string) {
-  const res = await api.get(`/public/quotes/${token}`);
-  return res.data as { quote: ApiQuote; html: string; pdfUrl: string };
-}
-
-export async function recordPublicQuoteView(token: string) {
-  const res = await api.post(`/public/quotes/${token}/view`);
-  return res.data;
-}
-
-export async function acceptPublicQuote(token: string) {
-  const res = await api.post(`/public/quotes/${token}/accept`);
-  return res.data;
-}
-
-export async function rejectPublicQuote(token: string) {
-  const res = await api.post(`/public/quotes/${token}/reject`);
-  return res.data;
-}
-
-export async function getPublicQuotePdf(token: string) {
-  const res = await api.get(`/public/quotes/${token}/pdf`, { responseType: "blob" });
   return res.data;
 }
 
@@ -1910,39 +1617,7 @@ export async function logInteraction(data: {
   return res.data;
 }
 
-export async function createCreditNoteFromItems(
-  invoiceId: string,
-  itemIds: string[],
-  reason?: string
-): Promise<{ creditNoteId: string }> {
-  const res = await api.post(`/invoices/${invoiceId}/credit-notes`, { itemIds, reason });
-  return res.data;
-}
-
-export interface CreditNoteForSelect {
-  id: string;
-  description: string;
-  quantity: string;
-  unit: string;
-  unitPrice: string;
-  taxRate: string;
-  lineTotal: string;
-}
-
-export async function getInvoiceItemsForCredit(invoiceId: string): Promise<CreditNoteForSelect[]> {
-  const invoice = await getInvoice(invoiceId);
-  return invoice.items.map((it: any) => ({
-    id: it.id,
-    description: it.description,
-    quantity: it.quantity,
-    unit: it.unit || "each",
-    unitPrice: it.unit_price,
-    taxRate: it.tax_rate,
-    lineTotal: it.line_total,
-  }));
-}
-
-// ============================================================================
+// ===========================================================================
 // Payment Risk Scoring API
 // ============================================================================
 

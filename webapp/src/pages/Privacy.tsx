@@ -29,7 +29,7 @@ export default function Privacy() {
           name, address, tax identification, logo).
         </li>
         <li>
-          <strong>Content you create:</strong> Invoices, quotes, customers,
+          <strong>Content you create:</strong> Invoices, customers,
           products, projects, templates, and related data that you
           enter or upload.
         </li>

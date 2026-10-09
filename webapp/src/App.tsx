@@ -18,17 +18,12 @@ const Templates = lazy(() => import("./pages/Templates"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
 const Settings = lazy(() => import("./pages/Settings"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
-const PublicQuote = lazy(() => import("./pages/PublicQuote"));
 const Payments = lazy(() => import("./pages/Payments"));
 const PaymentDetail = lazy(() => import("./pages/PaymentDetail"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
-const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
 const ReportSection = lazy(() => import("./pages/ReportSection"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
-const CreditNotes = lazy(() => import("./pages/CreditNotes"));
-const CreditNoteEditorPage = lazy(() => import("./pages/CreditNoteEditorPage"));
-const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
 const Plans = lazy(() => import("./pages/Plans"));
 
 const Invoices = lazy(() => import("./pages/Invoices"));
@@ -36,7 +31,6 @@ const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const InvoiceEditorPage = lazy(() => import("./pages/InvoiceEditorPage"));
 const QuickInvoicePage = lazy(() => import("./pages/QuickInvoicePage"));
 const Projects = lazy(() => import("./pages/Projects"));
-const Quotes = lazy(() => import("./pages/Quotes"));
 const Receipts = lazy(() => import("./pages/Receipts"));
 const ReceiptDetail = lazy(() => import("./pages/ReceiptDetail"));
 const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
@@ -93,7 +87,6 @@ export default function App() {
       <Route path="/auth/callback" element={<Suspense fallback={<Fallback />}><PublicOnly><AuthCallback /></PublicOnly></Suspense>} />
        <Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
         <Route path="/public/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
-        <Route path="/public/quote/:token" element={<Suspense fallback={<Fallback />}><PublicQuote /></Suspense>} />
 
       <Route path="/privacy" element={<Suspense fallback={<Fallback />}><Privacy /></Suspense>} />
       <Route path="/terms" element={<Suspense fallback={<Fallback />}><Terms /></Suspense>} />
@@ -116,15 +109,8 @@ export default function App() {
          <Route path="templates/new" element={<Suspense fallback={<Fallback />}><TemplateEditorPage /></Suspense>} />
           <Route path="templates/:id/edit" element={<Suspense fallback={<Fallback />}><TemplateEditorPage /></Suspense>} />
           <Route path="projects" element={<Suspense fallback={<Fallback />}><Projects /></Suspense>} />
-         <Route path="projects/:id" element={<Suspense fallback={<Fallback />}><ProjectDetail /></Suspense>} />
-         <Route path="quotes" element={<Suspense fallback={<Fallback />}><Quotes /></Suspense>} />
-         <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
-        <Route path="quotes/:id" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
-        <Route path="credit-notes" element={<Suspense fallback={<Fallback />}><CreditNotes /></Suspense>} />
-          <Route path="credit-notes/new" element={<Suspense fallback={<Fallback />}><CreditNoteEditorPage /></Suspense>} />
-          <Route path="credit-notes/:id" element={<Suspense fallback={<Fallback />}><CreditNoteDetail /></Suspense>} />
-          <Route path="credit-notes/:id/edit" element={<Suspense fallback={<Fallback />}><CreditNoteEditorPage /></Suspense>} />
-         <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
+          <Route path="projects/:id" element={<Suspense fallback={<Fallback />}><ProjectDetail /></Suspense>} />
+          <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
          <Route path="receipts/:id" element={<Suspense fallback={<Fallback />}><ReceiptDetail /></Suspense>} />
          <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />
          <Route path="report" element={<Suspense fallback={<Fallback />}><ReportSection /></Suspense>} />

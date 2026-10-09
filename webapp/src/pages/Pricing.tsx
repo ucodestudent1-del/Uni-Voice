@@ -24,7 +24,6 @@ const PLAN_FEATURES: PlanFeature[] = [
   { label: "Time tracking", free: false, pro: true },
   { label: "Project management", free: false, pro: true },
   { label: "Custom branding (logo, colors)", free: false, pro: true },
-  { label: "Quotes & estimates", free: false, pro: true },
   { label: "Priority support", free: false, pro: true },
 ];
 
@@ -37,7 +36,7 @@ const TIER_COPY: Record<TierKey, { tagline: string; description: string }> = {
   pro: {
     tagline: "All features. Billed monthly.",
     description:
-      "Full automation, multi-currency, and everything in Free — plus advanced project management, quotes, and financial reporting.",
+      "Full automation, multi-currency, and everything in Free — plus advanced project management and financial reporting.",
   },
 };
 

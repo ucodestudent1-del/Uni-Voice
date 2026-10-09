@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Edit2, Trash2, Plus, FileText, Receipt, CreditCard } from "lucide-react";
+import { Edit2, Trash2, Plus, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct, createInvoiceFromProduct, createQuoteFromProduct, createCreditNoteFromProduct } from "../api/client";
+import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct, createInvoiceFromProduct } from "../api/client";
 import type { ApiProduct } from "../types/api";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
@@ -26,25 +26,6 @@ export default function Products() {
       navigate(`/app/invoices/${res.invoiceId}/edit`);
     } catch {
       toast("Failed to create invoice from product", { type: "error" });
-    }
-  };
-
-  const handleCreateQuote = async (product: ApiProduct) => {
-    try {
-      const res = await createQuoteFromProduct(product.id);
-      navigate(`/app/quotes/${res.quoteId}`);
-    } catch {
-      toast("Failed to create quote from product", { type: "error" });
-    }
-  };
-
-  const handleCreateCreditNote = async (product: ApiProduct) => {
-    try {
-      await createCreditNoteFromProduct(product.id);
-      toast("Credit note created. You can edit it from the Credit Notes page.", { type: "success" });
-      navigate(`/app/credit-notes`);
-    } catch {
-      toast("Failed to create credit note from product", { type: "error" });
     }
   };
 
@@ -271,20 +252,6 @@ export default function Products() {
                         icon={<FileText className="w-3.5 h-3.5" />}
                         onClick={() => handleCreateInvoice(p)}
                         title="Create invoice from this product"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={<Receipt className="w-3.5 h-3.5" />}
-                        onClick={() => handleCreateQuote(p)}
-                        title="Create quote from this product"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={<CreditCard className="w-3.5 h-3.5" />}
-                        onClick={() => handleCreateCreditNote(p)}
-                        title="Create credit note from this product"
                       />
                       <Button
                         variant="ghost"

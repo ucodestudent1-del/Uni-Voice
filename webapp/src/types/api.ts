@@ -81,7 +81,6 @@ export interface ApiBusiness {
   phone?: string | null;
   website?: string | null;
   defaultCurrency: string;
-  defaultQuoteValidityDays?: number;
   countryCode?: string;
   logoUrl?: string | null;
   addressLine1?: string | null;
@@ -420,7 +419,7 @@ export interface InvoiceTemplateDTO {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
-  documentType: "invoice" | "quote";
+  documentType: "invoice";
   lifecycle: "draft" | "published" | "archived";
   publishedAt?: string | null;
   archivedAt?: string | null;
@@ -622,138 +621,6 @@ export interface InvoiceSearchParams {
   issueDateTo?: string;
   dueDateFrom?: string;
   dueDateTo?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}
-
-export interface ApiCreditNote {
-  id: string;
-  business_id: string;
-  reference_invoice_id?: string | null;
-  reference_invoice_number?: string | null;
-  customer_id?: string | null;
-  customer_name?: string | null;
-  customer_email?: string | null;
-  credit_note_number?: string | null;
-  status: string;
-  issue_date?: string | null;
-  currency: string;
-  subtotal: string;
-  discount_total: string;
-  tax_total: string;
-  fee_total: string;
-  total: string;
-  applied_total: string;
-  amount_due: string;
-  amount_applied: string;
-  amount_remaining: string;
-  notes?: string | null;
-  internal_notes?: string | null;
-  terms?: string | null;
-  reason?: string | null;
-  template_id?: string | null;
-  is_finalized: boolean;
-  finalized_at?: string | null;
-  cancelled_at?: string | null;
-  cancelled_reason?: string | null;
-  voided_at?: string | null;
-  void_reason?: string | null;
-  public_token?: string | null;
-  version: number;
-  created_at: string;
-  updated_at: string;
-  created_by?: string | null;
-  updated_by?: string | null;
-  items: ApiCreditNoteItem[];
-  fees: ApiCreditNoteFee[];
-  applications: ApiCreditNoteApplication[];
-}
-
-export interface ApiCreditNoteItem {
-  id: string;
-  credit_note_id: string;
-  product_id?: string | null;
-  description: string;
-  quantity: string;
-  unit: string;
-  unit_price: string;
-  discount: string;
-  discount_type: "fixed" | "percentage";
-  tax_rate: string;
-  tax_amount: string;
-  line_subtotal: string;
-  line_total: string;
-  sort_order: number;
-  is_tax_inclusive: boolean;
-  catalog_name?: string | null;
-  catalog_sku?: string | null;
-  catalog_tax_category?: string | null;
-  catalog_unit_price?: string | null;
-  catalog_tax_rate?: string | null;
-}
-
-export interface ApiCreditNoteFee {
-  id: string;
-  credit_note_id: string;
-  description: string;
-  amount: string;
-  tax_rate: string;
-  tax_amount: string;
-  sort_order: number;
-  created_at: string;
-}
-
-export interface ApiCreditNoteApplication {
-  id: string;
-  credit_note_id: string;
-  invoice_id: string;
-  business_id?: string;
-  amount: string;
-  applied_at: string;
-  idempotency_key?: string | null;
-  metadata?: Record<string, unknown>;
-  /**
-   * How the credit was consumed. Stored in metadata.
-   * - "invoice_offset" — applied to reduce an invoice's balance
-   * - "balance_credit" — held on the customer's account for future invoices
-   * - "refund" — returned to the customer's original payment method
-   */
-  application_method?: "invoice_offset" | "balance_credit" | "refund" | null;
-}
-
-export interface ApiCreditNoteListItem {
-  id: string;
-  business_id: string;
-  customer_id: string | null;
-  reference_invoice_id?: string | null;
-  reference_invoice_number?: string | null;
-  credit_note_number?: string | null;
-  status: string;
-  issue_date?: string | null;
-  currency: string;
-  total: string;
-  applied_total: string;
-  amount_due: string;
-  amount_applied: string;
-  amount_remaining: string;
-  reason?: string | null;
-  notes?: string | null;
-  is_finalized: boolean;
-  finalized_at?: string | null;
-  cancelled_at?: string | null;
-  created_at: string;
-  updated_at: string;
-  customer_name: string | null;
-  customer_email: string | null;
-}
-
-export interface CreditNoteSearchParams {
-  limit?: number;
-  offset?: number;
-  status?: string;
-  customerId?: string;
-  search?: string;
-  currency?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }

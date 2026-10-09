@@ -32,13 +32,11 @@ export default function Layout() {
     { name: "Invoices", to: "/app/invoices" },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
-    { name: "Quotes", to: "/app/quotes", feature: "quotes.create", requiredPlan: "pro" as PlanTier },
     { name: "Payments", to: "/app/payments" },
     { name: "Receipts", to: "/app/receipts", feature: "receipts.create", requiredPlan: "pro" as PlanTier },
     { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" as PlanTier },
      { name: "Projects", to: "/app/projects", feature: "projects.enabled", requiredPlan: "free" as PlanTier },
      { name: "Reports", to: "/app/reports", feature: "reports.revenue", requiredPlan: "pro" as PlanTier },
-    { name: "Credit Notes", to: "/app/credit-notes", feature: "credit_notes.create", requiredPlan: "pro" as PlanTier },
     { name: "Plans", to: "/app/plans" },
     { name: "Settings", to: "/app/settings" },
   ];
