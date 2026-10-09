@@ -12,6 +12,7 @@ interface SmartDefaultsBarProps {
   settings: Record<string, any>;
   onCurrencyChange: (value: string) => void;
   onTaxRateChange: (value: string) => void;
+  onSettingsClick?: () => void;
 }
 
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CNY"];
@@ -24,8 +25,8 @@ export function SmartDefaultsBar({
   settings,
   onCurrencyChange,
   onTaxRateChange,
+  onSettingsClick = () => {},
 }: SmartDefaultsBarProps) {
-  const meta = getCurrencyMetadata(currency || "USD");
   const defaultCurrency = business?.defaultCurrency ?? settings?.default_currency ?? "USD";
   const defaultTax = settings?.default_tax_rate ?? "0";
 
@@ -88,15 +89,15 @@ export function SmartDefaultsBar({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={() => {}}
-          className="ml-auto flex items-center gap-1 text-xs text-tertiary hover:text-primary"
-          title="Customize defaults"
-        >
-          <Edit3 className="h-3 w-3" />
-          Customize
-        </button>
+         <button
+           type="button"
+           onClick={onSettingsClick}
+           className="ml-auto flex items-center gap-1 text-xs text-tertiary hover:text-primary"
+           title="Customize defaults"
+         >
+           <Edit3 className="h-3 w-3" />
+           Customize
+         </button>
       </div>
     </div>
   );

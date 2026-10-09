@@ -28,9 +28,10 @@ import {
   createInvoice,
   duplicateInvoice,
   finalizeInvoice,
-  getBusiness,
-  getBusinessSettings,
-  getCustomer,
+   getBusiness,
+   getBusinessSettings,
+   updateBusinessSettings,
+   getCustomer,
   getCustomers,
   getInvoice,
   getInvoicePdf,
@@ -73,6 +74,9 @@ import InvoicePreviewV2, {
   type PreviewLineItem,
 } from "./InvoicePreviewV2";
 import type { ApiBusiness, ApiCustomer, ApiInvoice, ApiInvoiceAttachment, ApiProduct } from "../types/api";
+import CondensedLineItemsTable from "./CondensedLineItemsTable";
+import AdvancedOptionsPanel from "./AdvancedOptionsPanel";
+import SettingsAndDefaultsDrawer from "./SettingsAndDefaultsDrawer";
 
 export type LineItemType = "service" | "labor" | "material" | "part" | "other";
 
@@ -349,6 +353,8 @@ export default function InvoiceWorkspace() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewWidth, setPreviewWidth] = useState(480);
   const [previewMobileOpen, setPreviewMobileOpen] = useState(false);
+
+  const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
 
   const [quickActionsLoading, setQuickActionsLoading] = useState(isNew);
   const [quickActions, setQuickActions] = useState<any>(null);
@@ -1002,17 +1008,17 @@ export default function InvoiceWorkspace() {
       category: a.category,
     }));
     const paymentInstructions =
-      invoice.paymentInstructions ??
-      (invoice.isFinalized
-        ? `Please pay ${fmt(calc.amountDue, invoice.currency)} by the due date.`
-        : undefined) ??
-      undefined;
+       invoice.paymentInstructions ??
+       (invoice.isFinalized
+         ? `Please pay ${fmt(calc.amountDue, invoice.currency)} by the due date.`
+         : undefined) ??
+       undefined;
 
     const resolvedCustomer =
-      invoice.customer ?? customers.find((c) => c.id === invoice.customerId) ?? null;
+       invoice.customer ?? customers.find((c) => c.id === invoice.customerId) ?? null;
 
     const paymentMethods: PreviewInvoice["paymentMethods"] = [];
-    const bankDetails = invoice.bankDetails ?? undefined;
+    const bankDetails = invoice.bankDetails ?? settings.default_bank_details ?? undefined;
     if (bankDetails) {
       paymentMethods.push({
         type: "bank",
@@ -1020,7 +1026,7 @@ export default function InvoiceWorkspace() {
         details: bankDetails,
       });
     }
-    const onlineUrl = invoice.paymentPortalUrl;
+    const onlineUrl = invoice.paymentPortalUrl ?? settings.default_payment_portal_url ?? undefined;
     if (onlineUrl) {
       paymentMethods.push({
         type: "custom",
@@ -1243,6 +1249,7 @@ export default function InvoiceWorkspace() {
               settings={settings}
               onCurrencyChange={(v) => handleField("currency", v)}
               onTaxRateChange={(v) => handleField("taxRate", v)}
+              onSettingsClick={() => setSettingsDrawerOpen(true)}
             />
            <TotalsCard invoice={invoice} calc={calc} onField={handleField} />
          </div>
@@ -1264,7 +1271,7 @@ export default function InvoiceWorkspace() {
              <div className="mb-6">
                <AiInput
                  onParsed={handleParsedFromAi}
-                 businessName={business?.name || business?.legalName}
+                 businessName={(business?.name ?? business?.legalName) ?? "Your Business"}
                  currency={invoice.currency}
                  customerId={invoice.customerId ?? undefined}
                />
@@ -1310,17 +1317,17 @@ export default function InvoiceWorkspace() {
                  </div>
                )}
              </div>
-           ) : (
-             <LineItemsTable
-               invoice={invoice}
-               calc={calc}
-               onItemChange={handleItemChange}
-               onAdd={addItem}
-               onDuplicate={duplicateItem}
-               onRemove={removeItem}
-               defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
-             />
-           )}
+            ) : (
+              <CondensedLineItemsTable
+                invoice={invoice}
+                calc={calc}
+                onItemChange={handleItemChange}
+                onAdd={addItem}
+                onDuplicate={duplicateItem}
+                onRemove={removeItem}
+                defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
+              />
+            )}
 
            {products.length > 0 && invoice.items.length > 0 && (
              <div className="mb-4">
@@ -1342,7 +1349,13 @@ export default function InvoiceWorkspace() {
              </div>
            )}
 
-            <FeesSection
+            <AdvancedOptionsPanel
+              invoice={invoice}
+              onField={(field, value) => updateData({ [field]: value } as any)}
+              defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
+            />
+
+             <FeesSection
               fees={invoice.fees}
               onChange={(fees) => updateData({ fees })}
             />
@@ -1446,11 +1459,27 @@ export default function InvoiceWorkspace() {
       />
     )}
 
-    {previewOpen && previewInvoice && (
-      <PreviewDialog invoice={previewInvoice} onClose={() => setPreviewOpen(false)} onDownloadPdf={downloadPdf} />
-    )}
-  </div>
-  );
+     {previewOpen && previewInvoice && (
+       <PreviewDialog invoice={previewInvoice} onClose={() => setPreviewOpen(false)} onDownloadPdf={downloadPdf} />
+     )}
+
+     <SettingsAndDefaultsDrawer
+       open={settingsDrawerOpen}
+       onClose={() => setSettingsDrawerOpen(false)}
+       businessSettings={settings}
+       businessName={business?.name ?? business?.legalName ?? "Your Business"}
+       businessLogoUrl={business?.logoUrl}
+       onSave={async (data) => {
+         await updateBusinessSettings(data);
+         const res = await getBusinessSettings();
+         setSettings(res.settings ?? {});
+       }}
+       onSettingsChange={(data) => {
+         setSettings((prev) => ({ ...prev, ...data }));
+       }}
+     />
+   </div>
+   );
 
   function startResize(e: React.MouseEvent) {
     e.preventDefault();

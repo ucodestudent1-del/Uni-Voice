@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Decimal } from "decimal.js";
-import { CreditCard, FileText, Download, ExternalLink } from "lucide-react";
+import { CreditCard, FileText, ExternalLink } from "lucide-react";
 import { formatCurrency, formatDateLong, formatTaxRateWithName } from "../utils/format";
 import { getCurrencyMetadata } from "../types/currency";
 
@@ -508,7 +508,7 @@ const TaxBreakdown: React.FC<{ groups: PreviewTaxGroup[]; currency: string }> = 
   }
 );
 
-const TotalsSummary: React.FC<{ invoice: PreviewInvoice }> = React.memo(function TotalsSummary({ invoice }) {
+function TotalsSummaryInner({ invoice }: { invoice: PreviewInvoice }) {
   const currency = invoice.currency;
   const meta = getCurrencyMetadata(currency);
   const dp = meta.decimalPlaces;
@@ -518,68 +518,103 @@ const TotalsSummary: React.FC<{ invoice: PreviewInvoice }> = React.memo(function
   const hasFees = hasNonZero(invoice.feeTotal);
   const hasTax = hasNonZero(invoice.taxTotal);
   const amountDue = new Decimal(invoice.amountDue ?? 0);
-  const total = new Decimal(invoice.total ?? 0);
   const isFullyPaid = amountDue.lte(0);
 
+  const hasDeposit =
+    invoice.depositType &&
+    invoice.depositType !== "none" &&
+    hasNonZero(invoice.depositDue ?? "0");
+  const depositDue = new Decimal(invoice.depositDue ?? 0);
+  const depositPaid = new Decimal(invoice.depositPaid ?? 0);
+  const depositRemaining = depositDue.minus(depositPaid);
+
   return (
-    <div className="mt-6 flex justify-end">
-      <div className="w-64 space-y-1 font-tabular-nums">
+    <div className="w-64 space-y-1 font-tabular-nums">
+      <div className="flex justify-between py-2 text-sm">
+        <span className="text-tertiary">Subtotal</span>
+        <span className="text-primary">{fmtNumber(invoice.subtotal, currency, dp)}</span>
+      </div>
+
+      {hasDiscount && (
         <div className="flex justify-between py-2 text-sm">
-          <span className="text-tertiary">Subtotal</span>
-          <span className="text-primary">{fmtNumber(invoice.subtotal, currency, dp)}</span>
+          <span className="text-tertiary">Discount</span>
+          <span className="text-success-text">−{fmtNumber(invoice.discountTotal, currency, dp)}</span>
         </div>
+      )}
 
-        {hasDiscount && (
-          <div className="flex justify-between py-2 text-sm">
-            <span className="text-tertiary">Discount</span>
-            <span className="text-success-text">−{fmtNumber(invoice.discountTotal, currency, dp)}</span>
-          </div>
-        )}
-
-        {hasTax && (
-          <div className="flex justify-between py-2 text-sm">
-            <span className="text-tertiary">Tax</span>
-            <span className="text-primary">{fmtNumber(invoice.taxTotal, currency, dp)}</span>
-          </div>
-        )}
-
-        {hasFees && (
-          <div className="flex justify-between py-2 text-sm">
-            <span className="text-tertiary">Fees</span>
-            <span className="text-primary">{fmtNumber(invoice.feeTotal, currency, dp)}</span>
-          </div>
-        )}
-
-        <div className="border-t-2 border-color pt-3">
-          <div className="flex justify-between">
-            <span className="text-base font-semibold text-secondary">Total</span>
-            <span className="text-xl font-bold text-primary">{fmtNumber(invoice.total, currency, dp)}</span>
-          </div>
+      {hasTax && (
+        <div className="flex justify-between py-2 text-sm">
+          <span className="text-tertiary">Tax</span>
+          <span className="text-primary">{fmtNumber(invoice.taxTotal, currency, dp)}</span>
         </div>
+      )}
 
-        {hasAmountPaid && (
-          <div className="flex justify-between py-2 text-sm">
-            <span className="text-tertiary">Paid</span>
-            <span className="text-success-text">+{fmtNumber(invoice.amountPaid, currency, dp)}</span>
-          </div>
-        )}
+      {hasFees && (
+        <div className="flex justify-between py-2 text-sm">
+          <span className="text-tertiary">Fees</span>
+          <span className="text-primary">{fmtNumber(invoice.feeTotal, currency, dp)}</span>
+        </div>
+      )}
 
-        <div className="border-t-2 border-color pt-3">
-          <div className="flex justify-between">
-            <span className="text-lg font-semibold text-secondary">
-              {isFullyPaid ? "Paid in Full" : "Amount Due"}
-            </span>
-            <span
-              className={cn(
-                "text-2xl font-extrabold",
-                isFullyPaid ? "text-success-text" : "text-primary-brand"
-              )}
-            >
-              {isFullyPaid ? "✓" : fmtNumber(invoice.amountDue, currency, dp)}
-            </span>
-          </div>
+      <div className="border-t-2 border-color pt-3">
+        <div className="flex justify-between">
+          <span className="text-base font-semibold text-secondary">Total</span>
+          <span className="text-xl font-bold text-primary">{fmtNumber(invoice.total, currency, dp)}</span>
         </div>
       </div>
+
+      {hasDeposit && (
+        <>
+          <div className="border-t border-color pt-2 text-sm">
+            <span className="text-tertiary">Deposit ({invoice.depositType})</span>
+            <div className="text-right font-tabular-nums">
+              <span className="text-primary">{fmtNumber(depositDue, currency, dp)}</span>
+              {depositPaid.gt(0) && (
+                <span className="ml-2 text-xs text-success-text">
+                  (paid: {fmtNumber(depositPaid, currency, dp)})
+                </span>
+              )}
+            </div>
+          </div>
+          {depositRemaining.gt(0) && (
+            <div className="flex justify-between py-1 text-sm">
+              <span className="text-tertiary">Deposit balance</span>
+              <span className="text-primary">{fmtNumber(depositRemaining, currency, dp)}</span>
+            </div>
+          )}
+        </>
+      )}
+
+      {hasAmountPaid && (
+        <div className="flex justify-between py-2 text-sm">
+          <span className="text-tertiary">Paid</span>
+          <span className="text-success-text">+{fmtNumber(invoice.amountPaid, currency, dp)}</span>
+        </div>
+      )}
+
+      <div className="border-t-2 border-color pt-3">
+        <div className="flex justify-between">
+          <span className="text-lg font-semibold text-secondary">
+            {isFullyPaid ? "Paid in Full" : "Amount Due"}
+          </span>
+          <span
+            className={cn(
+              "text-2xl font-extrabold",
+              isFullyPaid ? "text-success-text" : "text-primary-brand"
+            )}
+          >
+            {isFullyPaid ? "✓" : fmtNumber(invoice.amountDue, currency, dp)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const TotalsSummary: React.FC<{ invoice: PreviewInvoice }> = React.memo(function TotalsSummary({ invoice }) {
+  return (
+    <div className="mt-6 flex justify-end">
+      <TotalsSummaryInner invoice={invoice} />
     </div>
   );
 });
@@ -587,8 +622,7 @@ const TotalsSummary: React.FC<{ invoice: PreviewInvoice }> = React.memo(function
 const PaymentInfoSection: React.FC<{ invoice: PreviewInvoice }> = React.memo(function PaymentInfoSection({ invoice }) {
   const currency = invoice.currency;
   const meta = getCurrencyMetadata(currency);
-  const dp = meta.decimalPlaces;
-  const amountDue = new Decimal(invoice.amountDue ?? 0);
+   const dp = meta.decimalPlaces;
   const hasAmountDue = hasNonZero(invoice.amountDue);
   const hasDeposit = invoice.depositType && invoice.depositType !== "none" && hasNonZero(invoice.depositDue);
   const depositDue = new Decimal(invoice.depositDue ?? 0);
