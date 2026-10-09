@@ -1657,3 +1657,189 @@ export async function batchScorePaymentRisk(): Promise<{ scored: number; failed:
   return res.data;
 }
 
+// ===========================================================================
+// Quotes API
+// ============================================================================
+
+export interface QuoteItemInput {
+  id?: string;
+  productId?: string | null;
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice: string | number;
+  discount?: string | number;
+  discountType?: "fixed" | "percentage";
+  taxRate?: string | number;
+  taxName?: string | null;
+  isTaxInclusive?: boolean;
+  sortOrder?: number;
+}
+
+export interface QuoteFeeInput {
+  description: string;
+  amount: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+  sortOrder?: number;
+}
+
+export interface QuoteCreateInput {
+  customerId?: string | null;
+  currency?: string;
+  issueDate?: string | null;
+  dueDate?: string | null;
+  expiryDate?: string | null;
+  notes?: string | null;
+  internalNotes?: string | null;
+  terms?: string | null;
+  paymentInstructions?: string | null;
+  scopeOfWork?: string | null;
+  items?: QuoteItemInput[];
+  fees?: QuoteFeeInput[];
+  depositType?: "none" | "percentage" | "fixed";
+  depositValue?: string | number;
+  depositDueDate?: string | null;
+}
+
+export interface QuoteSearchParam {
+  status?: string;
+  customerId?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FinalizeQuoteResult {
+  quoteNumber: string;
+}
+
+export interface SendQuoteResult {
+  sent: boolean;
+  publicToken: string;
+}
+
+export async function getQuotes(params?: QuoteSearchParam) {
+  const res = await cachedGet("/quotes", params as Record<string, unknown> | undefined, { ttlMs: 30 * 1000 });
+  return res;
+}
+
+export async function getQuote(id: string) {
+  const res = await cachedGet(`/quotes/${id}`, undefined, { ttlMs: 15 * 1000 });
+  return res;
+}
+
+export async function createQuote(data: QuoteCreateInput) {
+  const res = await api.post("/quotes", data);
+  invalidateCache("/quotes?");
+  return res.data;
+}
+
+export async function updateQuote(id: string, data: Partial<QuoteCreateInput>) {
+  const res = await api.patch(`/quotes/${id}`, data);
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function finalizeQuote(id: string): Promise<FinalizeQuoteResult> {
+  const res = await api.post(`/quotes/${id}/finalize`);
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function sendQuote(id: string): Promise<SendQuoteResult> {
+  const res = await api.post(`/quotes/${id}/send`);
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function acceptQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/accept`);
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function rejectQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/reject`);
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function deleteQuote(id: string) {
+  const res = await api.delete(`/quotes/${id}`);
+  invalidateCache("/quotes?");
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function getQuotePdf(id: string) {
+  const res = await api.post(`/quotes/${id}/pdf`, {}, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getQuoteEvents(id: string) {
+  const res = await api.get(`/quotes/${id}/events`);
+  return res.data;
+}
+
+export async function convertQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/convert`);
+  invalidateCache("/quotes?");
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function convertAndSendQuote(id: string) {
+  const res = await api.post(`/quotes/${id}/convert-and-send`);
+  invalidateCache("/quotes?");
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function recordQuoteDepositPayment(
+  id: string,
+  amount: string | number,
+  provider?: string,
+  idempotencyKey?: string
+) {
+  const res = await api.post(`/quotes/${id}/deposit`, { amount, provider, idempotencyKey });
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
+// Public quote view (for client-facing acceptance)
+export async function getPublicQuote(token: string) {
+  const res = await api.get(`/public/quotes/${token}`);
+  return res.data;
+}
+
+export async function recordQuoteView(token: string) {
+  const res = await api.post(`/public/quotes/${token}/view`);
+  return res.data;
+}
+
+export async function acceptPublicQuote(token: string) {
+  const res = await api.post(`/public/quotes/${token}/accept`);
+  return res.data;
+}
+
+export async function getPublicQuotePdf(token: string) {
+  const res = await api.get(`/public/quotes/${token}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function rejectPublicQuote(token: string) {
+  const res = await api.post(`/public/quotes/${token}/reject`);
+  return res.data;
+}
+
+export async function payQuoteDepositPublic(
+  token: string,
+  amount: string | number,
+  provider?: string,
+  idempotencyKey?: string
+) {
+  const res = await api.post(`/public/quotes/${token}/deposit`, { amount, provider, idempotencyKey });
+  return res.data;
+}
+

@@ -225,6 +225,91 @@ export interface ApiInvoice {
   attachments?: ApiInvoiceAttachment[];
 }
 
+export interface ApiQuoteItem {
+  id: string;
+  product_id?: string | null;
+  description: string;
+  quantity: string;
+  unit: string;
+  unit_price: string;
+  discount: string;
+  discount_type: "fixed" | "percentage";
+  tax_rate: string;
+  tax_name?: string | null;
+  tax_amount: string;
+  line_subtotal: string;
+  line_total: string;
+  is_tax_inclusive: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiQuoteFee {
+  id: string;
+  description: string;
+  amount: string;
+  tax_rate: string;
+  tax_name?: string | null;
+  tax_amount: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiQuote {
+  id: string;
+  business_id: string;
+  customer_id?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  quote_number?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  expiry_date?: string | null;
+  currency: string;
+  subtotal: string;
+  discount_total: string;
+  tax_total: string;
+  fee_total: string;
+  total: string;
+  amount_paid: string;
+  amount_due: string;
+  deposit_type: "none" | "percentage" | "fixed";
+  deposit_value: string;
+  deposit_due_date?: string | null;
+  deposit_paid: boolean;
+  deposit_due?: string | null;
+  payment_instructions?: string | null;
+  scope_of_work?: string | null;
+  notes?: string | null;
+  internal_notes?: string | null;
+  terms?: string | null;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  viewed_at?: string | null;
+  accepted_at?: string | null;
+  rejected_at?: string | null;
+  converted_invoice_id?: string | null;
+  public_token?: string | null;
+  public_token_expires_at?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  items: ApiQuoteItem[];
+  fees: ApiQuoteFee[];
+}
+
+export interface ApiQuoteEvent {
+  id: string;
+  quote_id: string;
+  event_type: string;
+  actor_id?: string | null;
+  actor_type?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface ApiTaxIdentifier {
   id: string;
   customerId: string;
