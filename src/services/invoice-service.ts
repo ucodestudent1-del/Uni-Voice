@@ -1333,7 +1333,7 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     };
   }
 
-  async generatePdf(businessId: string, id: string): Promise<Buffer> {
+  async generatePdf(businessId: string, id: string): Promise<{ buffer: Buffer; invoiceNumber: string | null | undefined }> {
     const invoice = await invoiceRepository.findById(businessId, id);
     const snapshot = await invoiceRepository.getSnapshot(invoice.id);
     const templateData = this.buildSnapshotTemplateData(invoice, snapshot);
@@ -1344,13 +1344,13 @@ private async ensurePublicToken(businessId: string, invoiceId: string): Promise<
     const cached = await invoiceRepository.getPdfCache(id, cacheHash);
     if (cached) {
       logger.info(`PDF cache hit for invoice ${id}`);
-      return cached;
+      return { buffer: cached, invoiceNumber: invoice.invoiceNumber };
     }
 
     const html = templateRenderer.render(templateData);
     const pdf = await pdfService.generatePdfFromHtml(html, templateData);
     await invoiceRepository.storePdfCache(id, pdf, cacheHash);
-    return pdf;
+    return { buffer: pdf, invoiceNumber: invoice.invoiceNumber };
   }
 }
 

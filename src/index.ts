@@ -1209,10 +1209,10 @@ app.post("/api/invoices/:id/payment-intent", requireAuth, async (req: AuthReques
 
 app.post("/api/invoices/:id/pdf", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const pdf = await invoiceService.generatePdf(req.user!.businessId, req.params.id);
+  const result = await invoiceService.generatePdf(req.user!.businessId, req.params.id);
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=invoice-${req.params.id}.pdf`);
-  res.send(pdf);
+  res.setHeader("Content-Disposition", `attachment; filename=invoice-${result.invoiceNumber ?? req.params.id}.pdf`);
+  res.send(result.buffer);
 });
 
 app.get("/api/invoices/:id/events", requireAuth, async (req: AuthRequest, res) => {
@@ -3207,10 +3207,10 @@ app.get("/api/public/invoices/:token", optionalAuth, async (req: AuthRequest, re
 
 app.get("/api/public/invoices/:token/pdf", optionalAuth, async (req: AuthRequest, res) => {
   const invoice = await invoiceRepository.findByPublicToken(undefined, req.params.token);
-  const pdf = await invoiceService.generatePdf(invoice.businessId, invoice.id);
+  const result = await invoiceService.generatePdf(invoice.businessId, invoice.id);
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=invoice-${invoice.invoiceNumber ?? invoice.id}.pdf`);
-  res.send(pdf);
+  res.setHeader("Content-Disposition", `attachment; filename=invoice-${result.invoiceNumber ?? invoice.id}.pdf`);
+  res.send(result.buffer);
 });
 
 app.post("/api/public/invoices/:token/view", optionalAuth, async (req: AuthRequest, res) => {

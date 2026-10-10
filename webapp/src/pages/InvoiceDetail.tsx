@@ -6,6 +6,7 @@ import {
   getInvoicePdf,
   getInvoicePayments,
   getInvoiceEvents,
+  getBusiness,
   sendReminder,
   cancelInvoice,
   voidInvoice,
@@ -19,13 +20,13 @@ import {
 } from "../api/client";
 import { formatCurrency, formatDate } from "../utils/format";
 import { formatCurrencyValue } from "../lib/utils";
-import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo } from "../types/api";
+import type { ApiInvoice, ApiPayment, ApiInvoiceEvent, ApiPaymentIntent, ApiDepositInfo, ApiBusiness } from "../types/api";
 import { InvoiceLifecycle, StatusBadge, invoiceStatusConfig, isOverdueStatus } from "@/components/ui";
 import { Button } from "../components/ui/Button";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 import PaymentDialog from "../components/payments/PaymentDialog";
 import DepositDialog from "../components/payments/DepositDialog";
-import { AlertCircle, Check, Copy } from "lucide-react";
+import { AlertCircle, Check, Copy, Building2, Phone, Mail, Globe, MapPin } from "lucide-react";
 
 const AlertCircleIcon = AlertCircle;
 const CheckIcon = Check;
@@ -34,6 +35,7 @@ export default function InvoiceDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState<ApiInvoice | null>(null);
+  const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [payments, setPayments] = useState<ApiPayment[]>([]);
   const [events, setEvents] = useState<ApiInvoiceEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,14 +63,16 @@ export default function InvoiceDetail() {
     if (!id) return;
     setLoading(true);
     try {
-      const [invRes, payRes, evRes] = await Promise.allSettled([
+      const [invRes, payRes, evRes, bizRes] = await Promise.allSettled([
         getInvoice(id),
         getInvoicePayments(id),
         getInvoiceEvents(id),
+        getBusiness(),
       ]);
       if (invRes.status === "fulfilled") setInvoice(invRes.value.invoice);
       if (payRes.status === "fulfilled") setPayments(payRes.value.payments ?? []);
       if (evRes.status === "fulfilled") setEvents(evRes.value.events ?? []);
+      if (bizRes.status === "fulfilled") setBusiness(bizRes.value);
     } catch (err: any) {
       if (err.response?.status === 404) {
         navigate("/app/invoices");
@@ -233,6 +237,23 @@ export default function InvoiceDetail() {
   const isOverdue = isOverdueStatus(invoice.status, invoice.due_date);
 
   const renderContextualAction = () => {
+    if (invoice.status === "void" || invoice.status === "cancelled") {
+      const label = invoice.status === "void" ? "Voided" : "Cancelled";
+      return (
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center justify-center h-8 w-8 rounded-full status-tertiary-bg">
+            <AlertCircleIcon className="h-5 w-5 status-tertiary-text" />
+          </span>
+          <div>
+            <p className="text-lg font-semibold text-tertiary">Invoice {label}</p>
+            <p className="text-sm text-tertiary">
+              {invoice.cancelled_reason || "—"}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     if (invoice.status === "draft") {
       return (
         <Link
@@ -362,6 +383,7 @@ export default function InvoiceDetail() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
+          <BusinessInfoSection business={business} />
           <CustomerBillingSection invoice={invoice} />
           <InvoiceDetailView invoice={invoice} />
         </div>
@@ -517,6 +539,93 @@ function TimelineItem({ event }: { event: ApiInvoiceEvent }) {
         </p>
       </div>
     </li>
+  );
+}
+
+function BusinessInfoSection({ business }: { business: ApiBusiness | null }) {
+  if (!business) return null;
+  const hasDetails =
+    business.name ||
+    business.email ||
+    business.phone ||
+    business.website ||
+    business.taxId ||
+    business.addressLine1;
+  if (!hasDetails) return null;
+  return (
+    <div className="rounded-xl border border-color bg-surface p-6 shadow-sm mb-6">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3">
+          <Building2 className="h-5 w-5 text-tertiary flex-shrink-0 mt-0.5" aria-hidden="true" />
+          <div>
+            <h3 className="invoice-section-title mb-1">Seller</h3>
+            <p className="text-lg font-semibold text-primary">{business.name}</p>
+            {business.legalName && business.legalName !== business.name && (
+              <p className="text-sm text-secondary">{business.legalName}</p>
+            )}
+          </div>
+        </div>
+        {business.logoUrl && (
+          <img
+            src={business.logoUrl}
+            alt={business.name}
+            className="h-12 w-auto object-contain"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        )}
+      </div>
+      <div className="mt-3 space-y-1 text-sm">
+        {business.email && (
+          <div className="flex items-center gap-2 text-secondary">
+            <Mail className="h-4 w-4 text-tertiary" />
+            <a href={`mailto:${business.email}`} className="text-primary hover:text-primary-brand">
+              {business.email}
+            </a>
+          </div>
+        )}
+        {business.phone && (
+          <div className="flex items-center gap-2 text-secondary">
+            <Phone className="h-4 w-4 text-tertiary" />
+            <span>{business.phone}</span>
+          </div>
+        )}
+        {business.website && (
+          <div className="flex items-center gap-2 text-secondary">
+            <Globe className="h-4 w-4 text-tertiary" />
+            <a
+              href={business.website.startsWith("http") ? business.website : `https://${business.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary-brand"
+            >
+              {business.website}
+            </a>
+          </div>
+        )}
+        {(business.addressLine1 || business.city || business.stateOrRegion || business.postalCode || business.countryCode) && (
+          <div className="flex items-start gap-2 text-secondary">
+            <MapPin className="h-4 w-4 text-tertiary mt-0.5" />
+            <address className="not-italic">
+              {business.addressLine1}
+              {business.addressLine2 && <><br />{business.addressLine2}</>}
+              {business.city && <>{business.addressLine2 || business.addressLine1 ? ", " : ""}{business.city}</>}
+              {business.stateOrRegion && <>{business.city || business.addressLine1 ? ", " : ""}{business.stateOrRegion}</>}
+              {business.postalCode && <>{business.city || business.stateOrRegion ? " " : ""}{business.postalCode}</>}
+              {business.countryCode && <br />}{business.countryCode}
+            </address>
+          </div>
+        )}
+        {business.taxId && (
+          <div className="text-secondary">
+            <span className="text-tertiary">Tax ID: </span>
+            <span className="text-primary">{business.taxId}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -698,10 +807,6 @@ function InvoiceDetailView({ invoice }: { invoice: ApiInvoice }) {
                 <span className="text-base font-semibold text-primary-brand">Amount Due</span>
                 <span className="text-2xl font-bold text-primary-brand">{formatCurrency(amountDue, invoice.currency)}</span>
               </div>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-tertiary">Paid</span>
-              <span className="text-primary">{formatCurrency(invoice.amount_paid, invoice.currency)}</span>
             </div>
           </div>
         </div>
