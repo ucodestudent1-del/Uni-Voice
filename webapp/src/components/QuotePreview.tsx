@@ -5,7 +5,7 @@ import { Decimal } from "decimal.js";
 import { formatCurrency, formatDateLong } from "@/utils/format";
 import { getCurrencyMetadata } from "@/types/currency";
 import { getPublicQuote, recordQuoteView, acceptPublicQuote, getPublicQuotePdf, getBusiness } from "@/api/client";
-import type { ApiQuote } from "@/types/api";
+import type { ApiQuote, ApiQuoteItem, ApiQuoteFee } from "@/types/api";
 import EmptyState from "@/components/ui/EmptyState";
 
 const QUOTE_STATUS_COLORS: Record<string, string> = {
@@ -25,6 +25,23 @@ function formatQuantity(qty: string | undefined | null): string {
 
 function hasNonZero(value: string | undefined | null): boolean {
   return new Decimal(value ?? 0).gt(0);
+}
+
+function formatLineItemTax(item: ApiQuoteItem): string | null {
+  const taxPct = new Decimal(item.tax_rate ?? 0).mul(100);
+  if (taxPct.isZero()) return null;
+  const suffix = item.is_tax_inclusive ? " (incl. tax)" : "";
+  const name = item.tax_name ? ` (${item.tax_name})` : "";
+  return `${taxPct.toFixed(2)}%${suffix}${name}`;
+}
+
+function formatLineItemDiscount(item: ApiQuoteItem, currency: string, decimalPlaces: number): string | null {
+  const discount = new Decimal(item.discount ?? 0);
+  if (discount.isZero()) return null;
+  if (item.discount_type === "percentage") {
+    return `−${discount.toFixed(2)}%`;
+  }
+  return `−${formatCurrency(discount, currency, decimalPlaces)}`;
 }
 
 export interface QuotePreviewProps {
@@ -99,6 +116,8 @@ export default function QuotePreview({
   const taxTotal = new Decimal(quote.tax_total || 0);
   const feeTotal = new Decimal(quote.fee_total || 0);
   const total = new Decimal(quote.total || 0);
+  const amountPaid = new Decimal(quote.amount_paid || 0);
+  const amountDue = new Decimal(quote.amount_due || 0);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -168,25 +187,91 @@ export default function QuotePreview({
               <tr className="border-b border-color-subtle">
                 <th className="text-left text-xs font-medium text-tertiary">Description</th>
                 <th className="text-center text-xs font-medium text-tertiary">Qty</th>
+                <th className="text-left text-xs font-medium text-tertiary">Unit</th>
                 <th className="text-right text-xs font-medium text-tertiary">Rate</th>
+                <th className="text-right text-xs font-medium text-tertiary">Tax Rate</th>
                 <th className="text-right text-xs font-medium text-tertiary">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {(quote.items || []).map((item) => (
-                <tr key={item.id} className="border-b border-color-subtle/50">
-                  <td className="py-3 text-sm text-primary">{item.description}</td>
-                  <td className="py-3 text-center text-sm text-secondary font-tabular-nums">{formatQuantity(item.quantity)}</td>
-                  <td className="py-3 text-right text-sm text-secondary font-tabular-nums">
-                    {formatCurrency(item.unit_price, currency, meta.decimalPlaces)}
-                  </td>
-                  <td className="py-3 text-right text-sm font-medium text-primary font-tabular-nums">
-                    {formatCurrency(item.line_total, currency, meta.decimalPlaces)}
+              {(quote.items || []).map((item) => {
+                const taxNote = formatLineItemTax(item);
+                const discountNote = formatLineItemDiscount(item, currency, meta.decimalPlaces);
+                return (
+                  <tr key={item.id} className="border-b border-color-subtle/50">
+                    <td className="py-3 text-sm text-primary align-top">
+                      {item.description || <span className="italic text-tertiary">Untitled item</span>}
+                      {taxNote && (
+                        <span className="mt-0.5 block text-xs text-tertiary">
+                          {taxNote}
+                        </span>
+                      )}
+                      {discountNote && (
+                        <span className="mt-0.5 block text-xs text-success-text">
+                          Discount{discountNote}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 text-center text-sm text-secondary font-tabular-nums">{formatQuantity(item.quantity)}</td>
+                    <td className="py-3 text-sm text-tertiary">{item.unit || "—"}</td>
+                    <td className="py-3 text-right text-sm text-secondary font-tabular-nums">
+                      {formatCurrency(item.unit_price, currency, meta.decimalPlaces)}
+                    </td>
+                    <td className="py-3 text-right text-sm text-tertiary font-tabular-nums">
+                      {taxNote || "—"}
+                    </td>
+                    <td className="py-3 text-right text-sm font-medium text-primary font-tabular-nums">
+                      {formatCurrency(item.line_total, currency, meta.decimalPlaces)}
+                    </td>
+                  </tr>
+                );
+              })}
+              {(quote.items || []).length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-sm text-tertiary">
+                    No line items
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
+
+          {/* Fees breakdown */}
+          {(quote.fees || []).length > 0 && (
+            <div className="mt-4 overflow-x-auto rounded-xl border border-color">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-surface-alt">
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                    <th className="px-2 py-2.5 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
+                    <th className="px-2 py-2.5 text-right text-xs font-semibold uppercase text-tertiary">Tax</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase text-tertiary">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(quote.fees || []).map((fee: ApiQuoteFee, i: number) => {
+                    const feeBase = new Decimal(fee.amount ?? 0);
+                    const feeTax = new Decimal(fee.tax_amount ?? 0);
+                    const feeTotal = feeBase.plus(feeTax);
+                    return (
+                      <tr key={fee.id ?? `fee_${i}`} className="border-t border-color-subtle/50">
+                        <td className="px-4 py-3 text-sm text-primary">{fee.description}</td>
+                        <td className="px-2 py-3 text-right text-sm text-secondary font-tabular-nums">
+                          {formatCurrency(feeBase, currency, meta.decimalPlaces)}
+                        </td>
+                        <td className="px-2 py-3 text-right text-sm text-tertiary font-tabular-nums">
+                          {formatCurrency(feeTax, currency, meta.decimalPlaces)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-medium text-primary font-tabular-nums">
+                          {formatCurrency(feeTotal, currency, meta.decimalPlaces)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Totals */}
           <div className="mt-6 flex justify-end">
@@ -219,6 +304,20 @@ export default function QuotePreview({
                   {formatCurrency(total, currency, meta.decimalPlaces)}
                 </span>
               </div>
+              {amountPaid.gt(0) && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-tertiary">Amount Paid</span>
+                  <span className="font-tabular-nums text-success-text">−{formatCurrency(amountPaid, currency, meta.decimalPlaces)}</span>
+                </div>
+              )}
+              {hasNonZero(quote.amount_due) && (
+                <div className="flex justify-between pt-2">
+                  <span className="text-base font-semibold text-secondary">Amount Due</span>
+                  <span className="text-xl font-bold text-primary font-tabular-nums">
+                    {formatCurrency(amountDue, currency, meta.decimalPlaces)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
