@@ -4,12 +4,15 @@ import {
   getQuotes,
   type QuoteSearchParam,
 } from "../api/client";
-import { Plus, Send, Copy, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
-import type { ComponentType } from "react";
+import { Plus, FileText, Copy, Send } from "lucide-react";
 import { formatCurrency } from "../utils/format";
+import { Decimal } from "decimal.js";
+import { quoteStatusConfig } from "@/components/ui";
+import StatusBadge from "@/components/ui/StatusBadge";
 import PageHeader from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
-import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+import KPICard from "@/components/ui/KPICard";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
 import type { ApiQuote } from "../types/api";
 
 const QUOTE_STATUS_FILTERS = [
@@ -23,44 +26,48 @@ const QUOTE_STATUS_FILTERS = [
   "cancelled",
 ];
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 
-const QUOTE_STATUS_LABELS: Record<string, string> = {
-  draft: "Draft",
-  sent: "Sent",
-  viewed: "Viewed",
-  accepted: "Accepted",
-  rejected: "Rejected",
-  expired: "Expired",
-  cancelled: "Cancelled",
-};
+const SORT_OPTIONS = [
+  { value: "created_at:desc", label: "Created (Newest)" },
+  { value: "created_at:asc", label: "Created (Oldest)" },
+  { value: "issue_date:desc", label: "Issue Date (Newest)" },
+  { value: "issue_date:asc", label: "Issue Date (Oldest)" },
+  { value: "expiry_date:asc", label: "Expiry Date (Earliest)" },
+  { value: "total:desc", label: "Total (Highest)" },
+  { value: "total:asc", label: "Total (Lowest)" },
+];
 
-const QUOTE_STATUS_COLORS: Record<string, string> = {
-  draft: "status-info-bg status-info-text",
-  sent: "status-warning-bg status-warning-text",
-  viewed: "status-warning-bg status-warning-text",
-  accepted: "status-success-bg status-success-text",
-  rejected: "status-error-bg status-error-text",
-  expired: "status-tertiary-bg status-tertiary-text",
-  cancelled: "status-tertiary-bg status-tertiary-text",
-};
+const DATE_FILTERS = [
+  { value: "", label: "All Time" },
+  { value: "this_month", label: "This Month" },
+  { value: "last_30", label: "Last 30 Days" },
+  { value: "last_90", label: "Last 90 Days" },
+];
 
-const QUOTE_STATUS_ICONS: Record<string, ComponentType<{ className?: string }>> = {
-  draft: Clock,
-  sent: RefreshCw,
-  viewed: RefreshCw,
-  accepted: CheckCircle,
-  rejected: XCircle,
-  expired: Clock,
-  cancelled: XCircle,
-};
-
-function getQuoteStatusColor(status: string): string {
-  return QUOTE_STATUS_COLORS[status] ?? "status-tertiary-bg status-tertiary-text";
+function computeDateRange(value: string): { dateFrom: string; dateTo: string } | null {
+  if (!value) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (value === "this_month") {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return { dateFrom: start.toISOString().split("T")[0], dateTo: end.toISOString().split("T")[0] };
+  }
+  if (value === "last_30") {
+    const start = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
+    return { dateFrom: start.toISOString().split("T")[0], dateTo: today.toISOString().split("T")[0] };
+  }
+  if (value === "last_90") {
+    const start = new Date(today.getTime() - 89 * 24 * 60 * 60 * 1000);
+    return { dateFrom: start.toISOString().split("T")[0], dateTo: today.toISOString().split("T")[0] };
+  }
+  return null;
 }
 
 function getQuoteStatusLabel(status: string): string {
-  return QUOTE_STATUS_LABELS[status] ?? status.charAt(0).toUpperCase() + status.slice(1);
+  const config = quoteStatusConfig.getConfig(status);
+  return config.label;
 }
 
 export default function Quotes() {
@@ -72,7 +79,13 @@ export default function Quotes() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
+  const [sortBy, setSortBy] = useState("created_at:desc");
+  const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
+
+  const [kpis, setKpis] = useState<{ totalQuotes: number; totalValue: string; acceptedValue: string; expiredValue: string } | null>(null);
+  const [kpiLoading, setKpiLoading] = useState(true);
 
   const debouncedSetSearchTerm = useDebouncedCallback((value: string) => {
     setSearchTerm(value);
@@ -80,18 +93,28 @@ export default function Quotes() {
   }, 300);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    debouncedSetSearchTerm(value);
+    debouncedSetSearchTerm(e.target.value);
   };
+
+  const sortParts = useMemo(() => {
+    const [field, order] = sortBy.split(":");
+    return { field: field || "created_at", order: (order === "asc" ? "asc" : "desc") as "asc" | "desc" };
+  }, [sortBy]);
+
+  const dateRange = useMemo(() => computeDateRange(dateFilter), [dateFilter]);
 
   const currentParams: QuoteSearchParam = useMemo(
     () => ({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
       search: searchTerm || undefined,
       status: statusFilter === "all" ? undefined : statusFilter,
+      sortBy: sortParts.field,
+      sortOrder: sortParts.order,
+      dateFrom: dateRange?.dateFrom,
+      dateTo: dateRange?.dateTo,
     }),
-    [page, searchTerm, statusFilter]
+    [page, pageSize, searchTerm, statusFilter, sortParts, dateRange]
   );
 
   const loadQuotes = useCallback(async (params: QuoteSearchParam) => {
@@ -113,11 +136,46 @@ export default function Quotes() {
     }
   }, []);
 
+  const computeKpis = useCallback((items: ApiQuote[]) => {
+    const totalQuotes = items.length;
+    const totalValue = items.reduce(
+      (sum, q) => sum.plus(new Decimal(q.total ?? 0)),
+      new Decimal(0)
+    );
+    const acceptedValue = items
+      .filter((q) => q.status === "accepted")
+      .reduce(
+        (sum, q) => sum.plus(new Decimal(q.total ?? 0)),
+        new Decimal(0)
+      );
+    const expiredValue = items
+      .filter((q) => q.status === "expired" || q.status === "rejected")
+      .reduce(
+        (sum, q) => sum.plus(new Decimal(q.total ?? 0)),
+        new Decimal(0)
+      );
+
+    return {
+      totalQuotes,
+      totalValue: totalValue.toFixed(2),
+      acceptedValue: acceptedValue.toFixed(2),
+      expiredValue: expiredValue.toFixed(2),
+    };
+  }, []);
+
   useEffect(() => {
     loadQuotes(currentParams);
   }, [currentParams, loadQuotes]);
 
-  const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+  useEffect(() => {
+    if (quotes.length > 0 || !loading) {
+      setKpis(computeKpis(quotes));
+      setKpiLoading(false);
+    }
+  }, [quotes, loading, computeKpis]);
+
+  const totalPages = Math.ceil(total / pageSize) || 1;
+  const commonCurrency = quotes.length > 0 ? quotes[0].currency : "USD";
 
   function handlePageChange(newPage: number) {
     if (newPage < 1 || newPage > totalPages) return;
@@ -131,10 +189,12 @@ export default function Quotes() {
   function clearFilters() {
     setSearchTerm("");
     setStatusFilter("all");
+    setDateFilter("");
+    setSortBy("created_at:desc");
     setPage(1);
   }
 
-  const hasActiveFilters = searchTerm || statusFilter !== "all";
+  const hasActiveFilters = searchTerm || statusFilter !== "all" || dateFilter || sortBy !== "created_at:desc";
 
   if (loading && quotes.length === 0) {
     return <div className="text-center py-20 text-secondary">Loading quotes…</div>;
@@ -158,9 +218,56 @@ export default function Quotes() {
         }
       />
 
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <KPICard
+          title="Total Quotes"
+          value={kpis?.totalQuotes ?? 0}
+          subtitle="All time"
+          icon={<FileText className="w-5 h-5" />}
+          iconBackground="status-info-bg status-info-text"
+          variant="tinted"
+          state="info"
+          isLoading={kpiLoading}
+        />
+        <KPICard
+          title="Total Quote Value"
+          value={kpis?.totalValue ?? "0"}
+          currency={commonCurrency}
+          subtitle="Sum of all quote totals"
+          icon={<FileText className="w-5 h-5" />}
+          iconBackground="status-tertiary-bg status-tertiary-text"
+          variant="tinted"
+          isLoading={kpiLoading}
+        />
+        <KPICard
+          title="Accepted Value"
+          value={kpis?.acceptedValue ?? "0"}
+          currency={commonCurrency}
+          subtitle="Value of accepted quotes"
+          icon={<Copy className="w-5 h-5" />}
+          iconBackground="status-success-bg status-success-text"
+          variant="tinted"
+          state="success"
+          isLoading={kpiLoading}
+        />
+        <KPICard
+          title="Expired/Rejected"
+          value={kpis?.expiredValue ?? "0"}
+          currency={commonCurrency}
+          subtitle="Value of expired or rejected quotes"
+          icon={<FileText className="w-5 h-5" />}
+          iconBackground="status-warning-bg status-warning-text"
+          variant="tinted"
+          state="warning"
+          isLoading={kpiLoading}
+        />
+      </div>
+
+      {/* Filters */}
       <div className="filter-container">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-4">
             <label className="filter-label">Search</label>
             <div className="relative">
               <input
@@ -172,7 +279,8 @@ export default function Quotes() {
               />
             </div>
           </div>
-          <div className="lg:col-span-3">
+
+          <div className="lg:col-span-2">
             <label className="filter-label">Status</label>
             <select
               value={statusFilter}
@@ -184,18 +292,51 @@ export default function Quotes() {
             >
               {QUOTE_STATUS_FILTERS.map((s) => (
                 <option key={s} value={s}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {s === "all" ? "All Statuses" : getQuoteStatusLabel(s)}
                 </option>
               ))}
             </select>
           </div>
-          <div className="lg:col-span-4 flex items-end justify-end gap-2">
+
+          <div className="lg:col-span-2">
+            <label className="filter-label">Date</label>
+            <select
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                setPage(1);
+              }}
+              className="filter-select"
+            >
+              {DATE_FILTERS.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-2">
+            <label className="filter-label">Sort By</label>
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setPage(1);
+              }}
+              className="filter-select"
+            >
+              {SORT_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-2 flex items-end justify-end gap-2">
             {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-              >
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
                 Clear All
               </Button>
             )}
@@ -247,7 +388,6 @@ export default function Quotes() {
               </tr>
             ) : (
               quotes.map((quote) => {
-                const StatusIcon = QUOTE_STATUS_ICONS[quote.status] ?? Clock;
                 return (
                   <tr
                     key={quote.id}
@@ -277,12 +417,12 @@ export default function Quotes() {
                       )}
                     </td>
                     <td className="td text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${getQuoteStatusColor(quote.status)}`}
-                      >
-                        <StatusIcon className="w-3 h-3" />
-                        {getQuoteStatusLabel(quote.status)}
-                      </span>
+                      <StatusBadge
+                        status={quote.status}
+                        config={quoteStatusConfig}
+                        showLabel={true}
+                        size="sm"
+                      />
                     </td>
                     <td className="td text-right text-sm font-medium text-primary font-tabular-nums">
                       {formatCurrency(quote.total, quote.currency)}
@@ -308,6 +448,14 @@ export default function Quotes() {
                     </td>
                     <td className="td text-center">
                       <div className="flex items-center justify-center gap-2">
+                        <Link to={`/app/quotes/${quote.id}/edit`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<FileText className="w-3.5 h-3.5" />}
+                            title="View / Edit"
+                          />
+                        </Link>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -339,6 +487,20 @@ export default function Quotes() {
               Page {page} of {totalPages} · {total} quotes
             </p>
             <div className="flex items-center gap-2">
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="form-control-sm"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size} per page
+                  </option>
+                ))}
+              </select>
               <Button
                 variant="secondary"
                 size="sm"

@@ -1370,12 +1370,17 @@ app.post("/api/interaction-log", requireAuth, async (req: AuthRequest, res) => {
 // ============================================================================
 app.get("/api/quotes", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const q = req.query;
   const result = await quoteService.list(req.user!.businessId, {
-    status: req.query.status as string | undefined,
-    customerId: req.query.customerId as string | undefined,
-    search: req.query.search as string | undefined,
-    limit: req.query.limit ? Number(req.query.limit) : undefined,
-    offset: req.query.offset ? Number(req.query.offset) : undefined,
+    status: q.status as string | undefined,
+    customerId: (q.customerId ?? q.customer_id) as string | undefined,
+    search: q.search as string | undefined,
+    sortBy: (q.sortBy ?? q.sort_by) as string | undefined,
+    sortOrder: (q.sortOrder ?? q.sort_order) as "asc" | "desc" | undefined,
+    dateFrom: (q.dateFrom ?? q.date_from) as string | undefined,
+    dateTo: (q.dateTo ?? q.date_to) as string | undefined,
+    limit: q.limit ? Number(q.limit) : undefined,
+    offset: q.offset ? Number(q.offset) : undefined,
   });
   res.json({ quotes: result.data, total: result.total, limit: result.limit, offset: result.offset });
 });
@@ -1597,17 +1602,18 @@ app.post("/api/invoices/:id/receipts", requireAuth, requireEntitlement("receipts
 // ============================================================================
 app.get("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-    const result = await creditNoteRepository.findManyPage(req.user!.businessId, {
-    status: req.query.status as string | undefined,
-    customerId: req.query.customer_id as string | undefined,
-    search: req.query.search as string | undefined,
-    currency: req.query.currency as string | undefined,
-    sortBy: req.query.sort_by as string | undefined,
-    sortOrder: (req.query.sort_order as string | undefined) === "asc" ? "asc" : "desc",
-    dateFrom: req.query.date_from as string | undefined,
-    dateTo: req.query.date_to as string | undefined,
-    limit: req.query.limit ? Number(req.query.limit) : undefined,
-    offset: req.query.offset ? Number(req.query.offset) : undefined,
+  const q = req.query;
+  const result = await creditNoteRepository.findManyPage(req.user!.businessId, {
+    status: q.status as string | undefined,
+    customerId: (q.customerId ?? q.customer_id) as string | undefined,
+    search: q.search as string | undefined,
+    currency: q.currency as string | undefined,
+    sortBy: (q.sortBy ?? q.sort_by) as string | undefined,
+    sortOrder: (q.sortOrder ?? q.sort_order) as "asc" | "desc" | undefined,
+    dateFrom: (q.dateFrom ?? q.date_from) as string | undefined,
+    dateTo: (q.dateTo ?? q.date_to) as string | undefined,
+    limit: q.limit ? Number(q.limit) : undefined,
+    offset: q.offset ? Number(q.offset) : undefined,
   });
   res.json({
     creditNotes: result.data.map(camelToSnake),

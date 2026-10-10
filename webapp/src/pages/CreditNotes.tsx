@@ -4,10 +4,10 @@ import {
   getCreditNotes,
   type CreditNoteSearchParams,
 } from "../api/client";
-import { Plus, FileText, Download, Send, Copy, Trash2, AlertCircle } from "lucide-react";
+import { Plus, FileText, Download, Send, Copy, AlertCircle } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import { Decimal } from "decimal.js";
-import { creditNoteStatusConfig, CreditNoteLifecycle } from "@/components/ui";
+import { creditNoteStatusConfig } from "@/components/ui";
 import PageHeader from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import KPICard from "@/components/ui/KPICard";
@@ -93,6 +93,26 @@ export default function CreditNotes() {
     return { field: field || "issue_date", order: (order === "asc" ? "asc" : "desc") as "asc" | "desc" };
   }, [sortBy]);
 
+  const dateRange = useMemo(() => {
+    if (!dateFilter) return null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (dateFilter === "this_month") {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { dateFrom: start.toISOString().split("T")[0], dateTo: end.toISOString().split("T")[0] };
+    }
+    if (dateFilter === "last_30") {
+      const start = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
+      return { dateFrom: start.toISOString().split("T")[0], dateTo: today.toISOString().split("T")[0] };
+    }
+    if (dateFilter === "last_90") {
+      const start = new Date(today.getTime() - 89 * 24 * 60 * 60 * 1000);
+      return { dateFrom: start.toISOString().split("T")[0], dateTo: today.toISOString().split("T")[0] };
+    }
+    return null;
+  }, [dateFilter]);
+
   const currentParams: CreditNoteSearchParams = useMemo(
     () => ({
       limit: pageSize,
@@ -102,7 +122,8 @@ export default function CreditNotes() {
       customerId: customerFilter || undefined,
       sortBy: sortParts.field,
       sortOrder: sortParts.order,
-      dateFrom: dateFilter || undefined,
+      dateFrom: dateRange?.dateFrom,
+      dateTo: dateRange?.dateTo,
     }),
     [page, pageSize, searchTerm, statusFilter, customerFilter, dateFilter, sortParts]
   );
@@ -190,12 +211,12 @@ export default function CreditNotes() {
 
   const hasActiveFilters = searchTerm || statusFilter !== "all" || customerFilter || dateFilter || sortBy !== "issue_date:desc";
 
-  function formatDateRange(value: string): string {
-    if (!value) return "All time";
-    if (value === "this_month") return "This month";
-    if (value === "last_30") return "Last 30 days";
-    if (value === "last_90") return "Last 90 days";
-    return value;
+  function handleSort(field: string) {
+    if (sortParts.field === field) {
+      setSortBy(`${field}:${sortParts.order === "asc" ? "desc" : "asc"}`);
+    } else {
+      setSortBy(`${field}:desc`);
+    }
   }
 
   if (loading && creditNotes.length === 0) {
@@ -366,19 +387,42 @@ export default function CreditNotes() {
 
       <div className="rounded-xl border border-color bg-surface shadow-sm overflow-hidden">
         <table className="w-full">
-          <thead>
-            <tr className="border-b border-color bg-surface-alt">
-              <th className="th">Credit Note #</th>
-              <th className="th">Customer</th>
-              <th className="th">Original Invoice</th>
-              <th className="th">Issue Date</th>
-              <th className="th text-right">Credit Amount</th>
-              <th className="th text-right">Applied</th>
-              <th className="th text-right">Remaining</th>
-              <th className="th text-center">Status</th>
-              <th className="th text-center">Actions</th>
-            </tr>
-          </thead>
+            <thead>
+              <tr className="border-b border-color bg-surface-alt">
+                <th
+                  className="th cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("issue_date")}
+                >
+                  Credit Note #
+                  {sortParts.field === "issue_date" && (sortParts.order === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="th">Customer</th>
+                <th className="th">Original Invoice</th>
+                <th
+                  className="th cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("issue_date")}
+                >
+                  Issue Date
+                  {sortParts.field === "issue_date" && (sortParts.order === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th
+                  className="th text-right cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("total")}
+                >
+                  Credit Amount
+                  {sortParts.field === "total" && (sortParts.order === "asc" ? " ↑" : " ↓")}
+                </th>
+                <th className="th text-right">Applied</th>
+                <th className="th text-right">Remaining</th>
+                <th
+                  className="th text-center cursor-pointer hover:bg-surface"
+                  onClick={() => handleSort("status")}
+                >
+                  Status
+                </th>
+                <th className="th text-center">Actions</th>
+              </tr>
+            </thead>
           <tbody>
             {creditNotes.length === 0 ? (
               <tr>

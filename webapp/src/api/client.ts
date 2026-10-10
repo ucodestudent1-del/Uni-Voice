@@ -1715,6 +1715,10 @@ export interface QuoteSearchParam {
   status?: string;
   customerId?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  dateFrom?: string;
+  dateTo?: string;
   limit?: number;
   offset?: number;
 }

@@ -31,6 +31,7 @@ import {
   ExternalLink,
   CheckCircle,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import CreditNoteDisplay, { type CreditNoteDesign } from "@/components/CreditNoteDisplay";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -448,7 +449,7 @@ export default function CreditNoteDetail() {
             <Button
               variant="danger"
               size="sm"
-              icon={<Copy className="w-4 h-4" />}
+              icon={<Trash2 className="w-4 h-4" />}
               onClick={() => setShowDeleteDialog(true)}
             >
               Delete
@@ -461,17 +462,6 @@ export default function CreditNoteDetail() {
       <div className="px-4 py-3 bg-surface-alt rounded-lg border border-color">
         <CreditNoteLifecycle status={creditNote.status} />
       </div>
-
-      {/* Action message from contextual actions */}
-      {actionMessage && (
-        <div
-          className="rounded-lg border status-success-border status-success-bg px-3 py-2 text-sm status-success-text"
-          role="status"
-          aria-live="polite"
-        >
-          {actionMessage}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

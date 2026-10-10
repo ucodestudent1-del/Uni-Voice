@@ -395,9 +395,23 @@ export class QuoteService {
     let i = 2;
      if (filter.status) { conditions.push(`q.status = $${i++}`); vals.push(filter.status); }
     if (filter.customerId) { conditions.push(`q.customer_id = $${i++}`); vals.push(filter.customerId); }
-    if (filter.search) { conditions.push(`(quote_number ILIKE $${i} OR customer_id IS NULL)`); vals.push(`%${filter.search}%`); i++; }
+    if (filter.search) { conditions.push(`(q.quote_number ILIKE $${i} OR c.name ILIKE $${i} OR c.email ILIKE $${i})`); vals.push(`%${filter.search}%`, `%${filter.search}%`, `%${filter.search}%`); i++; }
+    if (filter.dateFrom) { conditions.push(`q.issue_date >= $${i++}`); vals.push(filter.dateFrom); }
+    if (filter.dateTo) { conditions.push(`q.issue_date <= $${i++}`); vals.push(filter.dateTo); }
     const limit = Math.min(Math.max(filter.limit as number ?? 50, 1), 200);
     const offset = Math.max(filter.offset as number ?? 0, 0);
+
+    const sortMap: Record<string, string> = {
+      quote_number: "q.quote_number",
+      customer_name: "c.name",
+      total: "q.total",
+      amount_due: "q.amount_due",
+      issue_date: "q.issue_date",
+      expiry_date: "q.expiry_date",
+      created_at: "q.created_at",
+    };
+    const sortColumn = sortMap[filter.sortBy as string ?? "created_at"] ?? "q.created_at";
+    const direction = filter.sortOrder === "asc" ? "ASC" : "DESC";
 
     // Use COUNT(*) OVER() to get the total in the same query, avoiding a
     // second round-trip to the database.
@@ -405,7 +419,7 @@ export class QuoteService {
       `SELECT q.*, c.name as customer_name, c.email as customer_email,
               COUNT(*) OVER() AS total_count
        FROM quotes q LEFT JOIN customers c ON c.id = q.customer_id
-       WHERE ${conditions.join(" AND ")} ORDER BY q.created_at DESC LIMIT $${i++} OFFSET $${i++}`,
+       WHERE ${conditions.join(" AND ")} ORDER BY ${sortColumn} ${direction}, q.created_at DESC LIMIT $${i++} OFFSET $${i++}`,
       [...vals, limit, offset]
     );
     const total = dataRes.rows.length ? Number(dataRes.rows[0]?.total_count ?? 0) : 0;
