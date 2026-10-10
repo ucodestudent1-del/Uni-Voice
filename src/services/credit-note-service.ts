@@ -16,6 +16,7 @@ import {
   type CreditNoteTemplateTotals,
   type CreditNoteTemplateApplicationInfo,
 } from "./templates/credit-note-template-renderer.js";
+import type { TemplatePaymentInstructions } from "./templates/template-renderer.js";
 import { pdfService } from "./pdf/pdf-service.js";
 import type { CurrencyCode } from "../domain/value-objects/currency.js";
 import { BusinessLogicError } from "../domain/errors.js";
@@ -391,12 +392,12 @@ export class CreditNoteService {
     );
   }
 
-  private buildTemplateData(
+  private async buildTemplateData(
     cn: CreditNoteWithDetails,
     business: any,
     customer: any,
     referenceInvoiceNumber: string | null
-  ): CreditNoteTemplateData {
+  ): Promise<CreditNoteTemplateData> {
     const totals: CreditNoteTemplateTotals = {
       subtotal: new Decimal(cn.subtotal),
       discountTotal: new Decimal(cn.discountTotal),
@@ -487,8 +488,39 @@ export class CreditNoteService {
       fees,
       totals,
       applications,
-      {}
+      await this.buildPaymentInstructions(cn, business.id),
+      { htmlTemplate: undefined }
     );
+  }
+
+  private async buildPaymentInstructions(
+    cn: CreditNoteWithDetails,
+    businessId: string
+  ): Promise<TemplatePaymentInstructions | null> {
+    const settings = await businessRepository.getPaymentSettings(businessId);
+    const instructions: TemplatePaymentInstructions = {};
+
+    if (settings.lateFeeType && settings.lateFeeType !== "none" && settings.lateFeeValue) {
+      instructions.lateFeeType = settings.lateFeeType;
+      instructions.lateFeeValue = settings.lateFeeValue;
+    }
+    instructions.lateFeePeriodDays = settings.lateFeePeriodDays ?? null;
+
+    if (settings.defaultBankDetails) {
+      instructions.bankDetails = settings.defaultBankDetails;
+      instructions.methods = [{ type: "bank", label: "Bank Transfer", details: settings.defaultBankDetails }];
+    }
+
+    if (settings.defaultPaymentPortalUrl) {
+      instructions.paymentLink = settings.defaultPaymentPortalUrl;
+    }
+
+    instructions.taxExemption = settings.taxExemption ?? null;
+    instructions.deliveryDetails = settings.deliveryDetails ?? null;
+    instructions.warrantyInfo = settings.warrantyInfo ?? null;
+    instructions.returnPolicy = settings.returnPolicy ?? null;
+
+    return Object.keys(instructions).length > 0 ? instructions : null;
   }
 
   private async renderCreditNoteHtml(
@@ -497,7 +529,7 @@ export class CreditNoteService {
     customer: any,
     referenceInvoiceNumber: string | null
   ): Promise<string> {
-    const templateData = this.buildTemplateData(cn, business, customer, referenceInvoiceNumber);
+    const templateData = await this.buildTemplateData(cn, business, customer, referenceInvoiceNumber);
     return creditNoteTemplateRenderer.render(templateData);
   }
 

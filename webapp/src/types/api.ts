@@ -27,6 +27,13 @@ export interface ApiBusinessSettings {
   overdue_reminder_days: number;
   late_fee_type?: "none" | "fixed" | "percentage" | null;
   late_fee_value?: string | null;
+  late_fee_period_days?: number | null;
+  default_bank_details?: string | null;
+  default_payment_portal_url?: string | null;
+  tax_exemption?: string | null;
+  delivery_details?: string | null;
+  warranty_info?: string | null;
+  return_policy?: string | null;
   created_at?: string;
   updated_at?: string;
 }

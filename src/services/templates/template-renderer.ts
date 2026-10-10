@@ -1046,6 +1046,81 @@ export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
     </div>
     {{/if}}
 
+    <!-- Structured Payment Methods -->
+    {{#if paymentInstructions}}
+    {{#if paymentInstructions.methods}}
+    <div style="margin-top: 24px;">
+      <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Accepted Payment Methods</h3>
+      {{#each paymentInstructions.methods}}
+      <div style="margin-bottom: 12px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+        <p style="margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #0f172a;">{{label}}</p>
+        {{#if details}}<p style="margin: 0; font-size: 12px; color: #475569; white-space: pre-line;">{{details}}</p>{{/if}}
+        {{#if url}}<p style="margin: 0; font-size: 12px; color: #2563eb;"><a href="{{url}}" style="color: #2563eb;">Pay online</a></p>{{/if}}
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.bankDetails}}
+    <div style="margin-top: 16px;">
+      <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Bank Details</h3>
+      <div class="terms-box">
+        <p style="margin: 0; white-space: pre-line;">{{paymentInstructions.bankDetails}}</p>
+      </div>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.lateFeeType}}
+    <div style="margin-top: 16px;">
+      <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Late Payment Terms</h3>
+      <div class="terms-box">
+        {{#if (eq paymentInstructions.lateFeeType "fixed")}}
+        <p style="margin: 0;">A fixed fee of {{formatMoney paymentInstructions.lateFeeValue}} will be applied to overdue balances.</p>
+        {{/if}}
+        {{#if (eq paymentInstructions.lateFeeType "percentage")}}
+        <p style="margin: 0;">An overdue balance will incur a late fee of {{paymentInstructions.lateFeeValue}}%.</p>
+        {{/if}}
+      </div>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.taxExemption}}
+    <div style="margin-top: 16px;">
+      <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Tax Exemption</h3>
+      <div class="terms-box">
+        <p style="margin: 0; white-space: pre-line;">{{paymentInstructions.taxExemption}}</p>
+      </div>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.deliveryDetails}}
+    <div style="margin-top: 16px;">
+      <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Delivery Details</h3>
+      <div class="terms-box">
+        <p style="margin: 0; white-space: pre-line;">{{paymentInstructions.deliveryDetails}}</p>
+      </div>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.warrantyInfo}}
+    <div style="margin-top: 16px;">
+      <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Warranty</h3>
+      <div class="terms-box">
+        <p style="margin: 0; white-space: pre-line;">{{paymentInstructions.warrantyInfo}}</p>
+      </div>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.returnPolicy}}
+    <div style="margin-top: 16px;">
+      <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Return Policy</h3>
+      <div class="terms-box">
+        <p style="margin: 0; white-space: pre-line;">{{paymentInstructions.returnPolicy}}</p>
+      </div>
+    </div>
+    {{/if}}
+    {{/if}}
+
     <!-- Notes & Assumptions -->
     <div style="margin-top: 24px;">
       <h3 style="font-size: 13px; font-weight: 600; color: #475569; margin: 0 0 12px;">Notes &amp; Assumptions</h3>

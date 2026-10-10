@@ -76,7 +76,8 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
           {{#if business.legalName}}<p class="muted">{{business.legalName}}</p>{{/if}}
           {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
           {{#if business.phone}}<p class="muted">{{business.phone}}</p>{{/if}}
-          {{#if business.taxId}}<p class="tertiary">Tax ID: {{business.taxId}}</p>{{/if}}
+           {{#if business.taxId}}<p class="tertiary">Tax ID: {{business.taxId}}</p>{{/if}}
+           {{#if business.registrationNumber}}<p class="tertiary">Reg #: {{business.registrationNumber}}</p>{{/if}}
           {{#if business.address}}
           <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
             {{business.address.addressLine1}}<br />
@@ -88,7 +89,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         </div>
       </div>
       <div class="business-col">
-        <h1>{{invoice.title}}</h1>
+        <h1>{{#if invoice.title}}{{invoice.title}}{{else}}Invoice{{/if}}</h1>
         <div class="meta-grid" style="justify-items: end;">
           <div class="meta-item"><span class="meta-label">Invoice #</span><span class="meta-value">{{invoice.invoiceNumber}}</span></div>
           <div class="meta-item"><span class="meta-label">Issue Date</span><span class="meta-value">{{invoice.issueDate}}</span></div>
@@ -185,6 +186,91 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   </div>
 
   <!-- Payment Instructions -->
+  {{#if paymentInstructions}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Payment Instructions</div>
+
+    {{#if paymentInstructions.methods}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Accepted Payment Methods</span>
+      {{#each paymentInstructions.methods}}
+      <div style="margin-top: 8px; padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface);">
+        <p style="margin: 0 0 4px; font-size: 13px; font-weight: 600;">{{label}}</p>
+        {{#if details}}<p style="margin: 0; font-size: 12px; color: var(--color-text-secondary); white-space: pre-line;">{{details}}</p>{{/if}}
+        {{#if url}}<p style="margin: 0; font-size: 12px; color: var(--color-brand);"><a href="{{url}}" style="color: var(--color-brand);">Pay online</a></p>{{/if}}
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.bankDetails}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Bank Details</span>
+      <p class="muted" style="margin: 0; white-space: pre-line;">{{paymentInstructions.bankDetails}}</p>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.paymentLink}}
+    <div style="margin-bottom: 16px;">
+      <a href="{{paymentInstructions.paymentLink}}" style="display: inline-block; padding: 12px 24px; background: var(--color-brand); color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Pay Now</a>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.lateFeeType}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Late Fee</span>
+      {{#if (eq paymentInstructions.lateFeeType "fixed")}}
+      <p class="muted" style="margin: 0;">A fixed fee of {{formatMoney paymentInstructions.lateFeeValue}} will be applied to overdue balances.</p>
+      {{/if}}
+      {{#if (eq paymentInstructions.lateFeeType "percentage")}}
+      <p class="muted" style="margin: 0;">An overdue balance will incur a late fee of {{paymentInstructions.lateFeeValue}}%.</p>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.taxExemption}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Tax Exemption</span>
+      <p class="muted" style="margin: 0; white-space: pre-line;">{{paymentInstructions.taxExemption}}</p>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.deliveryDetails}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Delivery Details</span>
+      <p class="muted" style="margin: 0; white-space: pre-line;">{{paymentInstructions.deliveryDetails}}</p>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.warrantyInfo}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Warranty</span>
+      <p class="muted" style="margin: 0; white-space: pre-line;">{{paymentInstructions.warrantyInfo}}</p>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.returnPolicy}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Return Policy</span>
+      <p class="muted" style="margin: 0; white-space: pre-line;">{{paymentInstructions.returnPolicy}}</p>
+    </div>
+    {{/if}}
+
+    {{#if paymentInstructions.customFields}}
+    <div style="margin-bottom: 16px;">
+      <span class="meta-label">Custom Fields</span>
+      {{#each paymentInstructions.customFields}}
+      <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+        <span style="font-size: 12px; color: var(--color-text-secondary);">{{label}}</span>
+        <span style="font-size: 12px; color: var(--color-text-primary); font-weight: 600;">{{value}}</span>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <!-- Invoice-level Payment Instructions -->
   {{#if invoice.paymentInstructions}}
   <div class="section" style="padding-top: 0; border-bottom: none;">
     <div class="section-title">Payment Instructions</div>

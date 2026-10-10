@@ -2868,6 +2868,8 @@ app.get("/api/businesses/current/settings", requireAuth, async (req: AuthRequest
     `SELECT business_id, default_currency, default_tax_rate, default_terms, default_notes,
      time_zone, locale, pdf_template_id, payment_provider, payment_provider_config,
      reminders_enabled, overdue_reminder_days, late_fee_type, late_fee_value,
+     late_fee_period_days, default_bank_details, default_payment_portal_url,
+     tax_exemption, delivery_details, warranty_info, return_policy,
      created_at, updated_at
      FROM business_settings WHERE business_id = $1`,
      [req.user!.businessId]
@@ -2884,7 +2886,9 @@ app.patch("/api/businesses/current/settings", requireAuth, async (req: AuthReque
     "default_currency", "default_tax_rate", "default_terms", "default_notes",
     "time_zone", "locale", "pdf_template_id", "payment_provider",
     "payment_provider_config", "reminders_enabled", "overdue_reminder_days",
-    "late_fee_type", "late_fee_value",
+    "late_fee_type", "late_fee_value", "late_fee_period_days",
+    "default_bank_details", "default_payment_portal_url",
+    "tax_exemption", "delivery_details", "warranty_info", "return_policy",
   ];
   const updates: string[] = [];
   const values: unknown[] = [req.user!.businessId];
@@ -2897,11 +2901,13 @@ app.patch("/api/businesses/current/settings", requireAuth, async (req: AuthReque
   if (updates.length === 0) return res.json({ settings: null });
   updates.push(`updated_at = NOW()`);
   const result = await query(
-    `UPDATE business_settings SET ${updates.join(", ")}
-     WHERE business_id = $1 RETURNING business_id, default_currency, default_tax_rate,
-     default_terms, default_notes, time_zone, locale, pdf_template_id, payment_provider,
-     payment_provider_config, reminders_enabled, overdue_reminder_days, late_fee_type, late_fee_value,
-     created_at, updated_at`,
+     `UPDATE business_settings SET ${updates.join(", ")}
+      WHERE business_id = $1 RETURNING business_id, default_currency, default_tax_rate,
+      default_terms, default_notes, time_zone, locale, pdf_template_id, payment_provider,
+      payment_provider_config, reminders_enabled, overdue_reminder_days, late_fee_type, late_fee_value,
+      late_fee_period_days, default_bank_details, default_payment_portal_url,
+      tax_exemption, delivery_details, warranty_info, return_policy,
+      created_at, updated_at`,
      values
   );
   res.json({ settings: result.rows[0] });

@@ -3,6 +3,7 @@ import type { Address } from "../../domain/value-objects/address.js";
 import { formatMoney, getCurrencyMetadata, type CurrencyCode } from "../../domain/value-objects/currency.js";
 import { Decimal } from "decimal.js";
 import { env } from "../../config/index.js";
+import type { TemplatePaymentInstructions } from "./template-renderer.js";
 
 export interface CreditNoteTemplateLineItem {
   description: string;
@@ -93,6 +94,7 @@ export interface CreditNoteTemplateData {
   totals: CreditNoteTemplateTotals;
   applications: CreditNoteTemplateApplicationInfo[];
   config: Record<string, unknown>;
+  paymentInstructions?: TemplatePaymentInstructions | null;
 }
 
 export interface CreditNoteRenderOptions {
@@ -146,6 +148,17 @@ Handlebars.registerHelper("cnFormatQty", function (v: Decimal.Value): string {
   const str = d.toFixed(6);
   if (str.endsWith(".000000")) return str.slice(0, -6);
   return str.replace(/\.?0+$/, "");
+});
+
+Handlebars.registerHelper("cnEq", (a: unknown, b: unknown): boolean => a === b);
+
+Handlebars.registerHelper("cnDefault", function (fallback: unknown, value: unknown): unknown {
+  return value ?? fallback;
+});
+
+Handlebars.registerHelper("cnStartswith", (str: string | null | undefined, prefix: string): boolean => {
+  if (!str) return false;
+  return str.startsWith(prefix);
 });
 
 function compileTemplate(templateHtml: string): Handlebars.TemplateDelegate<any> {
@@ -383,9 +396,74 @@ export const DEFAULT_CREDIT_NOTE_TEMPLATE = `<!DOCTYPE html>
     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Terms &amp; Conditions</h3>
     <div class="muted">{{{cnNl2br creditNote.terms}}}</div>
   </div>
-  {{/if}}
+   {{/if}}
 
-  <div class="footer">
+   <!-- Payment Instructions -->
+   {{#if paymentInstructions}}
+   {{#if paymentInstructions.methods}}
+   <div style="margin-top:24px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Accepted Payment Methods</h3>
+     {{#each paymentInstructions.methods}}
+     <div style="margin-top:8px; padding:12px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
+       <p style="margin:0 0 4px; font-size:13px; font-weight:600; color:#0f172a;">{{label}}</p>
+       {{#if details}}<p style="margin:0; font-size:12px; color:#475569; white-space:pre-line;">{{details}}</p>{{/if}}
+       {{#if url}}<p style="margin:0; font-size:12px; color:#2563eb;"><a href="{{url}}" style="color:#2563eb;">Pay online</a></p>{{/if}}
+     </div>
+     {{/each}}
+   </div>
+   {{/if}}
+
+   {{#if paymentInstructions.bankDetails}}
+   <div style="margin-top:16px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Bank Details</h3>
+     <p class="muted" style="white-space:pre-line;">{{paymentInstructions.bankDetails}}</p>
+   </div>
+   {{/if}}
+
+   {{#if paymentInstructions.lateFeeType}}
+   <div style="margin-top:16px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Late Payment Terms</h3>
+     <p class="muted">
+       {{#if (cnEq paymentInstructions.lateFeeType "fixed")}}
+       A fixed fee of {{cnFormatMoney paymentInstructions.lateFeeValue}} will be applied to overdue balances.
+       {{/if}}
+       {{#if (cnEq paymentInstructions.lateFeeType "percentage")}}
+       An overdue balance will incur a late fee of {{paymentInstructions.lateFeeValue}}%.
+       {{/if}}
+     </p>
+   </div>
+   {{/if}}
+
+   {{#if paymentInstructions.taxExemption}}
+   <div style="margin-top:16px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Tax Exemption</h3>
+     <p class="muted" style="white-space:pre-line;">{{paymentInstructions.taxExemption}}</p>
+   </div>
+   {{/if}}
+
+   {{#if paymentInstructions.deliveryDetails}}
+   <div style="margin-top:16px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Delivery Details</h3>
+     <p class="muted" style="white-space:pre-line;">{{paymentInstructions.deliveryDetails}}</p>
+   </div>
+   {{/if}}
+
+   {{#if paymentInstructions.warrantyInfo}}
+   <div style="margin-top:16px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Warranty</h3>
+     <p class="muted" style="white-space:pre-line;">{{paymentInstructions.warrantyInfo}}</p>
+   </div>
+   {{/if}}
+
+   {{#if paymentInstructions.returnPolicy}}
+   <div style="margin-top:16px">
+     <h3 style="font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#666;">Return Policy</h3>
+     <p class="muted" style="white-space:pre-line;">{{paymentInstructions.returnPolicy}}</p>
+   </div>
+   {{/if}}
+   {{/if}}
+
+   <div class="footer">
     <p class="muted">Credit Note #{{creditNote.creditNoteNumber}}. All rights reserved.</p>
     <p class="muted" style="margin-top:4px">Generated on {{cnFormatDate (cnNowString)}}</p>
   </div>
@@ -457,6 +535,7 @@ export function buildCreditNoteTemplateData(
   fees: CreditNoteTemplateFee[],
   totals: CreditNoteTemplateTotals,
   applications: CreditNoteTemplateApplicationInfo[],
+  paymentInstructions?: TemplatePaymentInstructions | null,
   config: Record<string, unknown> = {}
 ): CreditNoteTemplateData {
   return {
@@ -479,6 +558,7 @@ export function buildCreditNoteTemplateData(
     fees,
     totals,
     applications,
+    paymentInstructions: paymentInstructions ?? null,
     config,
   };
 }

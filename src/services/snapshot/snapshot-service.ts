@@ -72,13 +72,41 @@ export class SnapshotService {
     };
   }
 
-  private buildPaymentInstructions(invoice: InvoiceWithDetails): TemplatePaymentInstructions {
+  private buildPaymentInstructions(
+    invoice: InvoiceWithDetails,
+    paymentSettings: {
+      defaultBankDetails?: string | null;
+      defaultPaymentPortalUrl?: string | null;
+      taxExemption?: string | null;
+      deliveryDetails?: string | null;
+      warrantyInfo?: string | null;
+      returnPolicy?: string | null;
+      lateFeePeriodDays?: number | null;
+    }
+  ): TemplatePaymentInstructions {
     const instructions: TemplatePaymentInstructions = {};
 
     if (invoice.lateFeeType && invoice.lateFeeType !== "none" && invoice.lateFeeValue) {
       instructions.lateFeeType = invoice.lateFeeType;
       instructions.lateFeeValue = invoice.lateFeeValue instanceof Decimal ? invoice.lateFeeValue.toFixed(2) : String(invoice.lateFeeValue);
     }
+    instructions.lateFeePeriodDays = paymentSettings.lateFeePeriodDays ?? null;
+
+    const bankDetails = paymentSettings.defaultBankDetails;
+    if (bankDetails) {
+      instructions.bankDetails = bankDetails;
+      instructions.methods = [{ type: "bank", label: "Bank Transfer", details: bankDetails }];
+    }
+
+    const paymentLink = paymentSettings.defaultPaymentPortalUrl;
+    if (paymentLink) {
+      instructions.paymentLink = paymentLink;
+    }
+
+    instructions.taxExemption = paymentSettings.taxExemption ?? null;
+    instructions.deliveryDetails = paymentSettings.deliveryDetails ?? null;
+    instructions.warrantyInfo = paymentSettings.warrantyInfo ?? null;
+    instructions.returnPolicy = paymentSettings.returnPolicy ?? null;
 
     return instructions;
   }
@@ -110,7 +138,8 @@ export class SnapshotService {
     const fees = this.mapFees(invoice);
     const totals = this.mapTotals(invoice);
     const attachments = this.mapAttachments(opts?.attachments ?? []);
-    const paymentInstructions = this.buildPaymentInstructions(invoice);
+    const paymentSettings = await businessRepository.getPaymentSettings(businessId);
+    const paymentInstructions = this.buildPaymentInstructions(invoice, paymentSettings);
 
     const templateData = buildTemplateData(
       {

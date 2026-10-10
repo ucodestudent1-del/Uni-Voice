@@ -139,6 +139,41 @@ export class BusinessRepository {
     };
   }
 
+  async getPaymentSettings(businessId: string): Promise<{
+    defaultBankDetails?: string | null;
+    defaultPaymentPortalUrl?: string | null;
+    taxExemption?: string | null;
+    deliveryDetails?: string | null;
+    warrantyInfo?: string | null;
+    returnPolicy?: string | null;
+    lateFeeType?: "none" | "fixed" | "percentage" | null;
+    lateFeeValue?: string | null;
+    lateFeePeriodDays?: number | null;
+  }> {
+    const res = await query(
+      `SELECT default_bank_details, default_payment_portal_url, tax_exemption,
+              delivery_details, warranty_info, return_policy,
+              late_fee_type, late_fee_value, late_fee_period_days
+       FROM business_settings WHERE business_id = $1`,
+      [businessId]
+    );
+    if (!res.rows.length) {
+      return { lateFeeType: "none", lateFeeValue: null, lateFeePeriodDays: null };
+    }
+    const row = res.rows[0];
+    return {
+      defaultBankDetails: (row.default_bank_details as string | null) ?? null,
+      defaultPaymentPortalUrl: (row.default_payment_portal_url as string | null) ?? null,
+      taxExemption: (row.tax_exemption as string | null) ?? null,
+      deliveryDetails: (row.delivery_details as string | null) ?? null,
+      warrantyInfo: (row.warranty_info as string | null) ?? null,
+      returnPolicy: (row.return_policy as string | null) ?? null,
+      lateFeeType: (row.late_fee_type as "none" | "fixed" | "percentage" | null) ?? "none",
+      lateFeeValue: (row.late_fee_value as string | null) ?? null,
+      lateFeePeriodDays: (row.late_fee_period_days as number | null) ?? null,
+    };
+  }
+
   async getReminderSettings(businessId: string): Promise<{
     enabled: boolean;
     beforeDue: Array<{ id: string; offsetDays: number; maxSends: number; enabled: boolean }>;
