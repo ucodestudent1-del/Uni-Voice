@@ -436,13 +436,14 @@ function InvoiceEditorContent() {
     analytics.trackTemplateSelected({ presetKey });
   };
 
-  async function handleSave() {
+  async function handleSave(): Promise<string | undefined> {
     if (!validation.isValid) {
       setShowValidation(true);
-      return;
+      return undefined;
     }
     setSaveState("saving");
     try {
+      let createdId: string | undefined;
       if (isNew) {
         const res = await createInvoice({
           customerId: editorData?.customerId,
@@ -476,7 +477,8 @@ function InvoiceEditorContent() {
           })),
           fees: editorData?.fees || [],
         });
-        analytics.trackInvoiceCreated({ invoiceId: res.invoiceId });
+         analytics.trackInvoiceCreated({ invoiceId: res.invoiceId });
+        createdId = res.invoiceId;
         navigate(`/app/invoices/${res.invoiceId}/edit`);
       } else {
         await updateInvoice(id!, {
@@ -513,12 +515,15 @@ function InvoiceEditorContent() {
           fees: editorData?.fees || [],
         });
         analytics.track("invoice_saved", { invoiceId: id });
+        createdId = id;
       }
       markSaved();
       setSaveState("saved");
+      return createdId;
     } catch (err: any) {
       setSaveState("error");
       setActionMessage({ type: "error", text: err.response?.data?.error || "Failed to save" });
+      return undefined;
     }
   }
 
@@ -531,10 +536,10 @@ function InvoiceEditorContent() {
     const confirmed = window.confirm("Finalize this invoice? It will be assigned an invoice number and can't be edited after.");
     if (!confirmed) return;
     try {
+      let currentId = id && !isNew ? id : undefined;
       if (isNew) {
-        await handleSave();
+        currentId = await handleSave();
       }
-      const currentId = id && !isNew ? id : undefined;
       if (currentId) {
         const res = await finalizeInvoice(currentId);
         analytics.track("invoice_finalized", { invoiceNumber: res.invoiceNumber });
