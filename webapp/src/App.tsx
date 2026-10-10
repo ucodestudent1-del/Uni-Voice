@@ -35,6 +35,7 @@ const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const InvoiceEditorPage = lazy(() => import("./pages/InvoiceEditorPage"));
 const QuickInvoicePage = lazy(() => import("./pages/QuickInvoicePage"));
 const QuoteCreationWizard = lazy(() => import("./components/QuoteCreationWizard"));
+const QuoteWorkspacePage = lazy(() => import("./pages/QuoteWorkspacePage"));
 const PublicQuote = lazy(() => import("./pages/PublicQuote"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Receipts = lazy(() => import("./pages/Receipts"));
@@ -108,8 +109,8 @@ export default function App() {
           <Route path="invoices/:id" element={<Suspense fallback={<Fallback />}><InvoiceDetail /></Suspense>} />
            <Route path="invoices/:id/edit" element={<Suspense fallback={<Fallback />}><InvoiceEditorPage /></Suspense>} />
           <Route path="quotes" element={<Suspense fallback={<Fallback />}><Quotes /></Suspense>} />
-           <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteCreationWizard /></Suspense>} />
-           <Route path="quotes/:id/edit" element={<Suspense fallback={<Fallback />}><QuoteCreationWizard /></Suspense>} />
+           <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteWorkspacePage /></Suspense>} />
+           <Route path="quotes/:id/edit" element={<Suspense fallback={<Fallback />}><QuoteWorkspacePage /></Suspense>} />
 
           <Route path="credit-notes" element={<Suspense fallback={<Fallback />}><CreditNotes /></Suspense>} />
           <Route path="credit-notes/new" element={<Suspense fallback={<Fallback />}><CreditNoteWorkspacePage /></Suspense>} />

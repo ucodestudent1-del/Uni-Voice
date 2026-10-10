@@ -1,5 +1,5 @@
-import CreditNoteWorkspace from "../components/CreditNoteWorkspace";
+import CreditNoteWorkspaceRedesign from "../components/CreditNoteWorkspaceRedesign";
 
 export default function CreditNoteWorkspacePage() {
-  return <CreditNoteWorkspace />;
+  return <CreditNoteWorkspaceRedesign />;
 }
