@@ -903,7 +903,7 @@ app.post("/api/products/:id/use-as-line-item", requireAuth, async (req: AuthRequ
           taxRate,
         }],
       }, businessId, req.user!.id);
-      res.status(201).json({ creditNoteId });
+    res.status(201).json({ id: creditNoteId });
     } else {
       res.status(400).json({ error: "Invalid type. Must be 'invoice', 'quote', or 'credit-note'." });
     }
@@ -1597,13 +1597,15 @@ app.post("/api/invoices/:id/receipts", requireAuth, requireEntitlement("receipts
 // ============================================================================
 app.get("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await creditNoteRepository.findManyPage(req.user!.businessId, {
+    const result = await creditNoteRepository.findManyPage(req.user!.businessId, {
     status: req.query.status as string | undefined,
     customerId: req.query.customer_id as string | undefined,
     search: req.query.search as string | undefined,
     currency: req.query.currency as string | undefined,
     sortBy: req.query.sort_by as string | undefined,
     sortOrder: (req.query.sort_order as string | undefined) === "asc" ? "asc" : "desc",
+    dateFrom: req.query.date_from as string | undefined,
+    dateTo: req.query.date_to as string | undefined,
     limit: req.query.limit ? Number(req.query.limit) : undefined,
     offset: req.query.offset ? Number(req.query.offset) : undefined,
   });
@@ -1618,7 +1620,7 @@ app.get("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"),
 app.post("/api/credit-notes", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const cnId = await creditNoteService.create(req.body, req.user!.businessId, req.user.id);
-  res.status(201).json({ creditNoteId: cnId });
+  res.status(201).json({ id: cnId });
 });
 
 // Create a credit note from selected invoice items (partial credit)
@@ -1688,9 +1690,10 @@ app.post("/api/credit-notes/:id/send", requireAuth, requireEntitlement("invoices
 
 app.get("/api/credit-notes/:id/pdf", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cn = await creditNoteRepository.findById(req.user!.businessId, req.params.id);
   const pdf = await creditNoteService.generatePdf(req.user!.businessId, req.params.id);
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=credit-note-${req.params.id}.pdf`);
+  res.setHeader("Content-Disposition", `attachment; filename=Credit-Note-${cn.creditNoteNumber ?? req.params.id}.pdf`);
   res.send(pdf);
 });
 
@@ -1698,6 +1701,71 @@ app.get("/api/credit-notes/:id/events", requireAuth, requireEntitlement("invoice
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const events = await creditNoteRepository.getEvents(req.params.id, req.user!.businessId);
   res.json({ events: camelToSnake(events) });
+});
+
+app.get("/api/credit-notes/:id/applications", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const cn = await creditNoteRepository.findById(req.user!.businessId, req.params.id);
+  const applications = cn.applications.map((app) => ({
+    id: app.id,
+    credit_note_id: app.creditNoteId,
+    invoice_id: app.invoiceId,
+    amount: app.amount,
+    applied_at: app.appliedAt,
+    idempotency_key: app.idempotencyKey,
+    metadata: app.metadata,
+  }));
+  res.json({ applications });
+});
+
+// Eligible invoices for applying a credit note
+app.get("/api/credit-notes/eligible-invoices", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { customer_id, currency } = req.query;
+  let queryStr = `
+    SELECT id, invoice_number, customer_name, customer_id, currency, total, amount_due, status
+    FROM invoices
+    WHERE business_id = $1 AND status NOT IN ('void', 'cancelled')
+    AND amount_due > 0
+  `;
+  const params: any[] = [req.user!.businessId];
+  let idx = 2;
+  if (customer_id) {
+    queryStr += ` AND customer_id = $${idx++}`;
+    params.push(customer_id as string);
+  }
+  if (currency) {
+    queryStr += ` AND currency = $${idx++}`;
+    params.push(currency as string);
+  }
+  queryStr += ` ORDER BY issue_date DESC LIMIT 100`;
+  const result = await query(queryStr, params);
+  res.json({
+    invoices: result.rows.map((r) => ({
+      id: r.id,
+      invoice_number: r.invoice_number,
+      customer_name: r.customer_name,
+      customer_id: r.customer_id,
+      currency: r.currency,
+      total: r.total,
+      amount_due: r.amount_due,
+      status: r.status,
+    })),
+  });
+});
+
+app.post("/api/credit-notes/:id/void", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { reason } = req.body;
+  await creditNoteService.void(req.user!.businessId, req.params.id, reason ?? "Voided by user", req.user.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/credit-notes/:id/record-refund", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { amount, reason } = req.body;
+  await creditNoteService.recordRefund(req.user!.businessId, req.params.id, amount, reason);
+  res.json({ ok: true });
 });
 
 app.delete("/api/credit-notes/:id", requireAuth, requireEntitlement("invoices.create"), async (req: AuthRequest, res) => {

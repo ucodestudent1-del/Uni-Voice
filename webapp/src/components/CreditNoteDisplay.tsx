@@ -508,7 +508,7 @@ const CreditNoteTotalsSummary: React.FC<{ design: CreditNoteDesign }> = React.me
 
         <div className="border-t-2 border-color pt-3">
           <div className="flex justify-between">
-            <span className="text-base font-semibold text-secondary">Total</span>
+            <span className="text-base font-semibold text-secondary">Total Credit</span>
             <span className="text-xl font-bold text-primary">{fmtNumber(design.total, currency, dp)}</span>
           </div>
         </div>

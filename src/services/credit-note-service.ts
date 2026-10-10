@@ -6,6 +6,7 @@ import { businessRepository } from "../repositories/business.repo.js";
 import { customerRepository } from "../repositories/customer.repo.js";
 import { invoiceRepository } from "../repositories/invoice.repo.js";
 import { creditNoteNumberService } from "../services/numbering/service.js";
+import type { CreditNoteStatus } from "../domain/models/index.js";
 import {
   creditNoteTemplateRenderer,
   buildCreditNoteTemplateData,
@@ -19,6 +20,7 @@ import { pdfService } from "./pdf/pdf-service.js";
 import type { CurrencyCode } from "../domain/value-objects/currency.js";
 import { BusinessLogicError } from "../domain/errors.js";
 import { emailService, type CreditNoteEmailData } from "./email/email-service.js";
+import { creditNoteStateMachine } from "../services/state-machine/credit-note-state-machine.js";
 import { generatePublicInvoiceToken } from "../utils/crypto.js";
 
 export interface CreateCreditNoteInput {
@@ -67,6 +69,12 @@ export class CreditNoteService {
       await customerRepository.findById(businessId, input.customerId);
     }
     const cnId = await creditNoteRepository.create(businessId, input as CreditNoteCreateInput, userId);
+    if (input.items && input.items.length > 0) {
+      await creditNoteRepository.setItems(cnId, input.items as CreditNoteItemInput[], undefined);
+    }
+    if (input.fees && input.fees.length > 0) {
+      await creditNoteRepository.setFees(cnId, input.fees as CreditNoteFeeInput[]);
+    }
     const cn = await creditNoteRepository.findById(businessId, cnId);
     const calc = this.recalculate(cn);
     await creditNoteRepository.updateTotals(cnId, calc);
@@ -134,6 +142,7 @@ export class CreditNoteService {
   async finalize(businessId: string, id: string, _userId?: string): Promise<{ creditNoteNumber?: string | null }> {
     const cn = await creditNoteRepository.findById(businessId, id);
     if (cn.isFinalized) throw new BusinessLogicError("Credit note is already finalized");
+    creditNoteStateMachine.transition(cn.status, "finalized");
     const creditNoteNumber = await this.generateNumber(businessId, id, cn);
     await creditNoteRepository.finalize(id, businessId, new Date());
     const fresh = await creditNoteRepository.findById(businessId, id);
@@ -143,6 +152,51 @@ export class CreditNoteService {
 
   async cancel(businessId: string, id: string, reason: string, _userId?: string): Promise<void> {
     await creditNoteRepository.cancel(id, businessId, new Date(), reason);
+  }
+
+  async void(businessId: string, id: string, reason: string, _userId?: string): Promise<void> {
+    const cn = await creditNoteRepository.findById(businessId, id);
+    if (!creditNoteStateMachine.isVoidable(cn.status)) {
+      throw new BusinessLogicError(
+        `Cannot void a credit note in '${cn.status}' status`,
+        "INVALID_VOID_OPERATION"
+      );
+    }
+    creditNoteStateMachine.transition(cn.status, "void");
+    await creditNoteRepository.void(id, businessId, new Date(), reason);
+  }
+
+  async recordRefund(
+    businessId: string,
+    creditNoteId: string,
+    amount: string,
+    reason?: string
+  ): Promise<void> {
+    const cn = await creditNoteRepository.findById(businessId, creditNoteId);
+    if (!cn.isFinalized) {
+      throw new BusinessLogicError("Credit note must be finalized before recording a refund");
+    }
+    const refundAmount = new Decimal(amount);
+    const total = new Decimal(cn.total);
+    if (refundAmount.isNegative() || refundAmount.isZero()) {
+      throw new BusinessLogicError("Refund amount must be positive");
+    }
+    if (refundAmount.gt(total)) {
+      throw new BusinessLogicError("Refund amount cannot exceed the total credit note amount");
+    }
+    const idempotencyKey = `cn-refund:${creditNoteId}:${amount}`;
+    await creditNoteRepository.recordApplication(
+      creditNoteId,
+      cn.id,
+      businessId,
+      refundAmount.toFixed(6),
+      idempotencyKey,
+      {
+        application_method: "refund",
+        refund_reason: reason ?? null,
+        refund_provider: "manual",
+      }
+    );
   }
 
   async send(businessId: string, id: string, userId?: string): Promise<{ publicToken: string; status: string }> {
@@ -174,8 +228,9 @@ export class CreditNoteService {
 
     await emailService.sendCreditNoteEmail(emailData);
 
+    creditNoteStateMachine.transition(cn.status, "sent");
     await query(
-      `UPDATE credit_notes SET status = 'sent', public_token = $1, updated_at = NOW() WHERE id = $2`,
+      `UPDATE credit_notes SET status = 'sent', public_token = $1, sent_at = NOW(), updated_at = NOW() WHERE id = $2`,
       [token, id]
     );
     logger.info(`Credit note ${cn.creditNoteNumber} sent to ${customerEmail}`);
@@ -205,11 +260,17 @@ export class CreditNoteService {
     const total = new Decimal(cn.total);
     const finalApplied = newAppliedTotal.gt(total) ? total : newAppliedTotal;
     const finalDue = finalApplied.gt(total) ? new Decimal(0) : newAmountDue;
-    const status = finalDue.lte(0) && (applicationMethod === "refund" || applicationMethod === "balance_credit")
-      ? "applied"
-      : finalDue.lte(0)
-      ? "applied"
-      : "finalized";
+    let status: string;
+    if (applicationMethod === "refund") {
+      status = "refunded";
+    } else if (finalDue.lte(0)) {
+      status = "applied";
+    } else if (finalApplied.gt(0)) {
+      status = "partially_applied";
+    } else {
+      status = "finalized";
+    }
+    creditNoteStateMachine.transition(cn.status, status as CreditNoteStatus);
     await query(
       `UPDATE credit_notes SET applied_total = $1, amount_due = $2, status = $3, updated_at = NOW()
        WHERE id = $4 AND business_id = $5`,
@@ -234,13 +295,15 @@ export class CreditNoteService {
     const discountTotal = cn.items.reduce((sum, it) => sum.plus(new Decimal(it.discount)), new Decimal(0));
     const taxTotal = cn.items.reduce((sum, it) => sum.plus(new Decimal(it.taxAmount)), new Decimal(0));
     const feeTotal = cn.fees.reduce((sum, f) => sum.plus(new Decimal(f.amount)), new Decimal(0));
+    const feeTaxTotal = cn.fees.reduce((sum, f) => sum.plus(new Decimal(f.taxAmount)), new Decimal(0));
+    const taxTotalWithFees = taxTotal.plus(feeTaxTotal);
     const total = subtotal.plus(feeTotal);
     const appliedTotal = new Decimal(cn.appliedTotal ?? 0);
     const amountDue = total.minus(appliedTotal).isNegative() ? new Decimal(0) : total.minus(appliedTotal);
     return {
       subtotal: subtotal.toFixed(6),
       discountTotal: discountTotal.toFixed(6),
-      taxTotal: taxTotal.toFixed(6),
+      taxTotal: taxTotalWithFees.toFixed(6),
       feeTotal: feeTotal.toFixed(6),
       total: total.toFixed(6),
       appliedTotal: appliedTotal.toFixed(6),

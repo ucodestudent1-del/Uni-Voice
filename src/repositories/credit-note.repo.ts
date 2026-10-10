@@ -83,6 +83,8 @@ export interface CreditNoteListOptions {
   currency?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  dateFrom?: string;
+  dateTo?: string;
   limit?: number;
   offset?: number;
 }
@@ -289,6 +291,14 @@ export class CreditNoteRepository {
       vals.push(term, term, term);
       i++;
     }
+    if (opts.dateFrom) {
+      conditions.push(`cn.issue_date >= $${i++}`);
+      vals.push(opts.dateFrom);
+    }
+    if (opts.dateTo) {
+      conditions.push(`cn.issue_date <= $${i++}`);
+      vals.push(opts.dateTo);
+    }
 
     const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
     const offset = Math.max(opts.offset ?? 0, 0);
@@ -430,6 +440,30 @@ export class CreditNoteRepository {
 
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
+      const qty = new Decimal(it.quantity);
+      const unitPrice = new Decimal(it.unitPrice);
+      const lineSubtotal = qty.mul(unitPrice);
+
+      let discountAmount = new Decimal(0);
+      if (it.discount && Number(it.discount) > 0) {
+        if (it.discountType === "percentage") {
+          discountAmount = lineSubtotal.mul(new Decimal(it.discount).div(100));
+        } else {
+          discountAmount = new Decimal(it.discount);
+        }
+      }
+
+      const taxRate = new Decimal(it.taxRate ?? 0);
+      const taxableAmount = it.isTaxInclusive
+        ? lineSubtotal.minus(discountAmount)
+        : lineSubtotal.minus(discountAmount);
+      const taxAmount = it.isTaxInclusive
+        ? lineSubtotal.mul(taxRate.div(taxRate.plus(1)))
+        : taxableAmount.mul(taxRate);
+      const lineTotal = it.isTaxInclusive
+        ? lineSubtotal
+        : taxableAmount.plus(taxAmount);
+
       await client.query(
         `INSERT INTO credit_note_items (
            id, credit_note_id, product_id, description, quantity, unit, unit_price,
@@ -444,8 +478,8 @@ export class CreditNoteRepository {
         [
           it.id ?? randomUUID(), creditNoteId, it.productId, it.description,
           it.quantity, it.unit ?? "each", it.unitPrice,
-          it.discount ?? 0, it.discountType ?? "fixed",
-          it.taxRate ?? 0, 0, 0, 0,
+          discountAmount.toFixed(6), it.discountType ?? "fixed",
+          it.taxRate ?? 0, taxAmount.toFixed(6), lineSubtotal.toFixed(6), lineTotal.toFixed(6),
           it.sortOrder ?? i, it.isTaxInclusive ?? false,
           it.catalogName ?? null, it.catalogSku ?? null, it.catalogTaxCategory ?? null,
           it.catalogUnitPrice ?? null, it.catalogTaxRate ?? null, now,
@@ -545,8 +579,18 @@ export class CreditNoteRepository {
   }
 
   /**
-   * Persist a credit note application (applying credit to an invoice).
+   * Void a credit note (mark as invalid through authorized workflow).
    */
+  async void(creditNoteId: string, businessId: string, voidedAt: Date, reason: string): Promise<void> {
+    const res = await query(
+      `UPDATE credit_notes
+       SET status = 'void', voided_at = $1, void_reason = $2, updated_at = NOW()
+       WHERE id = $3 AND business_id = $4
+       RETURNING id`,
+      [voidedAt, reason, creditNoteId, businessId]
+    );
+    if (!res.rows.length) throw new NotFoundError(`Credit note ${creditNoteId} not found`);
+  }
   async recordApplication(
     creditNoteId: string,
     invoiceId: string,
@@ -672,11 +716,12 @@ export class CreditNoteRepository {
       appliedTotal: r.applied_total as string,
       amountDue: r.amount_due as string,
       isFinalized: Boolean(r.is_finalized),
-      finalizedAt: rowToDate(r.finalized_at),
-      cancelledAt: rowToDate(r.cancelled_at),
-      cancelledReason: r.cancelled_reason as string | null,
-      voidedAt: rowToDate(r.voided_at),
-      voidReason: r.void_reason as string | null,
+       finalizedAt: rowToDate(r.finalized_at),
+       sentAt: rowToDate(r.sent_at),
+       cancelledAt: rowToDate(r.cancelled_at),
+       cancelledReason: r.cancelled_reason as string | null,
+       voidedAt: rowToDate(r.voided_at),
+       voidReason: r.void_reason as string | null,
       publicToken: r.public_token as string | null,
       version: Number(r.version ?? 1),
       createdAt: rowToDate(r.created_at)!,

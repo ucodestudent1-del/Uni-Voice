@@ -1874,6 +1874,8 @@ export interface CreditNoteSearchParams {
   currency?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  dateFrom?: string;
+  dateTo?: string;
   limit?: number;
   offset?: number;
 }
@@ -1918,8 +1920,8 @@ export async function sendCreditNote(id: string) {
   return res.data;
 }
 
-export async function applyCreditNote(id: string, invoiceId: string, amount?: string) {
-  const res = await api.post(`/credit-notes/${id}/apply`, { invoiceId, amount });
+export async function applyCreditNote(id: string, invoiceId: string, amount?: string, applicationMethod?: "invoice_offset" | "balance_credit" | "refund") {
+  const res = await api.post(`/credit-notes/${id}/apply`, { invoiceId, amount, application_method: applicationMethod });
   invalidateCacheByKey(`/credit-notes/${id}`);
   return res.data;
 }
@@ -1927,6 +1929,107 @@ export async function applyCreditNote(id: string, invoiceId: string, amount?: st
 export async function deleteCreditNote(id: string) {
   const res = await api.delete(`/credit-notes/${id}`);
   invalidateCache("/credit-notes?");
+  invalidateCacheByKey(`/credit-notes/${id}`);
+  return res.data;
+}
+
+export interface CreditNoteItemInput {
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice: string | number;
+  discount?: string | number;
+  discountType?: "fixed" | "percentage";
+  taxRate?: string | number;
+  isTaxInclusive?: boolean;
+  sortOrder?: number;
+}
+
+export interface CreditNoteFeeInput {
+  description: string;
+  amount: string | number;
+  taxRate?: string | number;
+}
+
+export interface CreateCreditNoteInput {
+  customerId?: string | null;
+  referenceInvoiceId?: string | null;
+  currency?: string;
+  issueDate?: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  internalNotes?: string | null;
+  terms?: string | null;
+  templateId?: string | null;
+  items?: CreditNoteItemInput[];
+  fees?: CreditNoteFeeInput[];
+}
+
+export interface CreateCreditNoteResult {
+  id: string;
+}
+
+export interface UpdateCreditNoteInput {
+  issueDate?: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  internalNotes?: string | null;
+  terms?: string | null;
+  items?: CreditNoteItemInput[];
+  fees?: CreditNoteFeeInput[];
+}
+
+export async function createCreditNote(data: CreateCreditNoteInput): Promise<CreateCreditNoteResult> {
+  const res = await api.post("/credit-notes", data);
+  invalidateCache("/credit-notes?");
+  return res.data;
+}
+
+export async function createCreditNoteFromInvoice(
+  invoiceId: string,
+  data: {
+    reason?: string | null;
+    items: Array<{
+      id: string;
+      description: string;
+      quantity: string | number;
+      unit: string;
+      unitPrice: string | number;
+      discount: string | number;
+      discountType: "fixed" | "percentage";
+      isTaxInclusive?: boolean;
+      taxRate?: string | number;
+      productId?: string | null;
+    }>;
+  }
+): Promise<CreateCreditNoteResult> {
+  const res = await api.post(`/invoices/${invoiceId}/credit-notes`, data);
+  invalidateCache("/credit-notes?");
+  return res.data;
+}
+
+export async function updateCreditNote(id: string, data: UpdateCreditNoteInput): Promise<void> {
+  await api.patch(`/credit-notes/${id}`, data);
+  invalidateCacheByKey(`/credit-notes/${id}`);
+}
+
+export interface GetEligibleInvoicesParams {
+  customerId?: string;
+  currency?: string;
+}
+
+export async function getEligibleInvoicesForCredit(params?: GetEligibleInvoicesParams) {
+  const res = await api.get("/credit-notes/eligible-invoices", { params });
+  return res.data;
+}
+
+export async function getCreditNoteApplications(id: string) {
+  const res = await api.get(`/credit-notes/${id}/applications`);
+  return res.data;
+}
+
+export async function voidCreditNote(id: string, reason: string) {
+  const res = await api.post(`/credit-notes/${id}/void`, { reason });
   invalidateCacheByKey(`/credit-notes/${id}`);
   return res.data;
 }

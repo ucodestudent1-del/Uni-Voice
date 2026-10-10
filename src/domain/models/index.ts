@@ -14,6 +14,17 @@ export type Status =
 
 export type QuoteStatus = "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired" | "cancelled";
 
+export type CreditNoteStatus =
+  | "draft"
+  | "finalized"
+  | "sent"
+  | "partially_applied"
+  | "applied"
+  | "partially_refunded"
+  | "refunded"
+  | "cancelled"
+  | "void";
+
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "cancelled" | "refunded" | "partially_refunded";
 
 export interface Business {
@@ -264,7 +275,7 @@ export interface CreditNote {
   customerId: string;
   referenceInvoiceId?: string | null;
   creditNoteNumber?: string | null;
-  status: "draft" | "finalized" | "cancelled" | "void";
+  status: CreditNoteStatus;
   issueDate?: Date | null;
   currency: CurrencyCode;
   reason?: string | null;
@@ -281,6 +292,7 @@ export interface CreditNote {
   amountDue: Decimal.Value;
   isFinalized: boolean;
   finalizedAt?: Date | null;
+  sentAt?: Date | null;
   cancelledAt?: Date | null;
   cancelledReason?: string | null;
   voidedAt?: Date | null;

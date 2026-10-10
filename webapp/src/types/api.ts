@@ -348,6 +348,8 @@ export interface ApiCreditNoteApplication {
   invoice_id: string;
   amount: string;
   applied_at: string;
+  idempotency_key?: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface ApiCreditNote {
@@ -357,7 +359,7 @@ export interface ApiCreditNote {
   reference_invoice_id?: string | null;
   reference_invoice_number?: string | null;
   credit_note_number?: string | null;
-  status: "draft" | "finalized" | "cancelled" | "void" | string;
+  status: "draft" | "finalized" | "sent" | "partially_applied" | "applied" | "partially_refunded" | "refunded" | "cancelled" | "void" | string;
   issue_date?: string | null;
   currency: string;
   subtotal: string;
@@ -373,6 +375,7 @@ export interface ApiCreditNote {
   terms?: string | null;
   is_finalized: boolean;
   finalized_at?: string | null;
+  sent_at?: string | null;
   cancelled_at?: string | null;
   cancelled_reason?: string | null;
   voided_at?: string | null;
@@ -402,12 +405,13 @@ export interface ApiCreditNoteListItem {
   total: string;
   applied_total: string;
   amount_due: string;
-  is_finalized: boolean;
-  finalized_at?: string | null;
-  created_at: string;
-  updated_at: string;
-  customer_name?: string | null;
-  customer_email?: string | null;
+   is_finalized: boolean;
+   finalized_at?: string | null;
+   sent_at?: string | null;
+   created_at: string;
+   updated_at: string;
+   customer_name?: string | null;
+   customer_email?: string | null;
 }
 
 export interface ApiCreditNoteEvent {

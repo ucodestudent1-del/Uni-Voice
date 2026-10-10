@@ -258,13 +258,13 @@ describe("CreditNoteDisplay", () => {
     expect(screen.getAllByText("$200.00").length).toBeGreaterThan(0);
     expect(screen.getByText("Tax")).toBeInTheDocument();
     expect(screen.getAllByText("$20.00").length).toBeGreaterThan(0);
-    expect(screen.getByText("Total")).toBeInTheDocument();
+    expect(screen.getAllByText("Total Credit").length).toBeGreaterThan(0);
   });
 
   it("renders Total Credit with prominent styling", () => {
     const design = makeBaseCreditNote();
     render(<CreditNoteDisplay design={design} />);
-    expect(screen.getByText("Total Credit")).toBeInTheDocument();
+    expect(screen.getAllByText("Total Credit").length).toBeGreaterThan(0);
     expect(screen.getAllByText("$220.00").length).toBeGreaterThan(0);
   });
 

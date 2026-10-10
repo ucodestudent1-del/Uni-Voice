@@ -426,11 +426,11 @@ export default function QuoteCreationWizard({ quoteId }: { quoteId?: string }) {
     <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <Link
-          to="/app/invoices"
+          to="/app/quotes"
           className="inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Invoices
+          Back to Quotes
         </Link>
         <div className="flex items-center gap-2 text-xs text-secondary">
           {STEP_ORDER.map((step) => (
@@ -526,7 +526,7 @@ export default function QuoteCreationWizard({ quoteId }: { quoteId?: string }) {
           publicToken={publicToken}
           onSendEmail={handleSendEmail}
           onDownloadPdf={handleDownloadPdf}
-          onNavigate={() => navigate("/app/invoices")}
+          onNavigate={() => navigate("/app/quotes")}
         />
       )}
     </div>
@@ -1056,7 +1056,7 @@ function StepDone({ publicToken, onSendEmail, onDownloadPdf, onNavigate }: StepD
           <Button variant="secondary" onClick={() => publicToken && navigator.clipboard.writeText(`${window.location.origin}/quote/${publicToken}`)}>
             <Share2 className="h-4 w-4" /> Share link
           </Button>
-          <Link to="/app/invoices" className="flex items-center justify-center gap-2 rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt">
+          <Link to="/app/quotes" className="flex items-center justify-center gap-2 rounded-lg border border-input-border px-4 py-3 text-sm font-medium text-secondary hover:bg-surface-alt">
             All quotes
           </Link>
         </div>
