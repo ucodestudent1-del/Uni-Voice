@@ -74,18 +74,18 @@ export const customerStatusConfig = createStatusBadgeConfig(
   "active"
 );
 
-// export const creditNoteStatusConfig = createStatusBadgeConfig(
-//   {
-//     draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Credit note has been created but not yet finalized." },
-//     finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Credit note has been finalized and is ready for use." },
-//     applied: { label: "Applied", className: "status-success-bg status-success-text", description: "Credit note has been applied to an invoice." },
-//     refunded: { label: "Refunded", className: "status-info-bg status-info-text", description: "Credit note has been refunded to the customer." },
-//     cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been cancelled." },
-//     void: { label: "Void", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been voided." },
-//     sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Credit note has been sent to the customer." },
-//   },
-//   "draft"
-// );
+export const creditNoteStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Credit note has been created but not yet finalized." },
+    finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Credit note has been finalized and is ready for use." },
+    applied: { label: "Applied", className: "status-success-bg status-success-text", description: "Credit note has been applied to an invoice." },
+    refunded: { label: "Refunded", className: "status-info-bg status-info-text", description: "Credit note has been refunded to the customer." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been cancelled." },
+    void: { label: "Void", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been voided." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Credit note has been sent to the customer." },
+  },
+  "draft"
+);
 
 export function isOverdueStatus(status: string, dueDate?: string | null): boolean {
   if (status === "overdue") return true;

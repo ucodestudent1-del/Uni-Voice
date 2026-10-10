@@ -1843,3 +1843,69 @@ export async function payQuoteDepositPublic(
   return res.data;
 }
 
+// === Credit Notes ===
+
+export interface CreditNoteSearchParams {
+  status?: string;
+  customerId?: string;
+  search?: string;
+  currency?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}
+
+export async function getCreditNotes(params?: CreditNoteSearchParams) {
+  const res = await cachedGet("/credit-notes", params as Record<string, unknown> | undefined, {
+    ttlMs: 30 * 1000,
+  });
+  return res;
+}
+
+export async function getCreditNote(id: string) {
+  const res = await cachedGet(`/credit-notes/${id}`, undefined, { ttlMs: 15 * 1000 });
+  return res;
+}
+
+export async function getCreditNotePdf(id: string) {
+  const res = await api.post(`/credit-notes/${id}/pdf`, {}, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getCreditNoteEvents(id: string) {
+  const res = await api.get(`/credit-notes/${id}/events`);
+  return res.data;
+}
+
+export async function finalizeCreditNote(id: string) {
+  const res = await api.post(`/credit-notes/${id}/finalize`);
+  invalidateCacheByKey(`/credit-notes/${id}`);
+  return res.data;
+}
+
+export async function cancelCreditNote(id: string, reason?: string) {
+  const res = await api.post(`/credit-notes/${id}/cancel`, { reason });
+  invalidateCacheByKey(`/credit-notes/${id}`);
+  return res.data;
+}
+
+export async function sendCreditNote(id: string) {
+  const res = await api.post(`/credit-notes/${id}/send`);
+  invalidateCacheByKey(`/credit-notes/${id}`);
+  return res.data;
+}
+
+export async function applyCreditNote(id: string, invoiceId: string, amount?: string) {
+  const res = await api.post(`/credit-notes/${id}/apply`, { invoiceId, amount });
+  invalidateCacheByKey(`/credit-notes/${id}`);
+  return res.data;
+}
+
+export async function deleteCreditNote(id: string) {
+  const res = await api.delete(`/credit-notes/${id}`);
+  invalidateCache("/credit-notes?");
+  invalidateCacheByKey(`/credit-notes/${id}`);
+  return res.data;
+}
+
