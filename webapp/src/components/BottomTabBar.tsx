@@ -1,6 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import {
-  LayoutDashboard,
+import     { LayoutDashboard,
   FileText,
   Users,
   Plus,
@@ -12,6 +11,7 @@ export default function BottomTabBar() {
   const items = [
     { name: "Dashboard", to: "/app", icon: LayoutDashboard },
     { name: "Invoices", to: "/app/invoices", icon: FileText },
+    { name: "Credit Notes", to: "/app/credit-notes", icon: Receipt },
     { name: "Quotes", to: "/app/quotes", icon: Quote },
     { name: "Customers", to: "/app/customers", icon: Users },
     { name: "Payments", to: "/app/payments", icon: Receipt },

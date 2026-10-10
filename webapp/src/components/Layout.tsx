@@ -5,13 +5,15 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useState } from "react";
 import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
-import { Menu } from "lucide-react";
+import type { ComponentType } from "react";
+import { Menu, Receipt } from "lucide-react";
 
 import type { PlanTier } from "@/types/app";
 
 interface NavItem {
   name: string;
   to: string;
+  icon?: ComponentType<{ className?: string }>;
   feature?: string;
   requiredPlan?: PlanTier;
 }
@@ -30,6 +32,7 @@ export default function Layout() {
   const navItems: NavItem[] = [
     { name: "Dashboard", to: "/app", feature: undefined, requiredPlan: undefined },
     { name: "Invoices", to: "/app/invoices" },
+    { name: "Credit Notes", to: "/app/credit-notes", icon: Receipt },
     { name: "Quotes", to: "/app/quotes" },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
@@ -73,10 +76,11 @@ export default function Layout() {
                         }`
                       }
                     >
-                     <span className="flex items-center gap-2">
-                       <span className="w-5" />
-                       <span>{item.name}</span>
-                     </span>
+                      <span className="flex items-center gap-2">
+                        {item.icon && (<span className="w-5 flex items-center justify-center"><item.icon className="w-5 h-5" /></span>)}
+                        {!item.icon && <span className="w-5" />}
+                        <span>{item.name}</span>
+                      </span>
                      {item.requiredPlan && (
                        <span className="ml-auto text-xs bg-surface-alt text-tertiary px-1.5 py-0.5 rounded">
                          {item.requiredPlan}
