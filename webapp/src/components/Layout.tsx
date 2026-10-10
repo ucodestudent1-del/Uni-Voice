@@ -30,6 +30,7 @@ export default function Layout() {
   const navItems: NavItem[] = [
     { name: "Dashboard", to: "/app", feature: undefined, requiredPlan: undefined },
     { name: "Invoices", to: "/app/invoices" },
+    { name: "Quotes", to: "/app/quotes" },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
     { name: "Payments", to: "/app/payments" },
