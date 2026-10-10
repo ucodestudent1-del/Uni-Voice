@@ -95,22 +95,16 @@ export default function ReportSection() {
     } catch (dashErr: any) {
       const status = dashErr?.response?.status;
       if (status === 403 || status === 404) {
-        const [agingRes, metricsRes] = await Promise.allSettled([
-          getAgingReport().catch((err) => {
-            console.error("Failed to load aging report", err);
-            return null;
-          }),
-          getPaymentMetricsReport().catch((err) => {
-            console.error("Failed to load payment metrics report", err);
-            return null;
-          }),
+        const [aging, metrics] = await Promise.allSettled([
+          getAgingReport(),
+          getPaymentMetricsReport(),
         ]);
-        const aging = agingRes.status === "fulfilled" ? agingRes.value : null;
-        const metrics = metricsRes.status === "fulfilled" ? metricsRes.value : null;
+        const agingData = aging.status === "fulfilled" ? aging.value : null;
+        const metricsData = metrics.status === "fulfilled" ? metrics.value : null;
         return {
-          summary: aging?.summary ?? null,
-          agingBuckets: aging?.buckets ?? [],
-          paymentMetrics: metrics,
+          summary: agingData?.summary ?? null,
+          agingBuckets: agingData?.buckets ?? [],
+          paymentMetrics: metricsData,
           volumeTrend: [],
         };
       }

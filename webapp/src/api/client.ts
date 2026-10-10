@@ -1398,9 +1398,18 @@ export async function getProfitLossReport(params?: ReportFiltersParams): Promise
   return res.data;
 }
 
-export async function getAgingReport(): Promise<ApiAgingReport> {
-  const res = await api.get("/reports/aging");
-  return res.data;
+export async function getAgingReport(): Promise<ApiAgingReport | null> {
+  try {
+    const res = await api.get("/reports/aging");
+    return res.data;
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("404")) {
+      console.warn("Aging report endpoint not available");
+    } else {
+      console.error("Failed to load aging report:", err);
+    }
+    return null;
+  }
 }
 
 export async function exportReportCsv(reportType: string, params?: ReportFiltersParams): Promise<Blob> {

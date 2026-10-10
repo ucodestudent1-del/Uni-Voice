@@ -29,11 +29,11 @@ Commands to run during this session:
 
 ## Remaining Work (post-recent changes)
 
-1. **InvoiceWorkspace `handleFinalizeAndSend` redundant fetches** — `webapp/src/components/InvoiceWorkspace.tsx:846-884` calls `getInvoice` twice (lines 858, 871) after finalize/send. Use optimistic updates from the finalize response instead.
-2. **InvoiceWorkspace autosave batching** — `doSave` (`InvoiceWorkspace.tsx:531`) still fires 3 sequential API calls (`updateInvoice` → `setInvoiceItems` → `setInvoiceFees`). Should be a single `PATCH /api/invoices/:id` endpoint.
-3. **Missing `/api/reports/aging` and `/api/reports/payment-metrics`** backend endpoints — `webapp/src/api/client.ts:1169` and `:1744` call endpoints that don't exist in `src/index.ts`. `ReportSection.tsx` silently swallows 404s via `.catch(() => ({...}))`.
-4. **`computeChurnRate` uses `customer_email` instead of `customer_id`** — `webapp/src/pages/ReportSection.tsx:239` produces incorrect churn when customers share email domains.
-5. **List endpoints still fetch 500 customers** — `Invoices.tsx:94` and `CreditNotes.tsx:78` use `limit: 500` instead of lazy-loaded 100.
+1. **InvoiceWorkspace `handleFinalizeAndSend`** — Uses optimistic updates from `finalizeInvoice` + `sendInvoice` responses (lines 1162-1174). No redundant `getInvoice` fetches. Consider enriching `FinalizeInvoiceResult` type to include `status` for more robust optimistic updates.
+2. **InvoiceWorkspace autosave batching** — `doSave` (line 631) uses a single `createInvoice`/`updateInvoice` call with items and fees in the payload. Already resolved.
+3. **`/api/reports/aging` and `/api/reports/payment-metrics` endpoints** — Both exist in `src/index.ts` (lines 1750, 1763). `getPaymentMetricsReport` has graceful 404 handling; `getAgingReport` now has consistent error handling returning `null` on failure.
+4. **`computeChurnRate` uses `customer_email`** — Already fixed; uses `inv.customer_id` (line 274).
+5. **List endpoints fetch 500 customers** — Already fixed; `Invoices.tsx` uses `limit: 100`, `CreditNotes.tsx` doesn't fetch customers.
 
 ### Commands for the upcoming work
 | Command | What it does |

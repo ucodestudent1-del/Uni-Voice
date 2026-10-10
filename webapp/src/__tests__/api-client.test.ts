@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   getCacheKey,
   invalidateCache,
@@ -196,5 +196,96 @@ describe("buildInvoiceSearchParams", () => {
       due_date_from: "2024-02-01",
       due_date_to: "2024-12-30",
     });
+  });
+});
+
+describe("getAgingReport", () => {
+  it("returns data on successful response", async () => {
+    const { api, invalidateCache } = await import("../api/client");
+    invalidateCache();
+    const mockData = {
+      buckets: [{ bucket: "current", count: 5, amount: "1000.00" }],
+      summary: { totalOutstanding: "1000.00", totalOverdue: "500.00", currency: "USD" },
+    };
+    const originalGet = api.get;
+    api.get = vi.fn().mockResolvedValue({ data: mockData });
+    try {
+      const { getAgingReport } = await import("../api/client");
+      const result = await getAgingReport();
+      expect(result).toEqual(mockData);
+    } finally {
+      api.get = originalGet;
+    }
+  });
+
+  it("returns null on 404 error", async () => {
+    const { api, invalidateCache } = await import("../api/client");
+    invalidateCache();
+    const originalGet = api.get;
+    const error = new Error("Request failed with status code 404");
+    (error as any).response = { status: 404 };
+    api.get = vi.fn().mockRejectedValue(error);
+    try {
+      const { getAgingReport } = await import("../api/client");
+      const result = await getAgingReport();
+      expect(result).toBeNull();
+    } finally {
+      api.get = originalGet;
+    }
+  });
+
+  it("returns null on network error", async () => {
+    const { api, invalidateCache } = await import("../api/client");
+    invalidateCache();
+    const originalGet = api.get;
+    const error = new Error("Network Error");
+    api.get = vi.fn().mockRejectedValue(error);
+    try {
+      const { getAgingReport } = await import("../api/client");
+      const result = await getAgingReport();
+      expect(result).toBeNull();
+    } finally {
+      api.get = originalGet;
+    }
+  });
+});
+
+describe("getPaymentMetricsReport", () => {
+  it("returns data on successful response", async () => {
+    const { api, invalidateCache } = await import("../api/client");
+    invalidateCache();
+    const mockData = {
+      averagePaymentTimeDays: 5,
+      collectionRate: 0.9,
+      totalInvoiced: "1000.00",
+      totalPaid: "900.00",
+      totalOutstanding: "100.00",
+      totalOverdue: "50.00",
+    };
+    const originalGet = api.get;
+    api.get = vi.fn().mockResolvedValue({ data: mockData });
+    try {
+      const { getPaymentMetricsReport } = await import("../api/client");
+      const result = await getPaymentMetricsReport();
+      expect(result).toEqual(mockData);
+    } finally {
+      api.get = originalGet;
+    }
+  });
+
+  it("returns null on 404 error", async () => {
+    const { api, invalidateCache } = await import("../api/client");
+    invalidateCache();
+    const originalGet = api.get;
+    const error = new Error("Request failed with status code 404");
+    (error as any).response = { status: 404 };
+    api.get = vi.fn().mockRejectedValue(error);
+    try {
+      const { getPaymentMetricsReport } = await import("../api/client");
+      const result = await getPaymentMetricsReport();
+      expect(result).toBeNull();
+    } finally {
+      api.get = originalGet;
+    }
   });
 });
