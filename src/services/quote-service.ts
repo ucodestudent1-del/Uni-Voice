@@ -575,6 +575,24 @@ export class QuoteService {
     logger.info(`Quote ${id} rejected`);
   }
 
+  async cancel(businessId: string, id: string, userId?: string, reason?: string): Promise<void> {
+    const quote = await this.findById(businessId, id);
+    if (quote.isFinalized) {
+      if (quote.status !== "cancelled" && !["sent", "viewed", "accepted", "rejected", "expired"].includes(quote.status)) {
+        throw new BusinessLogicError(`Cannot cancel a quote in status ${quote.status}`, "INVALID_QUOTE_TRANSITION", { status: quote.status });
+      }
+    }
+    const res = await query(
+      `UPDATE quotes SET status = 'cancelled', updated_at = NOW()
+       WHERE id = $1 AND business_id = $2 AND status IN ('draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired')
+       RETURNING id`,
+      [id, businessId]
+    );
+    if (!res.rows.length) throw new NotFoundError(`Quote ${id} not found or cannot be cancelled`);
+    await this.recordEvent(id, { eventType: "cancelled", actorId: userId, actorType: userId ? "user" : "system", metadata: reason ? { reason } : undefined });
+    logger.info(`Quote ${id} cancelled`);
+  }
+
   async recordDepositPayment(businessId: string, id: string, amount: string | number, provider = "stub", idempotencyKey?: string): Promise<{ remainingDeposit: string; depositPaid: boolean }> {
     if (!idempotencyKey) {
       idempotencyKey = `quote-deposit:${id}:${amount}`;
@@ -659,6 +677,12 @@ export class QuoteService {
 
   async convertToInvoice(businessId: string, id: string, userId?: string): Promise<{ invoiceId: string; quoteNumber: string }> {
     const quote = await this.findById(businessId, id);
+
+    // Idempotency: if already converted, return the existing invoice
+    if (quote.convertedInvoiceId) {
+      return { invoiceId: quote.convertedInvoiceId, quoteNumber: quote.quoteNumber ?? id };
+    }
+
     if (!quote.isFinalized) {
       await this.finalize(businessId, id, userId, quote);
     }
@@ -734,7 +758,7 @@ export class QuoteService {
     return token;
   }
 
-async generatePdf(businessId: string, id: string): Promise<Buffer> {
+  async generatePdf(businessId: string, id: string): Promise<{ buffer: Buffer; quoteNumber: string | null | undefined }> {
     const quote = await this.findById(businessId, id);
 
     // Check the cached PDF first — if the quote state hash matches, we can
@@ -743,7 +767,7 @@ async generatePdf(businessId: string, id: string): Promise<Buffer> {
     const cached = await this.getPdfCache(id, cacheHash);
     if (cached) {
       logger.info(`PDF cache hit for quote ${id}`);
-      return cached;
+      return { buffer: cached, quoteNumber: quote.quoteNumber };
     }
 
     const business = await businessRepository.findById(businessId);
@@ -751,7 +775,7 @@ async generatePdf(businessId: string, id: string): Promise<Buffer> {
     const html = await this.renderQuoteHtml(quote, business, customer);
     const pdf = await pdfService.generatePdfFromHtml(html, { htmlTemplate: undefined } as any);
     await this.storePdfCache(id, pdf, cacheHash);
-    return pdf;
+    return { buffer: pdf, quoteNumber: quote.quoteNumber };
   }
 
   private computePdfCacheHash(quote: QuoteWithDetails): string {

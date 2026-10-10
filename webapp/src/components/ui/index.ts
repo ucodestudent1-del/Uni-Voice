@@ -17,9 +17,10 @@ export {
   INVOICE_LIFECYCLE_STEPS,
   INVOICE_LIFECYCLE_ALTERNATE_STEPS,
 } from "./InvoiceLifecycle";
+export { default as QuoteLifecycle, type QuoteLifecycleProps, getQuoteLifecycleStatus, QUOTE_LIFECYCLE_STEPS, QUOTE_LIFECYCLE_ALTERNATE_STEPS } from "./QuoteLifecycle";
 // CreditNoteLifecycle removed along with Credits Notes feature
 export { default as PaymentStatus, type PaymentStatusType, type PaymentStatusProps, getPaymentStatusConfig } from "./PaymentStatus";
-export { default as StatusBadge, type StatusBadgeProps, type StatusConfig, invoiceStatusConfig, creditNoteStatusConfig, paymentStatusConfig, projectStatusConfig, customerStatusConfig, getStatusBadgeClassName } from "./StatusBadge";
+export { default as StatusBadge, type StatusBadgeProps, type StatusConfig, invoiceStatusConfig, creditNoteStatusConfig, quoteStatusConfig, paymentStatusConfig, projectStatusConfig, customerStatusConfig, getStatusBadgeClassName } from "./StatusBadge";
 export { default as PageHeader, type BreadcrumbItem, type PageHeaderProps } from "./PageHeader";
 export { PageSection, type PageSectionProps } from "./PageSection";
 export { default as Dialog, type DialogProps } from "./Dialog";

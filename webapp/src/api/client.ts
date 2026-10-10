@@ -1781,6 +1781,13 @@ export async function deleteQuote(id: string) {
   return res.data;
 }
 
+export async function cancelQuote(id: string, reason?: string) {
+  const res = await api.post(`/quotes/${id}/cancel`, reason ? { reason } : {});
+  invalidateCache("/quotes?");
+  invalidateCacheByKey(`/quotes/${id}`);
+  return res.data;
+}
+
 export async function getQuotePdf(id: string) {
   const res = await api.post(`/quotes/${id}/pdf`, {}, { responseType: "blob" });
   return res.data;
@@ -1791,14 +1798,20 @@ export async function getQuoteEvents(id: string) {
   return res.data;
 }
 
-export async function convertQuote(id: string) {
+export interface ConvertQuoteResult {
+  invoiceId: string;
+  quoteNumber: string;
+  invoiceNumber?: string | null;
+}
+
+export async function convertQuote(id: string): Promise<ConvertQuoteResult> {
   const res = await api.post(`/quotes/${id}/convert`);
   invalidateCache("/quotes?");
   invalidateCacheByKey(`/quotes/${id}`);
   return res.data;
 }
 
-export async function convertAndSendQuote(id: string) {
+export async function convertAndSendQuote(id: string): Promise<ConvertQuoteResult> {
   const res = await api.post(`/quotes/${id}/convert-and-send`);
   invalidateCache("/quotes?");
   invalidateCacheByKey(`/quotes/${id}`);

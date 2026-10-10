@@ -827,7 +827,660 @@ export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-templateCache.set(DEFAULT_QUOTE_TEMPLATE, Handlebars.compile(DEFAULT_QUOTE_TEMPLATE, { noEscape: true }));
+export const MINIMAL_QUOTE_TEMPLATE = `<!DOCTYPE html>
+<html lang="{{invoice.language}}">
+<head>
+  <meta charset="utf-8">
+  <title>Quote {{invoice.invoiceNumber}}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #ffffff; }
+    .container { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    .header-section { padding-bottom: 24px; border-bottom: 1px solid #e2e8f0; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .business-col { text-align: right; }
+    .logo { max-height: 60px; max-width: 180px; object-contain; }
+    h1 { margin: 0; font-size: 24px; color: #0f172a; font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 18px; color: #1e293b; font-weight: 600; }
+    .muted { color: #64748b; font-size: 13px; line-height: 1.5; }
+    .tertiary { color: #94a3a5; font-size: 12px; line-height: 1.4; }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3a5; display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: #0f172a; }
+    .divider { height: 1px; background: #e2e8f0; margin: 24px 0; }
+    .section { padding: 32px 0; border-bottom: 1px solid #e2e8f0; }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 16px; }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 360px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+    .totals-label { color: #64748b; font-weight: 500; }
+    .totals-value { color: #0f172a; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-label { color: #64748b; }
+    .big-total-value { color: #2563eb; }
+    .terms-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; }
+    .terms-box ol, .terms-box ul { margin: 0; padding-left: 20px; }
+    .terms-box li { margin-bottom: 6px; font-size: 13px; color: #334155; line-height: 1.5; }
+    .notes-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; }
+    .notes-box p { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .footer { padding: 24px 0; font-size: 12px; color: #94a3a5; border-top: 1px solid #e2e8f0; }
+    .expiry-warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; color: #92400e; font-size: 13px; margin-top: 16px; }
+    .signature-line { border-top: 1px solid #cbd5e1; padding-top: 24px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-grid">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <h2>{{business.name}}</h2>
+        {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
+        {{#if business.address.addressLine1}}
+        <p class="muted" style="margin-top: 4px;">{{business.address.addressLine1}}<br />
+          {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+          {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+          {{business.address.countryCode}}
+        </p>
+        {{/if}}
+      </div>
+      <div class="business-col">
+        <h1>Quotation</h1>
+        <div class="meta-grid" style="justify-items: end;">
+          <div class="meta-item"><span class="meta-label">Quote #</span><span class="meta-value">{{invoice.invoiceNumber}}</span></div>
+          <div class="meta-item"><span class="meta-label">Date</span><span class="meta-value">{{invoice.issueDate}}</span></div>
+          {{#if invoice.dueDate}}
+          <div class="meta-item"><span class="meta-label">Valid Until</span><span class="meta-value">{{invoice.dueDate}}</span></div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer -->
+  {{#if customer}}
+  <div class="section">
+    <div class="section-title">Prepared For</div>
+    <p class="muted">{{customer.name}}</p>
+    {{#if customer.companyName}}<p class="muted">{{customer.companyName}}</p>{{/if}}
+    {{#if customer.email}}<p class="muted highlight">{{customer.email}}</p>{{/if}}
+    {{#if customer.address.addressLine1}}
+    <p class="muted" style="margin-top: 4px; white-space: pre-line;">
+      {{customer.address.addressLine1}}<br />
+      {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+      {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+      {{customer.address.countryCode}}
+    </p>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <!-- Line Items -->
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th class="text-right">Qty</th>
+          <th class="text-right">Unit Price</th>
+          <th class="text-right">Tax</th>
+          <th class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRate taxRate}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Totals -->
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <table class="totals-table">
+      <tr><td class="totals-label">Subtotal</td><td class="totals-value">{{formatMoney totals.subtotal}}</td></tr>
+      {{#if discountTotal}}<tr><td class="totals-label">Discount</td><td class="totals-value" style="color: #16a34a;">-{{formatMoney totals.discountTotal}}</td></tr>{{/if}}
+      {{#if taxTotal}}<tr><td class="totals-label">Tax</td><td class="totals-value">{{formatMoney totals.taxTotal}}</td></tr>{{/if}}
+      {{#if feeTotal}}<tr><td class="totals-label">Fees</td><td class="totals-value">{{formatMoney totals.feeTotal}}</td></tr>{{/if}}
+      <tr class="big-total-row"><td class="big-total-label">Total Quoted</td><td class="big-total-value">{{formatMoney totals.total}}</td></tr>
+    </table>
+  </div>
+
+  <!-- Terms -->
+  {{#if invoice.terms}}
+  <div class="section">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="terms-box">{{{nl2br invoice.terms}}}</div>
+  </div>
+  {{/if}}
+
+  <!-- Notes -->
+  {{#if invoice.notes}}
+  <div class="section">
+    <div class="section-title">Notes</div>
+    <div class="notes-box">{{{nl2br invoice.notes}}}</div>
+  </div>
+  {{/if}}
+
+  <!-- Acceptance -->
+  {{#if invoice.isFinalized}}
+  <div class="section">
+    <div class="section-title">Acceptance</div>
+    <div class="terms-box">
+      <p style="margin: 0 0 12px;">By signing below, you accept this quotation.</p>
+      <div class="signature-line">
+        <table style="width: 100%;"><tr>
+          <td style="width: 33%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Signature</span></td>
+          <td style="width: 33%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Print Name</span></td>
+          <td style="width: 34%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Date</span></td>
+        </tr></table>
+      </div>
+      <p style="margin-top: 8px; font-size: 12px; color: #94a3a5;">This quote is valid until {{invoice.dueDate}}.</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Quote #{{invoice.invoiceNumber}}. All rights reserved.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+export const MODERN_QUOTE_TEMPLATE = `<!DOCTYPE html>
+<html lang="{{invoice.language}}">
+<head>
+  <meta charset="utf-8">
+  <title>Quote {{invoice.invoiceNumber}}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #ffffff; }
+    .container { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    .accent { color: #2563eb; }
+    .header-section { padding-bottom: 32px; border-bottom: 3px solid #e2e8f0; position: relative; }
+    .header-section::after { content: "QUOTATION"; position: absolute; top: 0; right: 0; font-size: 80px; font-weight: 800; color: #f1f5f9; transform: rotate(20deg); }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .business-col { text-align: right; }
+    .logo { max-height: 70px; max-width: 200px; object-contain; }
+    h1 { margin: 0; font-size: 32px; color: #0f172a; font-weight: 800; letter-spacing: -0.02em; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: #1e293b; font-weight: 600; }
+    .muted { color: #64748b; font-size: 13px; line-height: 1.5; }
+    .tertiary { color: #94a3a5; font-size: 12px; line-height: 1.4; }
+    .highlight { color: #2563eb; font-weight: 600; }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; }
+    .meta-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3a5; display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 700; color: #0f172a; }
+    .accent-border { border-color: #2563eb; }
+    .divider { height: 2px; background: #e2e8f0; margin: 24px 0; }
+    .section { padding: 32px 0; border-bottom: 1px solid #e2e8f0; }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #2563eb; margin-bottom: 16px; }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table thead th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+    .items-table td { padding: 16px; border-bottom: 1px solid #e2e8f0; font-size: 14px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .items-table .desc-col { width: 45%; }
+    .items-table .qty-col { width: 8%; }
+    .items-table .price-col { width: 15%; }
+    .items-table .tax-col { width: 12%; }
+    .items-table .total-col { width: 20%; }
+    .quote-total { width: 100%; max-width: 380px; margin-left: auto; }
+    .quote-total td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+    .quote-total .label { color: #64748b; font-weight: 500; }
+    .quote-total .value { color: #0f172a; font-weight: 600; text-align: right; }
+    .grand-total-row td { font-weight: 800; font-size: 18px; border-top: 2px solid #2563eb; }
+    .grand-total-label { color: #2563eb; }
+    .grand-total-value { color: #2563eb; }
+    .accent-box { background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px 24px; margin-top: 24px; }
+    .accent-box h3 { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #1d4ed8; }
+    .accent-box p { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .signature-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-top: 32px; }
+    .signature-line { border-top: 1px solid #cbd5e1; margin-top: 24px; padding-top: 24px; }
+    .footer { padding: 32px 0; text-align: center; font-size: 12px; color: #94a3a5; border-top: 1px solid #e2e8f0; }
+    .quote-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; background: #2563eb; color: #ffffff; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-grid">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <h2 style="margin-top: 8px;">{{business.name}}</h2>
+        {{#if business.legalName}}<p class="muted">{{business.legalName}}</p>{{/if}}
+        {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
+        {{#if business.phone}}<p class="muted">{{business.phone}}</p>{{/if}}
+        {{#if business.taxId}}<p class="tertiary">Tax ID: {{business.taxId}}</p>{{/if}}
+      </div>
+      <div class="business-col">
+        <span class="quote-badge">QUOTATION</span>
+        <h1 style="margin-top: 16px;">{{invoice.invoiceNumber}}</h1>
+        <div class="meta-grid" style="justify-items: end; margin-top: 20px;">
+          <div class="meta-item"><span class="meta-label">Issue Date</span><span class="meta-value">{{invoice.issueDate}}</span></div>
+          {{#if invoice.dueDate}}
+          <div class="meta-item"><span class="meta-label">Valid Until</span><span class="meta-value">{{invoice.dueDate}}</span></div>
+          {{/if}}
+          {{#if invoice.poNumber}}
+          <div class="meta-item"><span class="meta-label">P.O. Number</span><span class="meta-value">{{invoice.poNumber}}</span></div>
+          {{/if}}
+          <div class="meta-item"><span class="meta-label">Currency</span><span class="meta-value accent">{{meta.code}}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer -->
+  {{#if customer}}
+  <div class="section">
+    <div class="section-title">Prepared For</div>
+    <div class="meta-grid" style="grid-template-columns: 1fr;">
+      <div class="meta-item"><span class="meta-label">Customer</span><span class="meta-value">{{customer.name}}</span></div>
+      {{#if customer.companyName}}
+      <div class="meta-item"><span class="meta-label">Company</span><span class="meta-value">{{customer.companyName}}</span></div>
+      {{/if}}
+      {{#if customer.email}}
+      <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value highlight">{{customer.email}}</span></div>
+      {{/if}}
+      {{#if customer.address.addressLine1}}
+      <div class="meta-item"><span class="meta-label">Address</span>
+        <span class="muted" style="font-weight: 400; white-space: pre-line;">
+          {{customer.address.addressLine1}}<br />
+          {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+          {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+          {{customer.address.countryCode}}
+        </span>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Line Items -->
+  <div class="section">
+    <div class="section-title">Items</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th class="desc-col">Description</th>
+          <th class="qty-col text-right">Qty</th>
+          <th class="price-col text-right">Unit Price</th>
+          <th class="tax-col text-right">Tax</th>
+          <th class="total-col text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top desc-col">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRate taxRate}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Fees -->
+  {{#if fees.length}}
+  <div class="section">
+    <div class="section-title">Additional Fees</div>
+    <table class="items-table">
+      <thead><tr><th>Description</th><th class="text-right">Amount</th><th class="text-right">Tax</th><th class="text-right">Total</th></tr></thead>
+      <tbody>
+        {{#each fees}}
+        <tr>
+          <td>{{description}}</td>
+          <td class="text-right">{{formatMoney amount}}</td>
+          <td class="text-right">{{formatRate taxRate}}</td>
+          <td class="text-right">{{formatMoney (add amount (default 0 taxAmount))}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
+
+  <!-- Totals -->
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <table class="quote-total">
+      <tr><td class="label">Subtotal</td><td class="value">{{formatMoney totals.subtotal}}</td></tr>
+      {{#if discountTotal}}<tr><td class="label">Discount</td><td class="value" style="color: #16a34a;">-{{formatMoney totals.discountTotal}}</td></tr>{{/if}}
+      {{#if taxTotal}}<tr><td class="label">Tax</td><td class="value">{{formatMoney totals.taxTotal}}</td></tr>{{/if}}
+      {{#if feeTotal}}<tr><td class="label">Fees</td><td class="value">{{formatMoney totals.feeTotal}}</td></tr>{{/if}}
+      <tr class="grand-total-row"><td class="grand-total-label">Total Quoted</td><td class="grand-total-value">{{formatMoney totals.total}}</td></tr>
+    </table>
+
+    {{#if invoice.depositAmount}}
+    <div class="accent-box">
+      <h3>Deposit Required</h3>
+      <p>{{formatMoney invoice.depositAmount}}</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <!-- Scope & Terms -->
+  <div class="section">
+    <div class="section-title">Terms</div>
+    {{#if invoice.terms}}
+    <div class="accent-box">{{{nl2br invoice.terms}}}</div>
+    {{else}}
+    <div class="accent-box"><p style="margin: 0; color: #94a3a5;">Payment terms and conditions will be specified here.</p></div>
+    {{/if}}
+
+    {{#if invoice.notes}}
+    <div style="margin-top: 24px;">
+      <div class="section-title">Scope of Work</div>
+      <div class="accent-box">{{{nl2br invoice.notes}}}</div>
+    </div>
+    {{/if}}
+
+    {{#if invoice.paymentInstructions}}
+    <div style="margin-top: 24px;">
+      <div class="section-title">Payment Instructions</div>
+      <div class="accent-box">{{{nl2br invoice.paymentInstructions}}}</div>
+    </div>
+    {{/if}}
+  </div>
+
+  <!-- Acceptance -->
+  {{#if invoice.isFinalized}}
+  <div class="section">
+    <div class="section-title">Acceptance</div>
+    <div class="signature-box">
+      <p style="margin: 0 0 12px; font-size: 13px; color: #334155;">By signing below, you accept this quotation and authorize work to begin.</p>
+      <div class="signature-line">
+        <table style="width: 100%;"><tr>
+          <td style="width: 33%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Signature</span></td>
+          <td style="width: 33%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Print Name</span></td>
+          <td style="width: 34%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Date</span></td>
+        </tr></table>
+      </div>
+      <p style="margin-top: 16px; font-size: 12px; color: #94a3a5; line-height: 1.5;">
+        This quotation is valid until {{invoice.dueDate}}. A deposit may be required to begin work.
+      </p>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Quote #{{invoice.invoiceNumber}} &middot; This quotation expires on {{invoice.dueDate}}.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+export const CORPORATE_QUOTE_TEMPLATE = `<!DOCTYPE html>
+<html lang="{{invoice.language}}">
+<head>
+  <meta charset="utf-8">
+  <title>Quote {{invoice.invoiceNumber}}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #ffffff; }
+    .container { max-width: 960px; margin: 0 auto; padding: 72px 48px; }
+    .header-section { padding-bottom: 32px; border-bottom: 3px solid #cbd5e1; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+    .business-col { text-align: right; }
+    .logo { max-height: 70px; max-width: 220px; object-contain; }
+    h1 { margin: 0; font-size: 28px; color: #0f172a; font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 18px; color: #475569; font-weight: 500; }
+    .muted { color: #64748b; font-size: 13px; line-height: 1.6; }
+    .tertiary { color: #94a3a5; font-size: 12px; line-height: 1.4; }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 24px; }
+    .meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3a5; display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 14px; font-weight: 600; color: #0f172a; }
+    .divider { height: 1px; background: #e2e8f0; margin: 28px 0; }
+    .section { padding: 28px 0; border-bottom: 1px solid #e2e8f0; }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3a5; margin-bottom: 16px; }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; line-height: 1.6; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .quote-total { width: 100%; max-width: 360px; margin-left: auto; border-collapse: collapse; }
+    .quote-total td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+    .quote-total .label { color: #64748b; font-weight: 500; }
+    .quote-total .value { color: #0f172a; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .grand-total-row td { font-weight: 700; font-size: 16px; border-top: 2px solid #0f172a; }
+    .grand-total-label { color: #64748b; }
+    .grand-total-value { color: #0f172a; }
+    .terms-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px 20px; }
+    .terms-box ol, .terms-box ul { margin: 0; padding-left: 20px; }
+    .terms-box li { margin-bottom: 6px; font-size: 13px; color: #334155; line-height: 1.5; }
+    .notes-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px 20px; }
+    .notes-box p { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .footer { padding: 24px 0; font-size: 11px; color: #94a3a5; border-top: 1px solid #e2e8f0; }
+    .expiry-warning { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 10px 14px; color: #92400e; font-size: 12px; margin-top: 16px; }
+    .reference-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .signature-line { border-top: 1px solid #cbd5e1; padding-top: 32px; margin-top: 32px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-grid">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <h2>{{business.name}}</h2>
+        {{#if business.legalName}}<p class="muted">{{business.legalName}}</p>{{/if}}
+        {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
+        {{#if business.phone}}<p class="muted">{{business.phone}}</p>{{/if}}
+        {{#if business.taxId}}<p class="tertiary">Tax ID: {{business.taxId}}</p>{{/if}}
+        {{#if business.address.addressLine1}}
+        <p class="muted" style="margin-top: 4px; white-space: pre-line;">
+          {{business.address.addressLine1}}<br />
+          {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+          {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+          {{business.address.countryCode}}
+        </p>
+        {{/if}}
+      </div>
+      <div class="business-col">
+        <h1>Quotation</h1>
+        <div class="meta-grid" style="justify-items: end;">
+          <div class="meta-item"><span class="meta-label">Quote #</span><span class="meta-value">{{invoice.invoiceNumber}}</span></div>
+          <div class="meta-item"><span class="meta-label">Issue Date</span><span class="meta-value">{{invoice.issueDate}}</span></div>
+          {{#if invoice.dueDate}}
+          <div class="meta-item"><span class="meta-label">Valid Until</span><span class="meta-value">{{invoice.dueDate}}</span></div>
+          {{/if}}
+          {{#if invoice.poNumber}}
+          <div class="meta-item"><span class="meta-label">P.O. Number</span><span class="meta-value">{{invoice.poNumber}}</span></div>
+          {{/if}}
+          <div class="meta-item"><span class="meta-label">Currency</span><span class="meta-value">{{meta.code}}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer -->
+  {{#if customer}}
+  <div class="section">
+    <div class="section-title">Bill To</div>
+    <div class="reference-grid">
+      <div class="meta-item"><span class="meta-label">Customer Name</span><span class="meta-value">{{customer.name}}</span></div>
+      {{#if customer.companyName}}
+      <div class="meta-item"><span class="meta-label">Company</span><span class="meta-value">{{customer.companyName}}</span></div>
+      {{/if}}
+      {{#if customer.email}}
+      <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value highlight">{{customer.email}}</span></div>
+      {{/if}}
+      {{#if customer.phone}}
+      <div class="meta-item"><span class="meta-label">Phone</span><span class="meta-value">{{customer.phone}}</span></div>
+      {{/if}}
+      {{#if customer.address.addressLine1}}
+      <div class="meta-item"><span class="meta-label">Address</span>
+        <span class="muted" style="font-weight: 400; white-space: pre-line;">
+          {{customer.address.addressLine1}}<br />
+          {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+          {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+          {{customer.address.countryCode}}
+        </span>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Line Items -->
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Description</th>
+          <th class="text-right">Qty</th>
+          <th class="text-right">Unit Price</th>
+          <th class="text-right">Tax</th>
+          <th class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRate taxRate}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Fees -->
+  {{#if fees.length}}
+  <div class="section">
+    <div class="section-title">Additional Fees</div>
+    <table class="items-table">
+      <thead><tr><th>Description</th><th class="text-right">Amount</th><th class="text-right">Tax</th><th class="text-right">Total</th></tr></thead>
+      <tbody>
+        {{#each fees}}
+        <tr>
+          <td>{{description}}</td>
+          <td class="text-right">{{formatMoney amount}}</td>
+          <td class="text-right">{{formatRate taxRate}}</td>
+          <td class="text-right">{{formatMoney (add amount (default 0 taxAmount))}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
+
+  <!-- Totals -->
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <table class="quote-total">
+      <tr><td class="label">Subtotal</td><td class="value">{{formatMoney totals.subtotal}}</td></tr>
+      {{#if discountTotal}}<tr><td class="label">Discount</td><td class="value" style="color: #16a34a;">-{{formatMoney totals.discountTotal}}</td></tr>{{/if}}
+      {{#if taxTotal}}<tr><td class="label">Tax</td><td class="value">{{formatMoney totals.taxTotal}}</td></tr>{{/if}}
+      {{#if feeTotal}}<tr><td class="label">Fees</td><td class="value">{{formatMoney totals.feeTotal}}</td></tr>{{/if}}
+      {{#if invoice.depositAmount}}
+      <tr><td class="label">Deposit Required</td><td class="value" style="color: #2563eb;">{{formatMoney invoice.depositAmount}}</td></tr>
+      {{/if}}
+      <tr class="grand-total-row"><td class="grand-total-label">Total Quoted</td><td class="grand-total-value">{{formatMoney totals.total}}</td></tr>
+    </table>
+  </div>
+
+  <!-- Terms & Scope -->
+  <div class="section">
+    {{#if invoice.terms}}
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="terms-box">{{{nl2br invoice.terms}}}</div>
+    {{/if}}
+
+    {{#if invoice.notes}}
+    <div style="margin-top: 24px;">
+      <div class="section-title">Scope of Work</div>
+      <div class="terms-box">{{{nl2br invoice.notes}}}</div>
+    </div>
+    {{/if}}
+
+    {{#if invoice.paymentInstructions}}
+    <div style="margin-top: 24px;">
+      <div class="section-title">Payment Instructions</div>
+      <div class="terms-box">{{{nl2br invoice.paymentInstructions}}}</div>
+    </div>
+    {{/if}}
+  </div>
+
+  <!-- Acceptance -->
+  {{#if invoice.isFinalized}}
+  <div class="section">
+    <div class="section-title">Acceptance</div>
+    <div class="terms-box">
+      <p style="margin: 0 0 12px; font-size: 13px; color: #334155;">By signing below, you accept this quotation.</p>
+      <div class="signature-line">
+        <table style="width: 100%;"><tr>
+          <td style="width: 30%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Signature</span></td>
+          <td style="width: 30%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Print Name</span></td>
+          <td style="width: 40%; padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;"><span style="font-size: 11px; color: #94a3a5;">Date</span></td>
+        </tr></table>
+      </div>
+      <p style="margin-top: 16px; font-size: 12px; color: #94a3a5; line-height: 1.5;">
+        This quotation is valid until {{invoice.dueDate}}.
+      </p>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Quotation #{{invoice.invoiceNumber}}. All rights reserved.</p>
+    {{#if business.name}}<p style="margin-top: 4px;">{{business.name}} &middot; {{business.email}}</p>{{/if}}
+  </div>
+
+</div>
+</body>
+</html>`;
+
+export const QUOTE_TEMPLATES: Record<string, string> = {
+  default: DEFAULT_QUOTE_TEMPLATE,
+  minimal: MINIMAL_QUOTE_TEMPLATE,
+  modern: MODERN_QUOTE_TEMPLATE,
+  corporate: CORPORATE_QUOTE_TEMPLATE,
+};
+
+Object.values(QUOTE_TEMPLATES).forEach((html) => {
+  templateCache.set(html, Handlebars.compile(html, { noEscape: true }));
+});
 
 export class TemplateRenderer {
   private defaultTemplate: string;
@@ -837,9 +1490,16 @@ export class TemplateRenderer {
   }
 
   renderQuote(data: InvoiceTemplateData, templateHtml?: string): string {
-    const template = compileTemplate(
-      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? DEFAULT_QUOTE_TEMPLATE
-    );
+    const templateName = data.config?.htmlTemplate as string | undefined;
+    let templateSource: string = DEFAULT_QUOTE_TEMPLATE;
+    if (templateName && QUOTE_TEMPLATES[templateName]) {
+      templateSource = QUOTE_TEMPLATES[templateName];
+    } else if (templateName) {
+      templateSource = templateName;
+    } else if (templateHtml) {
+      templateSource = templateHtml;
+    }
+    const template = compileTemplate(templateSource);
     return template({
       ...data,
       meta: getCurrencyMetadata(data.invoice.currency),

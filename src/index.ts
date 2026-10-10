@@ -1432,10 +1432,10 @@ app.post("/api/quotes/:id/send", requireAuth, requireEntitlement("quotes.create"
 
 app.get("/api/quotes/:id/pdf", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const pdf = await quoteService.generatePdf(req.user!.businessId, req.params.id);
+  const result = await quoteService.generatePdf(req.user!.businessId, req.params.id);
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=quote-${req.params.id}.pdf`);
-  res.send(pdf);
+  res.setHeader("Content-Disposition", `attachment; filename=quote-${result.quoteNumber ?? req.params.id}.pdf`);
+  res.send(result.buffer);
 });
 
 app.post("/api/quotes/:id/convert", requireAuth, requireEntitlement("quotes.convert"), async (req: AuthRequest, res) => {
@@ -1458,6 +1458,14 @@ app.delete("/api/quotes/:id", requireAuth, requireEntitlement("quotes.create"), 
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await quoteService.delete(req.user!.businessId, req.params.id);
   res.status(204).send();
+});
+
+app.post("/api/quotes/:id/cancel", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  const { reason } = req.body;
+  await quoteService.cancel(req.user!.businessId, req.params.id, req.user.id, reason);
+  invalidateReportsCache(req.user!.businessId);
+  res.json({ ok: true });
 });
 
 app.get("/api/quotes/:id/events", requireAuth, requireEntitlement("quotes.create"), async (req: AuthRequest, res) => {
@@ -3262,10 +3270,10 @@ app.get("/api/public/quotes/:token", optionalAuth, async (req: AuthRequest, res)
 
 app.get("/api/public/quotes/:token/pdf", optionalAuth, async (req: AuthRequest, res) => {
   const quote = await quoteService.findByPublicToken(req.params.token);
-  const pdf = await quoteService.generatePdf(quote.businessId, quote.id);
+  const result = await quoteService.generatePdf(quote.businessId, quote.id);
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=quote-${quote.quoteNumber ?? quote.id}.pdf`);
-  res.send(pdf);
+  res.setHeader("Content-Disposition", `attachment; filename=quote-${result.quoteNumber ?? quote.id}.pdf`);
+  res.send(result.buffer);
 });
 
 app.post("/api/public/quotes/:token/view", optionalAuth, async (req: AuthRequest, res) => {
