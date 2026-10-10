@@ -4,7 +4,7 @@ import type { InvoiceCalculationInput, CalculationResult, FeeInput } from "../do
 import { invoiceStateMachine } from "../services/state-machine/invoice-state-machine.js";
 import { invoiceNumberService } from "../services/numbering/service.js";
 import { snapshotService } from "../services/snapshot/snapshot-service.js";
-import { templateRenderer, buildTemplateData, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals } from "../services/templates/template-renderer.js";
+import { templateRenderer, buildTemplateData, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals, type TemplatePaymentInstructions } from "../services/templates/template-renderer.js";
 import { renderDefaultTerms } from "../services/terms.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService, type InvoiceEmailData } from "../services/email/email-service.js";
@@ -618,6 +618,7 @@ export class InvoiceService {
     const customer = (snap as any).customer ?? null;
     const snapItems: TemplateLineItem[] = (snap as any).items ?? this.toTemplateItems(invoice.items);
     const snapFees: TemplateFee[] = (snap as any).fees ?? this.toTemplateFees(invoice.fees);
+    const snapPaymentInstructions: TemplatePaymentInstructions = (snap as any).paymentInstructionsExt ?? {};
     return buildTemplateData(
       {
         id: invoice.id,
@@ -625,17 +626,20 @@ export class InvoiceService {
         status: invoice.status,
         issueDate: invoice.issueDate,
         dueDate: invoice.dueDate,
-         currency: invoice.currency,
+        currency: invoice.currency,
         poNumber: invoice.poNumber,
         notes: invoice.notes,
         terms: invoice.terms,
         paymentInstructions: invoice.paymentInstructions,
+        projectId: invoice.projectId ?? null,
+        projectName: null,
       },
       business,
       customer,
       snapItems,
       snapFees,
       this.toTemplateTotals(invoice),
+      snapPaymentInstructions,
       { htmlTemplate: (snap as any).htmlTemplate }
     );
   }

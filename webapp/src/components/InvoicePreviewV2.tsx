@@ -95,6 +95,15 @@ export interface PreviewInvoice {
   paymentMethods?: PaymentMethod[];
   paymentLink?: string;
   bankDetails?: string | null;
+  lateFeeType?: "none" | "fixed" | "percentage" | null;
+  lateFeeValue?: string | null;
+  lateFeePeriodDays?: number | null;
+  taxExemption?: string | null;
+
+  // Delivery & policies
+  deliveryDetails?: string | null;
+  warrantyInfo?: string | null;
+  returnPolicy?: string | null;
 
   // Deposit
   depositType?: "none" | "fixed" | "percentage" | null;
@@ -729,6 +738,26 @@ const PaymentInfoSection: React.FC<{ invoice: PreviewInvoice }> = React.memo(fun
         </div>
       )}
 
+      {invoice.lateFeeType && invoice.lateFeeType !== "none" && invoice.lateFeeValue && (
+        <div className="mt-4">
+          <span className="invoice-section-title block">Late Payment Terms</span>
+          <div className="mt-0.5 rounded-lg bg-surface-alt p-4">
+            <p className="text-sm text-secondary">
+              {invoice.lateFeeType === "fixed"
+                ? `A late fee of ${fmtNumber(invoice.lateFeeValue, currency, dp)} will be applied to overdue balances.`
+                : `An overdue balance will incur a late fee of ${new Decimal(invoice.lateFeeValue).mul(100).toFixed(2)}%.`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {invoice.taxExemption && (
+        <div className="mt-4">
+          <span className="invoice-section-title block">Tax Exemption</span>
+          <p className="mt-0.5 text-sm text-secondary whitespace-pre-line">{invoice.taxExemption}</p>
+        </div>
+      )}
+
       {hasAmountDue && invoice.paymentLink && (
         <div className="mt-6 border-t border-color pt-6 text-center">
           <div className="mb-3 text-3xl font-extrabold text-primary-brand font-tabular-nums">
@@ -787,9 +816,33 @@ const AttachmentsSection: React.FC<{ invoice: PreviewInvoice }> = React.memo(fun
 const FooterSection: React.FC<{ invoice: PreviewInvoice }> = React.memo(function FooterSection({ invoice }) {
   const hasNotes = invoice.notes && invoice.notes.length > 0;
   const hasTerms = invoice.terms && invoice.terms.length > 0;
+  const hasDelivery = invoice.deliveryDetails && invoice.deliveryDetails.length > 0;
+  const hasWarranty = invoice.warrantyInfo && invoice.warrantyInfo.length > 0;
+  const hasReturn = invoice.returnPolicy && invoice.returnPolicy.length > 0;
 
   return (
     <>
+      {hasDelivery && (
+        <div className="border-t border-color px-8 py-6">
+          <h4 className="invoice-section-title mb-2">Delivery Details</h4>
+          <p className="text-sm text-secondary whitespace-pre-line">{invoice.deliveryDetails}</p>
+        </div>
+      )}
+
+      {hasWarranty && (
+        <div className="border-t border-color px-8 py-6">
+          <h4 className="invoice-section-title mb-2">Warranty</h4>
+          <p className="text-sm text-secondary whitespace-pre-line">{invoice.warrantyInfo}</p>
+        </div>
+      )}
+
+      {hasReturn && (
+        <div className="border-t border-color px-8 py-6">
+          <h4 className="invoice-section-title mb-2">Return Policy</h4>
+          <p className="text-sm text-secondary whitespace-pre-line">{invoice.returnPolicy}</p>
+        </div>
+      )}
+
       {hasNotes && (
         <div className="border-t border-color px-8 py-6">
           <h4 className="invoice-section-title mb-2">Notes</h4>
@@ -808,6 +861,7 @@ const FooterSection: React.FC<{ invoice: PreviewInvoice }> = React.memo(function
         {invoice.isFinalized
           ? `Invoice #${invoice.invoiceNumber || "—"}. All rights reserved.`
           : "This is a draft invoice. Not yet finalized."}
+        <p className="mt-2 text-sm text-secondary">Thank you for your business.</p>
       </div>
     </>
   );

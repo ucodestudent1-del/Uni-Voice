@@ -116,6 +116,7 @@ export interface WorkspaceInvoiceData {
   customerId?: string | null;
   customer?: ApiCustomer | null;
   projectId?: string | null;
+  projectName?: string | null;
   invoiceNumber?: string | null;
   invoiceTitle?: string | null;
   issueDate?: string | null;
@@ -1051,22 +1052,24 @@ export default function InvoiceWorkspace() {
       customerPhone: resolvedCustomer?.phone ?? undefined,
       customerAddress: resolvedCustomer ? customerAddressString(resolvedCustomer) : undefined,
       customerTaxId: resolvedCustomer?.taxId ?? resolvedCustomer?.address?.taxId ?? undefined,
-      invoiceNumber: invoice.invoiceNumber ?? (invoiceId ? "Draft" : undefined),
-      invoiceTitle: "INVOICE",
-      issueDate: invoice.issueDate ?? undefined,
-      dueDate: invoice.dueDate ?? undefined,
-      currency: invoice.currency,
-      poNumber: invoice.poNumber ?? undefined,
-      projectName: invoice.projectId || undefined,
+       invoiceNumber: invoice.invoiceNumber ?? (invoiceId ? "Draft" : undefined),
+       invoiceTitle: invoice.invoiceTitle || "INVOICE",
+       issueDate: invoice.issueDate ?? undefined,
+       dueDate: invoice.dueDate ?? undefined,
+       currency: invoice.currency,
+       poNumber: invoice.poNumber ?? undefined,
+        projectName: invoice.projectName ?? invoice.projectId ?? undefined,
        terms: invoice.invoiceTerms || invoice.terms ? invoice.invoiceTerms || invoice.terms : undefined,
-      notes: invoice.notes ?? undefined,
-      paymentInstructions,
-      paymentMethods,
-      paymentLink:
-        invoice.isFinalized && invoice.publicToken
-          ? `${window.location.origin}/invoice/${invoice.publicToken}`
-          : undefined,
-      bankDetails,
+       notes: invoice.notes ?? undefined,
+       paymentInstructions,
+       paymentMethods,
+       paymentLink:
+         invoice.isFinalized && invoice.publicToken
+           ? `${window.location.origin}/invoice/${invoice.publicToken}`
+           : undefined,
+       bankDetails,
+       lateFeeType: settings.late_fee_type ?? null,
+       lateFeeValue: settings.late_fee_value ?? null,
       depositType: invoice.depositType ?? "none",
       depositValue: invoice.depositValue ?? "0",
       depositDueDate: invoice.depositDueDate ?? null,

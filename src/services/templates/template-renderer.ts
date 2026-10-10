@@ -47,6 +47,7 @@ export interface TemplateBusiness {
   phone?: string | null;
   website?: string | null;
   taxId?: string | null;
+  registrationNumber?: string | null;
   address: Address;
   countryCode: string;
   defaultCurrency: CurrencyCode;
@@ -65,6 +66,33 @@ export interface TemplateCustomer {
   notes?: string | null;
 }
 
+export interface TemplatePaymentInstructions {
+  methods?: TemplatePaymentMethod[];
+  bankDetails?: string | null;
+  paymentLink?: string | null;
+  lateFeeType?: "none" | "fixed" | "percentage" | null;
+  lateFeeValue?: string | null;
+  lateFeePeriodDays?: number | null;
+  taxExemption?: string | null;
+  deliveryDetails?: string | null;
+  warrantyInfo?: string | null;
+  returnPolicy?: string | null;
+  customFields?: TemplateCustomField[];
+}
+
+export interface TemplatePaymentMethod {
+  type: "bank" | "card" | "paypal" | "stripe" | "custom";
+  label: string;
+  details?: string | null;
+  url?: string | null;
+  instructions?: string | null;
+}
+
+export interface TemplateCustomField {
+  label: string;
+  value: string;
+}
+
 export interface InvoiceTemplateData {
   business: TemplateBusiness;
   customer: TemplateCustomer | null;
@@ -80,16 +108,20 @@ export interface InvoiceTemplateData {
     terms?: string | null;
     paymentInstructions?: string | null;
     language?: string;
+    title?: string | null;
     depositType?: string | null;
     depositValue?: string | null;
     depositDueDate?: string | null;
     depositPaid?: boolean | null;
     isFinalized?: boolean;
     depositAmount?: string | null;
+    projectId?: string | null;
+    projectName?: string | null;
   };
   lineItems: TemplateLineItem[];
   fees: TemplateFee[];
   totals: TemplateTotals;
+  paymentInstructions?: TemplatePaymentInstructions | null;
   config: Record<string, unknown>;
 }
 
@@ -111,6 +143,18 @@ const templateCache = new Map<string, Handlebars.TemplateDelegate<any>>();
 
 Handlebars.registerHelper("add", (a: number, b: number) => a + b);
 
+Handlebars.registerHelper("gt", (a: number, b: number): boolean => a > b);
+
+Handlebars.registerHelper("eq", (a: unknown, b: unknown): boolean => a === b);
+
+Handlebars.registerHelper("or", (...args: unknown[]): boolean => {
+  const options = args[args.length - 1] as any;
+  for (let i = 0; i < args.length - 1; i++) {
+    if (args[i]) return true;
+  }
+  return false;
+});
+
 Handlebars.registerHelper("nl2br", (str: string | null | undefined): string => {
   if (!str) return "";
   const escaped = str
@@ -130,6 +174,34 @@ Handlebars.registerHelper("formatMoney", function (v: Decimal.Value, options: an
 
 Handlebars.registerHelper("formatRate", fmtRate);
 
+Handlebars.registerHelper("formatDate", (iso: string | null | undefined, fmt?: string): string => {
+  if (!iso) return "";
+  let d: Date;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    const [y, m, day] = iso.split("-").map(Number);
+    d = new Date(y, m - 1, day);
+  } else {
+    d = new Date(iso);
+  }
+  if (isNaN(d.getTime())) return iso ?? "";
+  if (fmt === "long") {
+    return d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  }
+  if (fmt === "short") {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+});
+
+Handlebars.registerHelper("startswith", (str: string | null | undefined, prefix: string): boolean => {
+  if (!str) return false;
+  return str.startsWith(prefix);
+});
+
+Handlebars.registerHelper("default", function (fallback: unknown, value: unknown): unknown {
+  return value ?? fallback;
+});
+
 function compileTemplate(templateHtml: string): Handlebars.TemplateDelegate<any> {
   let compiled = templateCache.get(templateHtml);
   if (!compiled) {
@@ -143,82 +215,134 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
 <html lang="{{invoice.language}}">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Invoice {{invoice.invoiceNumber}}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #ffffff; }
-    .container { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
-    .header-section { padding-bottom: 24px; border-bottom: 3px solid #e2e8f0; }
+    body { margin: 0; padding: 0; color: #1e293b; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    /* ===== Design tokens ===== */
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #2563eb;
+      --color-brand-hover: #1d4ed8;
+      --color-success: #065f46;
+      --color-success-bg: #d1fae5;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --color-error: #991b1b;
+      --color-error-bg: #fee2e2;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 20px;
+    }
+    /* ===== Layout ===== */
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid var(--color-brand); }
     .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
     .business-col { text-align: right; }
-    .logo { max-height: 70px; max-width: 200px; object-contain; }
-    h1 { margin: 0; font-size: 28px; color: #0f172a; font-weight: 700; }
-    h2 { margin: 4px 0 0; font-size: 20px; color: #1e293b; font-weight: 600; }
-    h3 { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; }
-    .muted { color: #64748b; font-size: 13px; line-height: 1.5; }
-    .tertiary { color: #94a3a5; font-size: 12px; line-height: 1.4; }
-    .highlight { color: #2563eb; font-weight: 600; }
-    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
-    .meta-item { }
-    .meta-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #94a3a5; display: block; margin-bottom: 4px; }
-    .meta-value { font-size: 15px; font-weight: 600; color: #0f172a; }
-    .divider { height: 1px; background: #e2e8f0; margin: 24px 0; }
-    .section { padding: 32px 0; border-bottom: 1px solid #e2e8f0; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
     .section:last-child { border-bottom: none; }
-    .section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; margin-bottom: 16px; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .divider { height: 1px; background: var(--color-border); margin: 32px 0; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    /* ===== Typography ===== */
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    .highlight { color: var(--color-brand); font-weight: 600; }
+    /* ===== Meta grid ===== */
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-item {}
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .meta-value-long { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); white-space: pre-wrap; word-break: break-word; }
+    /* ===== Tables ===== */
     .items-table { width: 100%; border-collapse: collapse; }
-    .items-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
-    .items-table td { padding: 14px 16px; border-bottom: 1px solid #e2e8f0; font-size: 13px; line-height: 1.5; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
     .items-table tbody tr:last-child td { border-bottom: none; }
     .text-right { text-align: right; }
     .align-top { vertical-align: top; }
-    .totals-table { width: 100%; max-width: 360px; margin-left: auto; border-collapse: collapse; }
-    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
-    .totals-label { color: #64748b; font-weight: 500; }
-    .totals-value { color: #0f172a; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    /* ===== Totals ===== */
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
     .big-total-row td { font-weight: 700; font-size: 16px; }
-    .big-total-label { color: #64748b; }
-    .big-total-value { color: #2563eb; }
-    .amount-due-value { color: #2563eb; font-size: 20px; font-weight: 700; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .status-draft { background: #fef3c7; color: #92400e; }
-    .status-sent { background: #dbeafe; color: #1d4ed8; }
-    .status-viewed { background: #dbeafe; color: #1d4ed8; }
-    .status-partially_paid { background: #fef3c7; color: #92400e; }
-    .status-paid { background: #d1fae5; color: #065f46; }
-    .status-overdue { background: #fee2e2; color: #991b1b; }
-    .status-cancelled { background: #f1f5f9; color: #475569; }
-    .status-void { background: #f1f5f9; color: #475569; }
-    .terms-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; }
-    .terms-box ol, .terms-box ul { margin: 0; padding-left: 20px; }
-    .terms-box li { margin-bottom: 6px; font-size: 13px; color: #334155; line-height: 1.5; }
-    .notes-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 20px; }
-    .notes-box p { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; }
-    .footer { padding: 24px 0; font-size: 12px; color: #94a3a5; border-top: 1px solid #e2e8f0; }
-    .paid-amount { color: #16a34a; font-weight: 600; }
-    .balance-due { color: #2563eb; font-weight: 700; font-size: 16px; }
+    .big-total-label { color: var(--color-text-tertiary); }
+    .big-total-value { color: var(--color-brand); }
+    .paid-amount { color: var(--color-success); font-weight: 600; }
+    .balance-due { color: var(--color-brand); font-weight: 700; font-size: 18px; }
+    /* ===== Status badges ===== */
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-sent { background: #dbeafe; color: var(--color-brand-hover); }
+    .status-viewed { background: #dbeafe; color: var(--color-brand-hover); }
+    .status-partially_paid { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-paid { background: var(--color-success-bg); color: var(--color-success); }
+    .status-overdue { background: var(--color-error-bg); color: var(--color-error); }
+    .status-cancelled { background: #f1f5f9; color: var(--color-text-secondary); }
+    .status-void { background: #f1f5f9; color: var(--color-text-secondary); }
+    /* ===== Boxes ===== */
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box ol, .info-box ul { margin: 0; padding-left: 20px; }
+    .info-box li { margin-bottom: 6px; font-size: 13px; color: #334155; line-height: 1.5; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .info-box p:last-child { margin-bottom: 0; }
+    .payment-methods-list { list-style: none; margin: 0; padding: 0; }
+    .payment-methods-list li { padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .payment-methods-list li:last-child { border-bottom: none; }
+    .custom-field-row td { padding: 6px 16px; font-size: 13px; }
+    /* ===== QR / payment link ===== */
+    .payment-cta { text-align: center; }
+    .pay-btn { display: inline-block; margin-top: 12px; padding: 12px 32px; background: var(--color-brand); color: #ffffff; text-decoration: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; }
+    .pay-btn:hover { background: var(--color-brand-hover); }
+    /* ===== Footer ===== */
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
   </style>
 </head>
 <body>
-<div class="container">
+<div class="page">
 
-  <!-- ========== HEADER SECTION ========== -->
+  <!-- ========== HEADER: Business info (left) + Invoice details (right) ========== -->
   <div class="header-section">
     <div class="header-grid">
-      <div class="business-col">
+      <!-- Business / seller info -->
+      <div>
         {{#if business.logoUrl}}
         <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
         {{/if}}
-        <div style="margin-top: 8px; text-align: right;">
-          <h2 style="margin: 0; font-size: 20px; color: #0f172a; font-weight: 700;">{{business.name}}</h2>
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 18px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
           {{#if business.legalName}}<p class="muted">{{business.legalName}}</p>{{/if}}
           {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
           {{#if business.phone}}<p class="muted">{{business.phone}}</p>{{/if}}
           {{#if business.website}}
           <p class="muted">
-            <a href="{{#if (startswith business.website "http")}}{{business.website}}{{else}}https://{{business.website}}{{/if}}" style="color: #2563eb; text-decoration: none;">{{business.website}}</a>
+            <a href="{{#if (startswith business.website "http")}}{{business.website}}{{else}}https://{{business.website}}{{/if}}" style="color: var(--color-brand); text-decoration: none;">{{business.website}}</a>
           </p>
           {{/if}}
           {{#if business.taxId}}<p class="tertiary">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.registrationNumber}}<p class="tertiary">Reg #: {{business.registrationNumber}}</p>{{/if}}
           {{#if business.address}}
           <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
             {{business.address.addressLine1}}<br />
@@ -230,8 +354,9 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         </div>
       </div>
 
-      <div class="business-col" style="text-align: right;">
-        <h1 style="margin: 0;">Invoice</h1>
+      <!-- Invoice metadata -->
+      <div class="business-col">
+        <h1>{{#if invoice.title}}{{invoice.title}}{{else}}Invoice{{/if}}</h1>
         <div class="meta-grid" style="justify-items: end;">
           <div class="meta-item">
             <span class="meta-label">Invoice #</span>
@@ -243,18 +368,28 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
               <span class="status-badge status-{{invoice.status}}">{{invoice.status}}</span>
             </span>
           </div>
+          {{#if invoice.issueDate}}
           <div class="meta-item">
             <span class="meta-label">Issue Date</span>
-            <span class="meta-value">{{invoice.issueDate}}</span>
+            <span class="meta-value">{{formatDate invoice.issueDate}}</span>
           </div>
+          {{/if}}
+          {{#if invoice.dueDate}}
           <div class="meta-item">
             <span class="meta-label">Due Date</span>
-            <span class="meta-value">{{invoice.dueDate}}</span>
+            <span class="meta-value">{{formatDate invoice.dueDate}}</span>
           </div>
+          {{/if}}
           {{#if invoice.poNumber}}
           <div class="meta-item">
             <span class="meta-label">P.O. Number</span>
             <span class="meta-value">{{invoice.poNumber}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.projectName}}
+          <div class="meta-item">
+            <span class="meta-label">Project</span>
+            <span class="meta-value">{{invoice.projectName}}</span>
           </div>
           {{/if}}
           <div class="meta-item">
@@ -266,66 +401,97 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- ========== BILL TO SECTION ========== -->
+  <!-- ========== CUSTOM FIELDS (supplemental, top of body) ========== -->
+  {{#if paymentInstructions.customFields}}
+  {{#each paymentInstructions.customFields}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <table class="items-table">
+      <tr>
+        <th>{{label}}</th>
+        <td class="meta-value-long">{{value}}</td>
+      </tr>
+    </table>
+  </div>
+  {{/each}}
+  {{/if}}
+
+  <!-- ========== BILL TO + SHIP TO ========== -->
   {{#if customer}}
   <div class="section">
-    <div class="section-title">Bill To</div>
-    <div class="meta-grid">
-      <div class="meta-item">
-        <span class="meta-label">Customer Name</span>
-        <span class="meta-value">{{customer.name}}</span>
+    <div class="grid-2">
+      <!-- Bill To -->
+      <div>
+        <h3 style="margin: 0 0 12px;">Bill To</h3>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Customer</span>
+            <span class="meta-value">{{customer.name}}</span>
+          </div>
+          {{#if customer.companyName}}
+          <div class="meta-item">
+            <span class="meta-label">Company</span>
+            <span class="meta-value">{{customer.companyName}}</span>
+          </div>
+          {{/if}}
+          {{#if customer.email}}
+          <div class="meta-item">
+            <span class="meta-label">Email</span>
+            <span class="meta-value highlight">{{customer.email}}</span>
+          </div>
+          {{/if}}
+          {{#if customer.phone}}
+          <div class="meta-item">
+            <span class="meta-label">Phone</span>
+            <span class="meta-value">{{customer.phone}}</span>
+          </div>
+          {{/if}}
+          {{#if customer.taxId}}
+          <div class="meta-item">
+            <span class="meta-label">Tax ID</span>
+            <span class="meta-value">{{customer.taxId}}</span>
+          </div>
+          {{/if}}
+          {{#if customer.address}}
+          <div class="meta-item">
+            <span class="meta-label">Address</span>
+            <span class="meta-value meta-value-long">
+              {{customer.address.addressLine1}}<br />
+              {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+              {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+              {{customer.address.countryCode}}
+            </span>
+          </div>
+          {{/if}}
+        </div>
       </div>
-      {{#if customer.companyName}}
-      <div class="meta-item">
-        <span class="meta-label">Company</span>
-        <span class="meta-value">{{customer.companyName}}</span>
-      </div>
-      {{/if}}
-      {{#if customer.email}}
-      <div class="meta-item">
-        <span class="meta-label">Email</span>
-        <span class="meta-value highlight">{{customer.email}}</span>
-      </div>
-      {{/if}}
-      {{#if customer.phone}}
-      <div class="meta-item">
-        <span class="meta-label">Phone</span>
-        <span class="meta-value">{{customer.phone}}</span>
-      </div>
-      {{/if}}
-      {{#if customer.taxId}}
-      <div class="meta-item">
-        <span class="meta-label">Tax ID</span>
-        <span class="meta-value">{{customer.taxId}}</span>
-      </div>
-      {{/if}}
-      {{#if customer.address}}
-      <div class="meta-item">
-        <span class="meta-label">Address</span>
-        <span class="meta-value" style="white-space: pre-line; font-weight: 400; font-size: 13px; color: #475569;">
-          {{customer.address.addressLine1}}<br />
-          {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
-          {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
-          {{customer.address.countryCode}}
-        </span>
+      <!-- Ship To (if delivery details provided) -->
+      {{#if paymentInstructions.deliveryDetails}}
+      <div>
+        <h3 style="margin: 0 0 12px;">Delivery Details</h3>
+        <div class="info-box">
+          <p class="meta-value-long">{{{nl2br paymentInstructions.deliveryDetails}}}</p>
+        </div>
       </div>
       {{/if}}
     </div>
   </div>
   {{/if}}
 
-  <!-- ========== LINE ITEMS SECTION ========== -->
+  <!-- ========== LINE ITEMS ========== -->
   <div class="section">
-    <div class="section-title">Line Items</div>
+    <div class="section-title">{{#if invoice.title}}Items{{else}}Line Items{{/if}}</div>
     {{#if lineItems.length}}
+    <div class="items-table" style="overflow-x: auto;">
     <table class="items-table">
       <thead>
         <tr>
           <th style="width: 5%;">#</th>
-          <th style="width: 40%;">Description</th>
+          <th style="width: 35%;">Description</th>
           <th style="width: 8%;" class="text-right">Qty</th>
           <th style="width: 12%;" class="text-right">Unit Price</th>
-          <th style="width: 10%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Discount</th>
+          <th style="width: 10%;" class="text-right">Tax Rate</th>
+          <th style="width: 15%;" class="text-right">Tax Amount</th>
           <th style="width: 15%;" class="text-right">Line Total</th>
         </tr>
       </thead>
@@ -336,34 +502,42 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
           <td class="align-top">
             {{{nl2br description}}}
             {{#if catalogName}}<span class="tertiary" style="display: block; margin-top: 2px;">{{catalogName}}</span>{{/if}}
+            {{#if catalogSku}}<span class="tertiary" style="display: block; margin-top: 2px;">SKU: {{catalogSku}}</span>{{/if}}
             {{#if isTaxInclusive}}<span class="tertiary" style="display: block; margin-top: 2px;">(incl. tax)</span>{{/if}}
           </td>
           <td class="text-right align-top">{{quantity}} {{unit}}</td>
           <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">
+            {{#if discount}}-{{formatMoney discount}}{{/if}}
+            {{^if discount}}—{{/if}}
+          </td>
           <td class="text-right align-top">{{formatRate taxRate}}</td>
+          <td class="text-right align-top">{{formatMoney taxAmount}}</td>
           <td class="text-right align-top">{{formatMoney lineTotal}}</td>
         </tr>
         {{/each}}
       </tbody>
     </table>
+    </div>
     {{else}}
-    <div class="terms-box">
-      <p style="margin: 0; color: #94a3a5; font-style: italic;">No line items added.</p>
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items added.</p>
     </div>
     {{/if}}
   </div>
 
-  <!-- ========== FEES SECTION ========== -->
+  <!-- ========== FEES ========== -->
   {{#if fees.length}}
-  <div class="section">
+  <div class="section" style="padding-top: 0; border-bottom: none;">
     <div class="section-title">Additional Fees</div>
     <table class="items-table">
       <thead>
         <tr>
-          <th>Description</th>
-          <th class="text-right">Amount</th>
-          <th class="text-right">Tax</th>
-          <th class="text-right">Total</th>
+          <th style="width: 50%;">Description</th>
+          <th style="width: 20%;" class="text-right">Amount</th>
+          <th style="width: 15%;" class="text-right">Tax Rate</th>
+          <th style="width: 15%;" class="text-right">Tax</th>
+          <th style="width: 15%;" class="text-right">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -372,6 +546,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
           <td>{{description}}</td>
           <td class="text-right">{{formatMoney amount}}</td>
           <td class="text-right">{{formatRate taxRate}}</td>
+          <td class="text-right">{{formatMoney taxAmount}}</td>
           <td class="text-right">{{formatMoney (add amount (default 0 taxAmount))}}</td>
         </tr>
         {{/each}}
@@ -380,7 +555,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   </div>
   {{/if}}
 
-  <!-- ========== FINANCIAL SUMMARY SECTION ========== -->
+  <!-- ========== FINANCIAL SUMMARY ========== -->
   <div class="divider"></div>
   <div class="section" style="padding-top: 0; border-bottom: none;">
     <div class="section-title">Financial Summary</div>
@@ -389,17 +564,17 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         <td class="totals-label">Subtotal</td>
         <td class="totals-value">{{formatMoney totals.subtotal}}</td>
       </tr>
-      {{#if discountTotal}}
+      {{#if totals.discountTotal}}
       <tr>
         <td class="totals-label">Discount</td>
-        <td class="totals-value" style="color: #16a34a;">-{{formatMoney totals.discountTotal}}</td>
+        <td class="totals-value" style="color: var(--color-success);">−{{formatMoney totals.discountTotal}}</td>
       </tr>
       {{/if}}
       <tr>
         <td class="totals-label">Tax</td>
         <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
       </tr>
-      {{#if feeTotal}}
+      {{#if fees.length}}
       <tr>
         <td class="totals-label">Fees</td>
         <td class="totals-value">{{formatMoney totals.feeTotal}}</td>
@@ -409,48 +584,146 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         <td class="big-total-label">Total</td>
         <td class="big-total-value">{{formatMoney totals.total}}</td>
       </tr>
+      {{#if totals.amountPaid}}
       <tr>
         <td class="totals-label">Amount Paid</td>
         <td class="totals-value paid-amount">+{{formatMoney totals.amountPaid}}</td>
       </tr>
+      {{/if}}
       <tr>
-        <td class="totals-label">Balance Due</td>
+        <td class="totals-label balance-due-label">Balance Due</td>
         <td class="totals-value balance-due">{{formatMoney totals.amountDue}}</td>
       </tr>
     </table>
   </div>
 
-    {{#if invoice.paymentInstructions}}
-    <div class="section" style="padding-top: 0;">
-      <div class="section-title">Payment Instructions</div>
-      <div class="terms-box">
-        {{{nl2br invoice.paymentInstructions}}}
-      </div>
-    </div>
-    {{/if}}
+  <!-- ========== PAYMENT INSTRUCTIONS ========== -->
+  {{#if (or invoice.paymentInstructions paymentInstructions)}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Payment Instructions</div>
+    <div class="info-box">
+      <div class="grid-2" style="gap: 20px;">
 
-    {{#if invoice.notes}}
-    <div class="section" style="padding-top: 0;">
-      <div class="section-title">Notes</div>
-      <div class="notes-box">
-        {{{nl2br invoice.notes}}}
-      </div>
-    </div>
-    {{/if}}
+        <!-- Left column: Methods, bank details, payment link -->
+        <div>
+          {{#if paymentInstructions.methods}}
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Accepted Payment Methods</span>
+            <ul class="payment-methods-list">
+              {{#each paymentInstructions.methods}}
+              <li>
+                <strong>{{label}}</strong>
+                {{#if details}}<br /><span class="tertiary">{{details}}</span>{{/if}}
+                {{#if url}}<br /><a href="{{url}}" style="color: var(--color-brand); text-decoration: none;">Pay online</a>{{/if}}
+                {{#if instructions}}<br /><span class="tertiary">{{instructions}}</span>{{/if}}
+              </li>
+              {{/each}}
+            </ul>
+          </div>
+          {{/if}}
 
-    {{#if invoice.terms}}
-    <div class="section" style="padding-top: 0;">
-      <div class="section-title">Terms &amp; Conditions</div>
-      <div class="terms-box">
-        {{{nl2br invoice.terms}}}
+          {{#if paymentInstructions.bankDetails}}
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Bank Details</span>
+            <p class="muted" style="white-space: pre-line; margin: 0;">{{paymentInstructions.bankDetails}}</p>
+          </div>
+          {{/if}}
+
+          {{#if paymentInstructions.paymentLink}}
+          <div style="margin-top: 16px;" class="payment-cta">
+            <span class="meta-label">Pay Online</span>
+            <div>
+              <a href="{{paymentInstructions.paymentLink}}" class="pay-btn">Pay Now</a>
+            </div>
+            <p class="tertiary" style="margin-top: 8px;">Or scan the QR code / click above to pay securely online.</p>
+          </div>
+          {{/if}}
+
+          {{#if paymentInstructions.taxExemption}}
+          <div style="margin-top: 16px;">
+            <span class="meta-label">Tax Exemption</span>
+            <p class="muted" style="white-space: pre-line; margin: 0;">{{paymentInstructions.taxExemption}}</p>
+          </div>
+          {{/if}}
+        </div>
+
+        <!-- Right column: Currency, late terms, warranty, returns -->
+        <div>
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Currency</span>
+            <p class="muted" style="margin: 0;">{{meta.code}} ({{meta.name}})</p>
+          </div>
+
+          {{#if invoice.paymentInstructions}}
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Additional Payment Info</span>
+            <div class="muted" style="white-space: pre-line;">{{{nl2br invoice.paymentInstructions}}}</div>
+          </div>
+          {{/if}}
+
+          {{#if paymentInstructions.lateFeeType}}
+          {{#if (eq paymentInstructions.lateFeeType "fixed")}}
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Late Fee</span>
+            <p class="muted" style="margin: 0;">A fixed fee of {{formatMoney paymentInstructions.lateFeeValue}} will be applied to overdue balances.</p>
+          </div>
+          {{/if}}
+          {{#if (eq paymentInstructions.lateFeeType "percentage")}}
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Late Fee</span>
+            <p class="muted" style="margin: 0;">An overdue balance will incur a late fee of {{paymentInstructions.lateFeeValue}}%.</p>
+          </div>
+          {{/if}}
+          {{/if}}
+
+          {{#if paymentInstructions.warrantyInfo}}
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Warranty</span>
+            <p class="muted" style="white-space: pre-line; margin: 0;">{{{nl2br paymentInstructions.warrantyInfo}}}</p>
+          </div>
+          {{/if}}
+
+          {{#if paymentInstructions.returnPolicy}}
+          <div style="margin-bottom: 16px;">
+            <span class="meta-label">Return Policy</span>
+            <p class="muted" style="white-space: pre-line; margin: 0;">{{{nl2br paymentInstructions.returnPolicy}}}</p>
+          </div>
+          {{/if}}
+        </div>
       </div>
     </div>
-    {{/if}}
+  </div>
+  {{/if}}
+
+  <!-- ========== NOTES ========== -->
+  {{#if invoice.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      {{{nl2br invoice.notes}}}
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- ========== TERMS & CONDITIONS ========== -->
+  {{#if invoice.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      {{{nl2br invoice.terms}}}
+    </div>
+  </div>
+  {{/if}}
 
   <!-- ========== FOOTER ========== -->
   <div class="footer">
-    <p style="margin: 0;">Invoice #{{invoice.invoiceNumber}}. All rights reserved.</p>
-    {{#if business.name}}<p style="margin: 4px 0 0;">{{business.name}} — {{business.email}}</p>{{/if}}
+    {{#if invoice.isFinalized}}
+    <p>Invoice #{{invoice.invoiceNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft invoice. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
   </div>
 
 </div>
@@ -1532,23 +1805,28 @@ export function buildTemplateData(
     status: string;
     issueDate?: Date | null;
     dueDate?: Date | null;
-     currency: CurrencyCode;
+    currency: CurrencyCode;
     poNumber?: string | null;
     notes?: string | null;
     terms?: string | null;
     paymentInstructions?: string | null;
-     depositType?: string | null;
-     depositValue?: string | null;
-     depositDueDate?: string | null;
-     depositPaid?: boolean | null;
-     isFinalized?: boolean;
-     depositAmount?: string | null;
-   },
+    language?: string;
+    title?: string | null;
+    depositType?: string | null;
+    depositValue?: string | null;
+    depositDueDate?: string | null;
+    depositPaid?: boolean | null;
+    isFinalized?: boolean;
+    depositAmount?: string | null;
+    projectId?: string | null;
+    projectName?: string | null;
+  },
   business: TemplateBusiness,
   customer: TemplateCustomer | null,
   items: TemplateLineItem[],
   fees: TemplateFee[],
   totals: TemplateTotals,
+  paymentInstructions?: TemplatePaymentInstructions | null,
   config: Record<string, unknown> = {}
 ): InvoiceTemplateData {
   return {
@@ -1560,21 +1838,26 @@ export function buildTemplateData(
       status: invoice.status,
       issueDate: invoice.issueDate ? invoice.issueDate.toISOString().slice(0, 10) : null,
       dueDate: invoice.dueDate ? invoice.dueDate.toISOString().slice(0, 10) : null,
-       currency: invoice.currency,
+      currency: invoice.currency,
       poNumber: invoice.poNumber,
       notes: invoice.notes,
       terms: invoice.terms,
       paymentInstructions: invoice.paymentInstructions,
+      language: invoice.language ?? undefined,
+      title: invoice.title ?? null,
       depositType: invoice.depositType ?? null,
       depositValue: invoice.depositValue ?? null,
       depositDueDate: invoice.depositDueDate ?? null,
       depositPaid: invoice.depositPaid ?? null,
       isFinalized: invoice.isFinalized ?? false,
       depositAmount: invoice.depositAmount ?? null,
+      projectId: invoice.projectId ?? null,
+      projectName: invoice.projectName ?? null,
     },
     lineItems: items,
     fees,
     totals,
+    paymentInstructions: paymentInstructions ?? null,
     config,
   };
 }

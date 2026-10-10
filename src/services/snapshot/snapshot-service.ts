@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { Decimal } from "decimal.js";
 import type { InvoiceWithDetails } from "../../repositories/invoice.repo.js";
 import type { InvoiceAttachment } from "../../repositories/invoice-attachment.repo.js";
 import type { Customer } from "../../domain/models/index.js";
@@ -6,7 +7,7 @@ import type { Template } from "../../domain/models/index.js";
 import { businessRepository } from "../../repositories/business.repo.js";
 import { customerRepository } from "../../repositories/customer.repo.js";
 import { templateRepository } from "../../repositories/template.repo.js";
-import { templateRenderer, type InvoiceTemplateData, buildTemplateData } from "../../services/templates/template-renderer.js";
+import { templateRenderer, type InvoiceTemplateData, type TemplatePaymentInstructions, buildTemplateData } from "../../services/templates/template-renderer.js";
 import { logger } from "../../utils/logger.js";
 
 export interface SnapshotResult {
@@ -71,6 +72,17 @@ export class SnapshotService {
     };
   }
 
+  private buildPaymentInstructions(invoice: InvoiceWithDetails): TemplatePaymentInstructions {
+    const instructions: TemplatePaymentInstructions = {};
+
+    if (invoice.lateFeeType && invoice.lateFeeType !== "none" && invoice.lateFeeValue) {
+      instructions.lateFeeType = invoice.lateFeeType;
+      instructions.lateFeeValue = invoice.lateFeeValue instanceof Decimal ? invoice.lateFeeValue.toFixed(2) : String(invoice.lateFeeValue);
+    }
+
+    return instructions;
+  }
+
   async build(invoice: InvoiceWithDetails, businessId: string, opts?: SnapshotBuildOptions): Promise<SnapshotResult> {
     const business = await businessRepository.findById(businessId);
     let customer: Customer | null = null;
@@ -98,6 +110,7 @@ export class SnapshotService {
     const fees = this.mapFees(invoice);
     const totals = this.mapTotals(invoice);
     const attachments = this.mapAttachments(opts?.attachments ?? []);
+    const paymentInstructions = this.buildPaymentInstructions(invoice);
 
     const templateData = buildTemplateData(
       {
@@ -111,6 +124,8 @@ export class SnapshotService {
         notes: invoice.notes,
         terms: invoice.terms,
         paymentInstructions: invoice.paymentInstructions,
+        projectId: invoice.projectId ?? null,
+        projectName: null,
       },
       {
         id: business.id,
@@ -120,6 +135,7 @@ export class SnapshotService {
         phone: business.phone,
         website: business.website,
         taxId: business.taxId,
+        registrationNumber: business.registrationNumber,
         address: business.address,
         countryCode: business.countryCode,
         defaultCurrency: business.defaultCurrency,
@@ -135,6 +151,7 @@ export class SnapshotService {
       items,
       fees,
       totals,
+      paymentInstructions,
       {
         htmlTemplate: template?.htmlTemplate,
         schemaVersion: templateSchemaVersion,
@@ -160,9 +177,12 @@ export class SnapshotService {
         total: invoice.total,
         amountPaid: invoice.amountPaid,
         amountDue: invoice.amountDue,
-        notes: invoice.notes,
+         notes: invoice.notes,
         terms: invoice.terms,
         paymentInstructions: invoice.paymentInstructions,
+        paymentInstructionsExt: paymentInstructions,
+        lateFeeType: invoice.lateFeeType,
+        lateFeeValue: invoice.lateFeeValue,
         publicToken: invoice.publicToken,
       },
       business: {

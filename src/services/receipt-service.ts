@@ -386,9 +386,10 @@ async generatePdf(receiptId: string): Promise<Buffer> {
         total: String(receiptData.receipt.amount),
         amountPaid: String(receiptData.receipt.amount),
         amountDue: "0",
-      } as TemplateTotals,
-       {}
-     );
+       } as TemplateTotals,
+        null,
+        {}
+      );
    }
 
   async getDetailResponse(businessId: string, id: string): Promise<Record<string, unknown>> {

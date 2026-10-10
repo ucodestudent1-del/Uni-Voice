@@ -901,8 +901,9 @@ export class QuoteService {
       customerData,
       items,
       fees,
-      totals,
-      { htmlTemplate: undefined }
+       totals,
+       undefined,
+       { htmlTemplate: undefined }
     );
     return templateRenderer.renderQuote(templateData);
   }
