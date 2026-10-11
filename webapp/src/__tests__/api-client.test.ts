@@ -7,7 +7,6 @@ import {
 import {
   formatDuration,
   buildProjectSearchParams,
-  buildInvoiceSearchParams,
 } from "../api/client";
 
 describe("API client cache utilities", () => {
@@ -143,59 +142,6 @@ describe("buildProjectSearchParams", () => {
   it("handles boolean includeArchived", () => {
     const result = buildProjectSearchParams({ includeArchived: false });
     expect(result).toEqual({ includeArchived: false });
-  });
-});
-
-describe("buildInvoiceSearchParams", () => {
-  it("returns empty object for empty params", () => {
-    expect(buildInvoiceSearchParams({})).toEqual({});
-  });
-
-  it("maps camelCase to snake_case", () => {
-    const result = buildInvoiceSearchParams({
-      paymentState: "paid",
-      customerId: "cust-1",
-      minAmount: "100",
-    });
-    expect(result).toEqual({
-      payment_state: "paid",
-      customer_id: "cust-1",
-      min_amount: "100",
-    });
-  });
-
-  it("includes basic params as-is", () => {
-    const result = buildInvoiceSearchParams({
-      limit: 25,
-      status: "sent",
-      search: "invoice",
-      currency: "USD",
-      sortBy: "date",
-      sortOrder: "desc",
-    });
-    expect(result).toEqual({
-      limit: 25,
-      status: "sent",
-      search: "invoice",
-      currency: "USD",
-      sort_by: "date",
-      sort_order: "desc",
-    });
-  });
-
-  it("handles date range params", () => {
-    const result = buildInvoiceSearchParams({
-      issueDateFrom: "2024-01-01",
-      issueDateTo: "2024-12-31",
-      dueDateFrom: "2024-02-01",
-      dueDateTo: "2024-12-30",
-    });
-    expect(result).toEqual({
-      issue_date_from: "2024-01-01",
-      issue_date_to: "2024-12-31",
-      due_date_from: "2024-02-01",
-      due_date_to: "2024-12-30",
-    });
   });
 });
 

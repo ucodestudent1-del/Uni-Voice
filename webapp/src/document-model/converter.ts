@@ -13,7 +13,6 @@ import {
 import { DocumentBuilder, insertComponent } from "./document-operations";
 import { getComponentDefinition } from "./registry";
 import type { ApiInvoice, ApiCustomer, ApiBusiness } from "../types/api";
-import { DEFAULT_INVOICE_TERMS } from "../constants/invoiceTerms";
 
 export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, customer?: ApiCustomer): InvoiceDocument {
   const doc = createEmptyDocument(invoice.business_id as UUID, "Untitled Invoice");
@@ -385,7 +384,7 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
   insert("spacer", { height: 16 });
   insert("paymentTerms", { content: "Net 30", label: "Payment Terms" });
   insert("spacer", { height: 16 });
-  insert("terms", { content: DEFAULT_INVOICE_TERMS, label: "Terms & Conditions" });
+  insert("terms", { content: "Payment is due within 30 days of the invoice date.", label: "Terms & Conditions" });
   insert("spacer", { height: 32 });
   insert("signature", {
     label: "Authorized Signature",

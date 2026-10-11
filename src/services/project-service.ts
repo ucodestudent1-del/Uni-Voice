@@ -10,8 +10,6 @@ import { ProjectRepository } from "../repositories/project.repo.js";
 import { CustomerRepository } from "../repositories/customer.repo.js";
 import { ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
 import type { ProjectCreateInput, ProjectUpdateInput as SchemaProjectUpdateInput } from "../domain/schemas/project.js";
-import { invoiceService } from "./invoice-service.js";
-import type { DraftLineItem, DraftFee } from "./invoice-service.js";
 import { projectTimeEntryRepository } from "../repositories/project-time.repo.js";
 
 export interface ProjectSummary {
@@ -39,17 +37,6 @@ export interface ProjectSearchResponse {
   total: number;
   limit: number;
   offset: number;
-}
-
-export interface CreateInvoiceFromProjectInput {
-  currency?: string;
-  issueDate?: Date | null;
-  dueDate?: Date | null;
-  notes?: string | null;
-  terms?: string | null;
-  items?: DraftLineItem[];
-  fees?: DraftFee[];
-  includeUnbilledTime?: boolean;
 }
 
 export class ProjectService {
@@ -245,71 +232,6 @@ export class ProjectService {
   async getFinancialSummary(businessId: string, projectId: string): Promise<ProjectFinancialSummary> {
     await this.repo.findById(businessId, projectId);
     return this.repo.getFinancialSummary(businessId, projectId);
-  }
-
-  // Invoices for project
-  async getInvoices(businessId: string, projectId: string, opts: { limit?: number; offset?: number; status?: string } = {}): Promise<PagedResult<any>> {
-    const { invoiceRepository } = await import("../repositories/invoice.repo.js");
-    const limit = opts.limit ?? 50;
-    const offset = opts.offset ?? 0;
-    const data = await invoiceRepository.findMany(businessId, {
-      projectId,
-      status: opts.status,
-      limit,
-      offset,
-    });
-    return { data, total: data.length, limit, offset };
-  }
-
-  // Create invoice directly from a project
-  async createInvoiceFromProject(
-    businessId: string,
-    projectId: string,
-    input: CreateInvoiceFromProjectInput,
-    userId?: string
-  ): Promise<{ invoiceId: string }> {
-    const project = await this.repo.findById(businessId, projectId);
-    if (!project.customerId) {
-      throw new BusinessLogicError("Project must have a customer to create an invoice");
-    }
-
-    let items = input.items ?? [];
-
-    if (input.includeUnbilledTime !== false) {
-      const timeLineItems = await projectTimeEntryRepository.convertToLineItems(
-        businessId,
-        projectId,
-        ""
-      );
-      if (timeLineItems.length > 0) {
-        items = [...items, ...timeLineItems];
-      }
-    }
-
-    const invoiceId = await invoiceService.createDraft({
-      customerId: project.customerId,
-      projectId: project.id,
-      currency: input.currency ?? project.currency,
-      issueDate: input.issueDate ?? null,
-      dueDate: input.dueDate ?? null,
-      notes: input.notes ?? project.description ?? null,
-      terms: input.terms ?? null,
-      items: items.length > 0 ? items : undefined,
-      fees: input.fees,
-    }, businessId, userId);
-
-    if (input.includeUnbilledTime !== false && items.length > 0) {
-      await projectTimeEntryRepository.markInvoiced(businessId, projectId, invoiceId);
-    }
-
-    await this.repo.recordEvent(projectId, businessId, "invoice_created", userId, {
-      invoiceId,
-      currency: input.currency ?? project.currency,
-      includedTimeEntries: input.includeUnbilledTime !== false,
-      lineItemCount: items.length,
-    });
-
-    return { invoiceId };
   }
 }
 

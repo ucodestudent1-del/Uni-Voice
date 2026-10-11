@@ -1,27 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import InvoicesReport from "../components/reports/InvoicesReport";
 import PaymentsReport from "../components/reports/PaymentsReport";
-import type { ApiInvoicesReport, ApiPaymentsReport } from "@/types/api";
-
-const mockInvoicesReport: ApiInvoicesReport = {
-  invoices: [],
-  summary: {
-    totalInvoices: 10,
-    totalInvoiced: "5000.00",
-    totalPaid: "3000.00",
-    totalOutstanding: "2000.00",
-    totalOverdue: "500.00",
-    currency: "USD",
-    statusBreakdown: [
-      { status: "sent", count: 8, amount: "4000.00" },
-      { status: "paid", count: 2, amount: "1000.00" },
-    ],
-    byPeriod: [
-      { period: "2026-09", invoiced: "5000.00", paid: "3000.00", count: 10, currency: "USD" },
-    ],
-  },
-};
+import type { ApiPaymentsReport } from "@/types/api";
 
 const mockPaymentsReport: ApiPaymentsReport = {
   payments: [],
@@ -48,41 +28,6 @@ const mockPaymentsReport: ApiPaymentsReport = {
     ],
   },
 };
-
-describe("InvoicesReport", () => {
-  it("renders KPI cards with summary values", () => {
-    render(
-      <InvoicesReport
-        data={mockInvoicesReport}
-        loading={false}
-        currency="USD"
-        onExport={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText("Total Invoices")).toBeInTheDocument();
-    expect(screen.getByText("10")).toBeInTheDocument();
-    expect(screen.getByText("Total Invoiced")).toBeInTheDocument();
-    expect(screen.getByText("$5,000.00")).toBeInTheDocument();
-    expect(screen.getByText("Outstanding")).toBeInTheDocument();
-    expect(screen.getByText("$2,000.00")).toBeInTheDocument();
-    expect(screen.getByText("Overdue")).toBeInTheDocument();
-    expect(screen.getByText("$500.00")).toBeInTheDocument();
-  });
-
-  it("renders without crashing when data is null", () => {
-    render(
-      <InvoicesReport
-        data={null}
-        loading={false}
-        currency="USD"
-        onExport={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText("Invoices Report")).toBeInTheDocument();
-  });
-});
 
 describe("PaymentsReport", () => {
   it("renders KPI cards with summary values", () => {

@@ -4,12 +4,11 @@ import { logger } from "../utils/logger.js";
 import { NotFoundError, BusinessLogicError } from "../domain/errors.js";
 import { receiptRepository, type ReceiptRow, type ReceiptFilter } from "../repositories/receipt.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
-import { buildTemplateData, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals } from "../services/templates/template-renderer.js";
+import { buildTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals, type InvoiceTemplateData } from "../services/templates/template-renderer.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
-import { emailService, type InvoiceEmailData } from "../services/email/email-service.js";
+import { emailService, type ReceiptEmailData } from "../services/email/email-service.js";
 import type { CurrencyCode } from "../domain/value-objects/currency.js";
 import type { Payment } from "../domain/models/index.js";
-import { invoiceService } from "../services/invoice-service.js";
 import Handlebars from "handlebars";
 
 export interface ReceiptNumberConfig {
@@ -206,15 +205,12 @@ export class ReceiptService {
 
   async getResponse(businessId: string, id: string): Promise<Record<string, unknown>> {
     const res = await query(
-      `SELECT r.*, i.invoice_number, i.currency,
-              i.customer_id, c.name as customer_name, c.email as customer_email,
+      `SELECT r.*,
               b.name as business_name
        FROM receipts r
-       JOIN invoices i ON i.id = r.invoice_id
        JOIN businesses b ON b.id = r.business_id
-       LEFT JOIN customers c ON c.id = i.customer_id
        WHERE r.id = $1 AND r.business_id = $2`,
-      [id, businessId]
+       [id, businessId]
     );
     if (!res.rows.length) throw new NotFoundError(`Receipt ${id} not found`);
     return this.toApiRow(res.rows[0]);
@@ -237,9 +233,6 @@ export class ReceiptService {
       issued_at: r.issued_at,
       created_at: r.created_at,
       updated_at: r.updated_at,
-      invoice_number: r.invoice_number,
-      customer_name: r.customer_name ?? null,
-      customer_email: r.customer_email ?? null,
     };
   }
 
@@ -248,7 +241,6 @@ export class ReceiptService {
     const offset = Math.max(Number(filter.offset ?? 0), 0);
     const receiptFilter: ReceiptFilter = {
       status: filter.status as string | undefined,
-      invoiceId: filter.invoiceId as string | undefined,
       paymentId: filter.paymentId as string | undefined,
       dateFrom: filter.dateFrom as string | undefined,
       dateTo: filter.dateTo as string | undefined,
@@ -267,23 +259,7 @@ export class ReceiptService {
   }
 
 
-  async findByInvoice(businessId: string, invoiceId: string): Promise<ReceiptRow[]> {
-    return receiptRepository.findByInvoice(businessId, invoiceId);
-  }
-
-  async findMany(businessId: string, filter: Record<string, unknown>): Promise<{ data: ReceiptRow[]; total: number; limit: number; offset: number }> {
-    return receiptRepository.findMany(businessId, {
-      status: filter.status as string | undefined,
-      invoiceId: filter.invoiceId as string | undefined,
-      paymentId: filter.paymentId as string | undefined,
-      dateFrom: filter.dateFrom as string | undefined,
-      dateTo: filter.dateTo as string | undefined,
-      limit: filter.limit as number | undefined,
-      offset: filter.offset as number | undefined,
-    });
-  }
-
-async generatePdf(receiptId: string): Promise<Buffer> {
+  async generatePdf(receiptId: string): Promise<Buffer> {
     const { pdf, receiptNumber } = await this.generatePdfWithMeta(receiptId);
     return pdf;
   }
@@ -300,13 +276,11 @@ async generatePdf(receiptId: string): Promise<Buffer> {
     const client = await query(
       `SELECT r.id, r.receipt_number, r.amount, r.currency, r.status, r.issued_at,
               r.payment_method, r.metadata,
-              i.invoice_number, i.status as invoice_status, i.currency as invoice_currency, i.amount_paid, i.amount_due,
               b.name as business_name, b.email as business_email, b.phone as business_phone,
               b.address_line_1, b.address_line_2, b.city, b.state_or_region, b.postal_code, b.country_code
-        FROM receipts r
-        JOIN invoices i ON i.id = r.invoice_id
-        JOIN businesses b ON b.id = r.business_id
-        WHERE r.id = $1`,
+       FROM receipts r
+       JOIN businesses b ON b.id = r.business_id
+       WHERE r.id = $1`,
        [receiptId]
     );
     if (!client.rows.length) throw new NotFoundError(`Receipt ${receiptId} not found`);
@@ -323,19 +297,19 @@ async generatePdf(receiptId: string): Promise<Buffer> {
       receipt: {
         receiptNumber: r.receipt_number as string,
         amount: r.amount as Decimal.Value,
-         currency: (r.currency as string) ?? (r.invoice_currency as string) ?? "USD",
+         currency: (r.currency as string) ?? "USD",
         status: r.status as string,
         issuedAt: r.issued_at ? new Date(r.issued_at as string).toISOString().slice(0, 10) : null,
         paymentMethod: r.payment_method as string | null,
         paymentProvider: (metadata.provider as string) ?? "unknown",
         providerPaymentId: (metadata.providerPaymentId as string) ?? null,
-        invoiceNumber: r.invoice_number as string | null,
+        invoiceNumber: null,
       },
       formatMoney: (v: Decimal.Value) => new Decimal(v).toFixed(2),
     };
 
     const html = this.renderReceipt(data);
-    const pdf = await pdfService.generatePdfFromHtml(html, this.toInvoiceTemplateData(r, data));
+    const pdf = await pdfService.generatePdfFromHtml(html, this.toTemplateData(r, data));
     await receiptRepository.storePdf(receiptId, pdf);
     return { pdf, receiptNumber: r.receipt_number as string };
   }
@@ -344,12 +318,12 @@ async generatePdf(receiptId: string): Promise<Buffer> {
     return compiledReceiptTemplate(data);
   }
 
-  private toInvoiceTemplateData(r: Record<string, unknown>, receiptData: ReceiptTemplateData): InvoiceTemplateData {
+  private toTemplateData(r: Record<string, unknown>, receiptData: ReceiptTemplateData): InvoiceTemplateData {
     return buildTemplateData(
       {
         id: r.id as string,
-        invoiceNumber: r.invoice_number as string | null,
-        status: r.invoice_status as string,
+        invoiceNumber: null,
+        status: "paid",
         issueDate: null,
         dueDate: null,
         currency: r.currency as CurrencyCode,
@@ -394,12 +368,7 @@ async generatePdf(receiptId: string): Promise<Buffer> {
 
   async getDetailResponse(businessId: string, id: string): Promise<Record<string, unknown>> {
     const result = await query(
-      `SELECT r.*, i.invoice_number, i.status as invoice_status, i.due_date as invoice_due_date,
-              i.issue_date as invoice_issue_date, i.total as invoice_total, i.subtotal as invoice_subtotal,
-              i.discount_total as invoice_discount_total, i.tax_total as invoice_tax_total,
-              i.fee_total as invoice_fee_total, i.amount_paid as invoice_amount_paid,
-              i.amount_due as invoice_amount_due, i.notes as invoice_notes,
-              i.currency as invoice_currency,
+      `SELECT r.*,
               c.name as customer_name, c.email as customer_email,
               b.name as business_name, b.email as business_email, b.phone as business_phone,
               b.address_line_1, b.address_line_2, b.city, b.state_or_region, b.postal_code, b.country_code,
@@ -407,23 +376,16 @@ async generatePdf(receiptId: string): Promise<Buffer> {
               p.status as payment_status, p.method as payment_method, p.provider as payment_provider,
               p.provider_payment_id as payment_provider_payment_id, p.paid_at as payment_paid_at
        FROM receipts r
-       JOIN invoices i ON i.id = r.invoice_id
        JOIN businesses b ON b.id = r.business_id
-       LEFT JOIN customers c ON c.id = i.customer_id
+       LEFT JOIN customers c ON c.id = r.customer_id
        LEFT JOIN payments p ON p.id = r.payment_id
        WHERE r.id = $1 AND r.business_id = $2`,
-      [id, businessId]
+       [id, businessId]
     );
     if (!result.rows.length) throw new NotFoundError(`Receipt ${id} not found`);
 
     const row = result.rows[0] as Record<string, unknown>;
     const metadata = (row.metadata as Record<string, unknown>) ?? {};
-
-    const invoiceItemsResult = await query(
-      `SELECT description, quantity, unit, unit_price, tax_rate, tax_amount, line_total
-       FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order`,
-      [row.invoice_id]
-    );
 
     return {
       id: row.id,
@@ -440,18 +402,6 @@ async generatePdf(receiptId: string): Promise<Buffer> {
       issued_at: row.issued_at,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      invoice_number: row.invoice_number,
-      invoice_status: row.invoice_status,
-      invoice_due_date: row.invoice_due_date,
-      invoice_issue_date: row.invoice_issue_date,
-      invoice_total: row.invoice_total,
-      invoice_subtotal: row.invoice_subtotal,
-      invoice_discount_total: row.invoice_discount_total,
-      invoice_tax_total: row.invoice_tax_total,
-      invoice_fee_total: row.invoice_fee_total,
-      invoice_amount_paid: row.invoice_amount_paid,
-      invoice_amount_due: row.invoice_amount_due,
-      invoice_notes: row.invoice_notes,
       customer_name: row.customer_name ?? null,
       customer_email: row.customer_email ?? null,
       business_name: row.business_name,
@@ -469,42 +419,7 @@ async generatePdf(receiptId: string): Promise<Buffer> {
             paid_at: row.payment_paid_at ?? null,
           }
         : null,
-      items: invoiceItemsResult.rows.map((item: Record<string, unknown>) => ({
-        description: item.description,
-        quantity: item.quantity,
-        unit: item.unit,
-        unit_price: item.unit_price,
-        tax_rate: item.tax_rate,
-        tax_amount: item.tax_amount,
-        line_total: item.line_total,
-        is_tax_inclusive: false,
-      })),
     };
-  }
-
-  async processRefund(
-    businessId: string,
-    receiptId: string,
-    data: { amount: string; reason?: string }
-  ): Promise<{ status: string; refundId?: string }> {
-    const receipt = await receiptRepository.findById(businessId, receiptId);
-
-    if (!receipt.paymentId) {
-      throw new BusinessLogicError("Receipt has no associated payment");
-    }
-
-    const refundResult = await invoiceService.refundPayment(
-      businessId,
-      receipt.invoiceId,
-      receipt.paymentId,
-      data.amount,
-      receipt.currency,
-      "stripe",
-      undefined,
-      `receipt-refund:${receipt.id}`
-    );
-
-    return { status: refundResult.status };
   }
 
   async sendReceiptEmail(receiptId: string, recipient: { email: string; name?: string; subject?: string; message?: string }): Promise<{ messageId: string; status: string }> {
@@ -523,8 +438,8 @@ async generatePdf(receiptId: string): Promise<Buffer> {
     const pdf = receipt.pdf ?? await this.generatePdf(receiptId);
 
     const idempotencyKey = `receipt-email:${receipt.id}`;
-    const emailData: InvoiceEmailData = {
-      invoiceId: receipt.invoiceId,
+    const emailData: ReceiptEmailData = {
+      receiptId: receipt.id,
       businessId: receipt.businessId,
       recipient,
       subject: recipient.subject ?? `Receipt ${receipt.receiptNumber} from ${business.name}`,
@@ -533,7 +448,7 @@ async generatePdf(receiptId: string): Promise<Buffer> {
       idempotencyKey,
     };
 
-    const result = await emailService.sendInvoiceEmail(emailData);
+    const result = await emailService.sendReceiptEmail(emailData);
     await receiptRepository.setStatus(receiptId, "sent", { emailLogId: result.messageId });
     logger.info(`Sent receipt ${receipt.receiptNumber} to ${recipient.email}`);
     return { messageId: result.messageId, status: result.status };

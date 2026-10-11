@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Edit2, Trash2, Plus, FileText } from "lucide-react";
+import { Edit2, Trash2, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct, createInvoiceFromProduct } from "../api/client";
+import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from "../api/client";
 import type { ApiProduct } from "../types/api";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
@@ -19,15 +19,6 @@ export default function Products() {
   });
 
   const { toast } = useToast();
-
-  const handleCreateInvoice = async (product: ApiProduct) => {
-    try {
-      const res = await createInvoiceFromProduct(product.id);
-      navigate(`/app/invoices/${res.invoiceId}/edit`);
-    } catch {
-      toast("Failed to create invoice from product", { type: "error" });
-    }
-  };
 
   useEffect(() => {
     loadProducts();
@@ -244,15 +235,8 @@ export default function Products() {
                   <td className="py-3 px-4 text-sm text-secondary">{p.sku || "—"}</td>
                   <td className="py-3 px-4 text-right text-sm font-medium text-primary">${parseFloat(p.defaultUnitPrice).toFixed(2)}</td>
                   <td className="py-3 px-4 text-right text-sm text-secondary">{(parseFloat(p.defaultTaxRate) * 100).toFixed(0)}%</td>
-                  <td className="py-3 px-4 text-right">
+                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={<FileText className="w-3.5 h-3.5" />}
-                        onClick={() => handleCreateInvoice(p)}
-                        title="Create invoice from this product"
-                      />
                       <Button
                         variant="ghost"
                         size="sm"

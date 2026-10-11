@@ -18,20 +18,16 @@ import { reportsCache, invalidateReportsCache } from "./services/reports-cache.j
 import { reportsService, type ReportFilters } from "./services/reports-service.js";
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
-import { invoiceService } from "./services/invoice-service.js";
 import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
-import { paymentRiskService } from "./services/payment-risk-service.js";
 
 const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
-import { invoiceNumberService } from "./services/numbering/service.js";
 import { businessRepository } from "./repositories/business.repo.js";
 import { productRepository } from "./repositories/product.repo.js";
 import { productServiceRepository } from "./repositories/product-service.repo.js";
 import { productServiceService } from "./services/product-service/product-service.js";
-import { invoiceRepository, type InvoiceListOptions, type InvoiceListItem } from "./repositories/invoice.repo.js";
 import { customerRepository } from "./repositories/customer.repo.js";
 import { receiptRepository } from "./repositories/receipt.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
@@ -41,7 +37,6 @@ import { onboardingRepository } from "./repositories/onboarding.repo.js";
 import { onboardingService } from "./services/onboarding.service.js";
 import { logger } from "./utils/logger.js";
 import { stripeService } from "./services/payments/stripe-service.js";
-import { invoicePaymentService } from "./services/payments/invoice-payment-service.js";
 import {
   DocumentTemplateInputSchema,
   DocumentTemplateUpdateSchema,
@@ -64,13 +59,6 @@ import {
   CatalogSelectionSchema,
   BulkCatalogSchema,
 } from "./schemas/product-service.js";
-import {
-  InvoiceTemplateCreateRequestSchema,
-  InvoiceTemplateUpdateRequestSchema,
-  InvoiceTemplatePublishRequestSchema,
-  InvoiceTemplateListParamsSchema,
-} from "./schemas/invoice-template-dto.js";
-import { invoiceTemplateService } from "./services/templates/invoice-template-service.js";
 import { aiService } from "./services/ai-service.js";
 import { projectService } from "./services/project-service.js";
 import { projectTimeEntryService } from "./services/project-time-service.js";
@@ -230,7 +218,7 @@ if (isDev) {
       version: "1.0.0",
       status: "ok",
       docs: "/api/health",
-       endpoints: ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/plans", "/api/invoices", "/api/customers", "/api/products", "/api/projects"],
+       endpoints: ["/api/auth/register", "/api/auth/login", "/api/auth/me", "/api/plans", "/api/customers", "/api/products", "/api/projects"],
     });
   });
 }
@@ -655,21 +643,6 @@ app.post("/api/subscription/cancel", requireAuth, async (req: AuthRequest, res) 
   res.json(camelToSnake({ subscription: updated, plan }));
 });
 
-app.get("/api/subscription/invoices", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const ctx = await subscriptionService.getSubscriptionContext(req.user!.businessId);
-  const invoices: any[] = [];
-  if (ctx.subscription.stripeSubscriptionId && env.STRIPE_SECRET_KEY) {
-    try {
-      const stripeInvoices = await stripeService.getSubscriptionInvoices(ctx.subscription.stripeSubscriptionId);
-      invoices.push(...stripeInvoices);
-    } catch (e) {
-      logger.warn({ err: e }, "Failed to fetch Stripe invoices");
-    }
-  }
-  res.json({ invoices });
-});
-
 app.get("/api/subscription/payment-methods", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   res.json({ paymentMethods: [], stripeConfigured: !!env.STRIPE_SECRET_KEY });
@@ -781,15 +754,6 @@ app.post("/api/customers/:id/restore", requireAuth, async (req: AuthRequest, res
   res.json({ customer });
 });
 
-app.get("/api/customers/:id/invoices", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const limit = Math.min(Number(req.query.limit ?? 50), 200);
-  const offset = Number(req.query.offset ?? 0);
-  const status = req.query.status as string | undefined;
-  const result = await customerService.getInvoiceHistory(req.user!.businessId, req.params.id, { limit, offset, status });
-  res.json(result);
-});
-
 app.get("/api/customers/:id/summary", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const summary = await customerService.getSummary(req.user!.businessId, req.params.id);
@@ -849,38 +813,7 @@ app.patch("/api/products/:id", requireAuth, async (req: AuthRequest, res) => {
 app.delete("/api/products/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await productRepository.delete(req.user!.businessId, req.params.id);
-  res.status(204).send();
-});
-
-app.post("/api/products/:id/use-as-line-item", requireAuth, async (req: AuthRequest, res, next) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const businessId = req.user!.businessId;
-  try {
-    const product = await productRepository.findById(businessId, req.params.id);
-    const docType = (req.query.type as string | undefined) ?? "invoice";
-    const currency = product.defaultCurrency ?? req.body?.currency ?? "USD";
-    const lineItemDescription = product.description ?? product.name;
-    const unitPrice = new Decimal(product.defaultUnitPrice).toString();
-    const taxRate = new Decimal(product.defaultTaxRate ?? 0).toString();
-    if (docType === "invoice") {
-      const invoiceId = await invoiceService.createDraft({
-        currency,
-        items: [{
-          productId: product.id,
-          description: lineItemDescription,
-          quantity: 1,
-          unit: product.unit ?? "each",
-          unitPrice,
-          taxRate,
-        }],
-      }, businessId, req.user!.id);
-      res.status(201).json({ invoiceId });
-    } else {
-      res.status(400).json({ error: "Invalid type. Must be 'invoice'." });
-    }
-  } catch (err) {
-    next(err);
-  }
+   res.status(204).send();
 });
 
 // ============================================================================
@@ -972,276 +905,6 @@ app.get("/api/catalog/sku/:sku/check", requireAuth, async (req: AuthRequest, res
 });
 
 // ============================================================================
-// INVOICES
-// ============================================================================
-app.get("/api/invoices", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const q = req.query;
-  const opts: InvoiceListOptions = {
-    status: q.status as string | undefined,
-    customerId: (q.customerId ?? q.customer_id) as string | undefined,
-    projectId: (q.projectId ?? q.project_id) as string | undefined,
-    invoiceNumber: q.invoice_number as string | undefined,
-    currency: q.currency as string | undefined,
-    minAmount: q.min_amount ? Number(q.min_amount) : undefined,
-    maxAmount: q.max_amount ? Number(q.max_amount) : undefined,
-    issueDateFrom: q.issue_date_from as string | undefined,
-    issueDateTo: q.issue_date_to as string | undefined,
-    dueDateFrom: q.due_date_from as string | undefined,
-    dueDateTo: q.due_date_to as string | undefined,
-    search: q.search as string | undefined,
-    paymentState: q.payment_state as string | undefined,
-    limit: q.limit ? Number(q.limit) : undefined,
-    offset: q.offset ? Number(q.offset) : undefined,
-    sortBy: (q.sortBy ?? q.sort_by) as string | undefined,
-    sortOrder: (q.sortOrder ?? q.sort_order) as "asc" | "desc" | undefined,
-  };
-  const page = await invoiceRepository.findManyPage(req.user!.businessId, opts);
-  const invoices = page.data.map((inv: InvoiceListItem) => ({
-    id: inv.id,
-    business_id: inv.businessId,
-    customer_id: inv.customerId,
-    project_id: inv.projectId,
-    invoice_number: inv.invoiceNumber,
-    status: inv.status,
-    issue_date: inv.issueDate instanceof Date ? inv.issueDate.toISOString().split("T")[0] : inv.issueDate ?? null,
-    due_date: inv.dueDate instanceof Date ? inv.dueDate.toISOString().split("T")[0] : inv.dueDate ?? null,
-    currency: inv.currency,
-    exchange_rate: inv.exchangeRate ?? null,
-    subtotal: String(inv.subtotal ?? 0),
-    discount_total: String(inv.discountTotal ?? 0),
-    tax_total: String(inv.taxTotal ?? 0),
-    fee_total: String(inv.feeTotal ?? 0),
-    total: String(inv.total ?? 0),
-    amount_paid: String(inv.amountPaid ?? 0),
-    amount_due: String(inv.amountDue ?? 0),
-    credit_applied: String(inv.creditApplied ?? 0),
-    deposit_amount: String(inv.depositAmount ?? 0),
-    deposit_type: inv.depositType ?? "none",
-    deposit_due_date: inv.depositDueDate instanceof Date ? inv.depositDueDate.toISOString().split("T")[0] : inv.depositDueDate ?? null,
-    deposit_payment_purpose: inv.depositPaymentPurpose ?? null,
-    notes: inv.notes ?? null,
-    terms: inv.terms ?? null,
-    template_id: inv.templateId ?? null,
-    public_token: inv.publicToken ?? null,
-    public_token_expires_at: inv.publicTokenExpiresAt ?? null,
-     payment_instructions: inv.paymentInstructions ?? null,
-     is_finalized: inv.isFinalized ?? false,
-     finalized_at: inv.finalizedAt ?? null,
-     sent_at: inv.sentAt ?? null,
-     viewed_at: inv.viewedAt ?? null,
-     paid_at: inv.paidAt ?? null,
-     cancelled_at: inv.cancelledAt ?? null,
-     cancelled_reason: inv.cancelledReason ?? null,
-     payment_risk_score: inv.paymentRiskScore ?? null,
-     payment_risk_factors: inv.paymentRiskFactors ?? null,
-     payment_risk_scored_at: inv.paymentRiskScoredAt ?? null,
-     version: inv.version ?? 1,
-    created_at: inv.createdAt instanceof Date ? inv.createdAt.toISOString() : inv.createdAt,
-    updated_at: inv.updatedAt instanceof Date ? inv.updatedAt.toISOString() : inv.updatedAt,
-    created_by: inv.createdBy ?? null,
-    updated_by: inv.updatedBy ?? null,
-    customer_name: inv.customer_name ?? null,
-    customer_email: inv.customer_email ?? null,
-  }));
-   res.json({ invoices, total: page.total, limit: page.limit, offset: page.offset });
-});
-
-app.post("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  try {
-    await requireUsageLimit("invoices.unlimited", true)(req as any, res, async () => {
-      const invoiceId = await invoiceService.createDraft(req.body, req.user!.businessId!, req.user!.id);
-      res.status(201).json({ invoiceId });
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-app.get("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const summary = await invoiceService.getInvoice(req.user!.businessId, req.params.id);
-  res.json(camelToSnake(summary));
-});
-
-app.patch("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const body = req.body ?? {};
-  const hasItemsOrFees = body.items !== undefined || body.fees !== undefined;
-  if (hasItemsOrFees) {
-    const id = await invoiceService.updateDraftWithItems(req.user!.businessId, req.params.id, body, req.user.id);
-    res.json({ invoiceId: id });
-  } else {
-    const id = await invoiceService.updateDraft(req.user!.businessId, req.params.id, body, req.user.id);
-    res.json({ invoiceId: id });
-  }
-});
-
-app.put("/api/invoices/:id/items", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceService.setItems(req.user!.businessId, req.params.id, req.body as any, req.user.id);
-  res.json({ ok: true });
-});
-
-app.put("/api/invoices/:id/fees", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceService.setFees(req.user!.businessId, req.params.id, req.body as any, req.user.id);
-  res.json({ ok: true });
-});
-
-app.put("/api/invoices/:id/attachments", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const body = req.body ?? {};
-  const attachments = Array.isArray(body) ? body : body.attachments;
-  if (!Array.isArray(attachments)) return res.status(400).json({ error: "Attachments array required" });
-  await invoiceService.setAttachments(req.user!.businessId, req.params.id, attachments as any, req.user.id);
-  res.json({ ok: true });
-});
-
-app.post("/api/invoices/:id/finalize", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await invoiceService.finalize(req.user!.businessId, req.params.id, req.user.id);
-  invoiceService.invalidateDashboardCache(req.user!.businessId);
-  res.json(result);
-});
-
-app.post("/api/invoices/:id/send", requireAuth, requireEntitlement("reminders.automated"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await invoiceService.send(req.user!.businessId, req.params.id, req.user.id);
-  res.json(result);
-});
-
-app.post("/api/invoices/:id/send-reminder", requireAuth, requireEntitlement("reminders.automated"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceService.sendReminder(req.user!.businessId, req.params.id, req.user.id);
-  res.json({ ok: true });
-});
-
-app.post("/api/invoices/:id/sms", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  try {
-    const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
-    if (!invoice.isFinalized) return res.status(400).json({ error: "Invoice must be finalized before sending an SMS" });
-    if (!invoice.customerId) return res.status(400).json({ error: "Invoice has no customer" });
-    const customer = await customerService.getById(req.user!.businessId, invoice.customerId).catch(() => null);
-    const phone = customer?.phone ?? req.body?.to;
-    if (!phone) return res.status(400).json({ error: "Customer has no phone number" });
-    const amountDue = new Decimal(invoice.amountDue ?? invoice.total ?? 0).toFixed(2);
-    const paymentUrl = invoice.publicToken
-      ? `${env.APP_PUBLIC_BASE_URL}/invoice/${invoice.publicToken}`
-      : env.APP_PUBLIC_BASE_URL;
-    const business = await businessRepository.findById(req.user!.businessId);
-    const message = buildPaymentLinkSms({
-      businessName: business.name,
-      invoiceNumber: invoice.invoiceNumber,
-      amountDue,
-      currency: invoice.currency,
-      paymentUrl,
-    });
-    const result = await smsService.send(phone, message);
-    await invoiceRepository.recordEvent(req.params.id, {
-      eventType: "sms_sent",
-      actorId: req.user.id,
-      actorType: "user",
-      metadata: { to: phone, provider: smsService.provider.name, messageId: result.messageId, status: result.status },
-    });
-    res.json({ ok: true, provider: smsService.provider.name, status: result.status });
-  } catch (err: any) {
-    if (err.statusCode) {
-      res.status(err.statusCode).json({ error: err.message, code: err.code });
-    } else {
-      res.status(400).json({ error: err.message || "Failed to send SMS" });
-    }
-  }
-});
-
-app.post("/api/invoices/:id/cancel", requireAuth, requireEntitlement("invoices.cancel"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { reason } = req.body;
-   await invoiceService.cancel(req.user!.businessId, req.params.id, req.user.id, reason);
-  invalidateReportsCache(req.user!.businessId);
-  res.json({ ok: true });
-});
-
-app.post("/api/invoices/:id/void", requireAuth, requireEntitlement("invoices.void"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { reason } = req.body;
-  await invoiceService.void(req.user!.businessId, req.params.id, req.user.id, reason);
-  invalidateReportsCache(req.user!.businessId);
-  res.json({ ok: true });
-});
-
-app.post("/api/invoices/:id/payment-intent", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await invoiceService.createPaymentIntent(req.user!.businessId, req.params.id);
-  res.json(result);
-});
-
-app.post("/api/invoices/:id/pdf", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await invoiceService.generatePdf(req.user!.businessId, req.params.id);
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=invoice-${result.invoiceNumber ?? req.params.id}.pdf`);
-  res.send(result.buffer);
-});
-
-app.get("/api/invoices/:id/events", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const events = await invoiceRepository.getEvents(req.params.id, req.user!.businessId);
-  res.json({ events: camelToSnake(events) });
-});
-
-app.delete("/api/invoices/:id", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
-  if (invoice.isFinalized) return res.status(400).json({ error: "Cannot delete a finalized invoice" });
-  await query("DELETE FROM invoices WHERE id = $1 AND business_id = $2", [req.params.id, req.user!.businessId]);
-  res.status(204).send();
-});
-
-app.get("/api/dashboard", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const data = await invoiceService.getDashboardData(req.user!.businessId);
-  res.json(data);
-});
-
-app.post("/api/invoices/:id/duplicate", requireAuth, requireEntitlement("invoices.duplicate"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const original = await invoiceRepository.findById(req.user!.businessId, req.params.id);
-  const newId = await invoiceService.createDraft({
-    customerId: original.customerId,
-    currency: original.currency,
-    notes: original.notes,
-    terms: original.terms,
-    templateId: original.templateId,
-    paymentInstructions: original.paymentInstructions,
-    items: original.items.map((it) => ({
-      productId: it.productId,
-      description: it.description,
-      quantity: Number(it.quantity),
-      unit: it.unit,
-      unitPrice: Number(it.unitPrice),
-      discount: Number(it.discount),
-      discountType: it.discountType,
-      taxRate: Number(it.taxRate),
-      isTaxInclusive: it.isTaxInclusive,
-      catalogName: it.catalogName,
-      catalogSku: it.catalogSku,
-      catalogTaxCategory: it.catalogTaxCategory,
-      catalogUnitPrice: it.catalogUnitPrice,
-      catalogTaxRate: it.catalogTaxRate,
-    })),
-    fees: original.fees.map((f) => ({
-      description: f.description,
-      amount: Number(f.amount),
-      taxRate: Number(f.taxRate),
-    })),
-  }, req.user!.businessId, req.user.id);
-  res.status(201).json({ invoiceId: newId });
-});
-
-// ============================================================================
 // SPEED OPTIMIZATION API (Predictive UX)
 // ============================================================================
 
@@ -1280,51 +943,16 @@ app.get("/api/progressive-autofill", requireAuth, async (req: AuthRequest, res) 
   res.json(autofill);
 });
 
-app.get("/api/frequently-invoiced", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const limit = req.query.limit ? Number(req.query.limit) : 12;
-  const items = await speedOptimizationService.getFrequentlyInvoiced(req.user!.businessId, limit);
-  res.json({ items });
-});
-
-app.get("/api/last-invoice", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { customerId } = req.query;
-  const lastInvoice = await speedOptimizationService.getLastInvoice(
-    req.user!.businessId,
-    customerId as string | undefined
-  );
-  res.json(lastInvoice);
-});
-
-// Record speed metrics for an invoice creation session
-app.post("/api/speed-metrics", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { invoiceId, ...metrics } = req.body;
-  try {
-    await speedOptimizationService.recordSpeedMetrics(
-      req.user!.businessId,
-      req.user!.id,
-      invoiceId,
-      metrics
-    );
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to record metrics" });
-  }
-});
-
 // Record a user interaction for adaptive UI learning
 app.post("/api/interaction-log", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { actionType, targetField, invoiceId, durationMs, valueFrom, valueTo, sessionId } = req.body;
+  const { actionType, targetField, durationMs, valueFrom, valueTo, sessionId } = req.body;
   try {
     await speedOptimizationService.logInteraction(
       req.user!.businessId,
       req.user!.id,
       actionType,
       targetField,
-      invoiceId,
       durationMs,
       valueFrom,
       valueTo,
@@ -1343,7 +971,6 @@ app.get("/api/receipts", requireAuth, requireEntitlement("receipts.create"), asy
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const result = await receiptService.listResponse(req.user!.businessId, {
     status: req.query.status as string | undefined,
-    invoiceId: req.query.invoiceId as string | undefined,
     paymentId: req.query.paymentId as string | undefined,
     dateFrom: req.query.dateFrom as string | undefined,
     dateTo: req.query.dateTo as string | undefined,
@@ -1434,24 +1061,6 @@ app.get("/api/receipts/:id/detail", requireAuth, requireEntitlement("receipts.cr
   res.json({ receipt: receiptDetail });
 });
 
-app.post("/api/receipts/:id/refund", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await receiptService.processRefund(req.user!.businessId, req.params.id, {
-    amount: req.body.amount,
-    reason: req.body.reason,
-  });
-  res.json(result);
-});
-
-app.post("/api/invoices/:id/receipts", requireAuth, requireEntitlement("receipts.create"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
-  const payment = await receiptRepository.getPayment(invoice.id, req.user!.businessId);
-  if (!payment) return res.status(404).json({ error: "No payment found for invoice" });
-  const receipt = await receiptService.issueReceipt(req.user!.businessId, invoice.id, payment);
-  res.status(201).json({ receiptId: receipt.id, receiptNumber: receipt.receiptNumber });
-});
-
 // ============================================================================
 // REPORTS (Business tier)
 // ============================================================================
@@ -1464,23 +1073,22 @@ app.get("/api/reports/dashboard", requireAuth, async (req: AuthRequest, res) => 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [summary, agingBuckets, volumeTrend, paymentMetrics] = await Promise.all([
+  const [summary, volumeTrend, paymentMetrics] = await Promise.all([
     reportsService.getDashboardSummary(businessId),
-    invoiceRepository.getAgingBuckets(businessId, now),
-    invoiceRepository.getVolumeTrend(businessId, 1),
-    invoiceRepository.getPaymentMetrics(businessId, monthStart),
+    reportsService.getVolumeTrend(businessId, 1),
+    reportsService.getPaymentMetrics(businessId, monthStart),
   ]);
 
   const response = {
     summary,
-    agingBuckets,
-    paymentMetrics: {
-      averagePaymentTimeDays: paymentMetrics.averagePaymentTimeDays,
-      collectionRate: paymentMetrics.collectionRate,
-      totalInvoiced: paymentMetrics.totalInvoiced,
-      totalPaid: paymentMetrics.totalPaid,
-      totalOutstanding: paymentMetrics.totalOutstanding,
-      totalOverdue: paymentMetrics.totalOverdue,
+    agingBuckets: [],
+    paymentMetrics: paymentMetrics ?? {
+      averagePaymentTimeDays: 0,
+      collectionRate: 0,
+      totalInvoiced: "0",
+      totalPaid: "0",
+      totalOutstanding: "0",
+      totalOverdue: "0",
     },
     volumeTrend,
   };
@@ -1496,7 +1104,7 @@ app.get("/api/reports/volume-trend", requireAuth, async (req: AuthRequest, res) 
   const months = Math.min(Number(req.query.months ?? 3), 12);
   const period = (req.query.period as string) ?? "month";
   const validPeriod = period === "day" || period === "week" || period === "month" ? period : "month";
-  const result = await invoiceRepository.getVolumeTrend(req.user!.businessId, months, validPeriod);
+  const result = await reportsService.getVolumeTrend(req.user!.businessId, months, validPeriod);
   reportsCache.set(cacheKey, result);
   res.json(result);
 });
@@ -1509,32 +1117,23 @@ app.get("/api/reports/payment-metrics", requireAuth, async (req: AuthRequest, re
   const monthStart = new Date();
   monthStart.setHours(0, 0, 0, 0);
   monthStart.setDate(1);
-  const result = await invoiceRepository.getPaymentMetrics(req.user!.businessId, monthStart);
-  reportsCache.set(cacheKey, result);
-  res.json(result);
+  const result = await reportsService.getPaymentMetrics(req.user!.businessId, monthStart);
+  if (result) {
+    reportsCache.set(cacheKey, result);
+    res.json(result);
+  } else {
+    res.status(404).json(null);
+  }
 });
 
 app.get("/api/reports/aging", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const cacheKey = `aging:${req.user!.businessId}`;
-  const cached = reportsCache.get(cacheKey);
-  if (cached) return res.json(cached);
-  const now = new Date();
-  const [buckets, summary, business] = await Promise.all([
-    invoiceRepository.getAgingBuckets(req.user!.businessId, now),
-    invoiceRepository.getDashboardSummary(req.user!.businessId),
-    businessRepository.findById(req.user!.businessId),
-  ]);
-  const response = {
-    buckets,
-    summary: {
-      totalOutstanding: new Decimal(summary.totalOutstanding).toFixed(2),
-      totalOverdue: new Decimal(summary.totalOverdue).toFixed(2),
-      currency: business.defaultCurrency ?? "USD",
-    },
-  };
-  reportsCache.set(cacheKey, response);
-  res.json(response);
+  const result = await reportsService.getAgingReport(req.user!.businessId);
+  if (result) {
+    res.json(result);
+  } else {
+    res.status(404).json(null);
+  }
 });
 
 app.get("/api/reports/revenue", requireAuth, requireEntitlement("reports.revenue"), async (req: AuthRequest, res) => {
@@ -1546,27 +1145,6 @@ app.get("/api/reports/revenue", requireAuth, requireEntitlement("reports.revenue
     status: req.query.status as string | string[] | undefined,
   };
   const result = await reportsService.getRevenueReport(req.user!.businessId, filters);
-  res.json(result);
-});
-
-app.get("/api/reports/invoices", requireAuth, requireEntitlement("reports.invoices"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const status = req.query.status;
-  const filters: ReportFilters = {
-    dateFrom: req.query.dateFrom as string | undefined,
-    dateTo: req.query.dateTo as string | undefined,
-    customerId: req.query.customerId as string | undefined,
-    projectId: req.query.projectId as string | undefined,
-    status: Array.isArray(status)
-      ? status.map((s) => String(s))
-      : status ? [String(status)] : undefined,
-    search: req.query.search as string | undefined,
-    limit: req.query.limit ? Number(req.query.limit) : undefined,
-    offset: req.query.offset ? Number(req.query.offset) : undefined,
-    sortBy: req.query.sortBy as string | undefined,
-    sortOrder: (req.query.sortOrder as string | undefined) as "asc" | "desc" | undefined,
-  };
-  const result = await reportsService.getInvoicesReport(req.user!.businessId, filters);
   res.json(result);
 });
 
@@ -1626,29 +1204,7 @@ app.get("/api/reports/profit-loss", requireAuth, requireEntitlement("reports.pro
 // ============================================================================
 // PAYMENT RISK SCORING API (Autonomous AR)
 // ============================================================================
-app.get("/api/reports/payment-risk", requireAuth, requireEntitlement("ai.risk_scoring"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const limit = Math.min(Number(req.query.limit ?? 50), 200);
-  const invoices = await paymentRiskService.getRiskScoredInvoices(req.user!.businessId, limit);
-  res.json({ invoices });
-});
-
-app.post("/api/reports/payment-risk/score/:invoiceId", requireAuth, requireEntitlement("ai.risk_scoring"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.invoiceId);
-  const result = await paymentRiskService.scoreInvoice(
-    req.user!.businessId,
-    req.params.invoiceId,
-    invoice.customerId
-  );
-  res.json(result);
-});
-
-app.post("/api/reports/payment-risk/batch", requireAuth, requireEntitlement("ai.risk_scoring"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await paymentRiskService.batchScoreBusiness(req.user!.businessId);
-  res.json(result);
-});
+// Removed: payment risk scoring routes depend on invoices which have been removed.
 
 // Report CSV export endpoints
 app.get("/api/reports/revenue/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
@@ -1665,25 +1221,6 @@ app.get("/api/reports/revenue/csv", requireAuth, requireEntitlement("export.csv"
   }
   res.setHeader("Content-Type", "text/csv");
   res.setHeader("Content-Disposition", "attachment; filename=revenue-report.csv");
-  res.send(rows.join("\n"));
-});
-
-app.get("/api/reports/invoices/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const report = await reportsService.getInvoicesReport(req.user!.businessId, {
-    dateFrom: req.query.dateFrom as string | undefined,
-    dateTo: req.query.dateTo as string | undefined,
-    customerId: req.query.customerId as string | undefined,
-    status: req.query.status ? (Array.isArray(req.query.status) ? req.query.status as string[] : [req.query.status as string]) : undefined,
-    search: req.query.search as string | undefined,
-  });
-  const headers = ["invoice_number", "customer_name", "status", "total", "amount_paid", "amount_due", "issue_date", "due_date", "paid_at", "days_overdue"];
-  const rows = [headers.join(",")];
-  for (const r of report.invoices) {
-    rows.push(headers.map((h) => JSON.stringify(String((r as any)[h] ?? ""))).join(","));
-  }
-  res.setHeader("Content-Type", "text/csv");
-  res.setHeader("Content-Disposition", "attachment; filename=invoices-report.csv");
   res.send(rows.join("\n"));
 });
 
@@ -1751,31 +1288,6 @@ app.get("/api/reports/profit-loss/csv", requireAuth, requireEntitlement("export.
 });
 
 // ============================================================================
-// EXPORTS (Pro/Business tier)
-// ============================================================================
-app.get("/api/export/invoices/csv", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await query("SELECT * FROM invoices WHERE business_id = $1 ORDER BY created_at DESC LIMIT 1000", [req.user!.businessId]);
-  const headers = ["id", "invoice_number", "status", "customer_id", "currency", "total", "amount_paid", "amount_due", "issue_date", "due_date", "created_at"];
-  const csvRows = [headers.join(",")];
-  for (const row of result.rows) {
-    csvRows.push(headers.map((h) => JSON.stringify(row[h] ?? "")).join(","));
-  }
-  const csv = csvRows.join("\n");
-  res.setHeader("Content-Type", "text/csv");
-  res.setHeader("Content-Disposition", "attachment; filename=invoices.csv");
-  res.send(csv);
-});
-
-app.get("/api/export/invoices/json", requireAuth, requireEntitlement("export.csv"), async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await query("SELECT * FROM invoices WHERE business_id = $1 ORDER BY created_at DESC LIMIT 1000", [req.user!.businessId]);
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader("Content-Disposition", "attachment; filename=invoices.json");
-  res.send(JSON.stringify(result.rows, null, 2));
-});
-
-// ============================================================================
 // REMINDER TEMPLATES
 // ============================================================================
 app.get("/api/reminder-templates", requireAuth, async (req: AuthRequest, res) => {
@@ -1829,39 +1341,6 @@ app.delete("/api/reminder-templates/:id", requireAuth, async (req: AuthRequest, 
   res.json({ deleted: true });
 });
 
-// ============================================================================
-// INVOICE DEPOSITS
-// ============================================================================
-app.patch("/api/invoices/:id/deposit", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { depositType, depositValue, depositDueDate, depositPaymentPurpose } = req.body;
-  if (!depositType || depositType !== "none" && !depositValue) return res.status(400).json({ error: "Invalid deposit configuration" });
-  const updateFields: string[] = [];
-  const updateValues: unknown[] = [req.params.id, req.user!.businessId];
-  let idx = 3;
-  if (depositType !== undefined) { updateFields.push(`deposit_type = $${idx++}`); updateValues.push(depositType); }
-  if (depositValue !== undefined) { updateFields.push(`deposit_amount = $${idx++}`); updateValues.push(depositValue); }
-  if (depositDueDate !== undefined) { updateFields.push(`deposit_due_date = $${idx++}`); updateValues.push(depositDueDate); }
-  if (depositPaymentPurpose !== undefined) { updateFields.push(`deposit_payment_purpose = $${idx++}`); updateValues.push(depositPaymentPurpose); }
-  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
-  if (invoice.isFinalized) return res.status(400).json({ error: "Cannot modify a finalized invoice" });
-  await query(
-    `UPDATE invoices SET ${updateFields.join(", ")}, updated_at = NOW() WHERE id = $1 AND business_id = $2 RETURNING id`,
-    updateValues
-  );
-  invalidateReportsCache(req.user!.businessId);
-  res.json({ invoiceId: req.params.id });
-});
-
-app.post("/api/invoices/:id/deposit/pay", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { amount, provider = "stub", idempotencyKey } = req.body;
-  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Valid amount required" });
-  const invoice = await invoiceRepository.findById(req.user!.businessId, req.params.id);
-  await invoiceService.recordPayment(req.user!.businessId, req.params.id, Number(amount), provider, idempotencyKey, req.user!.id);
-  invalidateReportsCache(req.user!.businessId);
-  res.status(201).json({ ok: true });
-});
 app.get("/api/features", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const ctx = await subscriptionService.getSubscriptionContext(req.user!.businessId);
@@ -2013,193 +1492,8 @@ app.post("/api/ai/parse-document", requireAuth, aiRateLimiter, requireEntitlemen
 });
 
 // ============================================================================
-// INVOICE TEMPLATES (canonical lifecycle + versioning)
+// INVOICE TEMPLATES (canonical lifecycle + versioning) — Removed
 // ============================================================================
-app.get("/api/invoice-templates", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const parsed = InvoiceTemplateListParamsSchema.safeParse(req.query);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-  const templates = await invoiceTemplateService.listTemplates(req.user!.businessId, {
-    industry: parsed.data.industry ?? null,
-    isDefault: parsed.data.isDefault,
-    lifecycle: parsed.data.lifecycle,
-    documentType: parsed.data.documentType,
-    limit: parsed.data.limit,
-    offset: parsed.data.offset,
-  });
-  res.json({ templates, limit: parsed.data.limit, offset: parsed.data.offset });
-});
-
-app.post("/api/invoice-templates", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const parsed = InvoiceTemplateCreateRequestSchema.parse(req.body);
-  const template = await invoiceTemplateService.create(req.user!.businessId, parsed, req.user!.id);
-  res.status(201).json({ template });
-});
-
-app.get("/api/invoice-templates/default", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const industry = req.query.industry ? String(req.query.industry) : undefined;
-  const documentType = req.query.documentType ? String(req.query.documentType) : undefined;
-  const template = await invoiceTemplateService.getDefaultTemplate(req.user!.businessId, industry, documentType);
-  res.json({ template });
-});
-
-app.get("/api/invoice-templates/:id", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const template = await invoiceTemplateService.getTemplate(req.user!.businessId, req.params.id);
-  res.json({ template });
-});
-
-app.patch("/api/invoice-templates/:id", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const parsed = InvoiceTemplateUpdateRequestSchema.parse(req.body);
-  const template = await invoiceTemplateService.updateTemplate(
-    req.user!.businessId,
-    req.params.id,
-    parsed,
-    req.user!.id
-  );
-  res.json({ template });
-});
-
-app.delete("/api/invoice-templates/:id", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceTemplateService.deleteTemplate(req.user!.businessId, req.params.id);
-  res.status(204).send();
-});
-
-app.post("/api/invoice-templates/:id/duplicate", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const template = await invoiceTemplateService.duplicateTemplate(
-    req.user!.businessId,
-    req.params.id,
-    req.user!.id
-  );
-  res.status(201).json({ template });
-});
-
-app.post("/api/invoice-templates/:id/set-default", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const template = await invoiceTemplateService.setDefault(req.user!.businessId, req.params.id);
-  res.json({ template });
-});
-
-app.post("/api/invoice-templates/:id/publish", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const parsed = InvoiceTemplatePublishRequestSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
-  const template = await invoiceTemplateService.publish(
-    req.user!.businessId,
-    req.params.id,
-    parsed.data.changeSummary ? { changeSummary: parsed.data.changeSummary } : undefined,
-    req.user!.id
-  );
-  res.json({ template });
-});
-
-app.post("/api/invoice-templates/:id/archive", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const template = await invoiceTemplateService.archive(req.user!.businessId, req.params.id, req.user!.id);
-  res.json({ template });
-});
-
-app.post("/api/invoice-templates/:id/unarchive", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const template = await invoiceTemplateService.unarchive(req.user!.businessId, req.params.id, req.user!.id);
-  res.json({ template });
-});
-
-app.get("/api/invoice-templates/:id/revisions", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const revisions = await invoiceTemplateService.getRevisions(req.user!.businessId, req.params.id);
-  res.json({ revisions });
-});
-
-app.get("/api/invoice-templates/:id/revisions/:revision", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const revision = Number(req.params.revision);
-  if (!Number.isInteger(revision) || revision < 1) {
-    return res.status(400).json({ error: "Invalid revision number" });
-  }
-  const rev = await invoiceTemplateService.getRevision(req.user!.businessId, req.params.id, revision);
-  res.json({ revision: rev });
-});
-
-app.post("/api/invoice-templates/:id/revisions/:revision/restore", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const revision = Number(req.params.revision);
-  if (!Number.isInteger(revision) || revision < 1) {
-    return res.status(400).json({ error: "Invalid revision number" });
-  }
-  const template = await invoiceTemplateService.restoreRevision(
-    req.user!.businessId,
-    req.params.id,
-    revision,
-    req.user!.id
-  );
-  res.json({ template });
-});
-
-app.get("/api/invoice-templates/:id/with-revisions", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const template = await invoiceTemplateService.getWithRevisions(req.user!.businessId, req.params.id);
-  res.json({ template });
-});
-
-app.post("/api/invoice-templates/:id/migrate", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const targetVersion = req.body.targetVersion as string | undefined;
-  const result = await invoiceTemplateService.migrateSchema(
-    req.user!.businessId,
-    req.params.id,
-    targetVersion
-  );
-  res.json({ template: result.template, migrated: result.migrated });
-});
-
-app.post("/api/invoice-templates/:id/render", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const html = await invoiceTemplateService.renderToHtml(
-    req.user!.businessId,
-    req.params.id,
-    req.body
-  );
-  res.json({ html });
-});
-
-app.get("/api/invoice-templates/:id/usage", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const count = await invoiceTemplateService.getUsageCount(req.user!.businessId, req.params.id);
-  res.json({ templateId: req.params.id, usageCount: count });
-});
-
-app.post("/api/invoice-templates/:id/permissions", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceTemplateService.setPermission(
-    req.user!.businessId,
-    req.params.id,
-    req.body.userId,
-    req.body.permission
-  );
-  res.status(201).json({ ok: true });
-});
-
-app.get("/api/invoice-templates/:id/permissions", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const permissions = await invoiceTemplateService.getPermissions(req.user!.businessId, req.params.id);
-  res.json({ permissions });
-});
-
-app.post("/api/invoice-templates/:id/usage", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceTemplateService.recordUsage(
-    req.user!.businessId,
-    req.params.id,
-    req.body.invoiceId ?? null
-  );
-  res.status(201).json({ ok: true });
-});
 
 // ============================================================================
 // PROJECTS
@@ -2289,21 +1583,6 @@ app.delete("/api/projects/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   await projectService.delete(req.user!.businessId, req.params.id);
   res.status(204).send();
-});
-
-app.post("/api/projects/:id/invoice", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await projectService.createInvoiceFromProject(req.user!.businessId, req.params.id, req.body, req.user!.id);
-  res.status(201).json(camelToSnake(result));
-});
-
-app.get("/api/projects/:id/invoices", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const limit = Math.min(Number(req.query.limit ?? 50), 200);
-  const offset = Number(req.query.offset ?? 0);
-  const status = req.query.status as string | undefined;
-  const result = await projectService.getInvoices(req.user!.businessId, req.params.id, { limit, offset, status });
-  res.json(camelToSnake({ invoices: result.data, total: result.total, limit, offset }));
 });
 
 app.get("/api/projects/:id/financial-summary", requireAuth, async (req: AuthRequest, res) => {
@@ -2517,27 +1796,6 @@ app.delete("/api/projects/:projectId/notes/:noteId", requireAuth, async (req: Au
 });
 
 // ============================================================================
-// NUMBER SEQUENCES (invoice numbering config)
-// ============================================================================
-app.get("/api/businesses/current/numbering", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const result = await query(
-    "SELECT * FROM invoice_number_sequences WHERE business_id = $1",
-    [req.user!.businessId]
-  );
-  if (!result.rows.length) {
-    return res.json({ sequence: null });
-  }
-  res.json({ sequence: result.rows[0] });
-});
-
-app.patch("/api/businesses/current/numbering", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  await invoiceNumberService.updateSequenceConfig(req.user!.businessId, req.body);
-  res.json({ ok: true });
-});
-
-// ============================================================================
 // BUSINESS SETTINGS (branding, defaults, payment config)
 // ============================================================================
 app.get("/api/businesses/current/settings", requireAuth, async (req: AuthRequest, res) => {
@@ -2713,31 +1971,6 @@ app.delete("/api/businesses/current/team/:memberId", requireAuth, requireEntitle
   res.json({ removed: true });
 });
 
-// ============================================================================
-// INVOICE PAYMENTS
-// ============================================================================
-app.get("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const payments = await invoiceRepository.findPayments(req.params.id, req.user!.businessId);
-  res.json({ payments });
-});
-
-app.post("/api/invoices/:id/payments", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { amount, provider = "stub", providerPaymentId, idempotencyKey } = req.body;
-  if (!amount) return res.status(400).json({ error: "amount required" });
-   await invoiceService.recordPayment(
-     req.user!.businessId,
-     req.params.id,
-     amount,
-     provider,
-     providerPaymentId,
-     idempotencyKey
-   );
-   invoiceService.invalidateDashboardCache(req.user!.businessId);
-   res.status(201).json({ ok: true });
-});
-
 // Global payments list (all payments for the business, paginated)
 app.get("/api/payments", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
@@ -2753,18 +1986,15 @@ app.get("/api/payments", requireAuth, async (req: AuthRequest, res) => {
   if (status) { where.push(`p.status = $${i++}`); vals.push(status); }
   if (provider) { where.push(`p.provider = $${i++}`); vals.push(provider); }
   if (search) {
-    where.push(`(i.invoice_number ILIKE $${i} OR p.provider_payment_id ILIKE $${i})`);
+    where.push(`(p.provider_payment_id ILIKE $${i})`);
     vals.push(`%${search}%`);
     i++;
   }
 
   const listRes = await query(
-    `SELECT p.id, p.invoice_id, p.amount, p.currency, p.status, p.method, p.provider,
-            p.provider_payment_id, p.paid_at, p.idempotency_key, p.created_at, p.updated_at,
-            i.invoice_number, c.name as customer_name, c.email as customer_email
+    `SELECT p.id, p.amount, p.currency, p.status, p.method, p.provider,
+            p.provider_payment_id, p.paid_at, p.idempotency_key, p.created_at, p.updated_at
       FROM payments p
-      JOIN invoices i ON i.id = p.invoice_id
-      LEFT JOIN customers c ON c.id = i.customer_id
       WHERE ${where.join(" AND ")}
       ORDER BY p.created_at DESC
       LIMIT $${i++} OFFSET $${i++}`,
@@ -2774,7 +2004,6 @@ app.get("/api/payments", requireAuth, async (req: AuthRequest, res) => {
   const countRes = await query(
     `SELECT COUNT(*)::int AS total
       FROM payments p
-      JOIN invoices i ON i.id = p.invoice_id
       WHERE ${where.join(" AND ")}`,
     vals
   );
@@ -2823,43 +2052,14 @@ app.get("/api/payments/summary", requireAuth, async (req: AuthRequest, res) => {
   });
 });
 
-// Record a payment manually (offline/stub)
-app.post("/api/payments/record", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { invoiceId, amount, provider = "manual", providerPaymentId, idempotencyKey } = req.body;
-  if (!invoiceId || !amount) return res.status(400).json({ error: "invoiceId and amount required" });
-
-  await invoiceService.recordPayment(
-    req.user!.businessId,
-    invoiceId,
-    amount,
-    provider,
-    providerPaymentId,
-    idempotencyKey
-  );
-  invalidateReportsCache(req.user!.businessId);
-  res.status(201).json({ ok: true });
-});
-
-// Single payment detail with invoice, customer, and payment events timeline
+// Single payment detail with payment events timeline
 app.get("/api/payments/:id", requireAuth, async (req: AuthRequest, res) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
 
   const paymentRes = await query(
-    `SELECT p.*, i.invoice_number, i.status as invoice_status, i.total as invoice_total,
-            i.amount_due as invoice_amount_due, i.amount_paid as invoice_amount_paid,
-            i.currency as invoice_currency, i.due_date as invoice_due_date,
-            i.issue_date as invoice_issue_date, i.sent_at as invoice_sent_at,
-            i.paid_at as invoice_paid_at, i.notes as invoice_notes,
-            c.name as customer_name, c.email as customer_email, c.address_line_1 as customer_address_line_1,
-            c.address_line_2 as customer_address_line_2, c.city as customer_city,
-            c.state_or_region as customer_state, c.postal_code as customer_postal_code,
-            c.country_code as customer_country_code,
-            b.name as business_name, b.email as business_email, b.phone as business_phone
+    `SELECT p.*, b.name as business_name, b.email as business_email, b.phone as business_phone
      FROM payments p
-     JOIN invoices i ON i.id = p.invoice_id
      JOIN businesses b ON b.id = p.business_id
-     LEFT JOIN customers c ON c.id = i.customer_id
      WHERE p.id = $1 AND p.business_id = $2`,
     [req.params.id, req.user!.businessId]
   );
@@ -2876,34 +2076,6 @@ app.get("/api/payments/:id", requireAuth, async (req: AuthRequest, res) => {
   );
 
   res.json({ payment, events: eventsRes.rows });
-});
-
-// Issue a refund for a payment
-app.post("/api/payments/:id/refund", requireAuth, async (req: AuthRequest, res) => {
-  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
-  const { amount, reason } = req.body;
-  if (!amount) return res.status(400).json({ error: "amount required" });
-
-  const payRes = await query(
-    `SELECT invoice_id, currency, status, provider FROM payments WHERE id = $1 AND business_id = $2`,
-    [req.params.id, req.user!.businessId]
-  );
-  if (!payRes.rows.length) return res.status(404).json({ error: "Payment not found" });
-  const paymentRow = payRes.rows[0];
-
-  const result = await invoiceService.refundPayment(
-    req.user!.businessId,
-    paymentRow.invoice_id,
-    req.params.id,
-    amount,
-    paymentRow.currency,
-    paymentRow.provider ?? "stub",
-    undefined,
-    `refund:${crypto.randomUUID()}`,
-    reason
-  );
-  invalidateReportsCache(req.user!.businessId);
-  res.json({ ok: true, status: result.status });
 });
 
 app.get("/api/tax-rates", requireAuth, async (req: AuthRequest, res) => {
@@ -2955,61 +2127,6 @@ app.delete("/api/tax-rates/:id", requireAuth, async (req: AuthRequest, res) => {
   );
   if (!result.rows.length) return res.status(404).json({ error: "Tax rate not found" });
   res.json({ deleted: true });
-});
-
-// ============================================================================
-// PUBLIC INVOICE VIEW (customer-facing, no auth required)
-// ============================================================================
-app.get("/api/public/invoices/:token", optionalAuth, async (req: AuthRequest, res) => {
-  const { invoice, html, attachments } = await invoiceService.getPublicInvoice(req.params.token);
-  res.json({ invoice, html, attachments });
-});
-
-app.get("/api/public/invoices/:token/pdf", optionalAuth, async (req: AuthRequest, res) => {
-  const invoice = await invoiceRepository.findByPublicToken(undefined, req.params.token);
-  const result = await invoiceService.generatePdf(invoice.businessId, invoice.id);
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename=invoice-${result.invoiceNumber ?? invoice.id}.pdf`);
-  res.send(result.buffer);
-});
-
-app.post("/api/public/invoices/:token/view", optionalAuth, async (req: AuthRequest, res) => {
-  const invoiceId = await invoiceService.recordView(req.params.token);
-  res.json({ invoiceId });
-});
-
-app.post("/api/public/invoices/:token/pay", optionalAuth, async (req: AuthRequest, res) => {
-  const { amount, provider = "stub", idempotencyKey } = req.body;
-  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: "Valid amount required" });
-  try {
-    await invoiceService.recordPublicPayment(req.params.token, amount, provider, idempotencyKey);
-    const invoice = await invoiceRepository.findByPublicToken(undefined, req.params.token);
-    invalidateReportsCache(invoice.businessId);
-    res.status(201).json({ ok: true });
-  } catch (err: any) {
-    if (err.statusCode) {
-      res.status(err.statusCode).json({ error: err.message, code: err.code });
-    } else {
-      res.status(400).json({ error: err.message || "Payment failed" });
-    }
-  }
-});
-
-app.post("/api/public/invoices/:token/payment-intent", optionalAuth, async (req: AuthRequest, res) => {
-  try {
-    const invoice = await invoiceRepository.findByPublicToken(undefined, req.params.token);
-    if (!invoice.isFinalized) return res.status(400).json({ error: "Invoice is not finalized" });
-    const amountDue = new Decimal(invoice.amountDue ?? invoice.total ?? 0);
-    if (amountDue.lte(0)) return res.status(400).json({ error: "Invoice is already fully paid" });
-    const result = await invoiceService.createPaymentIntent(invoice.businessId, invoice.id);
-    res.json(result);
-  } catch (err: any) {
-    if (err.statusCode) {
-      res.status(err.statusCode).json({ error: err.message, code: err.code });
-    } else {
-      res.status(400).json({ error: err.message || "Could not create payment intent" });
-    }
-  }
 });
 
 // ============================================================================
@@ -3101,11 +2218,7 @@ async function handleStripeEvent(event: any): Promise<void> {
     }
     default:
       if (event.type.startsWith("payment_intent.") || event.type.startsWith("charge.")) {
-        try {
-          await invoicePaymentService.reconcileStripeEvent(event);
-        } catch (e) {
-          logger.error({ err: e, eventType: event.type, eventId: event.id }, "Failed to reconcile Stripe payment event");
-        }
+        logger.info(`Payment event received but invoice reconciliation was removed: ${event.type}`);
         return;
       }
       logger.info(`Unhandled Stripe event type: ${event.type}`);
@@ -3214,54 +2327,12 @@ async function start() {
   app.listen(PORT, () => {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
     subscriptionService.ensureDefaults().catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
-    processOverdueJob();
-  });
+   });
 }
 
-let overdueJobRunning = false;
-function processOverdueJob() {
-  if (overdueJobRunning) return;
-  overdueJobRunning = true;
-  invoiceService.processOverdueInvoices().then((count) => {
-    if (count > 0) logger.info(`Processed ${count} overdue invoices`);
-   }).catch((e) => logger.error({ err: e }, "Overdue processing failed"));
-   
-   invoiceService.processAutomatedReminders().then((count) => {
-     if (count > 0) logger.info(`Sent ${count} automated reminders`);
-   }).catch((e) => logger.error({ err: e }, "Automated reminder processing failed"));
-  
-   overdueJobRunning = false;
-   setTimeout(processOverdueJob, 15 * 60 * 1000);
- }
-
-// Nightly payment risk scoring job (runs every 24h)
-let riskScoringJobRunning = false;
-async function runPaymentRiskScoringJob() {
-  if (riskScoringJobRunning) return;
-  riskScoringJobRunning = true;
-  try {
-    const businessIds = await invoiceRepository.getAllBusinessIdsWithOutstandingInvoices();
-    let totalScored = 0;
-    let totalFailed = 0;
-    for (const bizId of businessIds) {
-      const result = await paymentRiskService.batchScoreBusiness(bizId);
-      totalScored += result.scored;
-      totalFailed += result.failed;
-    }
-    if (totalScored > 0) logger.info(`Risk scoring: scored ${totalScored} invoices (${totalFailed} failed)`);
-  } catch (e) {
-    logger.error({ err: e }, "Payment risk scoring job failed");
-  } finally {
-    riskScoringJobRunning = false;
-    setTimeout(runPaymentRiskScoringJob, 24 * 60 * 60 * 1000);
-  }
-}
-
-// Start the nightly job shortly after server start
-if (!isTest && !isDev) {
-  setTimeout(runPaymentRiskScoringJob, 60 * 1000);
-}
-
+// ============================================================================
+// SERVER STARTUP
+// ============================================================================
 if (!isTest) {
   start().catch((err) => {
     logger.error({ err }, "Failed to start server");

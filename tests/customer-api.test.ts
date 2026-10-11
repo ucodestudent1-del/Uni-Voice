@@ -198,19 +198,9 @@ describe("Customer API (integration)", () => {
       const res = await agent.post(`/api/customers/${body.customer.id}/restore`).set(headers);
       expect(res.status).toBe(409);
     });
-  });
+   });
 
-  describe("GET /api/customers/:id/invoices", () => {
-    it("returns empty invoice list for new customer", async () => {
-      const { body } = await agent.post("/api/customers").set(headers).send({ name: "No Invoices" });
-      const res = await agent.get(`/api/customers/${body.customer.id}/invoices`).set(headers);
-      expect(res.status).toBe(200);
-      expect(res.body.data).toHaveLength(0);
-      expect(res.body.total).toBe(0);
-    });
-  });
-
-  describe("GET /api/customers/:id/summary", () => {
+   describe("GET /api/customers/:id/summary", () => {
     it("returns customer summary with invoice stats", async () => {
       const { body } = await agent.post("/api/customers").set(headers).send({ name: "Summary Customer" });
       const res = await agent.get(`/api/customers/${body.customer.id}/summary`).set(headers);
@@ -231,39 +221,6 @@ describe("Customer API (integration)", () => {
       const eventTypes = res.body.events.map((e: any) => e.event_type);
       expect(eventTypes).toContain("created");
       expect(eventTypes).toContain("archived");
-    });
-  });
-
-  describe("GET /api/customers/:id/invoices with actual invoices", () => {
-    it("returns finalized invoices linked to the customer", async () => {
-      const { body: custBody } = await agent.post("/api/customers").set(headers).send({ name: "Invoice Customer" });
-      const customerId = custBody.customer.id;
-
-      const { body: invBody } = await agent.post("/api/invoices").set(headers).send({
-        customerId,
-        currency: "USD",
-        notes: "Test invoice",
-        issueDate: new Date().toISOString(),
-        items: [
-          {
-            description: "Consulting",
-            quantity: "1",
-            unit: "hour",
-            unitPrice: "100.00",
-            taxRate: "0",
-            isTaxInclusive: false,
-          },
-        ],
-      });
-      const invoiceId = invBody.invoiceId;
-
-      await agent.post(`/api/invoices/${invoiceId}/finalize`).set(headers);
-
-      const res = await agent.get(`/api/customers/${customerId}/invoices`).set(headers);
-      expect(res.status).toBe(200);
-      expect(res.body.total).toBe(1);
-      expect(res.body.data[0].invoiceNumber).toBeTruthy();
-      expect(res.body.data[0].finalizedAt).toBeTruthy();
     });
   });
 });

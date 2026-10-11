@@ -5,7 +5,6 @@ import { rowToDate } from "./helpers.js";
 
 export interface ReceiptFilter {
   status?: string;
-  invoiceId?: string;
   paymentId?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -110,7 +109,6 @@ export class ReceiptRepository {
     let i = 2;
 
     if (filter.status) { conditions.push(`status = $${i++}`); vals.push(filter.status); }
-    if (filter.invoiceId) { conditions.push(`invoice_id = $${i++}`); vals.push(filter.invoiceId); }
     if (filter.paymentId) { conditions.push(`payment_id = $${i++}`); vals.push(filter.paymentId); }
     if (filter.dateFrom) { conditions.push(`issued_at >= $${i++}`); vals.push(filter.dateFrom); }
     if (filter.dateTo) { conditions.push(`issued_at <= $${i++}`); vals.push(filter.dateTo); }
@@ -121,7 +119,7 @@ export class ReceiptRepository {
     // Project explicit columns (excluding the pdf BLOB) to avoid transferring
     // large binary data over the wire for list views.
     const dataRes = await query(
-      `SELECT id, business_id, invoice_id, payment_id, receipt_number, amount, currency,
+      `SELECT id, business_id, payment_id, receipt_number, amount, currency,
               payment_method, payment_purpose, status, issued_at, email_log_id,
               idempotency_key, metadata, created_at, updated_at,
               COUNT(*) OVER() AS total_count
@@ -145,15 +143,14 @@ export class ReceiptRepository {
     let i = 2;
 
     if (filter.status) { conditions.push(`r.status = $${i++}`); vals.push(filter.status); }
-    if (filter.invoiceId) { conditions.push(`r.invoice_id = $${i++}`); vals.push(filter.invoiceId); }
     if (filter.paymentId) { conditions.push(`r.payment_id = $${i++}`); vals.push(filter.paymentId); }
     if (filter.dateFrom) { conditions.push(`r.issued_at >= $${i++}`); vals.push(filter.dateFrom); }
     if (filter.dateTo) { conditions.push(`r.issued_at <= $${i++}`); vals.push(filter.dateTo); }
     if (filter.provider) { conditions.push(`(r.metadata->>'provider') = $${i++}`); vals.push(filter.provider); }
     if (filter.search) {
       const term = `%${filter.search}%`;
-      conditions.push(`(r.receipt_number ILIKE $${i} OR i.invoice_number ILIKE $${i} OR c.name ILIKE $${i})`);
-      vals.push(term, term, term);
+      conditions.push(`(r.receipt_number ILIKE $${i} OR c.name ILIKE $${i})`);
+      vals.push(term, term);
       i++;
     }
 
@@ -161,13 +158,11 @@ export class ReceiptRepository {
     const offset = Math.max(filter.offset ?? 0, 0);
 
     const res = await query(
-      `SELECT r.*, i.invoice_number, i.currency,
-              i.customer_id, c.name as customer_name, c.email as customer_email,
+      `SELECT r.*,
               b.name as business_name
        FROM receipts r
-       JOIN invoices i ON i.id = r.invoice_id
        JOIN businesses b ON b.id = r.business_id
-       LEFT JOIN customers c ON c.id = i.customer_id
+       LEFT JOIN customers c ON c.id = r.customer_id
        WHERE ${conditions.join(" AND ")}
        ORDER BY r.created_at DESC
        LIMIT $${i++} OFFSET $${i++}`,
@@ -185,15 +180,14 @@ export class ReceiptRepository {
     let i = 2;
 
     if (filter.status) { conditions.push(`r.status = $${i++}`); vals.push(filter.status); }
-    if (filter.invoiceId) { conditions.push(`r.invoice_id = $${i++}`); vals.push(filter.invoiceId); }
     if (filter.paymentId) { conditions.push(`r.payment_id = $${i++}`); vals.push(filter.paymentId); }
     if (filter.dateFrom) { conditions.push(`r.issued_at >= $${i++}`); vals.push(filter.dateFrom); }
     if (filter.dateTo) { conditions.push(`r.issued_at <= $${i++}`); vals.push(filter.dateTo); }
     if (filter.provider) { conditions.push(`(r.metadata->>'provider') = $${i++}`); vals.push(filter.provider); }
     if (filter.search) {
       const term = `%${filter.search}%`;
-      conditions.push(`(r.receipt_number ILIKE $${i} OR i.invoice_number ILIKE $${i} OR c.name ILIKE $${i})`);
-      vals.push(term, term, term);
+      conditions.push(`(r.receipt_number ILIKE $${i} OR c.name ILIKE $${i})`);
+      vals.push(term, term);
       i++;
     }
 
@@ -203,19 +197,18 @@ export class ReceiptRepository {
     // Project explicit columns (excluding the pdf BLOB) to avoid transferring
     // large binary data over the wire for list views.
     const res = await query(
-      `SELECT r.id, r.business_id, r.invoice_id, r.payment_id, r.receipt_number, r.amount, i.currency,
+      `SELECT r.id, r.business_id, r.invoice_id, r.payment_id, r.receipt_number, r.amount, r.currency,
               r.payment_method, r.payment_purpose, r.status, r.issued_at, r.email_log_id,
               r.idempotency_key, r.metadata, r.created_at, r.updated_at,
-              i.invoice_number, i.customer_id, c.name as customer_name, c.email as customer_email,
+              c.name as customer_name, c.email as customer_email,
               b.name as business_name,
               COUNT(*) OVER() AS total_count
-        FROM receipts r
-        JOIN invoices i ON i.id = r.invoice_id
-        JOIN businesses b ON b.id = r.business_id
-        LEFT JOIN customers c ON c.id = i.customer_id
-        WHERE ${conditions.join(" AND ")}
-        ORDER BY r.created_at DESC
-        LIMIT $${i++} OFFSET $${i++}`,
+       FROM receipts r
+       JOIN businesses b ON b.id = r.business_id
+       LEFT JOIN customers c ON c.id = r.customer_id
+       WHERE ${conditions.join(" AND ")}
+       ORDER BY r.created_at DESC
+       LIMIT $${i++} OFFSET $${i++}`,
        [...vals, limit, offset]
     );
 

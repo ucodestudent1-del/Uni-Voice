@@ -15,7 +15,6 @@ import {
   Download,
   Copy,
   RefreshCw,
-  FileText,
   Clock,
   CheckCircle,
   XCircle,
@@ -141,9 +140,9 @@ function RecordPaymentModal({ open, onClose, onConfirm, payment, processing }: R
       >
         <div className="p-6 pb-4">
           <h2 className="text-lg font-semibold text-primary">Record Payment Manually</h2>
-          <p className="mt-1 text-sm text-secondary">
-            Record an offline payment for invoice #{payment.invoice_number || payment.invoice_id?.slice(0, 8)}.
-          </p>
+            <p className="mt-1 text-sm text-secondary">
+              Record an offline payment for this transaction.
+            </p>
         </div>
 
         <div className="px-6 pb-4 space-y-4">
@@ -301,7 +300,6 @@ export default function PaymentDetail() {
     setActionLoading(true);
     try {
       await recordPaymentManually({
-        invoiceId: payment.invoice_id,
         amount: data.amount,
         provider: data.provider,
         providerPaymentId: data.providerPaymentId,
@@ -317,16 +315,6 @@ export default function PaymentDetail() {
       setActionLoading(false);
     }
   }, [payment, toast]);
-
-  const handleViewInvoice = useCallback(() => {
-    if (!payment) return;
-    navigate(`/app/invoices/${payment.invoice_id}`);
-  }, [payment, navigate]);
-
-  const handleDownloadReceipt = useCallback(() => {
-    if (!payment) return;
-    window.open(`/api/invoices/${payment.invoice_id}/pdf`, "_blank");
-  }, [payment]);
 
   const handleCopyPaymentId = useCallback(async () => {
     if (!payment) return;
@@ -415,17 +403,9 @@ export default function PaymentDetail() {
             variant="secondary"
             size="sm"
             icon={<Download className="h-4 w-4" />}
-            onClick={handleDownloadReceipt}
+            onClick={() => window.open(`/api/payments/${payment?.id}/receipt`, "_blank")}
           >
             Download Receipt
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<FileText className="h-4 w-4" />}
-            onClick={handleViewInvoice}
-          >
-            View Invoice
           </Button>
         </div>
       </div>
@@ -584,16 +564,7 @@ export default function PaymentDetail() {
               <div>
                 <dt className="text-tertiary">Invoice Number</dt>
                 <dd className="text-primary mt-0.5">
-                  {payment.invoice_id ? (
-                    <Link
-                      to={`/app/invoices/${payment.invoice_id}`}
-                      className="text-primary-brand hover:underline"
-                    >
-                      {payment.invoice_number || `#${payment.invoice_id.slice(0, 8)}`}
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
+                  {payment.invoice_number || (payment.invoice_id ? `#${payment.invoice_id.slice(0, 8)}` : "—")}
                 </dd>
               </div>
               <div>

@@ -1017,6 +1017,119 @@ export class ReportsService {
     return result;
   }
 
+  async getVolumeTrend(businessId: string, months: number, period: "day" | "week" | "month" = "month"): Promise<Array<{
+    period: string;
+    invoiced: string;
+    paid: string;
+    count: number;
+  }>> {
+    const dateTrunc = period === "day" ? "day" : period === "week" ? "week" : "month";
+    const format = period === "day" ? "YYYY-MM-DD" : period === "week" ? "IYYY-IW" : "YYYY-MM";
+    const cutoff = new Date();
+    cutoff.setDate(1);
+    cutoff.setMonth(cutoff.getMonth() - months + 1);
+    cutoff.setHours(0, 0, 0, 0);
+
+    const res = await query(
+      `SELECT
+           TO_CHAR(DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at)), '${format}') AS period,
+           COUNT(*)::int AS count,
+           COALESCE(SUM(i.total), 0) AS invoiced,
+           COALESCE(SUM(i.amount_paid), 0) AS paid
+         FROM invoices i
+         WHERE i.business_id = $1 AND i.issue_date >= $2
+         GROUP BY DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at))
+         UNION ALL
+         SELECT
+           TO_CHAR(DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at)), '${format}') AS period,
+           COUNT(*)::int AS count,
+           COALESCE(SUM(i.total), 0) AS invoiced,
+           COALESCE(SUM(i.amount_paid), 0) AS paid
+         FROM invoices i
+         WHERE i.business_id = $1 AND i.issue_date IS NULL
+         GROUP BY DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at))
+         UNION ALL
+         SELECT
+           TO_CHAR(DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at)), '${format}') AS period,
+           COUNT(*)::int AS count,
+           COALESCE(SUM(i.total), 0) AS invoiced,
+           COALESCE(SUM(i.amount_paid), 0) AS paid
+         FROM invoices i
+         WHERE i.business_id = $1 AND i.issue_date < $2 AND i.created_at >= $2
+         GROUP BY DATE_TRUNC('${dateTrunc}', COALESCE(i.issue_date, i.created_at))
+         ORDER BY period ASC`,
+      [businessId, cutoff.toISOString()]
+    );
+
+    const merged = new Map<string, { period: string; invoiced: string; paid: string; count: number }>();
+    for (const row of res.rows) {
+      const existing = merged.get(row.period);
+      if (existing) {
+        existing.count += Number(row.count ?? 0);
+        existing.invoiced = String(new Decimal(existing.invoiced).plus(new Decimal(row.invoiced ?? "0")));
+        existing.paid = String(new Decimal(existing.paid).plus(new Decimal(row.paid ?? "0")));
+      } else {
+        merged.set(row.period, {
+          period: row.period as string,
+          invoiced: String(row.invoiced ?? "0"),
+          paid: String(row.paid ?? "0"),
+          count: Number(row.count ?? 0),
+        });
+      }
+    }
+
+    return Array.from(merged.values()).sort((a, b) => a.period.localeCompare(b.period));
+  }
+
+  async getPaymentMetrics(businessId: string, _monthStart: Date): Promise<{
+    totalInvoiced: string;
+    totalPaid: string;
+    totalOutstanding: string;
+    totalOverdue: string;
+    averagePaymentTimeDays: number;
+    collectionRate: number;
+    paidInvoiceCount: number;
+  } | null> {
+    try {
+      const res = await query(
+        `SELECT
+           COALESCE(SUM(total), 0) AS total_invoiced,
+           COALESCE(SUM(amount_paid), 0) AS total_paid,
+           COALESCE(SUM(CASE WHEN amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_outstanding,
+           COALESCE(SUM(CASE WHEN (status = 'overdue' OR (due_date < NOW() AND amount_due > 0)) AND amount_due > 0 AND status NOT IN ('draft','cancelled','void') THEN amount_due ELSE 0 END), 0) AS total_overdue,
+           COUNT(CASE WHEN status = 'paid' AND paid_at IS NOT NULL AND created_at IS NOT NULL THEN 1 END) AS paid_invoice_count,
+           COALESCE(SUM(CASE WHEN status = 'paid' AND paid_at IS NOT NULL AND created_at IS NOT NULL
+            THEN EXTRACT(EPOCH FROM (paid_at - created_at)) / 86400 ELSE 0 END), 0) AS total_payment_days
+         FROM invoices
+         WHERE business_id = $1`,
+        [businessId]
+      );
+
+      const row = res.rows[0];
+      const totalInvoiced = String(row.total_invoiced ?? "0");
+      const totalPaid = String(row.total_paid ?? "0");
+      const totalOutstanding = String(row.total_outstanding ?? "0");
+      const totalOverdue = String(row.total_overdue ?? "0");
+      const paidInvoiceCount = Number(row.paid_invoice_count ?? 0);
+      const totalPaymentDays = Number(row.total_payment_days ?? 0);
+      const averagePaymentTimeDays = paidInvoiceCount > 0 ? Math.round(totalPaymentDays / paidInvoiceCount) : 0;
+      const totalInvoicedNum = Number(totalInvoiced);
+      const collectionRate = totalInvoicedNum > 0 ? Math.round((Number(totalPaid) / totalInvoicedNum) * 100) : 0;
+
+      return {
+        totalInvoiced,
+        totalPaid,
+        totalOutstanding,
+        totalOverdue,
+        averagePaymentTimeDays,
+        collectionRate,
+        paidInvoiceCount,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async getAgingReport(businessId: string): Promise<{
     buckets: Array<{ bucket: string; count: number; amount: string }>;
     summary: { totalOutstanding: string; totalOverdue: string; currency: string };

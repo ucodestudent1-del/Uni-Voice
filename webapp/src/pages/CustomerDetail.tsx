@@ -1,36 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
   getCustomer,
-  getCustomerInvoices,
   getCustomerSummary,
   archiveCustomer,
   restoreCustomer,
-  createInvoice as apiCreateInvoice,
-  sendReminder,
 } from "../api/client";
 import FeatureGate from "../components/FeatureGate";
 import CustomerStatusBadge from "../components/CustomerStatusBadge";
-import InvoiceStatusBadge from "../components/InvoiceStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import { formatCurrency } from "../utils/format";
-import { formatDate } from "../utils/format";
-import { getInvoiceDisplayStatus } from "../utils/customer";
-import type { ApiCustomer, ApiCustomerInvoiceSummary, ApiCustomerSummary } from "../types/api";
-
-const INVOICE_STATUS_FILTERS = [
-  { value: "all", label: "All" },
-  { value: "draft", label: "Draft" },
-  { value: "sent", label: "Sent" },
-  { value: "viewed", label: "Viewed" },
-  { value: "partially_paid", label: "Partially Paid" },
-  { value: "paid", label: "Paid" },
-  { value: "overdue", label: "Overdue" },
-  { value: "cancelled", label: "Cancelled" },
-];
-
-const REMINDABLE_STATUSES = new Set(["sent", "viewed", "partially_paid", "overdue"]);
+import type { ApiCustomer, ApiCustomerSummary } from "../types/api";
 
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
@@ -78,27 +59,6 @@ export default function CustomerDetail() {
     }
   }
 
-  async function handleCreateInvoice() {
-    if (!customer) return;
-    try {
-      const res = await apiCreateInvoice({
-        customerId: customer.id,
-        currency: customer.defaultCurrency || "USD",
-        items: [{
-          description: "",
-          quantity: "1",
-          unit: "each",
-          unitPrice: "0.00",
-          taxRate: "0",
-          isTaxInclusive: false,
-        }],
-      });
-      navigate(`/app/invoices/${res.invoiceId}/edit`);
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to create invoice");
-    }
-  }
-
   if (loading) {
     return <div className="text-center py-20 text-secondary">Loading customer...</div>;
   }
@@ -133,18 +93,12 @@ export default function CustomerDetail() {
           <CustomerStatusBadge status={customer.status} />
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowForm(true)}
-            className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
-          >
-            Edit
-          </button>
-          <FeatureGate feature="invoices.create" requiredPlan="free" fallback={null}>
+          <FeatureGate feature="customers.edit" requiredPlan="free" fallback={null}>
             <button
-              onClick={handleCreateInvoice}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              onClick={() => setShowForm(true)}
+              className="rounded-lg border border-input-border px-4 py-2 text-sm font-medium text-secondary hover:bg-surface-alt"
             >
-              + Create Invoice
+              Edit
             </button>
           </FeatureGate>
           {customer.status === "archived" ? (
@@ -180,16 +134,10 @@ export default function CustomerDetail() {
 
 function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
   const [summary, setSummary] = useState<ApiCustomerSummary | null>(null);
-  const [invoices, setInvoices] = useState<ApiCustomerInvoiceSummary[]>([]);
   const [loadingSummary, setLoadingSummary] = useState(true);
-  const [loadingInvoices, setLoadingInvoices] = useState(true);
-  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState("all");
-  const [remindingInvoice, setRemindingInvoice] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadSummary();
-    loadInvoices();
   }, [customer.id]);
 
   async function loadSummary() {
@@ -203,53 +151,15 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
     }
   }
 
-  async function loadInvoices() {
-    try {
-      const data = await getCustomerInvoices(customer.id, { limit: 100 });
-      setInvoices(data.data ?? []);
-    } catch {
-      setInvoices([]);
-    } finally {
-      setLoadingInvoices(false);
-    }
-  }
-
-  async function handleSendReminder(invoice: ApiCustomerInvoiceSummary) {
-    setRemindingInvoice(invoice.id);
-    setActionMessage(null);
-    try {
-      await sendReminder(invoice.id);
-      setActionMessage(`Reminder sent for ${invoice.invoiceNumber || invoice.id.slice(0, 8)}.`);
-      loadInvoices();
-    } catch (err: any) {
-      setActionMessage(err.response?.data?.error || "Failed to send reminder");
-    } finally {
-      setRemindingInvoice(null);
-    }
-  }
-
-  const displayStatus = (inv: ApiCustomerInvoiceSummary) => getInvoiceDisplayStatus(inv);
-  const isOverdueRow = (inv: ApiCustomerInvoiceSummary) =>
-    displayStatus(inv) === "overdue";
-
-  const filteredInvoices = invoiceStatusFilter === "all"
-    ? invoices
-    : invoices.filter((i) => displayStatus(i) === invoiceStatusFilter);
-
-  const currency = invoices[0]?.currency || summary?.customer.defaultCurrency || customer.defaultCurrency || "USD";
-  const totalInvoiceCount = summary?.totalInvoiceCount ?? invoices.filter((i) => getInvoiceDisplayStatus(i) !== "draft").length;
-  const finalizedCount = summary?.finalizedInvoiceCount ?? invoices.filter((i) => getInvoiceDisplayStatus(i) !== "draft").length;
+  const currency = summary?.customer.defaultCurrency || customer.defaultCurrency || "USD";
+  const totalInvoiceCount = summary?.totalInvoiceCount ?? 0;
+  const finalizedCount = summary?.finalizedInvoiceCount ?? 0;
   const averagePaymentDays = summary?.averagePaymentDays ?? undefined;
 
   return (
     <>
-      {actionMessage && (
-        <div className="rounded-lg border border-color-subtle bg-surface-alt px-3 py-2 text-sm text-secondary">
-          {actionMessage}
-        </div>
-      )}
-
       {renderFinancialSummary(summary, loadingSummary, currency, totalInvoiceCount, finalizedCount, averagePaymentDays)}
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
@@ -292,119 +202,6 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
               </ul>
             </div>
           )}
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-surface rounded-xl border border-color-subtle p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-secondary uppercase">Invoice History</h3>
-              <div className="flex gap-1 flex-wrap">
-                {INVOICE_STATUS_FILTERS.map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => setInvoiceStatusFilter(f.value)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                      invoiceStatusFilter === f.value
-                        ? "bg-primary-bg text-primary-brand"
-                        : "text-secondary hover:bg-surface-alt"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {loadingInvoices ? (
-              <div className="text-center py-8 text-secondary">Loading invoices...</div>
-            ) : filteredInvoices.length === 0 ? (
-              <div className="text-center py-8 text-secondary">
-                {invoiceStatusFilter !== "all"
-                  ? "No invoices match the selected filter"
-                  : "No invoices for this customer yet"}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-color-subtle">
-                      <th className="text-left text-xs font-medium text-secondary uppercase py-2">Invoice</th>
-                      <th className="text-center text-xs font-medium text-secondary uppercase py-2">Status</th>
-                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Total</th>
-                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Paid</th>
-                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Due</th>
-                      <th className="text-right text-xs font-medium text-secondary uppercase py-2">Due Date</th>
-                      <th className="text-center text-xs font-medium text-secondary uppercase py-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredInvoices.map((inv) => {
-                      const overdue = isOverdueRow(inv);
-                      const canRemind = REMINDABLE_STATUSES.has(displayStatus(inv)) && new Decimal(inv.amountDue ?? 0).gt(0);
-                      return (
-                        <tr
-                          key={inv.id}
-                          className={`border-b border-color-subtle last:border-b-0 ${overdue ? "status-error-bg" : "hover:bg-surface-alt"}`}
-                        >
-                          <td className="py-2">
-                            <Link
-                              to={`/app/invoices/${inv.id}`}
-                              className="text-sm font-medium text-primary hover:text-primary-brand"
-                            >
-                              {inv.invoiceNumber || `Draft #${inv.id.slice(0, 8)}`}
-                            </Link>
-                            <p className="text-xs text-secondary">{formatDate(inv.createdAt)}</p>
-                          </td>
-                          <td className="py-2 text-center">
-                            <InvoiceStatusBadge status={displayStatus(inv)} isOverdue={overdue} />
-                          </td>
-                          <td className="py-2 text-right text-sm font-medium text-primary">
-                            {formatCurrency(inv.total, currency)}
-                          </td>
-                          <td className="py-2 text-right text-sm text-secondary">
-                            {new Decimal(inv.amountPaid ?? 0).gt(0)
-                              ? formatCurrency(inv.amountPaid, currency)
-                              : "-"}
-                          </td>
-                          <td className="py-2 text-right text-sm text-secondary">
-                            {new Decimal(inv.amountDue ?? 0).gt(0)
-                              ? formatCurrency(inv.amountDue, currency)
-                              : "-"}
-                          </td>
-                          <td className="py-2 text-right text-sm text-secondary">
-                            {inv.dueDate ? formatDate(inv.dueDate) : "-"}
-                          </td>
-                          <td className="py-2 text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              {canRemind && (
-                                <FeatureGate feature="reminders.automated" fallback={null}>
-                                  <button
-                                    onClick={() => handleSendReminder(inv)}
-                                    disabled={remindingInvoice === inv.id}
-                                    className="text-xs text-secondary hover:text-primary"
-                                    title="Send reminder"
-                                  >
-                                    {remindingInvoice === inv.id ? "..." : "Remind"}
-                                  </button>
-                                </FeatureGate>
-                              )}
-                              <Link
-                                to={`/app/invoices/${inv.id}`}
-                                className="text-xs text-secondary hover:text-primary"
-                                title="View invoice"
-                              >
-                                View
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </>

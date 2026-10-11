@@ -5,7 +5,6 @@ import type { ProjectNoteCreateInput } from "../domain/schemas/project-time-entr
 import { NotFoundError, BusinessLogicError } from "../domain/errors.js";
 import { rowToDate } from "./helpers.js";
 import type { PagedResult } from "../repositories/helpers.js";
-import type { DraftLineItem } from "../services/invoice-service.js";
 
 export interface TimeEntrySearchOpts {
   billable?: boolean;
@@ -237,34 +236,6 @@ export class ProjectTimeEntryRepository {
     await query(`DELETE FROM project_time_entries WHERE id = $1 AND business_id = $2`, [id, businessId]);
   }
 
-  async markInvoiced(
-    businessId: string,
-    projectId: string,
-    invoiceId: string,
-    client?: { query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }> }
-  ): Promise<void> {
-    const sql = `
-      UPDATE project_time_entries
-      SET is_invoiced = true, invoice_id = $1, updated_at = NOW()
-      WHERE project_id = $2 AND business_id = $3
-        AND is_invoiced = false AND billable = true
-        AND (invoice_id IS NULL OR invoice_id != $1)
-    `;
-    const runner = client ? client.query.bind(client) : query;
-    await runner(sql, [invoiceId, projectId, businessId]);
-  }
-
-  async getUnbilledBillableEntries(businessId: string, projectId: string): Promise<ProjectTimeEntry[]> {
-    const res = await query(
-      `SELECT * FROM project_time_entries
-       WHERE business_id = $1 AND project_id = $2
-         AND is_invoiced = false AND billable = true
-       ORDER BY created_at DESC`,
-      [businessId, projectId]
-    );
-    return res.rows.map((r) => this.rowToModel(r));
-  }
-
   async getSummary(businessId: string, projectId: string, currency = "USD"): Promise<ProjectTimeEntrySummary> {
     const res = await query(
       `SELECT
@@ -291,59 +262,6 @@ export class ProjectTimeEntryRepository {
       unbilledBillableAmount: (new Decimal(r.unbilled_billable_amount ?? 0)).toFixed(2),
       currency,
     };
-  }
-
-  async convertToLineItems(
-    businessId: string,
-    projectId: string,
-    _invoiceId?: string
-  ): Promise<DraftLineItem[]> {
-    const entries = await this.getUnbilledBillableEntries(businessId, projectId);
-    if (entries.length === 0) return [];
-
-    const lineItems: DraftLineItem[] = [];
-
-    for (const entry of entries) {
-      const hours = new Decimal(entry.durationMinutes ?? 0).div(60);
-      const rate = new Decimal(entry.billableRate);
-
-      let catalogInfo: Partial<Pick<DraftLineItem, "productId" | "catalogName" | "catalogSku" | "catalogTaxCategory" | "catalogUnitPrice" | "catalogTaxRate">> = {};
-
-      if (entry.catalogServiceId) {
-        const product = await this.fetchCatalogService(businessId, entry.catalogServiceId);
-        if (product) {
-          catalogInfo = {
-            productId: product.id,
-            catalogName: product.name,
-            catalogSku: product.sku,
-            catalogTaxCategory: product.taxCategory,
-            catalogUnitPrice: product.unitPrice,
-            catalogTaxRate: product.defaultTaxRate,
-          };
-        }
-      }
-
-      lineItems.push({
-        id: crypto.randomUUID(),
-        productId: entry.catalogServiceId ?? catalogInfo.productId ?? null,
-        description: entry.description,
-        quantity: hours.toFixed(4),
-        unit: "hour",
-        unitPrice: rate.toFixed(6),
-        discount: "0",
-        discountType: "percentage",
-        taxRate: catalogInfo.catalogTaxRate ?? "0",
-        isTaxInclusive: false,
-        sortOrder: lineItems.length,
-        catalogName: catalogInfo.catalogName ?? null,
-        catalogSku: catalogInfo.catalogSku ?? null,
-        catalogTaxCategory: catalogInfo.catalogTaxCategory ?? null,
-        catalogUnitPrice: catalogInfo.catalogUnitPrice ?? null,
-        catalogTaxRate: catalogInfo.catalogTaxRate ?? null,
-      });
-    }
-
-    return lineItems;
   }
 
   async addNote(

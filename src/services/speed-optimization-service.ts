@@ -1,6 +1,5 @@
 import { query, getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
-import type { Invoice } from "../domain/models/index.js";
 
 export interface ParsedLineItem {
   description: string;

@@ -1,8 +1,5 @@
-import { useMemo } from "react";
-import { Decimal } from "decimal.js";
 import {
   DollarSign,
-  TrendingUp,
   Clock,
   ArrowUpRight,
 } from "lucide-react";
@@ -14,8 +11,6 @@ interface ReportKPICardsProps {
   totalRevenue: string;
   totalOutstanding: string;
   avgPaymentDays: number | null;
-  churnRate: number | null;
-  volumeTrend: ApiVolumeTrend[];
   paidThisMonth: string;
 }
 
@@ -24,27 +19,8 @@ export default function ReportKPICards({
   totalRevenue,
   totalOutstanding,
   avgPaymentDays,
-  churnRate,
-  volumeTrend,
   paidThisMonth,
 }: ReportKPICardsProps) {
-  const revenueTrend = useMemo(() => {
-    if (volumeTrend.length < 2) return undefined;
-    const current = new Decimal(volumeTrend[volumeTrend.length - 1].invoiced ?? 0);
-    const previous = new Decimal(volumeTrend[volumeTrend.length - 2].invoiced ?? 0);
-    if (previous.isZero()) return undefined;
-    const pct = current.sub(previous).div(previous).mul(100).toNumber();
-    return { value: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, direction: (pct >= 0 ? "up" : "down") as "up" | "down" };
-  }, [volumeTrend]);
-
-  const paymentTrend = useMemo(() => {
-    if (volumeTrend.length < 2) return undefined;
-    const currentPaid = new Decimal(volumeTrend[volumeTrend.length - 1].paid ?? 0);
-    const previousPaid = new Decimal(volumeTrend[volumeTrend.length - 2].paid ?? 0);
-    if (previousPaid.isZero()) return undefined;
-    const pct = currentPaid.sub(previousPaid).div(previousPaid).mul(100).toNumber();
-    return { value: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, direction: (pct >= 0 ? "up" : "down") as "up" | "down" };
-  }, [volumeTrend]);
 
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -55,30 +31,29 @@ export default function ReportKPICards({
         subtitle="Gross revenue earned"
         icon={<DollarSign className="w-5 h-5" />}
         iconBackground="bg-success-bg text-success-text"
-        trend={revenueTrend}
       />
       <KPICard
         title="Outstanding Receivables"
         value={totalOutstanding}
         currency={currency}
-        subtitle="Unpaid invoices total"
+        subtitle="Outstanding payments"
         icon={<ArrowUpRight className="w-5 h-5" />}
         iconBackground="bg-warning-bg text-warning-text"
       />
       <KPICard
         title="Avg. Time to Payment"
         value={avgPaymentDays !== null ? `${avgPaymentDays} days` : "—"}
-        subtitle="Invoices paid within"
+        subtitle="Payments cleared within"
         icon={<Clock className="w-5 h-5" />}
         iconBackground="bg-info-bg text-info-text"
       />
       <KPICard
-        title="Churn Rate"
-        value={churnRate !== null ? `${churnRate}%` : "—"}
-        subtitle="Customer loss this period"
-        icon={<TrendingUp className="w-5 h-5" />}
-        iconBackground="bg-error-bg text-error-text"
-        trend={paymentTrend}
+        title="Paid This Month"
+        value={paidThisMonth}
+        currency={currency}
+        subtitle="Payments received"
+        icon={<DollarSign className="w-5 h-5" />}
+        iconBackground="bg-success-bg text-success-text"
       />
     </div>
   );

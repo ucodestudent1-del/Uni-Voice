@@ -5,18 +5,15 @@ import type {
   TwoFactorVerifyResult,
   TwoFactorStatus,
   RecoveryCodeSummary,
-  InvoiceSearchParams,
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
-  ApiPaymentWithInvoice,
   ApiPaymentSummary,
   ApiPaymentDetail,
   ApiPaymentEvent,
   ReportFiltersParams,
   ApiDashboardSummary,
   ApiRevenueReport,
-  ApiInvoicesReport,
   ApiPaymentsReport,
   ApiClientsReport,
   ApiTaxSummaryReport,
@@ -27,18 +24,15 @@ import type {
 
 // Re-export types from types/api
 export type {
-  InvoiceSearchParams,
   ApiReminderConfig,
   ApiReminderTemplate,
   ApiEnhancedDashboard,
-  ApiPaymentWithInvoice,
   ApiPaymentSummary,
   ApiPaymentDetail,
   ApiPaymentEvent,
   ReportFiltersParams,
   ApiDashboardSummary,
   ApiRevenueReport,
-  ApiInvoicesReport,
   ApiPaymentsReport,
   ApiClientsReport,
   ApiTaxSummaryReport,
@@ -235,133 +229,9 @@ export async function getStripeConfig() {
   return res.data;
 }
 
-export async function getInvoices(params?: { status?: string; customerId?: string; search?: string; limit?: number; offset?: number }) {
-  const res = await cachedGet("/invoices", params as Record<string, unknown> | undefined, { ttlMs: 30 * 1000 });
-  return res;
-}
-
-export async function getInvoice(id: string) {
-  const res = await cachedGet(`/invoices/${id}`, undefined, { ttlMs: 15 * 1000 });
-  return res;
-}
-
-export async function createInvoice(data: any) {
-  const res = await api.post("/invoices", data);
-  invalidateCache("/invoices?");
-  invalidateCacheByKey("/invoices/");
-  return res.data;
-}
-
-export async function updateInvoice(id: string, data: any) {
-  const res = await api.patch(`/invoices/${id}`, data);
-  invalidateCacheByKey("/invoices");
-  return res.data;
-}
-
-export interface InvoiceAttachmentPayload {
-  name: string;
-  size: number;
-  type?: string | null;
-  category: "attachment" | "before" | "after";
-  dataUrl?: string | null;
-}
-
-export async function setInvoiceAttachments(id: string, attachments: InvoiceAttachmentPayload[]) {
-  const res = await api.put(`/invoices/${id}/attachments`, { attachments });
-  invalidateCacheByKey(`/invoices/${id}`);
-  return res.data;
-}
-
-export async function sendInvoiceSms(id: string, to?: string) {
-  const res = await api.post(`/invoices/${id}/sms`, to ? { to } : {});
-  return res.data;
-}
-
-export interface FinalizeInvoiceResult {
-  invoiceNumber: string;
-  publicToken?: string | null;
-}
-
-export async function finalizeInvoice(id: string): Promise<FinalizeInvoiceResult> {
-  const res = await api.post(`/invoices/${id}/finalize`);
-  invalidateCacheByKey(`/invoices/${id}`);
-  invalidateCache("/invoices?");
-  return res.data;
-}
-
-export interface SendInvoiceResult {
-  publicToken: string;
-  status: string;
-}
-
-export async function sendInvoice(id: string): Promise<SendInvoiceResult> {
-  const res = await api.post(`/invoices/${id}/send`);
-  invalidateCacheByKey(`/invoices/${id}`);
-  invalidateCache("/invoices?");
-  return res.data;
-}
-
-export async function duplicateInvoice(id: string) {
-  const res = await api.post(`/invoices/${id}/duplicate`);
-  invalidateCache("/invoices?");
-  return res.data;
-}
-
-export async function getInvoicePdf(id: string) {
-  const res = await api.post(`/invoices/${id}/pdf`, {}, { responseType: "blob" });
-  return res.data;
-}
-
-export async function getInvoiceEvents(id: string) {
-  const res = await api.get(`/invoices/${id}/events`);
-  return res.data;
-}
-
-export async function getInvoicePayments(id: string) {
-  const res = await api.get(`/invoices/${id}/payments`);
-  return res.data;
-}
-
-export async function sendReminder(id: string) {
-  const res = await api.post(`/invoices/${id}/send-reminder`);
-  return res.data;
-}
-
-export async function cancelInvoice(id: string, data?: { reason?: string }) {
-  const res = await api.post(`/invoices/${id}/cancel`, data ?? {});
-  return res.data;
-}
-
-export async function voidInvoice(id: string, data?: { reason?: string }) {
-  const res = await api.post(`/invoices/${id}/void`, data ?? {});
-  return res.data;
-}
-
-export async function deleteInvoice(id: string) {
-  const res = await api.delete(`/invoices/${id}`);
-  invalidateCache("/invoices?");
-  invalidateCacheByKey(`/invoices/${id}`);
-  return res.data;
-}
-
-export async function createPaymentIntent(id: string) {
-  const res = await api.post(`/invoices/${id}/payment-intent`);
-  return res.data;
-}
-
 export async function getDashboardData() {
-  const res = await cachedGet("/dashboard", undefined, { ttlMs: 60 * 1000 });
+  const res = await cachedGet("/reports/dashboard", undefined, { ttlMs: 60 * 1000 });
   return res;
-}
-
-export async function payInvoicePublic(token: string, data: { amount: number; provider?: string; idempotencyKey?: string }) {
-  const res = await api.post(`/public/invoices/${token}/pay`, data);
-  return res.data;
-}
-
-export async function createPaymentIntentPublic(token: string) {
-  const res = await api.post(`/public/invoices/${token}/payment-intent`);
-  return res.data;
 }
 
 export interface CustomerSearchParams {
@@ -412,11 +282,6 @@ export async function getCustomer(id: string) {
 
 export async function importCustomers(csv: string) {
   const res = await api.post(`/customers/import`, { csv });
-  return res.data;
-}
-
-export async function getCustomerInvoices(customerId: string, params?: { limit?: number; offset?: number; status?: string }) {
-  const res = await api.get(`/customers/${customerId}/invoices`, { params });
   return res.data;
 }
 
@@ -472,11 +337,6 @@ export async function deleteProduct(id: string) {
   return res.data;
 }
 
-export async function createInvoiceFromProduct(productId: string): Promise<{ invoiceId: string }> {
-  const res = await api.post(`/products/${productId}/use-as-line-item?type=invoice`);
-  return res.data;
-}
-
 export async function getBusiness() {
   const res = await api.get("/businesses/current");
   return res.data;
@@ -484,11 +344,6 @@ export async function getBusiness() {
 
 export async function updateBusiness(data: any) {
   const res = await api.patch("/businesses/current", data);
-  return res.data;
-}
-
-export async function exportInvoicesCsv() {
-  const res = await api.get("/export/invoices/csv", { responseType: "blob" });
   return res.data;
 }
 
@@ -562,6 +417,56 @@ export async function setDefaultDocumentTemplate(id: string) {
   return res.data;
 }
 
+export async function getInvoiceTemplates(params?: { limit?: number; documentType?: string }) {
+  const res = await api.get("/document-templates", { params });
+  return res.data;
+}
+
+export async function getInvoiceTemplate(id: string) {
+  const res = await api.get(`/document-templates/${id}`);
+  return res.data;
+}
+
+export async function createInvoiceTemplate(data: any) {
+  const res = await api.post("/document-templates", data);
+  return res.data;
+}
+
+export async function updateInvoiceTemplate(id: string, data: any) {
+  const res = await api.patch(`/document-templates/${id}`, data);
+  return res.data;
+}
+
+export async function duplicateInvoiceTemplate(id: string) {
+  const res = await api.post(`/document-templates/${id}/duplicate`);
+  return res.data;
+}
+
+export async function setDefaultInvoiceTemplate(id: string) {
+  const res = await api.post(`/document-templates/${id}/set-default`);
+  return res.data;
+}
+
+export async function deleteInvoiceTemplate(id: string) {
+  const res = await api.delete(`/document-templates/${id}`);
+  return res.data;
+}
+
+export async function publishInvoiceTemplate(id: string) {
+  const res = await api.patch(`/document-templates/${id}`, { is_active: true });
+  return res.data;
+}
+
+export async function archiveInvoiceTemplate(id: string) {
+  const res = await api.patch(`/document-templates/${id}`, { is_active: false });
+  return res.data;
+}
+
+export async function unarchiveInvoiceTemplate(id: string) {
+  const res = await api.patch(`/document-templates/${id}`, { is_active: true });
+  return res.data;
+}
+
 export async function getNumberingConfig() {
   const res = await api.get("/businesses/current/numbering");
   return res.data;
@@ -569,16 +474,6 @@ export async function getNumberingConfig() {
 
 export async function updateNumberingConfig(data: any) {
   const res = await api.patch("/businesses/current/numbering", data);
-  return res.data;
-}
-
-export async function getPayments(invoiceId: string) {
-  const res = await api.get(`/invoices/${invoiceId}/payments`);
-  return res.data;
-}
-
-export async function recordPayment(invoiceId: string, data: { amount: number; provider?: string; providerPaymentId?: string; idempotencyKey?: string }) {
-  const res = await api.post(`/invoices/${invoiceId}/payments`, data);
   return res.data;
 }
 
@@ -609,28 +504,12 @@ export async function refundPayment(paymentId: string, data: { amount: number; r
 }
 
 export async function recordPaymentManually(data: {
-  invoiceId: string;
   amount: number;
   provider?: string;
   providerPaymentId?: string;
   idempotencyKey?: string;
 }) {
   const res = await api.post(`/payments/record`, data);
-  return res.data;
-}
-
-export async function getPublicInvoice(token: string) {
-  const res = await api.get(`/public/invoices/${token}`);
-  return res.data;
-}
-
-export async function recordPublicView(token: string) {
-  const res = await api.post(`/public/invoices/${token}/view`);
-  return res.data;
-}
-
-export async function getPublicInvoicePdf(token: string) {
-  const res = await api.get(`/public/invoices/${token}/pdf`, { responseType: "blob" });
   return res.data;
 }
 
@@ -656,115 +535,6 @@ export async function skipOnboardingStep(step: string) {
 
 export async function finishOnboarding() {
   const res = await api.post("/onboarding/complete");
-  return res.data;
-}
-
-export interface InvoiceTemplateListParams {
-  limit?: number;
-  offset?: number;
-  industry?: string;
-  documentType?: string;
-  isDefault?: boolean;
-  lifecycle?: string;
-}
-
-export async function getInvoiceTemplates(params?: InvoiceTemplateListParams) {
-  const res = await api.get("/invoice-templates", { params });
-  return res.data;
-}
-
-export async function getInvoiceTemplate(id: string) {
-  const res = await api.get(`/invoice-templates/${id}`);
-  return res.data;
-}
-
-export async function createInvoiceTemplate(data: any) {
-  const res = await api.post("/invoice-templates", data);
-  return res.data;
-}
-
-export async function updateInvoiceTemplate(id: string, data: any) {
-  const res = await api.patch(`/invoice-templates/${id}`, data);
-  return res.data;
-}
-
-export async function deleteInvoiceTemplate(id: string) {
-  const res = await api.delete(`/invoice-templates/${id}`);
-  return res.data;
-}
-
-export async function duplicateInvoiceTemplate(id: string) {
-  const res = await api.post(`/invoice-templates/${id}/duplicate`);
-  return res.data;
-}
-
-export async function setDefaultInvoiceTemplate(id: string) {
-  const res = await api.post(`/invoice-templates/${id}/set-default`);
-  return res.data;
-}
-
-export async function publishInvoiceTemplate(id: string, data?: { changeSummary?: string }) {
-  const res = await api.post(`/invoice-templates/${id}/publish`, data ?? {});
-  return res.data;
-}
-
-export async function archiveInvoiceTemplate(id: string) {
-  const res = await api.post(`/invoice-templates/${id}/archive`);
-  return res.data;
-}
-
-export async function unarchiveInvoiceTemplate(id: string) {
-  const res = await api.post(`/invoice-templates/${id}/unarchive`);
-  return res.data;
-}
-
-export async function getInvoiceTemplateRevisions(id: string) {
-  const res = await api.get(`/invoice-templates/${id}/revisions`);
-  return res.data;
-}
-
-export async function getInvoiceTemplateRevision(id: string, revision: number) {
-  const res = await api.get(`/invoice-templates/${id}/revisions/${revision}`);
-  return res.data;
-}
-
-export async function restoreInvoiceTemplateRevision(id: string, revision: number) {
-  const res = await api.post(`/invoice-templates/${id}/revisions/${revision}/restore`);
-  return res.data;
-}
-
-export async function getInvoiceTemplateWithRevisions(id: string) {
-  const res = await api.get(`/invoice-templates/${id}/with-revisions`);
-  return res.data;
-}
-
-export async function migrateInvoiceTemplate(id: string, targetVersion?: string) {
-  const res = await api.post(`/invoice-templates/${id}/migrate`, targetVersion ? { targetVersion } : {});
-  return res.data;
-}
-
-export async function renderInvoiceTemplateHtml(id: string, data: any) {
-  const res = await api.post(`/invoice-templates/${id}/render`, data);
-  return res.data;
-}
-
-export async function getInvoiceTemplateUsage(id: string) {
-  const res = await api.get(`/invoice-templates/${id}/usage`);
-  return res.data;
-}
-
-export async function setInvoiceTemplatePermission(templateId: string, userId: string, permission: string) {
-  const res = await api.post(`/invoice-templates/${templateId}/permissions`, { userId, permission });
-  return res.data;
-}
-
-export async function getInvoiceTemplatePermissions(templateId: string) {
-  const res = await api.get(`/invoice-templates/${templateId}/permissions`);
-  return res.data;
-}
-
-export async function recordInvoiceTemplateUsage(templateId: string, invoiceId?: string) {
-  const res = await api.post(`/invoice-templates/${templateId}/usage`, invoiceId ? { invoiceId } : {});
   return res.data;
 }
 
@@ -1041,36 +811,6 @@ export function buildProjectSearchParams(params: ProjectSearchParams): Record<st
 }
 
 // ============================================================================
-// INVOICE SEARCH (Enhanced)
-// ============================================================================
-
-export async function getInvoicesEnhanced(params?: InvoiceSearchParams) {
-  const res = await api.get("/invoices", { params });
-  return res.data;
-}
-
-export function buildInvoiceSearchParams(params: InvoiceSearchParams): Record<string, any> {
-  const result: Record<string, any> = {};
-  if (params.limit !== undefined) result.limit = params.limit;
-  if (params.offset !== undefined) result.offset = params.offset;
-  if (params.status !== undefined) result.status = params.status;
-  if (params.paymentState !== undefined) result.payment_state = params.paymentState;
-  if (params.customerId !== undefined) result.customer_id = params.customerId;
-  if (params.customerName !== undefined) result.customer_name = params.customerName;
-  if (params.search !== undefined) result.search = params.search;
-  if (params.currency !== undefined) result.currency = params.currency;
-  if (params.minAmount !== undefined) result.min_amount = params.minAmount;
-  if (params.maxAmount !== undefined) result.max_amount = params.maxAmount;
-  if (params.issueDateFrom !== undefined) result.issue_date_from = params.issueDateFrom;
-  if (params.issueDateTo !== undefined) result.issue_date_to = params.issueDateTo;
-  if (params.dueDateFrom !== undefined) result.due_date_from = params.dueDateFrom;
-  if (params.dueDateTo !== undefined) result.due_date_to = params.dueDateTo;
-  if (params.sortBy !== undefined) result.sort_by = params.sortBy;
-  if (params.sortOrder !== undefined) result.sort_order = params.sortOrder;
-  return result;
-}
-
-// ============================================================================
 // REMINDERS
 // ============================================================================
 
@@ -1290,11 +1030,6 @@ export async function refundReceipt(
   return res.data;
 }
 
-export async function generateInvoiceReceipt(invoiceId: string, data?: { sentTo?: string; provider?: string }) {
-  const res = await api.post(`/invoices/${invoiceId}/receipts`, data ?? {});
-  return res.data;
-}
-
 // ============================================================================
 // TEAM / RBAC
 // ============================================================================
@@ -1370,11 +1105,6 @@ export async function getDashboardSummary(): Promise<ApiDashboardSummary> {
 
 export async function getRevenueReport(params?: ReportFiltersParams): Promise<ApiRevenueReport> {
   const res = await api.get("/reports/revenue", { params: buildReportParams(params) });
-  return res.data;
-}
-
-export async function getInvoicesReport(params?: ReportFiltersParams): Promise<ApiInvoicesReport> {
-  const res = await api.get("/reports/invoices", { params: buildReportParams(params) });
   return res.data;
 }
 
@@ -1483,153 +1213,6 @@ export async function parseDocument(text: string, documentType?: string): Promis
   return res.data;
 }
 
-// ============================================================================
-// Speed Optimization API (Predictive UX)
-// ============================================================================
-
-export interface ApiCommandLineItem {
-  description: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  taxRate: number;
-  productId?: string | null;
-  catalogMatch?: {
-    name: string;
-    unitPrice: string;
-    taxRate: string;
-    confidence: number;
-  } | null;
-}
-
-export interface ApiQuickActions {
-  lastInvoice: ApiLastInvoice | null;
-  frequentlyInvoiced: ApiFrequentlyInvoicedItem[];
-  recentCustomers: ApiRecentCustomer[];
-  hasDraft: boolean;
-  draftInfo: { id: string; customerId?: string | null; itemCount: number } | null;
-}
-
-export interface ApiLastInvoice {
-  invoiceId: string;
-  invoiceNumber?: string | null;
-  customer: { id: string; name: string; email?: string | null };
-  items: Array<{
-    description: string;
-    quantity: string;
-    unit: string;
-    unitPrice: string;
-    taxRate: string;
-    productId?: string | null;
-    catalogName?: string | null;
-  }>;
-  currency: string;
-  terms?: string | null;
-  notes?: string | null;
-  paymentInstructions?: string | null;
-  templateId?: string | null;
-  total: string;
-  sentAt?: string | null;
-  isDraft: boolean;
-}
-
-export interface ApiFrequentlyInvoicedItem {
-  id: string | null;
-  name: string;
-  description: string | null;
-  unitPrice: string;
-  unit: string;
-  taxRate: string;
-  frequencyScore: number;
-  lastUsed: Date | null;
-}
-
-export interface ApiRecentCustomer {
-  id: string;
-  name: string;
-  email?: string | null;
-}
-
-export interface ApiProgressiveAutofill {
-  customerId?: string | null;
-  currency?: string;
-  issueDate?: string;
-  dueDate?: string;
-  notes?: string | null;
-  terms?: string | null;
-  paymentInstructions?: string | null;
-  templateId?: string | null;
-  taxRate?: string;
-  depositType?: "none" | "fixed" | "percentage";
-  depositValue?: string;
-  depositDueDate?: string | null;
-  depositPaymentPurpose?: string | null;
-  lateFeeType?: "none" | "fixed" | "percentage";
-  lateFeeValue?: string;
-  lateFeeDueDate?: string | null;
-  poNumber?: string | null;
-}
-
-export async function getSuggestedActions(): Promise<ApiQuickActions> {
-  const res = await cachedGet("/suggested-actions", undefined, { ttlMs: 15 * 1000 });
-  return res;
-}
-
-export async function parseCommandLineItem(input: string): Promise<{ parsed: ApiCommandLineItem }> {
-  const res = await api.post("/parse-command-line", { input });
-  return res.data;
-}
-
-export async function getProgressiveAutofill(customerId?: string): Promise<ApiProgressiveAutofill> {
-  const res = await cachedGet("/progressive-autofill", customerId ? { customerId } : undefined, { ttlMs: 10 * 1000 });
-  return res;
-}
-
-export async function getFrequentlyInvoiced(limit = 12): Promise<{ items: ApiFrequentlyInvoicedItem[] }> {
-  const res = await cachedGet("/frequently-invoiced", { limit }, { ttlMs: 60 * 1000 });
-  return res;
-}
-
-export async function getLastInvoice(customerId?: string): Promise<ApiLastInvoice | null> {
-  const params = customerId ? { customerId } : undefined;
-  const res = await cachedGet("/last-invoice", params, { ttlMs: 15 * 1000 });
-  return res;
-}
-
-export async function recordSpeedMetrics(data: {
-  invoiceId: string;
-  creationSeconds: number;
-  customerSelectedVia: string;
-  usedLastInvoice: boolean;
-  commandBarItems: number;
-  catalogChipItems: number;
-  manualItems: number;
-  itemsCount: number;
-  isReturningCustomer: boolean;
-  isMobile: boolean;
-  sessionId?: string;
-}): Promise<{ ok: boolean }> {
-  const res = await api.post("/speed-metrics", data);
-  return res.data;
-}
-
-export async function logInteraction(data: {
-  actionType: string;
-  targetField?: string;
-  invoiceId?: string;
-  durationMs?: number;
-  valueFrom?: string;
-  valueTo?: string;
-  sessionId?: string;
-}): Promise<{ ok: boolean }> {
-  const res = await api.post("/interaction-log", data);
-  return res.data;
-}
-
-// ===========================================================================
-// Payment Risk Scoring API
-// ============================================================================
-
 export interface ApiPaymentRiskInvoice {
   id: string;
   invoiceNumber: string | null;
@@ -1644,25 +1227,15 @@ export interface ApiPaymentRiskInvoice {
   paymentRiskFactors: Record<string, unknown> | null;
 }
 
-export interface ApiRiskScoreResult {
-  score: number;
-  factors: Record<string, unknown>;
-  confidence: number;
-  modelVersion: string;
-}
-
 export async function getPaymentRiskInvoices(limit = 50): Promise<{ invoices: ApiPaymentRiskInvoice[] }> {
   const res = await api.get(`/reports/payment-risk?limit=${limit}`);
   return res.data;
 }
 
-export async function scoreInvoiceRisk(invoiceId: string): Promise<ApiRiskScoreResult> {
-  const res = await api.post(`/reports/payment-risk/score/${invoiceId}`);
-  return res.data;
-}
-
-export async function batchScorePaymentRisk(): Promise<{ scored: number; failed: number }> {
-  const res = await api.post(`/reports/payment-risk/batch`);
-  return res.data;
+export interface ApiRiskScoreResult {
+  score: number;
+  factors: Record<string, unknown>;
+  confidence: number;
+  modelVersion: string;
 }
 

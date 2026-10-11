@@ -16,7 +16,7 @@ import {
   CheckCircle2,
   Landmark,
 } from "lucide-react";
-import { getCustomerSummary, createInvoice as apiCreateInvoice } from "../api/client";
+import { getCustomerSummary } from "../api/client";
 import type { ApiCustomer, ApiCustomerSummary, ApiCustomerInvoiceSummary } from "../types/api";
 import { formatCurrency, formatDate } from "../utils/format";
 import {
@@ -30,7 +30,7 @@ import {
 } from "../utils/customer";
 import { Button } from "./ui/Button";
 import { cn } from "../lib/utils";
-import InvoiceStatusBadge from "./InvoiceStatusBadge";
+import { StatusBadge } from "./ui";
 import CustomerStatusBadge from "./CustomerStatusBadge";
 
 interface CustomerQuickViewProps {
@@ -45,7 +45,6 @@ export default function CustomerQuickView({ customer, onClose, onEdit }: Custome
   const [summary, setSummary] = useState<ApiCustomerSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
 
   const currency = summary?.customer.defaultCurrency || customer.defaultCurrency || "USD";
   const billing = useMemo(
@@ -80,32 +79,6 @@ export default function CustomerQuickView({ customer, onClose, onEdit }: Custome
       window.removeEventListener("keydown", onKey);
     };
   }, [customer.id, onClose]);
-
-  async function handleCreateInvoice() {
-    setCreating(true);
-    try {
-      const res = await apiCreateInvoice({
-        customerId: customer.id,
-        currency,
-        items: [
-          {
-            description: "",
-            quantity: "1",
-            unit: "each",
-            unitPrice: "0.00",
-            taxRate: "0",
-            isTaxInclusive: false,
-          },
-        ],
-      });
-      onClose();
-      navigate(`/app/invoices/${res.invoiceId}/edit`);
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to create invoice");
-    } finally {
-      setCreating(false);
-    }
-  }
 
   return (
     <>
@@ -162,11 +135,11 @@ export default function CustomerQuickView({ customer, onClose, onEdit }: Custome
               <InvoiceSkeleton />
             ) : !summary ? (
               <InlineNotice tone="muted" icon={<AlertCircle className="h-3.5 w-3.5" />}>
-                Invoice history is unavailable right now.
+                Billing summary is unavailable right now.
               </InlineNotice>
             ) : (summary.invoices?.length ?? 0) === 0 ? (
               <InlineNotice tone="muted" icon={<Receipt className="h-3.5 w-3.5" />}>
-                No invoices yet. Create the first invoice to start tracking this account.
+                No billing history yet.
               </InlineNotice>
             ) : (
               <InvoiceList invoices={summary.invoices} defaultCurrency={currency} />
@@ -175,27 +148,15 @@ export default function CustomerQuickView({ customer, onClose, onEdit }: Custome
         </div>
 
         <div className="border-t border-color-subtle bg-surface p-4 md:rounded-bl-2xl">
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="secondary"
-              size="md"
-              icon={<Pencil className="h-4 w-4" />}
-              onClick={() => (onEdit ? onEdit(customer) : navigate(`/app/customers/${customer.id}`))}
-              className="w-full"
-            >
-              Edit details
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              icon={<Plus className="h-4 w-4" />}
-              onClick={handleCreateInvoice}
-              disabled={creating}
-              className="w-full"
-            >
-              {creating ? "Creating…" : "New invoice"}
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            size="md"
+            icon={<Pencil className="h-4 w-4" />}
+            onClick={() => (onEdit ? onEdit(customer) : navigate(`/app/customers/${customer.id}`))}
+            className="w-full"
+          >
+            Edit details
+          </Button>
           <Link
             to={`/app/customers/${customer.id}`}
             onClick={onClose}
@@ -484,13 +445,10 @@ function InvoiceRow({
 
   return (
     <li className="py-2.5 first:pt-1 last:pb-0">
-      <Link
-        to={`/app/invoices/${invoice.id}`}
-        className="group block rounded-lg px-1 py-1 -mx-1 hover:bg-surface-alt"
-      >
+      <div className="rounded-lg px-1 py-1 -mx-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-primary group-hover:text-primary-brand">
+            <p className="truncate text-sm font-medium text-primary">
               {getInvoiceReference(invoice)}
             </p>
             <p className="mt-0.5 text-xs text-tertiary">
@@ -503,14 +461,14 @@ function InvoiceRow({
           </p>
         </div>
         <div className="mt-1.5 flex items-center gap-2">
-          <InvoiceStatusBadge status={status} isOverdue={status === "overdue"} />
+          <StatusBadge status={status} isOverdue={status === "overdue"} />
           {hasDue && (
             <span className="text-xs text-secondary">
               {formatCurrency(invoice.amountPaid ?? 0, currency)} paid
             </span>
           )}
         </div>
-      </Link>
+      </div>
     </li>
   );
 }

@@ -5,7 +5,6 @@ import {
   getEnhancedDashboard,
   getVolumeTrendReport,
   getRevenueReport,
-  getInvoicesReport,
   getPaymentsReport,
   getClientsReport,
   getTaxSummaryReport,
@@ -19,7 +18,6 @@ import {
   ReportKPICards,
   ReportFilters,
   RevenueReport,
-  InvoicesReport,
   PaymentsReport,
   ClientsReport,
   TaxSummaryReport,
@@ -29,12 +27,11 @@ import MonthlyTrendChart from "@/components/dashboard/MonthlyTrendChart";
 import EmptyState from "@/components/ui/EmptyState";
 import { Download } from "lucide-react";
 
-type ReportTab = "dashboard" | "revenue" | "invoices" | "payments" | "clients" | "tax" | "profit-loss";
+type ReportTab = "dashboard" | "revenue" | "payments" | "clients" | "tax" | "profit-loss";
 
 const REPORT_TABS: Array<{ id: ReportTab; label: string; icon?: React.ReactNode }> = [
   { id: "dashboard", label: "Dashboard" },
   { id: "revenue", label: "Revenue" },
-  { id: "invoices", label: "Invoices" },
   { id: "payments", label: "Payments" },
   { id: "clients", label: "Clients" },
   { id: "tax", label: "Tax Summary" },
@@ -44,7 +41,6 @@ const REPORT_TABS: Array<{ id: ReportTab; label: string; icon?: React.ReactNode 
 const TAB_FILTERS: Record<ReportTab, { showDateRange: boolean; showCustomer: boolean; showProject: boolean; showStatus: boolean; showCategory: boolean; showProvider: boolean; showSearch: boolean; presets: boolean }> = {
   dashboard: { showDateRange: false, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: false, presets: false },
   revenue: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: false, presets: true },
-  invoices: { showDateRange: true, showCustomer: false, showProject: false, showStatus: true, showCategory: false, showProvider: false, showSearch: true, presets: true },
   payments: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: true, showSearch: true, presets: true },
   clients: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: true, presets: true },
   tax: { showDateRange: true, showCustomer: false, showProject: false, showStatus: false, showCategory: false, showProvider: false, showSearch: false, presets: true },
@@ -63,7 +59,6 @@ export default function Reports() {
   const [paymentMetrics, setPaymentMetrics] = useState<any>(null);
   const [volumeTrend, setVolumeTrend] = useState<any[]>([]);
   const [revenueData, setRevenueData] = useState<any>(null);
-  const [invoicesData, setInvoicesData] = useState<any>(null);
   const [paymentsData, setPaymentsData] = useState<any>(null);
   const [clientsData, setClientsData] = useState<any>(null);
   const [taxData, setTaxData] = useState<any>(null);
@@ -137,23 +132,6 @@ export default function Reports() {
       }
     }
   }, [filters, revenueData]);
-
-  const loadInvoices = useCallback(async () => {
-    setLoading("invoices", true);
-    try {
-      const data = await getInvoicesReport(filters);
-      setInvoicesData(data);
-      setError(null);
-    } catch (err: any) {
-      if (err.response?.status === 403) {
-        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
-      } else {
-        setError(err.message || "Failed to load invoices report");
-      }
-    } finally {
-      setLoading("invoices", false);
-    }
-  }, [filters]);
 
   const loadPayments = useCallback(async () => {
     setLoading("payments", true);
@@ -240,9 +218,6 @@ export default function Reports() {
       case "revenue":
         loadRevenue();
         break;
-      case "invoices":
-        loadInvoices();
-        break;
       case "payments":
         loadPayments();
         break;
@@ -256,7 +231,7 @@ export default function Reports() {
         loadProfitLoss();
         break;
     }
-  }, [activeTab, filters, loadRevenue, loadInvoices, loadPayments, loadClients, loadTax, loadProfitLoss]);
+  }, [activeTab, filters, loadRevenue, loadPayments, loadClients, loadTax, loadProfitLoss]);
 
   const handleTabChange = (tab: ReportTab) => {
     setActiveTab(tab);
@@ -269,7 +244,6 @@ export default function Reports() {
   const handleResetFilters = () => {
     setFilters({});
     setRevenueData(null);
-    setInvoicesData(null);
     setPaymentsData(null);
     setClientsData(null);
     setTaxData(null);
@@ -299,15 +273,6 @@ export default function Reports() {
             loading={isLoading("revenue")}
             currency={currency}
             onExport={() => handleExport("revenue")}
-          />
-        );
-      case "invoices":
-        return (
-          <InvoicesReport
-            data={invoicesData}
-            loading={isLoading("invoices")}
-            currency={currency}
-            onExport={() => handleExport("invoices")}
           />
         );
       case "payments":
@@ -461,7 +426,7 @@ function DashboardContent({
     return (
       <EmptyState
         title="No report data available"
-        description="Generate invoices and payments to see financial reports"
+        description="Generate payments and revenue to see financial reports"
         className="p-6"
       />
     );
@@ -493,14 +458,14 @@ function QuickStats({ summary, currency }: { summary: any; currency: string }) {
   if (!summary) return null;
   return (
     <div className="bg-surface rounded-xl border border-color p-5">
-      <h3 className="text-sm font-semibold text-primary mb-4">Invoice Summary</h3>
+      <h3 className="text-sm font-semibold text-primary mb-4">Financial Summary</h3>
       <div className="space-y-3 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-tertiary">Draft Invoices</span>
+          <span className="text-tertiary">Draft Documents</span>
           <span className="font-medium text-primary">{summary.draftCount}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-tertiary">Sent Invoices</span>
+          <span className="text-tertiary">Sent Documents</span>
           <span className="font-medium text-primary">{summary.sentCount}</span>
         </div>
         <div className="flex items-center justify-between">

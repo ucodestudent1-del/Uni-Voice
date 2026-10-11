@@ -9,8 +9,8 @@ export interface EmailRecipient {
   name?: string;
 }
 
-export interface InvoiceEmailData {
-  invoiceId: string;
+export interface ReceiptEmailData {
+  receiptId: string;
   businessId: string;
   recipient: EmailRecipient;
   subject: string;
@@ -227,13 +227,12 @@ export class EmailService {
     return this.provider.name;
   }
 
-  async sendInvoiceEmail(data: InvoiceEmailData): Promise<{ messageId: string; status: EmailStatus }> {
+  async sendReceiptEmail(data: ReceiptEmailData): Promise<{ messageId: string; status: EmailStatus }> {
     if (data.idempotencyKey) {
       const existing = await query(
         `SELECT message_id, status FROM email_log
-         WHERE idempotency_key = $1 AND document_type = $2
-         AND invoice_id = $3`,
-        [data.idempotencyKey, "invoice", data.invoiceId]
+         WHERE idempotency_key = $1 AND document_type = $2`,
+        [data.idempotencyKey, "receipt"]
       );
       if (existing.rows.length) {
         logger.info(`Email already sent (idempotent), msgId=${existing.rows[0].message_id}`);
@@ -252,12 +251,12 @@ export class EmailService {
       `INSERT INTO email_log (invoice_id, document_type, business_id, provider, status, recipient, subject, message_id, idempotency_key, created_at, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW())`,
       [
-        data.invoiceId, "invoice", data.businessId, this.provider.name, result.status,
+        null, "receipt", data.businessId, this.provider.name, result.status,
         data.recipient.email, data.subject, result.messageId, data.idempotencyKey ?? null,
       ]
     );
 
-    logger.info(`Email sent: to=${data.recipient.email} invoiceId=${data.invoiceId} msgId=${result.messageId}`);
+    logger.info(`Email sent: to=${data.recipient.email} receiptId=${data.receiptId} msgId=${result.messageId}`);
     return result;
   }
 

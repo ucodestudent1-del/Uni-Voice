@@ -1,30 +1,18 @@
 import { Link, NavLink } from "react-router-dom";
 import     { LayoutDashboard,
-  FileText,
   Users,
-  Plus,
   Receipt,
 } from "lucide-react";
 
 export default function BottomTabBar() {
   const items = [
     { name: "Dashboard", to: "/app", icon: LayoutDashboard },
-    { name: "Invoices", to: "/app/invoices", icon: FileText },
     { name: "Customers", to: "/app/customers", icon: Users },
     { name: "Payments", to: "/app/payments", icon: Receipt },
   ];
 
 return (
     <>
-      {/* Floating primary action */}
-      <Link
-        to="/app/invoices/new"
-        aria-label="New invoice"
-        className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center justify-center w-14 h-14 rounded-full bg-primary-action text-on-primary shadow-xl hover-bg-primary-action focus-ring-primary transition-colors"
-      >
-        <Plus className="w-6 h-6" />
-      </Link>
-
       <nav
         className="fixed inset-x-0 bottom-0 z-40 md:hidden bg-surface border-t border-color-subtle border-color shadow-sm backdrop-blur-sm"
         aria-label="Mobile navigation"

@@ -2,7 +2,6 @@ export { default as ReportFilters } from "./ReportFilters";
 export type { ReportFiltersProps, ReportFilterPreset } from "./ReportFilters";
 export { default as ReportKPICards } from "./ReportKPICards";
 export { default as RevenueReport } from "./RevenueReport";
-export { default as InvoicesReport } from "./InvoicesReport";
 export { default as PaymentsReport } from "./PaymentsReport";
 export { default as ClientsReport } from "./ClientsReport";
 export { default as TaxSummaryReport } from "./TaxSummaryReport";

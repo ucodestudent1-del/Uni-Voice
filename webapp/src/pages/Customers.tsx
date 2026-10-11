@@ -5,7 +5,6 @@ import {
   getCustomers,
   archiveCustomer,
   restoreCustomer,
-  createInvoice as apiCreateInvoice,
   exportCustomersCsv,
   type CustomerSearchParams,
 } from "../api/client";
@@ -15,7 +14,8 @@ import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import CustomerImport from "../components/CustomerImport";
 import CustomerQuickView from "../components/CustomerQuickView";
-import { Plus, FileText, Upload, Download, Eye, Edit2, Archive, RefreshCw, MoreVertical, Clock, Mail, Phone, Users } from "lucide-react";
+import { Plus, Upload, Download, Eye, Edit2, Archive, RefreshCw,
+MoreVertical, Clock, Mail, Phone, Users } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import { getCustomerPrimaryContact, customerHasBalance, customerHasOverdue } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
@@ -27,7 +27,6 @@ import type { NavigateFunction } from "react-router-dom";
 interface CustomerActionMenuProps {
   customer: ApiCustomer;
   hasOverdue: boolean;
-  isCreating: boolean;
   isOpen: boolean;
   onToggle: () => void;
   onClose: () => void;
@@ -35,7 +34,6 @@ interface CustomerActionMenuProps {
   onEdit: (customer: ApiCustomer) => void;
   onArchive: (customer: ApiCustomer) => void;
   onRestore: (customer: ApiCustomer) => void;
-  onCreateInvoice: (customer: ApiCustomer) => void;
   align?: "left" | "right";
 }
 
@@ -48,8 +46,6 @@ function CustomerActionMenu({
   onEdit,
   onArchive,
   onRestore,
-  onCreateInvoice,
-  isCreating,
   align = "right",
 }: CustomerActionMenuProps) {
   return (
@@ -93,18 +89,6 @@ function CustomerActionMenu({
               <Edit2 className="h-4 w-4" />
               Edit
             </button>
-            <FeatureGate feature="invoices.create" requiredPlan="pro" fallback={null}>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => { onClose(); onCreateInvoice(customer); }}
-                disabled={isCreating}
-                className="menu-item disabled:opacity-50"
-              >
-                <FileText className="h-4 w-4" />
-                {isCreating ? "Creating…" : "Create Invoice"}
-              </button>
-            </FeatureGate>
             <div className="menu-divider border-t" />
             {customer.status === "archived" ? (
               <button
@@ -168,7 +152,6 @@ export default function Customers() {
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<ApiCustomer | null>(null);
   const [showImport, setShowImport] = useState(false);
-  const [creatingInvoiceFor, setCreatingInvoiceFor] = useState<string | null>(null);
   const [quickViewCustomer, setQuickViewCustomer] = useState<ApiCustomer | null>(null);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
 
@@ -266,29 +249,6 @@ export default function Customers() {
   function handleEdit(customer: ApiCustomer) {
     setEditingCustomer(customer);
     setShowForm(true);
-  }
-
-  async function handleCreateInvoice(customer: ApiCustomer) {
-    setCreatingInvoiceFor(customer.id);
-    try {
-      const res = await apiCreateInvoice({
-        customerId: customer.id,
-        currency: customer.defaultCurrency || "USD",
-        items: [{
-          description: "",
-          quantity: "1",
-          unit: "each",
-          unitPrice: "0.00",
-          taxRate: "0",
-          isTaxInclusive: false,
-        }],
-      });
-      navigate(`/app/invoices/${res.invoiceId}/edit`);
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to create invoice");
-    } finally {
-      setCreatingInvoiceFor(null);
-    }
   }
 
   function handleCloseForm() {
@@ -478,7 +438,6 @@ export default function Customers() {
                   const hasBalance = customerHasBalance(c);
                   const hasOverdue = customerHasOverdue(c);
                   const isSelected = quickViewCustomer?.id === c.id;
-                  const isCreating = creatingInvoiceFor === c.id;
                   return (
                      <tr
                         key={c.id}
@@ -564,7 +523,6 @@ export default function Customers() {
                           <CustomerActionMenu
                             customer={c}
                             hasOverdue={hasOverdue}
-                            isCreating={isCreating}
                             isOpen={actionMenuOpenId === c.id}
                             onToggle={() => setActionMenuOpenId(actionMenuOpenId === c.id ? null : c.id)}
                             onClose={() => setActionMenuOpenId(null)}
@@ -572,7 +530,6 @@ export default function Customers() {
                             onEdit={handleEdit}
                             onArchive={handleArchive}
                             onRestore={handleRestore}
-                            onCreateInvoice={handleCreateInvoice}
                           />
                         </td>
                      </tr>
@@ -587,7 +544,6 @@ export default function Customers() {
                 const hasBalance = customerHasBalance(c);
                 const hasOverdue = customerHasOverdue(c);
                 const isSelected = quickViewCustomer?.id === c.id;
-                const isCreating = creatingInvoiceFor === c.id;
                 return (
                   <div
                     key={c.id}
@@ -625,7 +581,6 @@ export default function Customers() {
                       <CustomerActionMenu
                         customer={c}
                         hasOverdue={hasOverdue}
-                        isCreating={isCreating}
                         isOpen={actionMenuOpenId === c.id}
                         onToggle={() => setActionMenuOpenId(actionMenuOpenId === c.id ? null : c.id)}
                         onClose={() => setActionMenuOpenId(null)}
@@ -633,7 +588,6 @@ export default function Customers() {
                         onEdit={handleEdit}
                         onArchive={handleArchive}
                         onRestore={handleRestore}
-                        onCreateInvoice={handleCreateInvoice}
                         align="right"
                       />
                     </div>

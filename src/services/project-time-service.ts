@@ -6,7 +6,6 @@ import type { ProjectTimeEntry, ProjectTimeEntrySummary, ProjectNote } from "../
 import type { ProjectTimeEntryCreateInput, ProjectTimeEntryUpdateInput, ProjectNoteCreateInput } from "../domain/schemas/project-time-entry.js";
 import { BusinessLogicError } from "../domain/errors.js";
 import type { PagedResult } from "../repositories/helpers.js";
-import type { DraftLineItem } from "./invoice-service.js";
 
 export class ProjectTimeEntryService {
   constructor(
@@ -146,27 +145,6 @@ export class ProjectTimeEntryService {
   async getSummary(businessId: string, projectId: string, currency = "USD"): Promise<ProjectTimeEntrySummary> {
     await this.projectRepo.findById(businessId, projectId);
     return this.timeRepo.getSummary(businessId, projectId, currency);
-  }
-
-  async convertToLineItems(
-    businessId: string,
-    projectId: string,
-    invoiceId: string
-  ): Promise<DraftLineItem[]> {
-    await this.projectRepo.findById(businessId, projectId);
-    return this.timeRepo.convertToLineItems(businessId, projectId, invoiceId);
-  }
-
-  async markEntriesInvoiced(
-    businessId: string,
-    projectId: string,
-    invoiceId: string
-  ): Promise<void> {
-    await this.timeRepo.markInvoiced(businessId, projectId, invoiceId);
-
-    await this.projectRepo.recordEvent(projectId, businessId, "invoice_generated_from_time", undefined, {
-      invoiceId,
-    });
   }
 
   async addNote(
