@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Clock, Copy, Trash2 } from "lucide-react";
 import { getProgressiveAutofill, getFrequentlyInvoiced } from "../api/client";
 import { useAnalytics } from "../hooks/useAnalytics";
+import { Button } from "./ui/Button";
 import type { ApiLastInvoice, ApiProgressiveAutofill } from "../api/client";
 
 interface QuickRepeatBannerProps<T> {
@@ -55,7 +56,7 @@ export function QuickRepeatBanner<T>({
       setLastInvoice(null);
 
       const populateData: Record<string, any> = {
-        currency: (autofill?.currency || "USD"),
+        currency: autofill?.currency || "USD",
         notes: autofill?.notes || undefined,
         terms: autofill?.terms || undefined,
         paymentInstructions: autofill?.paymentInstructions || undefined,
@@ -109,55 +110,51 @@ export function QuickRepeatBanner<T>({
     <div className="relative">
       <div className="flex items-center gap-4">
         <div className="flex-1 min-w-0">
-          <button
+          <Button
+            variant="secondary"
+            size="md"
+            className="w-full justify-start gap-3 px-4 py-3"
+            loading={loading || action === "populate"}
             onClick={handleQuickRepeat}
-            disabled={loading || action === "populate"}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl hover:from-blue-100/50 hover:to-indigo-100/50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Clock className="h-5 w-5 text-blue-600" />
+            <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-primary-bg text-primary-brand">
+              <Clock className="h-5 w-5" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1 text-left">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-slate-900">
-                  {loading ? "Loading..." : "Quick repeat"}
+                <span className="font-medium text-primary">
+                  {loading ? "Loading…" : "Quick repeat"}
                 </span>
                 {lastInvoice && (
-                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                    Last invoice: {(
-                      lastInvoice as any
-                    )?.invoiceNumber ||
-                    formatDate(lastInvoice?.sentAt || new Date())}
+                  <span className="text-xs text-tertiary bg-surface-alt px-2 py-0.5 rounded">
+                    Last invoice: {(lastInvoice as any)?.invoiceNumber || formatDate(lastInvoice.sentAt || new Date())}
                   </span>
                 )}
               </div>
-              <div className="mt-0.5 text-sm text-slate-600 truncate">
+              <div className="mt-0.5 text-sm text-secondary truncate">
                 {loading
-                  ? "Preparing your next invoice..."
+                  ? "Preparing your next invoice…"
                   : lastInvoice?.customer.name
                     ? `${lastInvoice.customer.name} — ${formatCurrency(lastInvoice.total)}`
                     : "Repeat your last invoice details"}
               </div>
             </div>
-            <div className="flex-shrink-0 flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-              <Copy className="h-4 w-4 text-slate-600" />
-            </div>
-          </button>
+          </Button>
         </div>
 
         {onDismiss && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Trash2 className="h-4 w-4" />}
             onClick={handleDismiss}
-            className="flex-shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Don't show again"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+            aria-label="Don't show again"
+          />
         )}
       </div>
 
       {error && (
-        <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">
+        <div className="mt-2 text-xs text-error-text status-error-bg px-3 py-1.5 rounded-lg">
           {error}
         </div>
       )}
@@ -166,3 +163,4 @@ export function QuickRepeatBanner<T>({
 }
 
 export default QuickRepeatBanner;
+

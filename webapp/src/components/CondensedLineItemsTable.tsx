@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Trash2, FileText, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, FileText, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import { Decimal } from "decimal.js";
 import { formatCurrency, fromPercentage, toPercent } from "@/utils/format";
 import { getCurrencyMetadata } from "@/types/currency";
@@ -13,6 +13,7 @@ export interface CondensedLineItemsTableProps {
   onAdd: (type?: LineItemType) => void;
   onDuplicate: (id: string) => void;
   onRemove: (id: string) => void;
+  onReorderItems?: (dragIndex: number, dropIndex: number) => void;
   defaultTaxRate: string;
 }
 
@@ -25,6 +26,7 @@ export function CondensedLineItemsTable({
   onAdd,
   onDuplicate,
   onRemove,
+  onReorderItems,
   defaultTaxRate,
 }: CondensedLineItemsTableProps) {
   const c = invoice.currency;
@@ -33,6 +35,7 @@ export function CondensedLineItemsTable({
   const lineTotals = calc?.lineItems ?? [];
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => {
@@ -97,13 +100,36 @@ export function CondensedLineItemsTable({
         const isExpanded = item.id ? expandedRows.has(item.id) : false;
         const itemId = item.id ?? `li_${i}`;
 
-        return (
-          <div
-            key={itemId}
-            className="rounded-xl border border-color bg-surface shadow-sm transition-shadow hover:shadow-md"
-          >
-            {/* Collapsed summary row */}
-            <div className="flex items-center gap-2 p-3">
+         return (
+           <div
+             key={itemId}
+             className="relative rounded-xl border border-color bg-surface shadow-sm transition-shadow hover:shadow-md"
+           >
+            {onReorderItems && (
+              <div
+                draggable
+                onDragStart={() => setDraggedItem(itemId)}
+                onDragEnd={() => setDraggedItem(null)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => {
+                  const fromIdx = invoice.items.findIndex((it) => (it.id ?? `li_${invoice.items.indexOf(it)}`) === draggedItem);
+                  if (fromIdx !== -1 && fromIdx !== i) {
+                    onReorderItems(fromIdx, i);
+                  }
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab rounded p-1 text-tertiary hover:bg-surface-alt hover:text-primary"
+                title="Drag to reorder"
+              >
+                <GripVertical className="h-4 w-4" />
+              </div>
+            )}
+             {/* Collapsed summary row */}
+             <div
+               className={cn(
+                 "flex items-center gap-2 p-3",
+                 onReorderItems && "pl-10 sm:pl-3"
+               )}
+             >
               <button
                 type="button"
                 onClick={() => toggleRow(itemId)}

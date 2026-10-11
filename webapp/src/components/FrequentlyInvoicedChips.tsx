@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Tag, Plus, DollarSign, Clock, AlertCircle } from "lucide-react";
 import { getFrequentlyInvoiced } from "../api/client";
 import { useAnalytics } from "../hooks/useAnalytics";
+import { Button } from "./ui/Button";
 import type { ApiFrequentlyInvoicedItem } from "../api/client";
 
 interface FrequentlyInvoicedChipsProps<T> {
@@ -105,7 +106,7 @@ export function FrequentlyInvoicedChips<T extends { id?: string }>({
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="shrink-0 w-36 h-16 bg-slate-100 rounded-lg animate-pulse"
+            className="shrink-0 w-36 h-16 bg-surface-alt rounded-lg animate-pulse"
           />
         ))}
       </div>
@@ -124,18 +125,15 @@ export function FrequentlyInvoicedChips<T extends { id?: string }>({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-slate-600" />
-          <span className="text-sm font-medium text-slate-700">
+          <Tag className="h-4 w-4 text-tertiary" />
+          <span className="text-sm font-medium text-secondary">
             Frequently invoiced
           </span>
         </div>
         {!showAll && items.length > maxVisible && (
-          <button
-            onClick={() => setShowAll(true)}
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-          >
+          <Button variant="link" size="sm" onClick={() => setShowAll(true)}>
             Show all ({items.length})
-          </button>
+          </Button>
         )}
       </div>
 
@@ -146,49 +144,42 @@ export function FrequentlyInvoicedChips<T extends { id?: string }>({
           return (
             <div
               key={itemKey}
-              className="group flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
+              className="group flex items-center gap-2.5 px-3 py-1.5 bg-surface-alt border border-color-subtle rounded-lg hover:border-primary-300 hover:bg-primary-bg/30 transition-colors"
             >
               <div className="flex-1 min-w-[140px]">
-                <div className="text-sm font-medium text-slate-900 truncate">
+                <div className="text-sm font-medium text-primary truncate">
                   {item.name}
                 </div>
-                <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-tertiary">
                   {formatCurrency(item.unitPrice) && (
                     <span className="inline-flex items-center gap-0.5">
                       <DollarSign className="h-3 w-3" />
                       {formatCurrency(item.unitPrice)}
                     </span>
                   )}
-                  <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                  <span className="w-1 h-1 bg-color-subtle rounded-full" />
                   <span className="truncate">
                     {formatFrequency(item.frequencyScore)}
                   </span>
                 </div>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={isAdding ? <AlertCircle className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 onClick={() => handleAddItem(item)}
                 disabled={isAdding}
-                className="shrink-0 p-1 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Add to invoice"
-              >
-                {isAdding ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : (
-                  <Plus className="h-4 w-4 group-hover:rotate-90 transition-transform" />
-                )}
-              </button>
+                aria-label="Add to invoice"
+              />
             </div>
           );
         })}
       </div>
 
       {!showAll && items.length > maxVisible && (
-        <button
-          onClick={() => setShowAll(false)}
-          className="text-xs text-slate-500 hover:text-slate-700"
-        >
+        <Button variant="ghost" size="sm" onClick={() => setShowAll(false)}>
           Show less
-        </button>
+        </Button>
       )}
     </div>
   );

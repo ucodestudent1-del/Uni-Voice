@@ -2,28 +2,29 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
-  AlertCircle,
-  CheckCircle,
+   AlertCircle,
+   CheckCircle,
   CreditCard,
   Download,
   FileText,
+   GripVertical,
   Layers,
   Link2,
   LayoutDashboard,
   Mail,
   Package,
   Plus,
-  Receipt,
-  Sparkles,
-   RefreshCw,
-   Save,
-   Send,
-   Smartphone,
-   Trash2,
-   Upload,
-   Wrench,
-   X,
-} from "lucide-react";
+    Receipt,
+    Sparkles,
+    RefreshCw,
+    Save,
+    Send,
+    Smartphone,
+    Trash2,
+    Upload,
+    Wrench,
+    X,
+  } from "lucide-react";
 import {
   createInvoice,
   duplicateInvoice,
@@ -32,12 +33,12 @@ import {
    getBusinessSettings,
    updateBusinessSettings,
    getCustomer,
-  getCustomers,
-  getInvoice,
-  getInvoicePdf,
-  getProducts,
-  getSuggestedActions,
-  getProgressiveAutofill,
+   getCustomers,
+   getInvoice,
+   getInvoicePdf,
+   getProducts,
+   getSuggestedActions,
+   getProgressiveAutofill,
     parseCommandLineItem,
     recordSpeedMetrics as apiRecordSpeedMetrics,
     sendInvoice,
@@ -45,6 +46,9 @@ import {
     updateInvoice,
 } from "../api/client";
 import { PaymentTermsField, PaymentTermsWithCustomField, computeDueDateFromTerms, resolveTermsFromDueDate } from "./ui/PaymentTermsField";
+import { useToast } from "./ui/ToastProvider";
+import { StatusBadge, invoiceStatusConfig } from "./ui/StatusBadge";
+import { InvoiceLifecycle } from "./ui/InvoiceLifecycle";
 import { ServiceAutocomplete } from "./ServiceAutocomplete";
 import { AiInput } from "./AiInput";
 import type { ApiParsedDocumentResult } from "../api/client";
@@ -67,6 +71,8 @@ import QuickRepeatBanner from "./QuickRepeatBanner";
 import SmartDefaultsBar from "./SmartDefaultsBar";
 import { Button } from "./ui/Button";
 import { FormField } from "./ui/FormField";
+import { ConfirmationDialog } from "./ui/ConfirmationDialog";
+import { Dialog } from "./ui/Dialog";
 import InvoicePreviewV2, {
   type PreviewAttachment,
   type PreviewFee,
@@ -329,6 +335,10 @@ export default function InvoiceWorkspace() {
   const navigate = useNavigate();
   const isNew = !id || id === "new";
 
+  const { toast } = useToast();
+  const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
+  const [finalizeConfirmText, setFinalizeConfirmText] = useState("");
+
   const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [settings, setSettings] = useState<Record<string, any>>({});
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
@@ -346,7 +356,6 @@ export default function InvoiceWorkspace() {
   const lastSavedAttachmentsRef = useRef<string | null>(null);
 
   const [loading, setLoading] = useState(!isNew);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewStep, setReviewStep] = useState<"review" | "success">("review");
   const [reviewSending, setReviewSending] = useState(false);
@@ -600,7 +609,7 @@ export default function InvoiceWorkspace() {
         }
       } catch (err: any) {
         if (!cancelled) {
-          setActionMessage(err?.response?.data?.error || "Failed to load invoice");
+           toast(err?.response?.data?.error || "Failed to load invoice", { type: "error" });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -703,7 +712,7 @@ export default function InvoiceWorkspace() {
       return true;
     } catch (err: any) {
       setSaveState("error");
-      setActionMessage(err?.response?.data?.error || "Failed to save invoice");
+      toast(err?.response?.data?.error || "Failed to save invoice", { type: "error" });
       return false;
     }
   }
@@ -847,18 +856,18 @@ export default function InvoiceWorkspace() {
   const aiInputRef = useRef<HTMLInputElement>(null);
 
   useKeyboardShortcuts({
-    enabled: !invoice?.isFinalized && !reviewOpen,
+    enabled: !invoice?.isFinalized && !reviewOpen && !showFinalizeDialog,
     onSave: () => saveTimerRef.current !== null ? doSave() : undefined,
     onFinalize: () => {
       if (!validation.hasErrors) {
-        setReviewStep("review");
-        setReviewError(null);
-        setReviewOpen(true);
+        setShowFinalizeDialog(true);
+        setFinalizeConfirmText("");
       }
     },
     onSend: () => {
       if (!validation.hasErrors) {
-        handleReviewAndSend();
+        setShowFinalizeDialog(true);
+        setFinalizeConfirmText("");
       }
     },
     onDuplicate: () => handleDuplicate(),
@@ -942,6 +951,17 @@ export default function InvoiceWorkspace() {
       productId: product.id,
     };
     setInvoice((prev) => (prev ? { ...prev, items: [...prev.items, newItem] } : prev));
+    markDirtyAndSchedule();
+  }
+
+  function reorderItems(dragIndex: number, dropIndex: number) {
+    setInvoice((prev) => {
+      if (!prev) return prev;
+      const items = [...prev.items];
+      const [removed] = items.splice(dragIndex, 1);
+      items.splice(dropIndex, 0, removed);
+      return { ...prev, items };
+    });
     markDirtyAndSchedule();
   }
 
@@ -1097,15 +1117,13 @@ export default function InvoiceWorkspace() {
   }, [invoice, calc, business, customers, invoiceId, allAttachments]);
 
   async function handleSaveDraft() {
-    await doSave();
+    const ok = await doSave();
+    if (ok) toast("Draft saved", { type: "success" });
   }
 
   async function handleCreateAnother() {
     if (dirty) {
-      const ok = window.confirm(
-        "You have unsaved changes. Create another invoice anyway? Your current work has been/will be saved as a draft."
-      );
-      if (!ok) return;
+      if (!confirm("You have unsaved changes. Create another invoice anyway? Your current work has been/will be saved as a draft.")) return;
     }
     const saved = await doSave();
     if (saved) {
@@ -1122,9 +1140,10 @@ export default function InvoiceWorkspace() {
     try {
       const res = await duplicateInvoice(curId);
       analytics.track("invoice_saved", { sourceInvoiceId: curId, newInvoiceId: res.invoiceId });
+      toast("Invoice duplicated", { type: "success" });
       navigate(`/app/invoices/${res.invoiceId}/edit`);
     } catch (err: any) {
-      setActionMessage(err?.response?.data?.error || "Failed to duplicate invoice");
+      toast(err?.response?.data?.error || "Failed to duplicate invoice", { type: "error" });
     }
   }
 
@@ -1140,13 +1159,13 @@ export default function InvoiceWorkspace() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      setActionMessage(err?.response?.data?.error || "Failed to download PDF");
+      toast(err?.response?.data?.error || "Failed to download PDF", { type: "error" });
     }
   }
 
   async function handleReviewAndSend() {
     if (validation.hasErrors) {
-      setActionMessage("Please fix the highlighted issues before sending.");
+      toast("Please fix the highlighted issues before sending.", { type: "error" });
       return;
     }
     if (!latestRef.current.invoiceId || dirty) {
@@ -1173,7 +1192,7 @@ export default function InvoiceWorkspace() {
         prev
           ? {
               ...prev,
-              isFinalized: true,
+            isFinalized: true,
               status: sendRes.status ?? "sent",
               invoiceNumber: finalRes.invoiceNumber ?? prev.invoiceNumber ?? null,
               publicToken: sendRes.publicToken ?? finalRes.publicToken ?? prev.publicToken ?? null,
@@ -1182,8 +1201,10 @@ export default function InvoiceWorkspace() {
       );
       analytics.trackInvoiceSent({ invoiceId: curId, currency: cur.currency });
       setReviewStep("success");
+      toast("Invoice finalized and sent by email", { type: "success" });
     } catch (err: any) {
       setReviewError(err?.response?.data?.error || "Failed to finalize or send the invoice");
+      toast(err?.response?.data?.error || "Failed to finalize or send the invoice", { type: "error" });
     } finally {
       setReviewSending(false);
     }
@@ -1223,32 +1244,30 @@ export default function InvoiceWorkspace() {
         isNew={isNew}
         invoiceId={invoiceId}
         invoiceNumber={invoice.invoiceNumber}
+        invoiceStatus={invoice?.status}
+        isFinalized={invoice?.isFinalized}
         saveState={saveState}
         validation={validation}
+        onSaveNow={doSave}
       />
 
-    {actionMessage && (
-      <div className="fixed top-4 right-4 z-40 max-w-sm rounded-lg bg-surface-elevated px-4 py-3 text-sm text-primary shadow-lg">
-        {actionMessage}
-      </div>
-    )}
-
-    <main className="flex flex-1 overflow-hidden">
+      <main className="flex flex-1 overflow-hidden">
       {/* Mobile preview toggle */}
       <div className="lg:hidden border-b border-color bg-surface px-4 py-2">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-full justify-center"
+          icon={<LayoutDashboard className="h-4 w-4" />}
           onClick={() => setPreviewMobileOpen(!previewMobileOpen)}
-          className="flex items-center justify-center gap-2 w-full rounded-lg border border-color bg-surface px-4 py-2 text-sm font-medium text-primary hover:bg-surface-alt"
         >
-          <LayoutDashboard className="h-4 w-4" />
           {previewMobileOpen ? "Hide Preview" : "Show Preview"}
-        </button>
+        </Button>
       </div>
 
        <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
          <div className="flex-shrink-0 border-b border-color bg-surface">
-           <CustomerHeaderSection invoice={invoice} onField={handleField} customers={customers} />
+            <CustomerHeaderSection invoice={invoice} onField={handleField} customers={customers} validationIssues={validation.issues} />
             <SmartDefaultsBar
               currency={invoice.currency}
               taxRate={invoice.taxRate ?? defaultTaxRate}
@@ -1333,6 +1352,7 @@ export default function InvoiceWorkspace() {
                 onAdd={addItem}
                 onDuplicate={duplicateItem}
                 onRemove={removeItem}
+                onReorderItems={reorderItems}
                 defaultTaxRate={invoice.taxRate ?? defaultTaxRate}
               />
             )}
@@ -1451,18 +1471,18 @@ export default function InvoiceWorkspace() {
         onCopyPaymentLink={() => {
           if (invoice.publicToken) {
             copyToClipboard(`${window.location.origin}/invoice/${invoice.publicToken}`);
-            setActionMessage("Payment link copied to clipboard");
+            toast("Payment link copied to clipboard", { type: "success" });
           }
         }}
         onDownloadPdf={downloadPdf}
         onSendSms={async () => {
-          if (!invoiceId) return;
-          try {
-            await sendInvoiceSms(invoiceId);
-            setActionMessage("SMS with payment link sent to customer");
-          } catch (err: any) {
-            setActionMessage(err?.response?.data?.error || "Failed to send SMS");
-          }
+            if (!invoiceId) return;
+            try {
+              await sendInvoiceSms(invoiceId);
+              toast("SMS with payment link sent to customer", { type: "success" });
+            } catch (err: any) {
+              toast(err?.response?.data?.error || "Failed to send SMS", { type: "error" });
+            }
         }}
       />
     )}
@@ -1471,7 +1491,26 @@ export default function InvoiceWorkspace() {
        <PreviewDialog invoice={previewInvoice} onClose={() => setPreviewOpen(false)} onDownloadPdf={downloadPdf} />
      )}
 
-     <SettingsAndDefaultsDrawer
+     <ConfirmationDialog
+       open={showFinalizeDialog}
+       onClose={() => setShowFinalizeDialog(false)}
+       onConfirm={() => {
+         setShowFinalizeDialog(false);
+         setFinalizeConfirmText("");
+         handleReviewAndSend();
+       }}
+       title="Finalize and send invoice?"
+       message="This will assign an invoice number and lock the invoice. The customer will receive an email with a payment link."
+       confirmLabel="Finalize & send"
+       cancelLabel="Cancel"
+       showInput
+       inputLabel="Type the invoice total to confirm"
+       inputPlaceholder={calc ? `$${calc.total.toFixed(2)}` : "Type total to confirm"}
+       inputRequiredMatch={calc ? `$${calc.total.toFixed(2)}` : undefined}
+       isLoading={reviewSending}
+     />
+
+      <SettingsAndDefaultsDrawer
        open={settingsDrawerOpen}
        onClose={() => setSettingsDrawerOpen(false)}
        businessSettings={settings}
@@ -1514,14 +1553,20 @@ const WorkspaceHeader = React.memo(function WorkspaceHeader({
   isNew,
   invoiceId,
   invoiceNumber,
+  invoiceStatus,
+  isFinalized,
   saveState,
   validation,
+  onSaveNow,
 }: {
   isNew: boolean;
   invoiceId: string | null;
   invoiceNumber: string | null | undefined;
+  invoiceStatus?: string;
+  isFinalized?: boolean;
   saveState: "saved" | "saving" | "unsaved" | "error";
   validation: ReturnType<typeof useInvoiceValidation>;
+  onSaveNow?: () => void;
 }) {
   const navigate = useNavigate();
   const navigateBack = () => navigate("/app/invoices", { replace: true });
@@ -1547,14 +1592,13 @@ const WorkspaceHeader = React.memo(function WorkspaceHeader({
   return (
     <header className="flex h-14 items-center justify-between border-b border-color bg-surface px-6">
       <div className="flex items-center gap-4">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={<X className="h-5 w-5" />}
           onClick={navigateBack}
-          className="rounded-lg p-1.5 text-tertiary hover:bg-surface-alt hover:text-primary"
           aria-label="Back to invoices"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        />
         <span className="text-tertiary">|</span>
         <h1 className="text-xl font-semibold text-primary">
           {invoiceNumber ? `Invoice #${invoiceNumber}` : isNew ? "Create Invoice" : "Edit Invoice"}
@@ -1569,6 +1613,9 @@ const WorkspaceHeader = React.memo(function WorkspaceHeader({
             <Sparkles className="h-3 w-3" /> AI Quick Entry ready
           </span>
         )}
+        {isFinalized && invoiceId && (
+          <StatusBadge status={invoiceStatus ?? "draft"} showLabel size="sm" />
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -1576,10 +1623,15 @@ const WorkspaceHeader = React.memo(function WorkspaceHeader({
           {saveState === "saved" ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
           {statusLabel}
         </div>
+        {saveState === "unsaved" && (
+          <Button variant="ghost" size="sm" icon={<Save className="h-4 w-4" />} onClick={onSaveNow}>
+            Save now
+          </Button>
+        )}
         {validation.hasErrors && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-error-bg px-2.5 py-0.5 text-xs font-medium text-error-text">
             <AlertCircle className="h-3 w-3" /> {validation.issues.filter((i) => i.severity === "error").length} issue
-            {validation.issues.filter((i) => i.severity === "error").length !== 1 ? "s" : ""}
+            {validation.issues.filter((i) => i.severity === "error").length !== 1 ? "s" : ""} need attention
           </span>
         )}
       </div>
@@ -1591,11 +1643,17 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
   invoice,
   onField,
   customers,
+  validationIssues,
 }: {
   invoice: WorkspaceInvoiceData;
   onField: (field: keyof WorkspaceInvoiceData, value: any) => void;
   customers: ApiCustomer[];
+  validationIssues: ReturnType<typeof useInvoiceValidation>["issues"];
 }) {
+  const customerError = validationIssues.find((i) => i.field === "customerId" && i.severity === "error");
+  const issueDateError = validationIssues.find((i) => i.field === "issueDate" && i.severity === "error");
+  const dueDateError = validationIssues.find((i) => i.field === "dueDate" && i.severity === "error");
+
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <FormField
@@ -1603,6 +1661,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
         labelClassName="uppercase"
         className="sm:col-span-2 lg:col-span-2 xl:col-span-2"
         inputClassName="w-full"
+        error={customerError?.message}
       >
         <CustomerSelector
           value={invoice.customerId ?? undefined}
@@ -1628,6 +1687,7 @@ const CustomerHeaderSection = React.memo(function CustomerHeaderSection({
         type="date"
         value={invoice.issueDate ?? ""}
         onChange={(e) => onField("issueDate", e.target.value || null)}
+        error={issueDateError?.message}
       />
 
       <PaymentTermsWithCustomField
@@ -1976,14 +2036,9 @@ const FeesSection = React.memo(function FeesSection({
   if (fees.length === 0) {
     return (
       <div className="mb-6">
-        <button
-          type="button"
-          onClick={addFee}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-color bg-surface px-3 py-1.5 text-sm text-secondary hover:bg-hover"
-        >
-          <Plus className="h-3.5 w-3.5" />
+        <Button variant="secondary" size="sm" icon={<Plus className="h-3.5 w-3.5" />} onClick={addFee}>
           Add fee or charge
-        </button>
+        </Button>
       </div>
     );
   }
@@ -1992,38 +2047,35 @@ const FeesSection = React.memo(function FeesSection({
       <p className="text-xs font-semibold text-tertiary uppercase">Fees &amp; charges</p>
       {fees.map((fee, i) => (
         <div key={i} className="flex items-end gap-2 rounded-lg border border-color bg-surface p-2">
-          <input
-            type="text"
+          <FormField
+            label=""
+            placeholder="Description"
             value={fee.description}
             onChange={(e) => updateFee(i, { description: e.target.value })}
-            placeholder="Description"
-            className="flex-1 form-control"
+            inputClassName="flex-1"
           />
-          <input
+          <FormField
+            label=""
+            placeholder="0.00"
             type="number"
             value={fee.amount}
             onChange={(e) => updateFee(i, { amount: e.target.value || "0" })}
-            placeholder="0.00"
-            className="w-32 form-control text-right font-tabular-nums"
+            inputClassName="w-32 text-right font-tabular-nums"
           />
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Trash2 className="h-4 w-4" />}
             onClick={() => removeFee(i)}
-            className="rounded p-1 text-tertiary hover:bg-error-bg hover:text-error-text"
-            title="Remove fee"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+            aria-label="Remove fee"
+          />
         </div>
       ))}
-      <button
-        type="button"
-        onClick={addFee}
-        className="inline-flex items-center gap-1.5 text-sm text-secondary hover:text-primary"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        Add another fee
-      </button>
+      <div className="flex items-center gap-1.5">
+        <Button variant="ghost" size="sm" icon={<Plus className="h-3.5 w-3.5" />} onClick={addFee}>
+          Add another fee
+        </Button>
+      </div>
     </div>
   );
 });
@@ -2143,14 +2195,14 @@ const PhotoUploadSection = React.memo(function PhotoUploadSection({
                   <FileText className="h-6 w-6 text-tertiary" />
                 </div>
               )}
-              <button
-                type="button"
-                onClick={() => onRemove(a.id)}
-                className="absolute -top-1 -right-1 rounded-full bg-surface-alt text-tertiary hover:bg-error-bg hover:text-error-text"
-                title="Remove"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+             <button
+               type="button"
+               onClick={() => onRemove(a.id)}
+               className="absolute -top-1 -right-1 rounded-full bg-surface-alt p-0.5 text-tertiary hover:bg-error-bg hover:text-error-text focus:outline-none focus:ring-1 focus:ring-primary"
+               title="Remove"
+             >
+               <X className="h-3.5 w-3.5" />
+             </button>
             </div>
           ))}
           <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-color bg-surface text-tertiary hover:border-color-strong">
@@ -2446,34 +2498,40 @@ const PreviewDialog = React.memo(function PreviewDialog({
   onDownloadPdf: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
-      <div className="h-[85vh] w-[90vw] max-w-4xl overflow-auto rounded-xl bg-surface">
-        <div className="sticky top-0 flex items-center justify-between border-b border-color bg-surface-alt px-4 py-2">
-          <h3 className="text-sm font-semibold text-secondary">Invoice preview</h3>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Download className="h-3.5 w-3.5" />}
-              iconPosition="left"
-              onClick={onDownloadPdf}
-            >
-              Download
-            </Button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg p-1 text-tertiary hover:bg-hover"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        <div className="p-6">
-          <InvoicePreviewV2 invoice={invoice} />
+    <Dialog
+      open
+      onClose={onClose}
+      title="Invoice preview"
+      size="full"
+      showCloseButton={false}
+      closeOnOverlayClick={true}
+      className="p-0"
+    >
+      <div className="sticky top-0 flex items-center justify-between border-b border-color bg-surface-alt px-4 py-2">
+        <h3 className="text-sm font-semibold text-secondary">Invoice preview</h3>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Download className="h-3.5 w-3.5" />}
+            iconPosition="left"
+            onClick={onDownloadPdf}
+          >
+            Download
+          </Button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 text-tertiary hover:bg-hover"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
-    </div>
+      <div className="h-[calc(85vh-4rem)] overflow-auto p-6">
+        <InvoicePreviewV2 invoice={invoice} />
+      </div>
+    </Dialog>
   );
 });
 
