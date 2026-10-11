@@ -39,9 +39,9 @@ function formatLineItemDiscount(item: ApiQuoteItem, currency: string, decimalPla
   const discount = new Decimal(item.discount ?? 0);
   if (discount.isZero()) return null;
   if (item.discount_type === "percentage") {
-    return `−${discount.toFixed(2)}%`;
+    return ` −${discount.toFixed(2)}%`;
   }
-  return `−${formatCurrency(discount, currency, decimalPlaces)}`;
+  return ` −${formatCurrency(discount, currency, decimalPlaces)}`;
 }
 
 export interface QuotePreviewProps {
@@ -121,124 +121,148 @@ export default function QuotePreview({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="rounded-xl border border-color bg-surface shadow-sm">
-        {/* Header */}
-        <div className="border-b border-color-subtle p-6 sm:p-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-center gap-4">
+      <div
+        className="quote-preview bg-surface border border-color rounded-xl shadow-sm font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif]"
+        data-quote-preview="true"
+      >
+        <div className="p-8">
+          {/* Header: business info + status + title */}
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex items-start gap-4">
               {businessLogo && (
-                <img src={businessLogo} alt={businessName || "Business logo"} className="h-12 w-auto object-contain" />
+                <img src={businessLogo} alt={businessName || "Business logo"} className="h-16 w-auto rounded-xl object-contain" />
               )}
               <div>
-                {businessName && <h1 className="text-xl font-bold text-primary">{businessName}</h1>}
+                {businessName && <h1 className="text-2xl font-bold text-primary">{businessName}</h1>}
                 {businessEmail && <p className="text-sm text-secondary">{businessEmail}</p>}
                 {businessPhone && <p className="text-sm text-secondary">{businessPhone}</p>}
-                {businessWebsite && <p className="text-sm text-secondary">{businessWebsite}</p>}
-                {businessTaxId && <p className="text-sm text-tertiary">Tax ID: {businessTaxId}</p>}
+                {businessWebsite && (
+                  <a
+                    href={businessWebsite.startsWith("http") ? businessWebsite : `https://${businessWebsite}`}
+                    className="text-sm text-primary-brand hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {businessWebsite}
+                  </a>
+                )}
+                {businessTaxId && <p className="mt-1 text-xs text-tertiary">Tax ID: {businessTaxId}</p>}
+                {businessAddress && <p className="mt-1 whitespace-pre-line text-sm text-secondary">{businessAddress}</p>}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="flex flex-col items-end gap-3">
               {showAcceptAction && (
-                <>
-                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${statusColor}`}>
-                    {quote.status === "accepted" ? "Accepted" : quote.status === "sent" || quote.status === "viewed" ? "Open for acceptance" : quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
-                  </span>
-                </>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${statusColor}`}>
+                  {quote.status === "accepted"
+                    ? "Accepted"
+                    : quote.status === "sent" || quote.status === "viewed"
+                      ? "Open for acceptance"
+                      : quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+                </span>
               )}
+              <div className="text-right">
+                <p className="text-2xl font-bold text-primary">QUOTE</p>
+                {quote.quote_number && <p className="text-sm text-tertiary">#{quote.quote_number}</p>}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Quote metadata */}
-        <div className="border-b border-color-subtle p-6 sm:p-8">
-          <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+          {/* Quote metadata grid */}
+          <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl border border-color bg-surface-alt p-4 sm:grid-cols-4">
             <div>
-              <span className="block text-xs font-medium text-tertiary">Quote number</span>
-              <span className="mt-1 font-medium text-primary">{quote.quote_number ?? quote.id}</span>
+              <span className="invoice-section-title block">Quote #</span>
+              <p className="mt-0.5 text-sm font-medium text-primary">{quote.quote_number ?? quote.id}</p>
             </div>
             <div>
-              <span className="block text-xs font-medium text-tertiary">Issue date</span>
-              <span className="mt-1 font-medium text-primary">{formatDateLong(quote.issue_date ?? undefined)}</span>
+              <span className="invoice-section-title block">Issue date</span>
+              <p className="mt-0.5 text-sm font-medium text-primary">{formatDateLong(quote.issue_date ?? undefined)}</p>
             </div>
             <div>
-              <span className="block text-xs font-medium text-tertiary">Due date</span>
-              <span className="mt-1 font-medium text-primary">{formatDateLong(quote.due_date ?? undefined)}</span>
+              <span className="invoice-section-title block">Due date</span>
+              <p className="mt-0.5 text-sm font-medium text-primary">{formatDateLong(quote.due_date ?? undefined)}</p>
             </div>
             <div>
-              <span className="block text-xs font-medium text-tertiary">Valid until</span>
-              <span className="mt-1 font-medium text-primary">{formatDateLong(quote.expiry_date ?? undefined)}</span>
+              <span className="invoice-section-title block">Valid until</span>
+              <p className="mt-0.5 text-sm font-medium text-primary">{formatDateLong(quote.expiry_date ?? undefined)}</p>
             </div>
           </div>
-        </div>
 
-        {/* Customer section */}
-        {quote.customer_name && (
-          <div className="border-b border-color-subtle p-6 sm:p-8">
-            <h2 className="text-xs font-medium text-tertiary">Bill to</h2>
-            <p className="mt-1 font-medium text-primary">{quote.customer_name}</p>
-            {quote.customer_email && <p className="text-sm text-secondary">{quote.customer_email}</p>}
-          </div>
-        )}
+          {/* Customer section */}
+          {quote.customer_name && (
+            <div className="mt-6">
+              <h2 className="invoice-section-title mb-2">Bill To</h2>
+              <div className="space-y-0.5">
+                <p className="text-base font-semibold text-primary">{quote.customer_name}</p>
+                {quote.customer_email && (
+                  <a href={`mailto:${quote.customer_email}`} className="text-sm text-primary-brand hover:text-primary">
+                    {quote.customer_email}
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
 
-        {/* Line items */}
-        <div className="p-6 sm:p-8">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-color-subtle">
-                <th className="text-left text-xs font-medium text-tertiary">Description</th>
-                <th className="text-center text-xs font-medium text-tertiary">Qty</th>
-                <th className="text-left text-xs font-medium text-tertiary">Unit</th>
-                <th className="text-right text-xs font-medium text-tertiary">Rate</th>
-                <th className="text-right text-xs font-medium text-tertiary">Tax Rate</th>
-                <th className="text-right text-xs font-medium text-tertiary">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(quote.items || []).map((item) => {
-                const taxNote = formatLineItemTax(item);
-                const discountNote = formatLineItemDiscount(item, currency, meta.decimalPlaces);
-                return (
-                  <tr key={item.id} className="border-b border-color-subtle/50">
-                    <td className="py-3 text-sm text-primary align-top">
-                      {item.description || <span className="italic text-tertiary">Untitled item</span>}
-                      {taxNote && (
-                        <span className="mt-0.5 block text-xs text-tertiary">
-                          {taxNote}
-                        </span>
-                      )}
-                      {discountNote && (
-                        <span className="mt-0.5 block text-xs text-success-text">
-                          Discount{discountNote}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 text-center text-sm text-secondary font-tabular-nums">{formatQuantity(item.quantity)}</td>
-                    <td className="py-3 text-sm text-tertiary">{item.unit || "—"}</td>
-                    <td className="py-3 text-right text-sm text-secondary font-tabular-nums">
-                      {formatCurrency(item.unit_price, currency, meta.decimalPlaces)}
-                    </td>
-                    <td className="py-3 text-right text-sm text-tertiary font-tabular-nums">
-                      {taxNote || "—"}
-                    </td>
-                    <td className="py-3 text-right text-sm font-medium text-primary font-tabular-nums">
-                      {formatCurrency(item.line_total, currency, meta.decimalPlaces)}
+          {/* Line items */}
+          <div className="mt-6 overflow-x-auto rounded-xl border border-color">
+            <table className="w-full table-fixed border-collapse text-sm">
+              <thead>
+                <tr className="bg-surface-alt">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase text-tertiary">Description</th>
+                  <th className="px-2 py-2.5 text-center text-xs font-semibold uppercase text-tertiary">Qty</th>
+                  <th className="px-2 py-2.5 text-left text-xs font-semibold uppercase text-tertiary">Unit</th>
+                  <th className="px-2 py-2.5 text-right text-xs font-semibold uppercase text-tertiary">Rate</th>
+                  <th className="px-2 py-2.5 text-right text-xs font-semibold uppercase text-tertiary">Tax Rate</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase text-tertiary">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(quote.items || []).map((item) => {
+                  const taxNote = formatLineItemTax(item);
+                  const discountNote = formatLineItemDiscount(item, currency, meta.decimalPlaces);
+                  return (
+                    <tr key={item.id} className="border-t border-color-subtle">
+                      <td className="px-4 py-3 align-top text-sm text-primary break-words">
+                        {item.description || <span className="italic text-tertiary">Untitled item</span>}
+                        {taxNote && (
+                          <span className="mt-0.5 block text-xs text-tertiary">
+                            {taxNote}
+                          </span>
+                        )}
+                        {discountNote && (
+                          <span className="mt-0.5 block text-xs text-success-text">
+                            Discount{discountNote}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-3 text-center text-sm text-tertiary font-tabular-nums">{formatQuantity(item.quantity)}</td>
+                      <td className="px-2 py-3 text-sm text-tertiary">{item.unit || "—"}</td>
+                      <td className="px-2 py-3 text-sm text-secondary text-right font-tabular-nums">
+                        {formatCurrency(item.unit_price, currency, meta.decimalPlaces)}
+                      </td>
+                      <td className="px-2 py-3 text-sm text-tertiary text-right font-tabular-nums">
+                        {taxNote || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-primary text-right font-tabular-nums">
+                        {formatCurrency(item.line_total, currency, meta.decimalPlaces)}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {(quote.items || []).length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-10 text-center text-sm text-tertiary">
+                      No line items
                     </td>
                   </tr>
-                );
-              })}
-              {(quote.items || []).length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-tertiary">
-                    No line items
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {/* Fees breakdown */}
           {(quote.fees || []).length > 0 && (
-            <div className="mt-4 overflow-x-auto rounded-xl border border-color">
+            <div className="mt-2 overflow-x-auto rounded-xl border border-color">
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-surface-alt">
@@ -254,7 +278,7 @@ export default function QuotePreview({
                     const feeTax = new Decimal(fee.tax_amount ?? 0);
                     const feeTotal = feeBase.plus(feeTax);
                     return (
-                      <tr key={fee.id ?? `fee_${i}`} className="border-t border-color-subtle/50">
+                      <tr key={fee.id ?? `fee_${i}`} className="border-t border-color-subtle">
                         <td className="px-4 py-3 text-sm text-primary">{fee.description}</td>
                         <td className="px-2 py-3 text-right text-sm text-secondary font-tabular-nums">
                           {formatCurrency(feeBase, currency, meta.decimalPlaces)}
@@ -262,7 +286,7 @@ export default function QuotePreview({
                         <td className="px-2 py-3 text-right text-sm text-tertiary font-tabular-nums">
                           {formatCurrency(feeTax, currency, meta.decimalPlaces)}
                         </td>
-                        <td className="px-4 py-3 text-right text-sm font-medium text-primary font-tabular-nums">
+                        <td className="px-4 py-3 text-sm font-medium text-primary text-right font-tabular-nums">
                           {formatCurrency(feeTotal, currency, meta.decimalPlaces)}
                         </td>
                       </tr>
@@ -275,45 +299,47 @@ export default function QuotePreview({
 
           {/* Totals */}
           <div className="mt-6 flex justify-end">
-            <div className="w-48 space-y-2 border-t border-color-subtle pt-4">
-              <div className="flex justify-between text-sm">
+            <div className="w-56 space-y-1 font-tabular-nums">
+              <div className="flex justify-between py-2 text-sm">
                 <span className="text-tertiary">Subtotal</span>
-                <span className="font-tabular-nums text-primary">{formatCurrency(subtotal, currency, meta.decimalPlaces)}</span>
+                <span className="text-primary">{formatCurrency(subtotal, currency, meta.decimalPlaces)}</span>
               </div>
               {hasNonZero(quote.discount_total) && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between py-2 text-sm">
                   <span className="text-tertiary">Discount</span>
-                  <span className="font-tabular-nums text-success-text">−{formatCurrency(discountTotal, currency, meta.decimalPlaces)}</span>
+                  <span className="text-success-text">−{formatCurrency(discountTotal, currency, meta.decimalPlaces)}</span>
                 </div>
               )}
               {hasNonZero(quote.tax_total) && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between py-2 text-sm">
                   <span className="text-tertiary">Tax</span>
-                  <span className="font-tabular-nums text-primary">{formatCurrency(taxTotal, currency, meta.decimalPlaces)}</span>
+                  <span className="text-primary">{formatCurrency(taxTotal, currency, meta.decimalPlaces)}</span>
                 </div>
               )}
               {hasNonZero(quote.fee_total) && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between py-2 text-sm">
                   <span className="text-tertiary">Fees</span>
-                  <span className="font-tabular-nums text-primary">{formatCurrency(feeTotal, currency, meta.decimalPlaces)}</span>
+                  <span className="text-primary">{formatCurrency(feeTotal, currency, meta.decimalPlaces)}</span>
                 </div>
               )}
-              <div className="flex justify-between border-t border-color-subtle pt-3 mt-2">
-                <span className="text-base font-semibold text-secondary">Total</span>
-                <span className="text-xl font-bold text-primary font-tabular-nums">
-                  {formatCurrency(total, currency, meta.decimalPlaces)}
-                </span>
+              <div className="border-t-2 border-color pt-3">
+                <div className="flex justify-between">
+                  <span className="text-base font-semibold text-secondary">Total</span>
+                  <span className="text-xl font-bold text-primary">
+                    {formatCurrency(total, currency, meta.decimalPlaces)}
+                  </span>
+                </div>
               </div>
               {amountPaid.gt(0) && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between py-2 text-sm">
                   <span className="text-tertiary">Amount Paid</span>
-                  <span className="font-tabular-nums text-success-text">−{formatCurrency(amountPaid, currency, meta.decimalPlaces)}</span>
+                  <span className="text-success-text">−{formatCurrency(amountPaid, currency, meta.decimalPlaces)}</span>
                 </div>
               )}
               {hasNonZero(quote.amount_due) && (
-                <div className="flex justify-between pt-2">
+                <div className="flex justify-between border-t border-color-subtle pt-2">
                   <span className="text-base font-semibold text-secondary">Amount Due</span>
-                  <span className="text-xl font-bold text-primary font-tabular-nums">
+                  <span className="text-xl font-bold text-primary-brand font-tabular-nums">
                     {formatCurrency(amountDue, currency, meta.decimalPlaces)}
                   </span>
                 </div>
@@ -324,17 +350,17 @@ export default function QuotePreview({
 
         {/* Scope of work */}
         {quote.scope_of_work && (
-          <div className="border-t border-color-subtle p-6 sm:p-8">
-            <h2 className="text-sm font-medium text-tertiary">Scope of work</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-primary">{quote.scope_of_work}</p>
+          <div className="border-t border-color px-8 py-6">
+            <h2 className="invoice-section-title mb-1.5">Scope of work</h2>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-primary">{quote.scope_of_work}</p>
           </div>
         )}
 
         {/* Deposit info */}
         {quote.deposit_type && quote.deposit_type !== "none" && (
-          <div className="border-t border-color-subtle p-6 sm:p-8">
-            <h2 className="text-sm font-medium text-tertiary">Deposit required</h2>
-            <p className="mt-2 text-sm text-primary">
+          <div className="border-t border-color px-8 py-6">
+            <h2 className="invoice-section-title mb-1.5">Deposit required</h2>
+            <p className="mt-1 text-sm text-primary">
               {quote.deposit_type === "percentage"
                 ? `${formatCurrency(new Decimal(quote.total || 0).mul(new Decimal(quote.deposit_value || 0).div(100)).toFixed(2), currency, meta.decimalPlaces)} (${new Decimal(quote.deposit_value || 0).mul(100).toFixed(2)}%)`
                 : formatCurrency(quote.deposit_value, currency, meta.decimalPlaces)}
@@ -347,28 +373,25 @@ export default function QuotePreview({
 
         {/* Notes */}
         {quote.notes && (
-          <div className="border-t border-color-subtle p-6 sm:p-8">
-            <h2 className="text-sm font-medium text-tertiary">Notes</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-primary">{quote.notes}</p>
+          <div className="border-t border-color px-8 py-6">
+            <h2 className="invoice-section-title mb-1.5">Notes</h2>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-primary">{quote.notes}</p>
           </div>
         )}
 
-        {/* Terms */}
+        {/* Terms & Conditions */}
         {quote.terms && (
-          <div className="border-t border-color-subtle p-6 sm:p-8">
-            <h2 className="text-sm font-medium text-tertiary">Terms</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-primary">{quote.terms}</p>
+          <div className="border-t border-color px-8 py-6">
+            <h2 className="invoice-section-title mb-1.5">Terms &amp; Conditions</h2>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-primary">{quote.terms}</p>
           </div>
         )}
 
         {/* Footer */}
-        <div className="border-t border-color-subtle bg-surface-alt p-6 sm:p-8">
-          {quote.payment_instructions && (
-            <p className="text-sm text-secondary">{quote.payment_instructions}</p>
-          )}
-          {businessAddress && (
-            <p className="mt-2 text-xs text-tertiary">{businessAddress}</p>
-          )}
+        <div className="border-t border-color-subtle px-8 py-4 text-center text-xs text-tertiary">
+          {quote.is_finalized
+            ? `Quote #${quote.quote_number || "—"}. All rights reserved.`
+            : "This is a draft quote. Not yet finalized."}
         </div>
       </div>
 

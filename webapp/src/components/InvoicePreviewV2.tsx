@@ -491,7 +491,7 @@ const TaxBreakdown: React.FC<{ groups: PreviewTaxGroup[]; currency: string }> = 
     const dp = meta.decimalPlaces;
 
     return (
-      <div className="mt-2 rounded-xl border border-color-subtle bg-surface-alt p-4">
+      <div className="mt-2 rounded-xl border border-color bg-surface-alt p-4">
         <div className="text-xs font-medium text-tertiary uppercase">Tax Breakdown</div>
         <div className="mt-2 space-y-1.5">
           {groups.map((group, idx) => {
@@ -538,7 +538,7 @@ function TotalsSummaryInner({ invoice }: { invoice: PreviewInvoice }) {
   const depositRemaining = depositDue.minus(depositPaid);
 
   return (
-    <div className="w-64 space-y-1 font-tabular-nums">
+    <div className="w-56 space-y-1 font-tabular-nums">
       <div className="flex justify-between py-2 text-sm">
         <span className="text-tertiary">Subtotal</span>
         <span className="text-primary">{fmtNumber(invoice.subtotal, currency, dp)}</span>
@@ -639,7 +639,7 @@ const PaymentInfoSection: React.FC<{ invoice: PreviewInvoice }> = React.memo(fun
   const depositRemaining = depositDue.minus(depositPaid);
 
   return (
-    <div className="mt-8 rounded-xl border border-color bg-surface p-6 shadow-sm">
+    <div className="mt-8">
       <h3 className="invoice-section-title mb-4">Payment Information</h3>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

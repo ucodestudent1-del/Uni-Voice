@@ -1037,7 +1037,8 @@
       }
 
       .invoice-preview-v2,
-      .credit-note-display {
+      .credit-note-display,
+      .quote-preview {
         border: none !important;
         box-shadow: none !important;
         border-radius: 0 !important;

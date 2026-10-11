@@ -331,7 +331,7 @@ const CustomerInfoSection: React.FC<{ design: CreditNoteDesign }> = React.memo(f
 const ReasonSection: React.FC<{ design: CreditNoteDesign }> = React.memo(function ReasonSection({ design }) {
   if (!design.reason) return null;
   return (
-    <div className="mt-6 rounded-xl border border-color-subtle bg-surface-alt p-4">
+    <div className="mt-6 rounded-xl border border-color bg-surface-alt p-4">
       <h3 className="invoice-section-title mb-1.5">Reason for Credit</h3>
       <p className="text-sm text-secondary whitespace-pre-line">{design.reason}</p>
     </div>
@@ -479,7 +479,7 @@ const CreditNoteTotalsSummary: React.FC<{ design: CreditNoteDesign }> = React.me
 
   return (
     <div className="mt-6 flex justify-end">
-      <div className="w-64 space-y-1 font-tabular-nums">
+      <div className="w-56 space-y-1 font-tabular-nums">
         <div className="flex justify-between py-2 text-sm">
           <span className="text-tertiary">Subtotal</span>
           <span className="text-primary">{fmtNumber(design.subtotal, currency, dp)}</span>
