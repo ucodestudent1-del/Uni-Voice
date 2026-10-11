@@ -74,35 +74,6 @@ export const customerStatusConfig = createStatusBadgeConfig(
   "active"
 );
 
-export const creditNoteStatusConfig = createStatusBadgeConfig(
-  {
-    draft: { label: "Draft", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been created but not yet finalized." },
-    finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Credit note has been finalized and issued." },
-    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Credit note has been sent to the customer." },
-    partially_applied: { label: "Partially Applied", className: "status-warning-bg status-warning-text", description: "A portion of the credit has been applied to an invoice." },
-    applied: { label: "Applied", className: "status-success-bg status-success-text", description: "The full credit has been applied to invoice(s)." },
-    partially_refunded: { label: "Partially Refunded", className: "status-warning-bg status-warning-text", description: "A portion of the credit has been refunded to the customer." },
-    refunded: { label: "Refunded", className: "status-success-bg status-success-text", description: "The full credit has been refunded to the customer." },
-    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been cancelled." },
-    void: { label: "Void", className: "status-error-bg status-error-text", description: "Credit note has been voided." },
-  },
-  "draft"
-);
-
-export const quoteStatusConfig = createStatusBadgeConfig(
-  {
-    draft: { label: "Draft", className: "status-tertiary-bg status-tertiary-text", description: "Quote has been created but not yet sent to the customer." },
-    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Quote has been sent to the customer." },
-    viewed: { label: "Viewed", className: "status-info-bg status-info-text", description: "Customer has viewed the quote." },
-    accepted: { label: "Accepted", className: "status-success-bg status-success-text", description: "Quote has been accepted by the customer." },
-    rejected: { label: "Rejected", className: "status-error-bg status-error-text", description: "Quote has been rejected by the customer." },
-    expired: { label: "Expired", className: "status-tertiary-bg status-tertiary-text", description: "Quote has passed its expiration date." },
-    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Quote has been cancelled." },
-    converted: { label: "Converted", className: "status-success-bg status-success-text", description: "Quote has been converted to an invoice." },
-  },
-  "draft"
-);
-
 export function isOverdueStatus(status: string, dueDate?: string | null): boolean {
   if (status === "overdue") return true;
   if (status === "paid" || status === "void" || status === "cancelled") return false;

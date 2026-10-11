@@ -12,19 +12,6 @@ export type Status =
   | "cancelled"
   | "void";
 
-export type QuoteStatus = "draft" | "sent" | "viewed" | "accepted" | "rejected" | "expired" | "cancelled";
-
-export type CreditNoteStatus =
-  | "draft"
-  | "finalized"
-  | "sent"
-  | "partially_applied"
-  | "applied"
-  | "partially_refunded"
-  | "refunded"
-  | "cancelled"
-  | "void";
-
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "cancelled" | "refunded" | "partially_refunded";
 
 export interface Business {
@@ -40,7 +27,6 @@ export interface Business {
   address: Address;
   countryCode: string;
   defaultCurrency: CurrencyCode;
-  defaultQuoteValidityDays?: number;
   logoUrl?: string | null;
   version: number;
   createdAt: Date;
@@ -246,76 +232,6 @@ export interface InvoiceEvent {
   createdAt: Date;
 }
 
-export interface CreditNoteLineItem {
-  id: string;
-  creditNoteId: string;
-  productId?: string | null;
-  description: string;
-  quantity: Decimal.Value;
-  unit: string;
-  unitPrice: Decimal.Value;
-  discount: Decimal.Value;
-  discountType: "fixed" | "percentage";
-  taxRate: Decimal.Value;
-  taxAmount: Decimal.Value;
-  lineSubtotal: Decimal.Value;
-  lineTotal: Decimal.Value;
-  sortOrder: number;
-  isTaxInclusive: boolean;
-  catalogName?: string | null;
-  catalogSku?: string | null;
-  catalogTaxCategory?: string | null;
-  catalogUnitPrice?: string | null;
-  catalogTaxRate?: string | null;
-}
-
-export interface CreditNote {
-  id: string;
-  businessId: string;
-  customerId: string;
-  referenceInvoiceId?: string | null;
-  creditNoteNumber?: string | null;
-  status: CreditNoteStatus;
-  issueDate?: Date | null;
-  currency: CurrencyCode;
-  reason?: string | null;
-  notes?: string | null;
-  internalNotes?: string | null;
-  terms?: string | null;
-  templateId?: string | null;
-  subtotal: Decimal.Value;
-  discountTotal: Decimal.Value;
-  taxTotal: Decimal.Value;
-  feeTotal: Decimal.Value;
-  total: Decimal.Value;
-  appliedTotal: Decimal.Value;
-  amountDue: Decimal.Value;
-  isFinalized: boolean;
-  finalizedAt?: Date | null;
-  sentAt?: Date | null;
-  cancelledAt?: Date | null;
-  cancelledReason?: string | null;
-  voidedAt?: Date | null;
-  voidReason?: string | null;
-  publicToken?: string | null;
-  version: number;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string | null;
-  updatedBy?: string | null;
-}
-
-export interface CreditNoteApplication {
-  id: string;
-  creditNoteId: string;
-  invoiceId: string;
-  businessId: string;
-  amount: Decimal.Value;
-  appliedAt: Date;
-  idempotencyKey: string;
-  metadata: Record<string, unknown>;
-}
-
 export interface ReminderRule {
   id: string;
   businessId: string;
@@ -355,7 +271,6 @@ export interface ScheduledEmail {
   id: string;
   businessId: string;
   invoiceId?: string | null;
-  creditNoteId?: string | null;
   emailTemplateId?: string | null;
   recipient: string;
   recipientName?: string | null;
@@ -439,30 +354,6 @@ export interface RecurringInvoice {
   updatedAt: Date;
 }
 
-export interface Quote {
-  id: string;
-  businessId: string;
-  customerId?: string | null;
-  quoteNumber?: string | null;
-  status: QuoteStatus;
-  issueDate?: Date | null;
-  dueDate?: Date | null;
-  currency: CurrencyCode;
-  subtotal: Decimal.Value;
-  discountTotal: Decimal.Value;
-  taxTotal: Decimal.Value;
-  feeTotal: Decimal.Value;
-  total: Decimal.Value;
-  notes?: string | null;
-  terms?: string | null;
-  publicToken?: string | null;
-  isAccepted: boolean;
-  acceptedAt?: Date | null;
-  convertedInvoiceId?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface Template {
   id: string;
   businessId: string;
@@ -521,7 +412,7 @@ export interface InvoiceTemplate {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
-  documentType: "invoice" | "quote" | "recurring_invoice" | "credit_note";
+   documentType: "invoice" | "recurring_invoice";
   lifecycle: string;
   publishedAt?: Date | null;
   publishedRevision?: number | null;

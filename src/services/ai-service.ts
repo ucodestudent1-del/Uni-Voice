@@ -44,7 +44,7 @@ export interface ParsedDocumentResult {
 }
 
 export interface AiParseOptions {
-  documentType?: "invoice" | "quote" | "credit_note";
+  documentType?: "invoice";
   businessId: string;
 }
 

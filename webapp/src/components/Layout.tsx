@@ -6,7 +6,7 @@ import { useState } from "react";
 import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
 import type { ComponentType } from "react";
-import { Menu, Receipt } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import type { PlanTier } from "@/types/app";
 
@@ -32,8 +32,6 @@ export default function Layout() {
   const navItems: NavItem[] = [
     { name: "Dashboard", to: "/app", feature: undefined, requiredPlan: undefined },
     { name: "Invoices", to: "/app/invoices" },
-    { name: "Credit Notes", to: "/app/credit-notes", icon: Receipt },
-    { name: "Quotes", to: "/app/quotes" },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
     { name: "Payments", to: "/app/payments" },

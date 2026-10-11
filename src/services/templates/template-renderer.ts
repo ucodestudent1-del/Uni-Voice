@@ -1819,40 +1819,11 @@ export const CORPORATE_QUOTE_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export const QUOTE_TEMPLATES: Record<string, string> = {
-  default: DEFAULT_QUOTE_TEMPLATE,
-  minimal: MINIMAL_QUOTE_TEMPLATE,
-  modern: MODERN_QUOTE_TEMPLATE,
-  corporate: CORPORATE_QUOTE_TEMPLATE,
-};
-
-Object.values(QUOTE_TEMPLATES).forEach((html) => {
-  templateCache.set(html, Handlebars.compile(html, { noEscape: true }));
-});
-
 export class TemplateRenderer {
   private defaultTemplate: string;
 
   constructor(defaultTemplate?: string) {
     this.defaultTemplate = defaultTemplate ?? DEFAULT_INVOICE_TEMPLATE;
-  }
-
-  renderQuote(data: InvoiceTemplateData, templateHtml?: string): string {
-    const templateName = data.config?.htmlTemplate as string | undefined;
-    let templateSource: string = DEFAULT_QUOTE_TEMPLATE;
-    if (templateName && QUOTE_TEMPLATES[templateName]) {
-      templateSource = QUOTE_TEMPLATES[templateName];
-    } else if (templateName) {
-      templateSource = templateName;
-    } else if (templateHtml) {
-      templateSource = templateHtml;
-    }
-    const template = compileTemplate(templateSource);
-    return template({
-      ...data,
-      meta: getCurrencyMetadata(data.invoice.currency),
-      appBaseUrl: env.APP_PUBLIC_BASE_URL,
-    });
   }
 
   build(data: InvoiceTemplateData): any {

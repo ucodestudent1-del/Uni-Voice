@@ -202,7 +202,6 @@ export class PaymentRiskService {
     const disputeRes = await query(
       `SELECT COUNT(*) as disputes, COUNT(DISTINCT i.id) as total
        FROM invoices i
-       LEFT JOIN credit_notes cn ON cn.reference_invoice_id = i.id
        WHERE i.business_id = $1 AND i.customer_id = $2`,
       [businessId, customerId]
     );

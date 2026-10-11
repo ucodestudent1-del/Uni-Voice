@@ -17,18 +17,6 @@ export interface InvoiceEmailData {
   htmlBody: string;
   attachments?: Array<{ filename: string; content: Buffer }>;
   idempotencyKey?: string;
-  documentType?: "invoice" | "quote";
-  quoteId?: string;
-}
-
-export interface CreditNoteEmailData {
-  creditNoteId: string;
-  businessId: string;
-  recipient: EmailRecipient;
-  subject: string;
-  htmlBody: string;
-  attachments?: Array<{ filename: string; content: Buffer }>;
-  idempotencyKey?: string;
 }
 
 export type EmailStatus = "pending" | "sent" | "delivered" | "opened" | "failed";
@@ -240,16 +228,12 @@ export class EmailService {
   }
 
   async sendInvoiceEmail(data: InvoiceEmailData): Promise<{ messageId: string; status: EmailStatus }> {
-    const documentType: "invoice" | "quote" = data.documentType ?? "invoice";
-    const quoteId = data.documentType === "quote" ? data.quoteId : undefined;
-    const invoiceId = documentType === "invoice" ? data.invoiceId : null;
-
     if (data.idempotencyKey) {
       const existing = await query(
         `SELECT message_id, status FROM email_log
          WHERE idempotency_key = $1 AND document_type = $2
-         AND (${documentType === "invoice" ? "invoice_id = $3" : "quote_id = $3"})`,
-        [data.idempotencyKey, documentType, documentType === "invoice" ? data.invoiceId : quoteId]
+         AND invoice_id = $3`,
+        [data.idempotencyKey, "invoice", data.invoiceId]
       );
       if (existing.rows.length) {
         logger.info(`Email already sent (idempotent), msgId=${existing.rows[0].message_id}`);
@@ -265,48 +249,15 @@ export class EmailService {
     });
 
     await query(
-      `INSERT INTO email_log (invoice_id, quote_id, document_type, business_id, provider, status, recipient, subject, message_id, idempotency_key, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())`,
+      `INSERT INTO email_log (invoice_id, document_type, business_id, provider, status, recipient, subject, message_id, idempotency_key, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW())`,
       [
-        invoiceId, quoteId, documentType, data.businessId, this.provider.name, result.status,
+        data.invoiceId, "invoice", data.businessId, this.provider.name, result.status,
         data.recipient.email, data.subject, result.messageId, data.idempotencyKey ?? null,
       ]
     );
 
-    logger.info(`Email sent: to=${data.recipient.email} ${documentType}=${documentType === "invoice" ? data.invoiceId : quoteId} msgId=${result.messageId}`);
-    return result;
-  }
-
-  async sendCreditNoteEmail(data: CreditNoteEmailData): Promise<{ messageId: string; status: EmailStatus }> {
-    if (data.idempotencyKey) {
-      const existing = await query(
-        `SELECT message_id, status FROM email_log
-         WHERE idempotency_key = $1 AND credit_note_id = $2`,
-        [data.idempotencyKey, data.creditNoteId]
-      );
-      if (existing.rows.length) {
-        logger.info(`Email already sent (idempotent), msgId=${existing.rows[0].message_id}`);
-        return { messageId: existing.rows[0].message_id, status: existing.rows[0].status };
-      }
-    }
-
-    const result = await this.provider.send({
-      to: data.recipient,
-      subject: data.subject,
-      html: data.htmlBody,
-      attachments: data.attachments,
-    });
-
-    await query(
-      `INSERT INTO email_log (credit_note_id, business_id, provider, status, recipient, subject, message_id, idempotency_key, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())`,
-      [
-        data.creditNoteId, data.businessId, this.provider.name, result.status,
-        data.recipient.email, data.subject, result.messageId, data.idempotencyKey ?? null,
-      ]
-    );
-
-    logger.info(`Credit note email sent: to=${data.recipient.email} creditNoteId=${data.creditNoteId} msgId=${result.messageId}`);
+    logger.info(`Email sent: to=${data.recipient.email} invoiceId=${data.invoiceId} msgId=${result.messageId}`);
     return result;
   }
 
