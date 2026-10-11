@@ -33,6 +33,7 @@ export default function Layout() {
     { name: "Dashboard", to: "/app", feature: undefined, requiredPlan: undefined },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
+    { name: "Invoices", to: "/app/invoices" },
     { name: "Payments", to: "/app/payments" },
     { name: "Receipts", to: "/app/receipts", feature: "receipts.create", requiredPlan: "pro" as PlanTier },
     { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" as PlanTier },

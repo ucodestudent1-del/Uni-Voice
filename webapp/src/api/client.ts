@@ -20,6 +20,13 @@ import type {
   ApiProfitLossReport,
   ApiAgingReport,
   ApiPaymentMetrics,
+  ApiInvoice,
+  ApiInvoiceItem,
+  ApiInvoiceFee,
+  ApiInvoiceListItem,
+  ApiInvoiceEvent,
+  ApiCreditNote,
+  ApiCreditNoteListItem,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -1237,5 +1244,229 @@ export interface ApiRiskScoreResult {
   factors: Record<string, unknown>;
   confidence: number;
   modelVersion: string;
+}
+
+// ============================================================================
+// INVOICES
+// ============================================================================
+
+export interface InvoiceSearchParams {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  search?: string;
+  customerId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export async function getInvoices(params?: InvoiceSearchParams): Promise<{
+  invoices: ApiInvoiceListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}> {
+  const res = await api.get("/invoices", { params });
+  return res.data;
+}
+
+export async function getInvoice(id: string): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.get(`/invoices/${id}`);
+  return res.data;
+}
+
+export interface CreateInvoiceItemInput {
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice: string | number;
+  discount?: string | number;
+  discountType?: "fixed" | "percentage";
+  taxRate?: string | number;
+  taxName?: string | null;
+  isTaxInclusive?: boolean;
+  sortOrder?: number;
+  productId?: string | null;
+  catalogName?: string | null;
+  catalogSku?: string | null;
+  catalogTaxCategory?: string | null;
+  catalogUnitPrice?: string | null;
+  catalogTaxRate?: string | null;
+}
+
+export interface CreateInvoiceFeeInput {
+  description: string;
+  amount: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+  sortOrder?: number;
+}
+
+export interface CreateInvoiceInput {
+  customerId?: string | null;
+  projectId?: string | null;
+  currency?: string;
+  issueDate?: string | null;
+  dueDate?: string | null;
+  poNumber?: string | null;
+  terms?: string | null;
+  notes?: string | null;
+  paymentInstructions?: string | null;
+  templateId?: string | null;
+  items: CreateInvoiceItemInput[];
+  fees?: CreateInvoiceFeeInput[];
+  invoiceDiscount?: string | number;
+  invoiceDiscountType?: "fixed" | "percentage" | null;
+  shippingDescription?: string | null;
+  shippingAmount?: string | number;
+  shippingTaxRate?: string | number;
+}
+
+export async function createInvoice(data: CreateInvoiceInput): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.post("/invoices", data);
+  return res.data;
+}
+
+export async function updateInvoice(id: string, data: Partial<CreateInvoiceInput>): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.patch(`/invoices/${id}`, data);
+  return res.data;
+}
+
+export interface FinalizeInvoiceResult {
+  invoice: ApiInvoice;
+  invoiceNumber: string;
+  status: string;
+}
+
+export async function finalizeInvoice(id: string): Promise<FinalizeInvoiceResult> {
+  const res = await api.post(`/invoices/${id}/finalize`);
+  return res.data;
+}
+
+export interface SendInvoiceData {
+  to?: string | null;
+  cc?: string | null;
+  bcc?: string | null;
+  subject?: string | null;
+  message?: string | null;
+}
+
+export interface SendInvoiceResult {
+  success: boolean;
+  messageId?: string;
+  status: string;
+  sentAt: string;
+  invoice: ApiInvoice;
+}
+
+export async function sendInvoice(id: string, data?: SendInvoiceData): Promise<SendInvoiceResult> {
+  const res = await api.post(`/invoices/${id}/send`, data ?? {});
+  return res.data;
+}
+
+export interface RecordPaymentData {
+  amount: string | number;
+  provider?: string | null;
+  providerPaymentId?: string | null;
+  method?: string | null;
+  paidAt?: string | null;
+  idempotencyKey?: string | null;
+}
+
+export interface RecordPaymentResult {
+  ok: boolean;
+  invoice: ApiInvoice;
+  payment: { id: string };
+}
+
+export async function recordPayment(id: string, data: RecordPaymentData): Promise<RecordPaymentResult> {
+  const res = await api.post(`/invoices/${id}/record-payment`, data);
+  return res.data;
+}
+
+export async function cancelInvoice(id: string, reason: string): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.post(`/invoices/${id}/cancel`, { reason });
+  return res.data;
+}
+
+export async function voidInvoice(id: string, reason: string): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.post(`/invoices/${id}/void`, { reason });
+  return res.data;
+}
+
+export async function getInvoicePdf(id: string): Promise<Blob> {
+  const res = await api.get(`/invoices/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getInvoiceShareLink(id: string): Promise<{ url: string; token: string; expiresAt: string }> {
+  const res = await api.get(`/invoices/${id}/share-link`);
+  return res.data;
+}
+
+export async function getPublicInvoice(token: string): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.get(`/public/invoice/${token}`);
+  return res.data;
+}
+
+export async function getInvoiceEvents(invoiceId: string): Promise<{ events: ApiInvoiceEvent[] }> {
+  const res = await api.get(`/invoices/${invoiceId}/events`);
+  return res.data;
+}
+
+// ============================================================================
+// CREDIT NOTES
+// ============================================================================
+
+export interface CreditNoteSearchParams {
+  limit?: number;
+  offset?: number;
+  invoiceId?: string;
+}
+
+export async function getCreditNotes(params?: CreditNoteSearchParams): Promise<{
+  creditNotes: ApiCreditNoteListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}> {
+  const res = await api.get("/credit-notes", { params });
+  return res.data;
+}
+
+export async function getCreditNote(id: string): Promise<{ creditNote: ApiCreditNote }> {
+  const res = await api.get(`/credit-notes/${id}`);
+  return res.data;
+}
+
+export interface CreateCreditNoteInput {
+  invoiceId: string;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  items?: Array<{
+    description: string;
+    quantity: string | number;
+    unit?: string;
+    unitPrice: string | number;
+    taxRate?: string | number;
+    taxName?: string | null;
+    isTaxInclusive?: boolean;
+  }>;
+}
+
+export async function createCreditNote(data: CreateCreditNoteInput): Promise<{ creditNote: ApiCreditNote }> {
+  const res = await api.post("/credit-notes", data);
+  return res.data;
+}
+
+export async function applyCreditNote(
+  creditNoteId: string,
+  data: { invoiceId: string; amount: string | number }
+): Promise<{ ok: boolean; remaining: string }> {
+  const res = await api.post(`/credit-notes/${creditNoteId}/apply`, data);
+  return res.data;
 }
 

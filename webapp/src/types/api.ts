@@ -167,6 +167,22 @@ export interface ApiInvoiceAttachment {
   created_at: string;
 }
 
+export interface ApiInvoicePayment {
+  id: string;
+  invoice_id: string;
+  business_id: string;
+  customer_id?: string | null;
+  amount: string;
+  currency: string;
+  status: string;
+  method?: string | null;
+  provider: string;
+  provider_payment_id?: string | null;
+  paid_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ApiInvoice {
   id: string;
   business_id: string;
@@ -230,6 +246,8 @@ export interface ApiInvoice {
   items: ApiInvoiceItem[];
   fees: ApiInvoiceFee[];
   attachments?: ApiInvoiceAttachment[];
+  payments?: ApiInvoicePayment[];
+  events?: ApiInvoiceEvent[];
 }
 
 export interface ApiQuoteItem {

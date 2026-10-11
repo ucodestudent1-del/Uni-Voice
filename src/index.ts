@@ -21,6 +21,7 @@ import { oauthService } from "./services/auth/oauth.service.js";
 import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
+import { invoiceService } from "./services/invoice-service.js";
 
 const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
@@ -902,6 +903,229 @@ app.get("/api/catalog/sku/:sku/check", requireAuth, async (req: AuthRequest, res
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   const existing = await productServiceRepository.findBySku(req.user!.businessId, req.params.sku);
   res.json({ available: !existing, exists: !!existing });
+});
+
+// ============================================================================
+// INVOICES
+// ============================================================================
+
+app.post("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceService.create(req.user!.businessId, req.body, req.user!.id);
+    res.status(201).json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.findMany(req.user!.businessId, {
+      limit: req.query.limit,
+      offset: req.query.offset,
+      status: req.query.status,
+      search: req.query.search,
+      customerId: req.query.customerId,
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo,
+      sortBy: req.query.sortBy,
+      sortOrder: req.query.sortOrder,
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/invoices/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceService.findById(req.user!.businessId, req.params.id);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+    res.json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/invoices/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceService.update(req.user!.businessId, req.params.id, req.body, req.user!.id);
+    res.json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/invoices/:id/finalize", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.finalize(req.user!.businessId, req.params.id, req.user!.id);
+    res.json({ invoice: result.invoice, invoiceNumber: result.invoiceNumber });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/invoices/:id/send", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.send(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/invoices/:id/record-payment", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceService.recordPayment(req.user!.businessId, req.params.id, req.body, req.user!.id);
+    res.json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/invoices/:id/cancel", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const { reason } = req.body;
+    const invoice = await invoiceService.cancel(req.user!.businessId, req.params.id, reason ?? "", req.user!.id);
+    res.json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/invoices/:id/void", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const { reason } = req.body;
+    const invoice = await invoiceService.void(req.user!.businessId, req.params.id, reason ?? "", req.user!.id);
+    res.json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/invoices/:id/pdf", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceService.findById(req.user!.businessId, req.params.id);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+    const pdf = await invoiceService.generatePdf(req.user!.businessId, req.params.id, invoice);
+    res.set("Content-Type", "application/pdf");
+    res.set("Content-Disposition", `inline; filename="Invoice-${invoice.invoice_number ?? req.params.id}.pdf"`);
+    res.send(pdf);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/invoices/:id/share-link", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceService.findById(req.user!.businessId, req.params.id);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+
+    if (!invoice.public_token) {
+      const token = crypto.randomUUID().slice(0, 32);
+      await query(
+        `UPDATE invoices SET public_token = $1, public_token_expires_at = NOW() + INTERVAL '30 days'
+         WHERE id = $2 AND business_id = $3`,
+        [token, req.params.id, req.user!.businessId]
+      );
+      invoice.public_token = token;
+      invoice.public_token_expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    const url = `${env.APP_FRONTEND_URL || "http://localhost:5173"}/invoice/${invoice.public_token}`;
+    res.json({ url, token: invoice.public_token, expiresAt: invoice.public_token_expires_at });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/invoices/:id/events", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.getInvoiceEvents(req.user!.businessId, req.params.id);
+    res.json({ events: result });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================================
+// PUBLIC INVOICE VIEW
+// ============================================================================
+
+app.get("/api/public/invoice/:token", async (req: AuthRequest, res, next) => {
+  try {
+    const invoice = await invoiceService.findByPublicToken(req.params.token);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+    res.json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================================
+// CREDIT NOTES
+// ============================================================================
+
+app.post("/api/credit-notes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.createCreditNote(req.user!.businessId, req.body, req.user!.id);
+    res.status(201).json({ creditNote: result });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/credit-notes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.listCreditNotes(req.user!.businessId, {
+       invoiceId: req.query.invoiceId as string | undefined,
+       limit: req.query.limit as string | undefined,
+       offset: req.query.offset as string | undefined,
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/credit-notes/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const creditNote = await invoiceService.getCreditNoteById(req.user!.businessId, req.params.id);
+    if (!creditNote) return res.status(404).json({ error: "Credit note not found" });
+    res.json({ creditNote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/credit-notes/:id/apply", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.applyCreditNote(req.user!.businessId, req.params.id, req.body);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ============================================================================
