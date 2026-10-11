@@ -642,13 +642,13 @@ const CreditNoteFooter: React.FC<{ design: CreditNoteDesign }> = React.memo(func
   return (
     <>
       {hasNotes && (
-        <div className="border-t border-color pt-4 mt-6">
+        <div className="border-t border-color px-8 py-6">
           <h3 className="invoice-section-title mb-1.5">Notes</h3>
           <p className="whitespace-pre-line text-sm text-secondary">{design.notes}</p>
         </div>
       )}
 
-      <div className="border-t border-color-subtle pt-4 mt-6 text-center text-xs text-tertiary">
+      <div className="border-t border-color px-8 py-4 text-center text-xs text-tertiary">
         {design.isFinalized
           ? `Credit Note #${design.creditNoteNumber}. All rights reserved.`
           : "This is a draft credit note. Not yet finalized."}
