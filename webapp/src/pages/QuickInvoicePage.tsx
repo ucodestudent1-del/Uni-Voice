@@ -10,7 +10,6 @@ import {
   Download,
   FileText,
   GripVertical,
-  LayoutDashboard,
   Mail,
   Plus,
   Save,
@@ -47,9 +46,6 @@ import {
   toPercent,
 } from "../utils/format";
 import { getCurrencyMetadata, SUPPORTED_CURRENCIES } from "../types/currency";
-import { PreviewInvoice, PreviewLineItem } from "../components/InvoicePreviewV2";
-import { StatusBadge } from "../components/ui/StatusBadge";
-import LivePreview from "../components/LivePreview";
 import type { ApiBusiness, ApiCustomer } from "../types/api";
 import type { ApiParsedDocumentResult } from "../api/client";
 
@@ -119,106 +115,6 @@ function customerAddressString(c: ApiCustomer | null): string | undefined {
   return joined || undefined;
 }
 
-function buildPreviewInvoice(
-  items: QuickLineItem[],
-  currency: string,
-  customer: ApiCustomer | null,
-  business: ApiBusiness | null,
-  settings: Record<string, any>,
-  issueDate: string,
-  dueDate: string,
-  invoiceTerms: string,
-  notes: string,
-  paymentInstructions: string,
-  calc: ReturnType<typeof calculationEngine.calculate> | null,
-): PreviewInvoice {
-  const meta = getCurrencyMetadata(currency);
-  const dp = meta.decimalPlaces;
-
-  const previewItems: PreviewLineItem[] = items.map((it) => ({
-    description: it.description,
-    quantity: it.quantity || "1",
-    unit: it.unit || "each",
-    unitPrice: it.unitPrice || "0",
-    taxRate: it.taxRate ? fromPercentage(toPercent(it.taxRate)) : undefined,
-    isTaxInclusive: it.isTaxInclusive,
-  }));
-
-  const paymentMethods: PreviewInvoice["paymentMethods"] = [];
-  const bankDetails = settings?.default_bank_details ?? undefined;
-  if (bankDetails) {
-    paymentMethods.push({
-      type: "bank",
-      label: "Bank Transfer",
-      details: bankDetails,
-    });
-  }
-  const onlineUrl = settings?.default_payment_portal_url ?? undefined;
-  if (onlineUrl) {
-    paymentMethods.push({
-      type: "custom",
-      label: "Online Payment",
-      url: onlineUrl,
-    });
-  }
-
-  return {
-    businessName: business?.name || business?.legalName || "Untitled Business",
-    businessLegalName: business?.legalName ?? null,
-    businessEmail: business?.email ?? undefined,
-    businessPhone: business?.phone ?? undefined,
-    businessWebsite: business?.website ?? undefined,
-    businessAddress: businessAddressString(business),
-    businessLogo: business?.logoUrl ?? undefined,
-    businessTaxId: business?.taxId ?? undefined,
-    businessRegistrationNumber: business?.registrationNumber ?? undefined,
-    invoiceNumber: null,
-    invoiceTitle: "INVOICE",
-    issueDate,
-    dueDate,
-    currency,
-    poNumber: null,
-    projectName: null,
-    terms: invoiceTerms || undefined,
-    customerName: customer?.name ?? undefined,
-    customerCompanyName: customer?.companyName ?? undefined,
-    customerEmail: customer?.email ?? undefined,
-    customerPhone: customer?.phone ?? undefined,
-    customerAddress: customer ? customerAddressString(customer) : undefined,
-    customerTaxId: customer?.taxId ?? customer?.address?.taxId ?? undefined,
-    items: previewItems,
-    fees: [],
-    subtotal: calc?.subtotal.toFixed(dp) ?? "0.00",
-    discountTotal: calc?.discountTotal.toFixed(dp) ?? "0.00",
-    taxTotal: calc?.taxTotal.toFixed(dp) ?? "0.00",
-    feeTotal: calc?.feeTotal.toFixed(dp) ?? "0.00",
-    total: calc?.total.toFixed(dp) ?? "0.00",
-    amountPaid: calc?.amountPaid.toFixed(dp) ?? "0.00",
-    amountDue: calc?.amountDue.toFixed(dp) ?? "0.00",
-    notes: notes || undefined,
-    paymentInstructions,
-    paymentMethods,
-    paymentLink: undefined,
-    bankDetails,
-    lateFeeType: settings?.late_fee_type ?? null,
-    lateFeeValue: settings?.late_fee_value ?? null,
-    lateFeePeriodDays: settings?.late_fee_period_days ?? null,
-    taxExemption: settings?.tax_exemption ?? null,
-    deliveryDetails: settings?.delivery_details ?? null,
-    warrantyInfo: settings?.warranty_info ?? null,
-    returnPolicy: settings?.return_policy ?? null,
-    depositType: "none",
-    depositValue: null,
-    depositDueDate: null,
-    depositPaymentPurpose: null,
-    depositPaid: "0",
-    depositDue: "0",
-    status: "draft",
-    isFinalized: false,
-    attachments: [],
-  };
-}
-
 export default function QuickInvoicePage() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -246,7 +142,6 @@ export default function QuickInvoicePage() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [aiParsed, setAiParsed] = useState<ApiParsedDocumentResult | null>(null);
   const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
-  const [previewMobileOpen, setPreviewMobileOpen] = useState(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved" | "error">("unsaved");
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
@@ -295,23 +190,6 @@ export default function QuickInvoicePage() {
       return null;
     }
   }, [items, currency]);
-
-  const previewInvoice = useMemo(() => {
-    if (!calc) return null;
-    return buildPreviewInvoice(
-      items,
-      currency,
-      customer,
-      business,
-      settings,
-      issueDate,
-      dueDate,
-      invoiceTerms,
-      notes,
-      paymentInstructions,
-      calc
-    );
-  }, [items, currency, customer, business, settings, issueDate, dueDate, invoiceTerms, notes, paymentInstructions, calc]);
 
   const meta = useMemo(() => {
     try {
@@ -650,15 +528,6 @@ export default function QuickInvoicePage() {
               {saveState === "saved" ? "Saved" : saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed" : "Unsaved"}
             </span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<LayoutDashboard className="h-4 w-4" />}
-            onClick={() => setPreviewMobileOpen(!previewMobileOpen)}
-            className="lg:hidden"
-          >
-            {previewMobileOpen ? "Hide Preview" : "Show Preview"}
-          </Button>
           <Link to="/app/invoices">
             <Button variant="secondary" size="sm">
               Invoices
@@ -668,7 +537,7 @@ export default function QuickInvoicePage() {
       </header>
 
       <main className="flex flex-1 overflow-hidden">
-        <aside className="flex w-full min-w-0 flex-[3] flex-col overflow-hidden">
+        <aside className="flex w-full flex-col overflow-hidden">
           <div className="overflow-y-auto px-6 py-5">
             <div className="space-y-6">
               {/* Customer section */}
@@ -1043,23 +912,6 @@ export default function QuickInvoicePage() {
             </div>
           </div>
         </aside>
-
-        {/* Resize handle */}
-        <div className="hidden lg:flex lg:flex-shrink-0 cursor-col-resize hover:bg-primary/20">
-          <div style={{ width: "2px" }} />
-        </div>
-
-        {/* Preview sidebar */}
-        <div
-          className={`${previewMobileOpen ? "block" : "hidden"} lg:flex lg:flex-col`}
-          style={{ width: "400px", minWidth: "320px" }}
-        >
-          <LivePreview
-            calc={calc}
-            currency={currency}
-            previewInvoice={previewInvoice}
-          />
-        </div>
       </main>
 
       {/* Finalize confirmation dialog */}
