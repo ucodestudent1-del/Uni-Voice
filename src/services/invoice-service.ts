@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { calculationEngine, type InvoiceCalculationInput, type LineItemInput, type FeeInput, type DiscountDefinition } from "../domain/calculation.js";
+import { calculationEngine, type InvoiceCalculationInput, type LineItemInput, type FeeInput, type DiscountDefinition, type CalculatedLineItem, type CalculatedFee, computeTaxBreakdown } from "../domain/calculation.js";
 import { query, getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
 import { NotFoundError, BusinessLogicError, ConflictError } from "../domain/errors.js";
@@ -7,7 +7,7 @@ import { invoiceNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService } from "../services/email/email-service.js";
 import { buildTemplateData, type TemplateLineItem, type TemplateFee } from "../services/templates/template-renderer.js";
-import type { CurrencyCode } from "../domain/value-objects/currency.js";
+import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";
 
@@ -1152,6 +1152,7 @@ export class InvoiceService {
           unitPrice: new Decimal(item.unit_price as string),
           discount: new Decimal(item.discount as string),
           taxRate: new Decimal(item.tax_rate as string),
+          taxName: item.tax_name as string | null | undefined,
           taxAmount: new Decimal(item.tax_amount as string),
           lineSubtotal: new Decimal(item.line_subtotal as string),
           lineTotal: new Decimal(item.line_total as string),
@@ -1166,9 +1167,10 @@ export class InvoiceService {
           description: fee.description as string,
           amount: new Decimal(fee.amount as string),
           taxRate: new Decimal(fee.tax_rate as string),
+          taxName: fee.tax_name as string | null | undefined,
           taxAmount: new Decimal(fee.tax_amount as string),
         })),
-      {
+       {
         subtotal: new Decimal(invoice.subtotal as string),
         discountTotal: new Decimal(invoice.discount_total as string),
         taxTotal: new Decimal(invoice.tax_total as string),
@@ -1176,7 +1178,32 @@ export class InvoiceService {
         total: new Decimal(invoice.total as string),
         amountPaid: new Decimal(invoice.amount_paid as string),
         amountDue: new Decimal(invoice.amount_due as string),
-      },
+        taxByRate: computeTaxBreakdown(
+          (invoice.items as Record<string, unknown>[]).map((item): CalculatedLineItem => ({
+            description: item.description as string,
+            quantity: new Decimal(item.quantity as string),
+            unit: item.unit as string,
+            unitPrice: new Decimal(item.unit_price as string),
+            discountAmount: new Decimal(item.discount as string),
+            taxRate: new Decimal(item.tax_rate as string),
+            taxName: item.tax_name as string | null | undefined,
+            isTaxInclusive: Boolean(item.is_tax_inclusive),
+            lineSubtotal: new Decimal(item.line_subtotal as string),
+            taxableAmount: new Decimal(item.line_subtotal as string),
+            taxAmount: new Decimal(item.tax_amount as string),
+            lineTotal: new Decimal(item.line_total as string),
+          })),
+          (invoice.fees as Record<string, unknown>[]).map((fee): CalculatedFee => ({
+            description: fee.description as string,
+            amount: new Decimal(fee.amount as string),
+            taxRate: new Decimal(fee.tax_rate as string),
+            taxName: fee.tax_name as string | null | undefined,
+            taxAmount: new Decimal(fee.tax_amount as string),
+            feeTotal: new Decimal(fee.amount as string),
+          })),
+          getCurrencyMetadata(invoice.currency as CurrencyCode).decimalPlaces
+        ),
+       },
       null,
       {}
     );

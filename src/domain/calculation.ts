@@ -33,6 +33,7 @@ export interface LineItemInput {
   unitPrice: Decimal.Value;
   discount?: DiscountDefinition;
   taxRate: Decimal.Value;
+  tax_name?: string | null;
   isTaxInclusive: boolean;
   sortOrder?: number;
 }
@@ -41,6 +42,7 @@ export interface FeeInput {
   description: string;
   amount: Decimal.Value;
   taxRate?: Decimal.Value;
+  tax_name?: string | null;
   sortOrder?: number;
 }
 
@@ -59,6 +61,7 @@ export interface CalculatedLineItem {
   unitPrice: Decimal;
   discountAmount: Decimal;
   taxRate: Decimal;
+  taxName?: string | null;
   isTaxInclusive: boolean;
   lineSubtotal: Decimal;
   taxableAmount: Decimal;
@@ -70,8 +73,16 @@ export interface CalculatedFee {
   description: string;
   amount: Decimal;
   taxRate: Decimal;
+  taxName?: string | null;
   taxAmount: Decimal;
   feeTotal: Decimal;
+}
+
+export interface TaxBreakdownEntry {
+  rate: Decimal;
+  name: string;
+  taxableAmount: Decimal;
+  taxAmount: Decimal;
 }
 
 export interface CalculationResult {
@@ -88,6 +99,59 @@ export interface CalculationResult {
   amountDue: Decimal;
   amountPaid: Decimal;
   isTaxInclusive: boolean;
+  taxBreakdown: TaxBreakdownEntry[];
+}
+
+export function computeTaxBreakdown(
+  lineItems: CalculatedLineItem[],
+  fees: CalculatedFee[],
+  decimalPlaces: number
+): TaxBreakdownEntry[] {
+  const groups = new Map<string, { rate: Decimal; name: string; taxableAmount: Decimal; taxAmount: Decimal }>();
+
+  for (const li of lineItems) {
+    const rate = new Decimal(li.taxRate ?? 0);
+    if (rate.isZero()) continue;
+    const key = `${rate.toFixed(4)}|${li.taxName ?? ""}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.taxableAmount = existing.taxableAmount.plus(li.taxableAmount ?? li.lineSubtotal);
+      existing.taxAmount = existing.taxAmount.plus(li.taxAmount ?? 0);
+    } else {
+      groups.set(key, {
+        rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        name: li.taxName ?? "",
+        taxableAmount: new Decimal(li.taxableAmount ?? li.lineSubtotal),
+        taxAmount: new Decimal(li.taxAmount ?? 0),
+      });
+    }
+  }
+
+  for (const fee of fees) {
+    const rate = new Decimal(fee.taxRate ?? 0);
+    if (rate.isZero()) continue;
+    const key = `${rate.toFixed(4)}|${fee.taxName ?? ""}`;
+    const existing = groups.get(key);
+    const feeTaxable = new Decimal(fee.amount);
+    if (existing) {
+      existing.taxableAmount = existing.taxableAmount.plus(feeTaxable);
+      existing.taxAmount = existing.taxAmount.plus(fee.taxAmount ?? 0);
+    } else {
+      groups.set(key, {
+        rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        name: fee.taxName ?? "",
+        taxableAmount: feeTaxable,
+        taxAmount: new Decimal(fee.taxAmount ?? 0),
+      });
+    }
+  }
+
+  return Array.from(groups.values()).map((g) => ({
+    rate: g.rate,
+    name: g.name,
+    taxableAmount: g.taxableAmount.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP),
+    taxAmount: g.taxAmount.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP),
+  }));
 }
 
 export class CalculationEngine {
@@ -126,6 +190,7 @@ export class CalculationEngine {
         unitPrice,
         discountAmount: lineDiscount,
         taxRate: taxRate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        taxName: item.tax_name ?? null,
         isTaxInclusive: item.isTaxInclusive,
         lineSubtotal,
         taxableAmount: ZERO,
@@ -208,6 +273,7 @@ export class CalculationEngine {
         description: fee.description,
         amount: feeBase,
         taxRate: roundRate(feeTaxRate),
+        taxName: fee.tax_name ?? null,
         taxAmount: feeTaxAmount,
         feeTotal: feeLineTotal,
       });
@@ -228,6 +294,8 @@ export class CalculationEngine {
       if (li.isTaxInclusive) { hasTaxInclusive = true; break; }
     }
 
+    const taxBreakdown = computeTaxBreakdown(lineItems, fees, dp);
+
     return {
       currency,
       decimalPlaces: dp,
@@ -242,6 +310,7 @@ export class CalculationEngine {
       amountDue,
       amountPaid,
       isTaxInclusive: hasTaxInclusive,
+      taxBreakdown,
     };
   }
 }

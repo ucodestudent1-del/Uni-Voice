@@ -60,6 +60,13 @@ export interface CalculatedFee {
   feeTotal: Decimal;
 }
 
+export interface TaxBreakdownEntry {
+  rate: Decimal;
+  name: string;
+  taxableAmount: Decimal;
+  taxAmount: Decimal;
+}
+
 export interface CalculationResult {
   currency: CurrencyCode;
   decimalPlaces: number;
@@ -74,4 +81,5 @@ export interface CalculationResult {
   amountDue: Decimal;
   amountPaid: Decimal;
   isTaxInclusive: boolean;
+  taxBreakdown: TaxBreakdownEntry[];
 }

@@ -125,33 +125,44 @@ export default function PublicInvoice() {
 
           {/* Line Items */}
           <div className="p-6 border-b border-border">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-2 text-tertiary font-medium">Description</th>
-                    <th className="text-right py-2 text-tertiary font-medium">Qty</th>
-                    <th className="text-right py-2 text-tertiary font-medium">Unit Price</th>
-                    <th className="text-right py-2 text-tertiary font-medium">Tax</th>
-                    <th className="text-right py-2 text-tertiary font-medium">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(invoice.items ?? []).map((item: ApiInvoiceItem, idx: number) => (
-                    <tr key={item.id ?? idx} className="border-b border-border/50">
-                      <td className="py-2">
-                        <div className="font-medium text-primary">{item.description}</div>
-                        {item.tax_name && <span className="text-xs text-tertiary">{item.tax_name}</span>}
-                      </td>
-                      <td className="text-right py-2">{item.quantity}</td>
-                      <td className="text-right py-2">{item.unit_price}</td>
-                      <td className="text-right py-2">{Number(item.tax_rate) > 0 ? `${Number(item.tax_rate) * 100}%` : "—"}</td>
-                      <td className="text-right py-2 font-medium">{item.line_total}</td>
+            {(invoice.items ?? []).length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 text-tertiary font-medium">Description</th>
+                      <th className="text-right py-2 text-tertiary font-medium">Qty</th>
+                      <th className="text-right py-2 text-tertiary font-medium">Unit Price</th>
+                      <th className="text-right py-2 text-tertiary font-medium">Tax</th>
+                      <th className="text-right py-2 text-tertiary font-medium">Amount</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {(invoice.items ?? []).map((item: ApiInvoiceItem, idx: number) => (
+                      <tr key={item.id ?? idx} className="border-b border-border/50">
+                        <td className="py-2">
+                          <div className="font-medium text-primary">{item.description}</div>
+                          {item.tax_name && <span className="text-xs text-tertiary">{item.tax_name}</span>}
+                        </td>
+                        <td className="text-right py-2">{item.quantity}</td>
+                        <td className="text-right py-2">{item.unit_price}</td>
+                        <td className="text-right py-2">
+                          {Number(item.tax_rate) > 0
+                            ? `${(Number(item.tax_rate) * 100).toFixed(2)}%${item.tax_name ? ` ${item.tax_name}` : ""}`
+                            : "—"}
+                        </td>
+                        <td className="text-right py-2 font-medium">{item.line_total}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-6 text-tertiary">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p>No line items</p>
+              </div>
+            )}
           </div>
 
           {/* Totals */}

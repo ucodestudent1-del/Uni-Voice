@@ -172,7 +172,11 @@ export default function DocumentPreview({
                     <td className="py-1">{li.description}</td>
                     <td className="text-right py-1">{li.quantity.toFixed()}</td>
                     <td className="text-right py-1">{li.unitPrice.toFixed(2)}</td>
-                    <td className="text-right py-1">{(li.taxRate.mul(100)).toFixed(2)}%</td>
+                    <td className="text-right py-1">
+                      {li.tax_name && li.tax_name.trim() !== ""
+                        ? `${(li.taxRate.mul(100)).toFixed(2)}% ${li.tax_name}`
+                        : (li.taxRate.mul(100)).toFixed(2) + "%"}
+                    </td>
                     <td className="text-right py-1 font-medium">
                       <Money amount={li.lineTotal} currency={currency} signed={signedAmounts} />
                     </td>
@@ -194,14 +198,33 @@ export default function DocumentPreview({
                 <Money amount={calcResult.discountTotal.negated()} currency={currency} />
               </div>
             )}
-            <div className="flex justify-between text-tertiary">
-              <span>Tax</span>
-              <Money amount={calcResult.taxTotal} currency={currency} />
-            </div>
             {calcResult.fees.length > 0 && Number(calcResult.feeTotal.toFixed()) !== 0 && (
+              <>
+                {calcResult.fees.map((fee, idx) => (
+                  <div key={idx} className="flex justify-between text-tertiary">
+                    <span>{fee.description}</span>
+                    <Money amount={fee.feeTotal} currency={currency} signed={signedAmounts} />
+                  </div>
+                ))}
+                <div className="flex justify-between text-tertiary">
+                  <span>Fees</span>
+                  <Money amount={calcResult.feeTotal} currency={currency} signed={signedAmounts} />
+                </div>
+              </>
+            )}
+            {calcResult.taxBreakdown.length > 0 && Number(calcResult.taxTotal.toFixed()) !== 0 &&
+              calcResult.taxBreakdown.map((tb, idx) => (
+                <div key={idx} className="flex justify-between text-tertiary">
+                  <span>
+                    Tax ({tb.name ? `${(tb.rate.mul(100)).toFixed(2)}% ${tb.name}` : `${(tb.rate.mul(100)).toFixed(2)}%`})
+                  </span>
+                  <Money amount={tb.taxAmount} currency={currency} signed={signedAmounts} />
+                </div>
+              ))}
+            {!calcResult.taxBreakdown.length && Number(calcResult.taxTotal.toFixed()) !== 0 && (
               <div className="flex justify-between text-tertiary">
-                <span>Fees</span>
-                <Money amount={calcResult.feeTotal} currency={currency} />
+                <span>Tax</span>
+                <Money amount={calcResult.taxTotal} currency={currency} signed={signedAmounts} />
               </div>
             )}
             <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-border">

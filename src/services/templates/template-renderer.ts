@@ -11,6 +11,7 @@ export interface TemplateLineItem {
   unitPrice: Decimal.Value;
   discount: Decimal.Value;
   taxRate: Decimal.Value;
+  taxName?: string | null;
   taxAmount: Decimal.Value;
   lineSubtotal: Decimal.Value;
   lineTotal: Decimal.Value;
@@ -26,6 +27,14 @@ export interface TemplateFee {
   description: string;
   amount: Decimal.Value;
   taxRate: Decimal.Value;
+  taxName?: string | null;
+  taxAmount: Decimal.Value;
+}
+
+export interface TaxBreakdownEntry {
+  rate: Decimal.Value;
+  name: string;
+  taxableAmount: Decimal.Value;
   taxAmount: Decimal.Value;
 }
 
@@ -37,6 +46,7 @@ export interface TemplateTotals {
   total: Decimal.Value;
   amountPaid: Decimal.Value;
   amountDue: Decimal.Value;
+  taxByRate?: TaxBreakdownEntry[];
 }
 
 export interface TemplateBusiness {
@@ -145,6 +155,8 @@ Handlebars.registerHelper("add", (a: number, b: number) => a + b);
 
 Handlebars.registerHelper("gt", (a: number, b: number): boolean => a > b);
 
+Handlebars.registerHelper("length", (arr: unknown[]): number => (arr ? arr.length : 0));
+
 Handlebars.registerHelper("eq", (a: unknown, b: unknown): boolean => a === b);
 
 Handlebars.registerHelper("or", (...args: unknown[]): boolean => {
@@ -173,6 +185,12 @@ Handlebars.registerHelper("formatMoney", function (v: Decimal.Value, options: an
 });
 
 Handlebars.registerHelper("formatRate", fmtRate);
+
+Handlebars.registerHelper("formatRateWithName", function (v: Decimal.Value, name?: string | null): string {
+  const rateStr = fmtRate(v);
+  if (name) return `${rateStr} (${name})`;
+  return rateStr;
+});
 
 Handlebars.registerHelper("formatDate", (iso: string | null | undefined, fmt?: string): string => {
   if (!iso) return "";
@@ -243,8 +261,9 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
       --radius-full: 20px;
     }
     /* ===== Layout ===== */
-    .header-section { padding-bottom: 24px; border-bottom: 3px solid var(--color-brand); }
-    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid var(--color-brand); position: relative; }
+    .header-section::after { content: "INVOICE"; position: absolute; top: 0; right: 0; font-size: 80px; font-weight: 800; color: #f1f5f9; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
     .business-col { text-align: right; }
     .logo { max-height: 80px; max-width: 240px; object-contain; }
     .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
@@ -252,6 +271,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
     .divider { height: 1px; background: var(--color-border); margin: 32px 0; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     /* ===== Typography ===== */
     h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
     h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
@@ -302,10 +322,20 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     .payment-methods-list li { padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
     .payment-methods-list li:last-child { border-bottom: none; }
     .custom-field-row td { padding: 6px 16px; font-size: 13px; }
+    /* ===== Tax breakdown table ===== */
+    .tax-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .tax-table td { padding: 6px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .tax-rate-cell { font-size: 12px; color: var(--color-text-tertiary); }
     /* ===== QR / payment link ===== */
     .payment-cta { text-align: center; }
     .pay-btn { display: inline-block; margin-top: 12px; padding: 12px 32px; background: var(--color-brand); color: #ffffff; text-decoration: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; }
     .pay-btn:hover { background: var(--color-brand-hover); }
+    /* ===== Remittance instructions ===== */
+    .remittance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .remittance-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 20px; }
+    .remittance-box h4 { margin: 0 0 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .remittance-box p { margin: 0 0 8px 0; font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; white-space: pre-line; }
+    .remittance-box p:last-child { margin-bottom: 0; }
     /* ===== Footer ===== */
     .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
     .footer p { margin: 0; }
@@ -313,10 +343,13 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
     @media (max-width: 600px) {
       .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
       .header-grid { grid-template-columns: 1fr; }
       .business-col { text-align: left; }
       .meta-grid { grid-template-columns: 1fr; }
       .totals-table { max-width: 100%; }
+      .tax-table { max-width: 100%; }
+      .remittance-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -325,24 +358,24 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
 
   <!-- ========== HEADER: Business info (left) + Invoice details (right) ========== -->
   <div class="header-section">
-    <div class="header-grid">
+    <div class="header-grid" style="position: relative; z-index: 1;">
       <!-- Business / seller info -->
       <div>
         {{#if business.logoUrl}}
         <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
         {{/if}}
         <div style="margin-top: 8px;">
-          <h3 style="margin: 0; font-size: 18px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
-          {{#if business.legalName}}<p class="muted">{{business.legalName}}</p>{{/if}}
-          {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
-          {{#if business.phone}}<p class="muted">{{business.phone}}</p>{{/if}}
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.legalName}}<p class="muted" style="margin: 2px 0 0;">{{business.legalName}}</p>{{/if}}
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
           {{#if business.website}}
-          <p class="muted">
+          <p class="muted" style="margin: 2px 0 0;">
             <a href="{{#if (startswith business.website "http")}}{{business.website}}{{else}}https://{{business.website}}{{/if}}" style="color: var(--color-brand); text-decoration: none;">{{business.website}}</a>
           </p>
           {{/if}}
-          {{#if business.taxId}}<p class="tertiary">Tax ID: {{business.taxId}}</p>{{/if}}
-          {{#if business.registrationNumber}}<p class="tertiary">Reg #: {{business.registrationNumber}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.registrationNumber}}<p class="tertiary" style="margin: 2px 0 0;">Reg #: {{business.registrationNumber}}</p>{{/if}}
           {{#if business.address}}
           <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
             {{business.address.addressLine1}}<br />
@@ -415,62 +448,48 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   {{/each}}
   {{/if}}
 
-  <!-- ========== BILL TO + SHIP TO ========== -->
+  <!-- ========== BILL TO ========== -->
   {{#if customer}}
   <div class="section">
-    <div class="grid-2">
-      <!-- Bill To -->
-      <div>
-        <h3 style="margin: 0 0 12px;">Bill To</h3>
-        <div class="meta-grid">
-          <div class="meta-item">
-            <span class="meta-label">Customer</span>
-            <span class="meta-value">{{customer.name}}</span>
-          </div>
-          {{#if customer.companyName}}
-          <div class="meta-item">
-            <span class="meta-label">Company</span>
-            <span class="meta-value">{{customer.companyName}}</span>
-          </div>
-          {{/if}}
-          {{#if customer.email}}
-          <div class="meta-item">
-            <span class="meta-label">Email</span>
-            <span class="meta-value highlight">{{customer.email}}</span>
-          </div>
-          {{/if}}
-          {{#if customer.phone}}
-          <div class="meta-item">
-            <span class="meta-label">Phone</span>
-            <span class="meta-value">{{customer.phone}}</span>
-          </div>
-          {{/if}}
-          {{#if customer.taxId}}
-          <div class="meta-item">
-            <span class="meta-label">Tax ID</span>
-            <span class="meta-value">{{customer.taxId}}</span>
-          </div>
-          {{/if}}
-          {{#if customer.address}}
-          <div class="meta-item">
-            <span class="meta-label">Address</span>
-            <span class="meta-value meta-value-long">
-              {{customer.address.addressLine1}}<br />
-              {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
-              {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
-              {{customer.address.countryCode}}
-            </span>
-          </div>
-          {{/if}}
-        </div>
+    <h3 style="margin: 0 0 12px;">Bill To</h3>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Customer</span>
+        <span class="meta-value">{{customer.name}}</span>
       </div>
-      <!-- Ship To (if delivery details provided) -->
-      {{#if paymentInstructions.deliveryDetails}}
-      <div>
-        <h3 style="margin: 0 0 12px;">Delivery Details</h3>
-        <div class="info-box">
-          <p class="meta-value-long">{{{nl2br paymentInstructions.deliveryDetails}}}</p>
-        </div>
+      {{#if customer.companyName}}
+      <div class="meta-item">
+        <span class="meta-label">Company</span>
+        <span class="meta-value">{{customer.companyName}}</span>
+      </div>
+      {{/if}}
+      {{#if customer.email}}
+      <div class="meta-item">
+        <span class="meta-label">Email</span>
+        <span class="meta-value highlight">{{customer.email}}</span>
+      </div>
+      {{/if}}
+      {{#if customer.phone}}
+      <div class="meta-item">
+        <span class="meta-label">Phone</span>
+        <span class="meta-value">{{customer.phone}}</span>
+      </div>
+      {{/if}}
+      {{#if customer.taxId}}
+      <div class="meta-item">
+        <span class="meta-label">Tax ID</span>
+        <span class="meta-value">{{customer.taxId}}</span>
+      </div>
+      {{/if}}
+      {{#if customer.address}}
+      <div class="meta-item">
+        <span class="meta-label">Address</span>
+        <span class="meta-value meta-value-long">
+          {{customer.address.addressLine1}}<br />
+          {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+          {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+          {{customer.address.countryCode}}
+        </span>
       </div>
       {{/if}}
     </div>
@@ -481,18 +500,17 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   <div class="section">
     <div class="section-title">{{#if invoice.title}}Items{{else}}Line Items{{/if}}</div>
     {{#if lineItems.length}}
-    <div class="items-table" style="overflow-x: auto;">
+    <div style="overflow-x: auto;">
     <table class="items-table">
       <thead>
         <tr>
-          <th style="width: 5%;">#</th>
-          <th style="width: 35%;">Description</th>
-          <th style="width: 8%;" class="text-right">Qty</th>
+          <th style="width: 4%;">#</th>
+          <th style="width: 32%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
           <th style="width: 12%;" class="text-right">Unit Price</th>
-          <th style="width: 10%;" class="text-right">Discount</th>
-          <th style="width: 10%;" class="text-right">Tax Rate</th>
-          <th style="width: 15%;" class="text-right">Tax Amount</th>
-          <th style="width: 15%;" class="text-right">Line Total</th>
+          <th style="width: 9%;" class="text-right">Discount</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
         </tr>
       </thead>
       <tbody>
@@ -500,19 +518,18 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         <tr>
           <td class="align-top">{{add @index 1}}</td>
           <td class="align-top">
-            {{{nl2br description}}}
+            <div style="font-weight: 500; color: var(--color-text-primary);">{{description}}</div>
             {{#if catalogName}}<span class="tertiary" style="display: block; margin-top: 2px;">{{catalogName}}</span>{{/if}}
             {{#if catalogSku}}<span class="tertiary" style="display: block; margin-top: 2px;">SKU: {{catalogSku}}</span>{{/if}}
-            {{#if isTaxInclusive}}<span class="tertiary" style="display: block; margin-top: 2px;">(incl. tax)</span>{{/if}}
+            {{#if taxName}}<span class="tertiary" style="display: block; margin-top: 2px;">{{taxName}}</span>{{/if}}
+            {{#if isTaxInclusive}}<span class="tertiary" style="display: block; margin-top: 2px;">(tax included)</span>{{/if}}
           </td>
           <td class="text-right align-top">{{quantity}} {{unit}}</td>
           <td class="text-right align-top">{{formatMoney unitPrice}}</td>
           <td class="text-right align-top">
-            {{#if discount}}-{{formatMoney discount}}{{/if}}
-            {{^if discount}}—{{/if}}
+            {{#if discount}}-{{formatMoney discount}}{{else}}—{{/if}}
           </td>
-          <td class="text-right align-top">{{formatRate taxRate}}</td>
-          <td class="text-right align-top">{{formatMoney taxAmount}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
           <td class="text-right align-top">{{formatMoney lineTotal}}</td>
         </tr>
         {{/each}}
@@ -533,8 +550,8 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     <table class="items-table">
       <thead>
         <tr>
-          <th style="width: 50%;">Description</th>
-          <th style="width: 20%;" class="text-right">Amount</th>
+          <th style="width: 40%;">Description</th>
+          <th style="width: 15%;" class="text-right">Amount</th>
           <th style="width: 15%;" class="text-right">Tax Rate</th>
           <th style="width: 15%;" class="text-right">Tax</th>
           <th style="width: 15%;" class="text-right">Total</th>
@@ -545,7 +562,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         <tr>
           <td>{{description}}</td>
           <td class="text-right">{{formatMoney amount}}</td>
-          <td class="text-right">{{formatRate taxRate}}</td>
+          <td class="text-right">{{formatRateWithName taxRate taxName}}</td>
           <td class="text-right">{{formatMoney taxAmount}}</td>
           <td class="text-right">{{formatMoney (add amount (default 0 taxAmount))}}</td>
         </tr>
@@ -558,7 +575,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   <!-- ========== FINANCIAL SUMMARY ========== -->
   <div class="divider"></div>
   <div class="section" style="padding-top: 0; border-bottom: none;">
-    <div class="section-title">Financial Summary</div>
+    <div class="section-title">Summary</div>
     <table class="totals-table">
       <tr>
         <td class="totals-label">Subtotal</td>
@@ -570,8 +587,29 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
         <td class="totals-value" style="color: var(--color-success);">−{{formatMoney totals.discountTotal}}</td>
       </tr>
       {{/if}}
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
       <tr>
-        <td class="totals-label">Tax</td>
+        <td class="totals-label">Total Tax</td>
         <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
       </tr>
       {{#if fees.length}}
@@ -597,7 +635,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     </table>
   </div>
 
-  <!-- ========== PAYMENT INSTRUCTIONS ========== -->
+  <!-- ========== REMITTANCE INSTRUCTIONS ========== -->
   {{#if (or invoice.paymentInstructions paymentInstructions)}}
   <div class="section" style="padding-top: 0; border-bottom: none;">
     <div class="section-title">Payment Instructions</div>
@@ -639,6 +677,21 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
           </div>
           {{/if}}
 
+          {{#if paymentInstructions.lateFeeType}}
+          {{#if (eq paymentInstructions.lateFeeType "fixed")}}
+          <div style="margin-top: 16px;">
+            <span class="meta-label">Late Fee</span>
+            <p class="muted" style="margin: 0;">A fixed fee of {{formatMoney paymentInstructions.lateFeeValue}} will be applied to overdue balances.</p>
+          </div>
+          {{/if}}
+          {{#if (eq paymentInstructions.lateFeeType "percentage")}}
+          <div style="margin-top: 16px;">
+            <span class="meta-label">Late Fee</span>
+            <p class="muted" style="margin: 0;">An overdue balance will incur a late fee of {{paymentInstructions.lateFeeValue}}%.</p>
+          </div>
+          {{/if}}
+          {{/if}}
+
           {{#if paymentInstructions.taxExemption}}
           <div style="margin-top: 16px;">
             <span class="meta-label">Tax Exemption</span>
@@ -647,46 +700,49 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
           {{/if}}
         </div>
 
-        <!-- Right column: Currency, late terms, warranty, returns -->
+        <!-- Right column: Remittance details, warranty, returns -->
         <div>
-          <div style="margin-bottom: 16px;">
-            <span class="meta-label">Currency</span>
-            <p class="muted" style="margin: 0;">{{meta.code}} ({{meta.name}})</p>
+          <div class="remittance-grid">
+            <div>
+              <div class="remittance-box">
+                <h4>Remittance</h4>
+                {{#if business.name}}
+                <p>{{business.name}}</p>
+                {{/if}}
+                {{#if business.email}}
+                <p>Email: {{business.email}}</p>
+                {{/if}}
+                {{#if business.phone}}
+                <p>Phone: {{business.phone}}</p>
+                {{/if}}
+                {{#if business.address}}
+                <p>{{business.address.addressLine1}}<br />
+                {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+                {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+                {{business.address.countryCode}}</p>
+                {{/if}}
+              </div>
+            </div>
+            <div>
+              {{#if paymentInstructions.warrantyInfo}}
+              <div class="remittance-box">
+                <h4>Warranty</h4>
+                <p style="white-space: pre-line;">{{{nl2br paymentInstructions.warrantyInfo}}}</p>
+              </div>
+              {{/if}}
+              {{#if paymentInstructions.returnPolicy}}
+              <div class="remittance-box">
+                <h4>Return Policy</h4>
+                <p style="white-space: pre-line;">{{{nl2br paymentInstructions.returnPolicy}}}</p>
+              </div>
+              {{/if}}
+            </div>
           </div>
 
           {{#if invoice.paymentInstructions}}
-          <div style="margin-bottom: 16px;">
+          <div style="margin-top: 16px;">
             <span class="meta-label">Additional Payment Info</span>
             <div class="muted" style="white-space: pre-line;">{{{nl2br invoice.paymentInstructions}}}</div>
-          </div>
-          {{/if}}
-
-          {{#if paymentInstructions.lateFeeType}}
-          {{#if (eq paymentInstructions.lateFeeType "fixed")}}
-          <div style="margin-bottom: 16px;">
-            <span class="meta-label">Late Fee</span>
-            <p class="muted" style="margin: 0;">A fixed fee of {{formatMoney paymentInstructions.lateFeeValue}} will be applied to overdue balances.</p>
-          </div>
-          {{/if}}
-          {{#if (eq paymentInstructions.lateFeeType "percentage")}}
-          <div style="margin-bottom: 16px;">
-            <span class="meta-label">Late Fee</span>
-            <p class="muted" style="margin: 0;">An overdue balance will incur a late fee of {{paymentInstructions.lateFeeValue}}%.</p>
-          </div>
-          {{/if}}
-          {{/if}}
-
-          {{#if paymentInstructions.warrantyInfo}}
-          <div style="margin-bottom: 16px;">
-            <span class="meta-label">Warranty</span>
-            <p class="muted" style="white-space: pre-line; margin: 0;">{{{nl2br paymentInstructions.warrantyInfo}}}</p>
-          </div>
-          {{/if}}
-
-          {{#if paymentInstructions.returnPolicy}}
-          <div style="margin-bottom: 16px;">
-            <span class="meta-label">Return Policy</span>
-            <p class="muted" style="white-space: pre-line; margin: 0;">{{{nl2br paymentInstructions.returnPolicy}}}</p>
           </div>
           {{/if}}
         </div>
@@ -700,7 +756,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   <div class="section" style="padding-top: 0; border-bottom: none;">
     <div class="section-title">Notes</div>
     <div class="info-box">
-      {{{nl2br invoice.notes}}}
+      <div class="muted" style="white-space: pre-line;">{{{nl2br invoice.notes}}}</div>
     </div>
   </div>
   {{/if}}
@@ -710,7 +766,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
   <div class="section" style="padding-top: 0; border-bottom: none;">
     <div class="section-title">Terms &amp; Conditions</div>
     <div class="info-box">
-      {{{nl2br invoice.terms}}}
+      <div class="muted" style="white-space: pre-line;">{{{nl2br invoice.terms}}}</div>
     </div>
   </div>
   {{/if}}
@@ -1906,4 +1962,55 @@ export function buildTemplateData(
     paymentInstructions: paymentInstructions ?? null,
     config,
   };
+}
+
+export function aggregateTaxBreakdown(
+  items: TemplateLineItem[],
+  fees: TemplateFee[],
+  currency: CurrencyCode
+): TaxBreakdownEntry[] {
+  const groups = new Map<string, { rate: Decimal.Value; name: string; taxableAmount: Decimal; taxAmount: Decimal }>();
+
+  for (const item of items) {
+    const rate = new Decimal(item.taxRate ?? 0);
+    if (rate.isZero()) continue;
+    const key = `${rate.toFixed(4)}|${item.taxName ?? ""}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.taxableAmount = existing.taxableAmount.plus(item.lineSubtotal ?? 0);
+      existing.taxAmount = existing.taxAmount.plus(item.taxAmount ?? 0);
+    } else {
+      groups.set(key, {
+        rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        name: item.taxName ?? "",
+        taxableAmount: new Decimal(item.lineSubtotal ?? 0),
+        taxAmount: new Decimal(item.taxAmount ?? 0),
+      });
+    }
+  }
+
+  for (const fee of fees) {
+    const rate = new Decimal(fee.taxRate ?? 0);
+    if (rate.isZero()) continue;
+    const key = `${rate.toFixed(4)}|${fee.taxName ?? ""}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.taxableAmount = existing.taxableAmount.plus(fee.amount ?? 0);
+      existing.taxAmount = existing.taxAmount.plus(fee.taxAmount ?? 0);
+    } else {
+      groups.set(key, {
+        rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        name: fee.taxName ?? "",
+        taxableAmount: new Decimal(fee.amount ?? 0),
+        taxAmount: new Decimal(fee.taxAmount ?? 0),
+      });
+    }
+  }
+
+  return Array.from(groups.values()).map((g) => ({
+    rate: g.rate,
+    name: g.name,
+    taxableAmount: g.taxableAmount.toDecimalPlaces(getCurrencyMetadata(currency).decimalPlaces, Decimal.ROUND_HALF_UP),
+    taxAmount: g.taxAmount.toDecimalPlaces(getCurrencyMetadata(currency).decimalPlaces, Decimal.ROUND_HALF_UP),
+  }));
 }

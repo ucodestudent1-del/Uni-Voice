@@ -9,10 +9,11 @@ export type {
   InvoiceCalculationInput,
   CalculatedLineItem,
   CalculatedFee,
+  TaxBreakdownEntry,
   CalculationResult,
 } from "@/types/calculation";
 
-import type { DiscountDefinition, InvoiceCalculationInput, CalculationResult, CalculatedFee, CalculatedLineItem } from "@/types/calculation";
+import type { DiscountDefinition, InvoiceCalculationInput, CalculationResult, TaxBreakdownEntry, CalculatedFee, CalculatedLineItem } from "@/types/calculation";
 
 export function discountAmount(discount: DiscountDefinition | undefined, base: Decimal, currency: CurrencyCode): Decimal {
   if (!discount) return new Decimal(0);
@@ -156,6 +157,7 @@ export class CalculationEngine {
     const amountDue = round(total.minus(amountPaid));
 
     const isTaxInclusive = lineItems.some((li) => li.isTaxInclusive);
+    const taxBreakdown = computeTaxBreakdown(lineItems, fees, dp);
 
     return {
       currency,
@@ -171,6 +173,7 @@ export class CalculationEngine {
       amountDue,
       amountPaid,
       isTaxInclusive,
+      taxBreakdown,
     };
   }
 }
@@ -179,4 +182,56 @@ export const calculationEngine = new CalculationEngine();
 
 export function currencyMetadata(code: string) {
   return getCurrencyMetadata(code);
+}
+
+export function computeTaxBreakdown(
+  lineItems: CalculatedLineItem[],
+  fees: CalculatedFee[],
+  decimalPlaces: number
+): TaxBreakdownEntry[] {
+  const groups = new Map<string, { rate: Decimal; name: string; taxableAmount: Decimal; taxAmount: Decimal }>();
+
+  for (const li of lineItems) {
+    const rate = new Decimal(li.taxRate ?? 0);
+    if (rate.isZero()) continue;
+    const key = `${rate.toFixed(4)}|${li.tax_name ?? ""}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.taxableAmount = existing.taxableAmount.plus(li.taxableAmount);
+      existing.taxAmount = existing.taxAmount.plus(li.taxAmount);
+    } else {
+      groups.set(key, {
+        rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        name: li.tax_name ?? "",
+        taxableAmount: new Decimal(li.taxableAmount),
+        taxAmount: new Decimal(li.taxAmount),
+      });
+    }
+  }
+
+  for (const fee of fees) {
+    const rate = new Decimal(fee.taxRate ?? 0);
+    if (rate.isZero()) continue;
+    const key = `${rate.toFixed(4)}|${fee.tax_name ?? ""}`;
+    const existing = groups.get(key);
+    const feeTaxable = new Decimal(fee.amount);
+    if (existing) {
+      existing.taxableAmount = existing.taxableAmount.plus(feeTaxable);
+      existing.taxAmount = existing.taxAmount.plus(fee.taxAmount);
+    } else {
+      groups.set(key, {
+        rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        name: fee.tax_name ?? "",
+        taxableAmount: feeTaxable,
+        taxAmount: new Decimal(fee.taxAmount),
+      });
+    }
+  }
+
+  return Array.from(groups.values()).map((g) => ({
+    rate: g.rate,
+    name: g.name,
+    taxableAmount: g.taxableAmount.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP),
+    taxAmount: g.taxAmount.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP),
+  }));
 }
