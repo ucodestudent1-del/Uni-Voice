@@ -6,8 +6,9 @@ import { NotFoundError, BusinessLogicError, ConflictError } from "../domain/erro
 import { invoiceNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService } from "../services/email/email-service.js";
-import { buildTemplateData, type TemplateLineItem, type TemplateFee } from "../services/templates/template-renderer.js";
+import { buildTemplateData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, type TemplatePaymentMethod } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
+import type { Address } from "../domain/value-objects/address.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";
 
@@ -1248,6 +1249,26 @@ export class InvoiceService {
       ? await this.fetchCustomer(businessId, invoice.customer_id as string)
       : null;
 
+    // Derive payment terms from customer
+    const paymentTerms = customer?.paymentTerms ? `Net ${customer.paymentTerms}` : undefined;
+
+    // Build payment instructions if available
+    const paymentInstructions: TemplatePaymentInstructions | null = invoice.payment_instructions
+      ? {
+          methods: [],
+          bankDetails: null,
+          paymentLink: null,
+          lateFeeType: invoice.late_fee_type as "none" | "fixed" | "percentage" | null,
+          lateFeeValue: invoice.late_fee_value?.toString() ?? null,
+          lateFeePeriodDays: null, // Not stored on invoice, could be added later
+          taxExemption: null,
+          deliveryDetails: null,
+          warrantyInfo: null,
+          returnPolicy: null,
+          customFields: [],
+        }
+      : null;
+
     const data = buildTemplateData(
       {
         id: invoice.id as string,
@@ -1260,36 +1281,46 @@ export class InvoiceService {
         notes: invoice.notes as string | null | undefined,
         terms: invoice.terms as string | null | undefined,
         paymentInstructions: invoice.payment_instructions as string | null | undefined,
-         isFinalized: true,
-       },
-       business as any,
-       customer as any,
-        (invoice.items as Record<string, unknown>[]).map((item): TemplateLineItem => ({
-          description: item.description as string,
-          quantity: new Decimal(item.quantity as string),
-          unit: item.unit as string,
-          unitPrice: new Decimal(item.unit_price as string),
-          discount: new Decimal(item.discount as string),
-          taxRate: new Decimal(item.tax_rate as string),
-          taxName: item.tax_name as string | null | undefined,
-          taxAmount: new Decimal(item.tax_amount as string),
-          lineSubtotal: new Decimal(item.line_subtotal as string),
-          lineTotal: new Decimal(item.line_total as string),
-          isTaxInclusive: Boolean(item.is_tax_inclusive),
-          catalogName: item.catalog_name as string | null | undefined,
-          catalogSku: item.catalog_sku as string | null | undefined,
-          catalogTaxCategory: item.catalog_tax_category as string | null | undefined,
-          catalogUnitPrice: item.catalog_unit_price as string | null | undefined,
-          catalogTaxRate: item.catalog_tax_rate as string | null | undefined,
-        })),
-        (invoice.fees as Record<string, unknown>[]).map((fee): TemplateFee => ({
-          description: fee.description as string,
-          amount: new Decimal(fee.amount as string),
-          taxRate: new Decimal(fee.tax_rate as string),
-          taxName: fee.tax_name as string | null | undefined,
-          taxAmount: new Decimal(fee.tax_amount as string),
-        })),
-       {
+        language: undefined,
+        title: undefined,
+        depositType: invoice.deposit_type as "none" | "fixed" | "percentage" | string | null | undefined,
+        depositValue: null,
+        depositDueDate: invoice.deposit_due_date as string | null | undefined,
+        depositPaid: invoice.deposit_paid as boolean | null | undefined,
+        isFinalized: true,
+        depositAmount: invoice.deposit_amount?.toString() ?? null,
+        projectId: invoice.project_id as string | null | undefined,
+        projectName: null,
+        paymentTerms,
+      },
+      business,
+      customer,
+      (invoice.items as Record<string, unknown>[]).map((item): TemplateLineItem => ({
+        description: item.description as string,
+        quantity: new Decimal(item.quantity as string),
+        unit: item.unit as string,
+        unitPrice: new Decimal(item.unit_price as string),
+        discount: new Decimal(item.discount as string),
+        taxRate: new Decimal(item.tax_rate as string),
+        taxName: item.tax_name as string | null | undefined,
+        taxAmount: new Decimal(item.tax_amount as string),
+        lineSubtotal: new Decimal(item.line_subtotal as string),
+        lineTotal: new Decimal(item.line_total as string),
+        isTaxInclusive: Boolean(item.is_tax_inclusive),
+        catalogName: item.catalog_name as string | null | undefined,
+        catalogSku: item.catalog_sku as string | null | undefined,
+        catalogTaxCategory: item.catalog_tax_category as string | null | undefined,
+        catalogUnitPrice: item.catalog_unit_price as string | null | undefined,
+        catalogTaxRate: item.catalog_tax_rate as string | null | undefined,
+      })),
+      (invoice.fees as Record<string, unknown>[]).map((fee): TemplateFee => ({
+        description: fee.description as string,
+        amount: new Decimal(fee.amount as string),
+        taxRate: new Decimal(fee.tax_rate as string),
+        taxName: fee.tax_name as string | null | undefined,
+        taxAmount: new Decimal(fee.tax_amount as string),
+      })),
+      {
         subtotal: new Decimal(invoice.subtotal as string),
         discountTotal: new Decimal(invoice.discount_total as string),
         taxTotal: new Decimal(invoice.tax_total as string),
@@ -1322,8 +1353,8 @@ export class InvoiceService {
           })),
           getCurrencyMetadata(invoice.currency as CurrencyCode).decimalPlaces
         ),
-       },
-      null,
+      },
+      paymentInstructions,
       {}
     );
 
@@ -1362,7 +1393,7 @@ export class InvoiceService {
     });
   }
 
-  private async fetchBusiness(businessId: string): Promise<Record<string, unknown>> {
+  private async fetchBusiness(businessId: string): Promise<TemplateBusiness> {
     const res = await query(
       `SELECT id, name, legal_name, email, phone, website, tax_id, registration_number,
               address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
@@ -1370,19 +1401,80 @@ export class InvoiceService {
        FROM businesses WHERE id = $1`,
       [businessId]
     );
-    return res.rows[0];
+    const r = res.rows[0];
+    if (!r) throw new NotFoundError(`Business ${businessId} not found`);
+    return {
+      id: r.id,
+      name: r.name,
+      legalName: r.legal_name,
+      email: r.email,
+      phone: r.phone,
+      website: r.website,
+      taxId: r.tax_id,
+      registrationNumber: r.registration_number,
+      address: r.address_line_1 ? {
+        addressLine1: r.address_line_1,
+        addressLine2: r.address_line_2,
+        city: r.city,
+        stateOrRegion: r.state_or_region,
+        postalCode: r.postal_code,
+        countryCode: r.country_code,
+      } : { addressLine1: "", addressLine2: null, city: "", stateOrRegion: "", postalCode: "", countryCode: "US" },
+      countryCode: r.country_code,
+      defaultCurrency: r.default_currency,
+      logoUrl: r.logo_url,
+    };
   }
 
-  private async fetchCustomer(businessId: string, customerId: string): Promise<Record<string, unknown> | null> {
+  private async fetchCustomer(businessId: string, customerId: string): Promise<TemplateCustomer | null> {
     const res = await query(
       `SELECT id, name, company_name, email, phone, tax_id,
               address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
-              default_currency, notes
+              default_currency, notes, payment_terms, shipping_address_id
        FROM customers WHERE id = $1`,
       [customerId]
     );
     if (!res.rows.length) return null;
-    return res.rows[0];
+    const r = res.rows[0];
+    const customer: TemplateCustomer = {
+      id: r.id,
+      name: r.name,
+      companyName: r.company_name,
+      email: r.email,
+      phone: r.phone,
+      taxId: r.tax_id,
+      address: r.address_line_1 ? {
+        addressLine1: r.address_line_1,
+        addressLine2: r.address_line_2,
+        city: r.city,
+        stateOrRegion: r.state_or_region,
+        postalCode: r.postal_code,
+        countryCode: r.country_code,
+      } : { addressLine1: "", addressLine2: null, city: "", stateOrRegion: "", postalCode: "", countryCode: "US" },
+      countryCode: r.country_code,
+      notes: r.notes,
+      paymentTerms: r.payment_terms,
+    };
+    // Fetch shipping address if available
+    if (r.shipping_address_id) {
+      const addrRes = await query(
+        `SELECT address_line_1, address_line_2, city, state_or_region, postal_code, country_code
+         FROM customer_addresses WHERE id = $1 AND customer_id = $2`,
+        [r.shipping_address_id, customerId]
+      );
+      if (addrRes.rows.length) {
+        const a = addrRes.rows[0];
+        customer.shippingAddress = {
+          addressLine1: a.address_line_1,
+          addressLine2: a.address_line_2,
+          city: a.city,
+          stateOrRegion: a.state_or_region,
+          postalCode: a.postal_code,
+          countryCode: a.country_code,
+        };
+      }
+    }
+    return customer;
   }
 
   private async getInvoiceTemplate(businessId: string, templateId: string | null): Promise<Handlebars.TemplateDelegate> {

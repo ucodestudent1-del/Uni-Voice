@@ -1,4 +1,5 @@
 import Handlebars from "handlebars";
+import QRCode from "qrcode";
 import type { Address } from "../../domain/value-objects/address.js";
 import { formatMoney, getCurrencyMetadata, type CurrencyCode } from "../../domain/value-objects/currency.js";
 import { Decimal } from "decimal.js";
@@ -74,6 +75,8 @@ export interface TemplateCustomer {
   address: Address;
   countryCode?: string | null;
   notes?: string | null;
+  shippingAddress?: Address | null;
+  paymentTerms?: number | null;
 }
 
 export interface TemplatePaymentInstructions {
@@ -114,7 +117,7 @@ export interface InvoiceTemplateData {
     dueDate: string | null;
     currency: CurrencyCode;
     poNumber?: string | null;
-     notes?: string | null;
+    notes?: string | null;
     terms?: string | null;
     paymentInstructions?: string | null;
     language?: string;
@@ -127,6 +130,7 @@ export interface InvoiceTemplateData {
     depositAmount?: string | null;
     projectId?: string | null;
     projectName?: string | null;
+    paymentTerms?: string | null;
   };
   lineItems: TemplateLineItem[];
   fees: TemplateFee[];
@@ -351,6 +355,14 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
       .tax-table { max-width: 100%; }
       .remittance-grid { grid-template-columns: 1fr; }
     }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
   </style>
 </head>
 <body>
@@ -425,6 +437,12 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
             <span class="meta-value">{{invoice.projectName}}</span>
           </div>
           {{/if}}
+          {{#if invoice.paymentTerms}}
+          <div class="meta-item">
+            <span class="meta-label">Payment Terms</span>
+            <span class="meta-value">{{invoice.paymentTerms}}</span>
+          </div>
+          {{/if}}
           <div class="meta-item">
             <span class="meta-label">Currency</span>
             <span class="meta-value">{{meta.code}}</span>
@@ -490,6 +508,23 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
           {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
           {{customer.address.countryCode}}
         </span>
+      </div>
+      {{/if}}
+      {{#if customer.shippingAddress}}
+      <div class="meta-item">
+        <span class="meta-label">Ship To</span>
+        <span class="meta-value meta-value-long">
+          {{customer.shippingAddress.addressLine1}}<br />
+          {{#if customer.shippingAddress.addressLine2}}{{customer.shippingAddress.addressLine2}}<br />{{/if}}
+          {{customer.shippingAddress.city}}, {{customer.shippingAddress.stateOrRegion}} {{customer.shippingAddress.postalCode}}<br />
+          {{customer.shippingAddress.countryCode}}
+        </span>
+      </div>
+      {{/if}}
+      {{#if customer.notes}}
+      <div class="meta-item">
+        <span class="meta-label">Customer Notes</span>
+        <span class="meta-value meta-value-long">{{customer.notes}}</span>
       </div>
       {{/if}}
     </div>
@@ -635,6 +670,33 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     </table>
   </div>
 
+  <!-- ========== DEPOSIT DETAILS ========== -->
+  {{#if invoice.depositAmount}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Deposit</div>
+    <div class="info-box">
+      <table class="totals-table" style="max-width: 100%;">
+        <tr>
+          <td class="totals-label">Deposit Required</td>
+          <td class="totals-value" style="color: var(--color-brand);">{{formatMoney invoice.depositAmount}}</td>
+        </tr>
+        {{#if invoice.depositDueDate}}
+        <tr>
+          <td class="totals-label">Deposit Due Date</td>
+          <td class="totals-value">{{formatDate invoice.depositDueDate}}</td>
+        </tr>
+        {{/if}}
+        {{#if invoice.depositType}}
+        <tr>
+          <td class="totals-label">Deposit Type</td>
+          <td class="totals-value">{{invoice.depositType}}</td>
+        </tr>
+        {{/if}}
+      </table>
+    </div>
+  </div>
+  {{/if}}
+
   <!-- ========== REMITTANCE INSTRUCTIONS ========== -->
   {{#if (or invoice.paymentInstructions paymentInstructions)}}
   <div class="section" style="padding-top: 0; border-bottom: none;">
@@ -673,6 +735,12 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
             <div>
               <a href="{{paymentInstructions.paymentLink}}" class="pay-btn">Pay Now</a>
             </div>
+            {{#if paymentQrCode}}
+            <div style="margin-top: 12px; text-align: center;">
+              <img src="{{paymentQrCode}}" alt="Payment QR Code" style="width: 120px; height: 120px;" />
+              <p class="tertiary" style="margin-top: 4px;">Scan to pay</p>
+            </div>
+            {{/if}}
             <p class="tertiary" style="margin-top: 8px;">Or scan the QR code / click above to pay securely online.</p>
           </div>
           {{/if}}
@@ -682,12 +750,18 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
           <div style="margin-top: 16px;">
             <span class="meta-label">Late Fee</span>
             <p class="muted" style="margin: 0;">A fixed fee of {{formatMoney paymentInstructions.lateFeeValue}} will be applied to overdue balances.</p>
+            {{#if paymentInstructions.lateFeePeriodDays}}
+            <p class="muted" style="margin: 4px 0 0; font-size: 12px;">Applies after {{paymentInstructions.lateFeePeriodDays}} days overdue.</p>
+            {{/if}}
           </div>
           {{/if}}
           {{#if (eq paymentInstructions.lateFeeType "percentage")}}
           <div style="margin-top: 16px;">
             <span class="meta-label">Late Fee</span>
             <p class="muted" style="margin: 0;">An overdue balance will incur a late fee of {{paymentInstructions.lateFeeValue}}%.</p>
+            {{#if paymentInstructions.lateFeePeriodDays}}
+            <p class="muted" style="margin: 4px 0 0; font-size: 12px;">Applies after {{paymentInstructions.lateFeePeriodDays}} days overdue.</p>
+            {{/if}}
           </div>
           {{/if}}
           {{/if}}
@@ -778,6 +852,11 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
     {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
     {{else}}
     <p>This is a draft invoice. Not yet finalized.</p>
+    {{/if}}
+    {{#if viewInvoiceUrl}}
+    <p style="margin-top: 4px;">
+      <a href="{{viewInvoiceUrl}}" style="color: var(--color-brand); text-decoration: none; font-size: 11px;">View invoice online</a>
+    </p>
     {{/if}}
     <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
   </div>
@@ -1886,14 +1965,28 @@ export class TemplateRenderer {
     return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultTemplate);
   }
 
-  render(data: InvoiceTemplateData, templateHtml?: string): string {
+  async render(data: InvoiceTemplateData, templateHtml?: string): Promise<string> {
     const template = compileTemplate(
       templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultTemplate
     );
+
+    let paymentQrCode: string | null = null;
+    if (data.paymentInstructions?.paymentLink) {
+      try {
+        paymentQrCode = await QRCode.toDataURL(data.paymentInstructions.paymentLink, { width: 150, margin: 1 });
+      } catch {
+        // QR generation failed, leave as null
+      }
+    }
+
+    const viewInvoiceUrl = data.invoice.id ? `${env.APP_PUBLIC_BASE_URL}/invoices/${data.invoice.id}` : null;
+
     return template({
       ...data,
       meta: getCurrencyMetadata(data.invoice.currency),
       appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      paymentQrCode,
+      viewInvoiceUrl,
     });
   }
 }
@@ -1922,6 +2015,7 @@ export function buildTemplateData(
     depositAmount?: string | null;
     projectId?: string | null;
     projectName?: string | null;
+    paymentTerms?: string | null;
   },
   business: TemplateBusiness,
   customer: TemplateCustomer | null,
@@ -1955,6 +2049,7 @@ export function buildTemplateData(
       depositAmount: invoice.depositAmount ?? null,
       projectId: invoice.projectId ?? null,
       projectName: invoice.projectName ?? null,
+      paymentTerms: invoice.paymentTerms ?? null,
     },
     lineItems: items,
     fees,
