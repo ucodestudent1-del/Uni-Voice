@@ -140,12 +140,21 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+   (error) => {
     const status = error.response?.status;
     const skipRedirect = error.config?.skipAuthRedirect === true;
     if (status === 401 && !skipRedirect) {
       localStorage.removeItem("token");
       window.location.href = "/login";
+    }
+    if (status === 429) {
+      const retryAfter = error.response?.headers?.["retry-after"];
+      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) * 1000 : 900000;
+      return Promise.reject({
+        message: "Rate limit exceeded. Please try again later.",
+        statusCode: 429,
+        retryAfter: retrySeconds,
+      });
     }
     return Promise.reject(error);
   },

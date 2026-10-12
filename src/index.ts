@@ -262,7 +262,7 @@ const aiRateLimiter = rateLimit({
   skip: isDev ? () => true : undefined,
 });
 
-app.use(generalRateLimiter);
+app.use("/api", generalRateLimiter);
 
 app.get("/api/health", (_req, res) => {
   res.json({
