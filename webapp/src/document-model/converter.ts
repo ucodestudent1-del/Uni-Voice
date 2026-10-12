@@ -137,7 +137,7 @@ export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, cu
     showQuantity: true,
     showUnit: true,
     showUnitPrice: true,
-    showDiscount: false,
+    showDiscount: true,
     showTax: true,
     showLineTotal: true,
     currency: invoice.currency,
@@ -305,6 +305,12 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
     index: 2,
     props: { dateType: "due", label: "Due Date" },
   });
+  builder.insertComponent({
+    type: "customField",
+    parentId: rightCol.id as ParentId,
+    index: 3,
+    props: { key: "poNumber", label: "PO Number", value: "", type: "text" },
+  });
 
   insert("spacer", { height: 24 });
   insert("customerInfo", {
@@ -363,27 +369,43 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
     props: { label: "Subtotal", currency: "USD" },
   });
   builder.insertComponent({
-    type: "tax",
+    type: "discount",
     parentId: lastTotalCol.id as ParentId,
     index: 1,
+    props: { label: "Discount", currency: "USD" },
+  });
+  builder.insertComponent({
+    type: "tax",
+    parentId: lastTotalCol.id as ParentId,
+    index: 2,
     props: { label: "Tax", currency: "USD", showBreakdown: true },
+  });
+  builder.insertComponent({
+    type: "fees",
+    parentId: lastTotalCol.id as ParentId,
+    index: 3,
+    props: { label: "Fees", currency: "USD", showHeader: false },
   });
   builder.insertComponent({
     type: "total",
     parentId: lastTotalCol.id as ParentId,
-    index: 2,
+    index: 4,
     props: { label: "Total", currency: "USD" },
     style: { paddingTop: "8px", borderTop: "2px solid #e2e8f0", width: "100%" },
   });
   builder.insertComponent({
     type: "amountDue",
     parentId: lastTotalCol.id as ParentId,
-    index: 3,
+    index: 5,
     props: { label: "Amount Due", currency: "USD" },
   });
   insert("spacer", { height: 16 });
   insert("paymentTerms", { content: "Net 30", label: "Payment Terms" });
   insert("spacer", { height: 16 });
+  insert("notes", { content: "Thank you for your business!", label: "Notes" });
+  insert("spacer", { height: 8 });
+  insert("paymentInstructions", { content: "Payment via bank transfer. Please reference the invoice number above.", label: "Payment Instructions" });
+  insert("spacer", { height: 8 });
   insert("terms", { content: "Payment is due within 30 days of the invoice date.", label: "Terms & Conditions" });
   insert("spacer", { height: 32 });
   insert("signature", {
