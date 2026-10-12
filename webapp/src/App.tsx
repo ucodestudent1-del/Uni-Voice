@@ -33,10 +33,7 @@ const InvoiceList = lazy(() => import("./pages/InvoiceList"));
 const InvoiceWorkspace = lazy(() => import("./pages/InvoiceWorkspace"));
 const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
-const Quotes = lazy(() => import("./pages/Quotes"));
-const QuoteBuilder = lazy(() => import("./pages/QuoteBuilder"));
-const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
-const PublicQuote = lazy(() => import("./pages/PublicQuote"));
+
 const CreditNotes = lazy(() => import("./pages/CreditNotes"));
 const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
 const CreditNoteForm = lazy(() => import("./pages/CreditNoteForm"));
@@ -96,10 +93,9 @@ export default function App() {
 
         <Route path="/onboarding" element={<Suspense fallback={<Fallback />}><ProtectedRoute><OnboardingWizard /></ProtectedRoute></Suspense>} />
 
-         <Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
-         <Route path="/quote/:token" element={<Suspense fallback={<Fallback />}><PublicQuote /></Suspense>} />
+<Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
 
-         <Route path="/app" element={<Suspense fallback={<Fallback />}><OnboardedRoute><Layout /></OnboardedRoute></Suspense>}>
+          <Route path="/app" element={<Suspense fallback={<Fallback />}><OnboardedRoute><Layout /></OnboardedRoute></Suspense>}>
            <Route index element={<Suspense fallback={<Fallback />}><Dashboard /></Suspense>} />
 
            <Route path="customers" element={<Suspense fallback={<Fallback />}><Customers /></Suspense>} />
@@ -118,10 +114,6 @@ export default function App() {
             <Route path="invoices/new" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
             <Route path="invoices/:id" element={<Suspense fallback={<Fallback />}><InvoiceDetail /></Suspense>} />
             <Route path="invoices/:id/edit" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
-            <Route path="quotes" element={<Suspense fallback={<Fallback />}><Quotes /></Suspense>} />
-            <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteBuilder /></Suspense>} />
-            <Route path="quotes/:id" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
-            <Route path="quotes/:id/edit" element={<Suspense fallback={<Fallback />}><QuoteBuilder /></Suspense>} />
             <Route path="credit-notes" element={<Suspense fallback={<Fallback />}><CreditNotes /></Suspense>} />
             <Route path="credit-notes/new" element={<Suspense fallback={<Fallback />}><CreditNoteForm /></Suspense>} />
             <Route path="credit-notes/:id" element={<Suspense fallback={<Fallback />}><CreditNoteDetail /></Suspense>} />
