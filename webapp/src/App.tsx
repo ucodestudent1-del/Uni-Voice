@@ -33,6 +33,10 @@ const InvoiceList = lazy(() => import("./pages/InvoiceList"));
 const InvoiceWorkspace = lazy(() => import("./pages/InvoiceWorkspace"));
 const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
+const Quotes = lazy(() => import("./pages/Quotes"));
+const QuoteBuilder = lazy(() => import("./pages/QuoteBuilder"));
+const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
+const PublicQuote = lazy(() => import("./pages/PublicQuote"));
 
 const Fallback = () => (
   <div className="flex items-center justify-center h-64 text-secondary">Loading…</div>
@@ -89,7 +93,8 @@ export default function App() {
 
         <Route path="/onboarding" element={<Suspense fallback={<Fallback />}><ProtectedRoute><OnboardingWizard /></ProtectedRoute></Suspense>} />
 
-        <Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
+         <Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
+         <Route path="/quote/:token" element={<Suspense fallback={<Fallback />}><PublicQuote /></Suspense>} />
 
          <Route path="/app" element={<Suspense fallback={<Fallback />}><OnboardedRoute><Layout /></OnboardedRoute></Suspense>}>
            <Route index element={<Suspense fallback={<Fallback />}><Dashboard /></Suspense>} />
@@ -106,10 +111,14 @@ export default function App() {
           <Route path="projects/:id" element={<Suspense fallback={<Fallback />}><ProjectDetail /></Suspense>} />
            <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
            <Route path="receipts/:id" element={<Suspense fallback={<Fallback />}><ReceiptDetail /></Suspense>} />
-           <Route path="invoices" element={<Suspense fallback={<Fallback />}><InvoiceList /></Suspense>} />
-           <Route path="invoices/new" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
-           <Route path="invoices/:id" element={<Suspense fallback={<Fallback />}><InvoiceDetail /></Suspense>} />
-           <Route path="invoices/:id/edit" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
+            <Route path="invoices" element={<Suspense fallback={<Fallback />}><InvoiceList /></Suspense>} />
+            <Route path="invoices/new" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
+            <Route path="invoices/:id" element={<Suspense fallback={<Fallback />}><InvoiceDetail /></Suspense>} />
+            <Route path="invoices/:id/edit" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
+            <Route path="quotes" element={<Suspense fallback={<Fallback />}><Quotes /></Suspense>} />
+            <Route path="quotes/new" element={<Suspense fallback={<Fallback />}><QuoteBuilder /></Suspense>} />
+            <Route path="quotes/:id" element={<Suspense fallback={<Fallback />}><QuoteDetail /></Suspense>} />
+            <Route path="quotes/:id/edit" element={<Suspense fallback={<Fallback />}><QuoteBuilder /></Suspense>} />
            <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />
           <Route path="report" element={<Suspense fallback={<Fallback />}><ReportSection /></Suspense>} />
            <Route path="reminders" element={<Suspense fallback={<Fallback />}><ReminderAutomation /></Suspense>} />

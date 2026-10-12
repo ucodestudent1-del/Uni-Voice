@@ -252,7 +252,6 @@ export interface ApiInvoice {
 
 export interface ApiQuoteItem {
   id: string;
-  product_id?: string | null;
   description: string;
   quantity: string;
   unit: string;
@@ -265,6 +264,7 @@ export interface ApiQuoteItem {
   line_subtotal: string;
   line_total: string;
   is_tax_inclusive: boolean;
+  is_optional?: boolean;
   sort_order: number;
   created_at: string;
 }
@@ -335,6 +335,34 @@ export interface ApiQuoteEvent {
   created_at: string;
 }
 
+export interface ApiQuoteListItem {
+  id: string;
+  business_id: string;
+  customer_id?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  quote_number?: string | null;
+  status: string;
+  currency: string;
+  subtotal: string;
+  discount_total: string;
+  tax_total: string;
+  fee_total: string;
+  total: string;
+  amount_paid: string;
+  amount_due: string;
+  issue_date?: string | null;
+  expiry_date?: string | null;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  viewed_at?: string | null;
+  accepted_at?: string | null;
+  rejected_at?: string | null;
+  converted_invoice_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ApiCreditNoteItem {
   id: string;
   credit_note_id?: string;
@@ -392,8 +420,10 @@ export interface ApiCreditNote {
   tax_total: string;
   fee_total: string;
   total: string;
-  applied_total: string;
+  amount_paid: string;
   amount_due: string;
+  quote_discount_value?: string | null;
+  quote_discount_type?: "fixed" | "percentage" | null;
   reason?: string | null;
   notes?: string | null;
   internal_notes?: string | null;

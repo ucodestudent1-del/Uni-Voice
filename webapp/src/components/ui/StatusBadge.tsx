@@ -41,6 +41,20 @@ export const invoiceStatusConfig = createStatusBadgeConfig(
   "draft"
 );
 
+export const quoteStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Quote has not been sent to the customer." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Quote has been sent to the customer." },
+    viewed: { label: "Viewed", className: "status-info-bg status-info-text", description: "Customer has viewed the quote." },
+    accepted: { label: "Accepted", className: "status-success-bg status-success-text", description: "Quote has been accepted by the customer." },
+    rejected: { label: "Rejected", className: "status-error-bg status-error-text", description: "Quote has been rejected by the customer." },
+    expired: { label: "Expired", className: "status-tertiary-bg status-tertiary-text", description: "Quote has passed its expiry date." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Quote has been cancelled." },
+    converted: { label: "Converted", className: "status-success-subtle-bg status-success-subtle-text", description: "Quote has been converted to an invoice." },
+  },
+  "draft"
+);
+
 export const paymentStatusConfig = createStatusBadgeConfig(
   {
     paid: { label: "Paid", className: "status-success-bg status-success-text", icon: () => null, description: "Payment was successfully processed." },
