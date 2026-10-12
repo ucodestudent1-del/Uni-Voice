@@ -33,24 +33,37 @@ const InvoiceList = lazy(() => import("./pages/InvoiceList"));
 const InvoiceWorkspace = lazy(() => import("./pages/InvoiceWorkspace"));
 const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
+const PublicQuote = lazy(() => import("./pages/PublicQuote"));
 
 const CreditNotes = lazy(() => import("./pages/CreditNotes"));
 const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
 const CreditNoteForm = lazy(() => import("./pages/CreditNoteForm"));
 
+const Quotes = lazy(() => import("./pages/Quotes"));
+const QuoteForm = lazy(() => import("./pages/QuoteForm"));
+const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
+
 const Fallback = () => (
-  <div className="flex items-center justify-center h-64 text-secondary">Loading…</div>
+  <div className="flex items-center justify-center h-64 text-secondary">
+    Loading…
+  </div>
 );
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-secondary">Loading...</div>;
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-screen text-secondary">
+        Loading...
+      </div>
+    );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function OnboardedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, onboarding, refreshOnboarding } = useAuth();
+  const { isAuthenticated, isLoading, onboarding, refreshOnboarding } =
+    useAuth();
   const [attemptedFetch, setAttemptedFetch] = useState(false);
   const [fetchingOnboarding, setFetchingOnboarding] = useState(false);
 
@@ -64,16 +77,31 @@ function OnboardedRoute({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, onboarding, attemptedFetch, refreshOnboarding]);
 
-  if (isLoading || (isAuthenticated && onboarding === null && (fetchingOnboarding || !attemptedFetch)))
-    return <div className="flex items-center justify-center h-screen text-secondary">Loading...</div>;
+  if (
+    isLoading ||
+    (isAuthenticated &&
+      onboarding === null &&
+      (fetchingOnboarding || !attemptedFetch))
+  )
+    return (
+      <div className="flex items-center justify-center h-screen text-secondary">
+        Loading...
+      </div>
+    );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (onboarding && !onboarding.isComplete) return <Navigate to="/onboarding" replace />;
+  if (onboarding && !onboarding.isComplete)
+    return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }
 
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <div className="flex items-center justify-center h-screen text-secondary">Loading...</div>;
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-screen text-secondary">
+        Loading...
+      </div>
+    );
   if (isAuthenticated) return <Navigate to="/app" replace />;
   return <>{children}</>;
 }
@@ -81,55 +109,356 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ChunkErrorBoundary>
-    <Routes>
-        <Route path="/" element={<Suspense fallback={<Fallback />}><Landing /></Suspense>} />
-        <Route path="/pricing" element={<Suspense fallback={<Fallback />}><Pricing /></Suspense>} />
-        <Route path="/login" element={<Suspense fallback={<Fallback />}><PublicOnly><Login /></PublicOnly></Suspense>} />
-       <Route path="/register" element={<Suspense fallback={<Fallback />}><PublicOnly><Register /></PublicOnly></Suspense>} />
-        <Route path="/auth/callback" element={<Suspense fallback={<Fallback />}><PublicOnly><AuthCallback /></PublicOnly></Suspense>} />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <Landing />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/pricing"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <Pricing />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <PublicOnly>
+                <Login />
+              </PublicOnly>
+            </Suspense>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <PublicOnly>
+                <Register />
+              </PublicOnly>
+            </Suspense>
+          }
+        />
+        <Route
+          path="/auth/callback"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <PublicOnly>
+                <AuthCallback />
+              </PublicOnly>
+            </Suspense>
+          }
+        />
 
-        <Route path="/privacy" element={<Suspense fallback={<Fallback />}><Privacy /></Suspense>} />
-        <Route path="/terms" element={<Suspense fallback={<Fallback />}><Terms /></Suspense>} />
+        <Route
+          path="/privacy"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <Privacy />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/terms"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <Terms />
+            </Suspense>
+          }
+        />
 
-        <Route path="/onboarding" element={<Suspense fallback={<Fallback />}><ProtectedRoute><OnboardingWizard /></ProtectedRoute></Suspense>} />
+        <Route
+          path="/onboarding"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <ProtectedRoute>
+                <OnboardingWizard />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
 
-<Route path="/invoice/:token" element={<Suspense fallback={<Fallback />}><PublicInvoice /></Suspense>} />
+        <Route
+          path="/invoice/:token"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <PublicInvoice />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/quote/:token"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <PublicQuote />
+            </Suspense>
+          }
+        />
 
-          <Route path="/app" element={<Suspense fallback={<Fallback />}><OnboardedRoute><Layout /></OnboardedRoute></Suspense>}>
-           <Route index element={<Suspense fallback={<Fallback />}><Dashboard /></Suspense>} />
+        <Route
+          path="/app"
+          element={
+            <Suspense fallback={<Fallback />}>
+              <OnboardedRoute>
+                <Layout />
+              </OnboardedRoute>
+            </Suspense>
+          }
+        >
+          <Route
+            index
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Dashboard />
+              </Suspense>
+            }
+          />
 
-           <Route path="customers" element={<Suspense fallback={<Fallback />}><Customers /></Suspense>} />
-          <Route path="customers/:id" element={<Suspense fallback={<Fallback />}><CustomerDetail /></Suspense>} />
-          <Route path="products" element={<Suspense fallback={<Fallback />}><Products /></Suspense>} />
-           <Route path="payments" element={<Suspense fallback={<Fallback />}><Payments /></Suspense>} />
-           <Route path="payments/:id" element={<Suspense fallback={<Fallback />}><PaymentDetail /></Suspense>} />
-          <Route path="templates" element={<Suspense fallback={<Fallback />}><Templates /></Suspense>} />
-          <Route path="templates/new" element={<Suspense fallback={<Fallback />}><TemplateEditorPage /></Suspense>} />
-           <Route path="templates/:id/edit" element={<Suspense fallback={<Fallback />}><TemplateEditorPage /></Suspense>} />
-          <Route path="projects" element={<Suspense fallback={<Fallback />}><Projects /></Suspense>} />
-          <Route path="projects/:id" element={<Suspense fallback={<Fallback />}><ProjectDetail /></Suspense>} />
-           <Route path="receipts" element={<Suspense fallback={<Fallback />}><Receipts /></Suspense>} />
-           <Route path="receipts/:id" element={<Suspense fallback={<Fallback />}><ReceiptDetail /></Suspense>} />
-            <Route path="invoices" element={<Suspense fallback={<Fallback />}><InvoiceList /></Suspense>} />
-            <Route path="invoices/new" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
-            <Route path="invoices/:id" element={<Suspense fallback={<Fallback />}><InvoiceDetail /></Suspense>} />
-            <Route path="invoices/:id/edit" element={<Suspense fallback={<Fallback />}><InvoiceWorkspace /></Suspense>} />
-            <Route path="credit-notes" element={<Suspense fallback={<Fallback />}><CreditNotes /></Suspense>} />
-            <Route path="credit-notes/new" element={<Suspense fallback={<Fallback />}><CreditNoteForm /></Suspense>} />
-            <Route path="credit-notes/:id" element={<Suspense fallback={<Fallback />}><CreditNoteDetail /></Suspense>} />
-           <Route path="reports" element={<Suspense fallback={<Fallback />}><Reports /></Suspense>} />
-          <Route path="report" element={<Suspense fallback={<Fallback />}><ReportSection /></Suspense>} />
-           <Route path="reminders" element={<Suspense fallback={<Fallback />}><ReminderAutomation /></Suspense>} />
-           <Route path="plans" element={<Suspense fallback={<Fallback />}><Plans /></Suspense>} />
+          <Route
+            path="customers"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Customers />
+              </Suspense>
+            }
+          />
+          <Route
+            path="customers/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <CustomerDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="products"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Products />
+              </Suspense>
+            }
+          />
+          <Route
+            path="payments"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Payments />
+              </Suspense>
+            }
+          />
+          <Route
+            path="payments/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <PaymentDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="templates"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Templates />
+              </Suspense>
+            }
+          />
+          <Route
+            path="templates/new"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <TemplateEditorPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="templates/:id/edit"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <TemplateEditorPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="projects"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Projects />
+              </Suspense>
+            }
+          />
+          <Route
+            path="projects/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <ProjectDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="receipts"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Receipts />
+              </Suspense>
+            }
+          />
+          <Route
+            path="receipts/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <ReceiptDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="invoices"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <InvoiceList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="invoices/new"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <InvoiceWorkspace />
+              </Suspense>
+            }
+          />
+          <Route
+            path="invoices/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <InvoiceDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="invoices/:id/edit"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <InvoiceWorkspace />
+              </Suspense>
+            }
+          />
+          <Route
+            path="credit-notes"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <CreditNotes />
+              </Suspense>
+            }
+          />
+          <Route
+            path="credit-notes/new"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <CreditNoteForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="credit-notes/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <CreditNoteDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Quotes />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes/new"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <QuoteForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <QuoteDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes/:id/edit"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <QuoteForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="reports"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Reports />
+              </Suspense>
+            }
+          />
+          <Route
+            path="report"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <ReportSection />
+              </Suspense>
+            }
+          />
+          <Route
+            path="reminders"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <ReminderAutomation />
+              </Suspense>
+            }
+          />
+          <Route
+            path="plans"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Plans />
+              </Suspense>
+            }
+          />
           <Route path="settings">
-            <Route index element={<Navigate to="/app/settings/business" replace />} />
-            <Route path=":section" element={<Suspense fallback={<Fallback />}><Settings /></Suspense>} />
+            <Route
+              index
+              element={<Navigate to="/app/settings/business" replace />}
+            />
+            <Route
+              path=":section"
+              element={
+                <Suspense fallback={<Fallback />}>
+                  <Settings />
+                </Suspense>
+              }
+            />
           </Route>
-          <Route path="security" element={<Navigate to="/app/settings/security" replace />} />
+          <Route
+            path="security"
+            element={<Navigate to="/app/settings/security" replace />}
+          />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
-     </Routes>
-     </ChunkErrorBoundary>
+      </Routes>
+    </ChunkErrorBoundary>
   );
 }

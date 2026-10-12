@@ -139,6 +139,38 @@ export interface InvoiceTemplateData {
   config: Record<string, unknown>;
 }
 
+export interface CreditNoteTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  creditNote: {
+    id: string;
+    creditNoteNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    dueDate: string | null;
+    currency: CurrencyCode;
+    referenceInvoiceNumber: string | null;
+    referenceInvoiceId: string | null;
+    reason?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+    appliedTotal?: string | null;
+    amountDue?: string | null;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  applications: Array<{
+    invoiceId: string;
+    invoiceNumber: string;
+    amount: Decimal.Value;
+    appliedAt: string;
+  }>;
+  config: Record<string, unknown>;
+}
+
 export interface RenderOptions {
   currency: CurrencyCode;
   locale?: string;
@@ -1954,15 +1986,386 @@ export const CORPORATE_QUOTE_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
+export const DEFAULT_CREDIT_NOTE_TEMPLATE = `<!DOCTYPE html>
+<html lang="{{creditNote.language}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Credit Note {{creditNote.creditNoteNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #1e293b; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #2563eb;
+      --color-brand-hover: #1d4ed8;
+      --color-destructive: #dc2626;
+      --color-destructive-bg: #fee2e2;
+      --color-success: #065f46;
+      --color-success-bg: #d1fae5;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid #ef4444; position: relative; }
+    .header-section::after { content: "CREDIT NOTE"; position: absolute; top: 0; right: 0; font-size: 80px; font-weight: 800; color: #ffebee; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .divider { height: 1px; background: var(--color-border); margin: 32px 0; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    .highlight { color: var(--color-brand); font-weight: 600; }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .meta-value-long { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); white-space: pre-wrap; word-break: break-word; }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-label { color: var(--color-text-tertiary); }
+    .credit-total-value { color: #ef4444; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-success-bg); color: var(--color-success); }
+    .status-issued { background: #dbeafe; color: #1e40af; }
+    .status-applied { background: var(--color-success-bg); color: var(--color-success); }
+    .status-void { background: #f1f5f9; color: var(--color-text-secondary); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .credit-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; background: #fee2e2; color: var(--color-destructive); }
+    .reference-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .reason-box { background: #ffebee; border: 1px solid #fecaca; border-radius: var(--radius-md); padding: 16px 20px; margin-top: 16px; }
+    .reason-box p { margin: 0; font-size: 13px; color: #7f1d1d; line-height: 1.5; }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header-section">
+    <div class="header-grid">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.legalName}}<p class="muted">{{business.legalName}}</p>{{/if}}
+          {{#if business.email}}<p class="muted">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted">{{business.phone}}</p>{{/if}}
+          {{#if business.website}}
+          <p class="muted">
+            <a href="{{#if (startswith business.website "http")}}{{business.website}}{{else}}https://{{business.website}}{{/if}}" style="color: var(--color-brand); text-decoration: none;">{{business.website}}</a>
+          </p>
+          {{/if}}
+          {{#if business.taxId}}<p class="tertiary">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Credit Note</h1>
+        <span class="credit-badge">CREDIT</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          <div class="meta-item">
+            <span class="meta-label">Credit Note #</span>
+            <span class="meta-value">{{creditNote.creditNoteNumber}}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{creditNote.status}}">{{creditNote.status}}</span>
+            </span>
+          </div>
+          {{#if creditNote.issueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Issue Date</span>
+            <span class="meta-value">{{formatDate creditNote.issueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if creditNote.referenceInvoiceNumber}}
+          <div class="meta-item">
+            <span class="meta-label">Reference Invoice</span>
+            <span class="meta-value">{{creditNote.referenceInvoiceNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reason -->
+  {{#if creditNote.reason}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Reason for Credit</h3>
+    <div class="reason-box">
+      <p>{{creditNote.reason}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Bill To -->
+  {{#if customer}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Bill To</h3>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Customer</span>
+        <span class="meta-value">{{customer.name}}</span>
+      </div>
+      {{#if customer.companyName}}
+      <div class="meta-item">
+        <span class="meta-label">Company</span>
+        <span class="meta-value">{{customer.companyName}}</span>
+      </div>
+      {{/if}}
+      {{#if customer.email}}
+      <div class="meta-item">
+        <span class="meta-label">Email</span>
+        <span class="meta-value highlight">{{customer.email}}</span>
+      </div>
+      {{/if}}
+      {{#if customer.address}}
+      <div class="meta-item">
+        <span class="meta-label">Address</span>
+        <span class="meta-value meta-value-long">
+          {{customer.address.addressLine1}}<br />
+          {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+          {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+          {{customer.address.countryCode}}
+        </span>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Line Items -->
+  <div class="section">
+    <div class="section-title">Credit Note Items</div>
+    {{#if lineItems.length}}
+    <div style="overflow-x: auto;">
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 35%;">Description</th>
+          <th class="text-right" style="width: 8%;">Qty</th>
+          <th class="text-right" style="width: 14%;">Unit Price</th>
+          <th class="text-right" style="width: 9%;">Tax</th>
+          <th class="text-right" style="width: 14%;">Credit Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRate taxRate}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    </div>
+    {{/if}}
+
+  <!-- Fees -->
+  {{#if fees.length}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Credit Note Fees</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 49%;">Description</th>
+          <th class="text-right" style="width: 17%;">Amount</th>
+          <th class="text-right" style="width: 17%;">Tax</th>
+          <th class="text-right" style="width: 17%;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each fees}}
+        <tr>
+          <td>{{description}}</td>
+          <td class="text-right">{{formatMoney amount}}</td>
+          <td class="text-right">{{formatRate taxRate}}</td>
+          <td class="text-right">{{formatMoney (add amount (default 0 taxAmount))}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
+
+  <!-- Totals -->
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Credit Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if totals.discountTotal}}
+      <tr>
+        <td class="totals-label">Discount</td>
+        <td class="totals-value" style="color: #16a34a;">−{{formatMoney totals.discountTotal}}</td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      {{#if fees.length}}
+      <tr>
+        <td class="totals-label">Fees</td>
+        <td class="totals-value">{{formatMoney totals.feeTotal}}</td>
+      </tr>
+      {{/if}}
+      <tr class="big-total-row">
+        <td class="big-total-label">Total Credit</td>
+        <td class="credit-total-value">−{{formatMoney totals.total}}</td>
+      </tr>
+      {{#if creditNote.appliedTotal}}
+      <tr>
+        <td class="totals-label">Amount Applied</td>
+        <td class="totals-value" style="color: var(--color-success);">−{{formatMoney creditNote.appliedTotal}}</td>
+      </tr>
+      {{/if}}
+      {{#if creditNote.amountDue}}
+      <tr class="big-total-row">
+        <td class="big-total-label" style="color: #ef4444;">Balance Remaining</td>
+        <td class="credit-total-value">{{formatMoney creditNote.amountDue}}</td>
+      </tr>
+      {{/if}}
+    </table>
+  </div>
+
+  <!-- Applications -->
+  {{#if applications.length}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Applied To Invoices</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th class="text-right">Amount Applied</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each applications}}
+        <tr>
+          <td>{{invoiceNumber}}</td>
+          <td class="text-right">{{formatMoney amount}}</td>
+          <td>{{formatDate appliedAt}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
+
+  <!-- Notes -->
+  {{#if creditNote.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Notes</h3>
+    <div class="info-box">
+      <div class="muted" style="white-space: pre-line;">{{{nl2br creditNote.notes}}}</div>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Terms & Conditions -->
+  {{#if creditNote.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Terms &amp; Conditions</h3>
+    <div class="info-box">
+      <div class="muted" style="white-space: pre-line;">{{{nl2br creditNote.terms}}}</div>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Credit Note #{{creditNote.creditNoteNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    <p style="margin-top: 8px;">This credit note is issued against Invoice #{{creditNote.referenceInvoiceNumber}}.</p>
+  </div>
+
+</div>
+</body>
+  </html>`;
+
+templateCache.set(DEFAULT_CREDIT_NOTE_TEMPLATE, Handlebars.compile(DEFAULT_CREDIT_NOTE_TEMPLATE, { noEscape: true }));
+
 export class TemplateRenderer {
   private defaultTemplate: string;
+  private defaultCreditNoteTemplate: string;
 
-  constructor(defaultTemplate?: string) {
+  constructor(defaultTemplate?: string, defaultCreditNoteTemplate?: string) {
     this.defaultTemplate = defaultTemplate ?? DEFAULT_INVOICE_TEMPLATE;
+    this.defaultCreditNoteTemplate = defaultCreditNoteTemplate ?? DEFAULT_CREDIT_NOTE_TEMPLATE;
   }
 
   build(data: InvoiceTemplateData): any {
     return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultTemplate);
+  }
+
+  buildCreditNote(data: CreditNoteTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultCreditNoteTemplate);
   }
 
   async render(data: InvoiceTemplateData, templateHtml?: string): Promise<string> {
@@ -1987,6 +2390,23 @@ export class TemplateRenderer {
       appBaseUrl: env.APP_PUBLIC_BASE_URL,
       paymentQrCode,
       viewInvoiceUrl,
+    });
+  }
+
+  async renderCreditNote(data: CreditNoteTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultCreditNoteTemplate
+    );
+
+    const viewCreditNoteUrl = data.creditNote.id
+      ? `${env.APP_PUBLIC_BASE_URL}/credit-notes/${data.creditNote.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.creditNote.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewCreditNoteUrl,
     });
   }
 }
@@ -2108,4 +2528,64 @@ export function aggregateTaxBreakdown(
     taxableAmount: g.taxableAmount.toDecimalPlaces(getCurrencyMetadata(currency).decimalPlaces, Decimal.ROUND_HALF_UP),
     taxAmount: g.taxAmount.toDecimalPlaces(getCurrencyMetadata(currency).decimalPlaces, Decimal.ROUND_HALF_UP),
   }));
+}
+
+export interface BuildCreditNoteInput {
+  id: string;
+  creditNoteNumber: string | null;
+  status: string;
+  issueDate?: Date | null;
+  currency: CurrencyCode;
+  referenceInvoiceNumber: string | null;
+  referenceInvoiceId: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  language?: string;
+  isFinalized?: boolean;
+  appliedTotal?: string | null;
+  amountDue?: string | null;
+}
+
+export function buildCreditNoteData(
+  creditNote: BuildCreditNoteInput,
+  business: TemplateBusiness,
+  customer: TemplateCustomer | null,
+  items: TemplateLineItem[],
+  fees: TemplateFee[],
+  totals: TemplateTotals,
+  applications: Array<{
+    invoiceId: string;
+    invoiceNumber: string;
+    amount: Decimal.Value;
+    appliedAt: string;
+  }>,
+  config: Record<string, unknown> = {}
+): CreditNoteTemplateData {
+  return {
+    business,
+    customer,
+    creditNote: {
+      id: creditNote.id,
+      creditNoteNumber: creditNote.creditNoteNumber,
+      status: creditNote.status,
+      issueDate: creditNote.issueDate ? creditNote.issueDate.toISOString().slice(0, 10) : null,
+      dueDate: null,
+      currency: creditNote.currency,
+      referenceInvoiceNumber: creditNote.referenceInvoiceNumber,
+      referenceInvoiceId: creditNote.referenceInvoiceId,
+      reason: creditNote.reason ?? null,
+      notes: creditNote.notes ?? null,
+      terms: creditNote.terms ?? null,
+      language: creditNote.language ?? undefined,
+      isFinalized: creditNote.isFinalized ?? false,
+      appliedTotal: creditNote.appliedTotal ?? null,
+      amountDue: creditNote.amountDue ?? null,
+    },
+    lineItems: items,
+    fees,
+    totals,
+    applications,
+    config,
+  };
 }

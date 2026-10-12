@@ -221,7 +221,7 @@ export interface ApiInvoice {
   late_fee_type?: "none" | "fixed" | "percentage" | null;
   late_fee_value?: string | null;
   late_fee_due_date?: string | null;
-   late_fee_applied?: boolean | null;
+  late_fee_applied?: boolean | null;
   late_fee_applied_amount?: string | null;
   invoice_discount?: string | null;
   invoice_discount_type?: "fixed" | "percentage" | null;
@@ -299,7 +299,17 @@ export interface ApiCreditNote {
   reference_invoice_id?: string | null;
   reference_invoice_number?: string | null;
   credit_note_number?: string | null;
-  status: "draft" | "finalized" | "sent" | "partially_applied" | "applied" | "partially_refunded" | "refunded" | "cancelled" | "void" | string;
+  status:
+    | "draft"
+    | "finalized"
+    | "sent"
+    | "partially_applied"
+    | "applied"
+    | "partially_refunded"
+    | "refunded"
+    | "cancelled"
+    | "void"
+    | string;
   issue_date?: string | null;
   currency: string;
   subtotal: string;
@@ -348,13 +358,13 @@ export interface ApiCreditNoteListItem {
   total: string;
   applied_total: string;
   amount_due: string;
-   is_finalized: boolean;
-   finalized_at?: string | null;
-   sent_at?: string | null;
-   created_at: string;
-   updated_at: string;
-   customer_name?: string | null;
-   customer_email?: string | null;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  customer_name?: string | null;
+  customer_email?: string | null;
 }
 
 export interface ApiCreditNoteEvent {
@@ -365,6 +375,200 @@ export interface ApiCreditNoteEvent {
   actor_type?: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
+}
+
+export interface ApiQuoteItem {
+  id: string;
+  description: string;
+  quantity: string;
+  unit: string;
+  unit_price: string;
+  discount: string;
+  discount_type: "fixed" | "percentage";
+  tax_rate: string;
+  tax_name?: string | null;
+  tax_amount: string;
+  line_subtotal: string;
+  line_total: string;
+  is_tax_inclusive: boolean;
+  is_optional?: boolean | null;
+  product_id?: string | null;
+  catalog_name?: string | null;
+  catalog_sku?: string | null;
+  catalog_tax_category?: string | null;
+  catalog_unit_price?: string | null;
+  catalog_tax_rate?: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiQuoteFee {
+  id: string;
+  description: string;
+  amount: string;
+  tax_rate: string;
+  tax_name?: string | null;
+  tax_amount: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiQuoteEvent {
+  id: string;
+  quote_id?: string;
+  event_type: string;
+  actor_id?: string | null;
+  actor_type?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ApiQuote {
+  id: string;
+  business_id: string;
+  customer_id?: string | null;
+  quote_number?: string | null;
+  status:
+    | "draft"
+    | "finalized"
+    | "sent"
+    | "viewed"
+    | "accepted"
+    | "rejected"
+    | "cancelled"
+    | string;
+  issue_date?: string | null;
+  expiry_date?: string | null;
+  currency: string;
+  subtotal: string;
+  discount_total: string;
+  tax_total: string;
+  fee_total: string;
+  total: string;
+  deposit_type?: "none" | "percentage" | "fixed" | null;
+  deposit_value?: string | null;
+  deposit_due_date?: string | null;
+  deposit_amount?: string | null;
+  quote_discount?: string | null;
+  quote_discount_type?: "fixed" | "percentage" | null;
+  terms?: string | null;
+  notes?: string | null;
+  scope_of_work?: string | null;
+  internal_notes?: string | null;
+  payment_instructions?: string | null;
+  template_id?: string | null;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  accepted_at?: string | null;
+  rejected_at?: string | null;
+  rejected_reason?: string | null;
+  cancelled_at?: string | null;
+  cancelled_reason?: string | null;
+  public_token?: string | null;
+  public_token_expires_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  items: ApiQuoteItem[];
+  fees: ApiQuoteFee[];
+  events?: ApiQuoteEvent[];
+  customer_name?: string | null;
+  customer_email?: string | null;
+}
+
+export interface ApiQuoteListItem {
+  id: string;
+  business_id: string;
+  customer_id?: string | null;
+  quote_number?: string | null;
+  status: string;
+  issue_date?: string | null;
+  expiry_date?: string | null;
+  currency: string;
+  total: string;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  accepted_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  customer_name?: string | null;
+  customer_email?: string | null;
+}
+
+export interface ApiQuoteSearchParams {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  customerId?: string;
+  search?: string;
+}
+
+export interface CreateQuoteItemInput {
+  description: string;
+  quantity: string | number;
+  unit: string;
+  unitPrice: string | number;
+  discount?: string | number;
+  discountType?: "fixed" | "percentage";
+  taxRate: string | number;
+  taxName?: string | null;
+  isTaxInclusive?: boolean;
+  isOptional?: boolean;
+  productId?: string | null;
+  sortOrder?: number;
+}
+
+export interface CreateQuoteFeeInput {
+  description: string;
+  amount: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+  isTaxInclusive?: boolean;
+  sortOrder?: number;
+}
+
+export interface CreateQuoteInput {
+  customerId?: string | null;
+  currency: string;
+  issueDate?: string | null;
+  expiryDate?: string | null;
+  terms?: string | null;
+  notes?: string | null;
+  scopeOfWork?: string | null;
+  internalNotes?: string | null;
+  paymentInstructions?: string | null;
+  templateId?: string | null;
+  depositType?: "none" | "percentage" | "fixed";
+  depositValue?: string | number;
+  depositDueDate?: string | null;
+  items: CreateQuoteItemInput[];
+  fees?: CreateQuoteFeeInput[];
+  quoteDiscount?: string | number;
+  quoteDiscountType?: "fixed" | "percentage";
+}
+
+export interface FinalizeQuoteResult {
+  quote: ApiQuote;
+  quoteNumber: string;
+  status: string;
+}
+
+export interface SendQuoteResult {
+  ok: boolean;
+  messageId: string;
+  status: string;
+  quote: ApiQuote;
+}
+
+export interface ShareQuoteResult {
+  token: string;
+  url: string;
+}
+
+export interface ConvertQuoteToInvoiceResult {
+  invoice: Record<string, unknown>;
+  quoteId: string;
 }
 
 export interface ApiTaxIdentifier {
@@ -829,7 +1033,8 @@ export interface ApiVolumeTrend {
   count: number;
 }
 
-export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "archived";
+export type ProjectStatus =
+  "planning" | "active" | "on_hold" | "completed" | "archived";
 
 export interface ApiProjectTag {
   id: string;

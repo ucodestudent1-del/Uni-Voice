@@ -7,11 +7,10 @@ import { quoteNumberService } from "../services/quote-number-service.js";
 import { invoiceNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService, type EmailRecipient } from "../services/email/email-service.js";
-import { buildTemplateData, type TemplateLineItem, type TemplateFee, DEFAULT_QUOTE_TEMPLATE } from "../services/templates/template-renderer.js";
+import { buildTemplateData, type TemplateLineItem, type TemplateFee, DEFAULT_QUOTE_TEMPLATE, templateRenderer } from "../services/templates/template-renderer.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";
-import { env } from "../config/index.js";
-import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
+import { type CurrencyCode } from "../domain/value-objects/currency.js";
 
 export interface QuoteItemInput {
   description: string;
@@ -1528,6 +1527,9 @@ export class QuoteService {
         depositDueDate: quote.deposit_due_date as string | null | undefined,
         depositPaid: quote.deposit_paid as boolean | null | undefined,
         depositAmount: quote.deposit_due as string | null | undefined,
+        language: quote.language as string | undefined,
+        title: quote.title as string | null | undefined,
+        paymentTerms: quote.payment_terms as string | null | undefined,
       },
       business as any,
       customer as any,
@@ -1552,6 +1554,7 @@ export class QuoteService {
         description: fee.description as string,
         amount: new Decimal(fee.amount as string),
         taxRate: new Decimal(fee.tax_rate as string),
+        taxName: fee.tax_name as string | null | undefined,
         taxAmount: new Decimal(fee.tax_amount as string),
       })),
       {
@@ -1562,138 +1565,14 @@ export class QuoteService {
         total: new Decimal(quote.total as string),
         amountPaid: new Decimal(quote.amount_paid as string),
         amountDue: new Decimal(quote.amount_due as string),
+        taxByRate: [],
       },
       null,
-      { htmlTemplate: DEFAULT_QUOTE_TEMPLATE, ...quote } as any
+      { htmlTemplate: DEFAULT_QUOTE_TEMPLATE } as any
     );
 
-    const template = buildTemplateData(
-      {
-        id: quote.id as string,
-        invoiceNumber: quote.quote_number as string | null,
-        status: quote.status as string,
-        issueDate: quote.issue_date ? new Date(quote.issue_date as string) : null,
-        dueDate: quote.expiry_date ? new Date(quote.expiry_date as string) : null,
-        currency: quote.currency as CurrencyCode,
-        poNumber: quote.po_number as string | null | undefined,
-        notes: quote.notes as string | null | undefined,
-        terms: quote.terms as string | null | undefined,
-        paymentInstructions: quote.payment_instructions as string | null | undefined,
-        isFinalized: quote.is_finalized as boolean,
-        depositType: quote.deposit_type as string | null | undefined,
-        depositValue: quote.deposit_value as string | null | undefined,
-        depositDueDate: quote.deposit_due_date as string | null | undefined,
-        depositPaid: quote.deposit_paid as boolean | null | undefined,
-        depositAmount: quote.deposit_due as string | null | undefined,
-      },
-      business as any,
-      customer as any,
-      (quote.items as Record<string, unknown>[]).map((item): TemplateLineItem => ({
-        description: item.description as string,
-        quantity: new Decimal(item.quantity as string),
-        unit: item.unit as string,
-        unitPrice: new Decimal(item.unit_price as string),
-        discount: new Decimal(item.discount as string),
-        taxRate: new Decimal(item.tax_rate as string),
-        taxAmount: new Decimal(item.tax_amount as string),
-        lineSubtotal: new Decimal(item.line_subtotal as string),
-        lineTotal: new Decimal(item.line_total as string),
-        isTaxInclusive: Boolean(item.is_tax_inclusive),
-        catalogName: item.catalog_name as string | null | undefined,
-        catalogSku: item.catalog_sku as string | null | undefined,
-        catalogTaxCategory: item.catalog_tax_category as string | null | undefined,
-        catalogUnitPrice: item.catalog_unit_price as string | null | undefined,
-        catalogTaxRate: item.catalog_tax_rate as string | null | undefined,
-      })),
-      (quote.fees as Record<string, unknown>[]).map((fee): TemplateFee => ({
-        description: fee.description as string,
-        amount: new Decimal(fee.amount as string),
-        taxRate: new Decimal(fee.tax_rate as string),
-        taxAmount: new Decimal(fee.tax_amount as string),
-      })),
-      {
-        subtotal: new Decimal(quote.subtotal as string),
-        discountTotal: new Decimal(quote.discount_total as string),
-        taxTotal: new Decimal(quote.tax_total as string),
-        feeTotal: new Decimal(quote.fee_total as string),
-        total: new Decimal(quote.total as string),
-        amountPaid: new Decimal(quote.amount_paid as string),
-        amountDue: new Decimal(quote.amount_due as string),
-      },
-      null,
-      {} as any
-    );
-
-    const business2 = await this.fetchBusiness(businessId);
-    const customer2 = quote.customer_id
-      ? await this.fetchCustomer(businessId, quote.customer_id as string)
-      : null;
-
-    const templateData = buildTemplateData(
-      {
-        id: quote.id as string,
-        invoiceNumber: quote.quote_number as string | null,
-        status: quote.status as string,
-        issueDate: quote.issue_date ? new Date(quote.issue_date as string) : null,
-        dueDate: quote.expiry_date ? new Date(quote.expiry_date as string) : null,
-        currency: quote.currency as CurrencyCode,
-        poNumber: quote.po_number as string | null | undefined,
-        notes: quote.notes as string | null | undefined,
-        terms: quote.terms as string | null | undefined,
-        paymentInstructions: quote.payment_instructions as string | null | undefined,
-        isFinalized: quote.is_finalized as boolean,
-        depositType: quote.deposit_type as string | null | undefined,
-        depositValue: quote.deposit_value as string | null | undefined,
-        depositDueDate: quote.deposit_due_date as string | null | undefined,
-        depositPaid: quote.deposit_paid as boolean | null | undefined,
-        depositAmount: quote.deposit_due as string | null | undefined,
-      },
-      business2 as any,
-      customer2 as any,
-      (quote.items as Record<string, unknown>[]).map((item): TemplateLineItem => ({
-        description: item.description as string,
-        quantity: new Decimal(item.quantity as string),
-        unit: item.unit as string,
-        unitPrice: new Decimal(item.unit_price as string),
-        discount: new Decimal(item.discount as string),
-        taxRate: new Decimal(item.tax_rate as string),
-        taxAmount: new Decimal(item.tax_amount as string),
-        lineSubtotal: new Decimal(item.line_subtotal as string),
-        lineTotal: new Decimal(item.line_total as string),
-        isTaxInclusive: Boolean(item.is_tax_inclusive),
-        catalogName: item.catalog_name as string | null | undefined,
-        catalogSku: item.catalog_sku as string | null | undefined,
-        catalogTaxCategory: item.catalog_tax_category as string | null | undefined,
-        catalogUnitPrice: item.catalog_unit_price as string | null | undefined,
-        catalogTaxRate: item.catalog_tax_rate as string | null | undefined,
-      })),
-      (quote.fees as Record<string, unknown>[]).map((fee): TemplateFee => ({
-        description: fee.description as string,
-        amount: new Decimal(fee.amount as string),
-        taxRate: new Decimal(fee.tax_rate as string),
-        taxAmount: new Decimal(fee.tax_amount as string),
-      })),
-      {
-        subtotal: new Decimal(quote.subtotal as string),
-        discountTotal: new Decimal(quote.discount_total as string),
-        taxTotal: new Decimal(quote.tax_total as string),
-        feeTotal: new Decimal(quote.fee_total as string),
-        total: new Decimal(quote.total as string),
-        amountPaid: new Decimal(quote.amount_paid as string),
-        amountDue: new Decimal(quote.amount_due as string),
-      },
-      null,
-      { htmlTemplate: DEFAULT_QUOTE_TEMPLATE, ...quote } as any
-    );
-
-    const templateFn = Handlebars.compile((templateData as any).config?.htmlTemplate as string ?? DEFAULT_QUOTE_TEMPLATE);
-    const html = templateFn({
-      ...templateData,
-      meta: getCurrencyMetadata(quote.currency as CurrencyCode),
-      appBaseUrl: env.APP_PUBLIC_BASE_URL,
-    });
-
-    const pdf = await pdfService.generatePdfFromHtml(html, templateData);
+    const html = await templateRenderer.render(data);
+    const pdf = await pdfService.generatePdfFromHtml(html, data);
     return pdf;
   }
 

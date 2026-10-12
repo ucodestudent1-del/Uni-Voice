@@ -1,11 +1,13 @@
 import type { Browser, Page, LaunchOptions, PDFOptions } from "puppeteer";
 import { env } from "../../config/index.js";
 import { logger } from "../../utils/logger.js";
-import type { InvoiceTemplateData } from "../templates/template-renderer.js";
+import type { InvoiceTemplateData, CreditNoteTemplateData } from "../templates/template-renderer.js";
+
+type TemplateData = InvoiceTemplateData | CreditNoteTemplateData;
 
 export interface PdfProvider {
   readonly name: string;
-  generatePdf(html: string, data: InvoiceTemplateData): Promise<Buffer>;
+  generatePdf(html: string, data: TemplateData): Promise<Buffer>;
 }
 
 export class PuppeteerPdfService implements PdfProvider {
@@ -31,7 +33,7 @@ export class PuppeteerPdfService implements PdfProvider {
     return { args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"] };
   }
 
-  async generatePdf(html: string, data: InvoiceTemplateData): Promise<Buffer> {
+  async generatePdf(html: string, data: TemplateData): Promise<Buffer> {
     await this.loadPuppeteer();
     let page: Page | null = null;
     try {
@@ -60,14 +62,16 @@ export class PuppeteerPdfService implements PdfProvider {
 
 export class StubPdfService implements PdfProvider {
   readonly name = "stub";
-  async generatePdf(_html: string, data: InvoiceTemplateData): Promise<Buffer> {
-    logger.warn(`[StubPdfService] Placeholder PDF for invoice ${data.invoice.invoiceNumber}. Configure puppeteer for real PDFs.`);
-    const number = data.invoice.invoiceNumber ?? "INV";
+  async generatePdf(_html: string, data: TemplateData): Promise<Buffer> {
+    const number = "invoice" in data
+      ? data.invoice.invoiceNumber ?? "INV"
+      : data.creditNote.creditNoteNumber ?? "CN";
+    const docType = "invoice" in data ? "Invoice" : "Credit Note";
     const pdf =
       `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n` +
       `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n` +
       `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n` +
-      `4 0 obj\n<< /Length 44 >>\nstream\nBT /F1 24 Tf 72 720 Td (Invoice ${number}) Tj ET\nendstream\nendobj\n` +
+      `4 0 obj\n<< /Length 44 >>\nstream\nBT /F1 24 Tf 72 720 Td (${docType} ${number}) Tj ET\nendstream\nendobj\n` +
       `5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n` +
       `xref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000266 00000 n \n0000000360 00000 n \n` +
       `trailer<< /Size 6 /Root 1 0 R >>\nstartxref\n434\ntrue\n%%EOF`;
@@ -91,7 +95,7 @@ export class PdfService {
     return this.provider.name;
   }
 
-  async generatePdfFromHtml(html: string, data: InvoiceTemplateData): Promise<Buffer> {
+  async generatePdfFromHtml(html: string, data: TemplateData): Promise<Buffer> {
     return this.provider.generatePdf(html, data);
   }
 

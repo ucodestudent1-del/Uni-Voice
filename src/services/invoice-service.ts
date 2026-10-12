@@ -3,10 +3,10 @@ import { calculationEngine, type InvoiceCalculationInput, type LineItemInput, ty
 import { query, getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
 import { NotFoundError, BusinessLogicError, ConflictError } from "../domain/errors.js";
-import { invoiceNumberService } from "../services/invoice-number-service.js";
+import { invoiceNumberService, creditNoteNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService } from "../services/email/email-service.js";
-import { buildTemplateData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, type TemplatePaymentMethod } from "../services/templates/template-renderer.js";
+import { buildTemplateData, buildCreditNoteData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import type { Address } from "../domain/value-objects/address.js";
 import Handlebars from "handlebars";
@@ -597,6 +597,51 @@ export class InvoiceService {
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to send invoice ${invoiceId}`);
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async sendCreditNote(
+    businessId: string,
+    creditNoteId: string,
+    data: {
+      to: string;
+      cc?: string[];
+      bcc?: string[];
+      subject?: string;
+      message?: string;
+    },
+    userId?: string
+  ): Promise<{ ok: boolean; messageId: string; status: string }> {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      const existing = await client.query(
+        `SELECT * FROM credit_notes WHERE id = $1 AND business_id = $2 FOR UPDATE`,
+        [creditNoteId, businessId]
+      );
+
+      if (!existing.rows.length) {
+        throw new NotFoundError(`Credit note ${creditNoteId} not found`);
+      }
+
+      const creditNote = existing.rows[0];
+
+      await client.query(
+        `UPDATE credit_notes SET status = 'sent', sent_at = NOW(), version = version + 1
+         WHERE id = $1 AND business_id = $2`,
+        [creditNoteId, businessId]
+      );
+
+      await client.query("COMMIT");
+      logger.info(`Sent credit note ${creditNoteId} to ${data.to}`);
+      return { ok: true, messageId: crypto.randomUUID(), status: "sent" };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      logger.error({ err: e }, `Failed to send credit note ${creditNoteId}`);
       throw e;
     } finally {
       client.release();
@@ -1230,6 +1275,37 @@ export class InvoiceService {
     };
   }
 
+  private async buildCreditNoteSnapshot(businessId: string, creditNoteId: string): Promise<Record<string, unknown>> {
+    const cn = await this.getCreditNoteById(businessId, creditNoteId);
+    if (!cn) throw new NotFoundError(`Credit note ${creditNoteId} not found`);
+    return {
+      id: cn.id,
+      business_id: cn.business_id,
+      credit_note_number: cn.credit_note_number,
+      status: cn.status,
+      customer_id: cn.customer_id,
+      reference_invoice_id: cn.reference_invoice_id,
+      issue_date: cn.issue_date,
+      currency: cn.currency,
+      reason: cn.reason,
+      notes: cn.notes,
+      terms: cn.terms,
+      subtotal: cn.subtotal,
+      discount_total: cn.discount_total,
+      tax_total: cn.tax_total,
+      fee_total: cn.fee_total,
+      total: cn.total,
+      applied_total: cn.applied_total,
+      amount_due: cn.amount_due,
+      items: cn.items,
+      fees: cn.fees,
+      applications: cn.applications,
+      created_at: cn.created_at,
+      finalized_at: cn.finalized_at,
+      version: cn.version,
+    };
+  }
+
   async generatePdf(
     businessId: string,
     invoiceId: string,
@@ -1355,11 +1431,12 @@ export class InvoiceService {
         ),
       },
       paymentInstructions,
-      {}
+      {
+        htmlTemplate: await this.getInvoiceTemplateHtml(businessId, invoice.template_id as string | null),
+      }
     );
 
-    const template = await this.getInvoiceTemplate(businessId, invoice.template_id as string | null);
-    const html = template(data);
+    const html = await templateRenderer.render(data);
     const pdf = await pdfService.generatePdfFromHtml(html, data);
 
     await query(
@@ -1368,6 +1445,187 @@ export class InvoiceService {
     );
 
     return pdf;
+  }
+
+  async generateCreditNotePdf(
+    businessId: string,
+    creditNoteId: string,
+    creditNote: Record<string, unknown>
+  ): Promise<Buffer> {
+    const cached = await query(
+      `SELECT pdf_stored, pdf_hash FROM credit_note_snapshots WHERE credit_note_id = $1`,
+      [creditNoteId]
+    );
+
+    if (cached.rows.length && cached.rows[0].pdf_stored) {
+      return Buffer.from(`Cached PDF placeholder for credit note ${creditNoteId}`);
+    }
+
+    const business = await this.fetchBusiness(businessId);
+    const customer = creditNote.customer_id
+      ? await this.fetchCustomer(businessId, creditNote.customer_id as string)
+      : null;
+
+    const paymentInstructions: TemplatePaymentInstructions | null = creditNote.payment_instructions
+      ? {
+          methods: [],
+          bankDetails: null,
+          paymentLink: null,
+          lateFeeType: creditNote.late_fee_type as "none" | "fixed" | "percentage" | null,
+          lateFeeValue: creditNote.late_fee_value?.toString() ?? null,
+          lateFeePeriodDays: null,
+          taxExemption: null,
+          deliveryDetails: null,
+          warrantyInfo: null,
+          returnPolicy: null,
+          customFields: [],
+        }
+      : null;
+
+    const refInvoiceRes = await query(
+      `SELECT invoice_number FROM invoices WHERE id = $1 AND business_id = $2`,
+      [creditNote.reference_invoice_id, businessId]
+    );
+    const referenceInvoiceNumber = refInvoiceRes.rows.length
+      ? refInvoiceRes.rows[0].invoice_number
+      : null;
+
+    const appsRes = await query(
+      `SELECT ca.invoice_id, i.invoice_number, ca.amount, ca.applied_at
+       FROM credit_note_applications ca
+       JOIN invoices i ON i.id = ca.invoice_id
+       WHERE ca.credit_note_id = $1
+       ORDER BY ca.applied_at`,
+      [creditNoteId]
+    );
+    const applications = appsRes.rows.map((row) => ({
+      invoiceId: row.invoice_id,
+      invoiceNumber: row.invoice_number,
+      amount: row.amount,
+      appliedAt: row.applied_at,
+    }));
+
+    const data = buildCreditNoteData(
+      {
+        id: creditNote.id as string,
+        creditNoteNumber: creditNote.credit_note_number as string | null,
+        status: creditNote.status as string,
+        issueDate: creditNote.issue_date ? new Date(creditNote.issue_date as string) : null,
+        currency: creditNote.currency as CurrencyCode,
+        referenceInvoiceNumber: referenceInvoiceNumber,
+        referenceInvoiceId: creditNote.reference_invoice_id as string | null,
+        reason: creditNote.reason as string | null | undefined,
+        notes: creditNote.notes as string | null | undefined,
+        terms: creditNote.terms as string | null | undefined,
+        language: undefined,
+        isFinalized: Boolean(creditNote.is_finalized),
+        appliedTotal: creditNote.applied_total?.toString() ?? null,
+        amountDue: creditNote.amount_due?.toString() ?? null,
+      },
+      business,
+      customer,
+      (creditNote.items as Record<string, unknown>[]).map((item): TemplateLineItem => ({
+        description: item.description as string,
+        quantity: new Decimal(item.quantity as string),
+        unit: item.unit as string,
+        unitPrice: new Decimal(item.unit_price as string),
+        discount: new Decimal(item.discount as string),
+        taxRate: new Decimal(item.tax_rate as string),
+        taxName: item.tax_name as string | null | undefined,
+        taxAmount: new Decimal(item.tax_amount as string),
+        lineSubtotal: new Decimal(item.line_subtotal as string),
+        lineTotal: new Decimal(item.line_total as string),
+        isTaxInclusive: Boolean(item.is_tax_inclusive),
+        catalogName: item.catalog_name as string | null | undefined,
+        catalogSku: item.catalog_sku as string | null | undefined,
+        catalogTaxCategory: item.catalog_tax_category as string | null | undefined,
+        catalogUnitPrice: item.catalog_unit_price as string | null | undefined,
+        catalogTaxRate: item.catalog_tax_rate as string | null | undefined,
+      })),
+      (creditNote.fees as Record<string, unknown>[]).map((fee): TemplateFee => ({
+        description: fee.description as string,
+        amount: new Decimal(fee.amount as string),
+        taxRate: new Decimal(fee.tax_rate as string),
+        taxName: fee.tax_name as string | null | undefined,
+        taxAmount: new Decimal(fee.tax_amount as string),
+      })),
+      {
+        subtotal: new Decimal(creditNote.subtotal as string),
+        discountTotal: new Decimal(creditNote.discount_total as string),
+        taxTotal: new Decimal(creditNote.tax_total as string),
+        feeTotal: new Decimal(creditNote.fee_total as string),
+        total: new Decimal(creditNote.total as string),
+        amountPaid: new Decimal(0),
+        amountDue: new Decimal(creditNote.amount_due as string),
+        taxByRate: computeTaxBreakdown(
+          (creditNote.items as Record<string, unknown>[]).map((item): CalculatedLineItem => ({
+            description: item.description as string,
+            quantity: new Decimal(item.quantity as string),
+            unit: item.unit as string,
+            unitPrice: new Decimal(item.unit_price as string),
+            discountAmount: new Decimal(item.discount as string),
+            taxRate: new Decimal(item.tax_rate as string),
+            taxName: item.tax_name as string | null | undefined,
+            isTaxInclusive: Boolean(item.is_tax_inclusive),
+            lineSubtotal: new Decimal(item.line_subtotal as string),
+            taxableAmount: new Decimal(item.line_subtotal as string),
+            taxAmount: new Decimal(item.tax_amount as string),
+            lineTotal: new Decimal(item.line_total as string),
+          })),
+          (creditNote.fees as Record<string, unknown>[]).map((fee): CalculatedFee => ({
+            description: fee.description as string,
+            amount: new Decimal(fee.amount as string),
+            taxRate: new Decimal(fee.tax_rate as string),
+            taxName: fee.tax_name as string | null | undefined,
+            taxAmount: new Decimal(fee.tax_amount as string),
+            feeTotal: new Decimal(fee.amount as string),
+          })),
+          getCurrencyMetadata(creditNote.currency as CurrencyCode).decimalPlaces
+        ),
+      },
+      applications,
+      {
+        htmlTemplate: await this.getCreditNoteTemplateHtml(businessId, creditNote.template_id as string | null),
+      }
+    );
+
+    const html = await templateRenderer.renderCreditNote(data);
+    const pdf = await pdfService.generatePdfFromHtml(html, data);
+
+    await query(
+      `UPDATE credit_note_snapshots SET pdf_stored = TRUE, pdf_hash = $1 WHERE credit_note_id = $2`,
+      [crypto.createHash("sha256").update(pdf).digest("hex"), creditNoteId]
+    );
+
+    return pdf;
+  }
+
+  private async getCreditNoteTemplateHtml(businessId: string, templateId: string | null): Promise<string> {
+    if (templateId) {
+      const res = await query(
+        `SELECT html_template FROM templates WHERE id = $1 AND business_id = $2`,
+        [templateId, businessId]
+      );
+      if (res.rows.length) {
+        return res.rows[0].html_template;
+      }
+    }
+
+    const settingsRes = await query(
+      `SELECT pdf_template_id FROM business_settings WHERE business_id = $1`,
+      [businessId]
+    );
+    if (settingsRes.rows.length && settingsRes.rows[0].pdf_template_id) {
+      const res = await query(
+        `SELECT html_template FROM templates WHERE id = $1 AND business_id = $2`,
+        [settingsRes.rows[0].pdf_template_id, businessId]
+      );
+      if (res.rows.length) {
+        return res.rows[0].html_template;
+      }
+    }
+
+    return DEFAULT_CREDIT_NOTE_TEMPLATE;
   }
 
   private async renderInvoiceEmail(
@@ -1478,13 +1736,18 @@ export class InvoiceService {
   }
 
   private async getInvoiceTemplate(businessId: string, templateId: string | null): Promise<Handlebars.TemplateDelegate> {
+    const html = await this.getInvoiceTemplateHtml(businessId, templateId);
+    return Handlebars.compile(html);
+  }
+
+  private async getInvoiceTemplateHtml(businessId: string, templateId: string | null): Promise<string> {
     if (templateId) {
       const res = await query(
         `SELECT html_template FROM templates WHERE id = $1 AND business_id = $2`,
         [templateId, businessId]
       );
       if (res.rows.length) {
-        return Handlebars.compile(res.rows[0].html_template);
+        return res.rows[0].html_template;
       }
     }
 
@@ -1498,11 +1761,11 @@ export class InvoiceService {
         [settingsRes.rows[0].pdf_template_id, businessId]
       );
       if (res.rows.length) {
-        return Handlebars.compile(res.rows[0].html_template);
+        return res.rows[0].html_template;
       }
     }
 
-    return Handlebars.compile(INVOICE_DEFAULT_TEMPLATE);
+    return INVOICE_DEFAULT_TEMPLATE;
   }
 
   private async getInvoiceEmailTemplate(): Promise<Handlebars.TemplateDelegate> {
@@ -1560,21 +1823,26 @@ export class InvoiceService {
         amountPaid: undefined,
       });
 
+      const creditNoteNumber = await creditNoteNumberService.generate(businessId);
+      const issueDate = new Date();
+
       const res = await client.query(
         `INSERT INTO credit_notes (
-          business_id, customer_id, reference_invoice_id, reason, notes, terms,
-          currency, subtotal, discount_total, tax_total, fee_total, total,
+          business_id, customer_id, reference_invoice_id, credit_note_number, reason, notes, terms,
+          currency, issue_date, subtotal, discount_total, tax_total, fee_total, total,
           applied_total, amount_due, is_finalized, finalized_at, status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,TRUE,NOW(),'finalized')
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,TRUE,NOW(),'finalized')
         RETURNING *`,
         [
           businessId,
           refInvoice.rows[0].customer_id,
           input.invoiceId,
+          creditNoteNumber,
           input.reason ?? null,
           input.notes ?? null,
           input.terms ?? null,
           refInvoice.rows[0].currency,
+          issueDate.toISOString().split("T")[0],
           calcResult.subtotal.toFixed(),
           calcResult.discountTotal.toFixed(),
           calcResult.taxTotal.toFixed(),
@@ -1611,6 +1879,17 @@ export class InvoiceService {
         `INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata)
          VALUES ($1, 'credit_note_applied', $2, 'user', $3::jsonb)`,
         [input.invoiceId, userId ?? null, JSON.stringify({ credit_note_id: cnId })]
+      );
+
+      const cnSnapshot = await this.buildCreditNoteSnapshot(businessId, cnId);
+      const cnSnapshotJson = JSON.stringify(cnSnapshot);
+      const cnSnapshotHash = crypto.createHash("sha256").update(cnSnapshotJson).digest("hex");
+      await client.query(
+        `INSERT INTO credit_note_snapshots (credit_note_id, snapshot, snapshot_hash, pdf_stored, pdf_hash, created_by, created_at)
+         VALUES ($1, $2::jsonb, $3, FALSE, NULL, $4, NOW())
+         ON CONFLICT (credit_note_id) DO UPDATE SET
+           snapshot = $2::jsonb, snapshot_hash = $3, created_by = $4, created_at = NOW()`,
+        [cnId, cnSnapshotJson, cnSnapshotHash, userId ?? null]
       );
 
       await client.query("COMMIT");

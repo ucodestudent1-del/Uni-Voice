@@ -27,6 +27,19 @@ import type {
   ApiInvoiceEvent,
   ApiCreditNote,
   ApiCreditNoteListItem,
+  ApiQuote,
+  ApiQuoteListItem,
+  ApiQuoteItem,
+  ApiQuoteFee,
+  ApiQuoteEvent,
+  ApiQuoteSearchParams,
+  CreateQuoteItemInput,
+  CreateQuoteFeeInput,
+  CreateQuoteInput,
+  FinalizeQuoteResult,
+  SendQuoteResult,
+  ShareQuoteResult,
+  ConvertQuoteToInvoiceResult,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -45,6 +58,19 @@ export type {
   ApiTaxSummaryReport,
   ApiProfitLossReport,
   ApiAgingReport,
+  ApiPaymentMetrics,
+  ApiInvoice,
+  ApiInvoiceItem,
+  ApiInvoiceFee,
+  ApiInvoiceListItem,
+  ApiInvoiceEvent,
+  ApiCreditNote,
+  ApiCreditNoteListItem,
+  ApiQuote,
+  ApiQuoteListItem,
+  ApiQuoteItem,
+  ApiQuoteFee,
+  ApiQuoteEvent,
 };
 
 declare module "axios" {
@@ -53,7 +79,8 @@ declare module "axios" {
   }
 }
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
+const API_BASE =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
 
 type CacheEntry = {
   data: unknown;
@@ -63,7 +90,10 @@ type CacheEntry = {
 const CACHE_TTL_MS = 30 * 1000; // 30 seconds
 const responseCache = new Map<string, CacheEntry>();
 
-function cacheKey(url: string, params: Record<string, unknown> | undefined): string {
+function cacheKey(
+  url: string,
+  params: Record<string, unknown> | undefined,
+): string {
   if (!params) return url;
   const entries = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null)
@@ -73,7 +103,10 @@ function cacheKey(url: string, params: Record<string, unknown> | undefined): str
   return `${url}?${qs}`;
 }
 
-export function getCacheKey(url: string, params?: Record<string, unknown>): string {
+export function getCacheKey(
+  url: string,
+  params?: Record<string, unknown>,
+): string {
   return cacheKey(url, params);
 }
 
@@ -132,8 +165,8 @@ api.interceptors.response.use(
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
-  return Promise.reject(error);
-}
+    return Promise.reject(error);
+  },
 );
 
 interface CachedGetOptions {
@@ -144,7 +177,7 @@ interface CachedGetOptions {
 export async function cachedGet(
   url: string,
   params?: Record<string, unknown>,
-  options?: CachedGetOptions
+  options?: CachedGetOptions,
 ): Promise<any> {
   const key = cacheKey(url, params);
   const ttl = options?.ttlMs ?? CACHE_TTL_MS;
@@ -164,11 +197,14 @@ export async function login(email: string, password: string) {
   return res.data;
 }
 
-export async function verifyTwoFactor(email: string, code: string): Promise<TwoFactorVerifyResult> {
+export async function verifyTwoFactor(
+  email: string,
+  code: string,
+): Promise<TwoFactorVerifyResult> {
   const res = await api.post<TwoFactorVerifyResult>(
     "/auth/2fa/verify",
     { email, code },
-    { skipAuthRedirect: true } as AxiosRequestConfig
+    { skipAuthRedirect: true } as AxiosRequestConfig,
   );
   return res.data;
 }
@@ -186,7 +222,9 @@ export async function setupTwoFactor(): Promise<TwoFactorSetupResult> {
   return res.data;
 }
 
-export async function enableTwoFactor(code: string): Promise<{ enabled: boolean }> {
+export async function enableTwoFactor(
+  code: string,
+): Promise<{ enabled: boolean }> {
   const res = await api.post("/auth/2fa/enable", { code });
   return res.data;
 }
@@ -196,13 +234,27 @@ export async function disableTwoFactor(): Promise<{ disabled: boolean }> {
   return res.data;
 }
 
-export async function regenerateRecoveryCodes(): Promise<{ recoveryCodes: string[] }> {
+export async function regenerateRecoveryCodes(): Promise<{
+  recoveryCodes: string[];
+}> {
   const res = await api.post("/auth/2fa/recovery-codes/regenerate");
   return res.data;
 }
 
-export async function register(email: string, password: string, name: string, countryCode?: string, defaultCurrency?: string) {
-  const res = await api.post("/auth/register", { email, password, name, countryCode, defaultCurrency });
+export async function register(
+  email: string,
+  password: string,
+  name: string,
+  countryCode?: string,
+  defaultCurrency?: string,
+) {
+  const res = await api.post("/auth/register", {
+    email,
+    password,
+    name,
+    countryCode,
+    defaultCurrency,
+  });
   return res.data;
 }
 
@@ -237,7 +289,9 @@ export async function getStripeConfig() {
 }
 
 export async function getDashboardData() {
-  const res = await cachedGet("/reports/dashboard", undefined, { ttlMs: 60 * 1000 });
+  const res = await cachedGet("/reports/dashboard", undefined, {
+    ttlMs: 60 * 1000,
+  });
   return res;
 }
 
@@ -253,7 +307,11 @@ export interface CustomerSearchParams {
 }
 
 export async function getCustomers(params?: CustomerSearchParams) {
-  const res = await cachedGet("/customers", params as Record<string, unknown> | undefined, { ttlMs: 60 * 1000 });
+  const res = await cachedGet(
+    "/customers",
+    params as Record<string, unknown> | undefined,
+    { ttlMs: 60 * 1000 },
+  );
   return res;
 }
 
@@ -302,7 +360,10 @@ export async function getCustomerBalance(customerId: string) {
   return res.data;
 }
 
-export async function getCustomerEvents(customerId: string, params?: { limit?: number }) {
+export async function getCustomerEvents(
+  customerId: string,
+  params?: { limit?: number },
+) {
   const res = await api.get(`/customers/${customerId}/events`, { params });
   return res.data;
 }
@@ -312,20 +373,30 @@ export async function exportCustomersCsv() {
   return res.data;
 }
 
-export function buildCustomerSearchParams(params: CustomerSearchParams): Record<string, any> {
+export function buildCustomerSearchParams(
+  params: CustomerSearchParams,
+): Record<string, any> {
   const result: Record<string, any> = {};
   if (params.limit !== undefined) result.limit = params.limit;
   if (params.offset !== undefined) result.offset = params.offset;
   if (params.search !== undefined) result.search = params.search;
   if (params.status !== undefined) result.status = params.status;
-  if (params.includeArchived !== undefined) result.includeArchived = params.includeArchived;
+  if (params.includeArchived !== undefined)
+    result.includeArchived = params.includeArchived;
   if (params.sortBy !== undefined) result.sortBy = params.sortBy;
   if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
   return result;
 }
 
-export async function getProducts(params?: { limit?: number; offset?: number }) {
-  const res = await cachedGet("/products", params as Record<string, unknown> | undefined, { ttlMs: 60 * 1000 });
+export async function getProducts(params?: {
+  limit?: number;
+  offset?: number;
+}) {
+  const res = await cachedGet(
+    "/products",
+    params as Record<string, unknown> | undefined,
+    { ttlMs: 60 * 1000 },
+  );
   return res;
 }
 
@@ -359,7 +430,10 @@ export async function getFeatures() {
   return res.data;
 }
 
-export async function getTemplates(params?: { limit?: number; offset?: number }) {
+export async function getTemplates(params?: {
+  limit?: number;
+  offset?: number;
+}) {
   const res = await api.get("/templates", { params });
   return res.data;
 }
@@ -424,7 +498,10 @@ export async function setDefaultDocumentTemplate(id: string) {
   return res.data;
 }
 
-export async function getInvoiceTemplates(params?: { limit?: number; documentType?: string }) {
+export async function getInvoiceTemplates(params?: {
+  limit?: number;
+  documentType?: string;
+}) {
   const res = await api.get("/document-templates", { params });
   return res.data;
 }
@@ -465,7 +542,9 @@ export async function publishInvoiceTemplate(id: string) {
 }
 
 export async function archiveInvoiceTemplate(id: string) {
-  const res = await api.patch(`/document-templates/${id}`, { is_active: false });
+  const res = await api.patch(`/document-templates/${id}`, {
+    is_active: false,
+  });
   return res.data;
 }
 
@@ -505,7 +584,10 @@ export async function getPayment(id: string) {
   return res.data;
 }
 
-export async function refundPayment(paymentId: string, data: { amount: number; reason?: string }) {
+export async function refundPayment(
+  paymentId: string,
+  data: { amount: number; reason?: string },
+) {
   const res = await api.post(`/payments/${paymentId}/refund`, data);
   return res.data;
 }
@@ -580,7 +662,10 @@ export async function updateUserProfile(data: { email?: string }) {
   return res.data;
 }
 
-export async function changePassword(data: { currentPassword: string; newPassword: string }) {
+export async function changePassword(data: {
+  currentPassword: string;
+  newPassword: string;
+}) {
   const res = await api.post("/auth/change-password", data);
   return res.data;
 }
@@ -681,12 +766,18 @@ export async function deleteProject(id: string) {
   return res.data;
 }
 
-export async function createInvoiceFromProject(projectId: string, data?: { includeUnbilledTime?: boolean; items?: any[]; fees?: any[] }) {
+export async function createInvoiceFromProject(
+  projectId: string,
+  data?: { includeUnbilledTime?: boolean; items?: any[]; fees?: any[] },
+) {
   const res = await api.post(`/projects/${projectId}/invoice`, data ?? {});
   return res.data;
 }
 
-export async function getProjectInvoices(projectId: string, params?: { limit?: number; offset?: number; status?: string }) {
+export async function getProjectInvoices(
+  projectId: string,
+  params?: { limit?: number; offset?: number; status?: string },
+) {
   const res = await api.get(`/projects/${projectId}/invoices`, { params });
   return res.data;
 }
@@ -696,12 +787,19 @@ export async function getProjectFinancialSummary(projectId: string) {
   return res.data;
 }
 
-export async function getProjectEvents(projectId: string, params?: { limit?: number }) {
+export async function getProjectEvents(
+  projectId: string,
+  params?: { limit?: number },
+) {
   const res = await api.get(`/projects/${projectId}/events`, { params });
   return res.data;
 }
 
-export async function addProjectTag(projectId: string, name: string, color?: string) {
+export async function addProjectTag(
+  projectId: string,
+  name: string,
+  color?: string,
+) {
   const res = await api.post(`/projects/${projectId}/tags`, { name, color });
   return res.data;
 }
@@ -721,12 +819,19 @@ export async function getProjectTeam(projectId: string) {
   return res.data;
 }
 
-export async function addProjectTeamMember(projectId: string, userId: string, role?: string) {
+export async function addProjectTeamMember(
+  projectId: string,
+  userId: string,
+  role?: string,
+) {
   const res = await api.post(`/projects/${projectId}/team`, { userId, role });
   return res.data;
 }
 
-export async function removeProjectTeamMember(projectId: string, userId: string) {
+export async function removeProjectTeamMember(
+  projectId: string,
+  userId: string,
+) {
   const res = await api.delete(`/projects/${projectId}/team/${userId}`);
   return res.data;
 }
@@ -740,17 +845,20 @@ export async function createTimeEntry(projectId: string, data: any) {
   return res.data;
 }
 
-export async function getTimeEntries(projectId: string, params?: {
-  limit?: number;
-  offset?: number;
-  billable?: boolean;
-  isInvoiced?: boolean;
-  userId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}) {
+export async function getTimeEntries(
+  projectId: string,
+  params?: {
+    limit?: number;
+    offset?: number;
+    billable?: boolean;
+    isInvoiced?: boolean;
+    userId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  },
+) {
   const res = await api.get(`/projects/${projectId}/time-entries`, { params });
   return res.data;
 }
@@ -766,7 +874,10 @@ export async function deleteTimeEntry(entryId: string) {
 }
 
 export async function startTimer(projectId: string, data: any) {
-  const res = await api.post(`/time-entries/timer/start`, { projectId, ...data });
+  const res = await api.post(`/time-entries/timer/start`, {
+    projectId,
+    ...data,
+  });
   return res.data;
 }
 
@@ -775,18 +886,29 @@ export async function stopTimer(entryId: string) {
   return res.data;
 }
 
-export async function getTimeEntrySummary(projectId: string, currency?: string) {
-  const res = await api.get(`/projects/${projectId}/time-entries/summary`, { params: { currency } });
+export async function getTimeEntrySummary(
+  projectId: string,
+  currency?: string,
+) {
+  const res = await api.get(`/projects/${projectId}/time-entries/summary`, {
+    params: { currency },
+  });
   return res.data;
 }
 
 // Project Notes
-export async function addProjectNote(projectId: string, data: { title?: string; content: string }) {
+export async function addProjectNote(
+  projectId: string,
+  data: { title?: string; content: string },
+) {
   const res = await api.post(`/projects/${projectId}/notes`, data);
   return res.data;
 }
 
-export async function getProjectNotes(projectId: string, params?: { limit?: number; offset?: number }) {
+export async function getProjectNotes(
+  projectId: string,
+  params?: { limit?: number; offset?: number },
+) {
   const res = await api.get(`/projects/${projectId}/notes`, { params });
   return res.data;
 }
@@ -803,7 +925,9 @@ export function formatDuration(minutes: number): string {
   return `${h}h ${m}m`;
 }
 
-export function buildProjectSearchParams(params: ProjectSearchParams): Record<string, any> {
+export function buildProjectSearchParams(
+  params: ProjectSearchParams,
+): Record<string, any> {
   const result: Record<string, any> = {};
   if (params.limit !== undefined) result.limit = params.limit;
   if (params.offset !== undefined) result.offset = params.offset;
@@ -811,7 +935,8 @@ export function buildProjectSearchParams(params: ProjectSearchParams): Record<st
   if (params.status !== undefined) result.status = params.status;
   if (params.customerId !== undefined) result.customerId = params.customerId;
   if (params.tagId !== undefined) result.tagId = params.tagId;
-  if (params.includeArchived !== undefined) result.includeArchived = params.includeArchived;
+  if (params.includeArchived !== undefined)
+    result.includeArchived = params.includeArchived;
   if (params.sortBy !== undefined) result.sortBy = params.sortBy;
   if (params.sortOrder !== undefined) result.sortOrder = params.sortOrder;
   return result;
@@ -827,7 +952,9 @@ export async function getReminderConfig() {
 }
 
 export async function updateReminderConfig(data: Partial<ApiReminderConfig>) {
-  const res = await api.patch("/businesses/current/settings", { reminders: data });
+  const res = await api.patch("/businesses/current/settings", {
+    reminders: data,
+  });
   return res.data;
 }
 
@@ -836,12 +963,19 @@ export async function getReminderTemplates() {
   return res.data;
 }
 
-export async function createReminderTemplate(data: { name: string; subject: string; message: string }) {
+export async function createReminderTemplate(data: {
+  name: string;
+  subject: string;
+  message: string;
+}) {
   const res = await api.post("/reminder-templates", data);
   return res.data;
 }
 
-export async function updateReminderTemplate(id: string, data: Partial<ApiReminderTemplate>) {
+export async function updateReminderTemplate(
+  id: string,
+  data: Partial<ApiReminderTemplate>,
+) {
   const res = await api.patch(`/reminder-templates/${id}`, data);
   return res.data;
 }
@@ -855,12 +989,22 @@ export async function deleteReminderTemplate(id: string) {
 // DEPOSITS
 // ============================================================================
 
-export async function setInvoiceDeposit(id: string, data: { depositType: "fixed" | "percentage" | "none"; depositValue: string; depositDueDate?: string }) {
+export async function setInvoiceDeposit(
+  id: string,
+  data: {
+    depositType: "fixed" | "percentage" | "none";
+    depositValue: string;
+    depositDueDate?: string;
+  },
+) {
   const res = await api.patch(`/invoices/${id}/deposit`, data);
   return res.data;
 }
 
-export async function recordDepositPayment(id: string, data: { amount: number; provider?: string; idempotencyKey?: string }) {
+export async function recordDepositPayment(
+  id: string,
+  data: { amount: number; provider?: string; idempotencyKey?: string },
+) {
   const res = await api.post(`/invoices/${id}/deposit/pay`, data);
   return res.data;
 }
@@ -870,7 +1014,9 @@ export async function recordDepositPayment(id: string, data: { amount: number; p
 // ============================================================================
 
 export async function getEnhancedDashboard() {
-  const res = await cachedGet("/reports/dashboard", undefined, { ttlMs: 45 * 1000 });
+  const res = await cachedGet("/reports/dashboard", undefined, {
+    ttlMs: 45 * 1000,
+  });
   return res;
 }
 
@@ -888,7 +1034,10 @@ export async function getPaymentMetricsReport(): Promise<ApiPaymentMetrics | nul
   }
 }
 
-export async function getVolumeTrendReport(params?: { period?: "day" | "week" | "month"; months?: number }) {
+export async function getVolumeTrendReport(params?: {
+  period?: "day" | "week" | "month";
+  months?: number;
+}) {
   const res = await api.get("/reports/volume-trend", { params });
   return res.data;
 }
@@ -948,7 +1097,14 @@ export interface ApiReceiptSummary {
   currency: string;
 }
 
-export async function getReceipts(params?: ReceiptSearchParams): Promise<{ receipts: ApiReceipt[]; total: number; limit: number; offset: number }> {
+export async function getReceipts(
+  params?: ReceiptSearchParams,
+): Promise<{
+  receipts: ApiReceipt[];
+  total: number;
+  limit: number;
+  offset: number;
+}> {
   const res = await api.get("/receipts", { params });
   return res.data;
 }
@@ -958,7 +1114,9 @@ export async function getReceiptSummary(): Promise<ApiReceiptSummary> {
   return res.data;
 }
 
-export async function getReceiptById(id: string): Promise<{ receipt: ApiReceipt }> {
+export async function getReceiptById(
+  id: string,
+): Promise<{ receipt: ApiReceipt }> {
   const res = await api.get(`/receipts/${id}`);
   return res.data;
 }
@@ -1008,7 +1166,9 @@ export interface ApiReceiptDetail extends ApiReceipt {
   items?: ApiReceiptItem[];
 }
 
-export async function getReceiptDetail(id: string): Promise<{ receipt: ApiReceiptDetail }> {
+export async function getReceiptDetail(
+  id: string,
+): Promise<{ receipt: ApiReceiptDetail }> {
   const res = await api.get(`/receipts/${id}/detail`);
   return res.data;
 }
@@ -1020,7 +1180,7 @@ export async function emailReceipt(
     name?: string;
     subject?: string;
     message?: string;
-  }
+  },
 ): Promise<{ ok: boolean; messageId: string; status: string }> {
   const res = await api.post(`/receipts/${receiptId}/email`, data);
   return res.data;
@@ -1031,7 +1191,7 @@ export async function refundReceipt(
   data: {
     amount: string;
     reason?: string;
-  }
+  },
 ): Promise<{ status: string; refundId?: string }> {
   const res = await api.post(`/receipts/${receiptId}/refund`, data);
   return res.data;
@@ -1068,21 +1228,31 @@ export async function inviteTeamMember(data: {
   role: TeamRole;
   message?: string;
 }): Promise<{ member: ApiTeamMember }> {
-  const res = await api.post("/businesses/current/team", { ...data, action: "invite" });
+  const res = await api.post("/businesses/current/team", {
+    ...data,
+    action: "invite",
+  });
   return res.data;
 }
 
-export async function updateTeamMember(memberId: string, data: { role?: TeamRole }): Promise<{ member: ApiTeamMember }> {
+export async function updateTeamMember(
+  memberId: string,
+  data: { role?: TeamRole },
+): Promise<{ member: ApiTeamMember }> {
   const res = await api.patch(`/businesses/current/team/${memberId}`, data);
   return res.data;
 }
 
-export async function removeTeamMember(memberId: string): Promise<{ removed: boolean }> {
+export async function removeTeamMember(
+  memberId: string,
+): Promise<{ removed: boolean }> {
   const res = await api.delete(`/businesses/current/team/${memberId}`);
   return res.data;
 }
 
-export async function resendTeamInvite(memberId: string): Promise<{ member: ApiTeamMember }> {
+export async function resendTeamInvite(
+  memberId: string,
+): Promise<{ member: ApiTeamMember }> {
   const res = await api.post(`/businesses/current/team/${memberId}/resend`);
   return res.data;
 }
@@ -1110,28 +1280,48 @@ export async function getDashboardSummary(): Promise<ApiDashboardSummary> {
   return res.data.summary;
 }
 
-export async function getRevenueReport(params?: ReportFiltersParams): Promise<ApiRevenueReport> {
-  const res = await api.get("/reports/revenue", { params: buildReportParams(params) });
+export async function getRevenueReport(
+  params?: ReportFiltersParams,
+): Promise<ApiRevenueReport> {
+  const res = await api.get("/reports/revenue", {
+    params: buildReportParams(params),
+  });
   return res.data;
 }
 
-export async function getPaymentsReport(params?: ReportFiltersParams): Promise<ApiPaymentsReport> {
-  const res = await api.get("/reports/payments", { params: buildReportParams(params) });
+export async function getPaymentsReport(
+  params?: ReportFiltersParams,
+): Promise<ApiPaymentsReport> {
+  const res = await api.get("/reports/payments", {
+    params: buildReportParams(params),
+  });
   return res.data;
 }
 
-export async function getClientsReport(params?: ReportFiltersParams): Promise<ApiClientsReport> {
-  const res = await api.get("/reports/clients", { params: buildReportParams(params) });
+export async function getClientsReport(
+  params?: ReportFiltersParams,
+): Promise<ApiClientsReport> {
+  const res = await api.get("/reports/clients", {
+    params: buildReportParams(params),
+  });
   return res.data;
 }
 
-export async function getTaxSummaryReport(params?: ReportFiltersParams): Promise<ApiTaxSummaryReport> {
-  const res = await api.get("/reports/tax-summary", { params: buildReportParams(params) });
+export async function getTaxSummaryReport(
+  params?: ReportFiltersParams,
+): Promise<ApiTaxSummaryReport> {
+  const res = await api.get("/reports/tax-summary", {
+    params: buildReportParams(params),
+  });
   return res.data;
 }
 
-export async function getProfitLossReport(params?: ReportFiltersParams): Promise<ApiProfitLossReport> {
-  const res = await api.get("/reports/profit-loss", { params: buildReportParams(params) });
+export async function getProfitLossReport(
+  params?: ReportFiltersParams,
+): Promise<ApiProfitLossReport> {
+  const res = await api.get("/reports/profit-loss", {
+    params: buildReportParams(params),
+  });
   return res.data;
 }
 
@@ -1149,7 +1339,10 @@ export async function getAgingReport(): Promise<ApiAgingReport | null> {
   }
 }
 
-export async function exportReportCsv(reportType: string, params?: ReportFiltersParams): Promise<Blob> {
+export async function exportReportCsv(
+  reportType: string,
+  params?: ReportFiltersParams,
+): Promise<Blob> {
   const res = await api.get(`/reports/${reportType}/csv`, {
     params: buildReportParams(params),
     responseType: "blob",
@@ -1215,7 +1408,10 @@ export interface ApiParsedDocumentResult {
   suggestions: string[];
 }
 
-export async function parseDocument(text: string, documentType?: string): Promise<ApiParsedDocumentResult> {
+export async function parseDocument(
+  text: string,
+  documentType?: string,
+): Promise<ApiParsedDocumentResult> {
   const res = await api.post("/ai/parse-document", { text, documentType });
   return res.data;
 }
@@ -1234,7 +1430,9 @@ export interface ApiPaymentRiskInvoice {
   paymentRiskFactors: Record<string, unknown> | null;
 }
 
-export async function getPaymentRiskInvoices(limit = 50): Promise<{ invoices: ApiPaymentRiskInvoice[] }> {
+export async function getPaymentRiskInvoices(
+  limit = 50,
+): Promise<{ invoices: ApiPaymentRiskInvoice[] }> {
   const res = await api.get(`/reports/payment-risk?limit=${limit}`);
   return res.data;
 }
@@ -1324,12 +1522,17 @@ export interface CreateInvoiceInput {
   shippingTaxRate?: string | number;
 }
 
-export async function createInvoice(data: CreateInvoiceInput): Promise<{ invoice: ApiInvoice }> {
+export async function createInvoice(
+  data: CreateInvoiceInput,
+): Promise<{ invoice: ApiInvoice }> {
   const res = await api.post("/invoices", data);
   return res.data;
 }
 
-export async function updateInvoice(id: string, data: Partial<CreateInvoiceInput>): Promise<{ invoice: ApiInvoice }> {
+export async function updateInvoice(
+  id: string,
+  data: Partial<CreateInvoiceInput>,
+): Promise<{ invoice: ApiInvoice }> {
   const res = await api.patch(`/invoices/${id}`, data);
   return res.data;
 }
@@ -1340,7 +1543,9 @@ export interface FinalizeInvoiceResult {
   status: string;
 }
 
-export async function finalizeInvoice(id: string): Promise<FinalizeInvoiceResult> {
+export async function finalizeInvoice(
+  id: string,
+): Promise<FinalizeInvoiceResult> {
   const res = await api.post(`/invoices/${id}/finalize`);
   return res.data;
 }
@@ -1361,17 +1566,25 @@ export interface SendInvoiceResult {
   invoice: ApiInvoice;
 }
 
-export async function sendInvoice(id: string, data?: SendInvoiceData): Promise<SendInvoiceResult> {
+export async function sendInvoice(
+  id: string,
+  data?: SendInvoiceData,
+): Promise<SendInvoiceResult> {
   const res = await api.post(`/invoices/${id}/send`, data ?? {});
   return res.data;
 }
 
-export async function sendReminder(id: string, data?: SendInvoiceData): Promise<SendInvoiceResult> {
+export async function sendReminder(
+  id: string,
+  data?: SendInvoiceData,
+): Promise<SendInvoiceResult> {
   const res = await api.post(`/invoices/${id}/send-reminder`, data ?? {});
   return res.data;
 }
 
-export async function duplicateInvoice(id: string): Promise<{ invoice: ApiInvoice }> {
+export async function duplicateInvoice(
+  id: string,
+): Promise<{ invoice: ApiInvoice }> {
   const res = await api.post(`/invoices/${id}/duplicate`);
   return res.data;
 }
@@ -1391,17 +1604,26 @@ export interface RecordPaymentResult {
   payment: { id: string };
 }
 
-export async function recordPayment(id: string, data: RecordPaymentData): Promise<RecordPaymentResult> {
+export async function recordPayment(
+  id: string,
+  data: RecordPaymentData,
+): Promise<RecordPaymentResult> {
   const res = await api.post(`/invoices/${id}/record-payment`, data);
   return res.data;
 }
 
-export async function cancelInvoice(id: string, reason: string): Promise<{ invoice: ApiInvoice }> {
+export async function cancelInvoice(
+  id: string,
+  reason: string,
+): Promise<{ invoice: ApiInvoice }> {
   const res = await api.post(`/invoices/${id}/cancel`, { reason });
   return res.data;
 }
 
-export async function voidInvoice(id: string, reason: string): Promise<{ invoice: ApiInvoice }> {
+export async function voidInvoice(
+  id: string,
+  reason: string,
+): Promise<{ invoice: ApiInvoice }> {
   const res = await api.post(`/invoices/${id}/void`, { reason });
   return res.data;
 }
@@ -1411,18 +1633,127 @@ export async function getInvoicePdf(id: string): Promise<Blob> {
   return res.data;
 }
 
-export async function getInvoiceShareLink(id: string): Promise<{ url: string; token: string; expiresAt: string }> {
+export async function getInvoiceShareLink(
+  id: string,
+): Promise<{ url: string; token: string; expiresAt: string }> {
   const res = await api.get(`/invoices/${id}/share-link`);
   return res.data;
 }
 
-export async function getPublicInvoice(token: string): Promise<{ invoice: ApiInvoice }> {
+export async function getPublicInvoice(
+  token: string,
+): Promise<{ invoice: ApiInvoice }> {
   const res = await api.get(`/public/invoice/${token}`);
   return res.data;
 }
 
-export async function getInvoiceEvents(invoiceId: string): Promise<{ events: ApiInvoiceEvent[] }> {
+export async function getInvoiceEvents(
+  invoiceId: string,
+): Promise<{ events: ApiInvoiceEvent[] }> {
   const res = await api.get(`/invoices/${invoiceId}/events`);
+  return res.data;
+}
+
+// ============================================================================
+// QUOTES
+// ============================================================================
+
+export {
+  CreateQuoteItemInput,
+  CreateQuoteFeeInput,
+  CreateQuoteInput,
+  FinalizeQuoteResult,
+  SendQuoteResult,
+  ShareQuoteResult,
+  ConvertQuoteToInvoiceResult,
+};
+
+export async function getQuotes(params?: ApiQuoteSearchParams): Promise<{
+  quotes: ApiQuoteListItem[];
+  total: number;
+}> {
+  const res = await api.get("/quotes", { params });
+  return res.data;
+}
+
+export async function getQuote(
+  id: string,
+): Promise<{ quote: ApiQuote; events: ApiQuoteEvent[] }> {
+  const res = await api.get(`/quotes/${id}`);
+  return res.data;
+}
+
+export async function createQuote(
+  data: CreateQuoteInput,
+): Promise<{ quote: ApiQuote }> {
+  const res = await api.post("/quotes", data);
+  return res.data;
+}
+
+export async function updateQuote(
+  id: string,
+  data: Partial<CreateQuoteInput>,
+): Promise<{ quote: ApiQuote }> {
+  const res = await api.put(`/quotes/${id}`, data);
+  return res.data;
+}
+
+export async function finalizeQuote(id: string): Promise<FinalizeQuoteResult> {
+  const res = await api.post(`/quotes/${id}/finalize`);
+  return res.data;
+}
+
+export async function sendQuote(
+  id: string,
+  data?: { sendTo?: string; message?: string },
+): Promise<SendQuoteResult> {
+  const res = await api.post(`/quotes/${id}/send`, data);
+  return res.data;
+}
+
+export async function duplicateQuote(id: string): Promise<{ quote: ApiQuote }> {
+  const res = await api.post(`/quotes/${id}/duplicate`);
+  return res.data;
+}
+
+export async function cancelQuote(
+  id: string,
+  reason: string,
+): Promise<{ quote: ApiQuote }> {
+  const res = await api.post(`/quotes/${id}/cancel`, { reason });
+  return res.data;
+}
+
+export async function convertToInvoice(
+  id: string,
+): Promise<ConvertQuoteToInvoiceResult> {
+  const res = await api.post(`/quotes/${id}/convert-to-invoice`);
+  return res.data;
+}
+
+export async function getQuotePdf(id: string): Promise<Blob> {
+  const res = await api.get(`/quotes/${id}/pdf`, {
+    responseType: "blob",
+  });
+  return res.data;
+}
+
+export async function getQuoteShareLink(id: string): Promise<ShareQuoteResult> {
+  const res = await api.get(`/quotes/${id}/share-link`);
+  return res.data;
+}
+
+export async function getPublicQuote(
+  token: string,
+): Promise<{ quote: ApiQuote }> {
+  const res = await api.get(`/quotes/public/${token}`);
+  return res.data;
+}
+
+export async function getQuoteEvents(
+  quoteId: string,
+): Promise<{ events: ApiQuoteEvent[] }> {
+  const res = await api.get(`/quotes/${quoteId}/events`);
   return res.data;
 }
 
@@ -1446,7 +1777,9 @@ export async function getCreditNotes(params?: CreditNoteSearchParams): Promise<{
   return res.data;
 }
 
-export async function getCreditNote(id: string): Promise<{ creditNote: ApiCreditNote }> {
+export async function getCreditNote(
+  id: string,
+): Promise<{ creditNote: ApiCreditNote }> {
   const res = await api.get(`/credit-notes/${id}`);
   return res.data;
 }
@@ -1467,16 +1800,17 @@ export interface CreateCreditNoteInput {
   }>;
 }
 
-export async function createCreditNote(data: CreateCreditNoteInput): Promise<{ creditNote: ApiCreditNote }> {
+export async function createCreditNote(
+  data: CreateCreditNoteInput,
+): Promise<{ creditNote: ApiCreditNote }> {
   const res = await api.post("/credit-notes", data);
   return res.data;
 }
 
 export async function applyCreditNote(
   creditNoteId: string,
-  data: { invoiceId: string; amount: string | number }
+  data: { invoiceId: string; amount: string | number },
 ): Promise<{ ok: boolean; remaining: string }> {
   const res = await api.post(`/credit-notes/${creditNoteId}/apply`, data);
   return res.data;
 }
-
