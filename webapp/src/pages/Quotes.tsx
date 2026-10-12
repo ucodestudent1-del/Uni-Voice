@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   getQuotes,
@@ -17,6 +17,8 @@ import {
   Plus,
   Search,
   FileText,
+  Calendar,
+  AlertCircle,
 } from "lucide-react";
 import { formatDate } from "@/utils/format";
 import type { ApiQuoteListItem } from "@/types/api";
@@ -34,6 +36,13 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "converted", label: "Converted" },
 ];
 
+function isQuoteExpiringSoon(expiryDate?: string | null): boolean {
+  if (!expiryDate) return false;
+  const expiry = new Date(expiryDate);
+  const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  return expiry < sevenDaysFromNow && expiry > new Date();
+}
+
 export default function Quotes() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,12 +53,14 @@ export default function Quotes() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const params: QuoteSearchParams = {
+  const params: QuoteSearchParams = useMemo(() => ({
     limit,
     offset,
     status: searchParams.get("status") ?? undefined,
     search: searchParams.get("search") ?? undefined,
-  };
+    dateFrom: searchParams.get("dateFrom") ?? undefined,
+    dateTo: searchParams.get("dateTo") ?? undefined,
+  }), [limit, offset, searchParams]);
 
   const fetchQuotes = useCallback(async () => {
     setIsLoading(true);
@@ -125,7 +136,14 @@ export default function Quotes() {
       header: "Expires",
       accessor: (row: ApiQuoteListItem) => row.expiry_date,
       cell: (row: ApiQuoteListItem) => (
-        <span className="text-sm text-tertiary">{row.expiry_date ? formatDate(row.expiry_date) : "—"}</span>
+        <div className="flex items-center justify-end gap-1.5">
+          {row.expiry_date ? formatDate(row.expiry_date) : "—"}
+          {isQuoteExpiringSoon(row.expiry_date) && row.status !== "expired" && row.status !== "accepted" && row.status !== "converted" && (
+            <span title="Expiring soon (less than 7 days)">
+              <AlertCircle className="h-4 w-4 text-error shrink-0" />
+            </span>
+          )}
+        </div>
       ),
       align: "right" as const,
       sortable: true,
@@ -156,6 +174,57 @@ export default function Quotes() {
             value={searchParams.get("search") ?? ""}
             onChange={(e) => handleSearch(e.target.value)}
           />
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs text-tertiary">
+            <Calendar className="h-3 w-3" />
+            <span>Date range:</span>
+          </div>
+          <input
+            type="date"
+            className="px-2 py-1 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={searchParams.get("dateFrom") ?? ""}
+            onChange={(e) => {
+              setSearchParams({
+                search: searchParams.get("search") ?? "",
+                status: searchParams.get("status") ?? "",
+                dateFrom: e.target.value,
+                dateTo: searchParams.get("dateTo") ?? "",
+              });
+              setOffset(0);
+            }}
+          />
+          <span className="text-xs text-tertiary">to</span>
+          <input
+            type="date"
+            className="px-2 py-1 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={searchParams.get("dateTo") ?? ""}
+            onChange={(e) => {
+              setSearchParams({
+                search: searchParams.get("search") ?? "",
+                status: searchParams.get("status") ?? "",
+                dateFrom: searchParams.get("dateFrom") ?? "",
+                dateTo: e.target.value,
+              });
+              setOffset(0);
+            }}
+          />
+          {(searchParams.get("dateFrom") || searchParams.get("dateTo")) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchParams({
+                  search: searchParams.get("search") ?? "",
+                  status: searchParams.get("status") ?? "",
+                });
+                setOffset(0);
+              }}
+              className="text-xs text-tertiary hover:text-primary underline"
+            >
+              Clear
+            </button>
+          )}
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {STATUS_OPTIONS.map((opt) => (

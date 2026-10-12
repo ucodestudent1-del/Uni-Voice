@@ -8,8 +8,7 @@ import {
   getQuoteEvents,
   convertQuote,
   acceptQuote,
-  rejectQuote,
-  type ApiQuoteListItem,
+   rejectQuote,
 } from "@/api/client";
 import { useToast } from "@/components/ui/ToastProvider";
 import {
@@ -35,6 +34,7 @@ import {
   FileText,
 } from "lucide-react";
 import { formatDate, formatTaxRateWithName } from "@/utils/format";
+import { Decimal } from "decimal.js";
 import type { ApiQuote, ApiQuoteItem, ApiQuoteFee, ApiQuoteEvent } from "@/types/api";
 import { cn } from "@/lib/utils";
 
@@ -517,10 +517,41 @@ export default function QuoteDetail() {
                   <span className="text-error">-{Number(quote.discount_total ?? "0").toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="text-tertiary">Tax</span>
-                <Money amount={quote.tax_total ?? "0"} currency={quote.currency} />
-              </div>
+             {(() => {
+                const taxBreakdown: Record<string, { name: string; rate: string; amount: Decimal }> = {};
+                [...(quote.items ?? []), ...((quote.fees ?? []).map((f) => ({ tax_rate: f.tax_rate, tax_name: f.tax_name, tax_amount: f.tax_amount })))].forEach((li) => {
+                  const rate = li.tax_rate ?? "0";
+                  const name = li.tax_name ?? "";
+                  const key = `${rate}-${name}`;
+                  if (!taxBreakdown[key]) {
+                    taxBreakdown[key] = { name, rate, amount: new Decimal(0) };
+                  }
+                  taxBreakdown[key].amount = taxBreakdown[key].amount.plus(li.tax_amount ?? "0");
+                });
+                const breakdownEntries = Object.entries(taxBreakdown).filter(([, v]) => !v.amount.isZero());
+                return (
+                  <>
+                    {Number(quote.tax_total ?? "0") > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-tertiary">Tax</span>
+                        <Money amount={quote.tax_total ?? "0"} currency={quote.currency} />
+                      </div>
+                    )}
+                    {breakdownEntries.length > 0 && (
+                      <div className="mt-1 pl-4 border-l-2 border-border/50 space-y-0.5">
+                        {breakdownEntries.map(([key, v]) => (
+                          <div key={key} className="flex justify-between text-xs">
+                            <span className="text-tertiary">
+                              {formatTaxRateWithName(v.rate, v.name)}
+                            </span>
+                            <Money amount={v.amount.toFixed()} currency={quote.currency} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {(Number(quote.fee_total ?? "0") > 0) && (
                 <div className="flex justify-between">
                   <span className="text-tertiary">Fees</span>

@@ -1,6 +1,6 @@
-import { FileText, Globe, Phone, Mail, MapPin, CreditCard } from "lucide-react";
+import { FileText, Globe, Phone, Mail, MapPin, CreditCard, AlertCircle } from "lucide-react";
 import { Money } from "@/components/ui";
-import { formatDate, formatTaxRateWithName } from "@/utils/format";
+import { formatDate, formatTaxRateWithName, formatCurrency } from "@/utils/format";
 import type { CalculationResult } from "@/types/calculation";
 import type { ApiCustomer, ApiBusiness } from "@/types/api";
 
@@ -18,6 +18,7 @@ export interface DocumentPreviewProps {
   projectReference?: string;
   customerId?: string;
   customers?: ApiCustomer[];
+  scopeOfWork?: string;
   sourceInvoice?: {
     invoice_number?: string | null;
     customer_name?: string | null;
@@ -31,6 +32,10 @@ export interface DocumentPreviewProps {
   terms?: string;
   footerText?: string;
   signedAmounts?: boolean;
+  depositType?: "none" | "percentage" | "fixed";
+  depositValue?: string;
+  depositDueDate?: string;
+  depositPaid?: boolean;
 }
 
 const DOCUMENT_LABELS: Record<DocumentType, string> = {
@@ -73,12 +78,17 @@ export default function DocumentPreview({
   projectReference,
   customerId,
   customers = [],
+  scopeOfWork,
   sourceInvoice = null,
   paymentInstructions,
   notes,
   terms,
   footerText,
   signedAmounts = false,
+  depositType = "none",
+  depositValue = "0",
+  depositDueDate,
+  depositPaid = false,
 }: DocumentPreviewProps) {
   const label = DOCUMENT_LABELS[documentType];
   const currency = calcResult?.currency ?? sourceInvoice?.currency ?? "USD";
@@ -262,7 +272,15 @@ export default function DocumentPreview({
             </div>
           )}
 
-          {/* Section 4: Line Items */}
+           {/* Scope of Work (quotes only) */}
+           {documentType === "quote" && scopeOfWork && (
+             <div className="mb-6">
+               <h4 className="font-medium text-primary mb-1.5">Scope of Work</h4>
+               <div className="text-tertiary whitespace-pre-line">{scopeOfWork}</div>
+             </div>
+           )}
+
+           {/* Section 4: Line Items */}
           <div className="mb-6">
             <table className="w-full text-sm">
               <thead>
@@ -296,9 +314,29 @@ export default function DocumentPreview({
                 ))}
               </tbody>
             </table>
-          </div>
+           </div>
 
-          {/* Section 5: Financial Summary */}
+           {/* Deposit callout (quotes only) */}
+           {documentType === "quote" && depositType !== "none" && !depositPaid && (
+             <div className="mb-6 p-4 border border-info-border rounded-lg bg-info-bg">
+               <h4 className="font-medium text-info-text mb-1 flex items-center gap-1.5">
+                 <AlertCircle className="h-4 w-4" />
+                 Deposit Required
+               </h4>
+               <p className="text-sm text-info-text">
+                 {depositType === "percentage"
+                   ? `${depositValue}% of the total is due before work begins.`
+                   : `${formatCurrency(depositValue, currency)} is due before work begins.`}
+               </p>
+               {depositDueDate && (
+                 <p className="text-xs text-info-text mt-1">
+                   Due: {formatDate(depositDueDate)}
+                 </p>
+               )}
+             </div>
+           )}
+
+           {/* Section 5: Financial Summary */}
           <div className="border-t border-border pt-2 space-y-1 mb-6">
             <div className="flex justify-between text-tertiary">
               <span>Subtotal</span>
@@ -346,9 +384,9 @@ export default function DocumentPreview({
               </div>
             )}
             <div className="flex justify-between text-2xl font-bold text-primary pt-2 border-t border-border">
-              <span>Total {label}</span>
-              <Money amount={calcResult.total} currency={currency} signed={signedAmounts} />
-            </div>
+               <span>{documentType === "quote" ? "Estimated Total" : `Total ${label}`}</span>
+               <Money amount={calcResult.total} currency={currency} signed={signedAmounts} />
+             </div>
             {documentType === "invoice" && !calcResult.amountDue.isZero() && (
               <div className="flex justify-between text-lg font-bold text-primary">
                 <span>Amount Due</span>

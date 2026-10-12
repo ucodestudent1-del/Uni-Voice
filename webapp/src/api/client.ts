@@ -1562,6 +1562,9 @@ export interface CreateQuoteInput {
   fees?: CreateQuoteFeeInput[];
   quoteDiscount?: string | number;
   quoteDiscountType?: "fixed" | "percentage" | null;
+  depositType?: "none" | "percentage" | "fixed" | null;
+  depositValue?: string | number | null;
+  depositDueDate?: string | null;
 }
 
 export async function createQuote(data: CreateQuoteInput): Promise<{ quote: ApiQuote }> {
