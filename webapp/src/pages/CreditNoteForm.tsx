@@ -12,8 +12,8 @@ import {
   Money,
 } from "@/components/ui";
 import SectionCard from "@/components/SectionCard";
+import DocumentPreview from "@/components/DocumentPreview";
 import { Save, Plus, Trash2, FileText } from "lucide-react";
-import { formatDate } from "@/utils/format";
 import { Decimal } from "decimal.js";
 import type { ApiInvoice } from "@/types/api";
 
@@ -498,99 +498,13 @@ export default function CreditNoteForm() {
 
           {/* Preview Panel */}
           <div className="overflow-y-auto">
-            <div className="sticky top-0">
-              <div className="border border-border rounded-lg p-6 bg-surface shadow">
-                <h3 className="text-sm font-medium text-tertiary mb-4 uppercase tracking-wider">
-                  Live Preview
-                </h3>
-
-                {calcResult ? (
-                  <div className="text-sm">
-                    {/* Header */}
-                    <div className="mb-4">
-                      <div className="text-2xl font-bold text-primary flex items-center gap-2">
-                        <FileText className="h-6 w-6" />
-                        Credit Note (credit)
-                      </div>
-                      <div className="text-tertiary mt-1">
-                        Issue date: {formatDate(new Date().toISOString())}
-                      </div>
-                    </div>
-
-                    {/* Customer */}
-                    <div className="mb-4">
-                      <div className="font-medium text-primary">
-                        {sourceInvoice?.customer_name ?? "—"}
-                      </div>
-                      {sourceInvoice?.customer_email && (
-                        <div className="text-tertiary">{sourceInvoice.customer_email}</div>
-                      )}
-                    </div>
-
-                    {/* Line Items Table */}
-                    <div className="mb-4">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-1 text-tertiary font-medium">Description</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Qty</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Price</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Tax</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {calcResult.lineItems.map((li, idx) => (
-                            <tr key={idx} className="border-b border-border/50">
-                              <td className="py-1">{li.description}</td>
-                              <td className="text-right py-1">{li.quantity.toFixed()}</td>
-                              <td className="text-right py-1">{li.unitPrice.toFixed(2)}</td>
-                              <td className="text-right py-1">{(li.taxRate.mul(100)).toFixed(2)}%</td>
-                              <td className="text-right py-1 font-medium">
-                                <Money amount={li.lineTotal} currency={calcResult.currency} signed />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Totals */}
-                    <div className="border-t border-border pt-2 space-y-1">
-                      <div className="flex justify-between text-tertiary">
-                        <span>Subtotal</span>
-                        <Money amount={calcResult.subtotal} currency={calcResult.currency} />
-                      </div>
-                      {Number(calcResult.discountTotal.toFixed()) !== 0 && (
-                        <div className="flex justify-between text-tertiary">
-                          <span>Discount</span>
-                          <Money amount={calcResult.discountTotal.negated()} currency={calcResult.currency} />
-                        </div>
-                      )}
-                      <div className="flex justify-between text-tertiary">
-                        <span>Tax</span>
-                        <Money amount={calcResult.taxTotal} currency={calcResult.currency} />
-                      </div>
-                      {calcResult.fees.length > 0 && Number(calcResult.feeTotal.toFixed()) !== 0 && (
-                        <div className="flex justify-between text-tertiary">
-                          <span>Fees</span>
-                          <Money amount={calcResult.feeTotal} currency={calcResult.currency} />
-                        </div>
-                      )}
-                      <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-border">
-                        <span>Total</span>
-                        <Money amount={calcResult.total} currency={calcResult.currency} signed />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-tertiary">
-                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p>Add line items to see a preview</p>
-                  </div>
-                )}
-            </div>
-          </div>
+            <DocumentPreview
+              documentType="credit-note"
+              calcResult={calcResult}
+              issueDate={new Date().toISOString()}
+              sourceInvoice={sourceInvoice}
+              signedAmounts={true}
+            />
           </div>
         </div>
       </div>

@@ -22,15 +22,9 @@ import {
   FormTextareaField,
   PageHeader,
 } from "@/components/ui";
-import {
-  Save,
-  Send,
-  Plus,
-  Trash2,
-  FileText,
-} from "lucide-react";
-import { formatDate } from "@/utils/format";
+import { Save, Send, Plus, Trash2, FileText } from "lucide-react";
 import { Decimal } from "decimal.js";
+import DocumentPreview from "@/components/DocumentPreview";
 import type { ApiQuote, ApiQuoteItem, ApiQuoteFee } from "@/types/api";
 import type { ApiCustomer } from "@/types/api";
 
@@ -616,111 +610,16 @@ export default function QuoteBuilder() {
 
           {/* Preview Panel */}
           <div className="overflow-y-auto">
-            <div className="sticky top-0">
-              <div className="border border-border rounded-lg p-6 bg-surface shadow">
-                <h3 className="text-sm font-medium text-tertiary mb-4 uppercase tracking-wider">
-                  Live Preview
-                </h3>
-
-                {calcResult ? (
-                  <div className="text-sm">
-                    {/* Header */}
-                    <div className="mb-4">
-                      <div className="text-2xl font-bold text-primary flex items-center gap-2">
-                        <FileText className="h-6 w-6" />
-                        Quote {quote?.quote_number ?? "(Unsaved)"}
-                      </div>
-                      {state.issueDate && (
-                        <div className="text-tertiary mt-1">
-                          <span className="font-medium">Issue date:</span> {formatDate(state.issueDate)}
-                        </div>
-                      )}
-                      {state.expiryDate && (
-                        <div className="text-tertiary">
-                          <span className="font-medium">Expiry date:</span> {formatDate(state.expiryDate)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Customer */}
-                    {state.customerId && (
-                      <div className="mb-4">
-                        {(() => {
-                          const cust = customers.find((c) => c.id === state.customerId);
-                          if (!cust) return null;
-                          return (
-                            <div className="text-tertiary">
-                              <div className="font-medium text-primary">{cust.name ?? "—"}</div>
-                              {cust.email && <div>{cust.email}</div>}
-                              {cust.address?.addressLine1 && <div>{cust.address.addressLine1}</div>}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-
-                    {/* Line Items Table */}
-                    <div className="mb-4">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-1 text-tertiary font-medium">Description</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Qty</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Unit Price</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Tax</th>
-                            <th className="text-right py-1 text-tertiary font-medium">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {calcResult.lineItems.map((li, idx) => (
-                            <tr key={idx} className="border-b border-border/50">
-                              <td className="py-1">{li.description}</td>
-                              <td className="text-right py-1">{li.quantity.toFixed()}</td>
-                              <td className="text-right py-1">{li.unitPrice.toFixed(2)}</td>
-                              <td className="text-right py-1">{(li.taxRate.mul(100)).toFixed(2)}%</td>
-                              <td className="text-right py-1 font-medium">{li.lineTotal.toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Totals */}
-                    <div className="border-t border-border pt-2 space-y-1">
-                      <div className="flex justify-between text-tertiary">
-                        <span>Subtotal</span>
-                        <span>{calcResult.subtotal.toFixed(2)}</span>
-                      </div>
-                      {Number(calcResult.discountTotal.toFixed()) > 0 && (
-                        <div className="flex justify-between text-tertiary">
-                          <span>Discount</span>
-                          <span>-{calcResult.discountTotal.toFixed(2)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-tertiary">
-                        <span>Tax</span>
-                        <span>{calcResult.taxTotal.toFixed(2)}</span>
-                      </div>
-                      {calcResult.fees.length > 0 && (
-                        <div className="flex justify-between text-tertiary">
-                          <span>Fees</span>
-                          <span>{calcResult.feeTotal.toFixed(2)}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-border">
-                        <span>Total</span>
-                        <span>{calcResult.total.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-tertiary">
-                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p>Add line items to see a preview</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <DocumentPreview
+              documentType="quote"
+              documentNumber={quote?.quote_number}
+              calcResult={calcResult}
+              issueDate={state.issueDate}
+              expiryDate={state.expiryDate}
+              customerId={state.customerId}
+              customers={customers}
+              signedAmounts={false}
+            />
           </div>
         </div>
       </div>
