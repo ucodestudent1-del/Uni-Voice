@@ -29,7 +29,8 @@ import {
   getBusiness,
   getTaxRates,
   getProducts,
-  createCustomer,
+   createCustomer,
+   createProduct,
   type CreateInvoiceInput,
   type CreateInvoiceItemInput,
   type CreateInvoiceFeeInput,
@@ -211,6 +212,15 @@ export default function InvoiceWorkspace() {
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [newCustomerDialogOpen, setNewCustomerDialogOpen] = useState(false);
+  const [newProductDialogOpen, setNewProductDialogOpen] = useState(false);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductPrice, setNewProductPrice] = useState("");
+
+  const loadProducts = useCallback(() => {
+    getProducts({ limit: 100 })
+      .then((d) => setProducts(d.products ?? []))
+      .catch(() => {});
+  }, []);
   const [newCustomerData, setNewCustomerData] = useState({ name: "", email: "", phone: "" });
 
   const [state, setState] = useState<LocalState>({
@@ -248,8 +258,8 @@ export default function InvoiceWorkspace() {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
     getBusiness().then((d) => setBusiness(d.business ?? d)).catch(() => {});
     getTaxRates().then((d) => setTaxRates(d.taxRates ?? d.rates ?? [])).catch(() => {});
-    getProducts({ limit: 100 }).then((d) => setProducts(d.products ?? [])).catch(() => {});
-  }, []);
+    loadProducts();
+  }, [loadProducts]);
 
   useEffect(() => {
     if (!isNew && id) {
@@ -652,6 +662,31 @@ export default function InvoiceWorkspace() {
       toast("Customer created.", { type: "success", title: "Customer created" });
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Failed to create customer" });
+    }
+  };
+
+  const handleCreateProduct = async () => {
+    if (!newProductName.trim()) {
+      toast("Product name is required", { type: "error", title: "Validation error" });
+      return;
+    }
+    try {
+      const res = await createProduct({
+        name: newProductName,
+        description: "",
+        defaultUnitPrice: newProductPrice || "0",
+        defaultTaxRate: "0",
+        unit: "each",
+        defaultCurrency: state.currency || business?.defaultCurrency,
+      });
+      const prod = res.product ?? res;
+      setProducts((prev) => [...prev, prod]);
+      setNewProductDialogOpen(false);
+      setNewProductName("");
+      setNewProductPrice("");
+      toast("Product created.", { type: "success", title: "Product created" });
+    } catch (err: any) {
+      toast(err.message, { type: "error", title: "Failed to create product" });
     }
   };
 
@@ -1240,10 +1275,12 @@ export default function InvoiceWorkspace() {
           products={products}
           search={productSearch}
           onSearchChange={setProductSearch}
+          onAddNewProduct={() => setNewProductDialogOpen(true)}
           onSelect={(p) => {
             const idx = state.items.findIndex((item) => !item.description.trim());
             const targetIdx = idx >= 0 ? idx : state.items.length - 1;
             applyProductToItem(targetIdx, p);
+            setProductPickerOpen(false);
           }}
         />
       </Dialog>
@@ -1283,6 +1320,38 @@ export default function InvoiceWorkspace() {
           </Button>
           <Button variant="primary" size="sm" onClick={handleCreateCustomer}>
             Create Customer
+          </Button>
+        </div>
+      </Dialog>
+
+      {/* New Product Dialog */}
+      <Dialog
+        open={newProductDialogOpen}
+        onClose={() => setNewProductDialogOpen(false)}
+        title="Add New Product"
+        description="Create a new product or service to add as a line item."
+        size="md"
+      >
+        <div className="space-y-3">
+          <FormField
+            label="Name"
+            placeholder="Product or service name"
+            value={newProductName}
+            onChange={(e) => setNewProductName(e.target.value)}
+          />
+          <FormField
+            label="Price"
+            placeholder="0.00"
+            value={newProductPrice}
+            onChange={(e) => setNewProductPrice(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="secondary" size="sm" onClick={() => setNewProductDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleCreateProduct}>
+            Create Product
           </Button>
         </div>
       </Dialog>
@@ -1520,10 +1589,11 @@ interface ProductPickerProps {
   products: ApiProduct[];
   search: string;
   onSearchChange: (val: string) => void;
+  onAddNewProduct: () => void;
   onSelect: (product: ApiProduct) => void;
 }
 
-function ProductPicker({ products, search, onSearchChange, onSelect }: ProductPickerProps) {
+function ProductPicker({ products, search, onSearchChange, onAddNewProduct, onSelect }: ProductPickerProps) {
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -1533,16 +1603,21 @@ function ProductPicker({ products, search, onSearchChange, onSelect }: ProductPi
 
   return (
     <div className="space-y-3 max-h-80">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
-        <input
-          type="text"
-          placeholder="Search products..."
-          className="pl-10 pr-3 py-2 w-full text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          autoFocus
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            className="pl-10 pr-3 py-2 w-full text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            autoFocus
+          />
+        </div>
+        <Button variant="ghost" size="sm" icon={<Plus className="h-4 w-4" />} onClick={onAddNewProduct}>
+          New
+        </Button>
       </div>
       {filtered.length === 0 ? (
         <p className="text-tertiary text-sm">No products found.</p>
