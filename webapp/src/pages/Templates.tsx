@@ -111,7 +111,6 @@ export default function Templates() {
     invoice: "Invoice",
     recurring_invoice: "Recurring Invoice",
     credit_note: "Credit Note",
-    quote: "Quote",
   };
 
   if (loading) {
@@ -149,7 +148,6 @@ export default function Templates() {
           <option value="invoice">Invoice</option>
           <option value="recurring_invoice">Recurring Invoice</option>
           <option value="credit_note">Credit Note</option>
-          <option value="quote">Quote</option>
         </select>
       </div>
 

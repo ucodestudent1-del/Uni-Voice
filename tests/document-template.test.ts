@@ -273,20 +273,14 @@ describe("DocumentTemplateRepository (DB integration)", () => {
   });
 
   describe("document_type support", () => {
-    it("creates templates for credit_note and quote document types", async () => {
+    it("creates templates for credit_note document type", async () => {
       const creditNoteTpl = await documentTemplateRepository.create(BUSINESS_A, {
         name: "Credit Note Template",
         document: sampleDocument,
         document_type: "credit_note",
       });
-      const quoteTpl = await documentTemplateRepository.create(BUSINESS_A, {
-        name: "Quote Template",
-        document: sampleDocument,
-        document_type: "quote",
-      });
 
       expect(creditNoteTpl.documentType).toBe("credit_note");
-      expect(quoteTpl.documentType).toBe("quote");
 
       const found = await documentTemplateRepository.findMany(BUSINESS_A, { documentType: "credit_note" });
       expect(found).toHaveLength(1);

@@ -27,19 +27,6 @@ import type {
   ApiInvoiceEvent,
   ApiCreditNote,
   ApiCreditNoteListItem,
-  ApiQuote,
-  ApiQuoteListItem,
-  ApiQuoteItem,
-  ApiQuoteFee,
-  ApiQuoteEvent,
-  ApiQuoteSearchParams,
-  CreateQuoteItemInput,
-  CreateQuoteFeeInput,
-  CreateQuoteInput,
-  FinalizeQuoteResult,
-  SendQuoteResult,
-  ShareQuoteResult,
-  ConvertQuoteToInvoiceResult,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -66,11 +53,6 @@ export type {
   ApiInvoiceEvent,
   ApiCreditNote,
   ApiCreditNoteListItem,
-  ApiQuote,
-  ApiQuoteListItem,
-  ApiQuoteItem,
-  ApiQuoteFee,
-  ApiQuoteEvent,
 };
 
 declare module "axios" {
@@ -1651,109 +1633,6 @@ export async function getInvoiceEvents(
   invoiceId: string,
 ): Promise<{ events: ApiInvoiceEvent[] }> {
   const res = await api.get(`/invoices/${invoiceId}/events`);
-  return res.data;
-}
-
-// ============================================================================
-// QUOTES
-// ============================================================================
-
-export {
-  CreateQuoteItemInput,
-  CreateQuoteFeeInput,
-  CreateQuoteInput,
-  FinalizeQuoteResult,
-  SendQuoteResult,
-  ShareQuoteResult,
-  ConvertQuoteToInvoiceResult,
-};
-
-export async function getQuotes(params?: ApiQuoteSearchParams): Promise<{
-  quotes: ApiQuoteListItem[];
-  total: number;
-}> {
-  const res = await api.get("/quotes", { params });
-  return res.data;
-}
-
-export async function getQuote(
-  id: string,
-): Promise<{ quote: ApiQuote; events: ApiQuoteEvent[] }> {
-  const res = await api.get(`/quotes/${id}`);
-  return res.data;
-}
-
-export async function createQuote(
-  data: CreateQuoteInput,
-): Promise<{ quote: ApiQuote }> {
-  const res = await api.post("/quotes", data);
-  return res.data;
-}
-
-export async function updateQuote(
-  id: string,
-  data: Partial<CreateQuoteInput>,
-): Promise<{ quote: ApiQuote }> {
-  const res = await api.put(`/quotes/${id}`, data);
-  return res.data;
-}
-
-export async function finalizeQuote(id: string): Promise<FinalizeQuoteResult> {
-  const res = await api.post(`/quotes/${id}/finalize`);
-  return res.data;
-}
-
-export async function sendQuote(
-  id: string,
-  data?: { sendTo?: string; message?: string },
-): Promise<SendQuoteResult> {
-  const res = await api.post(`/quotes/${id}/send`, data);
-  return res.data;
-}
-
-export async function duplicateQuote(id: string): Promise<{ quote: ApiQuote }> {
-  const res = await api.post(`/quotes/${id}/duplicate`);
-  return res.data;
-}
-
-export async function cancelQuote(
-  id: string,
-  reason: string,
-): Promise<{ quote: ApiQuote }> {
-  const res = await api.post(`/quotes/${id}/cancel`, { reason });
-  return res.data;
-}
-
-export async function convertToInvoice(
-  id: string,
-): Promise<ConvertQuoteToInvoiceResult> {
-  const res = await api.post(`/quotes/${id}/convert-to-invoice`);
-  return res.data;
-}
-
-export async function getQuotePdf(id: string): Promise<Blob> {
-  const res = await api.get(`/quotes/${id}/pdf`, {
-    responseType: "blob",
-  });
-  return res.data;
-}
-
-export async function getQuoteShareLink(id: string): Promise<ShareQuoteResult> {
-  const res = await api.get(`/quotes/${id}/share-link`);
-  return res.data;
-}
-
-export async function getPublicQuote(
-  token: string,
-): Promise<{ quote: ApiQuote }> {
-  const res = await api.get(`/quotes/public/${token}`);
-  return res.data;
-}
-
-export async function getQuoteEvents(
-  quoteId: string,
-): Promise<{ events: ApiQuoteEvent[] }> {
-  const res = await api.get(`/quotes/${quoteId}/events`);
   return res.data;
 }
 

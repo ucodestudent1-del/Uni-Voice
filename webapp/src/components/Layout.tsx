@@ -40,7 +40,6 @@ export default function Layout() {
     { name: "Products", to: "/app/products" },
     { name: "Invoices", to: "/app/invoices" },
     { name: "Credit Notes", to: "/app/credit-notes" },
-    { name: "Quotes", to: "/app/quotes" },
     { name: "Payments", to: "/app/payments" },
     {
       name: "Receipts",

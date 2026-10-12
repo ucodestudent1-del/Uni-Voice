@@ -228,7 +228,6 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
                 <option value="invoice">Invoice</option>
                 <option value="recurring_invoice">Recurring Invoice</option>
                 <option value="credit_note">Credit Note</option>
-                <option value="quote">Quote</option>
              </select>
          </div>
         <div className="flex items-center gap-3">

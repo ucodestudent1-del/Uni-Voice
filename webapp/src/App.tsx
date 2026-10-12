@@ -33,15 +33,10 @@ const InvoiceList = lazy(() => import("./pages/InvoiceList"));
 const InvoiceWorkspace = lazy(() => import("./pages/InvoiceWorkspace"));
 const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
-const PublicQuote = lazy(() => import("./pages/PublicQuote"));
 
 const CreditNotes = lazy(() => import("./pages/CreditNotes"));
 const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
 const CreditNoteForm = lazy(() => import("./pages/CreditNoteForm"));
-
-const Quotes = lazy(() => import("./pages/Quotes"));
-const QuoteForm = lazy(() => import("./pages/QuoteForm"));
-const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
 
 const Fallback = () => (
   <div className="flex items-center justify-center h-64 text-secondary">
@@ -192,26 +187,18 @@ export default function App() {
               <PublicInvoice />
             </Suspense>
           }
-        />
-        <Route
-          path="/quote/:token"
-          element={
-            <Suspense fallback={<Fallback />}>
-              <PublicQuote />
-            </Suspense>
-          }
-        />
+          />
 
-        <Route
-          path="/app"
-          element={
-            <Suspense fallback={<Fallback />}>
-              <OnboardedRoute>
-                <Layout />
-              </OnboardedRoute>
-            </Suspense>
-          }
-        >
+          <Route
+            path="/app"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <OnboardedRoute>
+                  <Layout />
+                </OnboardedRoute>
+              </Suspense>
+            }
+          >
           <Route
             index
             element={
@@ -370,38 +357,6 @@ export default function App() {
             element={
               <Suspense fallback={<Fallback />}>
                 <CreditNoteDetail />
-              </Suspense>
-            }
-          />
-          <Route
-            path="quotes"
-            element={
-              <Suspense fallback={<Fallback />}>
-                <Quotes />
-              </Suspense>
-            }
-          />
-          <Route
-            path="quotes/new"
-            element={
-              <Suspense fallback={<Fallback />}>
-                <QuoteForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="quotes/:id"
-            element={
-              <Suspense fallback={<Fallback />}>
-                <QuoteDetail />
-              </Suspense>
-            }
-          />
-          <Route
-            path="quotes/:id/edit"
-            element={
-              <Suspense fallback={<Fallback />}>
-                <QuoteForm />
               </Suspense>
             }
           />
