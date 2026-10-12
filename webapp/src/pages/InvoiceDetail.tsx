@@ -5,6 +5,8 @@ import {
   recordPayment,
   cancelInvoice,
   voidInvoice,
+  sendReminder,
+  duplicateInvoice,
   getInvoicePdf,
   getInvoiceShareLink,
   getInvoiceEvents,
@@ -33,7 +35,8 @@ import {
   CheckCircle,
   Eye,
   Tag,
-  Printer,
+   Printer,
+   Bell,
 } from "lucide-react";
 import { formatDate, formatTaxRateWithName } from "@/utils/format";
 import type { ApiInvoice, ApiInvoiceItem, ApiInvoiceFee, ApiInvoiceEvent } from "@/types/api";
@@ -94,6 +97,36 @@ export default function InvoiceDetail() {
   const canSend = invoice?.is_finalized && !["paid", "cancelled", "void"].includes(invoice?.status ?? "");
   const canCancel = invoice?.status !== "cancelled" && invoice?.status !== "void" && invoice?.status !== "paid";
   const canVoid = invoice?.status !== "void" && invoice?.status !== "cancelled" && invoice?.status !== "paid";
+
+  const handleSendReminder = useCallback(async () => {
+    if (!invoice) return;
+    setActionLoading("reminder");
+    try {
+      await sendReminder(invoice.id, {
+        to: invoice.customer_email ?? "",
+        subject: `Payment Reminder: Invoice ${invoice.invoice_number ?? ""}`,
+      });
+      toast("Reminder sent.", { type: "success", title: "Sent" });
+    } catch (err: any) {
+      toast(err.message, { type: "error", title: "Send failed" });
+    } finally {
+      setActionLoading(null);
+    }
+  }, [invoice, toast]);
+
+  const handleDuplicate = useCallback(async () => {
+    if (!invoice) return;
+    setActionLoading("duplicate");
+    try {
+      const result = await duplicateInvoice(invoice.id);
+      toast("Invoice duplicated.", { type: "success", title: "Duplicated" });
+      navigate(`/app/invoices/${result.invoice.id}`);
+    } catch (err: any) {
+      toast(err.message, { type: "error", title: "Duplicate failed" });
+    } finally {
+      setActionLoading(null);
+    }
+  }, [invoice, navigate, toast]);
 
   const handleRecordPayment = useCallback(async () => {
     if (!invoice) return;
@@ -238,17 +271,39 @@ export default function InvoiceDetail() {
             >
               Download PDF
             </Button>
-            {canSend && (
-              <Button
-                variant="primary"
-                size="sm"
-                icon={<Send className="h-4 w-4" />}
-                onClick={() => navigate(`/app/invoices/${invoice.id}/send`)}
-              >
-                Send
-              </Button>
-            )}
-            {canEdit && (
+             {canSend && (
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 icon={<Bell className="h-4 w-4" />}
+                 onClick={handleSendReminder}
+                 loading={actionLoading === "reminder"}
+               >
+                 Send Reminder
+               </Button>
+             )}
+             {canSend && (
+               <Button
+                 variant="primary"
+                 size="sm"
+                 icon={<Send className="h-4 w-4" />}
+                 onClick={() => navigate(`/app/invoices/${invoice.id}/send`)}
+               >
+                 Send
+               </Button>
+             )}
+             {invoice?.is_finalized && (
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 icon={<Copy className="h-4 w-4" />}
+                 onClick={handleDuplicate}
+                 loading={actionLoading === "duplicate"}
+               >
+                 Duplicate
+               </Button>
+             )}
+             {canEdit && (
               <Button
                 variant="ghost"
                 size="sm"

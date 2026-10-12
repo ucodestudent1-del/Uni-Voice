@@ -1018,6 +1018,31 @@ app.post("/api/invoices/:id/void", requireAuth, async (req: AuthRequest, res, ne
   }
 });
 
+app.post("/api/invoices/:id/send-reminder", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await invoiceService.sendReminder(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/invoices/:id/duplicate", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
+  try {
+    const invoice = await invoiceService.duplicate(req.user!.businessId, req.params.id, req.user!.id);
+    res.status(201).json({ invoice });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.get("/api/invoices/:id/pdf", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId) return res.status(400).json({ error: "No business context" });
   try {

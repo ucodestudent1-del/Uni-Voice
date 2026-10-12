@@ -59,10 +59,12 @@ export interface UpdateInvoiceInput extends Partial<CreateInvoiceInput> {
 export interface FinalizeInvoiceResult {
   invoice: Record<string, unknown>;
   invoiceNumber: string;
+  status: string;
 }
 
 export interface SendInvoiceResult {
   ok: boolean;
+  success: boolean;
   messageId: string;
   status: string;
 }
@@ -520,7 +522,7 @@ export class InvoiceService {
       const finalizedInvoice = await this.findById(businessId, invoiceId);
       logger.info(`Finalized invoice ${invoiceId} with number ${invoiceNumber}`);
 
-      return { invoice: finalizedInvoice!, invoiceNumber };
+      return { invoice: finalizedInvoice!, invoiceNumber, status: (finalizedInvoice as any)?.status ?? "sent" };
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to finalize invoice ${invoiceId}`);
@@ -590,7 +592,7 @@ export class InvoiceService {
 
       await client.query("COMMIT");
       logger.info(`Sent invoice ${invoiceId} to ${data.to}`);
-      return { ok: true, messageId: result.messageId, status: result.status };
+      return { ok: true, success: true, messageId: result.messageId, status: result.status };
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to send invoice ${invoiceId}`);
@@ -715,6 +717,123 @@ export class InvoiceService {
     userId?: string
   ): Promise<Record<string, unknown>> {
     return this.transitionStatus(businessId, invoiceId, "cancelled", { reason }, userId);
+  }
+
+  async sendReminder(
+    businessId: string,
+    invoiceId: string,
+    data: {
+      to?: string;
+      cc?: string[];
+      bcc?: string[];
+      subject?: string;
+      message?: string;
+    },
+    userId?: string
+  ): Promise<SendInvoiceResult> {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      const existing = await client.query(
+        `SELECT * FROM invoices WHERE id = $1 AND business_id = $2 FOR UPDATE`,
+        [invoiceId, businessId]
+      );
+
+      if (!existing.rows.length) {
+        throw new NotFoundError(`Invoice ${invoiceId} not found`);
+      }
+
+      const invoice = existing.rows[0];
+      if (!invoice.is_finalized) {
+        throw new BusinessLogicError("Invoice must be finalized before sending a reminder", "NOT_FINALIZED");
+      }
+
+      const fullInvoice = await this.findById(businessId, invoiceId);
+      if (!fullInvoice) throw new NotFoundError(`Invoice ${invoiceId} not found`);
+      const pdf = await this.generatePdf(businessId, invoiceId, fullInvoice);
+      const html = await this.renderInvoiceEmail(businessId, invoiceId, fullInvoice as any, data.message, { isReminder: true });
+
+      const idempotencyKey = `invoice-reminder:${invoiceId}:${crypto.randomUUID()}`;
+      const recipient = data.to ?? invoice.customer_email ?? "";
+      const result = await emailService.sendInvoiceEmail({
+        invoiceId,
+        businessId,
+        recipient: { email: recipient, name: invoice.customer_name ?? undefined },
+        subject: data.subject ?? `Payment Reminder: Invoice ${invoice.invoice_number ?? ""} from {{business_name}}`,
+        htmlBody: html,
+        attachments: [{ filename: `Invoice-${invoice.invoice_number ?? invoiceId}.pdf`, content: pdf }],
+        idempotencyKey,
+      });
+
+      await client.query(
+        `INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata)
+         VALUES ($1, 'reminder_sent', $2, 'user', $3::jsonb)`,
+        [invoiceId, userId ?? null, JSON.stringify({ email: recipient, message_id: result.messageId })]
+      );
+
+      await client.query("COMMIT");
+      logger.info(`Sent reminder for invoice ${invoiceId} to ${recipient}`);
+      return { ok: true, success: true, messageId: result.messageId, status: result.status };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      logger.error({ err: e }, `Failed to send reminder for invoice ${invoiceId}`);
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async duplicate(
+    businessId: string,
+    invoiceId: string,
+    userId?: string
+  ): Promise<Record<string, unknown>> {
+    const existing = await this.findById(businessId, invoiceId);
+    if (!existing) throw new NotFoundError(`Invoice ${invoiceId} not found`);
+
+    const source = existing as Record<string, unknown>;
+
+    const dupInput: CreateInvoiceInput = {
+      customerId: (source.customer_id as string) ?? null,
+      currency: source.currency as string,
+      issueDate: new Date().toISOString().split("T")[0],
+      dueDate: source.due_date as string | null,
+      poNumber: source.po_number as string | null,
+      notes: source.notes as string | null,
+      terms: source.terms as string | null,
+      paymentInstructions: source.payment_instructions as string | null,
+      templateId: source.template_id as string | null,
+      invoiceDiscount: source.invoice_discount_value as string | undefined,
+      invoiceDiscountType: source.invoice_discount_type as "fixed" | "percentage" | undefined,
+      shippingDescription: source.shipping_description as string | null | undefined,
+      shippingAmount: source.shipping_amount as string | undefined,
+      shippingTaxRate: source.shipping_tax_rate as string | undefined,
+      items: (source.items as Record<string, unknown>[]).map((item): InvoiceItemInput => ({
+        description: item.description as string,
+        quantity: item.quantity as string,
+        unit: item.unit as string,
+        unitPrice: item.unit_price as string,
+        discount: item.discount as string,
+        discountType: item.discount_type as "fixed" | "percentage" | undefined,
+        taxRate: item.tax_rate as string,
+        taxName: item.tax_name as string | null,
+        isTaxInclusive: Boolean(item.is_tax_inclusive),
+        productId: item.product_id as string | null | undefined,
+        sortOrder: Number(item.sort_order),
+      })),
+      fees: (source.fees as Record<string, unknown>[]).map((fee): InvoiceFeeInput => ({
+        description: fee.description as string,
+        amount: fee.amount as string,
+        taxRate: fee.tax_rate as string | undefined,
+        taxName: fee.tax_name as string | null,
+        sortOrder: Number(fee.sort_order),
+      })),
+    };
+
+    const dup = await this.create(businessId, dupInput, userId);
+    logger.info(`Duplicated invoice ${invoiceId} for business ${businessId}`);
+    return dup;
   }
 
   async void(
@@ -1224,7 +1343,8 @@ export class InvoiceService {
     businessId: string,
     invoiceId: string,
     invoice: Record<string, unknown>,
-    customMessage?: string
+    customMessage?: string,
+    options?: { isReminder?: boolean }
   ): Promise<string> {
     const business = await this.fetchBusiness(businessId);
     const customer = invoice.customer_id
@@ -1238,6 +1358,7 @@ export class InvoiceService {
       invoice,
       customMessage: customMessage ?? "",
       businessName: business.name as string,
+      isReminder: options?.isReminder ?? false,
     });
   }
 

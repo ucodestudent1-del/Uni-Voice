@@ -1376,6 +1376,16 @@ export async function sendInvoice(id: string, data?: SendInvoiceData): Promise<S
   return res.data;
 }
 
+export async function sendReminder(id: string, data?: SendInvoiceData): Promise<SendInvoiceResult> {
+  const res = await api.post(`/invoices/${id}/send-reminder`, data ?? {});
+  return res.data;
+}
+
+export async function duplicateInvoice(id: string): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.post(`/invoices/${id}/duplicate`);
+  return res.data;
+}
+
 export interface RecordPaymentData {
   amount: string | number;
   provider?: string | null;
