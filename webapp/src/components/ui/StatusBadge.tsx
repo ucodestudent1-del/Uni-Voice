@@ -41,6 +41,21 @@ export const invoiceStatusConfig = createStatusBadgeConfig(
   "draft"
 );
 
+export const creditNoteStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Credit note has not been finalized." },
+    finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Credit note has been finalized and locked." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Credit note has been sent to the customer." },
+    partially_applied: { label: "Part. Applied", className: "status-warning-bg status-warning-text", description: "Credit note has been partially applied to an invoice." },
+    applied: { label: "Applied", className: "status-success-bg status-success-text", description: "Credit note has been fully applied to invoice(s)." },
+    partially_refunded: { label: "Part. Refunded", className: "status-warning-bg status-warning-text", description: "Credit note has been partially refunded." },
+    refunded: { label: "Refunded", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been fully refunded." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Credit note has been cancelled." },
+    void: { label: "Void", className: "status-error-bg status-error-text", description: "Credit note has been voided." },
+  },
+  "draft"
+);
+
 export const quoteStatusConfig = createStatusBadgeConfig(
   {
     draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Quote has not been sent to the customer." },
@@ -116,6 +131,10 @@ const STATUS_DOT_COLORS: Record<string, string> = {
   pending: "rgb(var(--color-info))",
   failed: "rgb(var(--color-error))",
   refunded: "rgb(var(--color-text-tertiary))",
+  finalized: "rgb(var(--color-info))",
+  partially_applied: "rgb(var(--color-warning))",
+  applied: "rgb(var(--color-success))",
+  partially_refunded: "rgb(var(--color-warning))",
 };
 
 const DEFAULT_DOT_COLOR = "rgb(var(--color-text-tertiary))";

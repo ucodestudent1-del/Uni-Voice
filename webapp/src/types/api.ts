@@ -422,6 +422,7 @@ export interface ApiCreditNote {
   total: string;
   amount_paid: string;
   amount_due: string;
+  applied_total?: string;
   quote_discount_value?: string | null;
   quote_discount_type?: "fixed" | "percentage" | null;
   reason?: string | null;
