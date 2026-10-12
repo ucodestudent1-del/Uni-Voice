@@ -1,8 +1,8 @@
-import { FileText } from "lucide-react";
+import { FileText, Globe, Phone, Mail, MapPin, CreditCard } from "lucide-react";
 import { Money } from "@/components/ui";
-import { formatDate } from "@/utils/format";
+import { formatDate, formatTaxRateWithName } from "@/utils/format";
 import type { CalculationResult } from "@/types/calculation";
-import type { ApiCustomer } from "@/types/api";
+import type { ApiCustomer, ApiBusiness } from "@/types/api";
 
 export type DocumentType = "invoice" | "quote" | "credit-note" | "receipt" | "purchase-order";
 
@@ -10,10 +10,12 @@ export interface DocumentPreviewProps {
   documentType: DocumentType;
   documentNumber?: string | null;
   calcResult: CalculationResult | null;
+  business?: ApiBusiness | null;
   issueDate?: string;
   dueDate?: string;
   expiryDate?: string;
   poNumber?: string;
+  projectReference?: string;
   customerId?: string;
   customers?: ApiCustomer[];
   sourceInvoice?: {
@@ -24,6 +26,10 @@ export interface DocumentPreviewProps {
     amount_due?: string;
     currency: string;
   } | null;
+  paymentInstructions?: string;
+  notes?: string;
+  terms?: string;
+  footerText?: string;
   signedAmounts?: boolean;
 }
 
@@ -35,17 +41,43 @@ const DOCUMENT_LABELS: Record<DocumentType, string> = {
   "purchase-order": "Purchase Order",
 };
 
+function AddressLines({ line1, line2, city, state, postal, country }: {
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal?: string | null;
+  country?: string | null;
+}) {
+  return (
+    <>
+      {line1 && <div>{line1}</div>}
+      {line2 && <div>{line2}</div>}
+      {(city || state || postal) && (
+        <div>{[city, state, postal].filter(Boolean).join(", ")}</div>
+      )}
+      {country && <div>{country}</div>}
+    </>
+  );
+}
+
 export default function DocumentPreview({
   documentType,
   documentNumber,
   calcResult,
+  business,
   issueDate,
   dueDate,
   expiryDate,
   poNumber,
+  projectReference,
   customerId,
   customers = [],
   sourceInvoice = null,
+  paymentInstructions,
+  notes,
+  terms,
+  footerText,
   signedAmounts = false,
 }: DocumentPreviewProps) {
   const label = DOCUMENT_LABELS[documentType];
@@ -69,6 +101,13 @@ export default function DocumentPreview({
           name: cust.name ?? cust.email ?? null,
           email: cust.email ?? undefined,
           addressLine1: cust.address?.addressLine1 ?? undefined,
+          addressLine2: cust.address?.addressLine2 ?? undefined,
+          city: cust.address?.city ?? undefined,
+          state: cust.address?.stateOrRegion ?? undefined,
+          postal: cust.address?.postalCode ?? undefined,
+          country: cust.address?.countryCode ?? undefined,
+                  taxId: cust.taxId ?? undefined,
+          phone: cust.phone ?? undefined,
         };
       }
     }
@@ -98,86 +137,159 @@ export default function DocumentPreview({
           Live Preview
         </h3>
 
-        <div className="text-sm">
-          {/* Header */}
-          <div className="mb-4">
-            <div className="text-2xl font-bold text-primary flex items-center gap-2">
-              <FileText className="h-6 w-6" />
-              {label} {documentNumber ?? "(Unsaved)"}
+        <div className="text-sm print:text-xs">
+          {/* Section 1: Business Information + Invoice Header */}
+          <div className="flex justify-between items-start mb-6 pb-4 border-b border-border">
+            <div className="flex items-start gap-3">
+              {business?.logoUrl && (
+                <img src={business.logoUrl} alt={business.name} className="h-12 w-12 object-contain rounded" />
+              )}
+              <div>
+                <div className="font-bold text-lg text-primary">{business?.legalName || business?.name}</div>
+                {business?.email && (
+                  <div className="text-tertiary flex items-center gap-1 mt-0.5">
+                    <Mail className="h-3 w-3" />
+                    {business.email}
+                  </div>
+                )}
+                {(business?.phone || business?.website) && (
+                  <div className="text-tertiary flex flex-col mt-0.5">
+                    {business.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {business.phone}
+                      </span>
+                    )}
+                    {business.website && (
+                      <span className="flex items-center gap-1">
+                        <Globe className="h-3 w-3" />
+                        {business.website}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {(business?.addressLine1 || business?.city || business?.stateOrRegion || business?.postalCode) && (
+                  <div className="text-tertiary flex items-start gap-1 mt-0.5">
+                    <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                    <AddressLines
+                      line1={business?.addressLine1}
+                      line2={business?.addressLine2}
+                      city={business?.city}
+                      state={business?.stateOrRegion}
+                      postal={business?.postalCode}
+                      country={business?.countryCode}
+                    />
+                  </div>
+                )}
+                {(business?.taxId || business?.registrationNumber) && (
+                  <div className="text-tertiary mt-0.5">
+                    <span className="font-medium">Tax ID:</span> {business.taxId || business.registrationNumber}
+                  </div>
+                )}
+              </div>
             </div>
-            {issueDate && (
-              <div className="text-tertiary mt-1">
-                <span className="font-medium">Issue date:</span> {formatDate(issueDate)}
+
+            {/* Section 2: Invoice Details */}
+            <div className="text-right">
+              <div className="text-2xl font-bold text-primary">{label.toUpperCase()}</div>
+              <div className="text-xl font-bold text-primary mt-1">
+                {documentNumber ?? "(Unsaved)"}
               </div>
-            )}
-            {dueDate && (
-              <div className="text-tertiary">
-                <span className="font-medium">Due date:</span> {formatDate(dueDate)}
-              </div>
-            )}
-            {poNumber && (
-              <div className="text-tertiary">
-                <span className="font-medium">PO:</span> {poNumber}
-              </div>
-            )}
-            {expiryDate && (
-              <div className="text-tertiary">
-                <span className="font-medium">Expiry date:</span> {formatDate(expiryDate)}
-              </div>
-            )}
+              {issueDate && (
+                <div className="text-tertiary mt-1">
+                  <span className="font-medium">Issue date:</span> {formatDate(issueDate)}
+                </div>
+              )}
+              {dueDate && (
+                <div className="text-tertiary">
+                  <span className="font-medium">Due date:</span> {formatDate(dueDate)}
+                </div>
+              )}
+              {currency && (
+                <div className="text-tertiary">
+                  <span className="font-medium">Currency:</span> {currency}
+                </div>
+              )}
+              {poNumber && (
+                <div className="text-tertiary">
+                  <span className="font-medium">PO Number:</span> {poNumber}
+                </div>
+              )}
+              {projectReference && (
+                <div className="text-tertiary">
+                  <span className="font-medium">Project:</span> {projectReference}
+                </div>
+              )}
+              {documentType === "quote" && expiryDate && (
+                <div className="text-tertiary">
+                  <span className="font-medium">Expiry date:</span> {formatDate(expiryDate)}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Customer */}
+          {/* Section 3: Bill To */}
           {displayCustomer && (
-            <div className="mb-4">
-              <div className="font-medium text-primary">
-                {displayCustomer.name ?? "—"}
+            <div className="mb-6">
+              <h4 className="font-medium text-primary mb-1.5">Bill To</h4>
+              <div>
+                <div className="font-medium text-primary">{displayCustomer.name ?? "—"}</div>
+                {displayCustomer.email && (
+                  <div className="text-tertiary flex items-center gap-1 mt-0.5">
+                    <Mail className="h-3 w-3" />
+                    {displayCustomer.email}
+                  </div>
+                )}
+                {(displayCustomer.addressLine1 || displayCustomer.city || displayCustomer.state || displayCustomer.postal) && (
+                  <div className="text-tertiary flex items-start gap-1 mt-0.5">
+                    <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
+                    <AddressLines
+                      line1={displayCustomer.addressLine1}
+                      line2={displayCustomer.addressLine2}
+                      city={displayCustomer.city}
+                      state={displayCustomer.state}
+                      postal={displayCustomer.postal}
+                      country={displayCustomer.country}
+                    />
+                  </div>
+                )}
+                {displayCustomer.taxId && (
+                  <div className="text-tertiary mt-0.5">
+                    <span className="font-medium">Tax ID:</span> {displayCustomer.taxId}
+                  </div>
+                )}
               </div>
-              {displayCustomer.email && (
-                <div className="text-tertiary">{displayCustomer.email}</div>
-              )}
-              {displayCustomer.addressLine1 && (
-                <div className="text-tertiary">{displayCustomer.addressLine1}</div>
-              )}
             </div>
           )}
 
-          {/* Source Invoice (for credit notes) */}
-          {sourceInvoice && documentType === "credit-note" && (
-            <div className="mb-4">
-              <div className="font-medium text-primary">
-                {sourceInvoice.customer_name ?? "—"}
-              </div>
-              {sourceInvoice.customer_email && (
-                <div className="text-tertiary">{sourceInvoice.customer_email}</div>
-              )}
-            </div>
-          )}
-
-          {/* Line Items Table */}
-          <div className="mb-4">
+          {/* Section 4: Line Items */}
+          <div className="mb-6">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-1 text-tertiary font-medium">Description</th>
-                  <th className="text-right py-1 text-tertiary font-medium">Qty</th>
-                  <th className="text-right py-1 text-tertiary font-medium">Unit Price</th>
-                  <th className="text-right py-1 text-tertiary font-medium">Tax</th>
-                  <th className="text-right py-1 text-tertiary font-medium">Amount</th>
+                  <th className="text-left py-1.5 text-tertiary font-medium">Description</th>
+                  <th className="text-right py-1.5 text-tertiary font-medium">Qty</th>
+                  <th className="text-right py-1.5 text-tertiary font-medium">Unit Price</th>
+                  <th className="text-right py-1.5 text-tertiary font-medium">Tax</th>
+                  <th className="text-right py-1.5 text-tertiary font-medium">Discount</th>
+                  <th className="text-right py-1.5 text-tertiary font-medium">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {calcResult.lineItems.map((li, idx) => (
                   <tr key={idx} className="border-b border-border/50">
-                    <td className="py-1">{li.description}</td>
-                    <td className="text-right py-1">{li.quantity.toFixed()}</td>
-                    <td className="text-right py-1">{li.unitPrice.toFixed(2)}</td>
-                    <td className="text-right py-1">
-                      {li.tax_name && li.tax_name.trim() !== ""
-                        ? `${(li.taxRate.mul(100)).toFixed(2)}% ${li.tax_name}`
-                        : (li.taxRate.mul(100)).toFixed(2) + "%"}
+                    <td className="py-1.5">{li.description}</td>
+                    <td className="text-right py-1.5">{li.quantity.toFixed()}</td>
+                    <td className="text-right py-1.5">
+                      <Money amount={li.unitPrice} currency={currency} />
                     </td>
-                    <td className="text-right py-1 font-medium">
+                    <td className="text-right py-1.5 text-tertiary">
+                      {formatTaxRateWithName(li.taxRate.toFixed(), li.tax_name)}
+                    </td>
+                    <td className="text-right py-1.5 text-tertiary">
+                      {li.discountAmount.isZero() ? "—" : <Money amount={li.discountAmount.negated()} currency={currency} />}
+                    </td>
+                    <td className="text-right py-1.5 font-medium">
                       <Money amount={li.lineTotal} currency={currency} signed={signedAmounts} />
                     </td>
                   </tr>
@@ -186,19 +298,19 @@ export default function DocumentPreview({
             </table>
           </div>
 
-          {/* Totals */}
-          <div className="border-t border-border pt-2 space-y-1">
+          {/* Section 5: Financial Summary */}
+          <div className="border-t border-border pt-2 space-y-1 mb-6">
             <div className="flex justify-between text-tertiary">
               <span>Subtotal</span>
               <Money amount={calcResult.subtotal} currency={currency} />
             </div>
-            {Number(calcResult.discountTotal.toFixed()) !== 0 && (
+            {!calcResult.discountTotal.isZero() && (
               <div className="flex justify-between text-tertiary">
                 <span>Discount</span>
                 <Money amount={calcResult.discountTotal.negated()} currency={currency} />
               </div>
             )}
-            {calcResult.fees.length > 0 && Number(calcResult.feeTotal.toFixed()) !== 0 && (
+            {calcResult.fees.length > 0 && !calcResult.feeTotal.isZero() && (
               <>
                 {calcResult.fees.map((fee, idx) => (
                   <div key={idx} className="flex justify-between text-tertiary">
@@ -212,34 +324,78 @@ export default function DocumentPreview({
                 </div>
               </>
             )}
-            {calcResult.taxBreakdown.length > 0 && Number(calcResult.taxTotal.toFixed()) !== 0 &&
-              calcResult.taxBreakdown.map((tb, idx) => (
-                <div key={idx} className="flex justify-between text-tertiary">
-                  <span>
-                    Tax ({tb.name ? `${(tb.rate.mul(100)).toFixed(2)}% ${tb.name}` : `${(tb.rate.mul(100)).toFixed(2)}%`})
-                  </span>
-                  <Money amount={tb.taxAmount} currency={currency} signed={signedAmounts} />
-                </div>
-              ))}
-            {!calcResult.taxBreakdown.length && Number(calcResult.taxTotal.toFixed()) !== 0 && (
+            {!calcResult.taxBreakdown.length && !calcResult.taxTotal.isZero() && (
               <div className="flex justify-between text-tertiary">
                 <span>Tax</span>
                 <Money amount={calcResult.taxTotal} currency={currency} signed={signedAmounts} />
               </div>
             )}
-            <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-border">
-              <span>Total</span>
+            {calcResult.taxBreakdown.length > 0 && !calcResult.taxTotal.isZero() &&
+              calcResult.taxBreakdown.map((tb, idx) => (
+                <div key={idx} className="flex justify-between text-tertiary">
+                  <span>
+                    Tax ({formatTaxRateWithName(tb.rate.toFixed(), tb.name)})
+                  </span>
+                  <Money amount={tb.taxAmount} currency={currency} signed={signedAmounts} />
+                </div>
+              ))}
+            {!calcResult.amountPaid.isZero() && (
+              <div className="flex justify-between text-tertiary">
+                <span>Amount Paid</span>
+                <Money amount={calcResult.amountPaid.negated()} currency={currency} />
+              </div>
+            )}
+            <div className="flex justify-between text-2xl font-bold text-primary pt-2 border-t border-border">
+              <span>Total {label}</span>
               <Money amount={calcResult.total} currency={currency} signed={signedAmounts} />
             </div>
-            {documentType === "invoice" && Number(calcResult.amountDue.toFixed()) !== 0 && (
-              <div className="flex justify-between text-tertiary">
+            {documentType === "invoice" && !calcResult.amountDue.isZero() && (
+              <div className="flex justify-between text-lg font-bold text-primary">
                 <span>Amount Due</span>
                 <Money amount={calcResult.amountDue} currency={currency} />
               </div>
             )}
           </div>
+
+          {/* Section 6: Payment Information */}
+          {paymentInstructions && (
+            <div className="mb-6">
+              <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
+                <CreditCard className="h-4 w-4" />
+                Payment Information
+              </h4>
+              <div className="text-tertiary whitespace-pre-line">{paymentInstructions}</div>
+            </div>
+          )}
+
+          {/* Section 7: Notes and Terms */}
+          {(notes || terms) && (
+            <div className="mb-6 space-y-2 border-t border-border pt-3">
+              {notes && (
+                <div>
+                  <h4 className="font-medium text-primary mb-1">Notes</h4>
+                  <div className="text-tertiary whitespace-pre-line">{notes}</div>
+                </div>
+              )}
+              {terms && (
+                <div>
+                  <h4 className="font-medium text-primary mb-1">Terms</h4>
+                  <div className="text-tertiary whitespace-pre-line">{terms}</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Section 8: Footer */}
+      {footerText && (
+        <div className="border-t border-border pt-3 mt-4">
+          <div className="text-tertiary text-xs whitespace-pre-line">
+            {footerText}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

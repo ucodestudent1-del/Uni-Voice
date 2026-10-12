@@ -7,6 +7,7 @@ import {
   finalizeInvoice,
   sendInvoice,
   getCustomers,
+  getBusiness,
   type CreateInvoiceInput,
   type CreateInvoiceItemInput,
   type CreateInvoiceFeeInput,
@@ -25,7 +26,7 @@ import {
 import { Save, Send, Plus, Trash2, FileText } from "lucide-react";
 import { Decimal } from "decimal.js";
 import DocumentPreview from "@/components/DocumentPreview";
-import type { ApiInvoice, ApiInvoiceItem, ApiInvoiceFee } from "@/types/api";
+import type { ApiInvoice, ApiInvoiceItem, ApiInvoiceFee, ApiBusiness } from "@/types/api";
 import type { ApiCustomer } from "@/types/api";
 
 interface LocalItem {
@@ -80,6 +81,7 @@ export default function InvoiceWorkspace() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
+  const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [invoice, setInvoice] = useState<ApiInvoice | null>(null);
   const [state, setState] = useState<LocalState>({
     customerId: "",
@@ -106,6 +108,7 @@ export default function InvoiceWorkspace() {
 
   useEffect(() => {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
+    getBusiness().then((d) => setBusiness(d.business ?? d)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -617,20 +620,24 @@ export default function InvoiceWorkspace() {
             </div>
           </div>
 
-          {/* Preview Panel */}
-          <div className="overflow-y-auto">
-            <DocumentPreview
-              documentType="invoice"
-              documentNumber={invoice?.invoice_number}
-              calcResult={calcResult}
-              issueDate={state.issueDate}
-              dueDate={state.dueDate}
-              poNumber={state.poNumber}
-              customerId={state.customerId}
-              customers={customers}
-              signedAmounts={false}
-            />
-          </div>
+           {/* Preview Panel */}
+           <div className="overflow-y-auto">
+             <DocumentPreview
+               documentType="invoice"
+               documentNumber={invoice?.invoice_number}
+               calcResult={calcResult}
+               business={business}
+               issueDate={state.issueDate}
+               dueDate={state.dueDate}
+               poNumber={state.poNumber}
+               customerId={state.customerId}
+               customers={customers}
+               paymentInstructions={state.paymentInstructions}
+               notes={state.notes}
+               terms={state.terms}
+               signedAmounts={false}
+             />
+           </div>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import {
   finalizeQuote,
   sendQuote,
   getCustomers,
+  getBusiness,
   type CreateQuoteInput,
   type CreateQuoteItemInput,
   type CreateQuoteFeeInput,
@@ -25,7 +26,7 @@ import {
 import { Save, Send, Plus, Trash2, FileText } from "lucide-react";
 import { Decimal } from "decimal.js";
 import DocumentPreview from "@/components/DocumentPreview";
-import type { ApiQuote, ApiQuoteItem, ApiQuoteFee } from "@/types/api";
+import type { ApiQuote, ApiQuoteItem, ApiQuoteFee, ApiBusiness } from "@/types/api";
 import type { ApiCustomer } from "@/types/api";
 
 interface LocalItem {
@@ -79,6 +80,7 @@ export default function QuoteBuilder() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
+  const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [quote, setQuote] = useState<ApiQuote | null>(null);
   const [state, setState] = useState<LocalState>({
     customerId: "",
@@ -102,6 +104,7 @@ export default function QuoteBuilder() {
 
   useEffect(() => {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
+    getBusiness().then((d) => setBusiness(d.business ?? d)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -610,16 +613,19 @@ export default function QuoteBuilder() {
 
           {/* Preview Panel */}
           <div className="overflow-y-auto">
-            <DocumentPreview
-              documentType="quote"
-              documentNumber={quote?.quote_number}
-              calcResult={calcResult}
-              issueDate={state.issueDate}
-              expiryDate={state.expiryDate}
-              customerId={state.customerId}
-              customers={customers}
-              signedAmounts={false}
-            />
+             <DocumentPreview
+               documentType="quote"
+               documentNumber={quote?.quote_number}
+               calcResult={calcResult}
+               business={business}
+               issueDate={state.issueDate}
+               expiryDate={state.expiryDate}
+               customerId={state.customerId}
+               customers={customers}
+               notes={state.notes}
+               terms={state.terms}
+               signedAmounts={false}
+             />
           </div>
         </div>
       </div>

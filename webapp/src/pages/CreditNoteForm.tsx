@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { createCreditNote, getInvoice, type CreateCreditNoteInput } from "@/api/client";
+import { createCreditNote, getInvoice, getBusiness, type CreateCreditNoteInput } from "@/api/client";
 import { CalculationEngine, type InvoiceCalculationInput, type LineItemInput, type FeeInput } from "@/utils/calculation";
 import { type CurrencyCode } from "@/types/currency";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -15,7 +15,7 @@ import SectionCard from "@/components/SectionCard";
 import DocumentPreview from "@/components/DocumentPreview";
 import { Save, Plus, Trash2, FileText } from "lucide-react";
 import { Decimal } from "decimal.js";
-import type { ApiInvoice } from "@/types/api";
+import type { ApiInvoice, ApiBusiness } from "@/types/api";
 
 interface LocalItem {
   description: string;
@@ -63,6 +63,7 @@ export default function CreditNoteForm() {
   const { toast } = useToast();
 
   const [sourceInvoice, setSourceInvoice] = useState<ApiInvoice | null>(null);
+  const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [isLoadingSource, setIsLoadingSource] = useState(!!invoiceId);
   const [sourceError, setSourceError] = useState<string | null>(null);
 
@@ -79,6 +80,7 @@ export default function CreditNoteForm() {
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
+    getBusiness().then((d) => setBusiness(d.business ?? d)).catch(() => {});
     if (invoiceId) {
       setIsLoadingSource(true);
       setSourceError(null);
@@ -498,13 +500,16 @@ export default function CreditNoteForm() {
 
           {/* Preview Panel */}
           <div className="overflow-y-auto">
-            <DocumentPreview
-              documentType="credit-note"
-              calcResult={calcResult}
-              issueDate={new Date().toISOString()}
-              sourceInvoice={sourceInvoice}
-              signedAmounts={true}
-            />
+             <DocumentPreview
+               documentType="credit-note"
+               calcResult={calcResult}
+               business={business}
+               issueDate={new Date().toISOString()}
+               sourceInvoice={sourceInvoice}
+               notes={state.notes}
+               terms={state.terms}
+               signedAmounts={true}
+             />
           </div>
         </div>
       </div>
