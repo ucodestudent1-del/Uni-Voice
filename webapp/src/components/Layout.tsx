@@ -29,12 +29,13 @@ export default function Layout() {
     navigate("/login");
   }
 
-  const navItems: NavItem[] = [
+const navItems: NavItem[] = [
     { name: "Dashboard", to: "/app", feature: undefined, requiredPlan: undefined },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
     { name: "Invoices", to: "/app/invoices" },
-    { name: "Quotes", to: "/app/quotes" },
+    { name: "Credit Notes", to: "/app/credit-notes" },
+    { name: "Estimates", to: "/app/quotes" },
     { name: "Payments", to: "/app/payments" },
     { name: "Receipts", to: "/app/receipts", feature: "receipts.create", requiredPlan: "pro" as PlanTier },
     { name: "Templates", to: "/app/templates", feature: "templates.enabled", requiredPlan: "pro" as PlanTier },
