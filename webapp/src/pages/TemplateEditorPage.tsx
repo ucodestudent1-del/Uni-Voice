@@ -220,13 +220,16 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
            <select
              value={documentType}
              onChange={(e) => {
-               setDocumentType(e.target.value as InvoiceTemplateDTO["documentType"]);
-               setSaveState("unsaved");
-             }}
-             className="border border-input-border rounded px-2 py-0.5 bg-surface text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-           >
-               <option value="invoice">Invoice</option>
-            </select>
+                setDocumentType(e.target.value as InvoiceTemplateDTO["documentType"]);
+                setSaveState("unsaved");
+              }}
+              className="border border-input-border rounded px-2 py-0.5 bg-surface text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+                <option value="invoice">Invoice</option>
+                <option value="recurring_invoice">Recurring Invoice</option>
+                <option value="credit_note">Credit Note</option>
+                <option value="quote">Quote</option>
+             </select>
          </div>
         <div className="flex items-center gap-3">
           {existingTemplate && (

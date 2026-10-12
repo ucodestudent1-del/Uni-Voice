@@ -14,7 +14,7 @@ ALTER TABLE document_templates
 -- NOT NULL DEFAULT since ADD COLUMN ... NOT NULL with a default backfills
 -- existing rows in PostgreSQL.
 
-COMMENT ON COLUMN document_templates.document_type IS 'invoice | quote | recurring_invoice';
+COMMENT ON COLUMN document_templates.document_type IS 'invoice | recurring_invoice | credit_note | quote';
 
 -- Ensure only valid document types are stored.
 -- Uses a DO block so we only add the constraint if it doesn't already exist

@@ -412,7 +412,7 @@ export interface InvoiceTemplate {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
-   documentType: "invoice" | "recurring_invoice";
+  documentType: "invoice" | "recurring_invoice" | "credit_note" | "quote";
   lifecycle: string;
   publishedAt?: Date | null;
   publishedRevision?: number | null;

@@ -742,7 +742,7 @@ export class InvoiceTemplateRepository {
       config: (r.config as Record<string, unknown>) ?? {},
       isDefault: Boolean(r.is_default),
       isActive: Boolean(r.is_active),
-      documentType: (r.document_type as "invoice" | "recurring_invoice") ?? "invoice",
+      documentType: (r.document_type as InvoiceTemplate["documentType"]) ?? "invoice",
       lifecycle: (r.lifecycle as string) ?? "draft",
       publishedAt: r.published_at ? new Date(r.published_at as string) : null,
       archivedAt: r.archived_at ? new Date(r.archived_at as string) : null,

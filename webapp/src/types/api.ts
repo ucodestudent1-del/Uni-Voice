@@ -765,7 +765,7 @@ export interface InvoiceTemplateDTO {
   config: Record<string, unknown>;
   isDefault: boolean;
   isActive: boolean;
-  documentType: "invoice";
+  documentType: "invoice" | "recurring_invoice" | "credit_note" | "quote";
   lifecycle: "draft" | "published" | "archived";
   publishedAt?: string | null;
   archivedAt?: string | null;
