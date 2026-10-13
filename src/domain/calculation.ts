@@ -54,6 +54,71 @@ export interface InvoiceCalculationInput {
   amountPaid?: Decimal.Value;
 }
 
+export interface TaxRuleInput {
+  id: string;
+  name: string;
+  rate: Decimal.Value;
+  type: "percentage" | "fixed";
+  isCompound: boolean;
+  countryCode?: string | null;
+  region?: string | null;
+  conditions: TaxRuleConditionInput[];
+}
+
+export type TaxRuleConditionOperator =
+  | "equals"
+  | "not_equals"
+  | "in"
+  | "not_in"
+  | "contains"
+  | "greater_than"
+  | "less_than"
+  | "greater_than_or_equal"
+  | "less_than_or_equal";
+
+export interface TaxRuleConditionInput {
+  field:
+    | "customer_country"
+    | "customer_state"
+    | "product_category"
+    | "item_description"
+    | "currency"
+    | "total_amount_min"
+    | "total_amount_max";
+  operator: TaxRuleConditionOperator;
+  value: string;
+  sortOrder?: number;
+}
+
+export interface TaxRuleContext {
+  customerCountry?: string | null;
+  customerState?: string | null;
+  productCategories?: string[];
+  currency?: string;
+  lineItemCount?: number;
+  totalAmount?: string;
+  itemDescriptions?: string[];
+}
+
+export interface DiscountRuleInput {
+  id: string;
+  name: string;
+  type: "fixed" | "percentage";
+  value: Decimal.Value;
+  scope: "invoice" | "line_item";
+  appliesTo?: string | null;
+  minAmount?: Decimal.Value | null;
+  maxDiscount?: Decimal.Value | null;
+  startsAt?: Date | null;
+  endsAt?: Date | null;
+}
+
+export interface InvoiceCalculationInputWithRules extends InvoiceCalculationInput {
+  taxRules?: TaxRuleInput[];
+  discountRules?: DiscountRuleInput[];
+  taxRuleContext?: TaxRuleContext;
+}
+
 export interface CalculatedLineItem {
   description: string;
   quantity: Decimal;
@@ -156,12 +221,36 @@ export function computeTaxBreakdown(
 
 export class CalculationEngine {
   calculate(input: InvoiceCalculationInput): CalculationResult {
+    return this.calculateWithRulesInternal({
+      ...input,
+      taxRules: [],
+      discountRules: [],
+    });
+  }
+
+  calculateWithRules(input: InvoiceCalculationInputWithRules): CalculationResult {
+    return this.calculateWithRulesInternal(input);
+  }
+
+  private calculateWithRulesInternal(input: InvoiceCalculationInputWithRules): CalculationResult {
     const { currency } = input;
     const meta = getCurrencyMetadata(currency);
     const dp = meta.decimalPlaces;
 
     const round = (v: Decimal.Value): Decimal => (v instanceof Decimal ? v : new Decimal(v)).toDecimalPlaces(dp, Decimal.ROUND_HALF_UP);
     const roundRate = (v: Decimal.Value): Decimal => (v instanceof Decimal ? v : new Decimal(v)).toDecimalPlaces(4, Decimal.ROUND_HALF_UP);
+
+    // Evaluate applicable tax rules
+    const applicableTaxRules = this.evaluateTaxRules(input.taxRules ?? [], input.taxRuleContext, input.currency);
+    const subtotalForRules = input.lineItems.reduce(
+      (sum, li) => sum.plus(new Decimal(li.quantity).mul(li.unitPrice)),
+      ZERO,
+    );
+    const applicableDiscountRules = this.evaluateDiscountRules(
+      input.discountRules ?? [],
+      subtotalForRules,
+       input.currency,
+    );
 
     const lineItems: CalculatedLineItem[] = [];
 
@@ -181,16 +270,39 @@ export class CalculationEngine {
         throw new Error(`Tax rate must be >= 0 for line item "${item.description}"`);
       }
 
+      // Apply tax rule if no explicit tax rate or rate is zero
+      let effectiveTaxRate = taxRate;
+      let effectiveTaxName = item.tax_name ?? null;
+      if (taxRate.isZero() && applicableTaxRules.length > 0) {
+        const rule = this.findApplicableTaxRuleForItem(item, applicableTaxRules, input.taxRuleContext);
+        if (rule) {
+          effectiveTaxRate = new Decimal(rule.rate);
+          effectiveTaxName = rule.name;
+        }
+      }
+
       const lineSubtotal = round(qty.mul(unitPrice));
-      const lineDiscount = discountAmount(item.discount, lineSubtotal, currency);
+      let lineDiscount = discountAmount(item.discount, lineSubtotal, currency);
+
+      // Apply line-level discount rules if no explicit discount
+      const rule = this.findApplicableLineDiscountRule(item, applicableDiscountRules);
+      if (rule) {
+        const ruleDiscount = this.computeRuleDiscount(rule, lineSubtotal);
+        if (ruleDiscount.gt(new Decimal(0))) {
+          if (new Decimal(lineDiscount).isZero()) {
+            lineDiscount = ruleDiscount;
+          }
+        }
+      }
+
       lineItems.push({
         description: item.description,
         quantity: qty,
         unit: item.unit,
         unitPrice,
         discountAmount: lineDiscount,
-        taxRate: taxRate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
-        taxName: item.tax_name ?? null,
+        taxRate: effectiveTaxRate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
+        taxName: effectiveTaxName,
         isTaxInclusive: item.isTaxInclusive,
         lineSubtotal,
         taxableAmount: ZERO,
@@ -210,9 +322,22 @@ export class CalculationEngine {
     }
 
     const netAfterLineDiscounts = subtotal.minus(lineDiscountTotal);
-    // Invoice-level discount (applied to the net subtotal, i.e. after line discounts)
-    const invoiceDiscount = discountAmount(input.invoiceDiscount, netAfterLineDiscounts, currency);
-    const discountTotal = round(lineDiscountTotal.plus(invoiceDiscount));
+    // Invoice-level discount (from explicit discount definition)
+    const explicitInvoiceDiscount = discountAmount(input.invoiceDiscount, netAfterLineDiscounts, currency);
+
+    // Invoice-level discount from rules
+    let ruleDiscountTotal = ZERO;
+    for (const rule of applicableDiscountRules) {
+      if (rule.scope === "invoice") {
+        const ruleDiscount = this.computeRuleDiscount(rule, netAfterLineDiscounts);
+        if (ruleDiscount.gt(ruleDiscountTotal)) {
+          ruleDiscountTotal = ruleDiscount;
+        }
+      }
+    }
+
+    const totalInvoiceDiscount = explicitInvoiceDiscount.plus(ruleDiscountTotal);
+    const discountTotal = round(lineDiscountTotal.plus(totalInvoiceDiscount));
 
     // Distribute the invoice discount proportionally across lines based on their net contribution
     const lineShares = new Array(lineItems.length).fill(null).map(() => ZERO);
@@ -221,7 +346,7 @@ export class CalculationEngine {
     } else {
       for (let i = 0; i < lineItems.length; i++) {
         const net = lineItems[i].lineSubtotal.minus(lineItems[i].discountAmount);
-        lineShares[i] = round(invoiceDiscount.mul(net.div(totalNet)));
+        lineShares[i] = round(totalInvoiceDiscount.mul(net.div(totalNet)));
       }
     }
 
@@ -303,7 +428,7 @@ export class CalculationEngine {
       fees,
       subtotal: round(subtotal),
       discountTotal,
-      taxableTotal: round(netAfterLineDiscounts.minus(invoiceDiscount)),
+      taxableTotal: round(netAfterLineDiscounts.minus(totalInvoiceDiscount)),
       taxTotal: round(taxTotal),
       feeTotal: round(feeTotal),
       total: round(total),
@@ -312,6 +437,155 @@ export class CalculationEngine {
       isTaxInclusive: hasTaxInclusive,
       taxBreakdown,
     };
+  }
+
+  private evaluateTaxRules(
+    rules: TaxRuleInput[],
+    context: TaxRuleContext | undefined,
+    currency: CurrencyCode,
+  ): TaxRuleInput[] {
+    const now = new Date();
+    return rules.filter((rule) => {
+      if (!rule.conditions || rule.conditions.length === 0) return true;
+
+      for (const condition of rule.conditions) {
+        const fieldValue = this.getContextValue(condition.field, context, currency);
+        if (!this.evaluateCondition(condition.operator, fieldValue, condition.value)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  private evaluateCondition(
+    operator: TaxRuleConditionOperator,
+    fieldValue: string | undefined,
+    compareTo: string,
+  ): boolean {
+    if (fieldValue === undefined || fieldValue === null) {
+      return operator === "not_equals" || operator === "not_in";
+    }
+
+    switch (operator) {
+      case "equals":
+        return fieldValue === compareTo;
+      case "not_equals":
+        return fieldValue !== compareTo;
+      case "in":
+        return compareTo.split(",").map((v) => v.trim()).includes(fieldValue);
+      case "not_in":
+        return !compareTo.split(",").map((v) => v.trim()).includes(fieldValue);
+      case "contains":
+        return fieldValue.toLowerCase().includes(compareTo.toLowerCase());
+      case "greater_than":
+        return Number(fieldValue) > Number(compareTo);
+      case "less_than":
+        return Number(fieldValue) < Number(compareTo);
+      case "greater_than_or_equal":
+        return Number(fieldValue) >= Number(compareTo);
+      case "less_than_or_equal":
+        return Number(fieldValue) <= Number(compareTo);
+      default:
+        return true;
+    }
+  }
+
+  private getContextValue(
+    field: TaxRuleConditionInput["field"],
+    context: TaxRuleContext | undefined,
+    currency: CurrencyCode,
+  ): string | undefined {
+    if (!context) return undefined;
+
+    switch (field) {
+      case "customer_country":
+        return context.customerCountry ?? undefined;
+      case "customer_state":
+        return context.customerState ?? undefined;
+      case "product_category":
+        return context.productCategories?.[0];
+      case "item_description":
+        return context.itemDescriptions?.[0];
+      case "currency":
+        return currency;
+      case "total_amount_min":
+      case "total_amount_max":
+        return context.totalAmount;
+      default:
+        return undefined;
+    }
+  }
+
+  private findApplicableTaxRuleForItem(
+    item: LineItemInput,
+    rules: TaxRuleInput[],
+    context: TaxRuleContext | undefined,
+  ): TaxRuleInput | undefined {
+    return rules.find((rule) => {
+      if (rule.conditions.length === 0) return true;
+
+      if (!context?.productCategories || context.productCategories.length === 0) {
+        for (const condition of rule.conditions) {
+          if (condition.field === "product_category") {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      for (const condition of rule.conditions) {
+        if (condition.field === "product_category") {
+          const fieldValue = context.productCategories[0];
+          if (!this.evaluateCondition(condition.operator, fieldValue, condition.value)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+  }
+
+  private evaluateDiscountRules(
+    rules: DiscountRuleInput[],
+    totalAmount: Decimal,
+    currency: CurrencyCode,
+  ): DiscountRuleInput[] {
+    const now = new Date();
+    return rules.filter((rule) => {
+      if (rule.startsAt && now < rule.startsAt) return false;
+      if (rule.endsAt && now > rule.endsAt) return false;
+      if (rule.minAmount && totalAmount.lt(new Decimal(rule.minAmount))) return false;
+      return true;
+    });
+  }
+
+  private findApplicableLineDiscountRule(
+    item: LineItemInput,
+    rules: DiscountRuleInput[],
+  ): DiscountRuleInput | undefined {
+    return rules.find((rule) => rule.scope === "line_item");
+  }
+
+  private computeRuleDiscount(rule: DiscountRuleInput, base: Decimal): Decimal {
+    const value = new Decimal(rule.value);
+    let amount: Decimal;
+
+    if (rule.type === "percentage") {
+      amount = base.mul(value.div(100));
+    } else {
+      amount = value;
+    }
+
+    if (amount.isNegative()) return ZERO;
+    if (amount.gt(base)) amount = base;
+
+    if (rule.maxDiscount) {
+      const maxD = new Decimal(rule.maxDiscount);
+      if (amount.gt(maxD)) amount = maxD;
+    }
+
+    return amount;
   }
 }
 

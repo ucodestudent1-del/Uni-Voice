@@ -31,7 +31,20 @@ import type {
   ApiQuoteItem,
   ApiQuoteFee,
   ApiQuoteEvent,
-  ApiQuoteListItem,
+   ApiQuoteListItem,
+  ApiTaxRule,
+  ApiTaxRuleList,
+  ApiTaxRuleCreate,
+  ApiTaxRuleUpdate,
+  ApiTaxRuleCondition,
+  ApiDiscountRule,
+  ApiDiscountRuleList,
+  ApiDiscountRuleCreate,
+  ApiDiscountRuleUpdate,
+  ApiBranding,
+  ApiBrandingInput,
+  ApiTaxEvaluationContext,
+  ApiTaxEvaluationRequest,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -62,7 +75,24 @@ export type {
   ApiQuoteItem,
   ApiQuoteFee,
   ApiQuoteEvent,
-  ApiQuoteListItem,
+   ApiQuoteListItem,
+} from "../types/api";
+
+// Re-export invoice generator module types
+export type {
+  ApiTaxRule,
+  ApiTaxRuleList,
+  ApiTaxRuleCreate,
+  ApiTaxRuleUpdate,
+  ApiTaxRuleCondition,
+  ApiDiscountRule,
+  ApiDiscountRuleList,
+  ApiDiscountRuleCreate,
+  ApiDiscountRuleUpdate,
+  ApiBranding,
+  ApiBrandingInput,
+  ApiTaxEvaluationContext,
+  ApiTaxEvaluationRequest,
 };
 
 declare module "axios" {
@@ -1902,5 +1932,94 @@ export async function convertQuoteToInvoice(
   id: string,
 ): Promise<{ quote: ApiQuote; invoiceId: string }> {
   const res = await api.post(`/quotes/${id}/convert-to-invoice`);
+  return res.data;
+}
+
+// ============================================================================
+// Invoice Generator Module API
+// ============================================================================
+
+export async function getTaxRules(
+  params?: Record<string, unknown>,
+): Promise<{ rules: ApiTaxRule[] }> {
+  return cachedGet("/tax-rules", params);
+}
+
+export async function getTaxRule(id: string): Promise<{ rule: ApiTaxRule }> {
+  const res = await api.get(`/tax-rules/${id}`);
+  return res.data;
+}
+
+export async function createTaxRule(input: ApiTaxRuleCreate): Promise<{ rule: ApiTaxRule }> {
+  const res = await api.post("/tax-rules", input);
+  invalidateCache("/tax-rules");
+  return res.data;
+}
+
+export async function updateTaxRule(
+  id: string,
+  input: ApiTaxRuleUpdate,
+): Promise<{ rule: ApiTaxRule }> {
+  const res = await api.patch(`/tax-rules/${id}`, input);
+  invalidateCache("/tax-rules");
+  return res.data;
+}
+
+export async function deleteTaxRule(id: string): Promise<void> {
+  await api.delete(`/tax-rules/${id}`);
+  invalidateCache("/tax-rules");
+}
+
+export async function evaluateTaxRule(
+  id: string,
+  context: ApiTaxEvaluationContext,
+): Promise<{ matched: boolean; matchedConditions: number }> {
+  const res = await api.post(`/tax-rules/${id}/evaluate`, { context });
+  return res.data;
+}
+
+export async function getDiscountRules(
+  params?: Record<string, unknown>,
+): Promise<{ rules: ApiDiscountRule[] }> {
+  return cachedGet("/discount-rules", params);
+}
+
+export async function getDiscountRule(id: string): Promise<{ rule: ApiDiscountRule }> {
+  const res = await api.get(`/discount-rules/${id}`);
+  return res.data;
+}
+
+export async function createDiscountRule(input: ApiDiscountRuleCreate): Promise<{ rule: ApiDiscountRule }> {
+  const res = await api.post("/discount-rules", input);
+  invalidateCache("/discount-rules");
+  return res.data;
+}
+
+export async function updateDiscountRule(
+  id: string,
+  input: ApiDiscountRuleUpdate,
+): Promise<{ rule: ApiDiscountRule }> {
+  const res = await api.patch(`/discount-rules/${id}`, input);
+  invalidateCache("/discount-rules");
+  return res.data;
+}
+
+export async function deleteDiscountRule(id: string): Promise<void> {
+  await api.delete(`/discount-rules/${id}`);
+  invalidateCache("/discount-rules");
+}
+
+export async function getBranding(): Promise<{ branding: ApiBranding }> {
+  return cachedGet("/branding");
+}
+
+export async function updateBranding(input: ApiBrandingInput): Promise<{ branding: ApiBranding }> {
+  const res = await api.post("/branding", input);
+  invalidateCache("/branding");
+  return res.data;
+}
+
+export async function generateBrandingPreview(input: ApiBrandingInput): Promise<{ html: string }> {
+  const res = await api.post("/branding/preview", input);
   return res.data;
 }

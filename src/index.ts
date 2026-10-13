@@ -36,6 +36,20 @@ import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { taxRuleService } from "./services/tax-rule-service.js";
+import { discountRuleService } from "./services/discount-rule-service.js";
+import { brandingService } from "./services/branding-service.js";
+import {
+  TaxRuleCreateSchema,
+  TaxRuleUpdateSchema,
+  TaxRuleSearchParamsSchema,
+} from "./domain/schemas/tax-rule.js";
+import {
+  DiscountRuleCreateSchema,
+  DiscountRuleUpdateSchema,
+  DiscountRuleSearchParamsSchema,
+} from "./domain/schemas/discount-rule.js";
+import { BrandingInputSchema } from "./domain/schemas/branding.js";
 
 const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
@@ -3941,6 +3955,212 @@ async function findBusinessByStripeSubscriptionId(
   if (!res.rows.length) return null;
   return res.rows[0].business_id as string;
 }
+
+// ============================================================================
+// TAX RULES
+// ============================================================================
+
+app.post("/api/tax-rules", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = TaxRuleCreateSchema.parse(req.body);
+    const rule = await taxRuleService.create(req.user!.businessId, parsed);
+    res.status(201).json({ rule });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/tax-rules", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const params = TaxRuleSearchParamsSchema.parse({
+      limit: req.query.limit,
+      offset: req.query.offset,
+      enabled: req.query.enabled,
+    });
+    const rules = await taxRuleService.findMany(req.user!.businessId, params);
+    res.json({ rules });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/tax-rules/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const rule = await taxRuleService.findById(req.user!.businessId, req.params.id);
+    if (!rule) return res.status(404).json({ error: "Tax rule not found" });
+    res.json({ rule });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/tax-rules/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = TaxRuleUpdateSchema.parse(req.body);
+    const rule = await taxRuleService.update(req.user!.businessId, req.params.id, parsed);
+    res.json({ rule });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete("/api/tax-rules/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    await taxRuleService.delete(req.user!.businessId, req.params.id);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post(
+  "/api/tax-rules/:id/evaluate",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const rule = await taxRuleService.findById(req.user!.businessId, req.params.id);
+      if (!rule) return res.status(404).json({ error: "Tax rule not found" });
+      const evaluated = taxRuleService.evaluateRule(rule, req.body);
+      res.json({ matched: evaluated });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ============================================================================
+// DISCOUNT RULES
+// ============================================================================
+
+app.post("/api/discount-rules", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = DiscountRuleCreateSchema.parse(req.body);
+    const rule = await discountRuleService.create(req.user!.businessId, parsed);
+    res.status(201).json({ rule });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/discount-rules", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const params = DiscountRuleSearchParamsSchema.parse({
+      limit: req.query.limit,
+      offset: req.query.offset,
+      active: req.query.active,
+    });
+    const rules = await discountRuleService.findMany(req.user!.businessId, params);
+    res.json({ rules });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get(
+  "/api/discount-rules/:id",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const rule = await discountRuleService.findById(req.user!.businessId, req.params.id);
+      if (!rule) return res.status(404).json({ error: "Discount rule not found" });
+      res.json({ rule });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.patch(
+  "/api/discount-rules/:id",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = DiscountRuleUpdateSchema.parse(req.body);
+      const rule = await discountRuleService.update(req.user!.businessId, req.params.id, parsed);
+      res.json({ rule });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.delete(
+  "/api/discount-rules/:id",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      await discountRuleService.delete(req.user!.businessId, req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ============================================================================
+// BRANDING
+// ============================================================================
+
+app.get("/api/branding", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const branding = await brandingService.get(req.user!.businessId);
+    res.json({ branding });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/branding", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const parsed = BrandingInputSchema.parse(req.body);
+    const branding = await brandingService.update(req.user!.businessId, parsed);
+    res.json({ branding });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post(
+  "/api/branding/preview",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = BrandingInputSchema.parse(req.body);
+      const html = await brandingService.generatePreviewHtml(req.user!.businessId, parsed);
+      res.json({ html });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // ============================================================================
 // FRONTEND FALLBACK (production SPA)

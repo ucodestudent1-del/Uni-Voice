@@ -1293,3 +1293,194 @@ export interface ApiAgingReport {
     currency: string;
   };
 }
+
+// ============================================================================
+// Invoice Generator Module Types
+// ============================================================================
+
+export type TaxRuleConditionField =
+  | "customer_country"
+  | "customer_state"
+  | "product_category"
+  | "item_description"
+  | "currency"
+  | "total_amount_min"
+  | "total_amount_max";
+
+export type TaxRuleConditionOperator =
+  | "equals"
+  | "not_equals"
+  | "in"
+  | "not_in"
+  | "contains"
+  | "greater_than"
+  | "less_than"
+  | "greater_than_or_equal"
+  | "less_than_or_equal";
+
+export interface ApiTaxRuleCondition {
+  id?: string;
+  field: TaxRuleConditionField;
+  operator: TaxRuleConditionOperator;
+  value: string;
+  sortOrder?: number;
+}
+
+export interface ApiTaxRule {
+  id: string;
+  businessId: string;
+  name: string;
+  code?: string | null;
+  rate: string;
+  type: "percentage" | "fixed";
+  countryCode?: string | null;
+  region?: string | null;
+  isCompound: boolean;
+  isDefault: boolean;
+  enabled: boolean;
+  conditions: ApiTaxRuleCondition[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiTaxRuleList {
+  rules: ApiTaxRule[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ApiTaxRuleCreate {
+  name: string;
+  code?: string | null;
+  rate: string;
+  type?: "percentage" | "fixed";
+  countryCode?: string | null;
+  region?: string | null;
+  isCompound?: boolean;
+  isDefault?: boolean;
+  enabled?: boolean;
+  conditions?: ApiTaxRuleCondition[];
+}
+
+export interface ApiTaxRuleUpdate {
+  name?: string;
+  code?: string | null;
+  rate?: string;
+  type?: "percentage" | "fixed";
+  countryCode?: string | null;
+  region?: string | null;
+  isCompound?: boolean;
+  isDefault?: boolean;
+  enabled?: boolean;
+  conditions?: ApiTaxRuleCondition[];
+}
+
+export type DiscountRuleScope = "invoice" | "line_item";
+export type DiscountRuleType = "fixed" | "percentage";
+
+export interface ApiDiscountRule {
+  id: string;
+  businessId: string;
+  name: string;
+  type: DiscountRuleType;
+  value: string;
+  scope: DiscountRuleScope;
+  appliesTo?: string | null;
+  minAmount?: string | null;
+  maxDiscount?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiDiscountRuleList {
+  rules: ApiDiscountRule[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ApiDiscountRuleCreate {
+  name: string;
+  type?: DiscountRuleType;
+  value: string;
+  scope?: DiscountRuleScope;
+  appliesTo?: string | null;
+  minAmount?: string | null;
+  maxDiscount?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  isActive?: boolean;
+}
+
+export interface ApiDiscountRuleUpdate {
+  name?: string;
+  type?: DiscountRuleType;
+  value?: string;
+  scope?: DiscountRuleScope;
+  appliesTo?: string | null;
+  minAmount?: string | null;
+  maxDiscount?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  isActive?: boolean;
+}
+
+export interface ApiBranding {
+  businessId: string;
+  primaryColor: string;
+  secondaryColor: string;
+  fontFamily?: string | null;
+  logoUrl?: string | null;
+  logoWidthPx?: number | null;
+  logoHeightPx?: number | null;
+  invoiceTitle?: string | null;
+  invoiceSubtitle?: string | null;
+  footerText?: string | null;
+  showLogo: boolean;
+  showPageNumbers: boolean;
+  showQrCode: boolean;
+  pdfPageSize: string;
+  pdfMarginTopMm: number;
+  pdfMarginRightMm: number;
+  pdfMarginBottomMm: number;
+  pdfMarginLeftMm: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiBrandingInput {
+  primaryColor?: string;
+  secondaryColor?: string;
+  fontFamily?: string | null;
+  logoUrl?: string | null;
+  logoWidthPx?: number | null;
+  logoHeightPx?: number | null;
+  invoiceTitle?: string | null;
+  invoiceSubtitle?: string | null;
+  footerText?: string | null;
+  showLogo?: boolean;
+  showPageNumbers?: boolean;
+  showQrCode?: boolean;
+  pdfPageSize?: string;
+  pdfMarginTopMm?: number;
+  pdfMarginRightMm?: number;
+  pdfMarginBottomMm?: number;
+  pdfMarginLeftMm?: number;
+}
+
+export interface ApiTaxEvaluationContext {
+  customerCountry?: string | null;
+  customerState?: string | null;
+  productCategories?: string[];
+  currency?: string | null;
+  lineItemCount?: number;
+  totalAmount?: string;
+}
+
+export interface ApiTaxEvaluationRequest {
+  context: ApiTaxEvaluationContext;
+}
