@@ -290,6 +290,8 @@ export interface ApiCreditNoteApplication {
   applied_at: string;
   idempotency_key?: string | null;
   metadata?: Record<string, unknown> | null;
+  application_method?: "invoice_offset" | "balance_credit" | "refund" | null;
+  method?: string | null;
 }
 
 export interface ApiCreditNote {
@@ -339,15 +341,20 @@ export interface ApiCreditNote {
   customer_tax_id?: string | null;
   created_at: string;
   updated_at: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+  version?: number;
   items: ApiCreditNoteItem[];
   fees: ApiCreditNoteFee[];
   applications: ApiCreditNoteApplication[];
+  events?: ApiCreditNoteEvent[];
 }
 
 export interface ApiCreditNoteListItem {
   id: string;
   business_id: string;
   customer_id?: string | null;
+  reference_invoice_id?: string | null;
   reference_invoice_number?: string | null;
   credit_note_number?: string | null;
   status: string;
@@ -367,15 +374,48 @@ export interface ApiCreditNoteListItem {
 
 export interface ApiCreditNoteEvent {
   id: string;
-  credit_note_id?: string;
+  credit_note_id?: string | null;
+  business_id?: string | null;
   event_type: string;
   actor_id?: string | null;
-      actor_type?: string | null;
-      metadata: Record<string, unknown>;
-      created_at: string;
-    }
-    
-    export interface ApiTaxIdentifier {
+  actor_type?: string | null;
+  metadata: Record<string, unknown>;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  created_at: string;
+}
+
+export interface ApiCreditNoteDraftInput {
+  invoiceId: string;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  items: Array<{
+    description: string;
+    quantity: string | number;
+    unit: string;
+    unitPrice: string | number;
+    taxRate?: string | number;
+    taxName?: string | null;
+    isTaxInclusive?: boolean;
+  }>;
+}
+
+export interface ApiCreditNoteApplyInput {
+  invoiceId: string;
+  amount: string | number;
+  applicationMethod?: "invoice_offset" | "balance_credit" | "refund";
+}
+
+export interface ApiCreditNoteCancelInput {
+  reason: string;
+}
+
+export interface ApiCreditNoteVoidInput {
+  reason: string;
+}
+
+export interface ApiTaxIdentifier {
   id: string;
   customerId: string;
   type: string;

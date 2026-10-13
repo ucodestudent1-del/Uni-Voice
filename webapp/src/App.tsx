@@ -37,6 +37,7 @@ const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const CreditNotes = lazy(() => import("./pages/CreditNotes"));
 const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
 const CreditNoteForm = lazy(() => import("./pages/CreditNoteForm"));
+const CreditNoteWorkspace = lazy(() => import("./pages/CreditNoteWorkspace"));
 
 const QuoteList = lazy(() => import("./pages/QuoteList"));
 const QuoteWorkspace = lazy(() => import("./pages/QuoteWorkspace"));
@@ -356,14 +357,22 @@ export default function App() {
               </Suspense>
             }
           />
-          <Route
-            path="credit-notes/:id"
-            element={
-              <Suspense fallback={<Fallback />}>
-                <CreditNoteDetail />
-              </Suspense>
-            }
-          />
+            <Route
+              path="credit-notes/:id"
+              element={
+                <Suspense fallback={<Fallback />}>
+                  <CreditNoteDetail />
+                </Suspense>
+              }
+            />
+            <Route
+              path="credit-notes/:id/edit"
+              element={
+                <Suspense fallback={<Fallback />}>
+                  <CreditNoteWorkspace />
+                </Suspense>
+              }
+            />
           <Route
             path="quotes"
             element={

@@ -636,6 +636,12 @@ export class InvoiceService {
         [creditNoteId, businessId]
       );
 
+      await client.query(
+        `INSERT INTO credit_note_events (credit_note_id, business_id, event_type, actor_id, actor_type, metadata)
+         VALUES ($1, $2, 'credit_note_sent', $3, 'user', $4::jsonb)`,
+        [creditNoteId, businessId, userId ?? null, JSON.stringify({ recipient: data.to })]
+      );
+
       await client.query("COMMIT");
       logger.info(`Sent credit note ${creditNoteId} to ${data.to}`);
       return { ok: true, messageId: crypto.randomUUID(), status: "sent" };
@@ -1275,8 +1281,10 @@ export class InvoiceService {
     };
   }
 
-  private async buildCreditNoteSnapshot(businessId: string, creditNoteId: string): Promise<Record<string, unknown>> {
-    const cn = await this.getCreditNoteById(businessId, creditNoteId);
+  private async buildCreditNoteSnapshot(businessId: string, creditNoteId: string, client?: { query: (text: string, params: unknown[]) => Promise<{ rows: unknown[] }> }): Promise<Record<string, unknown>> {
+    const cn = client
+      ? await this.getCreditNoteByIdTx(businessId, creditNoteId, client)
+      : await this.getCreditNoteById(businessId, creditNoteId);
     if (!cn) throw new NotFoundError(`Credit note ${creditNoteId} not found`);
     return {
       id: cn.id,
@@ -1303,6 +1311,40 @@ export class InvoiceService {
       created_at: cn.created_at,
       finalized_at: cn.finalized_at,
       version: cn.version,
+    };
+  }
+
+  private async getCreditNoteByIdTx(businessId: string, creditNoteId: string, client: { query: (text: string, params: unknown[]) => Promise<{ rows: unknown[] }> }): Promise<Record<string, unknown> | null> {
+    const result = await client.query(
+      `SELECT * FROM credit_notes WHERE id = $1 AND business_id = $2`,
+      [creditNoteId, businessId]
+    );
+    if (!result.rows.length) return null;
+    const cn = result.rows[0] as Record<string, unknown>;
+
+    const itemsRes = await client.query(
+      `SELECT * FROM credit_note_items WHERE credit_note_id = $1 ORDER BY sort_order`,
+      [creditNoteId]
+    );
+    const feesRes = await client.query(
+      `SELECT * FROM credit_note_fees WHERE credit_note_id = $1 ORDER BY sort_order`,
+      [creditNoteId]
+    );
+    const appsRes = await client.query(
+       `SELECT * FROM credit_note_applications WHERE credit_note_id = $1 ORDER BY applied_at`,
+      [creditNoteId]
+    );
+    const eventsRes = await client.query(
+      `SELECT * FROM credit_note_events WHERE credit_note_id = $1 ORDER BY created_at DESC`,
+      [creditNoteId]
+    );
+
+    return {
+      ...cn,
+      items: itemsRes.rows,
+      fees: feesRes.rows,
+      applications: appsRes.rows,
+      events: eventsRes.rows,
     };
   }
 
@@ -1829,10 +1871,10 @@ export class InvoiceService {
       const res = await client.query(
         `INSERT INTO credit_notes (
           business_id, customer_id, reference_invoice_id, credit_note_number, reason, notes, terms,
-          currency, issue_date, subtotal, discount_total, tax_total, fee_total, total,
-          applied_total, amount_due, is_finalized, finalized_at, status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,TRUE,NOW(),'finalized')
-        RETURNING *`,
+           currency, issue_date, subtotal, discount_total, tax_total, fee_total, total,
+           applied_total, amount_due, is_finalized, finalized_at, status
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,TRUE,NOW(),'finalized')
+         RETURNING *`,
         [
           businessId,
           refInvoice.rows[0].customer_id,
@@ -1881,7 +1923,7 @@ export class InvoiceService {
         [input.invoiceId, userId ?? null, JSON.stringify({ credit_note_id: cnId })]
       );
 
-      const cnSnapshot = await this.buildCreditNoteSnapshot(businessId, cnId);
+      const cnSnapshot = await this.buildCreditNoteSnapshot(businessId, cnId, client);
       const cnSnapshotJson = JSON.stringify(cnSnapshot);
       const cnSnapshotHash = crypto.createHash("sha256").update(cnSnapshotJson).digest("hex");
       await client.query(
@@ -1890,6 +1932,15 @@ export class InvoiceService {
          ON CONFLICT (credit_note_id) DO UPDATE SET
            snapshot = $2::jsonb, snapshot_hash = $3, created_by = $4, created_at = NOW()`,
         [cnId, cnSnapshotJson, cnSnapshotHash, userId ?? null]
+      );
+
+      await this.logCreditNoteEvent(
+        cnId,
+        businessId,
+        "credit_note_created",
+        userId ?? null,
+        { invoice_id: input.invoiceId, status: "finalized" },
+        client
       );
 
       await client.query("COMMIT");
@@ -1920,7 +1971,11 @@ export class InvoiceService {
       [creditNoteId]
     );
     const appsRes = await query(
-      `SELECT * FROM credit_note_applications WHERE credit_note_id = $1 ORDER BY created_at`,
+       `SELECT * FROM credit_note_applications WHERE credit_note_id = $1 ORDER BY applied_at`,
+      [creditNoteId]
+    );
+    const eventsRes = await query(
+      `SELECT * FROM credit_note_events WHERE credit_note_id = $1 ORDER BY created_at DESC`,
       [creditNoteId]
     );
 
@@ -1929,12 +1984,24 @@ export class InvoiceService {
       items: itemsRes.rows,
       fees: feesRes.rows,
       applications: appsRes.rows,
+      events: eventsRes.rows,
     };
   }
 
   async listCreditNotes(
     businessId: string,
-    filters: { invoiceId?: string; limit?: string | number; offset?: string | number }
+    filters: {
+      invoiceId?: string;
+      limit?: string | number;
+      offset?: string | number;
+      status?: string;
+      customerId?: string;
+      search?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: "asc" | "desc";
+    }
   ): Promise<{ creditNotes: Record<string, unknown>[]; total: number; limit: number; offset: number }> {
     const limit = Math.min(Math.max(Number(filters.limit ?? 50), 1), 200);
     const offset = Math.max(Number(filters.offset ?? 0), 0);
@@ -1946,9 +2013,46 @@ export class InvoiceService {
       where.push(`reference_invoice_id = $${i++}`);
       values.push(filters.invoiceId);
     }
+    if (filters.status) {
+      where.push(`status = $${i++}`);
+      values.push(filters.status);
+    }
+    if (filters.customerId) {
+      where.push(`customer_id = $${i++}`);
+      values.push(filters.customerId);
+    }
+     if (filters.search) {
+      const searchParam = `$${i}`;
+      const searchPattern = `%${filters.search}%`;
+      where.push(`(
+        credit_note_number ILIKE ${searchParam}
+        OR EXISTS (
+          SELECT 1 FROM customers c WHERE c.id = credit_notes.customer_id
+          AND (c.name ILIKE ${searchParam} OR c.email ILIKE ${searchParam})
+        )
+        OR reference_invoice_id IN (
+          SELECT id FROM invoices WHERE invoice_number ILIKE ${searchParam} AND business_id = $1
+        )
+      )`);
+      values.push(searchPattern);
+      i++;
+    }
+    if (filters.dateFrom) {
+      where.push(`issue_date >= $${i++}`);
+      values.push(filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      where.push(`issue_date <= $${i++}`);
+      values.push(filters.dateTo);
+    }
+
+    const sortBy = filters.sortBy ?? "created_at";
+    const sortOrder = filters.sortOrder ?? "desc";
+    const allowedSortColumns = ["created_at", "issue_date", "total", "status", "credit_note_number"];
+    const sortCol = allowedSortColumns.includes(sortBy) ? sortBy : "created_at";
 
     const listRes = await query(
-      `SELECT * FROM credit_notes WHERE ${where.join(" AND ")} ORDER BY created_at DESC LIMIT $${i++} OFFSET $${i++}`,
+      `SELECT * FROM credit_notes WHERE ${where.join(" AND ")} ORDER BY ${sortCol} ${sortOrder === "asc" ? "ASC" : "DESC"} LIMIT $${i} OFFSET $${i + 1}`,
       [...values, limit, offset]
     );
     const countRes = await query(
@@ -1956,17 +2060,20 @@ export class InvoiceService {
       values
     );
 
-    const applications = await query(
-      `SELECT credit_note_id, amount FROM credit_note_applications WHERE credit_note_id = ANY($1)`,
-      [listRes.rows.map((r: Record<string, unknown>) => r.id)]
-    );
+    const cnIds = listRes.rows.map((r: Record<string, unknown>) => r.id);
+    const applications = cnIds.length > 0
+      ? await query(
+          `SELECT credit_note_id, amount FROM credit_note_applications WHERE credit_note_id = ANY($1)`,
+          [cnIds]
+        )
+      : { rows: [] };
 
     return {
       creditNotes: listRes.rows.map((cn: Record<string, unknown>) => {
         const applied = applications.rows
           .filter((a: Record<string, unknown>) => a.credit_note_id === cn.id)
           .reduce((sum: Decimal, a: Record<string, unknown>) => sum.plus(new Decimal(a.amount as string)), new Decimal(0));
-        return { ...cn, applied_amount: applied.toFixed() };
+        return { ...cn, applied_total: applied.toFixed() };
       }),
       total: countRes.rows[0]?.total ?? 0,
       limit,
@@ -1977,8 +2084,8 @@ export class InvoiceService {
   async applyCreditNote(
     businessId: string,
     creditNoteId: string,
-    data: { invoiceId: string; amount: string | number }
-  ): Promise<{ ok: boolean; remaining: string }> {
+    data: { invoiceId: string; amount: string | number; applicationMethod?: "invoice_offset" | "balance_credit" | "refund" },
+  ): Promise<{ ok: boolean; remaining: string; status: string }> {
     const client = await getClient();
     try {
       await client.query("BEGIN");
@@ -2027,12 +2134,17 @@ export class InvoiceService {
 
       const invoiceAmountDue = new Decimal(invoice.amount_due ?? 0);
       const applyAmount = amountToApply.gt(invoiceAmountDue) ? invoiceAmountDue : amountToApply;
+      const applicationMethod = data.applicationMethod ?? "invoice_offset";
 
       await client.query(
-        `INSERT INTO credit_note_applications (credit_note_id, invoice_id, business_id, amount, idempotency_key)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO credit_note_applications (credit_note_id, invoice_id, business_id, amount, idempotency_key, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb)
          ON CONFLICT DO NOTHING`,
-        [creditNoteId, data.invoiceId, businessId, applyAmount.toFixed(), crypto.randomUUID()]
+        [
+          creditNoteId, data.invoiceId, businessId, applyAmount.toFixed(),
+          crypto.randomUUID(),
+          JSON.stringify({ application_method: applicationMethod }),
+        ]
       );
 
       const newAppliedTotal = alreadyApplied.plus(applyAmount);
@@ -2054,10 +2166,10 @@ export class InvoiceService {
       const newAmountPaid = invoiceAmountDue.minus(newAmountDue);
       await client.query(
         `UPDATE invoices SET
-          amount_due = $1,
-          amount_paid = $2,
+          amount_due = $1::NUMERIC(18,6),
+          amount_paid = $2::NUMERIC(18,6),
           status = CASE
-            WHEN $1 <= 0 THEN 'paid'
+            WHEN $1::NUMERIC(18,6) <= 0 THEN 'paid'
             WHEN amount_paid > 0 THEN 'partially_paid'
             ELSE status
           END,
@@ -2070,18 +2182,380 @@ export class InvoiceService {
       await client.query(
         `INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata)
          VALUES ($1, 'credit_note_applied', $2, 'user', $3::jsonb)`,
-        [data.invoiceId, null, JSON.stringify({ credit_note_id: creditNoteId, amount: applyAmount.toFixed() })]
+        [data.invoiceId, null, JSON.stringify({ credit_note_id: creditNoteId, amount: applyAmount.toFixed(), method: applicationMethod })]
+      );
+
+      await this.logCreditNoteEvent(
+        creditNoteId,
+        businessId,
+        "credit_note_applied",
+        null,
+        { invoice_id: data.invoiceId, amount: applyAmount.toFixed(), method: applicationMethod },
+        client
       );
 
       await client.query("COMMIT");
       logger.info(`Applied credit note ${creditNoteId} (${applyAmount.toFixed()}) to invoice ${data.invoiceId}`);
-      return { ok: true, remaining: newAmountDue.toFixed() };
+      return { ok: true, remaining: newAmountDue.toFixed(), status: cn.status };
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;
     } finally {
       client.release();
     }
+  }
+
+  private async logCreditNoteEvent(
+    creditNoteId: string,
+    businessId: string,
+    eventType: string,
+    actorId: string | null,
+    metadata: Record<string, unknown> = {},
+    client?: { query: (text: string, params: unknown[]) => Promise<{ rows: unknown[] }> },
+  ): Promise<void> {
+    const executor = client ?? { query };
+    await executor.query(
+      `INSERT INTO credit_note_events (credit_note_id, business_id, event_type, actor_id, actor_type, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+      [
+        creditNoteId,
+        businessId,
+        eventType,
+        actorId,
+        actorId ? "user" : "system",
+        JSON.stringify(metadata),
+      ],
+    );
+  }
+
+  async createCreditNoteDraft(
+    businessId: string,
+    userId: string | null,
+    input: {
+      invoiceId: string;
+      reason?: string | null;
+      notes?: string | null;
+      terms?: string | null;
+      items: Array<{
+        description: string;
+        quantity: string | number;
+        unit: string;
+        unitPrice: string | number;
+        taxRate?: string | number;
+        taxName?: string | null;
+        isTaxInclusive?: boolean;
+      }>;
+    },
+  ): Promise<Record<string, unknown>> {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      const refInvoice = await client.query(
+        `SELECT id, customer_id, invoice_number, currency FROM invoices WHERE id = $1 AND business_id = $2`,
+        [input.invoiceId, businessId]
+      );
+      if (!refInvoice.rows.length) {
+        throw new NotFoundError(`Reference invoice ${input.invoiceId} not found`);
+      }
+
+      const items = input.items ?? [];
+      const lineItems: CalcInputItem[] = items.map((item, idx) => ({
+        description: item.description,
+        quantity: new Decimal(item.quantity),
+        unit: item.unit ?? "each",
+        unitPrice: new Decimal(item.unitPrice),
+        taxRate: new Decimal(item.taxRate ?? 0),
+        tax_name: item.taxName ?? null,
+        isTaxInclusive: item.isTaxInclusive ?? false,
+        sortOrder: idx,
+      }));
+
+      const calcResult = calculationEngine.calculate({
+        currency: refInvoice.rows[0].currency as CurrencyCode,
+        lineItems: lineItems as any,
+        fees: [],
+        invoiceDiscount: undefined,
+        amountPaid: undefined,
+      });
+
+      const res = await client.query(
+        `INSERT INTO credit_notes (
+          business_id, customer_id, reference_invoice_id, reason, notes, terms,
+           currency, issue_date, subtotal, discount_total, tax_total, fee_total, total,
+           applied_total, amount_due, is_finalized, status, created_by
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,FALSE,'draft',$16)
+         RETURNING *`,
+        [
+          businessId,
+          refInvoice.rows[0].customer_id,
+          input.invoiceId,
+          input.reason ?? null,
+          input.notes ?? null,
+          input.terms ?? null,
+          refInvoice.rows[0].currency,
+          new Date().toISOString().split("T")[0],
+          calcResult.subtotal.toFixed(),
+          calcResult.discountTotal.toFixed(),
+          calcResult.taxTotal.toFixed(),
+          calcResult.feeTotal.toFixed(),
+          calcResult.total.toFixed(),
+          "0",
+          calcResult.total.toFixed(),
+          userId,
+        ]
+      );
+
+      const cnId = res.rows[0].id;
+
+      for (let idx = 0; idx < items.length; idx++) {
+        const item = items[idx];
+        const calcItem = calcResult.lineItems[idx];
+        await client.query(
+          `INSERT INTO credit_note_items (
+            credit_note_id, product_id, description, quantity, unit, unit_price,
+            discount, discount_type, tax_rate, tax_name, tax_amount,
+            line_subtotal, line_total, sort_order, is_tax_inclusive
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+          [
+            cnId, null, item.description, item.quantity, item.unit ?? "each",
+            item.unitPrice, 0, "fixed", item.taxRate ?? 0, item.taxName ?? null,
+            calcItem?.taxAmount.toFixed() ?? "0",
+            calcItem?.lineSubtotal.toFixed() ?? "0",
+            calcItem?.lineTotal.toFixed() ?? "0",
+            idx, item.isTaxInclusive ?? false,
+          ]
+        );
+      }
+
+      await this.logCreditNoteEvent(
+        cnId,
+        businessId,
+        "credit_note_created",
+        userId,
+        { invoice_id: input.invoiceId, status: "draft" },
+        client
+      );
+
+      await client.query("COMMIT");
+      logger.info(`Created credit note draft for invoice ${input.invoiceId}`);
+      return res.rows[0];
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async finalizeCreditNote(
+    businessId: string,
+    creditNoteId: string,
+    userId: string | null,
+  ): Promise<{ creditNote: Record<string, unknown>; creditNoteNumber: string }> {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      const existing = await client.query(
+        `SELECT * FROM credit_notes WHERE id = $1 AND business_id = $2 FOR UPDATE`,
+        [creditNoteId, businessId]
+      );
+      if (!existing.rows.length) {
+        throw new NotFoundError(`Credit note ${creditNoteId} not found`);
+      }
+      const cn = existing.rows[0];
+
+      if (cn.status !== "draft") {
+        throw new BusinessLogicError(
+          `Only draft credit notes can be finalized (current status: ${cn.status})`,
+          "INVALID_STATE"
+        );
+      }
+
+      const creditNoteNumber = await creditNoteNumberService.generate(businessId);
+
+      await client.query(
+        `UPDATE credit_notes SET
+          credit_note_number = $1,
+          status = 'finalized',
+          is_finalized = TRUE,
+          finalized_at = NOW(),
+          version = version + 1,
+          updated_at = NOW()
+         WHERE id = $2`,
+        [creditNoteNumber, creditNoteId]
+      );
+
+      const cnSnapshot = await this.buildCreditNoteSnapshot(businessId, creditNoteId, client);
+      const cnSnapshotJson = JSON.stringify(cnSnapshot);
+      const cnSnapshotHash = crypto.createHash("sha256").update(cnSnapshotJson).digest("hex");
+      await client.query(
+        `INSERT INTO credit_note_snapshots (credit_note_id, snapshot, snapshot_hash, pdf_stored, pdf_hash, created_by, created_at)
+         VALUES ($1, $2::jsonb, $3, FALSE, NULL, $4, NOW())
+         ON CONFLICT (credit_note_id) DO UPDATE SET
+           snapshot = $2::jsonb, snapshot_hash = $3, created_by = $4, created_at = NOW()`,
+        [creditNoteId, cnSnapshotJson, cnSnapshotHash, userId]
+      );
+
+      await this.logCreditNoteEvent(
+        creditNoteId,
+        businessId,
+        "credit_note_finalized",
+        userId,
+        { credit_note_number: creditNoteNumber },
+        client
+      );
+
+      await client.query("COMMIT");
+      logger.info(`Finalized credit note ${creditNoteNumber}`);
+      return {
+        creditNote: { ...cn, credit_note_number: creditNoteNumber, status: "finalized", is_finalized: true },
+        creditNoteNumber,
+      };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async cancelCreditNote(
+    businessId: string,
+    creditNoteId: string,
+    userId: string | null,
+    reason: string,
+  ): Promise<{ ok: boolean }> {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      const existing = await client.query(
+        `SELECT * FROM credit_notes WHERE id = $1 AND business_id = $2 FOR UPDATE`,
+        [creditNoteId, businessId]
+      );
+      if (!existing.rows.length) {
+        throw new NotFoundError(`Credit note ${creditNoteId} not found`);
+      }
+      const cn = existing.rows[0];
+
+      const allowedStates = ["draft", "finalized", "sent"];
+      if (!allowedStates.includes(cn.status)) {
+        throw new BusinessLogicError(
+          `Cannot cancel credit note in ${cn.status} status`,
+          "INVALID_STATE"
+        );
+      }
+
+      await client.query(
+        `UPDATE credit_notes SET
+          status = 'cancelled',
+          cancelled_at = NOW(),
+          cancelled_reason = $1,
+          version = version + 1,
+          updated_at = NOW()
+         WHERE id = $2`,
+        [reason, creditNoteId]
+      );
+
+      await this.logCreditNoteEvent(
+        creditNoteId,
+        businessId,
+        "credit_note_cancelled",
+        userId,
+        { reason },
+        client
+      );
+
+      await client.query("COMMIT");
+      return { ok: true };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async voidCreditNote(
+    businessId: string,
+    creditNoteId: string,
+    userId: string | null,
+    reason: string,
+  ): Promise<{ ok: boolean }> {
+    const client = await getClient();
+    try {
+      await client.query("BEGIN");
+
+      const existing = await client.query(
+        `SELECT * FROM credit_notes WHERE id = $1 AND business_id = $2 FOR UPDATE`,
+        [creditNoteId, businessId]
+      );
+      if (!existing.rows.length) {
+        throw new NotFoundError(`Credit note ${creditNoteId} not found`);
+      }
+      const cn = existing.rows[0];
+
+      if (cn.status === "void" || cn.status === "cancelled") {
+        throw new BusinessLogicError(
+          `Credit note already ${cn.status}`,
+          "INVALID_STATE"
+        );
+      }
+
+      await client.query(
+        `UPDATE credit_notes SET
+          status = 'void',
+          voided_at = NOW(),
+          void_reason = $1,
+          version = version + 1,
+          updated_at = NOW()
+         WHERE id = $2`,
+        [reason, creditNoteId]
+      );
+
+      await this.logCreditNoteEvent(
+        creditNoteId,
+        businessId,
+        "credit_note_voided",
+        userId,
+        { reason },
+        client
+      );
+
+      await client.query("COMMIT");
+      return { ok: true };
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  async getCreditNoteEvents(
+    businessId: string,
+    creditNoteId: string,
+    limit: number = 100,
+    offset: number = 0,
+  ): Promise<{ events: Record<string, unknown>[]; total: number }> {
+    const result = await query(
+      `SELECT * FROM credit_note_events
+       WHERE credit_note_id = $1 AND business_id = $2
+       ORDER BY created_at DESC
+       LIMIT $3 OFFSET $4`,
+      [creditNoteId, businessId, limit, offset]
+    );
+    const countResult = await query(
+      `SELECT COUNT(*)::int AS total FROM credit_note_events
+       WHERE credit_note_id = $1 AND business_id = $2`,
+      [creditNoteId, businessId]
+    );
+    return {
+      events: result.rows,
+      total: countResult.rows[0]?.total ?? 0,
+    };
   }
 }
 

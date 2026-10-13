@@ -1688,6 +1688,27 @@ app.get("/api/public/invoice/:token", async (req: AuthRequest, res, next) => {
 // ============================================================================
 // CREDIT NOTES
 // ============================================================================
+// CREDIT NOTES
+// ============================================================================
+
+app.post(
+  "/api/credit-notes/draft",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await invoiceService.createCreditNoteDraft(
+        req.user!.businessId,
+        req.user!.id,
+        req.body,
+      );
+      res.status(201).json({ creditNote: result });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 app.post(
   "/api/credit-notes",
@@ -1719,8 +1740,15 @@ app.get(
         req.user!.businessId,
         {
           invoiceId: req.query.invoiceId as string | undefined,
+          status: req.query.status as string | undefined,
+          customerId: req.query.customerId as string | undefined,
+          search: req.query.search as string | undefined,
+          dateFrom: req.query.dateFrom as string | undefined,
+          dateTo: req.query.dateTo as string | undefined,
           limit: req.query.limit as string | undefined,
           offset: req.query.offset as string | undefined,
+          sortBy: req.query.sortBy as string | undefined,
+          sortOrder: (req.query.sortOrder as "asc" | "desc" | undefined) ?? "desc",
         },
       );
       res.json(result);
@@ -1750,6 +1778,65 @@ app.get(
   },
 );
 
+app.get(
+  "/api/credit-notes/:id/events",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await invoiceService.getCreditNoteEvents(
+        req.user!.businessId,
+        req.params.id,
+        Number(req.query.limit ?? 100),
+        Number(req.query.offset ?? 0),
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.patch(
+  "/api/credit-notes/:id/finalize",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await invoiceService.finalizeCreditNote(
+        req.user!.businessId,
+        req.params.id,
+        req.user!.id,
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.post(
+  "/api/credit-notes/:id/send",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await invoiceService.sendCreditNote(
+        req.user!.businessId,
+        req.params.id,
+        req.body,
+        req.user!.id,
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 app.post(
   "/api/credit-notes/:id/apply",
   requireAuth,
@@ -1760,7 +1847,51 @@ app.post(
       const result = await invoiceService.applyCreditNote(
         req.user!.businessId,
         req.params.id,
-        req.body,
+        {
+          invoiceId: req.body.invoiceId,
+          amount: req.body.amount,
+          applicationMethod: req.body.applicationMethod,
+        },
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.post(
+  "/api/credit-notes/:id/cancel",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await invoiceService.cancelCreditNote(
+        req.user!.businessId,
+        req.params.id,
+        req.user!.id,
+        req.body?.reason ?? "",
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.post(
+  "/api/credit-notes/:id/void",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const result = await invoiceService.voidCreditNote(
+        req.user!.businessId,
+        req.params.id,
+        req.user!.id,
+        req.body?.reason ?? "",
       );
       res.json(result);
     } catch (err) {
@@ -1799,7 +1930,7 @@ app.get(
   },
 );
 
-app.get(
+app.post(
   "/api/credit-notes/:id/share-link",
   requireAuth,
   async (req: AuthRequest, res, next) => {
@@ -1827,60 +1958,6 @@ app.get(
         token: creditNote.public_token,
         url: `${env.APP_PUBLIC_BASE_URL}/credit-notes/${creditNote.public_token}`,
       });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
-
-app.post(
-  "/api/credit-notes/:id/send",
-  requireAuth,
-  async (req: AuthRequest, res, next) => {
-    if (!req.user?.businessId)
-      return res.status(400).json({ error: "No business context" });
-    try {
-      const result = await invoiceService.sendCreditNote(
-        req.user!.businessId,
-        req.params.id,
-        req.body,
-        req.user!.id,
-      );
-      res.json(result);
-    } catch (err) {
-      next(err);
-    }
-  },
-);
-
-app.post(
-  "/api/credit-notes/:id/void",
-  requireAuth,
-  async (req: AuthRequest, res, next) => {
-    if (!req.user?.businessId)
-      return res.status(400).json({ error: "No business context" });
-    try {
-      await query(
-        `UPDATE credit_notes SET status = 'voided', voided_at = NOW(), version = version + 1
-       WHERE id = $1 AND business_id = $2 AND status != 'voided'`,
-        [req.params.id, req.user!.businessId],
-      );
-
-      await query(
-        `INSERT INTO invoice_events (invoice_id, event_type, actor_id, actor_type, metadata)
-       VALUES ($1, 'credit_note_voided', $2, 'user', $3::jsonb)`,
-        [
-          req.params.id,
-          req.user!.id,
-          JSON.stringify({ reason: req.body.reason ?? null }),
-        ],
-      );
-
-      const creditNote = await invoiceService.getCreditNoteById(
-        req.user!.businessId,
-        req.params.id,
-      );
-      res.json({ creditNote });
     } catch (err) {
       next(err);
     }

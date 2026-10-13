@@ -1,11 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { getCreditNote, getInvoices, type InvoiceSearchParams, applyCreditNote } from "@/api/client";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  getCreditNote,
+  getInvoices,
+  cancelCreditNote,
+  voidCreditNote,
+  type InvoiceSearchParams,
+} from "@/api/client";
 import {
   PageHeader,
   StatusBadge,
   creditNoteStatusConfig,
   Money,
+  CreditNoteInvoiceLink,
+  CreditNoteTotalsSummary,
+  CreditNoteAppliedSummary,
+  CreditNoteActivityTimeline,
+  ApplyCreditNoteDialog,
+  ConfirmationDialog,
 } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import SectionCard from "@/components/SectionCard";
@@ -15,22 +27,31 @@ import {
   Send,
   Download,
   Plus,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import { formatDate, formatTaxRateWithName } from "@/utils/format";
+import { useToast } from "@/components/ui/ToastProvider";
 import type { ApiCreditNote, ApiInvoiceListItem } from "@/types/api";
 import { Decimal } from "decimal.js";
 
 export default function CreditNoteDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const action = searchParams.get("action") ?? "";
+  const { toast } = useToast();
+
   const [creditNote, setCreditNote] = useState<ApiCreditNote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
-  const [applyAmount, setApplyAmount] = useState<string>("");
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>("");
   const [availableInvoices, setAvailableInvoices] = useState<ApiInvoiceListItem[]>([]);
-  const [isApplying, setIsApplying] = useState(false);
+
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [confirmVoidOpen, setConfirmVoidOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isVoiding, setIsVoiding] = useState(false);
 
   const fetchCreditNote = useCallback(async () => {
     if (!id) return;
@@ -51,15 +72,8 @@ export default function CreditNoteDetail() {
     fetchCreditNote();
   }, [fetchCreditNote]);
 
-  const appliedAmount = new Decimal(creditNote?.applied_total ?? 0);
-  const totalAmount = new Decimal(creditNote?.total ?? 0);
-  const remainingCredit = totalAmount.minus(appliedAmount);
-  const canApply = creditNote && (creditNote.status === "finalized" || creditNote.status === "sent") && remainingCredit.gt(0);
-
-  const handleApplyClick = async () => {
+  const handleApplyClick = useCallback(async () => {
     if (!creditNote) return;
-    setSelectedInvoiceId("");
-    setApplyAmount("");
     try {
       const data = await getInvoices({
         limit: 100,
@@ -73,27 +87,66 @@ export default function CreditNoteDetail() {
       setAvailableInvoices([]);
     }
     setApplyDialogOpen(true);
+  }, [creditNote]);
+
+  useEffect(() => {
+    if (action === "apply" && creditNote && (creditNote.status === "finalized" || creditNote.status === "sent")) {
+      handleApplyClick();
+    }
+  }, [action, creditNote, handleApplyClick]);
+
+  useEffect(() => {
+    if (action === "apply" && creditNote && (creditNote.status === "finalized" || creditNote.status === "sent")) {
+      handleApplyClick();
+    }
+  }, [action, creditNote, handleApplyClick]);
+
+  const appliedAmount = creditNote ? new Decimal(creditNote.applied_total ?? 0) : new Decimal(0);
+  const totalAmount = creditNote ? new Decimal(creditNote.total ?? 0) : new Decimal(0);
+  const remainingCredit = totalAmount.minus(appliedAmount);
+  const canApply = creditNote && (creditNote.status === "finalized" || creditNote.status === "sent") && remainingCredit.gt(0);
+  const isCancelledOrVoid = creditNote && (creditNote.status === "cancelled" || creditNote.status === "void" || creditNote.status === "refunded");
+
+  const handleApplySuccess = (result: { ok: boolean; remaining: string; status: string }) => {
+    toast(
+      result.ok ? "Credit note applied successfully" : "Failed to apply credit note",
+      { type: result.ok ? "success" : "error", title: result.ok ? "Applied" : "Error" }
+    );
+    fetchCreditNote();
   };
 
-  const confirmApply = async () => {
-    if (!creditNote || !selectedInvoiceId || !applyAmount) return;
-    setIsApplying(true);
+  const handleCancelWithReason = async (reason: string) => {
+    if (!creditNote) return;
+    setIsCancelling(true);
     try {
-      const result = await applyCreditNote(creditNote.id, {
-        invoiceId: selectedInvoiceId,
-        amount: applyAmount,
-      });
-      if (result.ok) {
-        fetchCreditNote();
-        setApplyDialogOpen(false);
-      }
+      await cancelCreditNote(creditNote.id, reason);
+      toast("Credit note cancelled", { type: "success", title: "Cancelled" });
+      setConfirmCancelOpen(false);
+      fetchCreditNote();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to apply credit note";
-      setError(message);
+      toast(err instanceof Error ? err.message : "Failed to cancel", { type: "error", title: "Error" });
     } finally {
-      setIsApplying(false);
+      setIsCancelling(false);
     }
   };
+
+  const handleVoidWithReason = async (reason: string) => {
+    if (!creditNote) return;
+    setIsVoiding(true);
+    try {
+      await voidCreditNote(creditNote.id, reason);
+      toast("Credit note voided", { type: "success", title: "Voided" });
+      setConfirmVoidOpen(false);
+      fetchCreditNote();
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : "Failed to void", { type: "error", title: "Error" });
+    } finally {
+      setIsVoiding(false);
+    }
+  };
+
+  const canCancel = creditNote && creditNote.status === "draft";
+  const canVoid = creditNote && (creditNote.status === "finalized" || creditNote.status === "sent" || creditNote.status === "partially_applied");
 
   if (isLoading) {
     return (
@@ -130,10 +183,6 @@ export default function CreditNoteDetail() {
     );
   }
 
-  const totalDisplay = new Decimal(creditNote.total);
-  const balanceDue = new Decimal(creditNote.amount_due ?? 0);
-  const appliedTotal = new Decimal(creditNote.applied_total ?? 0);
-
   return (
     <div className="page-container">
       <PageHeader
@@ -155,7 +204,11 @@ export default function CreditNoteDetail() {
               Back
             </Button>
             {canApply && (
-              <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={handleApplyClick}>
+              <Button
+                variant="primary"
+                icon={<Plus className="h-4 w-4" />}
+                onClick={handleApplyClick}
+              >
                 Apply to Invoice
               </Button>
             )}
@@ -167,12 +220,34 @@ export default function CreditNoteDetail() {
                 Send
               </Button>
             )}
+            {canCancel && (
+              <Button
+                variant="secondary"
+                icon={<XCircle className="h-4 w-4" />}
+                onClick={() => setConfirmCancelOpen(true)}
+              >
+                Cancel Draft
+              </Button>
+            )}
+            {canVoid && (
+              <Button
+                variant="danger"
+                icon={<Clock className="h-4 w-4" />}
+                onClick={() => setConfirmVoidOpen(true)}
+              >
+                Void
+              </Button>
+            )}
           </div>
         }
       />
 
       <div className="space-y-6">
-        {/* Credit Note Details */}
+        <CreditNoteInvoiceLink
+          creditNote={creditNote}
+          onNavigateToInvoice={(invoiceId) => navigate(`/app/invoices/${invoiceId}`)}
+        />
+
         <SectionCard title="Credit Note Details">
           <div className="p-5 space-y-4">
             <div className="grid grid-cols-2 gap-6">
@@ -187,21 +262,6 @@ export default function CreditNoteDetail() {
                 <p className="text-sm text-primary mt-1">{creditNote.currency}</p>
               </div>
               <div>
-                <span className="text-xs font-medium text-tertiary uppercase tracking-wider">Reference Invoice</span>
-                <p className="text-sm text-primary mt-1">
-                  {creditNote.reference_invoice_number
-                    ? (
-                      <a
-                        href={`/app/invoices/${creditNote.reference_invoice_id}`}
-                        className="text-primary hover:underline"
-                      >
-                        {creditNote.reference_invoice_number}
-                      </a>
-                    )
-                    : "—"}
-                </p>
-              </div>
-              <div>
                 <span className="text-xs font-medium text-tertiary uppercase tracking-wider">Customer</span>
                 <p className="text-sm text-primary mt-1">
                   {creditNote.customer_name ?? "—"}
@@ -210,6 +270,14 @@ export default function CreditNoteDetail() {
                   )}
                 </p>
               </div>
+              {creditNote.finalized_at && (
+                <div>
+                  <span className="text-xs font-medium text-tertiary uppercase tracking-wider">Finalized At</span>
+                  <p className="text-sm text-primary mt-1">
+                    {formatDate(creditNote.finalized_at)}
+                  </p>
+                </div>
+              )}
             </div>
 
             {creditNote.reason && (
@@ -235,7 +303,6 @@ export default function CreditNoteDetail() {
           </div>
         </SectionCard>
 
-        {/* Line Items */}
         {creditNote.items && creditNote.items.length > 0 && (
           <SectionCard title="Line Items">
             <div className="overflow-x-auto">
@@ -271,7 +338,6 @@ export default function CreditNoteDetail() {
           </SectionCard>
         )}
 
-        {/* Fees */}
         {creditNote.fees && creditNote.fees.length > 0 && (
           <SectionCard title="Fees">
             <div className="overflow-x-auto">
@@ -301,150 +367,102 @@ export default function CreditNoteDetail() {
           </SectionCard>
         )}
 
-        {/* Totals */}
-        <SectionCard>
+        <SectionCard title="Totals">
           <div className="p-5">
-            <div className="space-y-2 max-w-xs ml-auto">
-              <div className="flex justify-between text-tertiary">
-                <span>Subtotal</span>
-                <Money amount={creditNote.subtotal} currency={creditNote.currency} />
-              </div>
-              {Number(new Decimal(creditNote.discount_total).toNumber()) !== 0 && (
-                <div className="flex justify-between text-tertiary">
-                  <span>Discount</span>
-                  <Money amount={new Decimal(creditNote.discount_total).negated()} currency={creditNote.currency} />
-                </div>
-              )}
-              <div className="flex justify-between text-tertiary">
-                <span>Tax</span>
-                <Money amount={creditNote.tax_total} currency={creditNote.currency} />
-              </div>
-              {creditNote.fees && creditNote.fees.length > 0 && Number(new Decimal(creditNote.fee_total).toNumber()) !== 0 && (
-                <div className="flex justify-between text-tertiary">
-                  <span>Fees</span>
-                  <Money amount={creditNote.fee_total} currency={creditNote.currency} />
-                </div>
-              )}
-              <div className="flex justify-between text-tertiary">
-                <span>Applied</span>
-                <Money amount={appliedTotal} currency={creditNote.currency} />
-              </div>
-              <div className="flex justify-between border-t border-border pt-2 text-lg font-bold text-primary">
-                <span>Balance Due</span>
-                <Money amount={balanceDue} currency={creditNote.currency} signed />
-              </div>
-              <div className="flex justify-between border-t border-border pt-2">
-                <span className="text-tertiary">Total</span>
-                <Money amount={totalDisplay} currency={creditNote.currency} signed />
-              </div>
+            <div className="max-w-xs ml-auto">
+              <CreditNoteTotalsSummary creditNote={creditNote} />
             </div>
           </div>
         </SectionCard>
 
-        {/* Applications */}
-        <SectionCard title="Applications">
-          <div className="p-5">
-            {creditNote.applications && creditNote.applications.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-surface-alt">
-                      <th className="text-left py-2 px-3 text-xs font-medium text-tertiary uppercase">Invoice</th>
-                      <th className="text-right py-2 px-3 text-xs font-medium text-tertiary uppercase">Amount Applied</th>
-                      <th className="text-left py-2 px-3 text-xs font-medium text-tertiary uppercase">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {creditNote.applications.map((app) => (
-                      <tr key={app.id} className="border-b border-border/50">
-                        <td className="py-2 px-3 text-sm text-primary">
-                          {app.invoice_id ? (
-                            <a
-                              href={`/app/invoices/${app.invoice_id}`}
-                              className="text-primary hover:underline"
-                            >
-                              {app.invoice_id}
-                            </a>
-                          ) : "—"}
-                        </td>
-                        <td className="py-2 px-3 text-right text-sm font-medium text-primary">
-                          <Money amount={app.amount} currency={creditNote.currency} signed />
-                        </td>
-                        <td className="py-2 px-3 text-sm text-tertiary">{formatDate(app.applied_at)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        {creditNote.applications && creditNote.applications.length > 0 && (
+          <SectionCard title="Application Summary">
+            <div className="p-5">
+              <CreditNoteAppliedSummary creditNote={creditNote} />
+            </div>
+          </SectionCard>
+        )}
+
+        {creditNote.events && creditNote.events.length > 0 && (
+          <SectionCard title="Activity Timeline">
+            <div className="p-5">
+              <CreditNoteActivityTimeline events={creditNote.events} />
+            </div>
+          </SectionCard>
+        )}
+
+        {isCancelledOrVoid && creditNote.cancelled_reason && (
+          <SectionCard title="Cancellation / Void Details">
+            <div className="p-5 space-y-2">
+              <div className="text-sm text-tertiary">
+                <span className="font-medium text-primary">Status:</span>{" "}
+                <span className="text-error-text">{creditNote.status}</span>
               </div>
-            ) : (
-              <p className="text-sm text-tertiary">This credit note has not been applied to any invoice yet.</p>
-            )}
-          </div>
-        </SectionCard>
+              <div className="text-sm text-tertiary">
+                <span className="font-medium text-primary">Reason:</span> {creditNote.cancelled_reason ?? creditNote.void_reason ?? "—"}
+              </div>
+              {(creditNote.cancelled_at ?? creditNote.voided_at) && (
+                <div className="text-sm text-tertiary">
+                  <span className="font-medium text-primary">Date:</span>{" "}
+                  {formatDate(creditNote.cancelled_at ?? creditNote.voided_at ?? "")}
+                </div>
+              )}
+            </div>
+          </SectionCard>
+        )}
       </div>
 
-      {/* Apply Credit Note Dialog */}
-      {applyDialogOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay"
-          onClick={() => !isApplying && setApplyDialogOpen(false)}
-        >
-          <div
-            className="relative mx-4 w-full max-w-lg rounded-xl bg-surface border border-border shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6 pb-4">
-              <h2 className="text-lg font-semibold text-primary">Apply Credit Note</h2>
-              <p className="mt-2 text-sm text-secondary">
-                Remaining credit: <strong>{remainingCredit.toFixed(2)}</strong>
-              </p>
-              <div className="mt-4 space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-secondary mb-1">Target Invoice</label>
-                  <select
-                    className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-                    value={selectedInvoiceId}
-                    onChange={(e) => setSelectedInvoiceId(e.target.value)}
-                  >
-                    <option value="">Select an invoice</option>
-                    {availableInvoices.map((inv) => (
-                      <option key={inv.id} value={inv.id}>
-                        {inv.invoice_number ?? inv.id} — {formatDate(inv.issue_date ?? undefined)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-secondary mb-1">Amount to Apply</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max={remainingCredit.toFixed(2)}
-                    className="w-full rounded-lg border border-input-border bg-input px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-primary placeholder-target"
-                    placeholder={remainingCredit.toFixed(2)}
-                    value={applyAmount}
-                    onChange={(e) => setApplyAmount(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 border-t border-border-subtle p-6 pt-4">
-              <Button variant="secondary" size="sm" onClick={() => !isApplying && setApplyDialogOpen(false)} disabled={isApplying}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={confirmApply}
-                disabled={isApplying || !selectedInvoiceId || !applyAmount}
-                loading={isApplying}
-              >
-                Apply Credit
-              </Button>
-            </div>
-          </div>
-        </div>
+      {creditNote.status !== "cancelled" && creditNote.status !== "void" && (
+        <ApplyCreditNoteDialog
+          open={action === "apply"}
+          onClose={() => navigate(-1)}
+          creditNote={creditNote}
+          onSuccess={handleApplySuccess}
+          availableInvoices={availableInvoices}
+        />
+      )}
+
+      <ConfirmationDialog
+        open={confirmCancelOpen}
+        onClose={() => setConfirmCancelOpen(false)}
+        onConfirm={(data) => {
+          const reason = data?.reason ?? "";
+          if (reason.trim()) handleCancelWithReason(reason);
+        }}
+        title="Cancel Draft Credit Note"
+        message="This will cancel the credit note. You can still create a new one."
+        confirmLabel="Cancel Draft"
+        destructive
+        isLoading={isCancelling}
+        showInput
+        inputLabel="Reason"
+        inputPlaceholder="Enter reason for cancellation..."
+      />
+
+      <ConfirmationDialog
+        open={confirmVoidOpen}
+        onClose={() => setConfirmVoidOpen(false)}
+        onConfirm={(data) => {
+          const reason = data?.reason ?? "";
+          if (reason.trim()) handleVoidWithReason(reason);
+        }}
+        title="Void Credit Note"
+        message="This action cannot be undone. The credit note will be marked as voided and all applications will be reversed."
+        confirmLabel="Void Credit Note"
+        destructive
+        isLoading={isVoiding}
+        showInput
+        inputLabel="Reason"
+        inputPlaceholder="Enter reason for voiding..."
+      />
+      {creditNote && !isCancelledOrVoid && (
+        <ApplyCreditNoteDialog
+          open={applyDialogOpen}
+          onClose={() => setApplyDialogOpen(false)}
+          creditNote={creditNote}
+          onSuccess={handleApplySuccess}
+          availableInvoices={availableInvoices}
+        />
       )}
     </div>
   );

@@ -1693,6 +1693,13 @@ export interface CreditNoteSearchParams {
   limit?: number;
   offset?: number;
   invoiceId?: string;
+  status?: string;
+  customerId?: string;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export async function getCreditNotes(params?: CreditNoteSearchParams): Promise<{
@@ -1735,11 +1742,49 @@ export async function createCreditNote(
   return res.data;
 }
 
+export async function createCreditNoteDraft(
+  data: CreateCreditNoteInput,
+): Promise<{ creditNote: ApiCreditNote }> {
+  const res = await api.post("/credit-notes/draft", data);
+  return res.data;
+}
+
+export async function finalizeCreditNote(
+  creditNoteId: string,
+): Promise<{ creditNote: ApiCreditNote; creditNoteNumber: string }> {
+  const res = await api.patch(`/credit-notes/${creditNoteId}/finalize`);
+  return res.data;
+}
+
 export async function applyCreditNote(
   creditNoteId: string,
-  data: { invoiceId: string; amount: string | number },
-): Promise<{ ok: boolean; remaining: string }> {
+  data: { invoiceId: string; amount: string | number; applicationMethod?: "invoice_offset" | "balance_credit" | "refund" },
+): Promise<{ ok: boolean; remaining: string; status: string }> {
   const res = await api.post(`/credit-notes/${creditNoteId}/apply`, data);
+  return res.data;
+}
+
+export async function cancelCreditNote(
+  creditNoteId: string,
+  reason: string,
+): Promise<{ ok: boolean }> {
+  const res = await api.post(`/credit-notes/${creditNoteId}/cancel`, { reason });
+  return res.data;
+}
+
+export async function voidCreditNote(
+  creditNoteId: string,
+  reason: string,
+): Promise<{ ok: boolean }> {
+  const res = await api.post(`/credit-notes/${creditNoteId}/void`, { reason });
+  return res.data;
+}
+
+export async function getCreditNoteEvents(
+  creditNoteId: string,
+  params?: { limit?: number; offset?: number },
+): Promise<{ events: any[]; total: number }> {
+  const res = await api.get(`/credit-notes/${creditNoteId}/events`, { params });
   return res.data;
 }
 
