@@ -96,7 +96,7 @@ export default function CreditNoteWorkspace() {
   const [availableInvoices, setAvailableInvoices] = useState<ApiInvoiceListItem[]>([]);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
 
-  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>(JSON.stringify(state));
 
   const loadCreditNote = useCallback(async () => {
