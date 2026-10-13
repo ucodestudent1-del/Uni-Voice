@@ -38,6 +38,10 @@ const CreditNotes = lazy(() => import("./pages/CreditNotes"));
 const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
 const CreditNoteForm = lazy(() => import("./pages/CreditNoteForm"));
 
+const QuoteList = lazy(() => import("./pages/QuoteList"));
+const QuoteWorkspace = lazy(() => import("./pages/QuoteWorkspace"));
+const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
+
 const Fallback = () => (
   <div className="flex items-center justify-center h-64 text-secondary">
     Loading…
@@ -357,6 +361,38 @@ export default function App() {
             element={
               <Suspense fallback={<Fallback />}>
                 <CreditNoteDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <QuoteList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes/new"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <QuoteWorkspace />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes/:id"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <QuoteDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="quotes/:id/edit"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <QuoteWorkspace />
               </Suspense>
             }
           />

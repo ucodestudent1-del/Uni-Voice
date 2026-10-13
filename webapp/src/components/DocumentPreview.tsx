@@ -4,7 +4,7 @@ import { formatDate, formatTaxRateWithName, formatCurrency } from "@/utils/forma
 import type { CalculationResult } from "@/types/calculation";
 import type { ApiCustomer, ApiBusiness } from "@/types/api";
 
-export type DocumentType = "invoice" | "credit-note" | "receipt" | "purchase-order";
+export type DocumentType = "invoice" | "credit-note" | "receipt" | "purchase-order" | "quote";
 
 export interface DocumentPreviewProps {
   documentType: DocumentType;
@@ -13,6 +13,7 @@ export interface DocumentPreviewProps {
   business?: ApiBusiness | null;
   issueDate?: string;
   dueDate?: string;
+  expiryDate?: string;
   poNumber?: string;
   projectReference?: string;
   customerId?: string;
@@ -28,6 +29,7 @@ export interface DocumentPreviewProps {
   paymentInstructions?: string;
   notes?: string;
   terms?: string;
+  scopeOfWork?: string;
   footerText?: string;
   signedAmounts?: boolean;
 }
@@ -37,6 +39,7 @@ const DOCUMENT_LABELS: Record<DocumentType, string> = {
   "credit-note": "Credit Note",
   receipt: "Receipt",
   "purchase-order": "Purchase Order",
+  quote: "Quotation",
 };
 
 function AddressLines({ line1, line2, city, state, postal, country }: {
@@ -66,6 +69,7 @@ export default function DocumentPreview({
   business,
   issueDate,
   dueDate,
+  expiryDate,
   poNumber,
   projectReference,
   customerId,
@@ -74,6 +78,7 @@ export default function DocumentPreview({
   paymentInstructions,
   notes,
   terms,
+  scopeOfWork,
   footerText,
   signedAmounts = false,
 }: DocumentPreviewProps) {
@@ -200,6 +205,11 @@ export default function DocumentPreview({
               {dueDate && (
                 <div className="text-tertiary">
                   <span className="font-medium">Due date:</span> {formatDate(dueDate)}
+                </div>
+              )}
+              {expiryDate && documentType === "quote" && (
+                <div className="text-tertiary">
+                  <span className="font-medium">Expiry date:</span> {formatDate(expiryDate)}
                 </div>
               )}
               {currency && (
@@ -342,14 +352,31 @@ export default function DocumentPreview({
                <Money amount={calcResult.total} currency={currency} signed={signedAmounts} />
              </div>
             {documentType === "invoice" && !calcResult.amountDue.isZero() && (
-              <div className="flex justify-between text-lg font-bold text-primary">
-                <span>Amount Due</span>
-                <Money amount={calcResult.amountDue} currency={currency} />
-              </div>
-            )}
-          </div>
+               <div className="flex justify-between text-lg font-bold text-primary">
+                 <span>Amount Due</span>
+                 <Money amount={calcResult.amountDue} currency={currency} />
+               </div>
+             )}
+             {documentType === "quote" && expiryDate && (
+               <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-border">
+                 <span>Expires</span>
+                 <span className="text-tertiary font-normal">{formatDate(expiryDate)}</span>
+               </div>
+             )}
+           </div>
 
-          {/* Section 6: Payment Information */}
+           {/* Section 6: Scope of Work (Quote only) */}
+           {scopeOfWork && documentType === "quote" && (
+             <div className="mb-6">
+               <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
+                 <FileText className="h-4 w-4" />
+                 Scope of Work
+               </h4>
+               <div className="text-tertiary whitespace-pre-line">{scopeOfWork}</div>
+             </div>
+           )}
+
+           {/* Section 6: Payment Information */}
           {paymentInstructions && (
             <div className="mb-6">
               <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
