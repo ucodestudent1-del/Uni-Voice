@@ -6,7 +6,7 @@ import { useState } from "react";
 import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
 import type { ComponentType } from "react";
-import { Menu } from "lucide-react";
+import { FileText, Menu } from "lucide-react";
 
 import type { PlanTier } from "@/types/app";
 
@@ -38,6 +38,7 @@ export default function Layout() {
     },
     { name: "Customers", to: "/app/customers" },
     { name: "Products", to: "/app/products" },
+    { name: "Documents", to: "/app/documents", icon: FileText },
     { name: "Payments", to: "/app/payments" },
     {
       name: "Receipts",

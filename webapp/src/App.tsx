@@ -30,6 +30,7 @@ const ReceiptDetail = lazy(() => import("./pages/ReceiptDetail"));
 const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
 const Reports = lazy(() => import("./pages/Reports"));
 const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
+const Documents = lazy(() => import("./pages/Documents"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 
 const Fallback = () => (
@@ -295,6 +296,14 @@ export default function App() {
             element={
               <Suspense fallback={<Fallback />}>
                 <ReceiptDetail />
+              </Suspense>
+            }
+          />
+          <Route
+            path="documents"
+            element={
+              <Suspense fallback={<Fallback />}>
+                <Documents />
               </Suspense>
             }
           />
