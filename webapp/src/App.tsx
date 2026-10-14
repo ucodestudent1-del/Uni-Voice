@@ -30,17 +30,14 @@ const ReceiptDetail = lazy(() => import("./pages/ReceiptDetail"));
 const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
 const Reports = lazy(() => import("./pages/Reports"));
 const InvoiceList = lazy(() => import("./pages/InvoiceList"));
-const InvoiceWorkspace = lazy(() => import("./pages/InvoiceWorkspace"));
+const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 
 const CreditNotes = lazy(() => import("./pages/CreditNotes"));
 const CreditNoteDetail = lazy(() => import("./pages/CreditNoteDetail"));
-const CreditNoteForm = lazy(() => import("./pages/CreditNoteForm"));
-const CreditNoteWorkspace = lazy(() => import("./pages/CreditNoteWorkspace"));
 
 const QuoteList = lazy(() => import("./pages/QuoteList"));
-const QuoteWorkspace = lazy(() => import("./pages/QuoteWorkspace"));
 const QuoteDetail = lazy(() => import("./pages/QuoteDetail"));
 
 const Fallback = () => (
@@ -321,7 +318,7 @@ export default function App() {
             path="invoices/new"
             element={
               <Suspense fallback={<Fallback />}>
-                <InvoiceWorkspace />
+                <DocumentWorkspace docType="invoice" />
               </Suspense>
             }
           />
@@ -337,7 +334,7 @@ export default function App() {
             path="invoices/:id/edit"
             element={
               <Suspense fallback={<Fallback />}>
-                <InvoiceWorkspace />
+                <DocumentWorkspace docType="invoice" />
               </Suspense>
             }
           />
@@ -353,7 +350,7 @@ export default function App() {
             path="credit-notes/new"
             element={
               <Suspense fallback={<Fallback />}>
-                <CreditNoteForm />
+                <DocumentWorkspace docType="credit-note" />
               </Suspense>
             }
           />
@@ -365,14 +362,14 @@ export default function App() {
                 </Suspense>
               }
             />
-            <Route
-              path="credit-notes/:id/edit"
-              element={
-                <Suspense fallback={<Fallback />}>
-                  <CreditNoteWorkspace />
-                </Suspense>
-              }
-            />
+              <Route
+                path="credit-notes/:id/edit"
+                element={
+                  <Suspense fallback={<Fallback />}>
+                    <DocumentWorkspace docType="credit-note" />
+                  </Suspense>
+                }
+              />
           <Route
             path="quotes"
             element={
@@ -385,7 +382,7 @@ export default function App() {
             path="quotes/new"
             element={
               <Suspense fallback={<Fallback />}>
-                <QuoteWorkspace />
+                <DocumentWorkspace docType="quote" />
               </Suspense>
             }
           />
@@ -401,7 +398,7 @@ export default function App() {
             path="quotes/:id/edit"
             element={
               <Suspense fallback={<Fallback />}>
-                <QuoteWorkspace />
+                <DocumentWorkspace docType="quote" />
               </Suspense>
             }
           />
