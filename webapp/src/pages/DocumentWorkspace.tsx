@@ -430,6 +430,11 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     }
   }, [calcInput, calcEngine]);
 
+  const effectiveReason = useMemo(
+    () => (docType === "credit-note" && state.reason === "other" ? state.customReason : state.reason),
+    [docType, state.reason, state.customReason]
+  );
+
   function hasUnsavedChanges(): boolean {
     if (isNew) return true;
     if (!document) return false;
@@ -1381,6 +1386,12 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
               terms={state.terms}
               scopeOfWork={state.scopeOfWork}
               signedAmounts={docType === "credit-note"}
+              reason={docType === "credit-note" ? effectiveReason : undefined}
+              shippingDescription={docType === "invoice" ? state.shippingDescription : undefined}
+              shippingAmount={docType === "invoice" ? state.shippingAmount : undefined}
+              shippingTaxRate={docType === "invoice" ? state.shippingTaxRate : undefined}
+              status={document?.status}
+              paymentState={document?.payment_state ?? null}
             />
           </div>
         </div>

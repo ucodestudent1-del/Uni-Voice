@@ -1,5 +1,5 @@
 import { FileText, Globe, Phone, Mail, MapPin, CreditCard } from "lucide-react";
-import { Money } from "@/components/ui";
+import { Money, StatusBadge, paymentStatusConfig } from "@/components/ui";
 import { formatDate, formatTaxRateWithName, formatCurrency } from "@/utils/format";
 import type { CalculationResult } from "@/types/calculation";
 import type { ApiCustomer, ApiBusiness } from "@/types/api";
@@ -32,6 +32,12 @@ export interface DocumentPreviewProps {
   scopeOfWork?: string;
   footerText?: string;
   signedAmounts?: boolean;
+  reason?: string | null;
+  shippingDescription?: string;
+  shippingAmount?: string;
+  shippingTaxRate?: string;
+  status?: string;
+  paymentState?: string | null;
 }
 
 const DOCUMENT_LABELS: Record<DocumentType, string> = {
@@ -81,6 +87,12 @@ export default function DocumentPreview({
   scopeOfWork,
   footerText,
   signedAmounts = false,
+  reason,
+  shippingDescription,
+  shippingAmount,
+  shippingTaxRate,
+  status,
+  paymentState,
 }: DocumentPreviewProps) {
   const label = DOCUMENT_LABELS[documentType];
   const currency = calcResult?.currency ?? sourceInvoice?.currency ?? "USD";
@@ -194,6 +206,16 @@ export default function DocumentPreview({
             {/* Section 2: Invoice Details */}
             <div className="text-right">
               <div className="text-2xl font-bold text-primary">{label.toUpperCase()}</div>
+              {status && (
+                <div className="mt-1 flex justify-end">
+                  <StatusBadge
+                    status={status}
+                    showIcon
+                    size="sm"
+                    className="whitespace-nowrap"
+                  />
+                </div>
+              )}
               <div className="text-xl font-bold text-primary mt-1">
                 {documentNumber ?? "(Unsaved)"}
               </div>
@@ -258,6 +280,74 @@ export default function DocumentPreview({
                 {displayCustomer.taxId && (
                   <div className="text-tertiary mt-0.5">
                     <span className="font-medium">Tax ID:</span> {displayCustomer.taxId}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Credit Note Reason */}
+          {documentType === "credit-note" && reason && (
+            <div className="mb-6">
+              <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
+                <FileText className="h-4 w-4" />
+                Reason
+              </h4>
+              <div className="text-tertiary">{reason}</div>
+            </div>
+          )}
+
+          {/* Credit Note Reference Invoice */}
+          {documentType === "credit-note" && sourceInvoice && (
+            <div className="mb-6">
+              <h4 className="font-medium text-primary mb-1.5">Reference Invoice</h4>
+              <div className="text-sm">
+                <div className="flex justify-between">
+                  <span className="text-tertiary">Invoice</span>
+                  <span className="text-primary font-medium">
+                    {sourceInvoice.invoice_number || "#—"}
+                  </span>
+                </div>
+                {sourceInvoice.customer_name && (
+                  <div className="flex justify-between mt-0.5">
+                    <span className="text-tertiary">Customer</span>
+                    <span className="text-primary">{sourceInvoice.customer_name}</span>
+                  </div>
+                )}
+                {sourceInvoice.total && (
+                  <div className="flex justify-between mt-0.5">
+                    <span className="text-tertiary">Total</span>
+                    <span className="text-primary">
+                      {formatCurrency(sourceInvoice.total, sourceInvoice.currency)}
+                    </span>
+                  </div>
+                )}
+                {sourceInvoice.amount_due && (
+                  <div className="flex justify-between mt-0.5">
+                    <span className="text-tertiary">Amount Due</span>
+                    <span className="text-primary">
+                      {formatCurrency(sourceInvoice.amount_due, sourceInvoice.currency)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Shipping (Invoice only) */}
+          {documentType === "invoice" && shippingDescription && (
+            <div className="mb-6">
+              <h4 className="font-medium text-primary mb-1.5">Shipping</h4>
+              <div className="text-sm text-tertiary">
+                <div>{shippingDescription}</div>
+                {shippingAmount && (
+                  <div className="mt-0.5">
+                    <span className="font-medium">Amount:</span> {formatCurrency(shippingAmount, currency)}
+                  </div>
+                )}
+                {shippingTaxRate && (
+                  <div className="mt-0.5">
+                    <span className="font-medium">Tax:</span> {formatTaxRateWithName(shippingTaxRate, "")}
                   </div>
                 )}
               </div>
@@ -351,12 +441,23 @@ export default function DocumentPreview({
                <span>{`Total ${label}`}</span>
                <Money amount={calcResult.total} currency={currency} signed={signedAmounts} />
              </div>
-            {documentType === "invoice" && !calcResult.amountDue.isZero() && (
-               <div className="flex justify-between text-lg font-bold text-primary">
-                 <span>Amount Due</span>
-                 <Money amount={calcResult.amountDue} currency={currency} />
-               </div>
-             )}
+              {documentType === "invoice" && !calcResult.amountDue.isZero() && (
+                <div className="flex justify-between text-lg font-bold text-primary">
+                  <span>Amount Due</span>
+                  <Money amount={calcResult.amountDue} currency={currency} />
+                </div>
+              )}
+              {documentType === "invoice" && paymentState && (
+                <div className="flex justify-between items-center pt-2 border-t border-border">
+                  <span className="text-sm text-tertiary">Payment</span>
+                  <StatusBadge
+                    status={paymentState}
+                    config={paymentStatusConfig}
+                    showIcon
+                    size="sm"
+                  />
+                </div>
+              )}
              {documentType === "quote" && expiryDate && (
                <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-border">
                  <span>Expires</span>
