@@ -28,7 +28,6 @@ import {
 } from "./middleware/entitlement.js";
 import {
   reportsCache,
-  invalidateReportsCache,
 } from "./services/reports-cache.js";
 import {
   reportsService,
@@ -1673,11 +1672,28 @@ app.get(
         req.params.id,
       );
       if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+
+      const cacheKey = `pdf:invoice:${req.params.id}`;
+      const cachedPdf = await reportsCache.get(cacheKey);
+      if (cachedPdf) {
+        res.set("Content-Type", "application/pdf");
+        res.set(
+          "Content-Disposition",
+          `inline; filename="Invoice-${invoice.invoice_number ?? req.params.id}.pdf"`,
+        );
+        return res.send(cachedPdf);
+      }
+
       const pdf = await invoiceService.generatePdf(
         req.user!.businessId,
         req.params.id,
         invoice,
       );
+
+      if (pdf && pdf.length > 0) {
+        await reportsCache.set(cacheKey, pdf);
+      }
+
       res.set("Content-Type", "application/pdf");
       res.set(
         "Content-Disposition",
@@ -2565,7 +2581,7 @@ app.get(
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
     const cacheKey = `dashboard:${req.user!.businessId}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return res.json(cached);
     const businessId = req.user!.businessId;
     const now = new Date();
@@ -2590,7 +2606,7 @@ app.get(
       },
       volumeTrend,
     };
-    reportsCache.set(cacheKey, response);
+     reportsCache.set(cacheKey, response);
     res.json(response);
   },
 );
@@ -2602,7 +2618,7 @@ app.get(
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
     const cacheKey = `volume-trend:${req.user!.businessId}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return res.json(cached);
     const months = Math.min(Number(req.query.months ?? 3), 12);
     const period = (req.query.period as string) ?? "month";
@@ -2615,7 +2631,7 @@ app.get(
       months,
       validPeriod,
     );
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     res.json(result);
   },
 );
@@ -2627,7 +2643,7 @@ app.get(
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
     const cacheKey = `payment-metrics:${req.user!.businessId}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return res.json(cached);
     const monthStart = new Date();
     monthStart.setHours(0, 0, 0, 0);
@@ -2637,7 +2653,7 @@ app.get(
       monthStart,
     );
     if (result) {
-      reportsCache.set(cacheKey, result);
+      await reportsCache.set(cacheKey, result);
       res.json(result);
     } else {
       res.status(404).json(null);
@@ -4667,8 +4683,11 @@ app.use(
     res: express.Response,
     _next: express.NextFunction,
   ) => {
-    const requestId =
-      (req.headers["x-request-id"] as string | undefined) ?? "unknown";
+    const ctx = getRequestContext();
+    const requestId = ctx?.requestId ?? (req.headers["x-request-id"] as string) ?? "unknown";
+    if (!res.headersSent) {
+      res.setHeader("X-Request-ID", requestId);
+    }
     if (err instanceof Error && "statusCode" in err) {
       const e = err as {
         statusCode: number;
@@ -4692,6 +4711,7 @@ app.use(
         .json({
           error: e.message,
           code: e.code,
+          requestId,
           ...(e.context ? { context: e.context } : {}),
         });
     }
@@ -4705,6 +4725,7 @@ app.use(
         .json({
           error: "Validation failed",
           code: "VALIDATION_ERROR",
+          requestId,
           issues: (err as any).issues,
         });
     }
@@ -4714,7 +4735,7 @@ app.use(
     );
     res
       .status(500)
-      .json({ error: "Internal server error", code: "INTERNAL_ERROR" });
+      .json({ error: "Internal server error", code: "INTERNAL_ERROR", requestId });
   },
 );
 
@@ -4744,6 +4765,13 @@ async function start() {
       .ensureDefaults()
       .catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
   });
+
+  if (env.REDIS_URL) {
+    const { startPdfWorker } = await import("./services/pdf-job-service.js");
+    startPdfWorker().catch((e) =>
+      logger.error({ err: e }, "Failed to start PDF worker"),
+    );
+  }
 }
 
 // ============================================================================

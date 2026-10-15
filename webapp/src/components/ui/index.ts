@@ -1,4 +1,5 @@
 export { Button, type ButtonProps, buttonSizeClasses } from "./Button";
+export { Skeleton, type SkeletonProps } from "./Skeleton";
 export { default as AppShell, type TopBarProps, type AppShellProps, SkipLink } from "./AppShell";
 export { default as Money, type MoneyProps, formatMoneyValue } from "./Money";
 export { default as Toast, type ToastProps, type ToastType } from "./Toast";

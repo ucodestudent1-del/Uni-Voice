@@ -7,6 +7,7 @@ import { Download, Send, AlertCircle, FileText } from "lucide-react";
 import { formatDate } from "@/utils/format";
 import type { ApiInvoice, ApiInvoiceItem } from "@/types/api";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 export default function PublicInvoice() {
   const { token } = useParams<{ token: string }>();
@@ -14,6 +15,18 @@ export default function PublicInvoice() {
   const [invoice, setInvoice] = useState<ApiInvoice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const invoiceNumber = invoice?.invoice_number ?? "";
+  const totalAmount = invoice?.total ?? "";
+  const currency = invoice?.currency ?? "USD";
+
+  useMetaTags({
+    title: invoiceNumber ? `${invoiceNumber} — InvoiceFlow` : "Invoice — InvoiceFlow",
+    description: invoiceNumber
+      ? `View invoice ${invoiceNumber} for ${totalAmount} ${currency}. Secure online payment available.`
+      : "View your invoice and make a secure online payment.",
+    noIndex: true,
+  });
 
   useEffect(() => {
     if (!token) {

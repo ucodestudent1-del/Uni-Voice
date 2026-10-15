@@ -11,6 +11,17 @@ interface ChunkErrorBoundaryState {
 	isChunkError: boolean;
 }
 
+interface PageErrorBoundaryProps {
+	children: ReactNode;
+	pageName?: string;
+	fallback?: ReactNode;
+}
+
+interface PageErrorBoundaryState {
+	hasError: boolean;
+	error: Error | null;
+}
+
 function isChunkLoadError(error: unknown): boolean {
 	if (error instanceof Error) {
 		const message = error.message.toLowerCase();
@@ -21,6 +32,68 @@ function isChunkLoadError(error: unknown): boolean {
 		);
 	}
 	return false;
+}
+
+export class PageErrorBoundary extends Component<PageErrorBoundaryProps, PageErrorBoundaryState> {
+	constructor(props: PageErrorBoundaryProps) {
+		super(props);
+		this.state = { hasError: false, error: null };
+	}
+
+	static getDerivedStateFromError(error: Error): Partial<PageErrorBoundaryState> | null {
+		return { hasError: true, error };
+	}
+
+	componentDidCatch(error: Error, errorInfo: { componentStack?: string }) {
+		if (typeof window !== "undefined" && window.location) {
+			const pageName = this.props.pageName ?? "Unknown page";
+			console.error(
+				`[PageErrorBoundary] Error in ${pageName}:`,
+				error,
+				errorInfo,
+			);
+		}
+	}
+
+	handleRetry = () => {
+		this.setState({ hasError: false, error: null });
+	};
+
+	render() {
+		if (this.state.hasError) {
+			if (this.props.fallback) {
+				return <>{this.props.fallback}</>;
+			}
+
+			const pageName = this.props.pageName ?? "page";
+			return (
+				<div className="flex flex-col items-center justify-center h-64 text-secondary">
+					<div className="flex items-start gap-3 text-error-text">
+						<AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+						<div className="text-left">
+							<p className="text-sm font-medium text-secondary">Failed to load {pageName}</p>
+							{this.state.error && (
+								<p className="mt-1 text-xs text-tertiary">
+									{this.state.error.message}
+								</p>
+							)}
+						</div>
+					</div>
+					<Button
+						variant="ghost"
+						size="sm"
+						icon={<RefreshCw className="h-4 w-4" />}
+						onClick={this.handleRetry}
+						className="mt-4"
+					>
+						Retry
+					</Button>
+				</div>
+			);
+		}
+
+		return this.props.children;
+	}
 }
 
 export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, ChunkErrorBoundaryState> {

@@ -8,6 +8,7 @@ import {
   DataTable,
   EmptyState,
   Dialog,
+  Skeleton,
 } from "@/components/ui";
 import type { ColumnDef } from "@/types/components";
 import { formatDate } from "@/utils/format";
@@ -377,9 +378,9 @@ export default function Documents() {
 
         <div className="p-4">
           {loading ? (
-            <div className="animate-pulse space-y-4">
+            <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-12 bg-surface-alt rounded" />
+                <Skeleton key={i} className="h-12 rounded" />
               ))}
             </div>
           ) : activeTab === "invoices" ? (

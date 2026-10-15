@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { getDashboardData, getVolumeTrendReport } from "../api/client";
 import type { ApiDashboardData } from "../types/api";
-import { KPICard } from "@/components/ui";
+import { KPICard, Skeleton } from "@/components/ui";
 import RevenueChart from "../components/dashboard/RevenueChart";
 import { formatCurrencyValue } from "@/lib/utils";
 import { Button } from "../components/ui/Button";
@@ -87,15 +87,15 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-surface-alt rounded w-48" />
-        <div className="h-4 bg-surface-alt rounded w-64 mb-6" />
+      <div className="space-y-6">
+        <Skeleton variant="text" width="12rem" height="1.5rem" />
+        <Skeleton variant="text" width="20rem" height="1rem" />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-surface rounded-xl border border-color p-5 h-28" />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
-        <div className="bg-surface rounded-xl border border-color h-64" />
+        <Skeleton className="h-64 rounded-xl" />
       </div>
     );
   }

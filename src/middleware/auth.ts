@@ -5,6 +5,20 @@ import { query } from "../db/pool.js";
 import { compareSync, hashSync } from "bcrypt";
 import jwt from "jsonwebtoken";
 
+/**
+ * CSRF Protection Strategy:
+ *   - Access tokens are sent via the `Authorization: Bearer` header,
+ *     which browsers do NOT auto-attach on cross-site requests.
+ *   - Refresh tokens are stored in an HTTP-only, SameSite=lax cookie.
+ *     SameSite=lax prevents the cookie from being sent on cross-site
+ *     POST requests (CSRF) while still allowing it on top-level GET
+ *     navigations from external links (e.g., returning from an email
+ *     invoice link).
+ *   - All state-changing endpoints require a valid Bearer access token;
+ *     no cookie-only state mutations exist.
+ *   - The `/auth/refresh` endpoint is the only one that reads auth
+ *     state from a cookie; it rotates the refresh token on use.
+ */
 export interface AuthRequest extends Request {
   user?: {
     id: string;
@@ -24,7 +38,7 @@ const REFRESH_TOKEN_EXPIRES_IN = "7d";
 const REFRESH_TOKEN_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: !isDev,
-  sameSite: "strict" as const,
+  sameSite: "lax" as const,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   path: "/",
 };

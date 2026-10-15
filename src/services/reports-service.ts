@@ -224,7 +224,7 @@ export class ReportsService {
 
   async getDashboardSummary(businessId: string): Promise<DashboardSummary> {
     const cacheKey = `dashboard-summary:${businessId}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const now = new Date();
@@ -269,7 +269,7 @@ export class ReportsService {
       currency: (row.currency ?? currencyRow.rows[0]?.currency ?? "USD"),
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 
@@ -283,7 +283,7 @@ export class ReportsService {
     byCustomer: RevenueByCustomer[];
   }> {
     const cacheKey = `revenue-report:${businessId}:${JSON.stringify(filters)}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const summary = await this.getDashboardSummary(businessId);
@@ -368,7 +368,7 @@ export class ReportsService {
       })) as RevenueByCustomer[],
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 
@@ -380,7 +380,7 @@ export class ReportsService {
     invoices: InvoiceReportItem[];
   }> {
     const cacheKey = `invoices-report:${businessId}:${JSON.stringify(filters)}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const limit = Math.min(filters.limit ?? 50, 500);
@@ -568,7 +568,7 @@ export class ReportsService {
       invoices,
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 
@@ -580,7 +580,7 @@ export class ReportsService {
     payments: PaymentReportItem[];
   }> {
     const cacheKey = `payments-report:${businessId}:${JSON.stringify(filters)}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const limit = Math.min(filters.limit ?? 50, 500);
@@ -746,7 +746,7 @@ export class ReportsService {
       payments,
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 
@@ -758,7 +758,7 @@ export class ReportsService {
     clients: ClientReportItem[];
   }> {
     const cacheKey = `clients-report:${businessId}:${JSON.stringify(filters)}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const limit = Math.min(filters.limit ?? 50, 500);
@@ -864,7 +864,7 @@ export class ReportsService {
       clients,
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 
@@ -873,7 +873,7 @@ export class ReportsService {
     filters: ReportFilters = {}
   ): Promise<TaxSummaryReport> {
     const cacheKey = `tax-summary-report:${businessId}:${JSON.stringify(filters)}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const dateFrom = filters.dateFrom ?? new Date(new Date().getFullYear(), new Date().getMonth() - 11, 1).toISOString();
@@ -950,7 +950,7 @@ export class ReportsService {
       })),
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 
@@ -959,7 +959,7 @@ export class ReportsService {
     filters: ReportFilters = {}
   ): Promise<ProfitLossReport> {
     const cacheKey = `profit-loss:${businessId}:${JSON.stringify(filters)}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const dateFrom = filters.dateFrom ?? new Date(new Date().getFullYear(), new Date().getMonth() - 11, 1).toISOString();
@@ -1013,7 +1013,7 @@ export class ReportsService {
       grossMargin: revenueTotal > 0 ? 100 : 0,
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 
@@ -1135,7 +1135,7 @@ export class ReportsService {
     summary: { totalOutstanding: string; totalOverdue: string; currency: string };
   }> {
     const cacheKey = `aging:${businessId}`;
-    const cached = reportsCache.get(cacheKey);
+    const cached = await reportsCache.get(cacheKey);
     if (cached) return cached;
 
     const now = new Date();
@@ -1202,14 +1202,14 @@ export class ReportsService {
       },
     };
 
-    reportsCache.set(cacheKey, result);
+    await reportsCache.set(cacheKey, result);
     return result;
   }
 }
 
 export const reportsService = new ReportsService();
 
-export function invalidateDashboardCache(businessId: string): void {
-  reportsCache.delete(`dashboard-summary:${businessId}`);
-  invalidateReportsCache(businessId);
+export async function invalidateDashboardCache(businessId: string): Promise<void> {
+  await reportsCache.delete(`dashboard-summary:${businessId}`);
+  await invalidateReportsCache(businessId);
 }

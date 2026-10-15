@@ -10,8 +10,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
+      redis:
+        condition: service_healthy
+     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/invoice_prod
+      - REDIS_URL=redis://redis:6379
       - APP_ENV=production
       - AUTH_JWT_SECRET=${AUTH_JWT_SECRET:?set AUTH_JWT_SECRET to a strong random value}
       - APP_PUBLIC_BASE_URL=${APP_PUBLIC_BASE_URL:?set APP_PUBLIC_BASE_URL to your public https URL}
@@ -48,6 +51,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
 networks:
   app-network:

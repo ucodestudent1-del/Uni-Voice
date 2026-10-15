@@ -3,10 +3,17 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { login as apiLogin } from "../api/client";
 import ThemeToggle from "../components/ThemeToggle";
+import { useMetaTags } from "../hooks/useMetaTags";
 
 type LoginStep = "credentials" | "two-factor";
 
 export default function Login() {
+  useMetaTags({
+    title: "Login — InvoiceFlow",
+    description: "Sign in to your InvoiceFlow account to manage invoices, customers, and payments.",
+    noIndex: true,
+  });
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [step, setStep] = useState<LoginStep>("credentials");

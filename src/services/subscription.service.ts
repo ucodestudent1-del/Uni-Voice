@@ -224,7 +224,7 @@ export class SubscriptionService {
 
     const result = await subscriptionRepository.changePlan(businessId, targetPlan.id, ctx.plan.code, targetPlanCode);
     clearFeatureFlagCache();
-    invalidateReportsCache(businessId);
+    void invalidateReportsCache(businessId);
     return result;
   }
 
@@ -239,7 +239,7 @@ export class SubscriptionService {
 
     const result = await subscriptionRepository.changePlan(businessId, targetPlan.id, ctx.plan.code, targetPlanCode);
     clearFeatureFlagCache();
-    invalidateReportsCache(businessId);
+    void invalidateReportsCache(businessId);
     return result;
   }
 

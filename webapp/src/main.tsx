@@ -2,6 +2,7 @@ import React from "react";
 import * as Sentry from "@sentry/react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
@@ -75,40 +76,42 @@ function AppLazy() {
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <SubscriptionProvider>
-          <ThemeProvider>
-            <ToastProvider>
-              <Sentry.ErrorBoundary
-                fallback={({ error, resetError }) => {
-                  const message =
-                    error instanceof Error ? error.message : String(error ?? "Unknown error");
-                  return (
-                  <div className="min-h-screen flex items-center justify-center bg-surface-alt">
-                    <div className="text-center max-w-md px-6">
-                      <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text mb-4">
-                        Something went wrong. Please try again.
+      <HelmetProvider>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <ThemeProvider>
+              <ToastProvider>
+                <Sentry.ErrorBoundary
+                  fallback={({ error, resetError }) => {
+                    const message =
+                      error instanceof Error ? error.message : String(error ?? "Unknown error");
+                    return (
+                    <div className="min-h-screen flex items-center justify-center bg-surface-alt">
+                      <div className="text-center max-w-md px-6">
+                        <div className="rounded-lg status-error-bg border status-error-border px-4 py-3 text-sm status-error-text mb-4">
+                          Something went wrong. Please try again.
+                        </div>
+                        <p className="text-xs text-tertiary font-mono mb-4">
+                          {message}
+                        </p>
+                        <button
+                          onClick={resetError}
+                          className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          Reload
+                        </button>
                       </div>
-                      <p className="text-xs text-tertiary font-mono mb-4">
-                        {message}
-                      </p>
-                      <button
-                        onClick={resetError}
-                        className="rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        Reload
-                      </button>
                     </div>
-                  </div>
-                  );
-                }}
-              >
-                <AppLazy />
-              </Sentry.ErrorBoundary>
-            </ToastProvider>
-          </ThemeProvider>
-        </SubscriptionProvider>
-      </AuthProvider>
+                    );
+                  }}
+                >
+                  <AppLazy />
+                </Sentry.ErrorBoundary>
+              </ToastProvider>
+            </ThemeProvider>
+          </SubscriptionProvider>
+        </AuthProvider>
+      </HelmetProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

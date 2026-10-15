@@ -21,6 +21,7 @@ import { getCustomerPrimaryContact, customerHasBalance, customerHasOverdue } fro
 import type { ApiCustomer } from "../types/api";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
+import { Skeleton } from "@/components/ui";
 import { cn } from "../lib/utils";
 import type { NavigateFunction } from "react-router-dom";
 
@@ -406,7 +407,11 @@ export default function Customers() {
       )}
 
       {loading && customers.length === 0 ? (
-        <EmptyState variant="loading" title="Loading customers…" />
+        <div className="space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 rounded-lg" />
+          ))}
+        </div>
       ) : effectiveRows.length === 0 ? (
         <div className="bg-surface rounded-xl border border-color-subtle">
           <EmptyState

@@ -6,28 +6,41 @@ interface MetaOptions {
   image?: string;
   url?: string;
   noIndex?: boolean;
+  canonical?: string;
 }
+
+const DEFAULT_TITLE = "InvoiceFlow — Professional Invoice Generator";
 
 export function useMetaTags(options: MetaOptions) {
   useEffect(() => {
     const previousTitle = document.title;
-    const defaultTitle = "InvoiceFlow — Professional Invoice Generator";
 
-    if (options.title) {
-      document.title = options.title;
-    } else {
-      document.title = defaultTitle;
-    }
+    const title = options.title ?? DEFAULT_TITLE;
+    document.title = title;
+
+    const head = document.head;
 
     const setMetaTag = (name: string, content: string, attr: string = "name") => {
-      const existing = document.querySelector(`meta[${attr}="${name}"]`);
+      const existing = head.querySelector(`meta[${attr}="${name}"]`);
       if (existing) {
         existing.setAttribute("content", content);
       } else {
         const meta = document.createElement("meta");
         meta.setAttribute(attr, name);
         meta.setAttribute("content", content);
-        document.head.appendChild(meta);
+        head.appendChild(meta);
+      }
+    };
+
+    const setLinkTag = (rel: string, href: string) => {
+      const existing = head.querySelector(`link[rel="${rel}"]`);
+      if (existing) {
+        existing.setAttribute("href", href);
+      } else {
+        const link = document.createElement("link");
+        link.setAttribute("rel", rel);
+        link.setAttribute("href", href);
+        head.appendChild(link);
       }
     };
 
@@ -37,30 +50,32 @@ export function useMetaTags(options: MetaOptions) {
       setMetaTag("twitter:description", options.description, "name");
     }
 
-    if (options.title) {
-      setMetaTag("og:title", options.title, "property");
-      setMetaTag("twitter:title", options.title, "name");
-    }
+    setMetaTag("og:title", title, "property");
+    setMetaTag("twitter:title", title, "name");
 
     if (options.image) {
       setMetaTag("og:image", options.image, "property");
-      setMetaTag("og:image:alt", options.description ?? options.title ?? "", "property");
+      setMetaTag("og:image:alt", options.description ?? title, "property");
       setMetaTag("twitter:image", options.image, "name");
-      setMetaTag("twitter:image:alt", options.description ?? options.title ?? "", "property");
+      setMetaTag("twitter:image:alt", options.description ?? title, "name");
     }
 
     if (options.url) {
       setMetaTag("og:url", options.url, "property");
+      setLinkTag("canonical", options.url);
     } else {
-      setMetaTag("og:type", "website", "property");
+      setMetaTag("og:locale", "en-US", "property");
+    }
+
+    if (options.canonical) {
+      setLinkTag("canonical", options.canonical);
     }
 
     if (options.noIndex) {
-      const robots = document.querySelector('meta[name="robots"]');
-      const metaRobots = robots || document.createElement("meta");
-      metaRobots.setAttribute("name", "robots");
-      metaRobots.setAttribute("content", "noindex, nofollow");
-      if (!robots) document.head.appendChild(metaRobots);
+      setMetaTag("robots", "noindex, nofollow", "name");
+    } else {
+      const robots = head.querySelector('meta[name="robots"]');
+      if (robots) robots.setAttribute("content", "index, follow");
     }
 
     return () => {

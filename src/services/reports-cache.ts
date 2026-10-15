@@ -1,28 +1,28 @@
-import { TtlCache } from "../utils/ttl-cache.js";
+import { DistributedCache } from "../utils/distributed-cache.js";
 
-export const reportsCache = new TtlCache<any>(60 * 1000);
+export const reportsCache = new DistributedCache<any>(60 * 1000);
 
-export function invalidateReportsCache(businessId: string): void {
-  reportsCache.delete(`revenue:${businessId}`);
-  reportsCache.delete(`tax-summary:${businessId}`);
-  reportsCache.delete(`volume-trend:${businessId}`);
-  reportsCache.delete(`dashboard:${businessId}`);
-  reportsCache.delete(`dashboard-summary:${businessId}`);
-  reportsCache.delete(`aging:${businessId}`);
-  reportsCache.delete(`payment-metrics:${businessId}`);
-  invalidateReportCacheByPattern(`revenue-report:${businessId}:*`);
-  invalidateReportCacheByPattern(`invoices-report:${businessId}:*`);
-  invalidateReportCacheByPattern(`payments-report:${businessId}:*`);
-  invalidateReportCacheByPattern(`clients-report:${businessId}:*`);
-  invalidateReportCacheByPattern(`tax-summary-report:${businessId}:*`);
-  invalidateReportCacheByPattern(`profit-loss:${businessId}:*`);
+export async function invalidateReportsCache(businessId: string): Promise<void> {
+  const prefixes = [
+    `revenue:${businessId}:`,
+    `tax-summary:${businessId}`,
+    `volume-trend:${businessId}`,
+    `dashboard:${businessId}`,
+    `dashboard-summary:${businessId}`,
+    `aging:${businessId}`,
+    `payment-metrics:${businessId}`,
+    `revenue-report:${businessId}:`,
+    `invoices-report:${businessId}:`,
+    `payments-report:${businessId}:`,
+    `clients-report:${businessId}:`,
+    `tax-summary-report:${businessId}:`,
+    `profit-loss:${businessId}:`,
+  ];
+  for (const prefix of prefixes) {
+    await reportsCache.deleteByPattern(prefix + "*");
+  }
 }
 
-export function invalidateReportCacheByPattern(pattern: string): void {
-  const prefix = pattern.replace(/\*$/, "");
-  for (const key of reportsCache["cache"].keys()) {
-    if (typeof key === "string" && key.startsWith(prefix)) {
-      reportsCache.delete(key);
-    }
-  }
+export async function invalidateReportsCacheByKey(key: string): Promise<void> {
+  await reportsCache.delete(key);
 }
