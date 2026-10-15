@@ -157,7 +157,6 @@ COPY nginx.conf /app/nginx.conf
 # Container entrypoint (migrations, backend, nginx supervision)
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 WORKDIR /app
 
@@ -183,12 +182,16 @@ ENV AWS_SES_REGION=us-east-1
 ENV PDF_PROVIDER=html
 ENV PAYMENT_PROVIDER=stub
 ENV TAX_PROVIDER=manual
-ENV AI_PROVIDER=stub
 ENV AUTH_MODE=jwt
 ENV AUTH_JWT_SECRET=
 # DATABASE_URL must be set at deployment time (no hardcoded default in production)
 ENV DATABASE_URL=
+# REDIS_URL is optional; if set, Redis-backed caching and PDF workers are used
+ENV REDIS_URL=
 
 EXPOSE 80 4000
 
+# CMD allows platforms like Railway to override with their own start command
+# (e.g., "node dist/index.js"). For local/docker-compose, the entrypoint
+# script handles migrations, backend, and nginx supervision.
 CMD ["/app/docker-entrypoint.sh"]

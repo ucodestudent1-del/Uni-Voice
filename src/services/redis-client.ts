@@ -1,16 +1,20 @@
 import { logger } from "../utils/logger.js";
-import { getRedis } from "../utils/redis-singleton.js";
+import { getRedis, initRedis } from "../utils/redis-singleton.js";
 import { TtlCache } from "../utils/ttl-cache.js";
+import { env } from "../config/index.js";
 
 type RedisInstance = InstanceType<typeof import("ioredis").default>;
 const memoryCache = new TtlCache<string>(60 * 1000);
 
-function getClient(): RedisInstance | null {
+async function getClient(): Promise<RedisInstance | null> {
+  if (env.REDIS_URL && !getRedis()) {
+    await initRedis();
+  }
   return getRedis();
 }
 
 export async function redisGet(key: string): Promise<string | null> {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
     return memoryCache.get(key) ?? null;
   }
@@ -26,7 +30,7 @@ export async function redisSet(
   value: string,
   ttlSeconds?: number,
 ): Promise<void> {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
     memoryCache.set(key, value);
     return;
@@ -43,7 +47,7 @@ export async function redisSet(
 }
 
 export async function redisDel(key: string): Promise<void> {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
     memoryCache.delete(key);
     return;
@@ -56,7 +60,7 @@ export async function redisDel(key: string): Promise<void> {
 }
 
 export async function redisDelPattern(pattern: string): Promise<void> {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
     const prefix = pattern.replace(/\*$/, "");
     for (const key of memoryCache["cache"].keys()) {
@@ -82,7 +86,7 @@ export async function redisDelPattern(pattern: string): Promise<void> {
 }
 
 export async function redisHas(key: string): Promise<boolean> {
-  const client = getClient();
+  const client = await getClient();
   if (!client) {
     return memoryCache.has(key);
   }
@@ -113,5 +117,5 @@ export async function redisSetParsed<T>(
 }
 
 export function isRedisAvailable(): boolean {
-  return getClient() !== null;
+  return getRedis() !== null;
 }

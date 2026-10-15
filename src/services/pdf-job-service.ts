@@ -1,7 +1,7 @@
 import { Queue, Worker, Job } from "bullmq";
 import { logger } from "../utils/logger.js";
 import { env } from "../config/index.js";
-import { getRedis } from "../utils/redis-singleton.js";
+import { initRedis, getRedis } from "../utils/redis-singleton.js";
 import { query } from "../db/pool.js";
 
 const QUEUE_NAME = "pdf-generation";
@@ -44,6 +44,9 @@ export async function enqueuePdfGeneration(
   docType: "invoice" | "credit-note" | "quote",
   invoiceNumber?: string,
 ): Promise<string | null> {
+  if (env.REDIS_URL && !getRedis()) {
+    await initRedis();
+  }
   const q = getQueue();
   if (!q) {
     return null;
@@ -62,6 +65,9 @@ export async function enqueuePdfGeneration(
 }
 
 export async function getPdfJobStatus(jobId: string): Promise<{ status: string; error?: string }> {
+  if (env.REDIS_URL && !getRedis()) {
+    await initRedis();
+  }
   const q = getQueue();
   if (!q) {
     return { status: "unavailable" };
@@ -85,6 +91,7 @@ export async function startPdfWorker(): Promise<void> {
   if (!env.REDIS_URL) {
     return;
   }
+  await initRedis();
   const connection = getRedis();
   if (!connection) {
     return;
@@ -161,6 +168,9 @@ export async function getCachedPdf(
   docType: "invoice" | "credit-note" | "quote",
   documentId: string,
 ): Promise<Buffer | null> {
+  if (env.REDIS_URL && !getRedis()) {
+    await initRedis();
+  }
   const connection = getRedis();
   if (!connection) {
     return null;

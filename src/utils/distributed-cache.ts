@@ -25,8 +25,9 @@ export class DistributedCache<T> {
       return;
     }
     try {
-      const Ioredis = require("ioredis");
-      const instance = new Ioredis(env.REDIS_URL, {
+    const IoredisModule = await import("ioredis");
+    const Ioredis = IoredisModule.default as unknown as typeof import("ioredis").default;
+    const instance = new Ioredis(env.REDIS_URL, {
         maxRetriesPerRequest: 1,
         enableOfflineQueue: false,
         connectTimeout: 5000,
