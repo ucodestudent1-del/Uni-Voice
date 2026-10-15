@@ -1006,8 +1006,11 @@ export class InvoiceService {
               i.fee_total as "fee_total",
               i.total as "total",
               i.amount_paid as "amount_paid",
-              i.amount_due as "amount_due"
+              i.amount_due as "amount_due",
+              c.name as "customer_name",
+              c.email as "customer_email"
        FROM invoices i
+       LEFT JOIN customers c ON i.customer_id = c.id
        WHERE i.id = $1 AND i.business_id = $2`,
       [invoiceId, businessId]
     );
@@ -1066,10 +1069,13 @@ export class InvoiceService {
               b.name as "business_name",
               b.address as "business_address",
               b.country_code as "business_country_code",
-              b.default_currency as "business_currency"
-       FROM invoices i
-       LEFT JOIN businesses b ON b.id = i.business_id
-       WHERE i.public_token = $1 AND i.public_token_expires_at > NOW()`,
+              b.default_currency as "business_currency",
+              c.name as "customer_name",
+              c.email as "customer_email"
+        FROM invoices i
+        LEFT JOIN businesses b ON b.id = i.business_id
+        LEFT JOIN customers c ON i.customer_id = c.id
+        WHERE i.public_token = $1 AND i.public_token_expires_at > NOW()`,
       [token]
     );
 
@@ -1133,7 +1139,7 @@ export class InvoiceService {
     }
     if (filters.search) {
       const search = `%${filters.search}%`;
-      where.push(`(invoice_number ILIKE $${i} OR customer_name ILIKE $${i} OR customer_email ILIKE $${i})`);
+      where.push(`(invoice_number ILIKE $${i} OR c.name ILIKE $${i} OR c.email ILIKE $${i})`);
       values.push(search, search, search);
       i++;
     }
@@ -1154,11 +1160,13 @@ export class InvoiceService {
     const sortOrder = (filters.sortOrder as string) ?? "desc";
 
     const listRes = await query(
-      `SELECT id, invoice_number, status, customer_id, customer_name, customer_email,
-              issue_date, due_date, currency, total, amount_paid, amount_due,
-              is_finalized, finalized_at, sent_at, viewed_at, paid_at,
-              created_at, updated_at, version
-       FROM invoices
+      `SELECT i.id, i.invoice_number, i.status, i.customer_id,
+              c.name AS customer_name, c.email AS customer_email,
+              i.issue_date, i.due_date, i.currency, i.total, i.amount_paid, i.amount_due,
+              i.is_finalized, i.finalized_at, i.sent_at, i.viewed_at, i.paid_at,
+              i.created_at, i.updated_at, i.version
+       FROM invoices i
+       LEFT JOIN customers c ON i.customer_id = c.id AND c.business_id = i.business_id
        WHERE ${where.join(" AND ")}
        ORDER BY ${sortBy} ${sortOrder === "asc" ? "ASC" : "DESC"}
        LIMIT $${i++} OFFSET $${i++}`,
@@ -1166,7 +1174,10 @@ export class InvoiceService {
     );
 
     const countRes = await query(
-      `SELECT COUNT(*)::int AS total FROM invoices WHERE ${where.join(" AND ")}`,
+      `SELECT COUNT(*)::int AS total
+       FROM invoices i
+       LEFT JOIN customers c ON i.customer_id = c.id AND c.business_id = i.business_id
+       WHERE ${where.join(" AND ")}`,
       values
     );
 
