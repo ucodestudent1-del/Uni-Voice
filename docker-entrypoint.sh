@@ -9,7 +9,7 @@ cd /app
 echo "Running database migrations..."
 MIGRATE_ATTEMPT=0
 MIGRATE_MAX_ATTEMPTS=30
-until node dist/db/migrate.js 2>/dev/null; do
+until node dist/db/migrate.js 2>&1; do
   MIGRATE_ATTEMPT=$((MIGRATE_ATTEMPT + 1))
   if [ $MIGRATE_ATTEMPT -ge $MIGRATE_MAX_ATTEMPTS ]; then
     echo "ERROR: Database migrations failed after ${MIGRATE_MAX_ATTEMPTS} attempts."

@@ -7,8 +7,14 @@ const { Pool } = pkg;
 
 const connectionString = isTest && env.DATABASE_URL_TEST ? env.DATABASE_URL_TEST : env.DATABASE_URL;
 
+const sslConfig =
+  env.APP_ENV === "production"
+    ? { rejectUnauthorized: false } as const
+    : undefined;
+
 export const pool = new Pool({
   connectionString,
+  ssl: sslConfig,
   max: isTest ? 5 : 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
