@@ -31,6 +31,8 @@ const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
 const Reports = lazy(() => import("./pages/Reports"));
 const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const Documents = lazy(() => import("./pages/Documents"));
+const PaymentVoucherGenerator = lazy(() => import("./pages/PaymentVoucherGenerator"));
+const DebitNoteGenerator = lazy(() => import("./pages/DebitNoteGenerator"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 
 const Fallback = () => (
@@ -80,6 +82,8 @@ const ReceiptDetailWithBoundary = withErrorBoundary(ReceiptDetail, "Receipt Deta
 const ReminderAutomationWithBoundary = withErrorBoundary(ReminderAutomation, "Reminder Automation");
 const ReportsWithBoundary = withErrorBoundary(Reports, "Reports");
 const DocumentsWithBoundary = withErrorBoundary(Documents, "Documents");
+const PaymentVoucherGeneratorWithBoundary = withErrorBoundary(PaymentVoucherGenerator, "Payment Voucher Generator");
+const DebitNoteGeneratorWithBoundary = withErrorBoundary(DebitNoteGenerator, "Debit Note Generator");
 const PublicInvoiceWithBoundary = withErrorBoundary(PublicInvoice, "Invoice");
 const DocumentWorkspaceInvoiceWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="invoice" />,
@@ -190,6 +194,8 @@ export default function App() {
           <Route path="receipts" element={<ReceiptsWithBoundary />} />
           <Route path="receipts/:id" element={<ReceiptDetailWithBoundary />} />
           <Route path="documents" element={<DocumentsWithBoundary />} />
+          <Route path="payment-vouchers/new" element={<PaymentVoucherGeneratorWithBoundary />} />
+          <Route path="debit-notes/new" element={<DebitNoteGeneratorWithBoundary />} />
           <Route path="invoices/new" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
           <Route path="invoices/:id/edit" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
           <Route path="credit-notes/new" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />

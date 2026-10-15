@@ -39,6 +39,8 @@ import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { paymentVoucherService } from "./services/payment-voucher-service.js";
+import { debitNoteService } from "./services/debit-note-service.js";
 import { z } from "zod";
 import { AiParseDocumentType } from "./services/ai-service.js";
 import { quoteService } from "./services/quote-service.js";
@@ -2314,6 +2316,341 @@ app.get("/api/quotes/:id/events", requireAuth, async (req: AuthRequest, res, nex
       req.query.limit ? Number(req.query.limit) : undefined,
       req.query.offset ? Number(req.query.offset) : undefined
     );    res.json({ events: result.events, total: result.total });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================================
+// PAYMENT VOUCHERS
+// ============================================================================
+app.post("/api/payment-vouchers", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const voucher = await paymentVoucherService.create(
+      req.user!.businessId,
+      req.body,
+      req.user!.id
+    );
+    res.status(201).json({ voucher });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/payment-vouchers", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await paymentVoucherService.findMany(
+      req.user!.businessId,
+      {
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+        status: req.query.status as string | undefined,
+        search: req.query.search as string | undefined,
+        sortOrder: req.query.sortOrder as string | undefined,
+        sortBy: req.query.sortBy as string | undefined,
+      }
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/payment-vouchers/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const voucher = await paymentVoucherService.findById(
+      req.user!.businessId,
+      req.params.id
+    );
+    if (!voucher) return res.status(404).json({ error: "Payment voucher not found" });
+    res.json({ voucher });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/payment-vouchers/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const voucher = await paymentVoucherService.update(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id
+    );
+    res.json({ voucher });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/payment-vouchers/:id/finalize", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await paymentVoucherService.finalize(
+      req.user!.businessId,
+      req.params.id,
+      req.user!.id
+    );
+    res.json({ voucher: result.voucher, voucherNumber: result.voucherNumber });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/payment-vouchers/:id/cancel", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const voucher = await paymentVoucherService.cancel(
+      req.user!.businessId,
+      req.params.id,
+      req.body.reason ?? "",
+      req.user!.id
+    );
+    res.json({ voucher });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/payment-vouchers/:id/void", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const voucher = await paymentVoucherService.void(
+      req.user!.businessId,
+      req.params.id,
+      req.body.reason ?? "",
+      req.user!.id
+    );
+    res.json({ voucher });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/payment-vouchers/:id/pdf", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const voucher = await paymentVoucherService.findById(
+      req.user!.businessId,
+      req.params.id
+    );
+    if (!voucher) return res.status(404).json({ error: "Payment voucher not found" });
+
+    const pdf = await paymentVoucherService.generatePdf(
+      req.user!.businessId,
+      req.params.id,
+      voucher
+    );
+    res.set("Content-Type", "application/pdf");
+    res.set(
+      "Content-Disposition",
+      `inline; filename="PaymentVoucher-${(voucher as any).payment_voucher_number ?? req.params.id}.pdf"`
+    );
+    res.send(pdf);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/payment-vouchers/:id/events", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const events = await paymentVoucherService.getEvents(
+      req.user!.businessId,
+      req.params.id,
+      req.query.limit ? Number(req.query.limit) : undefined,
+      req.query.offset ? Number(req.query.offset) : undefined
+    );
+    res.json({ events, total: events.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================================
+// DEBIT NOTES
+// ============================================================================
+app.post("/api/debit-notes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const note = await debitNoteService.create(
+      req.user!.businessId,
+      req.body,
+      req.user!.id
+    );
+    res.status(201).json({ debitNote: note });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/debit-notes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await debitNoteService.findMany(
+      req.user!.businessId,
+      {
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        offset: req.query.offset ? Number(req.query.offset) : undefined,
+        status: req.query.status as string | undefined,
+        search: req.query.search as string | undefined,
+        customerId: req.query.customerId as string | undefined,
+        sortOrder: req.query.sortOrder as string | undefined,
+        sortBy: req.query.sortBy as string | undefined,
+      }
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/debit-notes/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const note = await debitNoteService.findById(
+      req.user!.businessId,
+      req.params.id
+    );
+    if (!note) return res.status(404).json({ error: "Debit note not found" });
+    res.json({ debitNote: note });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/debit-notes/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const note = await debitNoteService.update(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id
+    );
+    res.json({ debitNote: note });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/debit-notes/:id/finalize", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await debitNoteService.finalize(
+      req.user!.businessId,
+      req.params.id,
+      req.user!.id
+    );
+    res.json({ debitNote: result.debitNote, debitNoteNumber: result.debitNoteNumber });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/debit-notes/:id/send", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await debitNoteService.send(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/debit-notes/:id/cancel", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const note = await debitNoteService.cancel(
+      req.user!.businessId,
+      req.params.id,
+      req.body.reason ?? "",
+      req.user!.id
+    );
+    res.json({ debitNote: note });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/debit-notes/:id/void", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const note = await debitNoteService.void(
+      req.user!.businessId,
+      req.params.id,
+      req.body.reason ?? "",
+      req.user!.id
+    );
+    res.json({ debitNote: note });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/debit-notes/:id/pdf", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const note = await debitNoteService.findById(
+      req.user!.businessId,
+      req.params.id
+    );
+    if (!note) return res.status(404).json({ error: "Debit note not found" });
+
+    const pdf = await debitNoteService.generatePdf(
+      req.user!.businessId,
+      req.params.id,
+      note
+    );
+    res.set("Content-Type", "application/pdf");
+    res.set(
+      "Content-Disposition",
+      `inline; filename="DebitNote-${(note as any).debit_note_number ?? req.params.id}.pdf"`
+    );
+    res.send(pdf);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/debit-notes/:id/events", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const events = await debitNoteService.getEvents(
+      req.user!.businessId,
+      req.params.id,
+      req.query.limit ? Number(req.query.limit) : undefined,
+      req.query.offset ? Number(req.query.offset) : undefined
+    );
+    res.json({ events, total: events.length });
   } catch (err) {
     next(err);
   }

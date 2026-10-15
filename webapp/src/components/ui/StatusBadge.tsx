@@ -103,6 +103,27 @@ export const customerStatusConfig = createStatusBadgeConfig(
   "active"
 );
 
+export const paymentVoucherStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Payment voucher has not been issued." },
+    issued: { label: "Issued", className: "status-success-bg status-success-text", description: "Payment voucher has been issued." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Payment voucher has been cancelled." },
+    void: { label: "Void", className: "status-tertiary-bg status-tertiary-text", description: "Payment voucher has been voided." },
+  },
+  "draft"
+);
+
+export const debitNoteStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Debit note has not been finalized." },
+    finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Debit note has been finalized." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Debit note has been sent to the customer." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Debit note has been cancelled." },
+    void: { label: "Void", className: "status-tertiary-bg status-tertiary-text", description: "Debit note has been voided." },
+  },
+  "draft"
+);
+
 export function isOverdueStatus(status: string, dueDate?: string | null): boolean {
   if (status === "overdue") return true;
   if (status === "paid" || status === "void" || status === "cancelled") return false;

@@ -1525,3 +1525,247 @@ export interface ApiTaxEvaluationContext {
 export interface ApiTaxEvaluationRequest {
   context: ApiTaxEvaluationContext;
 }
+
+export interface ApiPaymentVoucherItem {
+  id: string;
+  payment_voucher_id: string;
+  description: string;
+  quantity: string;
+  unit: string;
+  unit_price: string;
+  tax_rate: string;
+  tax_name?: string | null;
+  tax_amount: string;
+  line_subtotal: string;
+  line_total: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiPaymentVoucher {
+  id: string;
+  business_id: string;
+  payment_voucher_number?: string | null;
+  status: string;
+  voucher_date?: string | null;
+  currency: string;
+  payee_name?: string | null;
+  payee_email?: string | null;
+  payee_phone?: string | null;
+  payee_address_line_1?: string | null;
+  payee_address_line_2?: string | null;
+  payee_city?: string | null;
+  payee_state_or_region?: string | null;
+  payee_postal_code?: string | null;
+  payee_country_code?: string | null;
+  payee_tax_id?: string | null;
+  reference_number?: string | null;
+  payment_method?: string | null;
+  payment_provider?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  cancelled_at?: string | null;
+  cancelled_reason?: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  public_token?: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+  version?: number;
+  items: ApiPaymentVoucherItem[];
+  events?: ApiPaymentVoucherEvent[];
+}
+
+export interface ApiPaymentVoucherListItem {
+  id: string;
+  business_id: string;
+  payment_voucher_number?: string | null;
+  status: string;
+  voucher_date?: string | null;
+  currency: string;
+  payee_name?: string | null;
+  payee_email?: string | null;
+  total: string;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  cancelled_at?: string | null;
+  voided_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  version?: number;
+}
+
+export interface ApiPaymentVoucherEvent {
+  id: string;
+  payment_voucher_id?: string | null;
+  business_id?: string | null;
+  event_type: string;
+  actor_id?: string | null;
+  actor_type?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ApiPaymentVoucherItemInput {
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+}
+
+export interface ApiCreatePaymentVoucherInput {
+  voucherDate?: string | null;
+  currency?: string;
+  payeeName?: string | null;
+  payeeEmail?: string | null;
+  payeePhone?: string | null;
+  payeeAddressLine1?: string | null;
+  payeeAddressLine2?: string | null;
+  payeeCity?: string | null;
+  payeeStateOrRegion?: string | null;
+  payeePostalCode?: string | null;
+  payeeCountryCode?: string | null;
+  payeeTaxId?: string | null;
+  referenceNumber?: string | null;
+  paymentMethod?: string | null;
+  paymentProvider?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  items: ApiPaymentVoucherItemInput[];
+}
+
+export interface ApiDebitNoteItem {
+  id: string;
+  debit_note_id: string;
+  description: string;
+  quantity: string;
+  unit: string;
+  unit_price: string;
+  tax_rate: string;
+  tax_name?: string | null;
+  tax_amount: string;
+  line_subtotal: string;
+  line_total: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiDebitNote {
+  id: string;
+  business_id: string;
+  customer_id?: string | null;
+  debit_note_number?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  currency: string;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  customer_address_line_1?: string | null;
+  customer_address_line_2?: string | null;
+  customer_city?: string | null;
+  customer_state_or_region?: string | null;
+  customer_postal_code?: string | null;
+  customer_country_code?: string | null;
+  customer_tax_id?: string | null;
+  reference_invoice_id?: string | null;
+  reference_invoice_number?: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  payment_instructions?: string | null;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  amount_due: string;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  cancelled_at?: string | null;
+  cancelled_reason?: string | null;
+  voided_at?: string | null;
+  void_reason?: string | null;
+  public_token?: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+  version?: number;
+  items: ApiDebitNoteItem[];
+  events?: ApiDebitNoteEvent[];
+}
+
+export interface ApiDebitNoteListItem {
+  id: string;
+  business_id: string;
+  customer_id?: string | null;
+  debit_note_number?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  currency: string;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  total: string;
+  amount_due: string;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  version?: number;
+}
+
+export interface ApiDebitNoteEvent {
+  id: string;
+  debit_note_id?: string | null;
+  business_id?: string | null;
+  event_type: string;
+  actor_id?: string | null;
+  actor_type?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ApiDebitNoteItemInput {
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+}
+
+export interface ApiCreateDebitNoteInput {
+  customerId?: string | null;
+  issueDate?: string | null;
+  dueDate?: string | null;
+  currency?: string;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  customerPhone?: string | null;
+  customerAddressLine1?: string | null;
+  customerAddressLine2?: string | null;
+  customerCity?: string | null;
+  customerStateOrRegion?: string | null;
+  customerPostalCode?: string | null;
+  customerCountryCode?: string | null;
+  customerTaxId?: string | null;
+  referenceInvoiceId?: string | null;
+  referenceInvoiceNumber?: string | null;
+  reason?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  paymentInstructions?: string | null;
+  items: ApiDebitNoteItemInput[];
+}

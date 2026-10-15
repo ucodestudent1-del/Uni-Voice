@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Plus, FileText, Quote as QuoteIcon, CreditCard } from "lucide-react";
+import { Plus, FileText, Quote as QuoteIcon, CreditCard, Receipt } from "lucide-react";
 import {
   Button,
   KPICard,
@@ -25,7 +25,7 @@ import {
   creditNoteStatusConfig,
 } from "@/components/ui";
 
-type DocType = "invoice" | "quote" | "credit-note";
+type DocType = "invoice" | "quote" | "credit-note" | "payment-voucher" | "debit-note";
 
 interface CreateOption {
   type: DocType;
@@ -56,6 +56,20 @@ const createOptions: CreateOption[] = [
     description: "Issue a credit or refund to a customer",
     icon: <CreditCard className="w-5 h-5" />,
     path: "/app/credit-notes/new",
+  },
+  {
+    type: "payment-voucher",
+    label: "Payment Voucher",
+    description: "Record a business payment to a payee",
+    icon: <Receipt className="w-5 h-5" />,
+    path: "/app/payment-vouchers/new",
+  },
+  {
+    type: "debit-note",
+    label: "Debit Note",
+    description: "Charge a customer for additional amount owed",
+    icon: <FileText className="w-5 h-5" />,
+    path: "/app/debit-notes/new",
   },
 ];
 

@@ -45,6 +45,18 @@ import type {
   ApiBrandingInput,
   ApiTaxEvaluationContext,
   ApiTaxEvaluationRequest,
+  ApiPaymentVoucher,
+  ApiPaymentVoucherListItem,
+  ApiPaymentVoucherItem,
+  ApiPaymentVoucherItemInput,
+  ApiPaymentVoucherEvent,
+  ApiCreatePaymentVoucherInput,
+  ApiDebitNote,
+  ApiDebitNoteListItem,
+  ApiDebitNoteItem,
+  ApiDebitNoteItemInput,
+  ApiDebitNoteEvent,
+  ApiCreateDebitNoteInput,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -72,10 +84,22 @@ export type {
   ApiCreditNote,
   ApiCreditNoteListItem,
   ApiQuote,
-  ApiQuoteItem,
-  ApiQuoteFee,
-  ApiQuoteEvent,
-   ApiQuoteListItem,
+   ApiQuoteItem,
+   ApiQuoteFee,
+   ApiQuoteEvent,
+    ApiQuoteListItem,
+   ApiPaymentVoucher,
+   ApiPaymentVoucherListItem,
+   ApiPaymentVoucherItem,
+   ApiPaymentVoucherItemInput,
+   ApiPaymentVoucherEvent,
+   ApiCreatePaymentVoucherInput,
+   ApiDebitNote,
+   ApiDebitNoteListItem,
+   ApiDebitNoteItem,
+   ApiDebitNoteItemInput,
+   ApiDebitNoteEvent,
+   ApiCreateDebitNoteInput,
 } from "../types/api";
 
 // Re-export invoice generator module types
@@ -2043,6 +2067,171 @@ export async function convertQuoteToInvoice(
   id: string,
 ): Promise<{ quote: ApiQuote; invoiceId: string }> {
   const res = await api.post(`/quotes/${id}/convert-to-invoice`);
+  return res.data;
+}
+
+// ============================================================================
+// PAYMENT VOUCHERS
+// ============================================================================
+
+export interface PaymentVoucherSearchParams {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  search?: string;
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+}
+
+export async function getPaymentVouchers(params?: PaymentVoucherSearchParams): Promise<{
+  vouchers: ApiPaymentVoucherListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}> {
+  const res = await api.get("/payment-vouchers", { params });
+  return res.data;
+}
+
+export async function getPaymentVoucher(id: string): Promise<{ voucher: ApiPaymentVoucher }> {
+  const res = await api.get(`/payment-vouchers/${id}`);
+  return res.data;
+}
+
+export async function createPaymentVoucher(
+  data: ApiCreatePaymentVoucherInput,
+): Promise<{ voucher: ApiPaymentVoucher }> {
+  const res = await api.post("/payment-vouchers", data);
+  return res.data;
+}
+
+export async function updatePaymentVoucher(
+  id: string,
+  data: Partial<ApiCreatePaymentVoucherInput>,
+): Promise<{ voucher: ApiPaymentVoucher }> {
+  const res = await api.patch(`/payment-vouchers/${id}`, data);
+  return res.data;
+}
+
+export async function finalizePaymentVoucher(
+  id: string,
+): Promise<{ voucher: ApiPaymentVoucher; voucherNumber: string }> {
+  const res = await api.post(`/payment-vouchers/${id}/finalize`);
+  return res.data;
+}
+
+export async function cancelPaymentVoucher(
+  id: string,
+  reason: string,
+): Promise<{ voucher: ApiPaymentVoucher }> {
+  const res = await api.post(`/payment-vouchers/${id}/cancel`, { reason });
+  return res.data;
+}
+
+export async function voidPaymentVoucher(
+  id: string,
+  reason: string,
+): Promise<{ voucher: ApiPaymentVoucher }> {
+  const res = await api.post(`/payment-vouchers/${id}/void`, { reason });
+  return res.data;
+}
+
+export async function getPaymentVoucherPdf(id: string): Promise<Blob> {
+  const res = await api.get(`/payment-vouchers/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getPaymentVoucherEvents(
+  voucherId: string,
+): Promise<{ events: ApiPaymentVoucherEvent[] }> {
+  const res = await api.get(`/payment-vouchers/${voucherId}/events`);
+  return res.data;
+}
+
+// ============================================================================
+// DEBIT NOTES
+// ============================================================================
+
+export interface DebitNoteSearchParams {
+  limit?: number;
+  offset: number;
+  status?: string;
+  search?: string;
+  customerId?: string;
+  sortOrder?: "asc" | "desc";
+  sortBy?: string;
+}
+
+export async function getDebitNotes(params?: DebitNoteSearchParams): Promise<{
+  debitNotes: ApiDebitNoteListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}> {
+  const res = await api.get("/debit-notes", { params });
+  return res.data;
+}
+
+export async function getDebitNote(id: string): Promise<{ debitNote: ApiDebitNote }> {
+  const res = await api.get(`/debit-notes/${id}`);
+  return res.data;
+}
+
+export async function createDebitNote(
+  data: ApiCreateDebitNoteInput,
+): Promise<{ debitNote: ApiDebitNote }> {
+  const res = await api.post("/debit-notes", data);
+  return res.data;
+}
+
+export async function updateDebitNote(
+  id: string,
+  data: Partial<ApiCreateDebitNoteInput>,
+): Promise<{ debitNote: ApiDebitNote }> {
+  const res = await api.patch(`/debit-notes/${id}`, data);
+  return res.data;
+}
+
+export async function finalizeDebitNote(
+  id: string,
+): Promise<{ debitNote: ApiDebitNote; debitNoteNumber: string }> {
+  const res = await api.post(`/debit-notes/${id}/finalize`);
+  return res.data;
+}
+
+export async function sendDebitNote(
+  id: string,
+  data?: { to?: string; cc?: string[]; bcc?: string[]; subject?: string; message?: string },
+): Promise<{ ok: boolean; messageId: string; status: string }> {
+  const res = await api.post(`/debit-notes/${id}/send`, data ?? {});
+  return res.data;
+}
+
+export async function cancelDebitNote(
+  id: string,
+  reason: string,
+): Promise<{ debitNote: ApiDebitNote }> {
+  const res = await api.post(`/debit-notes/${id}/cancel`, { reason });
+  return res.data;
+}
+
+export async function voidDebitNote(
+  id: string,
+  reason: string,
+): Promise<{ debitNote: ApiDebitNote }> {
+  const res = await api.post(`/debit-notes/${id}/void`, { reason });
+  return res.data;
+}
+
+export async function getDebitNotePdf(id: string): Promise<Blob> {
+  const res = await api.get(`/debit-notes/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getDebitNoteEvents(
+  noteId: string,
+): Promise<{ events: ApiDebitNoteEvent[] }> {
+  const res = await api.get(`/debit-notes/${noteId}/events`);
   return res.data;
 }
 
