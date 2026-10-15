@@ -39,6 +39,8 @@ import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { z } from "zod";
+import { AiParseDocumentType } from "./services/ai-service.js";
 import { quoteService } from "./services/quote-service.js";
 quoteService.setInvoiceService(invoiceService);
 import { taxRuleService } from "./services/tax-rule-service.js";
@@ -3288,6 +3290,8 @@ app.post(
 // ============================================================================
 // AI DOCUMENT PARSING (natural-language to structured fields)
 // ============================================================================
+const AiParseDocumentTypeSchema = z.enum(["invoice", "quote", "credit_note", "receipt", "purchase_order"]);
+
 app.post(
   "/api/ai/parse-document",
   requireAuth,
@@ -3302,9 +3306,11 @@ app.post(
       return res.status(400).json({ error: "text is required" });
     }
 
+    const documentType = AiParseDocumentTypeSchema.optional().parse(req.body?.documentType) ?? "invoice";
+
     const result = await aiService.parseDocument(text, {
       businessId: req.user!.businessId,
-      documentType: req.body?.documentType ?? "invoice",
+      documentType: documentType as AiParseDocumentType,
     });
 
     res.json(result);

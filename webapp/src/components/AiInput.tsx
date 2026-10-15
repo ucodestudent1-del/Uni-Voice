@@ -10,9 +10,10 @@ export interface AiInputProps {
   businessName?: string | null;
   currency?: string;
   customerId?: string;
+  documentType?: string;
 }
 
-export function AiInput({ onParsed, onClear, hasParsedData, businessName, currency, customerId }: AiInputProps) {
+export function AiInput({ onParsed, onClear, hasParsedData, businessName, currency, customerId, documentType = "invoice" }: AiInputProps) {
   const [text, setText] = useState("");
   const [isParsing, setIsParsing] = useState(false);
   const [result, setResult] = useState<ApiParsedDocumentResult | null>(null);
@@ -27,7 +28,7 @@ export function AiInput({ onParsed, onClear, hasParsedData, businessName, curren
     trackAiParseAttempted({ textLength: text.length });
 
     try {
-      const parsed = await parseDocument(text.trim(), "invoice");
+      const parsed = await parseDocument(text.trim(), documentType);
       setResult(parsed);
       onParsed(parsed);
       trackAiParseSuccess({

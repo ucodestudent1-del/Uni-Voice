@@ -43,8 +43,10 @@ export interface ParsedDocumentResult {
   suggestions: string[];
 }
 
+export type AiParseDocumentType = "invoice" | "quote" | "credit_note" | "receipt" | "purchase_order";
+
 export interface AiParseOptions {
-  documentType?: "invoice";
+  documentType?: AiParseDocumentType;
   businessId: string;
 }
 
