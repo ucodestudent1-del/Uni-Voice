@@ -3,24 +3,10 @@ import { env } from "../config/index.js";
 
 type RedisInstance = InstanceType<typeof import("ioredis").default>;
 let redisInstance: RedisInstance | null = null;
-let redisReady: Promise<void> | null = null;
 
 export function getRedis(): RedisInstance | null {
   if (!env.REDIS_URL) {
     return null;
-  }
-  return redisInstance;
-}
-
-export function ensureRedis(): RedisInstance | null {
-  if (!env.REDIS_URL) {
-    return null;
-  }
-  if (redisInstance) {
-    return redisInstance;
-  }
-  if (!redisReady) {
-    redisReady = initRedis();
   }
   return redisInstance;
 }
