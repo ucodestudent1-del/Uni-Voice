@@ -72,6 +72,11 @@ COPY tsconfig.json tsconfig.typecheck.json ./
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 
+# Generate OG image and PWA icons
+COPY webapp/public/favicon.svg ./webapp/public/favicon.svg
+RUN mkdir -p webapp/public/icons
+RUN npx tsx scripts/generate-og-image.ts
+
 # Build backend TypeScript → dist/
 RUN npx tsc -p tsconfig.json && node scripts/copy-migrations.js
 
@@ -86,6 +91,10 @@ COPY webapp/package*.json ./
 RUN npm ci
 
 COPY webapp/ ./
+
+# Copy generated OG image and PWA icons from backend-builder stage
+COPY --from=backend-builder /app/webapp/public/og-image.png /app/webapp/public/og-image.png
+COPY --from=backend-builder /app/webapp/public/icons/ /app/webapp/public/icons/
 
 ARG PLAUSIBLE_DOMAIN
 ENV PLAUSIBLE_DOMAIN=$PLAUSIBLE_DOMAIN
@@ -175,9 +184,10 @@ ENV PDF_PROVIDER=html
 ENV PAYMENT_PROVIDER=stub
 ENV TAX_PROVIDER=manual
 ENV AI_PROVIDER=stub
-ENV AUTH_MODE=dev
-ENV AUTH_JWT_SECRET=dev-secret-change-me
-ENV DATABASE_URL=postgresql://postgres:postgres@localhost:5432/invoice_dev
+ENV AUTH_MODE=jwt
+ENV AUTH_JWT_SECRET=
+# DATABASE_URL must be set at deployment time (no hardcoded default in production)
+ENV DATABASE_URL=
 
 EXPOSE 80 4000
 

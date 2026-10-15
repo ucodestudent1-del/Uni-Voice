@@ -155,7 +155,26 @@ export function invalidateCacheByKey(url: string): void {
 
 export const api = axios.create({
   baseURL: API_BASE,
+  withCredentials: true,
 });
+
+let isRefreshing = false;
+let failedQueue: { resolve: (value: any) => void; reject: (reason?: any) => void }[] = [];
+
+function processQueue(error: any, token: string | null = null) {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      if (token) {
+        prom.resolve(token);
+      } else {
+        prom.reject(new Error("No token available"));
+      }
+    }
+  });
+  failedQueue = [];
+}
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -180,12 +199,54 @@ api.interceptors.response.use(
     }
     return response;
   },
-   (error) => {
+  async (error) => {
     const status = error.response?.status;
     const skipRedirect = error.config?.skipAuthRedirect === true;
+
     if (status === 401 && !skipRedirect) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
+      const originalRequest = error.config;
+      if (!originalRequest._retry) {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({
+              resolve: (token: string) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(api(originalRequest));
+              },
+              reject: (err: any) => {
+                reject(err);
+              },
+            });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const res = await api.post("/auth/refresh", {}, { skipAuthRedirect: true } as AxiosRequestConfig);
+          const newToken = res.data.token;
+          if (newToken) {
+            localStorage.setItem("token", newToken);
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            processQueue(null, newToken);
+            return api(originalRequest);
+          } else {
+            throw new Error("No token in refresh response");
+          }
+        } catch (refreshError) {
+          processQueue(refreshError, null);
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      } else {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return Promise.reject(error);
+      }
     }
     if (status === 429) {
       const retryAfter = error.response?.headers?.["retry-after"];
@@ -291,6 +352,11 @@ export async function register(
 
 export async function getMe() {
   const res = await api.get("/auth/me");
+  return res.data;
+}
+
+export async function logout() {
+  const res = await api.post("/auth/logout");
   return res.data;
 }
 

@@ -566,6 +566,7 @@ export interface TwoFactorSetupResult {
 
 export interface TwoFactorVerifyResult {
   token: string;
+  refreshToken?: string;
   user: ApiUser;
   usedRecoveryCode: boolean;
 }

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { query } from "../../db/pool.js";
 import { UnauthorizedError, ForbiddenError, AppError } from "../../domain/errors.js";
-import { generateToken } from "../../middleware/auth.js";
+import { generateTokenPair } from "../../middleware/auth.js";
 import { logger } from "../../utils/logger.js";
 import { generateSecret, generateOtpAuthUri, verifyTotp } from "./totp.js";
 
@@ -19,6 +19,7 @@ export interface TwoFactorSetupResult {
 
 export interface TwoFactorVerifyResult {
   token: string;
+  refreshToken?: string;
   user: { id: string; email: string; businessId?: string };
   usedRecoveryCode: boolean;
 }
@@ -143,8 +144,14 @@ export class TwoFactorService {
     const verification = verifyTotp(secret, code);
     if (verification.valid) {
       await this.recordAttempt(userId, true, null, ip);
+      const { accessToken, refreshToken } = await generateTokenPair({
+        userId,
+        businessId,
+        email,
+      });
       return {
-        token: generateToken(userId, businessId, email),
+        token: accessToken,
+        refreshToken,
         user: { id: userId, email, businessId },
         usedRecoveryCode: false,
       };
@@ -153,8 +160,14 @@ export class TwoFactorService {
     const recovered = await this.useRecoveryCode(userId, code);
     if (recovered) {
       await this.recordAttempt(userId, true, "recovery_code", ip);
+      const { accessToken, refreshToken } = await generateTokenPair({
+        userId,
+        businessId,
+        email,
+      });
       return {
-        token: generateToken(userId, businessId, email),
+        token: accessToken,
+        refreshToken,
         user: { id: userId, email, businessId },
         usedRecoveryCode: true,
       };

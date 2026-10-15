@@ -9,6 +9,7 @@ import {
   getOnboarding,
   completeOnboardingStep,
   finishOnboarding as finishOnboardingApi,
+  logout as logoutApi,
 } from "@/api/client";
 import type { OnboardingProgress } from "@/types/api";
 import { clearSubscriptionCache } from "@/contexts/SubscriptionContext";
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [token]);
 
-  const login = useCallback((newToken: string, newUser: User) => {
+  const login = useCallback((newToken: string, newUser: User, refreshToken?: string) => {
     safeSetToken(newToken);
     setToken(newToken);
     setUser(newUser);
@@ -115,12 +116,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearSubscriptionCache();
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     safeRemoveToken();
     setToken(null);
     setUser(null);
     setOnboarding(null);
     clearSubscriptionCache();
+    try {
+      await logoutApi();
+    } catch {
+      // ignore errors during logout
+    }
   }, []);
 
   const verifyTwoFactor = useCallback(async (email: string, code: string) => {

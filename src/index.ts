@@ -1,5 +1,6 @@
 import express, { NextFunction } from "express";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import compression from "compression";
 import cors from "cors";
 import helmet from "helmet";
@@ -16,7 +17,10 @@ import {
   requireAuth,
   optionalAuth,
   AuthRequest,
-  generateToken,
+  generateTokenPair,
+  consumeRefreshToken,
+  setRefreshTokenCookie,
+  clearRefreshTokenCookie,
 } from "./middleware/auth.js";
 import {
   requireEntitlement,
@@ -166,6 +170,7 @@ app.use(
   }),
 );
 app.use(compression());
+app.use(cookieParser());
 app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -354,12 +359,17 @@ app.post("/api/auth/register", authRateLimiter, async (req, res) => {
     throw e;
   }
 
-  await onboardingService.ensureSteps(businessId);
-  const token = generateToken(userId, businessId, email);
+   await onboardingService.ensureSteps(businessId);
+  const { accessToken, refreshToken } = await generateTokenPair({
+    userId,
+    businessId,
+    email,
+  });
+  setRefreshTokenCookie(res, refreshToken);
   res
     .status(201)
     .json({
-      token,
+      token: accessToken,
       user: {
         id: userId,
         businessId,
@@ -392,7 +402,7 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
   );
   const businessId = subResult.rows[0]?.business_id;
 
-  // If 2FA is enabled, do NOT issue a token yet — require a second factor.
+   // If 2FA is enabled, do NOT issue a token yet — require a second factor.
   if (user.two_factor_enabled) {
     return res.json({
       requiresTwoFactor: true,
@@ -401,8 +411,13 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
     });
   }
 
-  const token = generateToken(user.id, businessId, user.email);
-  res.json({ token, user: { id: user.id, businessId, email: user.email } });
+  const { accessToken, refreshToken } = await generateTokenPair({
+    userId: user.id,
+    businessId,
+    email: user.email,
+  });
+  setRefreshTokenCookie(res, refreshToken);
+  res.json({ token: accessToken, user: { id: user.id, businessId, email: user.email } });
 });
 
 app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
@@ -514,6 +529,58 @@ app.delete(
 );
 
 // ============================================================================
+// TOKEN REFRESH & LOGOUT
+// ============================================================================
+app.post("/api/auth/refresh", async (req: AuthRequest, res) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({ error: "Refresh token required" });
+  }
+
+  const result = await consumeRefreshToken(
+    refreshToken,
+    req.ip,
+    req.get("user-agent") || undefined,
+  );
+
+  if (!result) {
+    clearRefreshTokenCookie(res);
+    return res.status(401).json({ error: "Invalid or expired refresh token" });
+  }
+
+  const { userId } = result;
+  const userRes = await query(
+    "SELECT id, email FROM users WHERE id = $1",
+    [userId],
+  );
+  if (!userRes.rows.length) {
+    clearRefreshTokenCookie(res);
+    return res.status(401).json({ error: "User not found" });
+  }
+
+  const user = userRes.rows[0];
+  const subResult = await query(
+    "SELECT id AS business_id FROM businesses WHERE owner_id = $1 LIMIT 1",
+    [user.id],
+  );
+  const businessId = subResult.rows[0]?.business_id;
+
+  const { accessToken, refreshToken: newRefreshToken } = await generateTokenPair({
+    userId: user.id,
+    businessId,
+    email: user.email,
+  });
+  setRefreshTokenCookie(res, newRefreshToken);
+
+  res.json({ token: accessToken });
+});
+
+app.post("/api/auth/logout", (req: AuthRequest, res) => {
+  clearRefreshTokenCookie(res);
+  res.json({ loggedOut: true });
+});
+
+// ============================================================================
 // TWO-FACTOR AUTHENTICATION (TOTP / authenticator app)
 // ============================================================================
 function handleAuthError(err: unknown, res: express.Response) {
@@ -553,12 +620,15 @@ app.post("/api/auth/2fa/verify", authRateLimiter, async (req, res) => {
       code,
       req.ip,
     );
-    res.json({
-      token: result.token,
-      user: result.user,
-      usedRecoveryCode: result.usedRecoveryCode,
-    });
-  } catch (err) {
+     res.json({
+       token: result.token,
+       user: result.user,
+       usedRecoveryCode: result.usedRecoveryCode,
+     });
+     if (result.refreshToken) {
+       setRefreshTokenCookie(res, result.refreshToken);
+     }
+   } catch (err) {
     handleAuthError(err, res);
   }
 });
@@ -687,6 +757,9 @@ app.get("/api/auth/oauth/google/callback", async (req, res) => {
     redirectUrl.hash = `token=${encodeURIComponent(result.token)}`;
     redirectUrl.searchParams.set("userId", result.user.id);
     redirectUrl.searchParams.set("email", result.user.email);
+    if (result.refreshToken) {
+      setRefreshTokenCookie(res, result.refreshToken);
+    }
     res.redirect(redirectUrl.toString());
   } catch (err: any) {
     const message =

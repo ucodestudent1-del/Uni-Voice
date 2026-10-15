@@ -58,7 +58,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().min(1),
   DATABASE_URL_TEST: z.string().optional(),
-  AUTH_MODE: z.enum(["dev", "jwt", "stub"]).default("dev"),
+  AUTH_MODE: z.enum(["dev", "jwt", "stub"]).default(isProduction ? "jwt" : "dev"),
   AUTH_JWT_SECRET: z.string().default("dev-secret-change-me"),
   APP_PUBLIC_BASE_URL: baseUrlSchema.optional(),
   APP_FRONTEND_URL: baseUrlSchema.optional(),
@@ -97,6 +97,16 @@ try {
   parsed = envSchema.parse(cleanEnv);
 } catch (e) {
   console.error("Invalid environment configuration:", e);
+  process.exit(1);
+}
+
+if (isProduction && parsed.AUTH_MODE === "dev") {
+  console.error("Invalid environment configuration: AUTH_MODE=dev is not allowed in production. Use AUTH_MODE=jwt or AUTH_MODE=stub.");
+  process.exit(1);
+}
+
+if (isProduction && (!parsed.AUTH_JWT_SECRET || parsed.AUTH_JWT_SECRET === "dev-secret-change-me")) {
+  console.error("Invalid environment configuration: AUTH_JWT_SECRET must be set to a secure value in production (cannot use the default dev secret).");
   process.exit(1);
 }
 

@@ -56,13 +56,13 @@ nginx -c /app/nginx.conf -g "daemon off;" &
 NGINX_PID=$!
 
 # Clean up on exit — ensure both processes are terminated
-cleanup() {
+  cleanup() {
   echo "Shutting down..."
   kill $BACKEND_PID 2>/dev/null || true
   kill $NGINX_PID 2>/dev/null || true
   wait $BACKEND_PID 2>/dev/null || true
   wait $NGINX_PID 2>/dev/null || true
-  exit 1
+  exit 0
 }
 
 trap cleanup INT TERM

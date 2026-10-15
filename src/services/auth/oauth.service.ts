@@ -1,5 +1,5 @@
 import { env } from "../../config/index.js";
-import { generateToken } from "../../middleware/auth.js";
+import { generateTokenPair } from "../../middleware/auth.js";
 import { getClient } from "../../db/pool.js";
 import { logger } from "../../utils/logger.js";
 import { AppError, UnauthorizedError } from "../../domain/errors.js";
@@ -23,6 +23,7 @@ export interface GoogleUserInfo {
 
 export interface OAuthResult {
   token: string;
+  refreshToken?: string;
   user: { id: string; email: string; businessId: string | undefined; name: string };
 }
 
@@ -181,10 +182,15 @@ export class OAuthService {
         );
         const businessId = businessRes.rows[0]?.business_id as string | undefined;
 
-        const token = generateToken(row.id, businessId, row.email);
+        const { accessToken, refreshToken } = await generateTokenPair({
+          userId: row.id,
+          businessId,
+          email: row.email,
+        });
 
         return {
-          token,
+          token: accessToken,
+          refreshToken,
           user: {
             id: row.id,
             email: row.email,
@@ -232,12 +238,17 @@ export class OAuthService {
 
         await client.query("COMMIT");
 
-        const token = generateToken(userId, businessId, googleUser.email);
+        const { accessToken, refreshToken } = await generateTokenPair({
+          userId,
+          businessId,
+          email: googleUser.email,
+        });
 
         logger.info({ userId, googleId: googleUser.sub }, "Created new user via Google OAuth");
 
         return {
-          token,
+          token: accessToken,
+          refreshToken,
           user: {
             id: userId,
             email: googleUser.email,
