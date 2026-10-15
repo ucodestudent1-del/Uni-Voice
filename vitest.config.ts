@@ -19,7 +19,7 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     testTimeout: 60000,
     hookTimeout: 60000,
-    env: { ...parsedEnv, APP_ENV: "test" },
+    env: { ...parsedEnv, APP_ENV: "test", PDF_PROVIDER: "stub" },
     fileParallelism: false,
     maxWorkers: 1,
     minWorkers: 1,

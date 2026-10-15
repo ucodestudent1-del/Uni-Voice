@@ -36,6 +36,8 @@ import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
 import { invoiceService } from "./services/invoice-service.js";
+import { quoteService } from "./services/quote-service.js";
+quoteService.setInvoiceService(invoiceService);
 import { taxRuleService } from "./services/tax-rule-service.js";
 import { discountRuleService } from "./services/discount-rule-service.js";
 import { brandingService } from "./services/branding-service.js";
@@ -1963,6 +1965,282 @@ app.post(
     }
   },
 );
+
+// ============================================================================
+// QUOTES
+// ============================================================================
+
+app.get("/api/quotes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await quoteService.findMany(req.user!.businessId, {
+      limit: req.query.limit as string | number | undefined,
+      offset: req.query.offset as string | number | undefined,
+      status: req.query.status as string | undefined,
+      search: req.query.search as string | undefined,
+      customerId: req.query.customerId as string | undefined,
+      dateFrom: req.query.dateFrom as string | undefined,
+      dateTo: req.query.dateTo as string | undefined,
+      sortBy: req.query.sortBy as string | undefined,
+      sortOrder: req.query.sortOrder as "asc" | "desc" | undefined,
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/quotes/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.findById(req.user!.businessId, req.params.id);
+    if (!quote) return res.status(404).json({ error: "Quote not found" });
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.create(
+      req.user!.businessId,
+      req.body,
+      req.user!.id
+    );
+    res.status(201).json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/quotes/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.update(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id
+    );
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/finalize", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await quoteService.finalize(
+      req.user!.businessId,
+      req.params.id,
+      req.user!.id
+    );
+    res.json({
+      quote: result.quote,
+      quoteNumber: result.quoteNumber,
+      status: result.status,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/send", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await quoteService.send(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id
+    );
+    const quote = await quoteService.findById(req.user!.businessId, req.params.id);
+    res.json({
+      success: result.success,
+      messageId: result.messageId,
+      status: result.status,
+      sentAt: new Date().toISOString(),
+      quote,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/accept", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.accept(req.user!.businessId, req.params.id, req.user!.id);
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/reject", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.reject(req.user!.businessId, req.params.id, req.user!.id);
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/expire", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.expire(req.user!.businessId, req.params.id);
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/cancel", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const { reason } = req.body;
+    const quote = await quoteService.cancel(
+      req.user!.businessId,
+      req.params.id,
+      reason ?? "",
+      req.user!.id
+    );
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/void", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const { reason } = req.body;
+    const quote = await quoteService.void(
+      req.user!.businessId,
+      req.params.id,
+      reason ?? "",
+      req.user!.id
+    );
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/duplicate", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.duplicate(
+      req.user!.businessId,
+      req.params.id,
+      req.user!.id
+    );
+    res.status(201).json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/quotes/:id/convert-to-invoice", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await quoteService.convertToInvoice(
+      req.user!.businessId,
+      req.params.id,
+      req.user!.id
+    );
+    res.json({
+      quote: result.quote,
+      invoiceId: result.invoiceId,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/quotes/:id/pdf", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const quote = await quoteService.findById(req.user!.businessId, req.params.id);
+    if (!quote) return res.status(404).json({ error: "Quote not found" });
+    const pdf = await quoteService.generatePdf(
+      req.user!.businessId,
+      req.params.id,
+      quote
+    );
+    res.set("Content-Type", "application/pdf");
+    res.set(
+      "Content-Disposition",
+      `inline; filename="Quote-${(quote as any).quote_number ?? req.params.id}.pdf"`
+    );
+    res.send(pdf);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/quotes/:id/share-link", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const link = await quoteService.createShareLink(req.user!.businessId, req.params.id);
+    res.json({
+      token: link.token,
+      url: link.url,
+      expiresAt: link.expiresAt,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/quotes/:id/events", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await quoteService.getEvents(
+      req.user!.businessId,
+      req.params.id,
+      req.query.limit ? Number(req.query.limit) : undefined,
+      req.query.offset ? Number(req.query.offset) : undefined
+    );    res.json({ events: result.events, total: result.total });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================================
+// PUBLIC QUOTE VIEW
+// ============================================================================
+
+app.get("/api/public/quote/:token", async (req: AuthRequest, res, next) => {
+  try {
+    const quote = await quoteService.findByPublicToken(req.params.token);
+    if (!quote) return res.status(404).json({ error: "Quote not found" });
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ============================================================================
 // SPEED OPTIMIZATION API (Predictive UX)

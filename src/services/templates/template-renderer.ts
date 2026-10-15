@@ -22,6 +22,7 @@ export interface TemplateLineItem {
   catalogTaxCategory?: string | null;
   catalogUnitPrice?: string | null;
   catalogTaxRate?: string | null;
+  isOptional?: boolean;
 }
 
 export interface TemplateFee {
@@ -168,6 +169,29 @@ export interface CreditNoteTemplateData {
     amount: Decimal.Value;
     appliedAt: string;
   }>;
+  config: Record<string, unknown>;
+}
+
+export interface QuoteTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  quote: {
+    id: string;
+    quoteNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    expiryDate: string | null;
+    currency: CurrencyCode;
+    notes?: string | null;
+    terms?: string | null;
+    scopeOfWork?: string | null;
+    paymentInstructions?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
   config: Record<string, unknown>;
 }
 
@@ -1264,13 +1288,124 @@ export const DEFAULT_CREDIT_NOTE_TEMPLATE = `<!DOCTYPE html>
 
 templateCache.set(DEFAULT_CREDIT_NOTE_TEMPLATE, Handlebars.compile(DEFAULT_CREDIT_NOTE_TEMPLATE, { noEscape: true }));
 
+export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
+<html lang="{{quote.language}}">
+<head>
+  <meta charset="utf-8">
+  <title>Quote {{quote.quoteNumber}}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 48px; color: #222; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .logo { max-height: 60px; }
+    .muted { color: #666; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+    th { color: #666; font-weight: 600; }
+    td.amount { text-align: right; font-variant-numeric: tabular-nums; }
+    .totals { margin-top: 16px; }
+    .totals td { font-weight: 600; }
+    .big-total { font-size: 20px; }
+    .badge { display:inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-accepted { background: #dcfce7; color: #15803d; }
+    .expiry-warning { color: #ea580c; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 style="margin:0 0 4px;">Quote</h1>
+      <h2 style="margin:0; font-size: 22px;">{{quote.quoteNumber}}</h2>
+      {{#if quote.expiryDate}}
+      <p class="muted">Expires: {{formatDate quote.expiryDate}}</p>
+      {{/if}}
+    </div>
+    <div style="text-align:right">
+      <h2 style="margin:0">{{business.name}}</h2>
+      <p class="muted">{{business.email}}</p>
+      <p class="muted">{{business.phone}}</p>
+    </div>
+  </div>
+
+  {{#if customer}}
+  <table style="margin-bottom: 0;">
+    <tr><td><span class="muted">Billed to</span></td>
+        <td>{{customer.name}}{{#if customer.companyName}} ({{customer.companyName}}){{/if}}</td></tr>
+    <tr><td></td><td>{{customer.email}}</td></tr>
+    {{#if customer.addressLine1}}
+    <tr><td></td><td>{{customer.addressLine1}}</td></tr>
+    {{/if}}
+    {{#if customer.addressLine2}}
+    <tr><td></td><td>{{customer.addressLine2}}</td></tr>
+    {{/if}}
+    <tr><td></td><td>{{customer.city}}{{#if customer.stateOrRegion}}, {{customer.stateOrRegion}}{{/if}} {{customer.postalCode}}</td></tr>
+  </table>
+  {{/if}}
+
+  <table>
+    <tr>
+      <th>#</th><th>Description</th><th style="text-align:right">Qty</th>
+      <th style="text-align:right">Rate</th><th style="text-align:right">Tax</th>
+      <th style="text-align:right">Amount</th>
+    </tr>
+    {{#each lineItems}}
+    <tr>
+      <td>{{@index}}</td><td>{{description}}</td>
+      <td class="amount">{{quantity}}</td>
+      <td class="amount">{{formatMoney unitPrice}}</td>
+      <td class="amount">{{formatRate taxRate}}</td>
+      <td class="amount">{{formatMoney lineTotal}}</td>
+    </tr>
+    {{/each}}
+  </table>
+
+  <div class="totals">
+    <table style="max-width:320px; margin-left:auto">
+      <tr><td>Subtotal</td><td class="amount">{{formatMoney totals.subtotal}}</td></tr>
+      {{#if (gt totals.discountTotal 0)}}
+      <tr><td>Discount</td><td class="amount">−{{formatMoney totals.discountTotal}}</td></tr>
+      {{/if}}
+      <tr><td>Tax</td><td class="amount">{{formatMoney totals.taxTotal}}</td></tr>
+      {{#if (gt totals.feeTotal 0)}}
+      <tr><td>Fees</td><td class="amount">{{formatMoney totals.feeTotal}}</td></tr>
+      {{/if}}
+      <tr class="big-total"><td>Total</td><td class="amount">{{formatMoney totals.total}}</td></tr>
+    </table>
+  </div>
+
+  {{#if quote.scopeOfWork}}
+  <div style="margin-top: 24px;">
+    <h4 style="margin:0 0 8px; font-size: 14px; color: #666;">Scope of Work</h4>
+    <div class="muted" style="white-space: pre-line;">{{{nl2br quote.scopeOfWork}}}</div>
+  </div>
+  {{/if}}
+
+  {{#if quote.notes}}
+  <p class="muted" style="margin-top: 24px;">{{quote.notes}}</p>
+  {{/if}}
+  {{#if quote.terms}}
+  <p class="muted">{{quote.terms}}</p>
+  {{/if}}
+
+  <div class="footer" style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+    <p>Quote #{{quote.quoteNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+  </div>
+
+</body>
+  </html>`;
+
+templateCache.set(DEFAULT_QUOTE_TEMPLATE, Handlebars.compile(DEFAULT_QUOTE_TEMPLATE, { noEscape: true }));
+
 export class TemplateRenderer {
   private defaultTemplate: string;
   private defaultCreditNoteTemplate: string;
+  private defaultQuoteTemplate: string;
 
-  constructor(defaultTemplate?: string, defaultCreditNoteTemplate?: string) {
+  constructor(defaultTemplate?: string, defaultCreditNoteTemplate?: string, defaultQuoteTemplate?: string) {
     this.defaultTemplate = defaultTemplate ?? DEFAULT_INVOICE_TEMPLATE;
     this.defaultCreditNoteTemplate = defaultCreditNoteTemplate ?? DEFAULT_CREDIT_NOTE_TEMPLATE;
+    this.defaultQuoteTemplate = defaultQuoteTemplate ?? DEFAULT_QUOTE_TEMPLATE;
   }
 
   build(data: InvoiceTemplateData): any {
@@ -1279,6 +1414,10 @@ export class TemplateRenderer {
 
   buildCreditNote(data: CreditNoteTemplateData): any {
     return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultCreditNoteTemplate);
+  }
+
+  buildQuote(data: QuoteTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultQuoteTemplate);
   }
 
   async render(data: InvoiceTemplateData, templateHtml?: string): Promise<string> {
@@ -1320,6 +1459,21 @@ export class TemplateRenderer {
       meta: getCurrencyMetadata(data.creditNote.currency),
       appBaseUrl: env.APP_PUBLIC_BASE_URL,
       viewCreditNoteUrl,
+    });
+  }
+
+  async renderQuote(data: QuoteTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultQuoteTemplate
+    );
+
+    const viewQuoteUrl = data.quote.id ? `${env.APP_PUBLIC_BASE_URL}/quotes/${data.quote.id}` : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.quote.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewQuoteUrl,
     });
   }
 }
@@ -1499,6 +1653,54 @@ export function buildCreditNoteData(
     fees,
     totals,
     applications,
+    config,
+  };
+}
+
+export interface BuildQuoteInput {
+  id: string;
+  quoteNumber: string | null;
+  status: string;
+  issueDate?: Date | null;
+  expiryDate?: Date | null;
+  currency: CurrencyCode;
+  scopeOfWork?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  paymentInstructions?: string | null;
+  language?: string;
+  isFinalized?: boolean;
+}
+
+export function buildQuoteData(
+  quote: BuildQuoteInput,
+  business: TemplateBusiness,
+  customer: TemplateCustomer | null,
+  items: TemplateLineItem[],
+  fees: TemplateFee[],
+  totals: TemplateTotals,
+  config: Record<string, unknown> = {}
+): QuoteTemplateData {
+  return {
+    business,
+    customer,
+    quote: {
+      id: quote.id,
+      quoteNumber: quote.quoteNumber,
+      status: quote.status,
+      issueDate: quote.issueDate ? quote.issueDate.toISOString().slice(0, 10) : null,
+      expiryDate: quote.expiryDate ? quote.expiryDate.toISOString().slice(0, 10) : null,
+      currency: quote.currency,
+      scopeOfWork: quote.scopeOfWork ?? null,
+      notes: quote.notes ?? null,
+      terms: quote.terms ?? null,
+      paymentInstructions: quote.paymentInstructions ?? null,
+      language: quote.language ?? undefined,
+      isFinalized: quote.isFinalized ?? false,
+    },
+    lineItems: items,
+    fees,
+    totals,
     config,
   };
 }

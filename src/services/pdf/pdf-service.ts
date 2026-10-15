@@ -1,9 +1,9 @@
 import type { Browser, Page, LaunchOptions, PDFOptions } from "puppeteer";
 import { env } from "../../config/index.js";
 import { logger } from "../../utils/logger.js";
-import type { InvoiceTemplateData, CreditNoteTemplateData } from "../templates/template-renderer.js";
+import type { InvoiceTemplateData, CreditNoteTemplateData, QuoteTemplateData } from "../templates/template-renderer.js";
 
-type TemplateData = InvoiceTemplateData | CreditNoteTemplateData;
+type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData;
 
 export interface PdfProvider {
   readonly name: string;
@@ -65,8 +65,10 @@ export class StubPdfService implements PdfProvider {
   async generatePdf(_html: string, data: TemplateData): Promise<Buffer> {
     const number = "invoice" in data
       ? data.invoice.invoiceNumber ?? "INV"
-      : data.creditNote.creditNoteNumber ?? "CN";
-    const docType = "invoice" in data ? "Invoice" : "Credit Note";
+      : "creditNote" in data
+      ? data.creditNote.creditNoteNumber ?? "CN"
+      : data.quote.quoteNumber ?? "QOT";
+    const docType = "invoice" in data ? "Invoice" : "creditNote" in data ? "Credit Note" : "Quote";
     const pdf =
       `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n` +
       `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n` +

@@ -223,6 +223,16 @@ export interface CreditNoteEmailData {
   idempotencyKey?: string;
 }
 
+export interface QuoteEmailData {
+  quoteId: string;
+  businessId: string;
+  recipient: EmailRecipient;
+  subject: string;
+  htmlBody: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
+  idempotencyKey?: string;
+}
+
 export class EmailService {
   private provider: EmailProvider;
 
@@ -343,6 +353,39 @@ export class EmailService {
     );
 
     logger.info(`Email sent: to=${data.recipient.email} creditNoteId=${data.creditNoteId} msgId=${result.messageId}`);
+    return result;
+  }
+
+  async sendQuoteEmail(data: QuoteEmailData): Promise<{ messageId: string; status: EmailStatus }> {
+    if (data.idempotencyKey) {
+      const existing = await query(
+        `SELECT message_id, status FROM email_log
+         WHERE idempotency_key = $1 AND document_type = $2`,
+        [data.idempotencyKey, "quote"]
+      );
+      if (existing.rows.length) {
+        logger.info(`Quote email already sent (idempotent), msgId=${existing.rows[0].message_id}`);
+        return { messageId: existing.rows[0].message_id, status: existing.rows[0].status };
+      }
+    }
+
+    const result = await this.provider.send({
+      to: data.recipient,
+      subject: data.subject,
+      html: data.htmlBody,
+      attachments: data.attachments,
+    });
+
+    await query(
+      `INSERT INTO email_log (invoice_id, credit_note_id, quote_id, document_type, business_id, provider, status, recipient, subject, message_id, idempotency_key, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW(),NOW())`,
+      [
+        null, null, data.quoteId, "quote", data.businessId, this.provider.name, result.status,
+        data.recipient.email, data.subject, result.messageId, data.idempotencyKey ?? null,
+      ]
+    );
+
+    logger.info(`Email sent: to=${data.recipient.email} quoteId=${data.quoteId} msgId=${result.messageId}`);
     return result;
   }
 
