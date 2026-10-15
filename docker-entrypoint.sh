@@ -35,7 +35,8 @@ while [ $WAITED -lt $MAX_WAIT ]; do
     echo "Backend process exited unexpectedly."
     exit 1
   fi
-  if curl -sf http://127.0.0.1:4000/api/health >/dev/null 2>&1; then
+   HEALTH_PORT=${PORT:-4000}
+   if curl -sf "http://127.0.0.1:${HEALTH_PORT}/api/health" >/dev/null 2>&1; then
     echo "Backend is ready."
     BACKEND_READY=true
     break
