@@ -186,8 +186,10 @@ ENV AUTH_MODE=jwt
 ENV AUTH_JWT_SECRET=
 # DATABASE_URL must be set at deployment time (no hardcoded default in production)
 ENV DATABASE_URL=
-# REDIS_URL is optional; if set, Redis-backed caching and PDF workers are used
+# REDIS_URL is optional; if set, Redis-backed rate limiting and caching are used
 ENV REDIS_URL=
+# SENTRY_DSN is optional; if set, Sentry error tracking is enabled
+ENV SENTRY_DSN=
 
 EXPOSE 80 4000
 

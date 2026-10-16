@@ -87,6 +87,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CALLBACK_URL: optionalUrlSchema.optional(),
   REDIS_URL: z.string().optional(),
+  SENTRY_DSN: z.string().optional(),
 });
 
 type Env = Omit<z.infer<typeof envSchema>, "APP_PUBLIC_BASE_URL"> & {

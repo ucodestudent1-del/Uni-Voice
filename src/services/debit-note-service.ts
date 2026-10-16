@@ -153,7 +153,7 @@ const DEBIT_NOTE_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const compiledDebitNoteTemplate = Handlebars.compile(DEBIT_NOTE_TEMPLATE, { noEscape: true });
+const compiledDebitNoteTemplate = Handlebars.compile(DEBIT_NOTE_TEMPLATE, { noEscape: false });
 
 Handlebars.registerHelper("formatMoney", (v: Decimal.Value, currency = "USD") => {
   try {

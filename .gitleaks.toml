@@ -1,0 +1,18 @@
+title = "Gitleaks configuration for Universal Invoice Generator"
+
+[extend]
+useDefaults = true
+
+[allowlist]
+  description = "Allowlist for test fixtures and documentation"
+  paths = [
+    '''^\.env\.example$''',
+    '''^docs/''',
+    '''^SECURITY_AUDIT_GUIDE\.md$''',
+  ]
+  regexes = [
+    '''sk_test_.*''',
+    '''sk_live_.*''',
+    '''pk_test_.*''',
+    '''pk_live_.*''',
+  ]

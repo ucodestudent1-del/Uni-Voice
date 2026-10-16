@@ -23,8 +23,9 @@ services:
       - PDF_PROVIDER=html
       - PAYMENT_PROVIDER=stub
       - TAX_PROVIDER=manual
-      - AI_PROVIDER=stub
-    restart: unless-stopped
+       - AI_PROVIDER=stub
+       - SENTRY_DSN=${SENTRY_DSN:-}
+     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/api/health"]
       interval: 30s

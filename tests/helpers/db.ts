@@ -1,7 +1,7 @@
 import { query, getClient } from "../../src/db/pool.js";
 import { runMigrations, rollbackAll } from "../../src/db/migrate.js";
 import { subscriptionService } from "../../src/services/subscription.service.js";
-import bcrypt from "bcrypt";
+import { hashPassword } from "../../src/services/auth/password.js";
 
 export async function resetTestDb(): Promise<void> {
   await rollbackAll();
@@ -76,7 +76,7 @@ export async function createTestUser(data?: Partial<{
   const countryCode = data?.countryCode ?? "US";
   const defaultCurrency = data?.defaultCurrency ?? "USD";
   const now = new Date().toISOString();
-  const passwordHash = await bcrypt.hash(password, 5);
+  const passwordHash = await hashPassword(password);
 
   await query(
     `INSERT INTO users (id, email, password_hash, created_at, updated_at)

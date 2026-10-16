@@ -283,7 +283,7 @@ Handlebars.registerHelper("default", function (fallback: unknown, value: unknown
 function compileTemplate(templateHtml: string): Handlebars.TemplateDelegate<any> {
   let compiled = templateCache.get(templateHtml);
   if (!compiled) {
-    compiled = Handlebars.compile(templateHtml, { noEscape: true });
+    compiled = Handlebars.compile(templateHtml, { noEscape: false });
     templateCache.set(templateHtml, compiled);
   }
   return compiled;
@@ -921,7 +921,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-templateCache.set(DEFAULT_INVOICE_TEMPLATE, Handlebars.compile(DEFAULT_INVOICE_TEMPLATE, { noEscape: true }));
+templateCache.set(DEFAULT_INVOICE_TEMPLATE, Handlebars.compile(DEFAULT_INVOICE_TEMPLATE, { noEscape: false }));
 
 export const DEFAULT_CREDIT_NOTE_TEMPLATE = `<!DOCTYPE html>
 <html lang="{{creditNote.language}}">
@@ -1286,7 +1286,7 @@ export const DEFAULT_CREDIT_NOTE_TEMPLATE = `<!DOCTYPE html>
 </body>
   </html>`;
 
-templateCache.set(DEFAULT_CREDIT_NOTE_TEMPLATE, Handlebars.compile(DEFAULT_CREDIT_NOTE_TEMPLATE, { noEscape: true }));
+templateCache.set(DEFAULT_CREDIT_NOTE_TEMPLATE, Handlebars.compile(DEFAULT_CREDIT_NOTE_TEMPLATE, { noEscape: false }));
 
 export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
 <html lang="{{quote.language}}">
@@ -1395,7 +1395,7 @@ export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
 </body>
   </html>`;
 
-templateCache.set(DEFAULT_QUOTE_TEMPLATE, Handlebars.compile(DEFAULT_QUOTE_TEMPLATE, { noEscape: true }));
+templateCache.set(DEFAULT_QUOTE_TEMPLATE, Handlebars.compile(DEFAULT_QUOTE_TEMPLATE, { noEscape: false }));
 
 export class TemplateRenderer {
   private defaultTemplate: string;

@@ -139,7 +139,7 @@ const RECEIPT_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const compiledReceiptTemplate = Handlebars.compile(RECEIPT_TEMPLATE, { noEscape: true });
+const compiledReceiptTemplate = Handlebars.compile(RECEIPT_TEMPLATE, { noEscape: false });
 
 export interface ReceiptTemplateData {
   business: { name: string; email?: string | null; phone?: string | null; address?: Record<string, unknown> | null };

@@ -148,7 +148,7 @@ const PAYMENT_VOUCHER_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const compiledPaymentVoucherTemplate = Handlebars.compile(PAYMENT_VOUCHER_TEMPLATE, { noEscape: true });
+const compiledPaymentVoucherTemplate = Handlebars.compile(PAYMENT_VOUCHER_TEMPLATE, { noEscape: false });
 
 Handlebars.registerHelper("formatMoney", (v: Decimal.Value, currency = "USD") => {
   try {

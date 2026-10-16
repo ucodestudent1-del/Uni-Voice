@@ -1,5 +1,6 @@
 import express, { NextFunction } from "express";
 import rateLimit from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 import cors from "cors";
@@ -10,9 +11,11 @@ import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { Decimal } from "decimal.js";
 import { env, isDev, isTest } from "./config/index.js";
+import * as Sentry from "@sentry/node";
 import { parsePagination } from "./utils/pagination.js";
 import { validateDocumentTextInput } from "./utils/document-validation.js";
 import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
+import { getRedisSendCommand } from "./db/redis.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import {
@@ -26,11 +29,13 @@ import {
   setAccessTokenCookie,
   clearAccessTokenCookie,
 } from "./middleware/auth.js";
+import { revokeAccessToken } from "./services/auth/token-denylist.js";
 import { idempotencyKey } from "./middleware/idempotency.js";
 import {
   requireEntitlement,
   requireUsageLimit,
 } from "./middleware/entitlement.js";
+import { requireRole } from "./middleware/rbac.js";
 import {
   reportsCache,
 } from "./services/reports-cache.js";
@@ -111,7 +116,7 @@ import {
   ProjectTimeEntrySearchSchema,
   ProjectNoteCreateSchema,
 } from "./domain/schemas/project-time-entry.js";
-import bcrypt from "bcrypt";
+import { hashPassword, verifyPassword, validatePasswordPolicy, checkPasswordBreach } from "./services/auth/password.js";
 import { camelToSnake } from "./utils/case-conversion.js";
 
 const app = express();
@@ -176,14 +181,53 @@ app.use(
         upgradeInsecureRequests: isDev ? [] : ["'none'"],
       },
     },
+    hsts: isDev
+      ? undefined
+      : {
+          maxAge: 63072000,
+          includeSubDomains: true,
+          preload: true,
+        },
+    xPoweredBy: true,
   }),
 );
 app.use(compression());
 app.use(cookieParser());
-app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true }));
-app.use(express.json({ limit: "10mb" }));
+app.use(cors({ origin: isDev ? true : frontendBaseUrl, credentials: true, maxAge: isDev ? undefined : 86400 }));
+app.use(express.json({ limit: isDev ? "10mb" : "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 if (isDev) app.use(morgan("dev"));
+
+if (env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: env.SENTRY_DSN,
+    environment: env.APP_ENV,
+    integrations: [
+      Sentry.httpIntegration(),
+      Sentry.expressIntegration({
+        shouldHandleError(error) {
+          const statusCode = (error as any)?.statusCode;
+          return !statusCode || statusCode >= 500;
+        },
+      }),
+    ],
+    tracesSampleRate: isDev ? 0 : 0.1,
+    beforeSend(event) {
+      if (event.request && event.request.headers) {
+        const headers: Record<string, string> = {};
+        for (const [key, value] of Object.entries(event.request.headers)) {
+          if (key !== "authorization" && key !== "cookie") {
+            headers[key] = value as string;
+          }
+        }
+        event.request.headers = headers;
+      }
+      return event;
+    },
+  });
+  Sentry.setupExpressErrorHandler(app);
+  logger.info("Sentry error tracking initialized");
+}
 
 const QUERY_COUNT_LOG_THRESHOLD = 10;
 const REQUEST_DURATION_LOG_THRESHOLD_MS = 1000;
@@ -259,6 +303,16 @@ function getCookie(header: string | undefined, name: string): string | null {
 // ============================================================================
 // RATE LIMITING
 // ============================================================================
+function createRateLimitStore() {
+  const sendCommand = getRedisSendCommand();
+  if (sendCommand) {
+    return new RedisStore({ sendCommand, prefix: "rl:" });
+  }
+  return undefined;
+}
+
+const rateLimitStore = !isDev ? createRateLimitStore() : undefined;
+
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -269,6 +323,7 @@ const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: isDev ? () => true : undefined,
+  store: rateLimitStore,
 });
 
 const generalRateLimiter = rateLimit({
@@ -278,6 +333,7 @@ const generalRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: isDev ? () => true : undefined,
+  store: rateLimitStore,
 });
 
 const aiRateLimiter = rateLimit({
@@ -290,6 +346,7 @@ const aiRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: isDev ? () => true : undefined,
+  store: rateLimitStore,
 });
 
 const documentCreateRateLimiter = rateLimit({
@@ -302,6 +359,7 @@ const documentCreateRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: isDev ? () => true : undefined,
+  store: rateLimitStore,
 });
 
 const emailSendRateLimiter = rateLimit({
@@ -314,6 +372,7 @@ const emailSendRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: isDev ? () => true : undefined,
+  store: rateLimitStore,
 });
 
 app.use("/api", generalRateLimiter);
@@ -354,16 +413,37 @@ app.post("/api/auth/register", authRateLimiter, async (req, res) => {
   if (!email || !password)
     return res.status(400).json({ error: "email and password required" });
 
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: "Valid email address is required" });
+  }
+
+  const passwordValidation = validatePasswordPolicy(password);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({
+      error: "Password does not meet policy requirements",
+      violations: passwordValidation.violations,
+    });
+  }
+
   const existing = await query("SELECT id FROM users WHERE email = $1", [
     email,
   ]);
   if (existing.rows.length)
     return res.status(409).json({ error: "User already exists" });
 
+  const breachCheck = await checkPasswordBreach(password);
+  if (breachCheck.breached) {
+    return res.status(400).json({
+      error:
+        "Password found in data breach. Please choose a different password.",
+      breachCount: breachCheck.count,
+    });
+  }
+
   const userId = crypto.randomUUID();
   const businessId = crypto.randomUUID();
   const now = new Date().toISOString();
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await hashPassword(password);
 
   await query("BEGIN");
   try {
@@ -426,7 +506,7 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
     return res.status(401).json({ error: "Invalid credentials" });
 
   const user = result.rows[0];
-  const valid = await bcrypt.compare(password, user.password_hash);
+  const valid = await verifyPassword(password, user.password_hash);
   if (!valid) return res.status(401).json({ error: "Invalid credentials" });
 
   const subResult = await query(
@@ -510,6 +590,15 @@ app.post(
       return res
         .status(400)
         .json({ error: "currentPassword and newPassword required" });
+
+    const passwordValidation = validatePasswordPolicy(newPassword);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        error: "New password does not meet policy requirements",
+        violations: passwordValidation.violations,
+      });
+    }
+
     try {
       const userRow = await query(
         "SELECT password_hash FROM users WHERE id = $1",
@@ -517,13 +606,13 @@ app.post(
       );
       if (!userRow.rows.length)
         return res.status(404).json({ error: "User not found" });
-      const valid = await bcrypt.compare(
+      const valid = await verifyPassword(
         currentPassword,
         userRow.rows[0].password_hash,
       );
       if (!valid)
         return res.status(400).json({ error: "Current password is incorrect" });
-      const hash = await bcrypt.hash(newPassword, 10);
+      const hash = await hashPassword(newPassword);
       await query(
         "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
         [hash, req.user!.id],
@@ -610,11 +699,15 @@ app.post("/api/auth/refresh", async (req: AuthRequest, res) => {
    res.json({ user: { id: user.id, businessId, email: user.email } });
  });
 
- app.post("/api/auth/logout", (req: AuthRequest, res) => {
-   clearRefreshTokenCookie(res);
-   clearAccessTokenCookie(res);
-   res.json({ loggedOut: true });
- });
+  app.post("/api/auth/logout", async (req: AuthRequest, res) => {
+    const accessToken = req.cookies?.accessToken || (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : null);
+    if (accessToken) {
+      await revokeAccessToken(accessToken, 15 * 60);
+    }
+    clearRefreshTokenCookie(res);
+    clearAccessTokenCookie(res);
+    res.json({ loggedOut: true });
+  });
 
 // ============================================================================
 // TWO-FACTOR AUTHENTICATION (TOTP / authenticator app)
@@ -1086,6 +1179,7 @@ app.get(
 app.patch(
   "/api/businesses/current",
   requireAuth,
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -4255,6 +4349,7 @@ app.get(
 app.patch(
   "/api/businesses/current/settings",
   requireAuth,
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -4323,6 +4418,7 @@ app.get(
 app.patch(
   "/api/businesses/current/settings/reminders",
   requireAuth,
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -4379,6 +4475,7 @@ app.post(
   "/api/businesses/current/team",
   requireAuth,
   requireEntitlement("business.multiple"),
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -4421,6 +4518,7 @@ app.patch(
   "/api/businesses/current/team/:memberId",
   requireAuth,
   requireEntitlement("business.multiple"),
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -4453,6 +4551,7 @@ app.post(
   "/api/businesses/current/team/:memberId/resend",
   requireAuth,
   requireEntitlement("business.multiple"),
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -4473,6 +4572,7 @@ app.delete(
   "/api/businesses/current/team/:memberId",
   requireAuth,
   requireEntitlement("business.multiple"),
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -5176,9 +5276,15 @@ process.on("unhandledRejection", (reason) => {
     { err: reason },
     "Unhandled promise rejection — server will continue running",
   );
+  if (env.SENTRY_DSN) {
+    Sentry.captureException(reason);
+  }
 });
 process.on("uncaughtException", (err) => {
   logger.error({ err }, "Uncaught exception — server will continue running");
+  if (env.SENTRY_DSN) {
+    Sentry.captureException(err);
+  }
 });
 
 const PORT = env.PORT;

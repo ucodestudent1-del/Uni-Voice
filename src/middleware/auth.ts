@@ -3,6 +3,7 @@ import { UnauthorizedError } from "../domain/errors.js";
 import { env, isDev } from "../config/index.js";
 import { query } from "../db/pool.js";
 import { compareSync, hashSync } from "bcrypt";
+import { isAccessTokenRevoked } from "../services/auth/token-denylist.js";
 import jwt from "jsonwebtoken";
 
 /**
@@ -66,12 +67,30 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     throw new UnauthorizedError("Invalid or expired token");
   }
 
-  req.user = {
-    id: decoded.userId,
-    businessId: decoded.businessId,
-    email: decoded.email,
-  };
-  next();
+  if (!env.REDIS_URL) {
+    req.user = {
+      id: decoded.userId,
+      businessId: decoded.businessId,
+      email: decoded.email,
+    };
+    next();
+    return;
+  }
+
+  isAccessTokenRevoked(token).then((revoked) => {
+    if (revoked) {
+      throw new UnauthorizedError("Token has been revoked");
+    }
+
+    req.user = {
+      id: decoded.userId,
+      businessId: decoded.businessId,
+      email: decoded.email,
+    };
+    next();
+  }).catch((err) => {
+    next(err);
+  });
 }
 
 export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): void {
@@ -114,7 +133,7 @@ export async function generateTokenPair({
   const refreshToken = generateRefreshToken(userId);
 
   // Store hashed refresh token in DB
-  const tokenHash = hashSync(refreshToken, 10);
+  const tokenHash = hashSync(refreshToken, 12);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await query(
