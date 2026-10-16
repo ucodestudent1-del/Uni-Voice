@@ -11,6 +11,7 @@ import { randomUUID } from "node:crypto";
 import { Decimal } from "decimal.js";
 import { env, isDev, isTest } from "./config/index.js";
 import { parsePagination } from "./utils/pagination.js";
+import { validateDocumentTextInput } from "./utils/document-validation.js";
 import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
@@ -282,6 +283,30 @@ const aiRateLimiter = rateLimit({
   message: {
     error: "Too many AI parse requests. Please try again later.",
     code: "AI_RATE_LIMITED",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isDev ? () => true : undefined,
+});
+
+const documentCreateRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: isDev ? 100 : 30,
+  message: {
+    error: "Too many document creation requests. Please try again later.",
+    code: "DOCUMENT_RATE_LIMITED",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isDev ? () => true : undefined,
+});
+
+const emailSendRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: isDev ? 100 : 20,
+  message: {
+    error: "Too many email send requests. Please try again later.",
+    code: "EMAIL_RATE_LIMITED",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -1448,10 +1473,11 @@ app.get(
 // INVOICES
 // ============================================================================
 
-app.post("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
+app.post("/api/invoices", documentCreateRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
+    validateDocumentTextInput(req.body);
     const invoice = await invoiceService.create(
       req.user!.businessId,
       req.body,
@@ -1548,6 +1574,7 @@ app.post(
 
 app.post(
   "/api/invoices/:id/send",
+  emailSendRateLimiter,
   requireAuth,
   async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId)
@@ -1630,6 +1657,7 @@ app.post(
 
 app.post(
   "/api/invoices/:id/send-reminder",
+  emailSendRateLimiter,
   requireAuth,
   async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId)
@@ -1793,6 +1821,7 @@ app.get("/api/public/invoice/:token", async (req: AuthRequest, res, next) => {
 
 app.post(
   "/api/credit-notes/draft",
+  documentCreateRateLimiter,
   requireAuth,
   async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId)
@@ -1812,6 +1841,7 @@ app.post(
 
 app.post(
   "/api/credit-notes",
+  documentCreateRateLimiter,
   requireAuth,
   async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId)
@@ -1920,6 +1950,7 @@ app.patch(
 
 app.post(
   "/api/credit-notes/:id/send",
+  emailSendRateLimiter,
   requireAuth,
   async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId)
@@ -2104,7 +2135,7 @@ app.get("/api/quotes/:id", requireAuth, async (req: AuthRequest, res, next) => {
   }
 });
 
-app.post("/api/quotes", requireAuth, async (req: AuthRequest, res, next) => {
+app.post("/api/quotes", documentCreateRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
@@ -2154,7 +2185,7 @@ app.post("/api/quotes/:id/finalize", requireAuth, async (req: AuthRequest, res, 
   }
 });
 
-app.post("/api/quotes/:id/send", requireAuth, async (req: AuthRequest, res, next) => {
+app.post("/api/quotes/:id/send", emailSendRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
@@ -2333,7 +2364,7 @@ app.get("/api/quotes/:id/events", requireAuth, async (req: AuthRequest, res, nex
 // ============================================================================
 // PAYMENT VOUCHERS
 // ============================================================================
-app.post("/api/payment-vouchers", requireAuth, async (req: AuthRequest, res, next) => {
+app.post("/api/payment-vouchers", documentCreateRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
@@ -2493,7 +2524,7 @@ app.get("/api/payment-vouchers/:id/events", requireAuth, async (req: AuthRequest
 // ============================================================================
 // DEBIT NOTES
 // ============================================================================
-app.post("/api/debit-notes", requireAuth, async (req: AuthRequest, res, next) => {
+app.post("/api/debit-notes", documentCreateRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
@@ -2576,7 +2607,7 @@ app.post("/api/debit-notes/:id/finalize", requireAuth, async (req: AuthRequest, 
   }
 });
 
-app.post("/api/debit-notes/:id/send", requireAuth, async (req: AuthRequest, res, next) => {
+app.post("/api/debit-notes/:id/send", emailSendRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
@@ -2889,6 +2920,7 @@ app.get(
 
 app.post(
   "/api/receipts/:id/email",
+  emailSendRateLimiter,
   requireAuth,
   requireEntitlement("receipts.create"),
   async (req: AuthRequest, res) => {
