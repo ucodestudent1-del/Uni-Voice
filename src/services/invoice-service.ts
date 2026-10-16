@@ -6,6 +6,7 @@ import { NotFoundError, BusinessLogicError, ConflictError } from "../domain/erro
 import { invoiceNumberService, creditNoteNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService } from "../services/email/email-service.js";
+import { stripeService } from "../services/payments/stripe-service.js";
 import { buildTemplateData, buildCreditNoteData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import type { Address } from "../domain/value-objects/address.js";
@@ -1118,6 +1119,100 @@ export class InvoiceService {
       [invoiceId]
     );
     return result.rows;
+  }
+
+  async createPaymentSession(
+    businessId: string,
+    invoiceId: string,
+    successUrl: string,
+    cancelUrl: string
+  ): Promise<{ url: string; paymentIntentId: string }> {
+    const invoice = await this.findById(businessId, invoiceId);
+    if (!invoice) throw new NotFoundError(`Invoice ${invoiceId} not found`);
+
+    const amountDue = new Decimal(String(invoice.amount_due ?? invoice.total ?? 0));
+    if (amountDue.lte(0)) {
+      throw new BusinessLogicError("Invoice has no outstanding balance", "NO_BALANCE");
+    }
+
+    const existing = await query(
+      `SELECT id, provider_intent_id FROM payment_intents
+       WHERE invoice_id = $1 AND status IN ('pending', 'requires_action')`,
+      [invoiceId]
+    );
+
+    if (existing.rows.length) {
+      const intentId = existing.rows[0].id;
+      const sessionResult = await stripeService.createInvoicePaymentSession({
+        invoiceId,
+        businessId,
+        amount: Number(amountDue.toString()),
+        currency: invoice.currency as string,
+        customerEmail: invoice.customer_email as string | undefined,
+        customerName: invoice.customer_name as string | undefined,
+        invoiceNumber: invoice.invoice_number as string | undefined,
+        successUrl,
+        cancelUrl,
+      });
+      return { url: sessionResult.url, paymentIntentId: intentId };
+    }
+
+    const sessionResult = await stripeService.createInvoicePaymentSession({
+      invoiceId,
+      businessId,
+      amount: Number(amountDue.toString()),
+      currency: invoice.currency as string,
+      customerEmail: invoice.customer_email as string | undefined,
+      customerName: invoice.customer_name as string | undefined,
+      invoiceNumber: invoice.invoice_number as string | undefined,
+      successUrl,
+      cancelUrl,
+    });
+
+    const intentId = crypto.randomUUID();
+    await query(
+      `INSERT INTO payment_intents (id, invoice_id, business_id, provider, provider_intent_id, amount, currency, status)
+       VALUES ($1, $2, $3, 'stripe', $4, $5, $6, 'pending')`,
+      [intentId, invoiceId, businessId, sessionResult.sessionId, amountDue.toFixed(), invoice.currency]
+    );
+
+    return { url: sessionResult.url, paymentIntentId: intentId };
+  }
+
+  async recordPaymentFromStripeSession(sessionId: string): Promise<void> {
+    const session = await stripeService.getCheckoutSession(sessionId);
+
+    const intentRow = await query(
+      `SELECT id, invoice_id, business_id, amount, currency FROM payment_intents WHERE provider_intent_id = $1`,
+      [sessionId]
+    );
+
+    if (!intentRow.rows.length) {
+      logger.warn(`No payment_intent found for Stripe session ${sessionId}`);
+      return;
+    }
+
+    const row = intentRow.rows[0];
+
+    await this.recordPayment(
+      row.business_id,
+      row.invoice_id,
+      {
+        amount: Number(session.amount_total ?? row.amount) / 100,
+        currency: session.currency?.toUpperCase() ?? row.currency,
+        provider: "stripe",
+        providerPaymentId: sessionId,
+        method: "card",
+        idempotencyKey: `stripe:${sessionId}`,
+        paidAt: new Date().toISOString(),
+      },
+      undefined
+    );
+
+    await query(
+      `UPDATE payment_intents SET status = 'succeeded', updated_at = NOW() WHERE id = $1`,
+      [row.id]
+    );
   }
 
   async findMany(businessId: string, filters: Record<string, unknown>): Promise<{

@@ -330,7 +330,7 @@ export class ReportsService {
                 COALESCE(SUM(i.amount_due), 0) as total_outstanding,
                 MAX(i.created_at) as last_invoice_date
          FROM invoices i
-         LEFT JOIN customers c ON c.id = i.customer_id
+         LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
          WHERE i.business_id = $1 AND i.customer_id IS NOT NULL
          ${filters.customerId ? "AND i.customer_id = $2" : ""}
          GROUP BY c.id, c.name

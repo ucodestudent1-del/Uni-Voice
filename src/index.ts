@@ -26,6 +26,7 @@ import {
   setAccessTokenCookie,
   clearAccessTokenCookie,
 } from "./middleware/auth.js";
+import { idempotencyKey } from "./middleware/idempotency.js";
 import {
   requireEntitlement,
   requireUsageLimit,
@@ -1597,6 +1598,7 @@ app.post(
 app.post(
   "/api/invoices/:id/record-payment",
   requireAuth,
+  idempotencyKey,
   async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -1810,6 +1812,35 @@ app.get("/api/public/invoice/:token", async (req: AuthRequest, res, next) => {
     if (!invoice) return res.status(404).json({ error: "Invoice not found" });
     res.json({ invoice });
   } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/public/payments/:token", async (req: AuthRequest, res, next) => {
+  try {
+    const invoice = await invoiceService.findByPublicToken(req.params.token);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+
+    const amountDue = new Decimal(String(invoice.amount_due ?? invoice.total ?? 0));
+    if (amountDue.lte(0)) {
+      return res.status(400).json({ error: "Invoice has no outstanding balance" });
+    }
+
+    const successUrl = req.body.successUrl || `${env.APP_FRONTEND_URL || "http://localhost:5173"}/invoice/paid?token=${req.params.token}`;
+    const cancelUrl = req.body.cancelUrl || `${env.APP_FRONTEND_URL || "http://localhost:5173"}/invoice/${req.params.token}`;
+
+    const result = await invoiceService.createPaymentSession(
+      invoice.business_id as string,
+      invoice.id as string,
+      successUrl,
+      cancelUrl
+    );
+
+    res.json({ url: result.url });
+  } catch (err: any) {
+    if (err?.message?.includes("not configured") || err?.code === "STRIPE_NOT_CONFIGURED") {
+      return res.status(503).json({ error: "Payment processing is not configured" });
+    }
     next(err);
   }
 });
@@ -4664,14 +4695,26 @@ async function handleStripeEvent(event: any): Promise<void> {
     case "checkout.session.completed": {
       const session = event.data.object;
       const businessId = session.metadata?.businessId;
+      const invoiceId = session.metadata?.invoiceId;
       const planId = session.metadata?.planId;
-      const planCode = session.metadata?.planCode;
-      const billingCycle = session.metadata?.billingCycle;
+
+      if (invoiceId) {
+        try {
+          await invoiceService.recordPaymentFromStripeSession(session.id);
+          logger.info({ sessionId: session.id, invoiceId }, "Recorded payment from Stripe checkout session");
+        } catch (err) {
+          logger.error({ err, sessionId: session.id, invoiceId }, "Failed to record payment from Stripe checkout session");
+        }
+        break;
+      }
 
       if (!businessId || !planId) {
         logger.warn("Missing metadata in checkout.session.completed");
         return;
       }
+
+      const planCode = session.metadata?.planCode;
+      const billingCycle = session.metadata?.billingCycle;
 
       const sub =
         await subscriptionRepository.findSubscriptionByBusinessId(businessId);

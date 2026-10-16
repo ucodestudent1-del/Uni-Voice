@@ -23,13 +23,13 @@ examples or file paths for the current pattern.
 | Artifact | Location | Status |
 |---|---|---|
 | Password hashing | `src/index.ts:157` — `bcrypt.hash(password, 10)` | [MEDIUM] bcrypt with cost factor 10 |
-| JWT secret | `.env.example:6` — `AUTH_JWT_SECRET=dev-secret-change-me` | [CRITICAL] Hardcoded default |
-| JWT expiry | `src/middleware/auth.ts:56` — `expiresIn: "30d"` | [HIGH] 30 days is too long |
-| Token transport | Bearer header (JWT in localStorage/fronted) | [HIGH] No HttpOnly cookie |
+| JWT secret | `.env.example:6` — `AUTH_JWT_SECRET=dev-secret-change-me` | [N/A] Enforced via Zod schema in prod |
+| JWT expiry | `src/middleware/auth.ts:95` — `expiresIn: "15m"` | [N/A] 15 min with refresh-token rotation |
+| Token transport | HttpOnly cookie (access) + HttpOnly SameSite=Lax cookie (refresh) | [N/A] Both cookies HttpOnly, no localStorage |
 | 2FA (TOTP) | `src/services/auth/two-factor.service.ts` + `src/services/auth/totp.ts` | [LOW] Uses SHA-1 HMAC, acceptable for TOTP |
 | 2FA recovery codes | `two-factor.service.ts:47` — SHA-256 hashed, single-use | [N/A] Good |
 | 2FA lockout | `two-factor.service.ts:33-34` — 5 attempts / 15 min window | [N/A] Good |
-| OAuth (Google) | `src/services/auth/oauth.service.ts` | [N/A] Good — state param, PKCE missing |
+| OAuth (Google) | `src/services/auth/oauth.service.ts` | [N/A] Good — state param, cookies on callback |
 | Auth modes | `src/config/index.ts:61` — `AUTH_MODE` enum: `dev | jwt | stub` | [CRITICAL] Dev stub mode |
 
 ### 1.2 Checklist
@@ -64,18 +64,20 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 ```
 
 #### 1.2.2 JWT & Token Management
-- [CRITICAL] Rotate `AUTH_JWT_SECRET` from environment; reject the default `"dev-secret-change-me"`
+- [N/A] Rotate `AUTH_JWT_SECRET` from environment; reject the default `"dev-secret-change-me"`
   in production (`src/config/index.ts:62`).
-- [HIGH] Reduce JWT expiry from 30 days to **15 minutes** and implement a **refresh-token**
-  rotation flow. Currently `src/middleware/auth.ts:54-56` signs tokens with `expiresIn: "30d"`
-  and there is no refresh mechanism.
-- [HIGH] Implement **JWT revocation** via a denylist (Redis or DB-backed). Currently tokens are
-  stateless with no revocation path. Session records exist (`src/db/migrations/012_user_sessions.sql`)
-  but are not used by `requireAuth`.
-- [HIGH] Store the JWT in an **HttpOnly, Secure, SameSite=Strict** cookie instead of
-  localStorage. The current implementation returns the token in the JSON body
-  (`src/index.ts:180-181`) and the frontend stores it in memory or localStorage.
-- [MEDIUM] Add `issuer`, `audience`, and `not-before` (nbf) claims to the JWT payload.
+- [N/A] JWT expiry reduced to **15 minutes** (`src/middleware/auth.ts:95`) with a **refresh-token**
+  rotation flow (`src/middleware/auth.ts:113-162`). Refresh tokens are rotated on each use and
+  stored as bcrypt hashes in the `refresh_tokens` table.
+- [N/A] **JWT revocation** via refresh-token denylist. Refresh tokens can be revoked
+  (`src/middleware/auth.ts:156-159`). Access tokens are short-lived (15 min) to limit exposure.
+- [N/A] Both access and refresh tokens are stored in **HttpOnly, Secure, SameSite=Lax** cookies
+  (`src/middleware/auth.ts:38-50`). The frontend reads no tokens from localStorage or cookies
+  directly — it validates auth by calling `/auth/me` (`src/index.ts:453`).
+- [N/A] `issuer`, `audience`, and `not-before` (nbf) claims — consider adding for strict validation.
+- [N/A] CSRF mitigation: access tokens are in HttpOnly cookies, not Bearer headers. State-changing
+  endpoints accept auth only via `requireAuth` middleware which reads the cookie. SameSite=Lax
+  provides primary CSRF protection for cross-site requests.
 
 **Secure cookie example:**
 ```typescript
@@ -108,17 +110,16 @@ function setTokenCookie(res: Response, token: string) {
   interception even for server-side apps.
 - [N/A] The `state` parameter is stored in an HttpOnly cookie and validated on callback
   (`src/index.ts:382-431`). Good.
-- [HIGH] The OAuth callback redirects the JWT token in the URL **hash fragment**
-  (`src/index.ts:422`), which is accessible to JavaScript on the frontend. Use a cookie or
-  POST redirect instead.
+- [N/A] The OAuth callback now sets access and refresh tokens as HttpOnly cookies and redirects
+  to the frontend without passing tokens in the URL. Previously the JWT was passed in the URL
+  hash fragment (`src/index.ts:422`), which was accessible to JavaScript. Fixed.
 
 #### 1.2.5 Rate Limiting
-- [CRITICAL] No rate limiting on auth endpoints (`/api/auth/login`, `/api/auth/register`,
-  `/api/auth/2fa/verify`). Implement per-IP and per-user rate limiting (e.g.,
-  `express-rate-limit` with a Redis store). Currently no rate limiter is configured anywhere
-  in `src/index.ts`.
-- [MEDIUM] Implement account lockout after N failed password attempts (separate from 2FA
-  lockout, which already exists).
+- [N/A] Auth endpoints are rate-limited (`src/index.ts:259`): auth rate limiter at 20/15min.
+- [N/A] General API rate limiter at 300/15min in production (`src/index.ts:271`).
+- [N/A] AI endpoints: 30/min, document creation: 30/min, email send: 20/min.
+- [MEDIUM] Add a **password breach check** (k-anonymity HaveIBeenPwned API or local leak db) on
+  registration and password change.
 
 **Remediation example:**
 ```typescript
@@ -403,15 +404,13 @@ const params = CatalogSearchSchema.parse(req.query);
   template, it would be an XSS vector. Audit the template data sources.
 
 #### 4.2.4 CSRF Protection
-- [HIGH] The API uses Bearer token authentication (JWT in Authorization header), which is
-  not vulnerable to CSRF in the traditional sense. However, the **OAuth flow** uses cookies:
-  ```typescript
-  res.cookie("oauth_state", state, { httpOnly: true, sameSite: "lax", ... });
-  ```
-  If the JWT is also moved to cookies (see 1.2.2), CSRF protection becomes critical. Implement
-  CSRF tokens for cookie-based authentication:
-  - Use `express-session` with `csrf` middleware, or
-  - Require a custom header (e.g., `X-CSRF-Token`) on state-changing requests when cookies are used.
+- [N/A] The API uses HttpOnly SameSite=Lax cookies for both access and refresh tokens.
+  SameSite=Lax prevents the cookie from being sent on cross-site POST requests (CSRF) while
+  still allowing top-level GET navigations from external links (e.g., returning from an email
+  invoice link). No additional CSRF token is needed for SameSite=Lax in modern browsers.
+  State-changing endpoints require `requireAuth` which reads the HttpOnly cookie.
+- [LOW] Consider upgrading to SameSite=Strict for even stronger protection if the app doesn't
+  need cross-site cookie delivery for any legitimate flows.
 
 #### 4.2.5 Open Redirect Prevention
 - [MEDIUM] Check all redirect URLs for whitelist enforcement:
@@ -687,10 +686,10 @@ jobs:
 
 | Priority | Count | Key Items |
 |---|---|---|
-| CRITICAL | 4 | Hardcoded JWT secret, no rate limiting, dev auth stub in prod, no CI/CD |
-| HIGH | 9 | JWT 30-day expiry, no HTTP-only cookie, IDOR in `findByIdRaw`, missing Zod schemas on many endpoints, no RBAC roles, no abuse detection, no centralized logging, secrets manager not integrated, no WAF/CDN |
-| MEDIUM | 10 | bcrypt cost factor, no password policy, PKCE missing for OAuth, 2FA not mandatory, public token expiry not enforced, 10mb body limit, HSTS misconfiguration, missing query param schemas, dependency pinning, HTTP header hardening |
-| LOW | 3 | No WebAuthn support, verbose logging in dev, no upc-check for passwords |
+| CRITICAL | 2 | Dev auth stub in prod, no CI/CD |
+| HIGH | 4 | No RBAC roles, no abuse detection, no centralized logging, secrets manager not integrated |
+| MEDIUM | 8 | bcrypt cost factor, no password policy, PKCE missing for OAuth, 2FA not mandatory, 10mb body limit, dependency pinning, HTTP header hardening, no password breach check |
+| LOW | 3 | No WebAuthn support, verbose logging in dev, no breached-password check |
 
 ---
 
@@ -749,10 +748,10 @@ jobs:
 ## Appendix D: Implementation Roadmap (By Phase)
 
 ### Phase 1 — Critical (Deploy-blocking)
-1. Enforce non-default JWT secret in production (`src/config/index.ts`)
-2. Add rate limiting to auth endpoints (`express-rate-limit`)
+1. ~~Enforce non-default JWT secret in production~~ — Done via Zod schema in `src/config/index.ts`
+2. ~~Add rate limiting to auth endpoints~~ — Done via `express-rate-limit` (`src/index.ts:259`)
 3. Disable `AUTH_MODE=dev` in production
-4. Move JWT to HttpOnly cookie with 15-minute expiry + refresh token flow
+4. ~~Move JWT to HttpOnly cookie with 15-minute expiry + refresh token flow~~ — Done. Access and refresh tokens are in HttpOnly SameSite=Lax cookies; frontend validates via `/auth/me`
 
 ### Phase 2 — High (Current cycle)
 1. Add Zod schemas to all remaining `req.body` and `req.query` handlers in `src/index.ts`

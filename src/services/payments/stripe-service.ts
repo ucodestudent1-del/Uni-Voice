@@ -72,6 +72,58 @@ export class StripeService {
     return { sessionId: session.id, url: session.url };
   }
 
+  async createInvoicePaymentSession(input: {
+    invoiceId: string;
+    businessId: string;
+    amount: number;
+    currency: string;
+    customerEmail?: string;
+    customerName?: string;
+    invoiceNumber?: string;
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<CreateCheckoutSessionResult> {
+    const stripe = getStripe();
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: input.currency.toLowerCase(),
+            product_data: {
+              name: input.invoiceNumber
+                ? `Payment for Invoice ${input.invoiceNumber}`
+                : "Invoice Payment",
+              description: input.customerName ?? undefined,
+            },
+            unit_amount: Math.round(input.amount * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      customer_email: input.customerEmail,
+      success_url: input.successUrl,
+      cancel_url: input.cancelUrl,
+      metadata: {
+        invoiceId: input.invoiceId,
+        businessId: input.businessId,
+      },
+    });
+
+    if (!session.url) {
+      throw new BusinessLogicError("Failed to create Stripe checkout session", "STRIPE_ERROR");
+    }
+
+    return { sessionId: session.id, url: session.url };
+  }
+
+  async getCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session> {
+    const stripe = getStripe();
+    return stripe.checkout.sessions.retrieve(sessionId);
+  }
+
   async constructWebhookEvent(payload: Buffer, signature: string): Promise<Stripe.Event> {
     const stripe = getStripe();
     const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
