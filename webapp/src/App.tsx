@@ -34,6 +34,7 @@ const Documents = lazy(() => import("./pages/Documents"));
 const PaymentVoucherGenerator = lazy(() => import("./pages/PaymentVoucherGenerator"));
 const DebitNoteGenerator = lazy(() => import("./pages/DebitNoteGenerator"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 
 const Fallback = () => (
   <div className="flex items-center justify-center h-64 text-secondary">
@@ -85,6 +86,7 @@ const DocumentsWithBoundary = withErrorBoundary(Documents, "Documents");
 const PaymentVoucherGeneratorWithBoundary = withErrorBoundary(PaymentVoucherGenerator, "Payment Voucher Generator");
 const DebitNoteGeneratorWithBoundary = withErrorBoundary(DebitNoteGenerator, "Debit Note Generator");
 const PublicInvoiceWithBoundary = withErrorBoundary(PublicInvoice, "Invoice");
+const PaymentSuccessWithBoundary = withErrorBoundary(PaymentSuccess, "Payment Success");
 const DocumentWorkspaceInvoiceWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="invoice" />,
   "Invoice Workspace",
@@ -171,6 +173,7 @@ export default function App() {
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingWizardWithBoundary /></ProtectedRoute>} />
 
         <Route path="/invoice/:token" element={<PublicInvoiceWithBoundary />} />
+        <Route path="/invoice/paid" element={<PublicOnly><PaymentSuccessWithBoundary /></PublicOnly>} />
 
           <Route
             path="/app"

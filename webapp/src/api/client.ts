@@ -1750,6 +1750,15 @@ export async function getPublicInvoice(
   return res.data;
 }
 
+export async function createPaymentSession(
+  token: string,
+  successUrl: string,
+  cancelUrl: string,
+): Promise<{ url: string }> {
+  const res = await api.post(`/public/payments/${token}`, { successUrl, cancelUrl });
+  return res.data;
+}
+
 export async function getInvoiceEvents(
   invoiceId: string,
 ): Promise<{ events: ApiInvoiceEvent[] }> {

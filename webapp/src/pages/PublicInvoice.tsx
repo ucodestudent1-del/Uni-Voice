@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getPublicInvoice } from "@/api/client";
+import { getPublicInvoice, createPaymentSession } from "@/api/client";
 import { Money, StatusBadge, invoiceStatusConfig } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { Download, Send, AlertCircle, FileText } from "lucide-react";
@@ -15,6 +15,7 @@ export default function PublicInvoice() {
   const [invoice, setInvoice] = useState<ApiInvoice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const invoiceNumber = invoice?.invoice_number ?? "";
   const totalAmount = invoice?.total ?? "";
@@ -42,6 +43,26 @@ export default function PublicInvoice() {
       })
       .finally(() => setIsLoading(false));
   }, [token]);
+
+  const handlePayInvoice = async () => {
+    if (!token) return;
+    const amountDue = Number(invoice?.amount_due ?? 0);
+    if (amountDue <= 0) {
+      toast("This invoice has no outstanding balance.", { type: "info", title: "Already Paid" });
+      return;
+    }
+    setIsProcessingPayment(true);
+    try {
+      const successUrl = `${window.location.origin}/invoice/paid?token=${token}`;
+      const cancelUrl = `${window.location.origin}/invoice/${token}`;
+      const { url } = await createPaymentSession(token, successUrl, cancelUrl);
+      window.location.href = url;
+    } catch (err: any) {
+      toast(err.message || "Failed to start payment. Please try again.", { type: "error", title: "Payment Error" });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -77,8 +98,8 @@ export default function PublicInvoice() {
     <div className="min-h-screen bg-page">
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex justify-end gap-2">
-          <Button variant="ghost" size="sm" icon={<Send className="h-4 w-4" />}>
-            Pay Now
+          <Button variant="ghost" size="sm" icon={<Send className="h-4 w-4" />} onClick={handlePayInvoice} disabled={isProcessingPayment}>
+            {isProcessingPayment ? "Processing…" : "Pay Now"}
           </Button>
           <Button variant="ghost" size="sm" icon={<Download className="h-4 w-4" />}>
             Download PDF
@@ -237,11 +258,12 @@ export default function PublicInvoice() {
 
         <div className="mt-6 text-center">
           <button
-            onClick={() => toast("Payment integration coming soon!", { type: "info", title: "Coming Soon" })}
-            className="inline-flex items-center justify-center px-6 py-3 border border-primary text-primary rounded-md font-medium hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary/20"
+            onClick={handlePayInvoice}
+            disabled={isProcessingPayment || Number(invoice?.amount_due ?? 0) <= 0}
+            className="inline-flex items-center justify-center px-6 py-3 border border-primary text-primary rounded-md font-medium hover:bg-hover focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="h-4 w-4 mr-2" />
-            Pay this invoice
+            {isProcessingPayment ? "Processing…" : "Pay this invoice"}
           </button>
         </div>
       </div>
