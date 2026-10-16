@@ -23,8 +23,9 @@ function DataTableInner<TData extends Record<string, any>>(
     currentPage = 1,
     onPageChange,
     pageSizeOptions = [10, 25, 50, 100],
-    onPageSizeChange,
+     onPageSizeChange,
     isLoading = false,
+    isPageLoading = false,
     emptyMessage = "No data available",
     rowKey = "id",
     selectedRows,
@@ -169,7 +170,7 @@ function DataTableInner<TData extends Record<string, any>>(
         </table>
       </div>
 
-      {onPageChange && totalPages > 1 && (
+       {onPageChange && totalPages > 1 && (
         <div className="flex items-center justify-between px-2 py-4">
           <div className="flex-1 text-sm font-medium text-secondary">
             page {currentPage} of {totalPages} • {total} rows
@@ -177,8 +178,9 @@ function DataTableInner<TData extends Record<string, any>>(
           <div className="flex items-center gap-2">
             <select
               value={pageSize}
-              onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+              onChange={(e) => !isPageLoading && onPageSizeChange?.(Number(e.target.value))}
               className="form-control-sm min-w-[120px]"
+              disabled={isPageLoading}
             >
               {pageSizeOptions.map((size) => (
                 <option key={size} value={size}>
@@ -192,7 +194,7 @@ function DataTableInner<TData extends Record<string, any>>(
               icon={<ChevronsLeft className="h-4 w-4" />}
               aria-label="First page"
               onClick={() => onPageChange(1)}
-              disabled={currentPage === 1}
+              disabled={currentPage === 1 || isPageLoading}
               className="px-2"
             />
             <Button
@@ -201,27 +203,35 @@ function DataTableInner<TData extends Record<string, any>>(
               icon={<ChevronLeft className="h-4 w-4" />}
               aria-label="Previous page"
               onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              disabled={currentPage === 1 || isPageLoading}
               className="px-2"
             />
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<ChevronRight className="h-4 w-4" />}
-              aria-label="Next page"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-              className="px-2"
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<ChevronsRight className="h-4 w-4" />}
-              aria-label="Last page"
-              onClick={() => onPageChange(totalPages)}
-              disabled={currentPage >= totalPages}
-              className="px-2"
-            />
+            {isPageLoading ? (
+              <div className="w-10 h-10 flex items-center justify-center">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<ChevronRight className="h-4 w-4" />}
+                  aria-label="Next page"
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages || isPageLoading}
+                  className="px-2"
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<ChevronsRight className="h-4 w-4" />}
+                  aria-label="Last page"
+                  onClick={() => onPageChange(totalPages)}
+                  disabled={currentPage >= totalPages || isPageLoading}
+                  className="px-2"
+                />
+              </>
+            )}
           </div>
         </div>
       )}

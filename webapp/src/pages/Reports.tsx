@@ -65,12 +65,17 @@ export default function Reports() {
   const [profitLossData, setProfitLossData] = useState<any>(null);
 
   const [loadingFlags, setLoadingFlags] = useState<Record<string, boolean>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   const isLoading = (key: string) => loadingFlags[key] ?? false;
   const setLoading = (key: string, val: boolean) => {
     setLoadingFlags((prev) => ({ ...prev, [key]: val }));
   };
+  const setError = (key: string, val: string | null) => {
+    setErrors((prev) => ({ ...prev, [key]: val }));
+  };
+  const clearError = (key: string) => setError(key, null);
+  const getError = (key: string) => errors[key] ?? null;
 
   const currency = dashboardSummary?.currency ?? "USD";
 
@@ -102,12 +107,12 @@ export default function Reports() {
       setDashboardSummary(summaryRes ?? dash?.summary ?? null);
       setPaymentMetrics(dash?.paymentMetrics ?? null);
       setVolumeTrend(dash?.volumeTrend ?? (Array.isArray(trendRes) ? trendRes : []));
-      setError(null);
+      clearError("dashboard");
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+        setError("dashboard", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
       } else {
-        setError(err.message || "Failed to load dashboard data");
+        setError("dashboard", err.message || "Failed to load dashboard data");
       }
     } finally {
       setLoading("dashboard", false);
@@ -120,12 +125,12 @@ export default function Reports() {
       try {
         const data = await getRevenueReport(filters);
         setRevenueData(data);
-        setError(null);
+        clearError("revenue");
       } catch (err: any) {
         if (err.response?.status === 403) {
-          setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+          setError("revenue", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
         } else {
-          setError(err.message || "Failed to load revenue report");
+          setError("revenue", err.message || "Failed to load revenue report");
         }
       } finally {
         setLoading("revenue", false);
@@ -138,12 +143,12 @@ export default function Reports() {
     try {
       const data = await getPaymentsReport(filters);
       setPaymentsData(data);
-      setError(null);
+      clearError("payments");
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+        setError("payments", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
       } else {
-        setError(err.message || "Failed to load payments report");
+        setError("payments", err.message || "Failed to load payments report");
       }
     } finally {
       setLoading("payments", false);
@@ -155,12 +160,12 @@ export default function Reports() {
     try {
       const data = await getClientsReport(filters);
       setClientsData(data);
-      setError(null);
+      clearError("clients");
     } catch (err: any) {
       if (err.response?.status === 403) {
-        setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+        setError("clients", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
       } else {
-        setError(err.message || "Failed to load clients report");
+        setError("clients", err.message || "Failed to load clients report");
       }
     } finally {
       setLoading("clients", false);
@@ -173,12 +178,12 @@ export default function Reports() {
       try {
         const data = await getTaxSummaryReport(filters);
         setTaxData(data);
-        setError(null);
+        clearError("tax");
       } catch (err: any) {
         if (err.response?.status === 403) {
-          setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+          setError("tax", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
         } else {
-          setError(err.message || "Failed to load tax summary");
+          setError("tax", err.message || "Failed to load tax summary");
         }
       } finally {
         setLoading("tax", false);
@@ -192,12 +197,12 @@ export default function Reports() {
       try {
         const data = await getProfitLossReport(filters);
         setProfitLossData(data);
-        setError(null);
+        clearError("profit-loss");
       } catch (err: any) {
         if (err.response?.status === 403) {
-          setError(err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+          setError("profit-loss", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
         } else {
-          setError(err.message || "Failed to load profit & loss report");
+          setError("profit-loss", err.message || "Failed to load profit & loss report");
         }
       } finally {
         setLoading("profit-loss", false);
@@ -248,6 +253,7 @@ export default function Reports() {
     setClientsData(null);
     setTaxData(null);
     setProfitLossData(null);
+    setErrors({});
   };
 
   const tabFilters = TAB_FILTERS[activeTab];
@@ -263,7 +269,7 @@ export default function Reports() {
             currency={currency}
             loading={isLoading("dashboard")}
             onRetry={() => setRetryKey((k) => k + 1)}
-            error={error}
+            error={getError("dashboard")}
           />
         );
       case "revenue":
@@ -344,9 +350,9 @@ export default function Reports() {
         ))}
       </div>
 
-      {error && (
+      {getError(activeTab) && (
         <div className="rounded-xl border border-error-border bg-error-bg p-4 text-sm text-error-text">
-          {error}
+          {getError(activeTab)}
         </div>
       )}
 

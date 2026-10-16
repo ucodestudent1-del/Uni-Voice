@@ -1,12 +1,13 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
+import KeyboardShortcutsHelp from "./KeyboardShortcutsHelp";
 import type { ComponentType } from "react";
-import { FileText, Menu } from "lucide-react";
+import { FileText, Menu, Lock, HelpCircle } from "lucide-react";
 
 import type { PlanTier } from "@/types/app";
 
@@ -23,6 +24,18 @@ export default function Layout() {
   const { plan } = useSubscription();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "?" && (e.ctrlKey || e.metaKey || e.altKey)) {
+        e.preventDefault();
+        setShortcutsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   function handleLogout() {
     logout();
@@ -73,6 +86,12 @@ export default function Layout() {
     ? (tierOrder[plan.code as keyof typeof tierOrder] ?? 0)
     : 0;
 
+  function handleNavClick(isLocked: boolean, item: NavItem) {
+    if (isLocked) {
+      navigate(`/app/plans?upgrade=${item.requiredPlan || "pro"}`);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-page flex">
       <div className="hidden md:flex md:flex-col md:w-64 md:border-r md:border-color md:bg-surface md:shadow-sm">
@@ -89,18 +108,15 @@ export default function Layout() {
               const isLocked = !hasAccess;
               return (
                 <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.to === "/app"}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-primary-bg text-on-primary-strong"
-                          : isLocked
-                            ? "text-tertiary cursor-not-allowed"
-                            : "text-secondary hover:bg-surface-alt hover:text-primary"
-                      }`
-                    }
+                  <button
+                    type="button"
+                    onClick={() => handleNavClick(isLocked, item)}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left ${
+                      isLocked
+                        ? "text-tertiary cursor-not-allowed"
+                        : "text-secondary hover:bg-surface-alt hover:text-primary"
+                    }`}
+                    aria-label={isLocked ? `${item.name} (requires ${item.requiredPlan} plan)` : item.name}
                   >
                     <span className="flex items-center gap-2">
                       {item.icon && (
@@ -110,13 +126,18 @@ export default function Layout() {
                       )}
                       {!item.icon && <span className="w-5" />}
                       <span>{item.name}</span>
+                      {isLocked && <Lock className="w-4 h-4 text-tertiary" />}
                     </span>
                     {item.requiredPlan && (
-                      <span className="ml-auto text-xs bg-surface-alt text-tertiary px-1.5 py-0.5 rounded">
+                      <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${
+                        isLocked
+                          ? "bg-error-bg text-error-text"
+                          : "bg-surface-alt text-tertiary"
+                      }`}>
                         {item.requiredPlan}
                       </span>
                     )}
-                  </NavLink>
+                  </button>
                 </li>
               );
             })}
@@ -172,7 +193,16 @@ export default function Layout() {
             </button>
             <span className="text-sm text-tertiary">{user?.email}</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShortcutsOpen(true)}
+              className="rounded-lg p-2 text-secondary hover:bg-surface-alt focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="Keyboard shortcuts (Ctrl+?)"
+              title="Keyboard shortcuts"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </button>
             <ThemeToggle />
           </div>
         </header>
@@ -200,27 +230,33 @@ export default function Layout() {
                   const isLocked = currentTier < reqTier;
                   return (
                     <li key={item.to}>
-                      <NavLink
-                        to={item.to}
-                        end={item.to === "/app"}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                            isActive
-                              ? "bg-primary-bg text-on-primary-strong"
-                              : isLocked
-                                ? "text-tertiary cursor-not-allowed"
-                                : "text-secondary hover:bg-surface-alt hover:text-primary"
-                          }`
-                        }
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleNavClick(isLocked, item);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors w-full text-left ${
+                          isLocked
+                            ? "text-tertiary cursor-not-allowed"
+                            : "text-secondary hover:bg-surface-alt hover:text-primary"
+                        }`}
+                        aria-label={isLocked ? `${item.name} (requires ${item.requiredPlan} plan)` : item.name}
                       >
-                        <span>{item.name}</span>
+                        <span className="flex items-center gap-2">
+                          <span>{item.name}</span>
+                          {isLocked && <Lock className="w-4 h-4 text-tertiary" />}
+                        </span>
                         {item.requiredPlan && (
-                          <span className="ml-auto text-xs bg-surface-alt text-tertiary px-1.5 py-0.5 rounded">
+                          <span className={`ml-auto text-xs px-1.5 py-0.5 rounded ${
+                            isLocked
+                              ? "bg-error-bg text-error-text"
+                              : "bg-surface-alt text-tertiary"
+                          }`}>
                             {item.requiredPlan}
                           </span>
                         )}
-                      </NavLink>
+                      </button>
                     </li>
                   );
                 })}
@@ -239,6 +275,8 @@ export default function Layout() {
       )}
       {/* Mobile bottom tab bar + FAB (field-optimized nav) */}
       <BottomTabBar />
+
+      <KeyboardShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }

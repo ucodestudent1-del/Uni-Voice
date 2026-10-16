@@ -21,7 +21,7 @@ import { getCustomerPrimaryContact, customerHasBalance, customerHasOverdue } fro
 import type { ApiCustomer } from "../types/api";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
-import { Skeleton } from "@/components/ui";
+import { Skeleton, SearchInput } from "@/components/ui";
 import { cn } from "../lib/utils";
 import type { NavigateFunction } from "react-router-dom";
 
@@ -324,18 +324,16 @@ export default function Customers() {
 
           <div className="filter-container">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5">
-              <div className="lg:col-span-4">
-                <label className="filter-label-secondary">Search</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, or company…"
-                    value={search}
-                    onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-                    className="filter-input pl-4"
-                  />
-                </div>
-              </div>
+           <div className="lg:col-span-4">
+                 <label className="filter-label-secondary">Search</label>
+                 <div className="relative">
+                   <SearchInput
+                     value={search}
+                     onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
+                     placeholder="Name, email, or company"
+                   />
+                 </div>
+               </div>
               <div className="lg:col-span-3">
                 <label className="filter-label-secondary">Status</label>
                 <select

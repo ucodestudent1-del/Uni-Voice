@@ -267,6 +267,7 @@ export default function ClientsReport({
           currentPage={currentPage}
           onPageChange={onPageChange}
           isLoading={loading}
+          isPageLoading={loading && clients.length > 0}
           emptyMessage="No clients match your filters"
           rowKey="id"
         />

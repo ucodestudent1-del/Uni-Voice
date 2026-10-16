@@ -19,17 +19,17 @@ export default function UpgradePrompt({ feature, requiredPlan, message, children
   }
 
   return (
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-      <div className="flex">
-        <div className="flex-shrink-0">
-          <span className="text-yellow-400 text-xl">⚠</span>
+    <div className="rounded-xl border border-warning-border bg-warning-bg px-4 py-3">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          <span className="text-warning-text text-lg">⚠</span>
         </div>
-        <div className="ml-3">
-          <p className="text-sm text-yellow-700">
+        <div className="flex-1">
+          <p className="text-sm text-warning-text">
             {message ?? `This feature requires a ${requiredPlan} plan. Upgrade to unlock it.`}
           </p>
           <div className="mt-2">
-            <a href="/app/plans" className="text-sm font-medium text-yellow-700 underline hover:text-yellow-600">
+            <a href="/app/plans" className="text-sm font-medium text-warning-text underline hover:opacity-80">
               View Plans
             </a>
           </div>

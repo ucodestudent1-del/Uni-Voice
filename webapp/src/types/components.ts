@@ -54,6 +54,7 @@ export interface DataTableProps<TData> extends HTMLAttributes<HTMLDivElement> {
   pageSizeOptions?: number[];
   onPageSizeChange?: (size: number) => void;
   isLoading?: boolean;
+  isPageLoading?: boolean;
   emptyMessage?: ReactNode;
   rowKey?: keyof TData | ((row: TData) => string);
   selectedRows?: Set<string>;

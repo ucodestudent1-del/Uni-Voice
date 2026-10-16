@@ -17,6 +17,7 @@ import ProjectTagManager from "../components/ProjectTagManager";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
+import { SearchInput } from "@/components/ui";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 
 interface ProjectsProps {
@@ -181,15 +182,11 @@ const [search, setSearch] = useState("");
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
           <div className="lg:col-span-5">
             <label className="filter-label">Search</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search projects..."
-                className="filter-input pl-4"
-              />
-            </div>
+             <SearchInput
+               value={search}
+               onChange={(e) => setSearch(e.target.value)}
+               placeholder="Search projects..."
+             />
           </div>
           <div className="lg:col-span-3">
             <label className="filter-label">Status</label>

@@ -245,7 +245,7 @@ export default function PaymentsReport({
       </div>
 
       <div className="bg-surface rounded-xl border border-color overflow-hidden">
-        <DataTable
+         <DataTable
           columns={columns}
           data={payments}
           totalRows={totalRows ?? payments.length}
@@ -253,6 +253,7 @@ export default function PaymentsReport({
           currentPage={currentPage}
           onPageChange={onPageChange}
           isLoading={loading}
+          isPageLoading={loading && payments.length > 0}
           emptyMessage="No payments match your filters"
           rowKey="id"
         />

@@ -18,7 +18,7 @@ import {
 import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
 import { SUPPORTED_CURRENCIES, getCurrencyMetadata } from "@/types/currency";
-import { useToast, Button, FormField, FormTextareaField, PageHeader, StatusBadge, Dialog, invoiceStatusConfig, quoteStatusConfig, creditNoteStatusConfig } from "@/components/ui";
+  import { useToast, Button, FormField, FormTextareaField, PageHeader, StatusBadge, Dialog, SearchInput, invoiceStatusConfig, quoteStatusConfig, creditNoteStatusConfig } from "@/components/ui";
 import SectionCard from "@/components/SectionCard";
 import {
   Save,
@@ -1427,56 +1427,58 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         </div>
       </div>
 
-      {sendDialogOpen && document && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSendDialogOpen(false)}>
-          <div className="bg-popover border border-border rounded-lg p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-medium text-primary mb-4">Send {docTypeLabel(docType)}</h3>
-            <div className="space-y-3">
-              <FormField
-                label="To"
-                type="email"
-                placeholder={(document as any).customer_email ?? "customer@example.com"}
-                value={sendData.to}
-                onChange={(e) => setSendData((prev) => ({ ...prev, to: e.target.value }))}
-              />
-              <FormField
-                label="Cc"
-                type="email"
-                placeholder="cc@example.com"
-                value={sendData.cc}
-                onChange={(e) => setSendData((prev) => ({ ...prev, cc: e.target.value }))}
-              />
-              <FormField
-                label="Bcc"
-                type="email"
-                placeholder="bcc@example.com"
-                value={sendData.bcc}
-                onChange={(e) => setSendData((prev) => ({ ...prev, bcc: e.target.value }))}
-              />
-              <FormField
-                label="Subject"
-                placeholder={`${docTypeLabel(docType)} #${document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? ""}`}
-                value={sendData.subject}
-                onChange={(e) => setSendData((prev) => ({ ...prev, subject: e.target.value }))}
-              />
-              <FormTextareaField
-                label="Message"
-                placeholder={`Hi, please find your ${docTypeLabel(docType).toLowerCase()} attached.`}
-                value={sendData.message}
-                onChange={(e) => setSendData((prev) => ({ ...prev, message: e.target.value }))}
-              />
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="secondary" size="sm" onClick={() => setSendDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" size="sm" loading={isSending} onClick={confirmSend}>
-                Send
-              </Button>
-            </div>
-          </div>
+      <Dialog
+        open={sendDialogOpen}
+        onClose={() => setSendDialogOpen(false)}
+        title={`Send ${docTypeLabel(docType)}`}
+        description={(document as any)?.customer_email ? `Sending to ${(document as any).customer_email}` : undefined}
+        size="md"
+        closeOnOverlayClick={false}
+      >
+        <div className="space-y-4">
+          <FormField
+            label="To"
+            type="email"
+            placeholder={(document as any)?.customer_email ?? "customer@example.com"}
+            value={sendData.to}
+            onChange={(e) => setSendData((prev) => ({ ...prev, to: e.target.value }))}
+          />
+          <FormField
+            label="Cc"
+            type="email"
+            placeholder="cc@example.com"
+            value={sendData.cc}
+            onChange={(e) => setSendData((prev) => ({ ...prev, cc: e.target.value }))}
+          />
+          <FormField
+            label="Bcc"
+            type="email"
+            placeholder="bcc@example.com"
+            value={sendData.bcc}
+            onChange={(e) => setSendData((prev) => ({ ...prev, bcc: e.target.value }))}
+          />
+          <FormField
+            label="Subject"
+            placeholder={`${docTypeLabel(docType)} #${document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? ""}`}
+            value={sendData.subject}
+            onChange={(e) => setSendData((prev) => ({ ...prev, subject: e.target.value }))}
+          />
+          <FormTextareaField
+            label="Message"
+            placeholder={`Hi, please find your ${docTypeLabel(docType).toLowerCase()} attached.`}
+            value={sendData.message}
+            onChange={(e) => setSendData((prev) => ({ ...prev, message: e.target.value }))}
+          />
         </div>
-      )}
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-color-subtle">
+          <Button variant="secondary" size="sm" onClick={() => setSendDialogOpen(false)} disabled={isSending}>
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm" loading={isSending} onClick={confirmSend}>
+            Send
+          </Button>
+        </div>
+      </Dialog>
 
       <Dialog
         open={validationDialogOpen}
@@ -1505,17 +1507,12 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       >
         <div className="space-y-3 max-h-80">
           <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="pl-10 pr-3 py-2 w-full text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                autoFocus
-              />
-            </div>
+            <SearchInput
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search products..."
+              autoFocus
+            />
             <Button variant="ghost" size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setNewProductDialogOpen(true)}>
               New
             </Button>
@@ -1672,31 +1669,63 @@ function ValidationIssuesList({ issues, onProceed, onCancel, isFinalizing }: Val
                 {errors.map((issue, i) => (
                   <li key={i} className="flex items-start gap-2 text-error-text">
                     <span className="mt-0.5">•</span>
-                    <span>{issue.message}</span>
+                    <span className="flex-1">{issue.message}</span>
+                    {issue.field && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(issue.field!);
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "center" });
+                            const input = el.querySelector('input, select, textarea') as HTMLElement | null;
+                            input?.focus();
+                          }
+                        }}
+                        className="text-xs font-medium text-secondary hover:text-primary underline"
+                      >
+                        Go to field
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
-          )}
-          {warnings.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-warning-text mb-2 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Warnings ({warnings.length})
-              </h4>
-              <ul className="space-y-1 text-sm">
-                {warnings.map((issue, i) => (
+           )}
+           {warnings.length > 0 && (
+             <div>
+               <h4 className="text-sm font-medium text-warning-text mb-2 flex items-center gap-2">
+                 <AlertCircle className="h-4 w-4" />
+                 Warnings ({warnings.length})
+               </h4>
+               <ul className="space-y-1 text-sm">
+                 {warnings.map((issue, i) => (
                   <li key={i} className="flex items-start gap-2 text-secondary">
                     <span className="mt-0.5">•</span>
-                    <span>{issue.message}</span>
+                    <span className="flex-1">{issue.message}</span>
+                    {issue.field && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(issue.field!);
+                          if (el) {
+                            el.scrollIntoView({ behavior: "smooth", block: "center" });
+                            const input = el.querySelector('input, select, textarea') as HTMLElement | null;
+                            input?.focus();
+                          }
+                        }}
+                        className="text-xs font-medium text-secondary hover:text-primary underline"
+                      >
+                        Go to field
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
-          )}
+           )}
         </>
       )}
-      <div className="flex justify-end gap-2 pt-2 border-t border-border">
+      <div className="flex justify-end gap-2 pt-2 border-t border-color-subtle">
         <Button variant="secondary" size="sm" onClick={onCancel}>
           Cancel
         </Button>

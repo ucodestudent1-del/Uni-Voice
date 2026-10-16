@@ -606,7 +606,8 @@ export default function Receipts() {
           currentPage={page}
           onPageChange={setPage}
           onPageSizeChange={setPageSize}
-          isLoading={loading}
+           isLoading={loading}
+           isPageLoading={loading && receipts.length > 0}
           emptyMessage={
             hasActiveFilters ? (
               <span>No receipts match your filters.</span>

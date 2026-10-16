@@ -9,6 +9,7 @@ import {
 import { formatCurrencyValue } from "../lib/utils";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
+import { SearchInput } from "@/components/ui";
 import {
   Download,
   RefreshCw,
@@ -343,15 +344,11 @@ export default function Payments() {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="sm:col-span-2">
             <label className="filter-label">Search</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search by invoice number, customer name, or provider reference..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-                className="filter-input pl-4"
-              />
-            </div>
+             <SearchInput
+               value={searchTerm}
+               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+               placeholder="Invoice number, customer name, or provider reference"
+             />
           </div>
           <div>
             <label className="filter-label">Status</label>
@@ -399,6 +396,7 @@ export default function Payments() {
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
             isLoading={loading}
+            isPageLoading={loading && payments.length > 0}
             emptyMessage={
               hasActiveFilters ? (
                 <span>No payments match your filters. Try adjusting your search.</span>

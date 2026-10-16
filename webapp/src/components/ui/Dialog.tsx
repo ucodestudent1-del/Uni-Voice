@@ -42,7 +42,7 @@ export function Dialog({
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
-  const handleOverlayClick = (e: globalThis.MouseEvent) => {
+   const handleOverlayClick = (e: globalThis.PointerEvent) => {
     if (closeOnOverlayClick && overlayRef.current === (e.target as Node)) {
       onClose();
     }
@@ -81,7 +81,7 @@ export function Dialog({
     const panel = panelRef.current;
 
     if (overlay) {
-      overlay.addEventListener("mousedown", handleOverlayClick);
+      overlay.addEventListener("pointerdown", handleOverlayClick);
     }
 
     const firstFocusable = panel?.querySelector<HTMLElement>(
@@ -90,7 +90,7 @@ export function Dialog({
     (firstFocusable ?? panel)?.focus();
 
     return () => {
-      overlay?.removeEventListener("mousedown", handleOverlayClick);
+      overlay?.removeEventListener("pointerdown", handleOverlayClick);
       previouslyFocusedRef.current?.focus();
     };
   }, [open]);

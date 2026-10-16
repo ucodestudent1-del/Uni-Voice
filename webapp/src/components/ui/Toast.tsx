@@ -33,11 +33,11 @@ function Toast({ id, type = "info", title, message, actionLabel, onAction, durat
   return (
     <div
       className={cn(
-        "fixed top-4 right-4 z-50 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg transition-all",
+        "flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg transition-all",
         typeClasses[type],
         {
-          "translate-x-0 opacity-100": visible,
-          "translate-x-full opacity-0": !visible,
+          "translate-x-0 opacity-100 scale-100": visible,
+          "translate-x-full opacity-0 scale-95": !visible,
         }
       )}
       role="alert"
