@@ -330,7 +330,7 @@ export class ReportsService {
                 COALESCE(SUM(i.amount_due), 0) as total_outstanding,
                 MAX(i.created_at) as last_invoice_date
          FROM invoices i
-         LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
+          LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
          WHERE i.business_id = $1 AND i.customer_id IS NOT NULL
          ${filters.customerId ? "AND i.customer_id = $2" : ""}
          GROUP BY c.id, c.name
@@ -449,11 +449,11 @@ export class ReportsService {
     const sortDir = sortOrder === "desc" ? "DESC" : "ASC";
 
     const dataRes = await query(
-      `SELECT i.id, i.invoice_number, i.status, i.currency, i.total, i.amount_paid, i.amount_due,
+       `SELECT i.id, i.invoice_number, i.status, i.currency, i.total, i.amount_paid, i.amount_due,
               i.issue_date, i.due_date, i.paid_at, i.created_at,
               c.name as customer_name, c.email as customer_email
        FROM invoices i
-       LEFT JOIN customers c ON c.id = i.customer_id
+       LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
        WHERE ${conditions.join(" AND ")}
        ORDER BY ${sortCol} ${sortDir}, i.created_at DESC
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
@@ -461,21 +461,21 @@ export class ReportsService {
     );
 
     const countRes = await query(
-      `SELECT COUNT(*)::int AS total FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id
+      `SELECT COUNT(*)::int AS total FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
        WHERE ${conditions.join(" AND ")}`,
       vals
     );
 
     const summaryRes = await query(
       `SELECT
-         COUNT(*)::int AS total_invoices,
-         COALESCE(SUM(i.total), 0) AS total_invoiced,
-         COALESCE(SUM(i.amount_paid), 0) AS total_paid,
-         SUM(CASE WHEN i.amount_due > 0 AND i.status NOT IN ('draft','cancelled','void') THEN i.amount_due ELSE 0 END) AS total_outstanding,
-         SUM(CASE WHEN (i.status = 'overdue' OR (i.due_date < NOW() AND i.amount_due > 0)) AND i.amount_due > 0 AND i.status NOT IN ('draft','cancelled','void','paid') THEN i.amount_due ELSE 0 END) AS total_overdue,
-         COALESCE(MAX(i.currency), 'USD') AS currency
+          COUNT(*)::int AS total_invoices,
+          COALESCE(SUM(i.total), 0) AS total_invoiced,
+          COALESCE(SUM(i.amount_paid), 0) AS total_paid,
+          SUM(CASE WHEN i.amount_due > 0 AND i.status NOT IN ('draft','cancelled','void') THEN i.amount_due ELSE 0 END) AS total_outstanding,
+          SUM(CASE WHEN (i.status = 'overdue' OR (i.due_date < NOW() AND i.amount_due > 0)) AND i.amount_due > 0 AND i.status NOT IN ('draft','cancelled','void','paid') THEN i.amount_due ELSE 0 END) AS total_overdue,
+          COALESCE(MAX(i.currency), 'USD') AS currency
        FROM invoices i
-       LEFT JOIN customers c ON c.id = i.customer_id
+       LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
        WHERE ${conditions.join(" AND ")}`,
       vals
     );
@@ -639,8 +639,8 @@ export class ReportsService {
               p.provider_payment_id, p.paid_at, p.created_at,
               i.invoice_number, c.name as customer_name
        FROM payments p
-       LEFT JOIN invoices i ON i.id = p.invoice_id
-       LEFT JOIN customers c ON c.id = i.customer_id
+        LEFT JOIN invoices i ON i.id = p.invoice_id AND i.business_id = p.business_id
+        LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
        WHERE ${conditions.join(" AND ")}
        ORDER BY ${sortCol} ${sortDir}, p.created_at DESC
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
@@ -650,7 +650,7 @@ export class ReportsService {
     const countRes = await query(
       `SELECT COUNT(*)::int AS total
        FROM payments p
-       LEFT JOIN invoices i ON i.id = p.invoice_id
+       LEFT JOIN invoices i ON i.id = p.invoice_id AND i.business_id = p.business_id
        WHERE ${conditions.join(" AND ")}`,
       vals
     );

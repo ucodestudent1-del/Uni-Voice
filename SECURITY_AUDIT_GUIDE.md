@@ -180,11 +180,12 @@ export const authRateLimiter = rateLimit({
 
 #### 2.2.2 IDOR Prevention
 - [N/A] Good pattern: Repository methods always accept `businessId` and include it in the
-  WHERE clause. For example:
-  - `InvoiceRepository.findById(businessId, id)` — `src/repositories/invoice.repo.ts:287`
-  - `CustomerRepository.findById(businessId, id)` — `src/repositories/customer.repo.ts:216`
-  - `ReceiptRepository.findById(businessId, id)` — `src/repositories/receipt.repo.ts:66`
-  - `QuoteService.findById(businessId, id)` — `src/services/quote-service.ts:330`
+   WHERE clause. For example:
+   - `InvoiceRepository.findById(businessId, id)` — `src/repositories/invoice.repo.ts:287`
+   - `CustomerRepository.findById(businessId, id)` — `src/repositories/customer.repo.ts:216`
+   - `ReceiptRepository.findById(businessId, id)` — `src/repositories/receipt.repo.ts:66`
+   - `QuoteService.findById(businessId, id)` — `src/services/quote-service.ts:330`
+   - `InvoiceService.fetchCustomer(businessId, customerId)` — `src/services/invoice-service.ts:1741` ✅ Fixed — now includes `AND business_id = $2`
 
 - [HIGH] **One exception** in `receipt.repo.ts`: `findByIdRaw(id)` at line 75-79 does **NOT**
   filter by `businessId`. This is used by `ReceiptService.sendReceiptEmail` (line 378).
@@ -284,22 +285,16 @@ const params = CatalogSearchSchema.parse(req.query);
   `CustomerSearchQuerySchema` at `src/domain/schemas/customer.ts:103`) and apply consistently.
 
 #### 3.2.3 SQL Injection Prevention
-- [N/A] Good: All queries in repository files use parameterized queries with `$1, $2, ...`
-  placeholders. Example: `src/repositories/invoice.repo.ts:287`:
-  ```typescript
-  const res = await query(
-    `SELECT i.* FROM invoices i WHERE i.id = $1 AND i.business_id = $2`,
-    [id, businessId]
-  );
-  ```
-- [N/A] The dynamic query builders (e.g., `findManyPage` at `src/repositories/invoice.repo.ts:509`)
-  use parameterized conditions and an allowlist for sort columns
-  (`INVOICE_SORT_COLUMNS` at line 92). Column names are never interpolated from user input.
+- [N/A] Good: All queries use parameterized queries with `$1, $2, ...` placeholders.
+- [N/A] The dynamic query builders use parameterized conditions and allowlists for sort columns.
+  `findManyPage` at `src/repositories/invoice.repo.ts:509` uses `INVOICE_SORT_COLUMNS` (line 92).
+  `InvoiceService.findMany` at `src/services/invoice-service.ts:1159` now uses an
+  `allowedSortColumns` allowlist ✅ Fixed — previously `sortBy` was raw user input (SQL injection risk).
+  `listCreditNotes` at `src/services/invoice-service.ts:2062` was already using an allowlist.
 
-- [MEDIUM] `src/index.ts:254` — `req.params.sessionId` is passed to a parameterized query. Good.
-  But audit any string interpolation in SQL: there are dynamic SQL fragments like
-  `` `UPDATE invoices SET ${set.join(", ")}` `` at `src/repositories/invoice.repo.ts:247`. The
-  column names come from an allowlist (`INVOICE_ALLOWED_COLUMNS`), so this is safe.
+- [N/A] `src/index.ts:254` — `req.params.sessionId` is passed to a parameterized query. Good.
+  Dynamic SQL fragments like `` `UPDATE invoices SET ${set.join(", ")}` `` at
+  `src/repositories/invoice.repo.ts:247` use allowlisted column names. Safe.
 
 #### 3.2.4 File Upload Validation
 - [CRITICAL] No file upload endpoints exist in the current route set. If file uploads are
@@ -695,17 +690,17 @@ jobs:
 
 ## Appendix B: Files Requiring Immediate Attention
 
-| File | Issue | Priority |
-|---|---|---|
-| `src/config/index.ts` | Hardcoded default JWT secret, no production guards | CRITICAL |
-| `src/middleware/auth.ts` | 30-day JWT expiry, no cookie-based auth, no revocation | HIGH |
-| `src/middleware/entitlement.ts` | Synchronous throw in async middleware, potential unhandled rejection | MEDIUM |
-| `src/index.ts` | No rate limiting, raw `req.body` on multiple routes, verbose dev logging | HIGH/MEDIUM |
-| `src/repositories/receipt.repo.ts:75-79` | `findByIdRaw` does not scope by `businessId` | HIGH |
-| `src/services/quote-service.ts:404` | `setPublicToken` does not scope by `businessId` | HIGH |
-| `src/services/receipt-service.ts:326` | Handlebars `noEscape: true` — XSS risk | HIGH |
-| `src/db/migrations/001_initial_schema.sql` | No RLS policies, DB user uses superuser | MEDIUM |
-| `AGENTS.md` / `package.json` | No CI/CD security gates | CRITICAL |
+| File | Issue | Priority | Status |
+|---|---|---|---|
+| `src/config/index.ts` | Hardcoded default JWT secret, no production guards | CRITICAL | ✅ Fixed — Zod schema rejects defaults in prod |
+| `src/middleware/auth.ts` | 30-day JWT expiry, no cookie-based auth, no revocation | HIGH | ✅ Fixed — 15-min access token via HttpOnly cookie, refresh token rotation |
+| `src/middleware/entitlement.ts` | Synchronous throw in async middleware, potential unhandled rejection | MEDIUM | ⚠️ Pending |
+| `src/index.ts` | Raw `req.body` on multiple routes, verbose dev logging | HIGH/MEDIUM | ⚠️ Some fixed (rate limiting), schema validation pending |
+| `src/repositories/receipt.repo.ts:75-79` | `findByIdRaw` does not scope by `businessId` | HIGH | ⚠️ Verify caller scopes by business_id first |
+| `src/services/quote-service.ts:404` | `setPublicToken` does not scope by `businessId` | HIGH | ⚠️ Fix needed |
+| `src/services/receipt-service.ts:326` | Handlebars `noEscape: true` — XSS risk | HIGH | ⚠️ Fix needed |
+| `src/db/migrations/001_initial_schema.sql` | No RLS policies, DB user uses superuser | MEDIUM | ⚠️ Consider RLS as defense-in-depth |
+| `AGENTS.md` / `package.json` | No CI/CD security gates | CRITICAL | ⚠️ No CI/CD pipeline defined |
 
 ---
 
@@ -761,7 +756,7 @@ jobs:
 5. Enforce public token expiry checks
 
 ### Phase 3 — Medium (Next cycle)
-1. Implement CSRF protection (if moving to cookie-based auth)
+1. ~~Implement CSRF protection~~ — Done. SameSite=Lax cookies provide CSRF protection for non-GET requests.
 2. Increase bcrypt cost factor to 12 (or migrate to Argon2id)
 3. Add HSTS, strict CSP, and Permissions-Policy headers
 4. Enable PostgreSQL RLS as defense-in-depth
