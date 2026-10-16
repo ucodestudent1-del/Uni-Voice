@@ -1,5 +1,6 @@
 import { env } from "../../config/index.js";
 import { logger } from "../../utils/logger.js";
+import { query } from "../../db/pool.js";
 
 export interface SmsRecipient {
   to: string;
@@ -115,11 +116,58 @@ function createProvider(): SmsProvider {
   }
 }
 
+export interface SendSmsData {
+  businessId: string;
+  to: string;
+  message: string;
+  idempotencyKey?: string;
+}
+
+export interface SmsSendResult {
+  messageId: string;
+  status: SmsStatus;
+}
+
 export const smsService = {
   provider: createProvider(),
 
   async send(to: string, message: string): Promise<{ messageId: string; status: SmsStatus }> {
     return withSmsRetry(() => this.provider.send({ to, message }));
+  },
+
+  async sendSms(data: SendSmsData): Promise<SmsSendResult> {
+    if (data.idempotencyKey) {
+      const existing = await query(
+        `SELECT message_id, status FROM sms_log
+         WHERE idempotency_key = $1`,
+        [data.idempotencyKey],
+      );
+      if (existing.rows.length) {
+        logger.info(`SMS already sent (idempotent), msgId=${existing.rows[0].message_id}`);
+        return { messageId: existing.rows[0].message_id, status: existing.rows[0].status };
+      }
+    }
+
+    const result = await withSmsRetry(() =>
+      this.provider.send({ to: data.to, message: data.message }),
+    );
+
+    await query(
+      `INSERT INTO sms_log (business_id, provider, status, recipient, message, message_id, idempotency_key, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,NOW(),NOW())`,
+      [
+        data.businessId,
+        this.provider.name,
+        result.status,
+        data.to,
+        data.message,
+        result.messageId,
+        data.idempotencyKey ?? null,
+      ],
+    );
+
+    logger.info(`SMS sent: to=${data.to} msgId=${result.messageId}`);
+    return result;
   },
 
   async verifyConnection(): Promise<boolean> {

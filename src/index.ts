@@ -111,6 +111,7 @@ import bcrypt from "bcrypt";
 import { camelToSnake } from "./utils/case-conversion.js";
 
 const app = express();
+app.disable("x-powered-by");
 app.set("trust proxy", isDev ? true : 1);
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
 
@@ -1004,7 +1005,7 @@ app.get("/api/stripe/config", async (_req, res) => {
 
 app.post(
   "/api/webhooks/stripe",
-  express.raw({ type: "application/json" }),
+  express.raw({ type: "application/json", limit: "1mb" }),
   async (req: express.Request, res) => {
     const signature = req.headers["stripe-signature"];
     if (!signature || typeof signature !== "string") {

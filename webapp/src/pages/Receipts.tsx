@@ -185,11 +185,11 @@ export default function Receipts() {
     setEmailModalReceipt(null);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     loadReceipts();
     loadSummary();
     loadVolumeTrend();
-  };
+  }, [loadReceipts, loadSummary, loadVolumeTrend]);
 
   const columns = useMemo<ColumnDef<ApiReceipt>[]>(
     () => [
