@@ -119,7 +119,7 @@ export const smsService = {
   provider: createProvider(),
 
   async send(to: string, message: string): Promise<{ messageId: string; status: SmsStatus }> {
-    return this.provider.send({ to, message });
+    return withSmsRetry(() => this.provider.send({ to, message }));
   },
 
   async verifyConnection(): Promise<boolean> {
@@ -142,4 +142,31 @@ export function buildPaymentLinkSms(options: {
   const { businessName, invoiceNumber, amountDue, currency, paymentUrl } = options;
   const ref = invoiceNumber ? `inv ${invoiceNumber}` : "your invoice";
   return `${businessName}: ${ref} for ${currency} ${amountDue} is due. Pay here: ${paymentUrl}`;
+}
+
+const SMS_RETRY_CONFIG = {
+  retries: 3,
+  baseDelayMs: 500,
+  factor: 2,
+  shouldRetry: (error: unknown) => {
+    if (!error || typeof error !== "object") return false;
+    const e = error as { statusCode?: number };
+    return e.statusCode
+      ? [408, 429, 500, 502, 503, 504].includes(e.statusCode)
+      : false;
+  },
+};
+
+async function withSmsRetry<T>(fn: () => Promise<T>, attempt = 1): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (attempt >= SMS_RETRY_CONFIG.retries || !SMS_RETRY_CONFIG.shouldRetry?.(error)) {
+      throw error;
+    }
+    const delay = SMS_RETRY_CONFIG.baseDelayMs * Math.pow(SMS_RETRY_CONFIG.factor, attempt - 1);
+    const jitter = Math.random() * 0.3 * delay;
+    await new Promise((resolve) => setTimeout(resolve, delay + jitter));
+    return withSmsRetry(fn, attempt + 1);
+  }
 }

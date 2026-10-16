@@ -295,6 +295,8 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     quoteDiscountType: "fixed",
   });
 
+  const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
+
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1080,10 +1082,37 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         }
       />
 
-      <div className="flex-1 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full overflow-hidden">
-          <div className="overflow-y-auto space-y-6 pr-2">
-            <SectionCard title="Customer">
+       <div className="flex-1 overflow-hidden">
+         {/* Mobile tab toggle — hidden on desktop */}
+         <div className="lg:hidden flex border-b border-color bg-surface">
+           <button
+             onClick={() => setMobileView("editor")}
+             className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 ${
+               mobileView === "editor"
+                 ? "border-primary text-primary"
+                 : "border-transparent text-tertiary hover:text-primary"
+             }`}
+             aria-label="Edit document"
+           >
+             Edit
+           </button>
+           <button
+             onClick={() => setMobileView("preview")}
+             className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 ${
+               mobileView === "preview"
+                 ? "border-primary text-primary"
+                 : "border-transparent text-tertiary hover:text-primary"
+             }`}
+             aria-label="Preview document"
+           >
+             Preview
+           </button>
+         </div>
+
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-8rem)] overflow-hidden">
+           {/* Editor column — hidden on mobile when preview is active */}
+           <div className={`overflow-y-auto space-y-6 pr-2 ${mobileView === "preview" ? "hidden lg:block" : "block"}`}>
+             <SectionCard title="Customer">
               <div className="p-5 space-y-3">
                 <FormField
                   label="Customer"
@@ -1367,10 +1396,11 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                 </Button>
               </div>
             )}
-          </div>
+           </div>
 
-          <div className="overflow-y-auto">
-            <DocumentPreview
+           {/* Preview column — hidden on mobile when editor is active */}
+           <div className={`overflow-y-auto ${mobileView === "editor" ? "hidden lg:block" : "block"}`}>
+             <DocumentPreview
               documentType={docType === "credit-note" ? "credit-note" : docType === "quote" ? "quote" : "invoice"}
               documentNumber={document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number}
               calcResult={calcResult}

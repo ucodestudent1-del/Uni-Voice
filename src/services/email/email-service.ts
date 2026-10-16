@@ -4,6 +4,62 @@ import { env } from "../../config/index.js";
 import { logger } from "../../utils/logger.js";
 import { query } from "../../db/pool.js";
 
+export interface EmailParams {
+  to: EmailRecipient;
+  subject: string;
+  html: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
+}
+
+export interface RetryConfig {
+  retries: number;
+  baseDelayMs: number;
+  factor: number;
+  shouldRetry?: (error: unknown) => boolean;
+}
+
+export const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  retries: 3,
+  baseDelayMs: 500,
+  factor: 2,
+  shouldRetry: (error: unknown) => {
+    if (!error || typeof error !== "object") return false;
+    const e = error as { name?: string; message?: string; code?: string; statusCode?: number };
+    const msg = e.message ?? "";
+    const isNetworkError =
+      e.name === "ECONNRESET" ||
+      e.name === "ETIMEDOUT" ||
+      e.name === "ECONNREFUSED" ||
+      /timeout|network|connection/i.test(msg);
+    const isRetryableStatus = e.statusCode
+      ? [408, 429, 500, 502, 503, 504].includes(e.statusCode)
+      : false;
+    return isNetworkError || isRetryableStatus;
+  },
+};
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
+  attempt = 1,
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (attempt >= config.retries || !(config.shouldRetry?.(error) ?? true)) {
+      throw error;
+    }
+    const delay = config.baseDelayMs * Math.pow(config.factor, attempt - 1);
+    const jitter = Math.random() * 0.3 * delay;
+    const totalDelay = delay + jitter;
+    logger.warn(
+      `Retry attempt ${attempt}/${config.retries} after ${Math.round(totalDelay)}ms`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, totalDelay));
+    return withRetry(fn, config, attempt + 1);
+  }
+}
+
 export interface EmailRecipient {
   email: string;
   name?: string;
@@ -257,6 +313,10 @@ export class EmailService {
     return this.provider.name;
   }
 
+  private async sendWithRetry(params: EmailParams): Promise<{ messageId: string; status: EmailStatus }> {
+    return withRetry(() => this.provider.send(params));
+  }
+
   async sendReceiptEmail(data: ReceiptEmailData): Promise<{ messageId: string; status: EmailStatus }> {
     if (data.idempotencyKey) {
       const existing = await query(
@@ -270,7 +330,7 @@ export class EmailService {
       }
     }
 
-    const result = await this.provider.send({
+    const result = await this.sendWithRetry({
       to: data.recipient,
       subject: data.subject,
       html: data.htmlBody,
@@ -303,7 +363,7 @@ export class EmailService {
       }
     }
 
-    const result = await this.provider.send({
+    const result = await this.sendWithRetry({
       to: data.recipient,
       subject: data.subject,
       html: data.htmlBody,
@@ -336,7 +396,7 @@ export class EmailService {
       }
     }
 
-    const result = await this.provider.send({
+    const result = await this.sendWithRetry({
       to: data.recipient,
       subject: data.subject,
       html: data.htmlBody,
@@ -369,7 +429,7 @@ export class EmailService {
       }
     }
 
-    const result = await this.provider.send({
+    const result = await this.sendWithRetry({
       to: data.recipient,
       subject: data.subject,
       html: data.htmlBody,

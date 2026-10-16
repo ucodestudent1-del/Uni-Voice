@@ -369,7 +369,7 @@ export default function DocumentPreview({
               </thead>
               <tbody>
                 {calcResult.lineItems.map((li, idx) => (
-                  <tr key={idx} className="border-b border-border/50">
+                  <tr key={`${li.description}-${li.quantity.toFixed()}-${li.unitPrice.toFixed()}-${idx}`} className="border-b border-border/50">
                     <td className="py-1.5">{li.description}</td>
                     <td className="text-right py-1.5">{li.quantity.toFixed()}</td>
                     <td className="text-right py-1.5">

@@ -10,6 +10,7 @@ import { existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { Decimal } from "decimal.js";
 import { env, isDev, isTest } from "./config/index.js";
+import { parsePagination } from "./utils/pagination.js";
 import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
@@ -1465,9 +1466,10 @@ app.get("/api/invoices", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
+    const pagination = parsePagination(req.query);
     const result = await invoiceService.findMany(req.user!.businessId, {
-      limit: req.query.limit,
-      offset: req.query.offset,
+      limit: pagination.limit,
+      offset: pagination.offset,
       status: req.query.status,
       search: req.query.search,
       customerId: req.query.customerId,
@@ -1831,6 +1833,7 @@ app.get(
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
     try {
+      const pagination = parsePagination(req.query);
       const result = await invoiceService.listCreditNotes(
         req.user!.businessId,
         {
@@ -1840,8 +1843,8 @@ app.get(
           search: req.query.search as string | undefined,
           dateFrom: req.query.dateFrom as string | undefined,
           dateTo: req.query.dateTo as string | undefined,
-          limit: req.query.limit as string | undefined,
-          offset: req.query.offset as string | undefined,
+          limit: pagination.limit,
+          offset: pagination.offset,
           sortBy: req.query.sortBy as string | undefined,
           sortOrder: (req.query.sortOrder as "asc" | "desc" | undefined) ?? "desc",
         },
@@ -2067,9 +2070,10 @@ app.get("/api/quotes", requireAuth, async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
+    const pagination = parsePagination(req.query);
     const result = await quoteService.findMany(req.user!.businessId, {
-      limit: req.query.limit as string | number | undefined,
-      offset: req.query.offset as string | number | undefined,
+      limit: pagination.limit,
+      offset: pagination.offset,
       status: req.query.status as string | undefined,
       search: req.query.search as string | undefined,
       customerId: req.query.customerId as string | undefined,
@@ -5102,7 +5106,7 @@ async function start() {
     process.exit(1);
   }
   await runMigrations();
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
     subscriptionService
       .ensureDefaults()
@@ -5120,11 +5124,56 @@ async function start() {
 // ============================================================================
 // SERVER STARTUP
 // ============================================================================
+let server: ReturnType<typeof app.listen> | null = null;
+
 if (!isTest) {
   start().catch((err) => {
     logger.error({ err }, "Failed to start server");
     process.exit(1);
   });
 }
+
+// Graceful shutdown — close server, DB pool, and PDF service on SIGTERM/SIGINT
+let isShuttingDown = false;
+
+async function shutdown(signal: string): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  logger.info(`Received ${signal} — shutting down gracefully...`);
+
+  if (server) {
+    server.close((err) => {
+      if (err) {
+        logger.error({ err }, "Error closing server");
+        process.exit(1);
+      }
+      logger.info("HTTP server closed.");
+    });
+  }
+
+  try {
+    const { closePool } = await import("./db/pool.js");
+    await closePool();
+    logger.info("Database pool closed.");
+  } catch (err) {
+    logger.error({ err }, "Error closing database pool");
+  }
+
+  try {
+    const { pdfService } = await import("./services/pdf/pdf-service.js");
+    await pdfService.close();
+    logger.info("PDF service closed.");
+  } catch (err) {
+    logger.error({ err }, "Error closing PDF service");
+  }
+
+  setTimeout(() => {
+    logger.error("Could not close connections gracefully — forcing exit.");
+    process.exit(1);
+  }, 10000);
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 export default app;

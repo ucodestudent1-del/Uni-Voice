@@ -304,6 +304,7 @@ export default function Receipts() {
                 onClick={() => handleViewReceipt(r.id)}
                 className="text-xs text-secondary hover:text-primary"
                 title="View receipt"
+                aria-label="View receipt"
               >
                 <Eye className="h-3.5 w-3.5" />
               </button>
@@ -311,6 +312,7 @@ export default function Receipts() {
                 onClick={() => handleEmailReceipt(r)}
                 className="text-xs text-secondary hover:text-primary"
                 title="Email receipt"
+                aria-label="Email receipt"
               >
                 <Mail className="h-3.5 w-3.5" />
               </button>
@@ -321,6 +323,7 @@ export default function Receipts() {
                   rel="noopener noreferrer"
                   className="text-xs text-secondary hover:text-primary"
                   title="Open in provider"
+                  aria-label="Open receipt in provider"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
@@ -329,6 +332,7 @@ export default function Receipts() {
                 onClick={() => handleDownloadPdf(r.id)}
                 className="text-xs text-secondary hover:text-primary"
                 title="Download PDF"
+                aria-label="Download PDF"
               >
                 <Download className="h-3.5 w-3.5" />
               </button>
