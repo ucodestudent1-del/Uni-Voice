@@ -2,7 +2,12 @@
 -- Adds an SMS delivery log table mirroring the email_log pattern for
 -- observability, idempotency, and delivery-status tracking.
 
-CREATE TYPE sms_status AS ENUM ('pending', 'sent', 'failed');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'sms_status') THEN
+        CREATE TYPE sms_status AS ENUM ('pending', 'sent', 'failed');
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS sms_log (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

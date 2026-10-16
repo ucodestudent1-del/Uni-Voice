@@ -7,9 +7,14 @@
 -- describe what was paid.
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE payment_voucher_status AS ENUM (
-  'draft', 'issued', 'cancelled', 'void'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_voucher_status') THEN
+        CREATE TYPE payment_voucher_status AS ENUM (
+          'draft', 'issued', 'cancelled', 'void'
+        );
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS payment_voucher_number_sequences (
   business_id   UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
@@ -104,9 +109,14 @@ CREATE INDEX IF NOT EXISTS idx_payment_voucher_events_type ON payment_voucher_ev
 -- (e.g. for undercharged amounts, additional charges, or corrections).
 -- ----------------------------------------------------------------------------
 
-CREATE TYPE debit_note_status AS ENUM (
-  'draft', 'finalized', 'sent', 'cancelled', 'void'
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'debit_note_status') THEN
+        CREATE TYPE debit_note_status AS ENUM (
+          'draft', 'finalized', 'sent', 'cancelled', 'void'
+        );
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS debit_note_number_sequences (
   business_id   UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
