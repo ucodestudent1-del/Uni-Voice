@@ -1684,28 +1684,30 @@ app.get(
       const cachedPdf = await reportsCache.get(cacheKey);
       if (cachedPdf) {
         res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
         res.set(
           "Content-Disposition",
-          `inline; filename="Invoice-${invoice.invoice_number ?? req.params.id}.pdf"`,
-        );
-        return res.send(cachedPdf);
-      }
+           `attachment; filename="Invoice-${invoice.invoice_number ?? req.params.id}.pdf"`,
+         );
+         return res.send(cachedPdf);
+       }
 
-      const pdf = await invoiceService.generatePdf(
-        req.user!.businessId,
-        req.params.id,
-        invoice,
-      );
+       const pdf = await invoiceService.generatePdf(
+         req.user!.businessId,
+         req.params.id,
+         invoice,
+       );
 
-      if (pdf && pdf.length > 0) {
-        await reportsCache.set(cacheKey, pdf);
-      }
+       if (pdf && pdf.length > 0) {
+         await reportsCache.set(cacheKey, pdf);
+       }
 
-      res.set("Content-Type", "application/pdf");
-      res.set(
-        "Content-Disposition",
-        `inline; filename="Invoice-${invoice.invoice_number ?? req.params.id}.pdf"`,
-      );
+       res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
+       res.set(
+         "Content-Disposition",
+         `attachment; filename="Invoice-${invoice.invoice_number ?? req.params.id}.pdf"`,
+       );
       res.send(pdf);
     } catch (err) {
       next(err);
@@ -2018,9 +2020,10 @@ app.get(
         creditNote,
       );
       res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
       res.set(
         "Content-Disposition",
-        `inline; filename="CreditNote-${creditNote.credit_note_number ?? req.params.id}.pdf"`,
+         `attachment; filename="CreditNote-${creditNote.credit_note_number ?? req.params.id}.pdf"`,
       );
       res.send(pdf);
     } catch (err) {
@@ -2286,9 +2289,10 @@ app.get("/api/quotes/:id/pdf", requireAuth, async (req: AuthRequest, res, next) 
       quote
     );
     res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
     res.set(
       "Content-Disposition",
-      `inline; filename="Quote-${(quote as any).quote_number ?? req.params.id}.pdf"`
+       `attachment; filename="Quote-${(quote as any).quote_number ?? req.params.id}.pdf"`
     );
     res.send(pdf);
   } catch (err) {
@@ -2459,9 +2463,10 @@ app.get("/api/payment-vouchers/:id/pdf", requireAuth, async (req: AuthRequest, r
       voucher
     );
     res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
     res.set(
       "Content-Disposition",
-      `inline; filename="PaymentVoucher-${(voucher as any).payment_voucher_number ?? req.params.id}.pdf"`
+       `attachment; filename="PaymentVoucher-${(voucher as any).payment_voucher_number ?? req.params.id}.pdf"`
     );
     res.send(pdf);
   } catch (err) {
@@ -2635,9 +2640,10 @@ app.get("/api/debit-notes/:id/pdf", requireAuth, async (req: AuthRequest, res, n
       note
     );
     res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
     res.set(
       "Content-Disposition",
-      `inline; filename="DebitNote-${(note as any).debit_note_number ?? req.params.id}.pdf"`
+       `attachment; filename="DebitNote-${(note as any).debit_note_number ?? req.params.id}.pdf"`
     );
     res.send(pdf);
   } catch (err) {
@@ -2859,11 +2865,12 @@ app.get(
       req.params.id,
     );
     if (cached.pdf) {
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename=receipt-${cached.receiptNumber ?? req.params.id}.pdf`,
-      );
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=receipt-${cached.receiptNumber ?? req.params.id}.pdf`,
+    );
       res.send(cached.pdf);
       return;
     }
@@ -2871,6 +2878,7 @@ app.get(
       cached.id,
     );
     res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=receipt-${receiptNumber ?? req.params.id}.pdf`,

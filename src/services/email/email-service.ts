@@ -4,6 +4,24 @@ import { env } from "../../config/index.js";
 import { logger } from "../../utils/logger.js";
 import { query } from "../../db/pool.js";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(email: string): boolean {
+  return EMAIL_REGEX.test(email);
+}
+
+export function validateEmailParams(params: EmailParams): void {
+  if (!isValidEmail(params.to.email)) {
+    throw new Error(`Invalid recipient email address: ${params.to.email}`);
+  }
+  if (params.subject.length > 998) {
+    throw new Error("Email subject exceeds 998 character limit");
+  }
+  if (params.attachments && params.attachments.some((a) => !a.filename || a.filename.length > 255)) {
+    throw new Error("One or more attachment filenames are invalid or exceed 255 characters");
+  }
+}
+
 export interface EmailParams {
   to: EmailRecipient;
   subject: string;
@@ -314,6 +332,7 @@ export class EmailService {
   }
 
   private async sendWithRetry(params: EmailParams): Promise<{ messageId: string; status: EmailStatus }> {
+    validateEmailParams(params);
     return withRetry(() => this.provider.send(params));
   }
 
