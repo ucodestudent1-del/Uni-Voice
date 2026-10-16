@@ -80,7 +80,7 @@ export function DocumentFees({
               <button
                 type="button"
                 onClick={() => onRemove(idx)}
-                className="p-1.5 text-error hover:bg-error/10 rounded"
+                className="p-1.5 text-error hover:bg-error-bg rounded"
                 title="Remove fee"
               >
                 <Trash2 className="h-4 w-4" />

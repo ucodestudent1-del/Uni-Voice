@@ -120,23 +120,21 @@ export default function Reports() {
   }, []);
 
   const loadRevenue = useCallback(async () => {
-    if (!revenueData) {
-      setLoading("revenue", true);
-      try {
-        const data = await getRevenueReport(filters);
-        setRevenueData(data);
-        clearError("revenue");
-      } catch (err: any) {
-        if (err.response?.status === 403) {
-          setError("revenue", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
-        } else {
-          setError("revenue", err.message || "Failed to load revenue report");
-        }
-      } finally {
-        setLoading("revenue", false);
+    setLoading("revenue", true);
+    try {
+      const data = await getRevenueReport(filters);
+      setRevenueData(data);
+      clearError("revenue");
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setError("revenue", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError("revenue", err.message || "Failed to load revenue report");
       }
+    } finally {
+      setLoading("revenue", false);
     }
-  }, [filters, revenueData]);
+  }, [filters]);
 
   const loadPayments = useCallback(async () => {
     setLoading("payments", true);
@@ -173,42 +171,38 @@ export default function Reports() {
   }, [filters]);
 
   const loadTax = useCallback(async () => {
-    if (!taxData) {
-      setLoading("tax", true);
-      try {
-        const data = await getTaxSummaryReport(filters);
-        setTaxData(data);
-        clearError("tax");
-      } catch (err: any) {
-        if (err.response?.status === 403) {
-          setError("tax", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
-        } else {
-          setError("tax", err.message || "Failed to load tax summary");
-        }
-      } finally {
-        setLoading("tax", false);
+    setLoading("tax", true);
+    try {
+      const data = await getTaxSummaryReport(filters);
+      setTaxData(data);
+      clearError("tax");
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setError("tax", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError("tax", err.message || "Failed to load tax summary");
       }
+    } finally {
+      setLoading("tax", false);
     }
-  }, [filters, taxData]);
+  }, [filters]);
 
   const loadProfitLoss = useCallback(async () => {
-    if (!profitLossData) {
-      setLoading("profit-loss", true);
-      try {
-        const data = await getProfitLossReport(filters);
-        setProfitLossData(data);
-        clearError("profit-loss");
-      } catch (err: any) {
-        if (err.response?.status === 403) {
-          setError("profit-loss", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
-        } else {
-          setError("profit-loss", err.message || "Failed to load profit & loss report");
-        }
-      } finally {
-        setLoading("profit-loss", false);
+    setLoading("profit-loss", true);
+    try {
+      const data = await getProfitLossReport(filters);
+      setProfitLossData(data);
+      clearError("profit-loss");
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setError("profit-loss", err.response?.data?.error || "This report requires a Business plan. Please upgrade to continue.");
+      } else {
+        setError("profit-loss", err.message || "Failed to load profit & loss report");
       }
+    } finally {
+      setLoading("profit-loss", false);
     }
-  }, [filters, profitLossData]);
+  }, [filters]);
 
   useEffect(() => {
     loadDashboard();
@@ -257,6 +251,40 @@ export default function Reports() {
   };
 
   const tabFilters = TAB_FILTERS[activeTab];
+
+  useEffect(() => {
+    if (activeTab === "dashboard") {
+      return;
+    }
+
+    if (activeTab === "revenue") {
+      setRevenueData(null);
+    }
+    if (activeTab === "tax") {
+      setTaxData(null);
+    }
+    if (activeTab === "profit-loss") {
+      setProfitLossData(null);
+    }
+
+    switch (activeTab) {
+      case "revenue":
+        loadRevenue();
+        break;
+      case "payments":
+        loadPayments();
+        break;
+      case "clients":
+        loadClients();
+        break;
+      case "tax":
+        loadTax();
+        break;
+      case "profit-loss":
+        loadProfitLoss();
+        break;
+    }
+  }, [activeTab, filters, loadRevenue, loadPayments, loadClients, loadTax, loadProfitLoss]);
 
   const renderTabContent = () => {
     switch (activeTab) {

@@ -85,9 +85,9 @@ export default function PublicInvoice() {
           </Button>
         </div>
 
-        <div className="border border-border rounded-lg bg-surface shadow-sm">
+        <div className="border border-color rounded-lg bg-surface shadow-sm">
           {/* Header */}
-          <div className="p-6 border-b border-border">
+          <div className="p-6 border-b border-color">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <FileText className="h-8 w-8 text-tertiary" />
@@ -102,7 +102,7 @@ export default function PublicInvoice() {
           </div>
 
           {/* Business & Customer */}
-          <div className="p-6 border-b border-border grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 border-b border-color grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-xs font-medium text-tertiary uppercase mb-2">From</h3>
               <div className="font-medium text-primary">{business?.name ?? "—"}</div>
@@ -117,7 +117,7 @@ export default function PublicInvoice() {
           </div>
 
           {/* Invoice Info */}
-          <div className="p-6 border-b border-border grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-6 border-b border-color grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <h4 className="text-xs font-medium text-tertiary uppercase">Invoice Date</h4>
               <p className="mt-1 text-sm text-primary">{invoice.issue_date ? formatDate(invoice.issue_date) : "—"}</p>
@@ -137,12 +137,12 @@ export default function PublicInvoice() {
           </div>
 
           {/* Line Items */}
-          <div className="p-6 border-b border-border">
+          <div className="p-6 border-b border-color">
             {(invoice.items ?? []).length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border">
+                    <tr className="border-b border-color">
                       <th className="text-left py-2 text-tertiary font-medium">Description</th>
                       <th className="text-right py-2 text-tertiary font-medium">Qty</th>
                       <th className="text-right py-2 text-tertiary font-medium">Unit Price</th>
@@ -152,7 +152,7 @@ export default function PublicInvoice() {
                   </thead>
                   <tbody>
                     {(invoice.items ?? []).map((item: ApiInvoiceItem, idx: number) => (
-                      <tr key={item.id ?? idx} className="border-b border-border/50">
+                      <tr key={item.id ?? idx} className="border-b border-color/50">
                         <td className="py-2">
                           <div className="font-medium text-primary">{item.description}</div>
                           {item.tax_name && <span className="text-xs text-tertiary">{item.tax_name}</span>}
@@ -195,7 +195,7 @@ export default function PublicInvoice() {
                 <span className="text-tertiary">Tax</span>
                 <Money amount={invoice.tax_total ?? "0"} currency={invoice.currency} />
               </div>
-              <div className="flex justify-between font-bold text-lg text-primary pt-2 border-t border-border">
+              <div className="flex justify-between font-bold text-lg text-primary pt-2 border-t border-color">
                 <span>Total</span>
                 <Money amount={invoice.total ?? "0"} currency={invoice.currency} />
               </div>
@@ -211,7 +211,7 @@ export default function PublicInvoice() {
 
         {/* Notes */}
         {(invoice.notes || invoice.terms || invoice.payment_instructions) && (
-          <div className="mt-6 border border-border rounded-lg p-6 bg-surface">
+          <div className="mt-6 border border-color rounded-lg p-6 bg-surface">
             <div className="space-y-3 text-sm">
               {invoice.notes && (
                 <div>

@@ -15,13 +15,14 @@ import CustomerForm from "../components/CustomerForm";
 import CustomerImport from "../components/CustomerImport";
 import CustomerQuickView from "../components/CustomerQuickView";
 import { Plus, Upload, Download, Eye, Edit2, Archive, RefreshCw,
-MoreVertical, Clock, Mail, Phone, Users } from "lucide-react";
+   MoreVertical, Clock, Mail, Phone, Users } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
 import { getCustomerPrimaryContact, customerHasBalance, customerHasOverdue } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import { Skeleton, SearchInput } from "@/components/ui";
+import { useToast } from "../components/ui/ToastProvider";
 import { cn } from "../lib/utils";
 import type { NavigateFunction } from "react-router-dom";
 
@@ -138,6 +139,7 @@ const SORT_OPTIONS = [
 
 export default function Customers() {
   const { plan } = useSubscription();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
   const [total, setTotal] = useState(0);
@@ -218,8 +220,9 @@ export default function Customers() {
     try {
       await archiveCustomer(customer.id);
       loadCustomers(currentParams);
+      toast("Customer archived", { type: "success", title: "Archived" });
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to archive customer");
+      toast(err.response?.data?.error || "Failed to archive customer", { type: "error", title: "Error" });
     }
   }
 
@@ -227,8 +230,9 @@ export default function Customers() {
     try {
       await restoreCustomer(customer.id);
       loadCustomers(currentParams);
+      toast("Customer restored", { type: "success", title: "Restored" });
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to restore customer");
+      toast(err.response?.data?.error || "Failed to restore customer", { type: "error", title: "Error" });
     }
   }
 
@@ -242,8 +246,9 @@ export default function Customers() {
       a.download = "customers.csv";
       a.click();
       URL.revokeObjectURL(url);
+      toast("Customers exported successfully", { type: "success", title: "Exported" });
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to export customers");
+      toast(err.response?.data?.error || "Failed to export customers", { type: "error", title: "Error" });
     }
   }
 

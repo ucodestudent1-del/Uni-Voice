@@ -200,11 +200,11 @@ export const StatusBadge = forwardRef<HTMLSpanElement, StatusBadgeComponentProps
         title={configItem.description}
         aria-label={`${status} ${configItem.description}`}
       >
-        <span
-          className="block h-1.5 w-1.5 min-w-[6px] rounded-full"
-          style={{ color: dotColor }}
-          aria-hidden="true"
-        />
+         <span
+           className="block h-1.5 w-1.5 min-w-[6px] rounded-full"
+           style={{ backgroundColor: dotColor }}
+           aria-hidden="true"
+         />
         {showIcon && configItem.icon && <configItem.icon className={iconClass} aria-hidden="true" />}
         {showLabel && configItem.label}
       </span>

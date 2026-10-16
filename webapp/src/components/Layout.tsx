@@ -89,6 +89,8 @@ export default function Layout() {
   function handleNavClick(isLocked: boolean, item: NavItem) {
     if (isLocked) {
       navigate(`/app/plans?upgrade=${item.requiredPlan || "pro"}`);
+    } else {
+      navigate(item.to);
     }
   }
 

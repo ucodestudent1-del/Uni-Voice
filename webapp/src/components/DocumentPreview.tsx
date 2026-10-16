@@ -131,7 +131,7 @@ export default function DocumentPreview({
   if (!calcResult) {
     return (
       <div className="sticky top-0">
-        <div className="border border-border rounded-lg p-6 bg-surface shadow">
+        <div className="border border-color rounded-lg p-6 bg-surface shadow">
           <h3 className="text-sm font-medium text-tertiary mb-4 uppercase tracking-wider">
             Live Preview
           </h3>
@@ -146,14 +146,14 @@ export default function DocumentPreview({
 
   return (
     <div className="sticky top-0">
-      <div className="border border-border rounded-lg p-6 bg-surface shadow">
+      <div className="border border-color rounded-lg p-6 bg-surface shadow">
         <h3 className="text-sm font-medium text-tertiary mb-4 uppercase tracking-wider">
           Live Preview
         </h3>
 
         <div className="text-sm print:text-xs">
           {/* Section 1: Business Information + Invoice Header */}
-          <div className="flex justify-between items-start mb-6 pb-4 border-b border-border">
+          <div className="flex justify-between items-start mb-6 pb-4 border-b border-color">
             <div className="flex items-start gap-3">
               {business?.logoUrl && (
                 <img src={business.logoUrl} alt={business.name} className="h-12 w-12 object-contain rounded" />
@@ -358,7 +358,7 @@ export default function DocumentPreview({
           <div className="mb-6">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-color">
                   <th className="text-left py-1.5 text-tertiary font-medium">Description</th>
                   <th className="text-right py-1.5 text-tertiary font-medium">Qty</th>
                   <th className="text-right py-1.5 text-tertiary font-medium">Unit Price</th>
@@ -369,7 +369,7 @@ export default function DocumentPreview({
               </thead>
               <tbody>
                 {calcResult.lineItems.map((li, idx) => (
-                  <tr key={`${li.description}-${li.quantity.toFixed()}-${li.unitPrice.toFixed()}-${idx}`} className="border-b border-border/50">
+                  <tr key={`${li.description}-${li.quantity.toFixed()}-${li.unitPrice.toFixed()}-${idx}`} className="border-b border-color/50">
                     <td className="py-1.5">{li.description}</td>
                     <td className="text-right py-1.5">{li.quantity.toFixed()}</td>
                     <td className="text-right py-1.5">
@@ -391,7 +391,7 @@ export default function DocumentPreview({
            </div>
 
            {/* Section 5: Financial Summary */}
-          <div className="border-t border-border pt-2 space-y-1 mb-6">
+          <div className="border-t border-color pt-2 space-y-1 mb-6">
             <div className="flex justify-between text-tertiary">
               <span>Subtotal</span>
               <Money amount={calcResult.subtotal} currency={currency} />
@@ -437,7 +437,7 @@ export default function DocumentPreview({
                 <Money amount={calcResult.amountPaid.negated()} currency={currency} />
               </div>
             )}
-            <div className="flex justify-between text-2xl font-bold text-primary pt-2 border-t border-border">
+            <div className="flex justify-between text-2xl font-bold text-primary pt-2 border-t border-color">
                <span>{`Total ${label}`}</span>
                <Money amount={calcResult.total} currency={currency} signed={signedAmounts} />
              </div>
@@ -448,7 +448,7 @@ export default function DocumentPreview({
                 </div>
               )}
               {documentType === "invoice" && paymentState && (
-                <div className="flex justify-between items-center pt-2 border-t border-border">
+                <div className="flex justify-between items-center pt-2 border-t border-color">
                   <span className="text-sm text-tertiary">Payment</span>
                   <StatusBadge
                     status={paymentState}
@@ -459,7 +459,7 @@ export default function DocumentPreview({
                 </div>
               )}
              {documentType === "quote" && expiryDate && (
-               <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-border">
+               <div className="flex justify-between text-lg font-bold text-primary pt-2 border-t border-color">
                  <span>Expires</span>
                  <span className="text-tertiary font-normal">{formatDate(expiryDate)}</span>
                </div>
@@ -490,7 +490,7 @@ export default function DocumentPreview({
 
           {/* Section 7: Notes and Terms */}
           {(notes || terms) && (
-            <div className="mb-6 space-y-2 border-t border-border pt-3">
+            <div className="mb-6 space-y-2 border-t border-color pt-3">
               {notes && (
                 <div>
                   <h4 className="font-medium text-primary mb-1">Notes</h4>
@@ -510,7 +510,7 @@ export default function DocumentPreview({
 
       {/* Section 8: Footer */}
       {footerText && (
-        <div className="border-t border-border pt-3 mt-4">
+        <div className="border-t border-color pt-3 mt-4">
           <div className="text-tertiary text-xs whitespace-pre-line">
             {footerText}
           </div>

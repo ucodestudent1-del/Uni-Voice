@@ -984,7 +984,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     return (
       <div className="page-container">
         <PageHeader title={docTypeLabel(docType)} />
-        <div className="p-4 rounded-md bg-error/10 text-error-text">{error}</div>
+        <div className="p-4 rounded-md bg-error-bg text-error-text">{error}</div>
       </div>
     );
   }
@@ -1236,13 +1236,28 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                 {docType === "quote" && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        label="Validity Period"
-                        select
-                        value={state.expiryDate ? "custom" : "30"}
-                        onChange={(e) => {}}
-                        disabled={isFinalized}
-                      >
+                     <FormField
+                         label="Validity Period"
+                         select
+                         value={state.expiryDate ? "custom" : state.paymentTerms ?? "30"}
+                         onChange={(e) => {
+                           const val = e.target.value;
+                           if (val === "custom") {
+                             setState((prev) => ({ ...prev, paymentTerms: "custom" }));
+                           } else {
+                             const days = parseInt(val, 10);
+                             const issue = new Date(state.issueDate);
+                             const expiry = new Date(issue);
+                             expiry.setDate(issue.getDate() + days);
+                             setState((prev) => ({
+                               ...prev,
+                               paymentTerms: val,
+                               expiryDate: expiry.toISOString().split("T")[0],
+                             }));
+                           }
+                         }}
+                         disabled={isFinalized}
+                       >
                         {VALIDITY_DAYS_OPTIONS.map((v) => (
                           <option key={v.value} value={v.value}>
                             {v.label}
@@ -1545,7 +1560,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                       handleApplyProduct(targetIdx, p);
                       setProductPickerOpen(false);
                     }}
-                    className="w-full text-left p-3 border border-border rounded-md hover:bg-surface-alt transition-colors"
+                    className="w-full text-left p-3 border border-color rounded-md hover:bg-surface-alt transition-colors"
                   >
                     <div className="font-medium text-primary">{p.name}</div>
                     {p.description && <div className="text-sm text-tertiary">{p.description}</div>}
