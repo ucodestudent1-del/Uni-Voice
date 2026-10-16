@@ -1156,8 +1156,10 @@ export class InvoiceService {
       values.push(filters.dateTo);
     }
 
-    const sortBy = filters.sortBy as string ?? "created_at";
+    const allowedSortColumns = ["created_at", "issue_date", "due_date", "total", "status", "invoice_number"];
+    const sortBy = (filters.sortBy as string) ?? "created_at";
     const sortOrder = (filters.sortOrder as string) ?? "desc";
+    const sortCol = allowedSortColumns.includes(sortBy) ? sortBy : "created_at";
 
     const listRes = await query(
       `SELECT i.id, i.invoice_number, i.status, i.customer_id,
@@ -1168,9 +1170,9 @@ export class InvoiceService {
        FROM invoices i
        LEFT JOIN customers c ON i.customer_id = c.id AND c.business_id = i.business_id
        WHERE ${where.join(" AND ")}
-       ORDER BY ${sortBy} ${sortOrder === "asc" ? "ASC" : "DESC"}
+       ORDER BY ${sortCol} ${sortOrder === "asc" ? "ASC" : "DESC"}
        LIMIT $${i++} OFFSET $${i++}`,
-      [...values, limit, offset]
+       [...values, limit, offset]
     );
 
     const countRes = await query(
@@ -1365,12 +1367,12 @@ export class InvoiceService {
     invoice: Record<string, unknown>
   ): Promise<Buffer> {
     const cached = await query(
-      `SELECT pdf_stored, pdf_hash FROM invoice_snapshots WHERE invoice_id = $1`,
+      `SELECT pdf_cache, pdf_cache_hash FROM invoices WHERE id = $1`,
       [invoiceId]
     );
 
-    if (cached.rows.length && cached.rows[0].pdf_stored) {
-      return Buffer.from(`Cached PDF placeholder for invoice ${invoiceId}`);
+    if (cached.rows.length && cached.rows[0].pdf_cache) {
+      return cached.rows[0].pdf_cache;
     }
 
     const business = await this.fetchBusiness(businessId);
@@ -1493,8 +1495,8 @@ export class InvoiceService {
     const pdf = await pdfService.generatePdfFromHtml(html, data);
 
     await query(
-      `UPDATE invoice_snapshots SET pdf_stored = TRUE, pdf_hash = $1 WHERE invoice_id = $2`,
-      [crypto.createHash("sha256").update(pdf).digest("hex"), invoiceId]
+      `UPDATE invoices SET pdf_cache = $1, pdf_cache_hash = $2, pdf_cached_at = NOW() WHERE id = $3`,
+      [pdf, crypto.createHash("sha256").update(pdf).digest("hex"), invoiceId]
     );
 
     return pdf;
@@ -1506,12 +1508,12 @@ export class InvoiceService {
     creditNote: Record<string, unknown>
   ): Promise<Buffer> {
     const cached = await query(
-      `SELECT pdf_stored, pdf_hash FROM credit_note_snapshots WHERE credit_note_id = $1`,
+      `SELECT pdf_cache, pdf_cache_hash FROM credit_notes WHERE id = $1`,
       [creditNoteId]
     );
 
-    if (cached.rows.length && cached.rows[0].pdf_stored) {
-      return Buffer.from(`Cached PDF placeholder for credit note ${creditNoteId}`);
+    if (cached.rows.length && cached.rows[0].pdf_cache) {
+      return cached.rows[0].pdf_cache;
     }
 
     const business = await this.fetchBusiness(businessId);
@@ -1646,8 +1648,8 @@ export class InvoiceService {
     const pdf = await pdfService.generatePdfFromHtml(html, data);
 
     await query(
-      `UPDATE credit_note_snapshots SET pdf_stored = TRUE, pdf_hash = $1 WHERE credit_note_id = $2`,
-      [crypto.createHash("sha256").update(pdf).digest("hex"), creditNoteId]
+      `UPDATE credit_notes SET pdf_cache = $1, pdf_cache_hash = $2, pdf_cached_at = NOW() WHERE id = $3`,
+      [pdf, crypto.createHash("sha256").update(pdf).digest("hex"), creditNoteId]
     );
 
     return pdf;
@@ -1742,8 +1744,8 @@ export class InvoiceService {
       `SELECT id, name, company_name, email, phone, tax_id,
               address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
               default_currency, notes, payment_terms, shipping_address_id
-       FROM customers WHERE id = $1`,
-      [customerId]
+       FROM customers WHERE id = $1 AND business_id = $2`,
+      [customerId, businessId]
     );
     if (!res.rows.length) return null;
     const r = res.rows[0];

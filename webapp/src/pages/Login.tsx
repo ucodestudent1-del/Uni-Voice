@@ -52,7 +52,7 @@ export default function Login() {
         setStep("two-factor");
         setError("");
       } else {
-        login(data.token, data.user);
+        login(data.user);
         navigate("/app");
       }
     } catch (err: any) {

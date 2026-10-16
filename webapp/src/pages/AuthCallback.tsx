@@ -4,25 +4,18 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function AuthCallback() {
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
-    const token = params.get("token");
-    const userId = params.get("userId") ?? "";
-    const email = params.get("email") ?? "";
-
-    if (token) {
-      login(token, { id: userId, email });
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-      navigate("/app", { replace: true });
-    } else {
-      setError("No authentication token received.");
+    if (!isLoading && !error) {
+      if (isAuthenticated) {
+        navigate("/app", { replace: true });
+      } else {
+        setError("Authentication failed. Please try again.");
+      }
     }
-  }, [login, navigate]);
+  }, [isLoading, isAuthenticated, navigate, error]);
 
   if (error) {
     return (
@@ -46,6 +39,3 @@ export default function AuthCallback() {
     </div>
   );
 }
-
-
-

@@ -183,28 +183,20 @@ export const api = axios.create({
 });
 
 let isRefreshing = false;
-let failedQueue: { resolve: (value: any) => void; reject: (reason?: any) => void }[] = [];
+let failedQueue: { resolve: (value: void) => void; reject: (reason?: any) => void }[] = [];
 
-function processQueue(error: any, token: string | null = null) {
+function processQueue(error: any) {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      if (token) {
-        prom.resolve(token);
-      } else {
-        prom.reject(new Error("No token available"));
-      }
+      prom.resolve();
     }
   });
   failedQueue = [];
 }
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
@@ -233,8 +225,7 @@ api.interceptors.response.use(
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({
-              resolve: (token: string) => {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve: () => {
                 resolve(api(originalRequest));
               },
               reject: (err: any) => {
@@ -248,26 +239,17 @@ api.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          const res = await api.post("/auth/refresh", {}, { skipAuthRedirect: true } as AxiosRequestConfig);
-          const newToken = res.data.token;
-          if (newToken) {
-            localStorage.setItem("token", newToken);
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            processQueue(null, newToken);
-            return api(originalRequest);
-          } else {
-            throw new Error("No token in refresh response");
-          }
+          await api.post("/auth/refresh", {}, { skipAuthRedirect: true } as AxiosRequestConfig);
+          processQueue(null);
+          return api(originalRequest);
         } catch (refreshError) {
-          processQueue(refreshError, null);
-          localStorage.removeItem("token");
+          processQueue(refreshError);
           window.location.href = "/login";
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
         }
       } else {
-        localStorage.removeItem("token");
         window.location.href = "/login";
         return Promise.reject(error);
       }

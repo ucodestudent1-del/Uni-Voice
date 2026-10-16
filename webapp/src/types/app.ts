@@ -10,8 +10,7 @@ export interface User {
 export interface AuthContextType {
   user: User | null;
   businessId: string | undefined;
-  token: string | null;
-  login: (token: string, user: User) => void;
+  login: (user: User) => void;
   logout: () => void;
   verifyTwoFactor: (email: string, code: string) => Promise<void>;
   isAuthenticated: boolean;

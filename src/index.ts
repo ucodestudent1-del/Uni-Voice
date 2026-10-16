@@ -23,6 +23,8 @@ import {
   consumeRefreshToken,
   setRefreshTokenCookie,
   clearRefreshTokenCookie,
+  setAccessTokenCookie,
+  clearAccessTokenCookie,
 } from "./middleware/auth.js";
 import {
   requireEntitlement,
@@ -396,10 +398,10 @@ app.post("/api/auth/register", authRateLimiter, async (req, res) => {
     email,
   });
   setRefreshTokenCookie(res, refreshToken);
+  setAccessTokenCookie(res, accessToken);
   res
     .status(201)
     .json({
-      token: accessToken,
       user: {
         id: userId,
         businessId,
@@ -447,7 +449,8 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
     email: user.email,
   });
   setRefreshTokenCookie(res, refreshToken);
-  res.json({ token: accessToken, user: { id: user.id, businessId, email: user.email } });
+  setAccessTokenCookie(res, accessToken);
+  res.json({ user: { id: user.id, businessId, email: user.email } });
 });
 
 app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
@@ -600,15 +603,17 @@ app.post("/api/auth/refresh", async (req: AuthRequest, res) => {
     businessId,
     email: user.email,
   });
-  setRefreshTokenCookie(res, newRefreshToken);
+   setRefreshTokenCookie(res, newRefreshToken);
+   setAccessTokenCookie(res, accessToken);
 
-  res.json({ token: accessToken });
-});
+   res.json({ user: { id: user.id, businessId, email: user.email } });
+ });
 
-app.post("/api/auth/logout", (req: AuthRequest, res) => {
-  clearRefreshTokenCookie(res);
-  res.json({ loggedOut: true });
-});
+ app.post("/api/auth/logout", (req: AuthRequest, res) => {
+   clearRefreshTokenCookie(res);
+   clearAccessTokenCookie(res);
+   res.json({ loggedOut: true });
+ });
 
 // ============================================================================
 // TWO-FACTOR AUTHENTICATION (TOTP / authenticator app)
@@ -650,14 +655,14 @@ app.post("/api/auth/2fa/verify", authRateLimiter, async (req, res) => {
       code,
       req.ip,
     );
-     res.json({
-       token: result.token,
-       user: result.user,
-       usedRecoveryCode: result.usedRecoveryCode,
-     });
-     if (result.refreshToken) {
-       setRefreshTokenCookie(res, result.refreshToken);
-     }
+      if (result.refreshToken) {
+        setRefreshTokenCookie(res, result.refreshToken);
+      }
+      setAccessTokenCookie(res, result.token);
+      res.json({
+        user: result.user,
+        usedRecoveryCode: result.usedRecoveryCode,
+      });
    } catch (err) {
     handleAuthError(err, res);
   }
@@ -781,16 +786,12 @@ app.get("/api/auth/oauth/google/callback", async (req, res) => {
 
   try {
     const result = await oauthService.handleCallback(code);
-    const redirectUrl = new URL(
-      `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/auth/callback`,
-    );
-    redirectUrl.hash = `token=${encodeURIComponent(result.token)}`;
-    redirectUrl.searchParams.set("userId", result.user.id);
-    redirectUrl.searchParams.set("email", result.user.email);
     if (result.refreshToken) {
       setRefreshTokenCookie(res, result.refreshToken);
     }
-    res.redirect(redirectUrl.toString());
+    setAccessTokenCookie(res, result.token);
+    const redirectUrl = `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/auth/callback`;
+    res.redirect(redirectUrl);
   } catch (err: any) {
     const message =
       err instanceof Error ? err.message : "OAuth authentication failed";

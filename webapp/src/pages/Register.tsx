@@ -69,7 +69,7 @@ export default function Register() {
     setLoading(true);
     try {
       const data = await apiRegister(email, password, businessName || "My Business", countryCode, currency);
-      login(data.token, data.user);
+      login(data.user);
       if (!data.user?.businessId) {
         navigate("/");
       } else {

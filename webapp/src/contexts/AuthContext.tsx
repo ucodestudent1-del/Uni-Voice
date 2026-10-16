@@ -20,23 +20,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [onboarding, setOnboarding] = useState<OnboardingProgress | null>(null);
-
-  useEffect(() => {
-    try {
-      const storedToken = localStorage.getItem("token");
-      if (storedToken) {
-        setToken(storedToken);
-      } else {
-        setIsLoading(false);
-      }
-    } catch {
-      setToken(null);
-      setIsLoading(false);
-    }
-  }, []);
 
   async function loadOnboarding() {
     try {
@@ -63,29 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   }, []);
 
-  function safeRemoveToken() {
-    try {
-      localStorage.removeItem("token");
-    } catch {
-      console.warn("Failed to remove token from localStorage");
-    }
-  }
-
-  function safeSetToken(token: string) {
-    try {
-      localStorage.setItem("token", token);
-    } catch {
-      console.warn("Failed to set token in localStorage");
-    }
-  }
-
   useEffect(() => {
     let cancelled = false;
     async function validate() {
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
       try {
         const data = await getMe();
         if (!cancelled) {
@@ -94,8 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         if (!cancelled) {
-          safeRemoveToken();
-          setToken(null);
           setUser(null);
           setOnboarding(null);
         }
@@ -106,19 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, []);
 
-  const login = useCallback((newToken: string, newUser: User, refreshToken?: string) => {
-    safeSetToken(newToken);
-    setToken(newToken);
+  const login = useCallback((newUser: User) => {
     setUser(newUser);
     setOnboarding(null);
     clearSubscriptionCache();
   }, []);
 
   const logout = useCallback(async () => {
-    safeRemoveToken();
-    setToken(null);
     setUser(null);
     setOnboarding(null);
     clearSubscriptionCache();
@@ -131,11 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyTwoFactor = useCallback(async (email: string, code: string) => {
     const data = await verifyTwoFactorApi(email, code);
-    login(data.token, data.user as unknown as User);
+    login(data.user as unknown as User);
   }, [login]);
 
   return (
-    <AuthContext.Provider value={{ user, businessId: user?.businessId, token, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
+    <AuthContext.Provider value={{ user, businessId: user?.businessId, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

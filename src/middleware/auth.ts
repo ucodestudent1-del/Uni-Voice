@@ -35,6 +35,13 @@ export interface TokenPair {
 
 const ACCESS_TOKEN_EXPIRES_IN = "15m";
 const REFRESH_TOKEN_EXPIRES_IN = "7d";
+const ACCESS_TOKEN_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: !isDev,
+  sameSite: "lax" as const,
+  maxAge: 15 * 60 * 1000, // 15 minutes, matches JWT expiry
+  path: "/",
+};
 const REFRESH_TOKEN_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: !isDev,
@@ -45,11 +52,11 @@ const REFRESH_TOKEN_COOKIE_OPTIONS = {
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    throw new UnauthorizedError("Missing or invalid authorization header");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : req.cookies?.accessToken;
+  if (!token) {
+    throw new UnauthorizedError("Missing or invalid authorization");
   }
 
-  const token = authHeader.slice(7);
   let decoded: { userId: string; businessId?: string; email?: string };
 
   try {
@@ -69,8 +76,8 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 
 export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : req.cookies?.accessToken;
+  if (token) {
     try {
       const secret = env.AUTH_JWT_SECRET;
       const decoded = jwt.verify(token, secret) as { userId: string; businessId?: string; email?: string };
@@ -167,6 +174,14 @@ export function setRefreshTokenCookie(res: Response, refreshToken: string): void
 
 export function clearRefreshTokenCookie(res: Response): void {
   res.clearCookie("refreshToken", REFRESH_TOKEN_COOKIE_OPTIONS);
+}
+
+export function setAccessTokenCookie(res: Response, accessToken: string): void {
+  res.cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+}
+
+export function clearAccessTokenCookie(res: Response): void {
+  res.clearCookie("accessToken", ACCESS_TOKEN_COOKIE_OPTIONS);
 }
 
 // Backward-compatible: generates a short-lived access token
