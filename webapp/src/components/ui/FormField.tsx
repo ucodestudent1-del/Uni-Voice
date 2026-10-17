@@ -1,4 +1,4 @@
-import { type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { useId, type ReactNode, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export type FormFieldVariant = "default" | "filter";
@@ -45,7 +45,7 @@ export function FormField({
   id,
   ...props
 }: FormFieldProps) {
-  const inputId = id ?? `form-field-${Math.random().toString(36).slice(2, 11)}`;
+  const inputId = id ?? `form-field-${useId()}`;
   const hasError = Boolean(error);
   const describedBy = helperText || error ? `${inputId}-description` : undefined;
 
@@ -124,7 +124,7 @@ export function FormTextareaField({
   id,
   ...props
 }: FormTextareaFieldProps) {
-  const textareaId = id ?? `form-textarea-${Math.random().toString(36).slice(2, 11)}`;
+  const textareaId = id ?? `form-textarea-${useId()}`;
   const hasError = Boolean(error);
   const describedBy = helperText || error ? `${textareaId}-description` : undefined;
 

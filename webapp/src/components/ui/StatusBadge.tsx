@@ -128,7 +128,10 @@ export function isOverdueStatus(status: string, dueDate?: string | null): boolea
   if (status === "overdue") return true;
   if (status === "paid" || status === "void" || status === "cancelled") return false;
   if (!dueDate) return false;
-  return new Date(dueDate) < new Date();
+  const due = new Date(dueDate);
+  if (Number.isNaN(due.getTime())) return false;
+  const now = new Date();
+  return due <= now;
 }
 
 export function getStatusBadgeClassName(config: InternalStatusConfig, size: "sm" | "md" = "md"): string {

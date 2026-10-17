@@ -66,11 +66,12 @@ export function getDefaultCurrency(): CurrencyCode {
 export function formatMoney(amount: Decimal.Value, currency: CurrencyCode, locale?: string): string {
   const meta = getCurrencyMetadata(currency);
   const d = new Decimal(amount);
+  const rounded = d.toDecimalPlaces(meta.decimalPlaces, Decimal.ROUND_HALF_UP);
   const loc = locale ?? meta.localeKey;
   return new Intl.NumberFormat(loc, {
     style: "currency",
     currency,
     minimumFractionDigits: meta.decimalPlaces,
     maximumFractionDigits: meta.decimalPlaces,
-  }).format(Number(d.toNumber()));
+  }).format(Number(rounded.toFixed(meta.decimalPlaces)));
 }

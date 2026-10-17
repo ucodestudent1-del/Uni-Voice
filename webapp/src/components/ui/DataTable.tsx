@@ -55,53 +55,51 @@ function DataTableInner<TData extends Record<string, any>>(
       <div className="overflow-x-auto rounded-lg border border-color bg-surface">
         <table className="w-full border-collapse">
           <thead>
-            {Array.from({ length: 1 }).map(() => (
-              <tr key="header" className="bg-surface-alt border-b border-color">
-                {onSelectAll && (
-                  <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 w-8">
-                    <input
-                      type="checkbox"
-                      checked={selectAllChecked}
-                      ref={(el) => {
-                        if (el) (el as HTMLInputElement).indeterminate = selectAllIndeterminate;
-                      }}
-                      onChange={(e) => onSelectAll?.(e.target.checked)}
-                      aria-label="Select all"
-                    />
+            <tr key="header" className="bg-surface-alt border-b border-color">
+              {onSelectAll && (
+                <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-4 w-8">
+                  <input
+                    type="checkbox"
+                    checked={selectAllChecked}
+                    ref={(el) => {
+                      if (el) (el as HTMLInputElement).indeterminate = selectAllIndeterminate;
+                    }}
+                    onChange={(e) => onSelectAll?.(e.target.checked)}
+                    aria-label="Select all"
+                  />
+                </th>
+              )}
+               {columns.map((col, i) => {
+                const isSortable = col.sortable !== false && onSort && typeof col.accessor === "string";
+                const isSorted = sortColumn === (col.accessor as string);
+                const align = col.align ?? "left";
+                return (
+                  <th
+                    key={String(col.accessor ?? i)}
+                    className={cn(
+                      "text-xs font-medium text-tertiary uppercase py-3.5 px-4 whitespace-nowrap",
+                      {
+                        "text-left": align === "left",
+                        "text-center": align === "center",
+                        "text-right": align === "right",
+                        "cursor-pointer select-none hover:bg-surface": !!isSortable,
+                      },
+                      col.className
+                    )}
+                    onClick={isSortable ? () => onSort!(col.accessor as string) : undefined}
+                    aria-sort={isSortable && isSorted ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                  >
+                    <span className="flex items-center gap-1">
+                      {col.header}
+                      {isSortable && isSorted && (
+                        <span className="text-xs">{sortOrder === "asc" ? "▲" : "▼"}</span>
+                      )}
+                    </span>
                   </th>
-                )}
-                 {columns.map((col, i) => {
-                   const isSortable = col.sortable !== false && onSort && typeof col.accessor === "string";
-                   const isSorted = sortColumn === (col.accessor as string);
-                   const align = col.align ?? "left";
-                   return (
-                     <th
-                       key={String(col.accessor ?? i)}
-                       className={cn(
-                         "text-xs font-medium text-tertiary uppercase py-3.5 px-4 whitespace-nowrap",
-                         {
-                           "text-left": align === "left",
-                           "text-center": align === "center",
-                           "text-right": align === "right",
-                           "cursor-pointer select-none hover:bg-surface": !!isSortable,
-                         },
-                         col.className
-                       )}
-                       onClick={isSortable ? () => onSort!(col.accessor as string) : undefined}
-                       aria-sort={isSortable && isSorted ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                     >
-                       <span className="flex items-center gap-1">
-                         {col.header}
-                         {isSortable && isSorted && (
-                           <span className="text-xs">{sortOrder === "asc" ? "▲" : "▼"}</span>
-                         )}
-                       </span>
-                     </th>
-                   );
-                 })}
-                {actions && <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-2 w-16">Actions</th>}
-              </tr>
-            ))}
+                );
+              })}
+              {actions && <th className="text-center text-xs font-medium text-tertiary uppercase py-3 px-2 w-16">Actions</th>}
+            </tr>
           </thead>
           <tbody>
             {isLoading ? (

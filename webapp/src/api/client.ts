@@ -1131,8 +1131,8 @@ export async function getPaymentMetricsReport(): Promise<ApiPaymentMetrics | nul
   try {
     const res = await api.get("/reports/payment-metrics");
     return res.data;
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("404")) {
+  } catch (err: any) {
+    if (err.response?.status === 404) {
       console.warn("Payment metrics report endpoint not available");
     } else {
       console.error("Failed to load payment metrics:", err);
@@ -1436,8 +1436,8 @@ export async function getAgingReport(): Promise<ApiAgingReport | null> {
   try {
     const res = await api.get("/reports/aging");
     return res.data;
-  } catch (err) {
-    if (err instanceof Error && err.message.includes("404")) {
+  } catch (err: any) {
+    if (err.response?.status === 404) {
       console.warn("Aging report endpoint not available");
     } else {
       console.error("Failed to load aging report:", err);

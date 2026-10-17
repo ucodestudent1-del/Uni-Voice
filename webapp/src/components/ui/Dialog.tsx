@@ -101,7 +101,6 @@ export function Dialog({
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
-      role="presentation"
     >
       <div
         ref={panelRef}

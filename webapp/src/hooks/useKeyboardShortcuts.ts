@@ -117,10 +117,13 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
 
       const action = getAction(keyCombo);
       if (action && handlers[action]) {
-        if (isFormElement && !["Tab", "Shift+Tab", "Escape", "Delete", "Backspace"].includes(keyCombo)) {
-          if (keyCombo !== "/") {
-            return;
-          }
+        const isNonModalKey = ["Tab", "Shift+Tab", "Escape", "Delete", "Backspace"].includes(keyCombo);
+        const isSingleKey = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
+        if (isFormElement && !(isNonModalKey || isSingleKey)) {
+          return;
+        }
+        if (isFormElement && isSingleKey) {
+          return;
         }
         e.preventDefault();
         e.stopImmediatePropagation();

@@ -309,10 +309,10 @@ function createRateLimitStore(prefix = "rl:") {
   return undefined;
 }
 
-const redisAvailable = !!getRedisSendCommand() && !isDev;
+const redisAvailable = !!getRedisSendCommand() && !isDev && !isTest;
 let nextPrefixId = 0;
 function createRateLimiter(config: Partial<RateLimitOptions>) {
-  const skip = isDev ? () => true : undefined;
+  const skip = isDev || isTest ? () => true : undefined;
   const prefix = `rl:${nextPrefixId++}`;
   const store = redisAvailable ? createRateLimitStore(prefix) : undefined;
   return rateLimit({

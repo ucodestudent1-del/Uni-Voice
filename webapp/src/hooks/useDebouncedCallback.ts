@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 
 /**
  * Returns a debounced version of the callback that delays invoking `fn`
@@ -12,6 +12,14 @@ export function useDebouncedCallback<T = string>(
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fnRef = useRef(fn);
   fnRef.current = fn;
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return useCallback((value: T) => {
     if (timeoutRef.current) {

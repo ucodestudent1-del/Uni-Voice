@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { X } from "lucide-react";
@@ -24,6 +24,32 @@ export default function ConfirmationDialog({
   isLoading = false,
 }: ConfirmationDialogProps) {
   const [localInput, setLocalInput] = useState("");
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    previouslyFocusedRef.current = document.activeElement as HTMLElement;
+
+    const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    (firstFocusable ?? panelRef.current)?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -39,8 +65,23 @@ export default function ConfirmationDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay">
-      <div className="relative mx-4 w-full max-w-lg rounded-xl bg-surface shadow-xl">
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay"
+      role="presentation"
+      onClick={(e) => {
+        if (overlayRef.current === (e.target as Node)) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-dialog-title"
+        className="relative mx-4 w-full max-w-lg rounded-xl bg-surface shadow-xl"
+      >
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-lg p-1 text-tertiary hover:text-primary hover:bg-surface-alt"
@@ -50,7 +91,7 @@ export default function ConfirmationDialog({
         </button>
 
         <div className="p-6 pb-4">
-          <h2 className="text-lg font-semibold text-primary">{title}</h2>
+          <h2 id="confirmation-dialog-title" className="text-lg font-semibold text-primary">{title}</h2>
           {message && <p className="mt-2 text-sm text-secondary">{message}</p>}
         </div>
 

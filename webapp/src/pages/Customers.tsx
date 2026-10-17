@@ -17,6 +17,7 @@ import CustomerQuickView from "../components/CustomerQuickView";
 import { Plus, Upload, Download, Eye, Edit2, Archive, RefreshCw,
    MoreVertical, Clock, Mail, Phone, Users } from "lucide-react";
 import { formatCurrency, formatDate } from "../utils/format";
+import { Decimal } from "decimal.js";
 import { getCustomerPrimaryContact, customerHasBalance, customerHasOverdue } from "../utils/customer";
 import type { ApiCustomer } from "../types/api";
 import { Button } from "../components/ui/Button";
@@ -169,7 +170,7 @@ export default function Customers() {
     limit,
     offset,
     search: search || undefined,
-    status: statusFilter === "all" || statusFilter === "overdue" ? undefined : (statusFilter as any),
+    status: statusFilter === "all" ? undefined : (statusFilter as any),
     includeArchived: statusFilter === "archived" || includeArchived ? true : undefined,
     sortBy,
     sortOrder,
@@ -276,8 +277,8 @@ export default function Customers() {
   }
 
   const totalOutstanding = customers.reduce(
-    (sum, c) => sum + Number(c.totalOutstanding || 0),
-    0
+    (sum, c) => sum.plus(c.totalOutstanding ?? "0"),
+    new Decimal(0)
   );
 
   const effectiveRows =
@@ -293,9 +294,9 @@ export default function Customers() {
             <p className="text-sm text-secondary mt-1">
             {total} customers •{" "}
             <span className="text-primary font-medium">
-              {totalOutstanding > 0
-                ? formatCurrency(totalOutstanding.toString(), "USD")
-                : formatCurrency(0, "USD")}
+             {totalOutstanding.gt(0)
+                 ? formatCurrency(totalOutstanding.toString(), "USD")
+                 : formatCurrency(0, "USD")} 
             </span>{" "}
             total outstanding
           </p>

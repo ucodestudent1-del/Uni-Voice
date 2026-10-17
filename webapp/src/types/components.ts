@@ -75,6 +75,7 @@ export interface ToastProps {
   actionLabel?: string;
   onAction?: () => void;
   duration?: number;
+  onDismiss?: (id: string) => void;
 }
 
 export type ToastType = "success" | "error" | "info" | "warning";

@@ -139,6 +139,13 @@ describe("OAuthService", () => {
       process.env.GOOGLE_CLIENT_ID = "test-client-id";
       process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
       process.env.APP_ENV = "production";
+      process.env.AUTH_MODE = "jwt";
+      process.env.AUTH_JWT_SECRET = "test-secure-secret-for-tests-only";
+      process.env.REDIS_URL = "redis://localhost:6379";
+      process.env.EMAIL_PROVIDER = "smtp";
+      process.env.PAYMENT_PROVIDER = "stripe";
+      process.env.STRIPE_SECRET_KEY = "sk_test_12345";
+      process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_12345";
       process.env.RAILWAY_PUBLIC_DOMAIN = "api-example.up.railway.app";
       delete process.env.APP_PUBLIC_BASE_URL;
       delete process.env.APP_FRONTEND_URL;

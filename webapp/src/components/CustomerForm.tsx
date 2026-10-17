@@ -110,8 +110,8 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
   const isEditing = !!customer;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-y-auto py-8">
-      <div className="bg-surface rounded-xl shadow-xl w-full max-w-3xl mx-4 my-8">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overflow-y-auto py-8" onClick={onClose}>
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-3xl mx-4 my-8" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-color-subtle">
           <h3 className="text-lg font-semibold text-primary">
             {isEditing ? "Edit Customer" : "Add Customer"}
@@ -300,7 +300,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
           <Button
             variant="primary"
             size="md"
-            onClick={(e) => { e.preventDefault(); handleSubmit(e); }}
+            type="submit"
             disabled={loading}
           >
             {loading ? "Saving..." : isEditing ? "Update" : "Add Customer"}

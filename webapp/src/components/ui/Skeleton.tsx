@@ -20,12 +20,13 @@ export function Skeleton({
   const baseClasses =
     "bg-surface-alt animate-pulse rounded";
 
-  const variantClasses = {
+  const variantClasses: Record<NonNullable<SkeletonProps["variant"]>, string> = {
     text: "h-4 rounded",
     rect: "rounded",
     circle: "rounded-full",
     rounded: "rounded-lg",
-  }[variant];
+  };
+  const selectedVariant = variantClasses[variant];
 
   const styleValue = {
     ...(width !== undefined ? { width } : {}),
@@ -43,7 +44,7 @@ export function Skeleton({
         {Array.from({ length: lines }).map((_, i) => (
           <div
             key={i}
-            className={cn(baseClasses, variantClasses, "w-full")}
+            className={cn(baseClasses, selectedVariant, "w-full")}
             style={{
               width: i === lines - 1 ? "60%" : "100%",
               height: "1rem",
@@ -56,7 +57,7 @@ export function Skeleton({
 
   return (
     <div
-      className={cn(baseClasses, variantClasses, className)}
+      className={cn(baseClasses, selectedVariant, className)}
       style={styleValue}
       {...props}
     />

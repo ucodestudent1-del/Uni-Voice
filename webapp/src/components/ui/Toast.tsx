@@ -19,16 +19,22 @@ const typeClasses: Record<ToastType, string> = {
   warning: "border-warning-border bg-warning-bg text-warning-text",
 };
 
-function Toast({ id, type = "info", title, message, actionLabel, onAction, duration = 5000 }: ToastProps) {
+function Toast({ id, type = "info", title, message, actionLabel, onAction, duration = 5000, onDismiss }: ToastProps & { onDismiss: (id: string) => void }) {
   const [visible, setVisible] = useState(true);
   const Icon = iconMap[type];
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(false);
+      setTimeout(() => onDismiss(id), 200);
     }, duration);
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, id, onDismiss]);
+
+  const handleDismiss = () => {
+    setVisible(false);
+    setTimeout(() => onDismiss(id), 200);
+  };
 
   return (
     <div
@@ -57,8 +63,8 @@ function Toast({ id, type = "info", title, message, actionLabel, onAction, durat
         </button>
       )}
       <button
-        onClick={() => setVisible(false)}
-        className="rounded-lg p-1 text-tertiary hover:bg-surface-alt hover:text-primary"
+        onClick={handleDismiss}
+        className="rounded-lg p-1 text-tertiary hover:bg-surface-alt hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
         aria-label="Dismiss"
       >
         <X className="h-4 w-4" />

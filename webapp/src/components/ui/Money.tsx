@@ -26,10 +26,11 @@ export const Money = forwardRef<HTMLSpanElement, MoneyProps>(function Money(
   { amount, currency = "USD", decimalPlaces = 2, signed = false, placeholder, className, ...rest },
   ref
 ) {
-  const d = new Decimal(amount || 0);
+  const d = new Decimal(amount ?? 0);
   const formatted = formatValue(amount, currency, decimalPlaces);
-  const display = placeholder !== undefined && d.isZero() ? placeholder : formatted;
   const isNegative = d.isNegative();
+  const isZero = d.isZero() && !d.isNeg();
+  const display = isZero && placeholder !== undefined ? placeholder : formatted;
 
   const resolvedClassName = cn(
     "font-tabular-nums",

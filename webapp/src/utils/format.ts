@@ -34,7 +34,7 @@ export function formatCurrency(amount: Decimal.Value, currency: string, decimalP
   const rounded = d.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
   const safeCurrency = currency && currency.length >= 3 && isSupportedCurrency(currency) ? currency : "USD";
   const formatter = getCurrencyFormatter(safeCurrency, decimalPlaces);
-  return formatter.format(Number(rounded.toNumber()));
+  return formatter.format(Number(rounded.toFixed(decimalPlaces)));
 }
 
 export function formatDate(dateString: string | Date | undefined): string {

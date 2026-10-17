@@ -740,7 +740,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
     const issues = validateDocument();
     const errors = issues.filter((i) => i.severity === "error");
-    if (errors.length > 0 || issues.length > 0) {
+    if (errors.length > 0) {
       setValidationDialogOpen(true);
       return;
     }
@@ -850,9 +850,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     const issues: { code: string; message: string; severity: "error" | "warning"; field?: string }[] = [];
 
     const doc = document as any;
-    if (!doc?.customer_id && !state.customerId) {
-      issues.push({ code: "MISSING_CUSTOMER", message: "No customer selected", severity: "error" });
-    }
     if (!doc?.customer_id && !state.customerId) {
       issues.push({ code: "MISSING_CUSTOMER", message: "No customer selected", severity: "error" });
     }

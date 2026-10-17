@@ -178,7 +178,7 @@ export class InvoiceService {
           amount_paid, amount_due, version,
           invoice_discount_value, invoice_discount_type,
           shipping_description, shipping_amount, shipping_tax_rate
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,1,$18,$19,$20,$21,$22)
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
         RETURNING *`,
         [
           businessId,
@@ -198,6 +198,7 @@ export class InvoiceService {
           result.total.toFixed(),
           "0",
           result.amountDue.toFixed(),
+          1,
           input.invoiceDiscount ?? 0,
           input.invoiceDiscountType ?? "fixed",
           input.shippingDescription ?? null,
@@ -215,7 +216,7 @@ export class InvoiceService {
         let paramIdx = 2;
         for (const item of input.items) {
           const calcItem = result.lineItems[itemValues.length];
-          const placeholders: string[] = [];
+          const placeholders: string[] = ["$1"];
           for (let j = 0; j < 14; j++) {
             placeholders.push(`$${paramIdx + j}`);
           }
@@ -255,7 +256,7 @@ export class InvoiceService {
         let paramIdx = 2;
         for (const fee of input.fees) {
           const calcFee = result.fees[feeValues.length];
-          const placeholders: string[] = [];
+          const placeholders: string[] = ["$1"];
           for (let j = 0; j < 6; j++) {
             placeholders.push(`$${paramIdx + j}`);
           }
@@ -404,7 +405,7 @@ export class InvoiceService {
           for (let idx = 0; idx < input.items.length; idx++) {
             const item = input.items[idx];
             const calcItem = result.lineItems[idx];
-            const placeholders: string[] = [];
+            const placeholders: string[] = ["$1"];
             for (let j = 0; j < 14; j++) {
               placeholders.push(`$${paramIdx + j}`);
             }
@@ -466,7 +467,7 @@ export class InvoiceService {
           for (let idx = 0; idx < input.fees.length; idx++) {
             const fee = input.fees[idx];
             const calcFee = result.fees[idx];
-            const placeholders: string[] = [];
+            const placeholders: string[] = ["$1"];
             for (let j = 0; j < 6; j++) {
               placeholders.push(`$${paramIdx + j}`);
             }

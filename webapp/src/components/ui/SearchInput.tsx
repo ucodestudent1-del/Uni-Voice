@@ -33,8 +33,12 @@ export function SearchInput({
   const handleClear = () => {
     if (!isControlled) {
       setInternalValue("");
+    } else {
+      onChange?.({
+        target: { value: "" },
+        currentTarget: { value: "" },
+      } as React.ChangeEvent<HTMLInputElement>);
     }
-    onChange?.({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
     onSearch?.("");
   };
 

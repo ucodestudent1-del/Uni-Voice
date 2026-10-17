@@ -69,7 +69,7 @@ export function DocumentNotesSection({
         label="Notes"
         placeholder={
           isCreditNote
-            ? "Additional notes for the customer..."
+            ? "Additional notes for the credit note..."
             : "Additional notes for the customer..."
         }
         value={notes}

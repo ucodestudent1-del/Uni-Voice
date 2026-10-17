@@ -15,7 +15,7 @@ export default function FeatureGate({ feature, children, fallback }: FeatureFlag
 
   const featureFlag = (features as FeatureFlag[]).find((f) => f.code === feature);
   if (!featureFlag) {
-    return <>{children}</>;
+    return <>{fallback ?? null}</>;
   }
 
   const tierOrder = { free: 0, pro: 1 };
