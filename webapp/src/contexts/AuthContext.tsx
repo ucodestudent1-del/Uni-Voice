@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [onboarding, setOnboarding] = useState<OnboardingProgress | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   async function loadOnboarding() {
     try {
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled) {
           setUser(null);
           setOnboarding(null);
+          setAuthError("Authentication failed. Please try again.");
         }
       }
       if (!cancelled) setIsLoading(false);
@@ -94,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [login]);
 
   return (
-    <AuthContext.Provider value={{ user, businessId: user?.businessId, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
+    <AuthContext.Provider value={{ user, businessId: user?.businessId, login, logout, verifyTwoFactor, isAuthenticated: !!user, isLoading, authError, onboarding, completeStep, skipOnboarding, refreshOnboarding }}>
       {children}
     </AuthContext.Provider>
   );

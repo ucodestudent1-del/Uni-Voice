@@ -336,6 +336,16 @@ const generalRateLimiter = rateLimit({
   store: rateLimitStore,
 });
 
+const oauthRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 1000 : 100,
+  message: { error: "Too many requests", code: "RATE_LIMITED" },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isDev ? () => true : undefined,
+  store: rateLimitStore,
+});
+
 const aiRateLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: isDev ? 100 : 30,
@@ -857,7 +867,7 @@ app.post(
 // ============================================================================
 // OAUTH 2.0 (Google Sign-In)
 // ============================================================================
-app.get("/api/auth/oauth/google", (req, res) => {
+app.get("/api/auth/oauth/google", oauthRateLimiter, (req, res) => {
   if (!oauthService.isEnabled()) {
     return res.status(503).json({ error: "Google OAuth is not configured" });
   }
@@ -872,7 +882,7 @@ app.get("/api/auth/oauth/google", (req, res) => {
   res.redirect(url);
 });
 
-app.get("/api/auth/oauth/google/callback", async (req, res) => {
+app.get("/api/auth/oauth/google/callback", oauthRateLimiter, async (req, res) => {
   const { code, error, error_description, state } = req.query as Record<
     string,
     string

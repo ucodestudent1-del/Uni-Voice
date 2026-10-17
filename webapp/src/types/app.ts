@@ -15,8 +15,9 @@ export interface AuthContextType {
   logout: () => void;
   verifyTwoFactor: (email: string, code: string) => Promise<void>;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  onboarding: OnboardingProgress | null;
+   isLoading: boolean;
+   authError: string | null;
+   onboarding: OnboardingProgress | null;
   completeStep: (step: string) => Promise<OnboardingProgress>;
   skipOnboarding: () => Promise<OnboardingProgress>;
   refreshOnboarding: () => Promise<void>;
