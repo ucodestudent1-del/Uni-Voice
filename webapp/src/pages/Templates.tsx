@@ -17,12 +17,19 @@ import type { ApiBusiness, InvoiceTemplateDTO } from "../types/api";
 import { Button } from "../components/ui/Button";
 import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 interface PresetChoiceState {
   isOpen: boolean;
 }
 
 export default function Templates() {
+  useMetaTags({
+    title: "Templates — InvoiceFlow",
+    description: "Customize your invoice and document templates. Choose colors, fonts, and layouts that match your brand.",
+    noIndex: true,
+  });
+
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<InvoiceTemplateDTO[]>([]);
   const [business, setBusiness] = useState<ApiBusiness | null>(null);

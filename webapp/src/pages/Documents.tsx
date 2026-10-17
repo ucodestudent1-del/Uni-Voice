@@ -35,6 +35,8 @@ interface CreateOption {
   path: string;
 }
 
+import { useMetaTags } from "@/hooks/useMetaTags";
+
 const createOptions: CreateOption[] = [
   {
     type: "invoice",
@@ -74,6 +76,12 @@ const createOptions: CreateOption[] = [
 ];
 
 export default function Documents() {
+  useMetaTags({
+    title: "Documents — InvoiceFlow",
+    description: "Manage your invoices, quotes, credit notes, and debit notes. Create, send, and track all your business documents.",
+    noIndex: true,
+  });
+
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"invoices" | "quotes" | "credit-notes">("invoices");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

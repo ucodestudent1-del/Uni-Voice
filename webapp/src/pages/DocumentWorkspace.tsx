@@ -81,6 +81,7 @@ import {
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 const AUTO_SAVE_DELAY = 500;
 
@@ -233,6 +234,12 @@ function useDocumentValidation(
 }
 
 export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
+  useMetaTags({
+    title: "Document Workspace — InvoiceFlow",
+    description: "Create and edit your invoice, quote, or credit note with automatic calculations and professional formatting.",
+    noIndex: true,
+  });
+
   const { id } = useParams<{ id?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

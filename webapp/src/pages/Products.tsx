@@ -6,8 +6,15 @@ import type { ApiProduct } from "../types/api";
 import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import { useToast } from "../components/ui/ToastProvider";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 export default function Products() {
+  useMetaTags({
+    title: "Products — InvoiceFlow",
+    description: "Manage your product catalog. Set prices, tax rates, and SKUs for invoice line items.",
+    noIndex: true,
+  });
+
   const navigate = useNavigate();
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);

@@ -3,6 +3,7 @@ import { getPlans, upgradeSubscription, cancelSubscription } from "../api/client
 import { useSubscription } from "../contexts/SubscriptionContext";
 import type { ApiPlan } from "../types/api";
 import UpgradePrompt from "../components/UpgradePrompt";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 const PLAN_FEATURES: Record<string, { label: string; available: boolean }[]> = {
   free: [
@@ -20,6 +21,12 @@ const PLAN_FEATURES: Record<string, { label: string; available: boolean }[]> = {
 };
 
 export default function Plans() {
+  useMetaTags({
+    title: "Plans & Pricing — InvoiceFlow",
+    description: "Upgrade your InvoiceFlow plan for advanced features like multi-currency, time tracking, and automated reminders.",
+    noIndex: true,
+  });
+
   const { plan, subscription, loading: subLoading, refresh } = useSubscription();
   const [allPlans, setAllPlans] = useState<ApiPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);

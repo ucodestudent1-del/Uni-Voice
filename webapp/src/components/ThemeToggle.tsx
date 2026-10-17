@@ -18,43 +18,43 @@ export default function ThemeToggle() {
 
   return (
     <div className="flex items-center gap-1 rounded-lg bg-surface-alt text-tertiary p-1">
-      <button
-        type="button"
-        onClick={() => setTheme("light")}
-        aria-label="Light mode"
-        className={`rounded-md p-1.5 text-sm transition-all ${
-          resolvedTheme === "light" && theme === "light"
-            ? "bg-surface text-primary shadow"
-            : "text-tertiary hover:text-primary"
-        }`}
-        title="Light"
-      >
-        <Sun className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setTheme("dark")}
-        aria-label="Dark mode"
-        className={`rounded-md p-1.5 text-sm transition-all ${
-          resolvedTheme === "dark" && theme === "dark"
-            ? "bg-surface text-primary shadow"
-            : "text-tertiary hover:text-primary"
-        }`}
-        title="Dark"
-      >
-        <Moon className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setTheme("system")}
-        aria-label="System mode"
-        className={`rounded-md p-1.5 text-sm transition-all ${
-          theme === "system"
-            ? "bg-surface text-primary shadow"
-            : "text-tertiary hover:text-primary"
-        }`}
-        title="System"
-      >
+       <button
+         type="button"
+         onClick={() => setTheme("light")}
+         aria-label="Light mode"
+         className={`rounded-md p-1.5 text-sm transition-all ${
+           resolvedTheme === "light" && theme === "light"
+             ? "bg-surface text-primary shadow"
+             : "text-tertiary hover:text-primary"
+         } focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
+         title="Light"
+       >
+         <Sun className="h-4 w-4" />
+       </button>
+       <button
+         type="button"
+         onClick={() => setTheme("dark")}
+         aria-label="Dark mode"
+         className={`rounded-md p-1.5 text-sm transition-all ${
+           resolvedTheme === "dark" && theme === "dark"
+             ? "bg-surface text-primary shadow"
+             : "text-tertiary hover:text-primary"
+         } focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
+         title="Dark"
+       >
+         <Moon className="h-4 w-4" />
+       </button>
+       <button
+         type="button"
+         onClick={() => setTheme("system")}
+         aria-label="System mode"
+         className={`rounded-md p-1.5 text-sm transition-all ${
+           theme === "system"
+             ? "bg-surface text-primary shadow"
+             : "text-tertiary hover:text-primary"
+         } focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
+         title="System"
+       >
         <Monitor className="h-4 w-4" />
       </button>
     </div>

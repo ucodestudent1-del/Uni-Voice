@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
 import LegalPage from "../components/LegalPage";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 export default function Privacy() {
+  useMetaTags({
+    title: "Privacy Policy — InvoiceFlow",
+    description: "InvoiceFlow Privacy Policy — how we collect, use, and protect your data when you use our invoice management service.",
+  });
+
   return (
     <LegalPage title="Privacy Policy">
       <p className="text-tertiary">

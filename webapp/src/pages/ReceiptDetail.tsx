@@ -27,9 +27,17 @@ import EmailReceiptModal from "../components/EmailReceiptModal";
 import RefundReceiptModal from "../components/RefundReceiptModal";
 import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 
+import { useMetaTags } from "@/hooks/useMetaTags";
+
 type ActionMenuState = "closed" | "email" | "refund" | "delete";
 
 export default function ReceiptDetail() {
+  useMetaTags({
+    title: "Receipt Detail — InvoiceFlow",
+    description: "View receipt details, payment status, and download PDF.",
+    noIndex: true,
+  });
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();

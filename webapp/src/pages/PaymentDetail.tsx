@@ -20,6 +20,7 @@ import {
   XCircle,
 } from "lucide-react";
 import PaymentStatus from "../components/ui/PaymentStatus";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import { useToast } from "../components/ui/ToastProvider";
 
 interface RefundModalProps {
@@ -241,6 +242,12 @@ function eventStatusColor(status: string): string {
 }
 
 export default function PaymentDetail() {
+  useMetaTags({
+    title: "Payment Detail — InvoiceFlow",
+    description: "View payment details, transaction history, and refund options.",
+    noIndex: true,
+  });
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();

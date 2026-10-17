@@ -11,9 +11,16 @@ import FeatureGate from "../components/FeatureGate";
 import CustomerStatusBadge from "../components/CustomerStatusBadge";
 import CustomerForm from "../components/CustomerForm";
 import { formatCurrency } from "../utils/format";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import type { ApiCustomer, ApiCustomerSummary } from "../types/api";
 
 export default function CustomerDetail() {
+  useMetaTags({
+    title: "Customer Profile — InvoiceFlow",
+    description: "View customer details, invoice history, and outstanding balances.",
+    noIndex: true,
+  });
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState<ApiCustomer | null>(null);

@@ -13,6 +13,7 @@ import { KPICard, Skeleton } from "@/components/ui";
 import RevenueChart from "../components/dashboard/RevenueChart";
 import { formatCurrencyValue } from "@/lib/utils";
 import { Button } from "../components/ui/Button";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 function getGreeting(name: string | undefined): string {
   if (!name) return "Good day";
@@ -31,6 +32,12 @@ function deriveNameFromEmail(email: string | undefined): string {
 }
 
 export default function Dashboard() {
+  useMetaTags({
+    title: "Dashboard — InvoiceFlow",
+    description: "Overview of your invoices, payments, and revenue. Track outstanding balances, overdue items, and monthly trends.",
+    noIndex: true,
+  });
+
   const { user } = useAuth();
   const { plan } = useSubscription();
 

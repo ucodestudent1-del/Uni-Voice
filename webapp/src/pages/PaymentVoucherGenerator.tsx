@@ -26,6 +26,7 @@ import {
   type ApiCreatePaymentVoucherInput,
 } from "@/api/client";
 import { formatCurrencyValue } from "@/lib/utils";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 interface LineItem {
   id: string;
@@ -40,6 +41,12 @@ interface LineItem {
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CHF"];
 
 export default function PaymentVoucherGenerator() {
+  useMetaTags({
+    title: "Payment Voucher Generator — InvoiceFlow",
+    description: "Create and manage payment vouchers for business expenses. Automatic calculations and multi-currency support.",
+    noIndex: true,
+  });
+
   const { toast } = useToast();
 
   const [voucherId, setVoucherId] = useState<string>("");

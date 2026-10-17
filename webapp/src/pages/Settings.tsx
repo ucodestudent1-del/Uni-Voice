@@ -14,6 +14,7 @@ import SecuritySettings from "../components/settings/SecuritySettings";
 import BillingSubscriptionSettings from "../components/settings/BillingSubscriptionSettings";
 import ThemeSettings from "../components/settings/ThemeSettings";
 import FeatureGate from "../components/FeatureGate";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import type { SettingsNavItem, SettingsSection } from "../types/settings";
 
 export type SettingsTab =
@@ -165,6 +166,12 @@ const mainSections: SettingsSection[] = [{ id: "main", items: mainNavItems }];
 const accountSection: SettingsSection = { id: "account", items: accountNavItems };
 
 export default function Settings() {
+  useMetaTags({
+    title: "Settings — InvoiceFlow",
+    description: "Configure your business profile, invoicing preferences, payment methods, tax rates, and account settings.",
+    noIndex: true,
+  });
+
   const { section } = useParams();
   const navigate = useNavigate();
   const activeSection = (section ?? "business") as SettingsTab;

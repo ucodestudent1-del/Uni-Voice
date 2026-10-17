@@ -19,6 +19,7 @@ import { Button } from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import { SearchInput } from "@/components/ui";
 import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 interface ProjectsProps {
   customers?: ApiCustomer[];
@@ -32,7 +33,14 @@ const STATUS_FILTERS = [
   { value: "completed", label: "Completed" },
 ];
 
-export default function Projects({ customers }: ProjectsProps) {  const [projects, setProjects] = useState<ApiProject[]>([]);
+export default function Projects({ customers }: ProjectsProps) {
+  useMetaTags({
+    title: "Projects — InvoiceFlow",
+    description: "Manage your client projects, track time and progress, and create invoices from completed work.",
+    noIndex: true,
+  });
+
+  const [projects, setProjects] = useState<ApiProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);

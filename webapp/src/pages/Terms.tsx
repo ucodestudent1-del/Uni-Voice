@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
 import LegalPage from "../components/LegalPage";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 export default function Terms() {
+  useMetaTags({
+    title: "Terms of Service — InvoiceFlow",
+    description: "InvoiceFlow Terms of Service — legal agreement governing your access to and use of our invoice management platform.",
+  });
+
   return (
     <LegalPage title="Terms of Service">
       <p className="text-tertiary">

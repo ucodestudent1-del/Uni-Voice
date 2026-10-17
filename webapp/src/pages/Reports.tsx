@@ -26,6 +26,7 @@ import {
 import MonthlyTrendChart from "@/components/dashboard/MonthlyTrendChart";
 import EmptyState from "@/components/ui/EmptyState";
 import { Download } from "lucide-react";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 type ReportTab = "dashboard" | "revenue" | "payments" | "clients" | "tax" | "profit-loss";
 
@@ -48,6 +49,12 @@ const TAB_FILTERS: Record<ReportTab, { showDateRange: boolean; showCustomer: boo
 };
 
 export default function Reports() {
+  useMetaTags({
+    title: "Reports — InvoiceFlow",
+    description: "Financial reports, revenue trends, payment analytics, and client summaries. Export data to CSV for accounting.",
+    noIndex: true,
+  });
+
   const { plan } = useSubscription();
   const { toast } = useToast();
 

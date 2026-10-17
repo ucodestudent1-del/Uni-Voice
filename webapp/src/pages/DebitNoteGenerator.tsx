@@ -27,6 +27,7 @@ import {
   type ApiCreateDebitNoteInput,
 } from "@/api/client";
 import { formatCurrencyValue } from "@/lib/utils";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 interface LineItem {
   id: string;
@@ -47,6 +48,12 @@ interface SendDialogData {
 }
 
 export default function DebitNoteGenerator() {
+  useMetaTags({
+    title: "Debit Note Generator — InvoiceFlow",
+    description: "Create and send professional debit notes. Automatic tax calculations and currency conversion.",
+    noIndex: true,
+  });
+
   const { toast } = useToast();
 
   const [debitNoteId, setDebitNoteId] = useState<string>("");

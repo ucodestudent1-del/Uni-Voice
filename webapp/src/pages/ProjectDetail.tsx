@@ -23,6 +23,7 @@ import ProjectTimeTab from "../components/ProjectTimeTab";
 import ProjectNotesTab from "../components/ProjectNotesTab";
 import { formatDate, formatCurrency } from "../utils/format";
 import { Button } from "../components/ui/Button";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 const STATUS_OPTIONS = [
   { value: "planning", label: "Planning" },
@@ -33,6 +34,12 @@ const STATUS_OPTIONS = [
 ];
 
 export default function ProjectDetail() {
+  useMetaTags({
+    title: "Project Details — InvoiceFlow",
+    description: "View project details, track time and progress, and manage related invoices.",
+    noIndex: true,
+  });
+
   const { id: projectId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const onBack = () => navigate("/app/projects");

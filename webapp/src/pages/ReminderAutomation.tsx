@@ -13,6 +13,7 @@ import UpgradePrompt from "../components/UpgradePrompt";
 import { formatDate } from "../utils/format";
 import { Plus } from "lucide-react";
 import { Button } from "../components/ui/Button";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import type { ApiReminderConfig, ApiReminderTemplate, ReminderSequence } from "../types/api";
 
 function safeJsonParse<T>(value: unknown, fallback: T): T {
@@ -39,6 +40,12 @@ const DEFAULT_REMINDER_CONFIG: ApiReminderConfig = {
 };
 
 export default function ReminderAutomation() {
+  useMetaTags({
+    title: "Reminder Automation — InvoiceFlow",
+    description: "Configure automated payment reminders for overdue invoices. Set up reminder schedules and customize email templates.",
+    noIndex: true,
+  });
+
   const { plan, features } = useSubscription();
   const [config, setConfig] = useState<ApiReminderConfig>(DEFAULT_REMINDER_CONFIG);
   const [templates, setTemplates] = useState<ApiReminderTemplate[]>([]);

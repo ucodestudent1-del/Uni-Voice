@@ -24,6 +24,7 @@ import EmptyState from "../components/ui/EmptyState";
 import { Skeleton, SearchInput } from "@/components/ui";
 import { useToast } from "../components/ui/ToastProvider";
 import { cn } from "../lib/utils";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import type { NavigateFunction } from "react-router-dom";
 
 interface CustomerActionMenuProps {
@@ -138,6 +139,12 @@ const SORT_OPTIONS = [
 ];
 
 export default function Customers() {
+  useMetaTags({
+    title: "Customers — InvoiceFlow",
+    description: "Manage your customer list. View outstanding balances, invoice history, and contact information.",
+    noIndex: true,
+  });
+
   const { plan } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();

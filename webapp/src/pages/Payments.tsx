@@ -22,6 +22,7 @@ import PageHeader from "../components/ui/PageHeader";
 import { DataTable, type ColumnDef } from "../components/ui/DataTable";
 import KPICard from "../components/ui/KPICard";
 import PaymentStatus from "../components/ui/PaymentStatus";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import { type ApiPaymentWithInvoice, type ApiVolumeTrend } from "../types/api";
 
 const STATUS_FILTERS = [
@@ -40,6 +41,12 @@ const PROVIDER_OPTIONS = [
 ];
 
 export default function Payments() {
+  useMetaTags({
+    title: "Payments — InvoiceFlow",
+    description: "Track and manage all payment transactions. View payment status, export records, and monitor payment trends.",
+    noIndex: true,
+  });
+
   const [payments, setPayments] = useState<ApiPaymentWithInvoice[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);

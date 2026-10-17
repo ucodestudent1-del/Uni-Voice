@@ -23,6 +23,7 @@ import TemplatePreview from "../components/TemplatePreview";
 import TemplateCustomizationPanel from "../components/TemplateCustomizationPanel";
 import DocumentTemplateGallery from "../components/DocumentTemplateGallery";
 import { formatDate } from "../utils/format";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 interface TemplateEditorInnerProps {
   existingTemplate: InvoiceTemplateDTO | null;
@@ -331,6 +332,12 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
 }
 
 export default function TemplateEditorPage() {
+  useMetaTags({
+    title: "Template Editor — InvoiceFlow",
+    description: "Design and customize your invoice document templates with our visual editor.",
+    noIndex: true,
+  });
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

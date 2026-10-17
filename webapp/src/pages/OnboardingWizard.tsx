@@ -5,6 +5,7 @@ import {
   useAuth,
 } from "../contexts/AuthContext";
 import type { OnboardingProgress as OnboardingProgressType } from "../types/api";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<string, JSX.Element> {
   return {
@@ -92,6 +93,12 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
 
 
 export default function OnboardingWizard() {
+  useMetaTags({
+    title: "Welcome — Let's Set Up Your Business | InvoiceFlow",
+    description: "Complete your onboarding to set up your business profile, payment methods, and start creating professional invoices.",
+    noIndex: true,
+  });
+
   const { user, onboarding, refreshOnboarding, completeStep, skipOnboarding } = useAuth();
   const [progress, setProgress] = useState<OnboardingProgressType | null>(onboarding);
   const [isCompleting, setIsCompleting] = useState(false);

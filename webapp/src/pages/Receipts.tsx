@@ -13,6 +13,7 @@ import { type ApiVolumeTrend } from "../types/api";
 import { formatCurrencyValue } from "../lib/utils";
 import { formatDate } from "../utils/format";
 import { Button } from "../components/ui/Button";
+import { useMetaTags } from "@/hooks/useMetaTags";
 import {
   Download,
   Eye,
@@ -56,6 +57,12 @@ const SORT_OPTIONS = [
 ];
 
 export default function Receipts() {
+  useMetaTags({
+    title: "Receipts — InvoiceFlow",
+    description: "Manage and track all payment receipts. Filter by status, date, and provider.",
+    noIndex: true,
+  });
+
   const { toast } = useToast();
   const [receipts, setReceipts] = useState<ApiReceipt[]>([]);
   const [total, setTotal] = useState(0);

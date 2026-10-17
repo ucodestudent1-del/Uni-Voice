@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import BottomTabBar from "./BottomTabBar";
 import ThemeToggle from "./ThemeToggle";
 import KeyboardShortcutsHelp from "./KeyboardShortcutsHelp";
+import { SkipLink } from "./ui/AppShell";
 import type { ComponentType } from "react";
 import { FileText, Menu, Lock, HelpCircle } from "lucide-react";
 
@@ -96,6 +97,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-page flex">
+      <SkipLink href="#main-content" />
       <div className="hidden md:flex md:flex-col md:w-64 md:border-r md:border-color md:bg-surface md:shadow-sm">
         <div className="flex items-center h-16 px-6 border-b border-color">
           <h1 className="text-xl font-bold text-primary">InvoiceFlow</h1>
@@ -208,7 +210,7 @@ export default function Layout() {
             <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-6 bg-page">
+        <main id="main-content" className="flex-1 overflow-y-auto p-6 bg-page max-w-7xl mx-auto w-full">
           <Outlet />
         </main>
       </div>
