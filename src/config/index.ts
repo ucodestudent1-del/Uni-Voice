@@ -69,7 +69,7 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_PHONE_NUMBER: z.string().optional(),
   PDF_PROVIDER: z.enum(["html", "stub"]).default("html"),
-  PAYMENT_PROVIDER: z.enum(["stub", "stripe", "paypal"]).default("stub"),
+  PAYMENT_PROVIDER: z.enum(["stub", "stripe"]).default("stub"),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
@@ -103,12 +103,59 @@ try {
 }
 
 if (isProduction && parsed.AUTH_MODE === "dev") {
-  console.error("Invalid environment configuration: AUTH_MODE=dev is not allowed in production. Use AUTH_MODE=jwt or AUTH_MODE=stub.");
+  console.error("Invalid environment configuration: AUTH_MODE=dev is not allowed in production. Use AUTH_MODE=jwt.");
+  process.exit(1);
+}
+
+if (isProduction && parsed.AUTH_MODE === "stub") {
+  console.error(
+    "Invalid environment configuration: AUTH_MODE=stub is not allowed in production. " +
+      "Use AUTH_MODE=jwt for real authentication."
+  );
   process.exit(1);
 }
 
 if (isProduction && (!parsed.AUTH_JWT_SECRET || parsed.AUTH_JWT_SECRET === "dev-secret-change-me")) {
   console.error("Invalid environment configuration: AUTH_JWT_SECRET must be set to a secure value in production (cannot use the default dev secret).");
+  process.exit(1);
+}
+
+if (isProduction && !parsed.REDIS_URL) {
+  console.error(
+    "Invalid environment configuration: REDIS_URL is required in production. " +
+      "Redis is used for rate limiting, session revocation, PDF job queue, and report caching."
+  );
+  process.exit(1);
+}
+
+if (isProduction && parsed.EMAIL_PROVIDER === "stub") {
+  console.error(
+    "Invalid environment configuration: EMAIL_PROVIDER=stub is not allowed in production. " +
+      "Set EMAIL_PROVIDER to smtp, sendgrid, or ses so emails are actually delivered."
+  );
+  process.exit(1);
+}
+
+if (isProduction && parsed.PAYMENT_PROVIDER === "stripe") {
+  if (!parsed.STRIPE_SECRET_KEY) {
+    console.error(
+      "Invalid environment configuration: STRIPE_SECRET_KEY is required when PAYMENT_PROVIDER=stripe in production."
+    );
+    process.exit(1);
+  }
+  if (!parsed.STRIPE_WEBHOOK_SECRET) {
+    console.error(
+      "Invalid environment configuration: STRIPE_WEBHOOK_SECRET is required when PAYMENT_PROVIDER=stripe in production."
+    );
+    process.exit(1);
+  }
+}
+
+if (isProduction && parsed.PAYMENT_PROVIDER === "stub") {
+  console.error(
+    "Invalid environment configuration: PAYMENT_PROVIDER=stub is not allowed in production. " +
+      "Set PAYMENT_PROVIDER=stripe and provide STRIPE_SECRET_KEY."
+  );
   process.exit(1);
 }
 

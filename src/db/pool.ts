@@ -23,10 +23,7 @@ export const pool = new Pool({
 });
 
 pool.on("error", (err) => {
-  console.error("Unexpected error on idle pg client", err);
-  if (!isTest) {
-    process.exit(-1);
-  }
+  logger.error({ err }, "Unexpected error on idle pg client (pool will attempt reconnect)");
 });
 
 interface RequestContext {
