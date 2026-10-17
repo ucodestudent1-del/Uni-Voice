@@ -242,15 +242,19 @@ api.interceptors.response.use(
           await api.post("/auth/refresh", {}, { skipAuthRedirect: true } as AxiosRequestConfig);
           processQueue(null);
           return api(originalRequest);
-        } catch (refreshError) {
+         } catch (refreshError) {
           processQueue(refreshError);
-          window.location.href = "/login";
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
         }
       } else {
-        window.location.href = "/login";
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
         return Promise.reject(error);
       }
     }
@@ -357,12 +361,12 @@ export async function register(
 }
 
 export async function getMe() {
-  const res = await api.get("/auth/me");
+  const res = await api.get("/auth/me", { skipAuthRedirect: true } as AxiosRequestConfig);
   return res.data;
 }
 
 export async function logout() {
-  const res = await api.post("/auth/logout");
+  const res = await api.post("/auth/logout", {}, { skipAuthRedirect: true } as AxiosRequestConfig);
   return res.data;
 }
 
