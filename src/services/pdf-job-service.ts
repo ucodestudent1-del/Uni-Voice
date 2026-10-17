@@ -42,7 +42,6 @@ export async function enqueuePdfGeneration(
   businessId: string,
   documentId: string,
   docType: "invoice" | "credit-note" | "quote",
-  invoiceNumber?: string,
 ): Promise<string | null> {
   if (env.REDIS_URL && !getRedis()) {
     await initRedis();
@@ -97,7 +96,6 @@ export async function startPdfWorker(): Promise<void> {
     return;
   }
 
-  const { pdfService } = await import("./pdf/pdf-service.js");
   const { invoiceService } = await import("./invoice-service.js");
 
   worker = new Worker(

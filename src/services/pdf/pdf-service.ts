@@ -1,6 +1,5 @@
 import type { Browser, Page, LaunchOptions, PDFOptions } from "puppeteer";
 import { env } from "../../config/index.js";
-import { logger } from "../../utils/logger.js";
 import type { InvoiceTemplateData, CreditNoteTemplateData, QuoteTemplateData } from "../templates/template-renderer.js";
 
 type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData;
@@ -33,7 +32,7 @@ export class PuppeteerPdfService implements PdfProvider {
     return { args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"] };
   }
 
-  async generatePdf(html: string, data: TemplateData): Promise<Buffer> {
+  async generatePdf(html: string, _data: TemplateData): Promise<Buffer> {
     await this.loadPuppeteer();
     let page: Page | null = null;
     try {

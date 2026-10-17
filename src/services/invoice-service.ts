@@ -9,7 +9,6 @@ import { emailService } from "../services/email/email-service.js";
 import { stripeService } from "../services/payments/stripe-service.js";
 import { buildTemplateData, buildCreditNoteData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
-import type { Address } from "../domain/value-objects/address.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";
 
@@ -628,8 +627,6 @@ export class InvoiceService {
       if (!existing.rows.length) {
         throw new NotFoundError(`Credit note ${creditNoteId} not found`);
       }
-
-      const creditNote = existing.rows[0];
 
       await client.query(
         `UPDATE credit_notes SET status = 'sent', sent_at = NOW(), version = version + 1
@@ -1614,22 +1611,6 @@ export class InvoiceService {
     const business = await this.fetchBusiness(businessId);
     const customer = creditNote.customer_id
       ? await this.fetchCustomer(businessId, creditNote.customer_id as string)
-      : null;
-
-    const paymentInstructions: TemplatePaymentInstructions | null = creditNote.payment_instructions
-      ? {
-          methods: [],
-          bankDetails: null,
-          paymentLink: null,
-          lateFeeType: creditNote.late_fee_type as "none" | "fixed" | "percentage" | null,
-          lateFeeValue: creditNote.late_fee_value?.toString() ?? null,
-          lateFeePeriodDays: null,
-          taxExemption: null,
-          deliveryDetails: null,
-          warrantyInfo: null,
-          returnPolicy: null,
-          customFields: [],
-        }
       : null;
 
     const refInvoiceRes = await query(
@@ -2802,8 +2783,8 @@ const INVOICE_EMAIL_TEMPLATE = `<!DOCTYPE html>
 </html>`;
 
 Handlebars.registerHelper("formatMoney", function (v: Decimal.Value, currency?: string): string {
-  const cur = currency ?? "USD";
-  return new Decimal(v ?? 0).times(new Decimal(1)).toFixed(2);
+  void currency;
+  return new Decimal(v ?? 0).toFixed(2);
 });
 
 Handlebars.registerHelper("formatRate", function (v: Decimal.Value): string {

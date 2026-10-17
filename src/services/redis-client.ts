@@ -1,4 +1,3 @@
-import { logger } from "../utils/logger.js";
 import { getRedis, initRedis } from "../utils/redis-singleton.js";
 import { TtlCache } from "../utils/ttl-cache.js";
 import { env } from "../config/index.js";

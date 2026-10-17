@@ -1,98 +1,57 @@
-version: "3.8"
-
 services:
-  web:
-    build: .
-    image: universal-invoice-generator:latest
-    ports:
-      - "80:80"
-      - "4000:4000"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/invoice_prod
-      - REDIS_URL=redis://redis:6379
-      - APP_ENV=production
-      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET:?set AUTH_JWT_SECRET to a strong random value}
-      - APP_PUBLIC_BASE_URL=${APP_PUBLIC_BASE_URL:?set APP_PUBLIC_BASE_URL to your public https URL}
-      - APP_FRONTEND_URL=${APP_FRONTEND_URL:-}
-      - EMAIL_PROVIDER=stub
-      - PDF_PROVIDER=html
-      - PAYMENT_PROVIDER=stub
-      - TAX_PROVIDER=manual
-       - AI_PROVIDER=stub
-       - SENTRY_DSN=${SENTRY_DSN:-}
-     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - app-network
-
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
+      POSTGRES_DB: universal_invoice
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: invoice_prod
+      POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/db/migrations:/docker-entrypoint-initdb.d/migrations:ro
-    ports:
-      - "5432:5432"
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
-  backup:
-    image: prodrigestivill/postgres-backup:16
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file: .env
-    environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=invoice_prod
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_PORT=5432
-      - SCHEDULE=@daily
-      - BACKUP_KEEP_DAYS=14
-      - BACKUP_KEEP_WEEKS=8
-      - BACKUP_KEEP_MONTHS=6
-      - DATA_DIR=/backups
-      - HEALTHCHECK_PORT=81
-    volumes:
-      - backup_data:/backups
-    restart: unless-stopped
-    networks:
-      - app-network
 
   redis:
     image: redis:7-alpine
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
-    ports:
-      - "6379:6379"
-    networks:
-      - app-network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 3s
-      retries: 3
+      timeout: 5s
+      retries: 5
 
-networks:
-  app-network:
-    driver: bridge
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:password@db:5432/universal_invoice
+      REDIS_URL: redis://redis:6379
+      AUTH_MODE: jwt
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      EMAIL_FROM: ${EMAIL_FROM}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      SENTRY_DSN: ${SENTRY_DSN}
+      PDF_PROVIDER: ${PDF_PROVIDER}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER}
+    ports:
+      - "4000:4000"
 
 volumes:
   postgres_data:
-  backup_data:

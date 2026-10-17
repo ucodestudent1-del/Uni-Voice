@@ -1,199 +1,46 @@
-# Multi-stage Dockerfile
-# Builds both the backend and frontend
-# Express serves the frontend SPA and API on port 4000
-
-# —………………………………
-# Stage 1: Install dependencies + system libs
-# —………………………………
-FROM node:22-bookworm-slim AS deps
-
-# Install system dependencies FIRST (needed by Puppeteer/chrome at runtime)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    fonts-liberation \
-    unzip \
-    libasound2 \
-    libatk1.0-0 \
-    libatomic1 \
-    libc6 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libexpat1 \
-    libfontconfig1 \
-    libgbm1 \
-    libgcc-s1 \
-    libgdk-pixbuf-2.0-0 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libstdc++6 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    && rm -rf /var/lib/apt/lists/*
-
+FROM node:20-alpine AS base
 WORKDIR /app
+RUN corepack enable
 
-# Install backend dependencies (skip Puppeteer browser download during npm install)
-COPY package*.json ./
-ENV PUPPETEER_SKIP_DOWNLOAD=true
+# --- Backend build layer -----------------------------------------------------
+FROM base AS backend-builder
+WORKDIR /app
+COPY package.json package-lock.json* tsconfig.json tsconfig.typecheck.json ./
+COPY src ./src
+COPY scripts ./scripts
 RUN npm ci
-ENV PUPPETEER_SKIP_DOWNLOAD=false
+RUN npx tsc -p tsconfig.json
+# Copy migrations next to the compiled db/migrate.js so loadMigrations() finds them
+RUN node scripts/copy-migrations.js
 
-# Download Chrome separately for Puppeteer
-RUN npx puppeteer browsers install chrome
-
-# —………………………………
-# Stage 2: Backend build
-# —………………………………
-FROM node:22-bookworm-slim AS backend-builder
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules/ ./node_modules/
-COPY --from=deps /root/.cache/ /root/.cache/
-COPY package*.json ./
-COPY tsconfig.json tsconfig.typecheck.json ./
-COPY src/ ./src/
-COPY scripts/ ./scripts/
-
-# Generate OG image and PWA icons
-COPY webapp/public/favicon.svg ./webapp/public/favicon.svg
-RUN mkdir -p webapp/public/icons
-RUN npx tsx scripts/generate-og-image.ts
-
-# Build backend TypeScript → dist/
-RUN npx tsc -p tsconfig.json && node scripts/copy-migrations.js
-
-# —………………………………
-# Stage 3: Frontend build
-# —………………………………
-FROM node:22-bookworm-slim AS frontend-builder
-
+# --- Frontend build layer ----------------------------------------------------
+FROM base AS frontend-builder
 WORKDIR /app/webapp
-
-COPY webapp/package*.json ./
+COPY webapp/package.json webapp/package-lock.json* ./
 RUN npm ci
-
-COPY webapp/ ./
-
-# Copy generated OG image and PWA icons from backend-builder stage
-COPY --from=backend-builder /app/webapp/public/og-image.png /app/webapp/public/og-image.png
-COPY --from=backend-builder /app/webapp/public/icons/ /app/webapp/public/icons/
-
-ARG PLAUSIBLE_DOMAIN
-ENV PLAUSIBLE_DOMAIN=$PLAUSIBLE_DOMAIN
-
+COPY webapp/ /app/webapp/
 RUN npm run build
 
-# —………………………………
-# Stage 4: Production image
-# —………………………………
-FROM node:22-bookworm-slim AS production
-
-# Install nginx and system libraries needed at runtime (Chrome/Puppeteer)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    nginx \
-    libnss3 \
-    libgbm1 \
-    libgtk-3-0 \
-    libasound2 \
-    libatk1.0-0 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libexpat1 \
-    libfontconfig1 \
-    libgdk-pixbuf-2.0-0 \
-    libglib2.0-0 \
-    libnspr4 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxcursor1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxi6 \
-    libxrandr2 \
-    libxrender1 \
-    libxss1 \
-    libxtst6 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy backend compiled output
-COPY --from=backend-builder /app/dist/ /app/dist/
-COPY --from=backend-builder /app/node_modules/ /app/node_modules/
-COPY --from=backend-builder /root/.cache/ /root/.cache/
-
-# Copy frontend build
-COPY --from=frontend-builder /app/webapp/dist/ /app/webapp/dist/
-
-# Copy migrations
-COPY --from=backend-builder /app/dist/db/migrations/ /app/dist/db/migrations/
-
-# Copy nginx config
-COPY nginx.conf /app/nginx.conf
-
-# Container entrypoint (migrations, backend, nginx supervision)
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
-
+# --- Runtime image -----------------------------------------------------------
+FROM base AS runtime
 WORKDIR /app
 
-# Production environment variables
-# Override APP_PUBLIC_BASE_URL and SECRET_KEY at deployment time.
-# APP_PUBLIC_BASE_URL MUST be set to your public HTTPS domain in production.
-# The empty default below is intentionally insecure-for-local-only; the app
-# will log a warning if it is not overridden, but will still start.
-ENV NODE_ENV=production
-ENV APP_ENV=production
-ENV PORT=4000
-ENV APP_PUBLIC_BASE_URL=
-ENV APP_FRONTEND_URL=
-ENV GOOGLE_CLIENT_ID=
-ENV GOOGLE_CLIENT_SECRET=
-ENV GOOGLE_CALLBACK_URL=
-ENV EMAIL_FROM=noreply@example.com
-ENV EMAIL_PROVIDER=stub
-ENV SENDGRID_API_KEY=
-ENV AWS_SES_ACCESS_KEY_ID=
-ENV AWS_SES_SECRET_ACCESS_KEY=
-ENV AWS_SES_REGION=us-east-1
-ENV PDF_PROVIDER=html
-ENV PAYMENT_PROVIDER=stub
-ENV TAX_PROVIDER=manual
-ENV AUTH_MODE=jwt
-ENV AUTH_JWT_SECRET=
-# DATABASE_URL must be set at deployment time (no hardcoded default in production)
-ENV DATABASE_URL=
-# REDIS_URL is optional; if set, Redis-backed rate limiting and caching are used
-ENV REDIS_URL=
-# SENTRY_DSN is optional; if set, Sentry error tracking is enabled
-ENV SENTRY_DSN=
+# Copy backend build output
+COPY --from=backend-builder /app/dist ./dist
+COPY --from=backend-builder /app/node_modules ./node_modules
+COPY --from=backend-builder /app/package.json ./package.json
 
-EXPOSE 80 4000
+# Copy frontend build output
+COPY --from=frontend-builder /app/webapp/dist ./webapp/dist
 
-# CMD allows platforms like Railway to override with their own start command
-# (e.g., "node dist/index.js"). For local/docker-compose, the entrypoint
-# script handles migrations, backend, and nginx supervision.
-CMD ["/app/docker-entrypoint.sh"]
+# Create non-root user
+RUN addgroup -S invoice && adduser -S -G invoice invoice
+USER invoice
+
+EXPOSE 4000
+
+# Health check — hits the /api/health endpoint
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "const http=require('http');http.get('http://localhost:4000/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+
+CMD ["node", "dist/index.js"]

@@ -1,9 +1,8 @@
-import type { Customer, CustomerStatus, TaxIdentifier } from "../domain/models/index.js";
+import type { Customer, TaxIdentifier } from "../domain/models/index.js";
 import type { CustomerInvoiceSummary, EnrichedCustomer } from "../repositories/customer.repo.js";
-import type { Address } from "../domain/value-objects/address.js";
 import { CustomerRepository } from "../repositories/customer.repo.js";
-import { NotFoundError, ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
-import type { CustomerCreateInput, CustomerUpdateInput, CustomerSearchQuery } from "../domain/schemas/customer.js";
+import { ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
+import type { CustomerCreateInput, CustomerUpdateInput } from "../domain/schemas/customer.js";
 import type { PagedResult } from "../repositories/helpers.js";
 
 export interface CustomerSummary {

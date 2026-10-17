@@ -220,7 +220,6 @@ Handlebars.registerHelper("length", (arr: unknown[]): number => (arr ? arr.lengt
 Handlebars.registerHelper("eq", (a: unknown, b: unknown): boolean => a === b);
 
 Handlebars.registerHelper("or", (...args: unknown[]): boolean => {
-  const options = args[args.length - 1] as any;
   for (let i = 0; i < args.length - 1; i++) {
     if (args[i]) return true;
   }

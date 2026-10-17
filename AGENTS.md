@@ -27,13 +27,43 @@ Commands to run during this session:
 > **Tip:** Use `npm run dev:all` from the project root to start both the
 > backend (`localhost:4000`) and frontend (`localhost:5173`) together.
 
+## Deployment
+
+### Docker (recommended)
+
+```bash
+# 1. Copy .env.example and configure for your environment
+cp .env.example .env
+# Edit .env — set real values for DB, Redis, JWT secret, etc.
+
+# 2. Run all services (postgres, redis, api)
+docker compose up --build
+
+# The API starts on http://localhost:4000, frontend build is served by the API.
+```
+
+### Docker Compose services
+| Service | Port | Notes |
+|---|---|---|
+| `db` | 5432 | PostgreSQL 16-alpine with healthcheck |
+| `redis` | 6379 | Redis 7-alpine with healthcheck |
+| `api` | 4000 | Express + compiled frontend; depends on db+redis |
+
+### Required environment variables (production)
+At minimum set these in `.env` before deploying:
+- `DATABASE_URL` — PostgreSQL connection string
+- `AUTH_JWT_SECRET` — secure random string (for `AUTH_MODE=jwt`)
+- `APP_PUBLIC_BASE_URL` — public URL of the backend (for OAuth/webhooks)
+- `APP_FRONTEND_URL` — URL where the frontend is served
+- `REDIS_URL` — required for rate-limiting, token revocation, job queue, report cache
+
+### CI
+`.github/workflows/ci.yml` runs typecheck, lint (with `--max-warnings 0` for backend), tests, and build on every push/PR.
+
 ## Remaining Work (post-recent changes)
 
-1. **InvoiceWorkspace `handleFinalizeAndSend`** — Uses optimistic updates from `finalizeInvoice` + `sendInvoice` responses (lines 1162-1174). No redundant `getInvoice` fetches. Consider enriching `FinalizeInvoiceResult` type to include `status` for more robust optimistic updates.
-2. **InvoiceWorkspace autosave batching** — `doSave` (line 631) uses a single `createInvoice`/`updateInvoice` call with items and fees in the payload. Already resolved.
-3. **`/api/reports/aging` and `/api/reports/payment-metrics` endpoints** — Both exist in `src/index.ts` (lines 1750, 1763). `getPaymentMetricsReport` has graceful 404 handling; `getAgingReport` now has consistent error handling returning `null` on failure.
-4. **`computeChurnRate` uses `customer_email`** — Already fixed; uses `inv.customer_id` (line 274).
-5. **List endpoints fetch 500 customers** — Already fixed; `Invoices.tsx` uses `limit: 100`, `CreditNotes.tsx` doesn't fetch customers.
+1. **InvoiceWorkspace `handleFinalizeAndSend`** — Uses optimistic updates from `finalizeInvoice` + `sendInvoice` responses. No redundant `getInvoice` fetches. Consider enriching `FinalizeInvoiceResult` type to include `status` for more robust optimistic updates.
+2. **Frontend lint warnings** — ~520 warnings remain (272 `no-explicit-any`, 201 `no-unused-vars`). All are warnings, 0 errors. The `no-explicit-any` warnings match the backend pattern (100 warnings). Can be addressed incrementally with stricter eslint if desired.
 
 ### Commands for the upcoming work
 | Command | What it does |

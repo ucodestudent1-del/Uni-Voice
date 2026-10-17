@@ -1,5 +1,5 @@
-import express, { NextFunction } from "express";
-import rateLimit from "express-rate-limit";
+import express from "express";
+import rateLimit, { type Options as RateLimitOptions } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import cookieParser from "cookie-parser";
 import compression from "compression";
@@ -20,7 +20,6 @@ import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import {
   requireAuth,
-  optionalAuth,
   AuthRequest,
   generateTokenPair,
   consumeRefreshToken,
@@ -45,7 +44,6 @@ import {
 } from "./services/reports-service.js";
 import { twoFactorService } from "./services/auth/two-factor.service.js";
 import { oauthService } from "./services/auth/oauth.service.js";
-import { smsService, buildPaymentLinkSms } from "./services/sms/sms-service.js";
 import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
 import { invoiceService } from "./services/invoice-service.js";
@@ -303,17 +301,28 @@ function getCookie(header: string | undefined, name: string): string | null {
 // ============================================================================
 // RATE LIMITING
 // ============================================================================
-function createRateLimitStore() {
+function createRateLimitStore(prefix = "rl:") {
   const sendCommand = getRedisSendCommand();
   if (sendCommand) {
-    return new RedisStore({ sendCommand, prefix: "rl:" });
+    return new RedisStore({ sendCommand: sendCommand as never, prefix });
   }
   return undefined;
 }
 
-const rateLimitStore = !isDev ? createRateLimitStore() : undefined;
+const redisAvailable = !!getRedisSendCommand() && !isDev;
+let nextPrefixId = 0;
+function createRateLimiter(config: Partial<RateLimitOptions>) {
+  const skip = isDev ? () => true : undefined;
+  const prefix = `rl:${nextPrefixId++}`;
+  const store = redisAvailable ? createRateLimitStore(prefix) : undefined;
+  return rateLimit({
+    ...config,
+    skip,
+    store,
+  });
+}
 
-const authRateLimiter = rateLimit({
+const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: {
@@ -322,31 +331,25 @@ const authRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: isDev ? () => true : undefined,
-  store: rateLimitStore,
 });
 
-const generalRateLimiter = rateLimit({
+const generalRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: isDev ? 1000 : 300,
   message: { error: "Too many requests", code: "RATE_LIMITED" },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: isDev ? () => true : undefined,
-  store: rateLimitStore,
 });
 
-const oauthRateLimiter = rateLimit({
+const oauthRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   max: isDev ? 1000 : 100,
   message: { error: "Too many requests", code: "RATE_LIMITED" },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: isDev ? () => true : undefined,
-  store: rateLimitStore,
 });
 
-const aiRateLimiter = rateLimit({
+const aiRateLimiter = createRateLimiter({
   windowMs: 60 * 1000,
   max: isDev ? 100 : 30,
   message: {
@@ -355,11 +358,9 @@ const aiRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: isDev ? () => true : undefined,
-  store: rateLimitStore,
 });
 
-const documentCreateRateLimiter = rateLimit({
+const documentCreateRateLimiter = createRateLimiter({
   windowMs: 60 * 1000,
   max: isDev ? 100 : 30,
   message: {
@@ -368,11 +369,9 @@ const documentCreateRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: isDev ? () => true : undefined,
-  store: rateLimitStore,
 });
 
-const emailSendRateLimiter = rateLimit({
+const emailSendRateLimiter = createRateLimiter({
   windowMs: 60 * 1000,
   max: isDev ? 100 : 20,
   message: {
@@ -381,9 +380,13 @@ const emailSendRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: isDev ? () => true : undefined,
-  store: rateLimitStore,
 });
+
+if (isDev) {
+  console.info("Rate limiting is disabled in development mode (AUTH_MODE=dev).");
+} else if (!redisAvailable) {
+  console.warn("Redis is not configured; rate limiting is disabled. Set REDIS_URL for production.");
+}
 
 app.use("/api", generalRateLimiter);
 
@@ -737,7 +740,7 @@ app.post("/api/auth/refresh", async (req: AuthRequest, res) => {
   app.post("/api/auth/logout", async (req: AuthRequest, res) => {
     const accessToken = req.cookies?.accessToken || (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : null);
     if (accessToken) {
-      await revokeAccessToken(accessToken, 15 * 60);
+      await revokeAccessToken(accessToken, 15 * 60, req.user?.id);
     }
     clearRefreshTokenCookie(res);
     clearAccessTokenCookie(res);
@@ -2955,7 +2958,7 @@ app.post("/api/interaction-log", requireAuth, async (req: AuthRequest, res) => {
       sessionId,
     );
     res.json({ ok: true });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to log interaction" });
   }
 });

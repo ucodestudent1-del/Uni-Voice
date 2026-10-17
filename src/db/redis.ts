@@ -23,8 +23,8 @@ export function getRedisClient(): RedisType | null {
   return redisClient;
 }
 
-export function getRedisSendCommand(): ((...args: (string | Buffer | number)[]) => Promise<any>) | null {
+export function getRedisSendCommand(): ((...args: string[]) => Promise<unknown>) | null {
   const client = getRedisClient();
   if (!client) return null;
-  return (...args: (string | Buffer | number)[]) => client.call(args[0] as string, ...args.slice(1));
+  return (...args: string[]) => client.call(args[0], ...args.slice(1)) as Promise<unknown>;
 }

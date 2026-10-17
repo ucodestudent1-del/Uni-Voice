@@ -260,8 +260,7 @@ export class ReceiptService {
 
 
   async generatePdf(receiptId: string): Promise<Buffer> {
-    const { pdf, receiptNumber } = await this.generatePdfWithMeta(receiptId);
-    return pdf;
+    return (await this.generatePdfWithMeta(receiptId)).pdf;
   }
 
   async generatePdfWithMeta(receiptId: string): Promise<{ pdf: Buffer; receiptNumber: string }> {

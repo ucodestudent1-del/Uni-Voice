@@ -5,12 +5,10 @@ import type {
   ProjectFinancialSummary,
   ProjectListItem,
 } from "../repositories/project.repo.js";
-import type { PagedResult } from "../repositories/helpers.js";
 import { ProjectRepository } from "../repositories/project.repo.js";
 import { CustomerRepository } from "../repositories/customer.repo.js";
 import { ConflictError, BusinessLogicError, ValidationError } from "../domain/errors.js";
 import type { ProjectCreateInput, ProjectUpdateInput as SchemaProjectUpdateInput } from "../domain/schemas/project.js";
-import { projectTimeEntryRepository } from "../repositories/project-time.repo.js";
 
 export interface ProjectSummary {
   project: Project;

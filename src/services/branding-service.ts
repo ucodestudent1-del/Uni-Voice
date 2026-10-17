@@ -66,26 +66,6 @@ export class BrandingService {
   }
 
   async update(businessId: string, input: BrandingInput): Promise<BrandingSettings> {
-    const fieldMap: Record<string, string> = {
-      primaryColor: "primary_color",
-      secondaryColor: "secondary_color",
-      fontFamily: "font_family",
-      logoUrl: "logo_url",
-      logoWidthPx: "logo_width_px",
-      logoHeightPx: "logo_height_px",
-      invoiceTitle: "invoice_title",
-      invoiceSubtitle: "invoice_subtitle",
-      footerText: "footer_text",
-      showLogo: "show_logo",
-      showPageNumbers: "show_page_numbers",
-      showQrCode: "show_qr_code",
-      pdfPageSize: "pdf_page_size",
-      pdfMarginTopMm: "pdf_margin_top_mm",
-      pdfMarginRightMm: "pdf_margin_right_mm",
-      pdfMarginBottomMm: "pdf_margin_bottom_mm",
-      pdfMarginLeftMm: "pdf_margin_left_mm",
-    };
-
     const columns: string[] = ["business_id"];
     const valueParams: string[] = ["$1"];
     const setClauses: string[] = [];

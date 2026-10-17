@@ -2,10 +2,12 @@ import { getRedisClient } from "../../db/redis.js";
 import { logger } from "../../utils/logger.js";
 
 const DENYLIST_PREFIX = "jwt:denylist:";
+const USER_TOKENS_PREFIX = "jwt:user-tokens:";
 
 export async function revokeAccessToken(
   token: string,
   expiresInSeconds: number,
+  userId?: string,
 ): Promise<void> {
   const redis = getRedisClient();
   if (!redis) {
@@ -15,6 +17,12 @@ export async function revokeAccessToken(
 
   const key = `${DENYLIST_PREFIX}${token}`;
   await redis.setex(key, expiresInSeconds, "1");
+
+  if (userId) {
+    const userKey = `${USER_TOKENS_PREFIX}${userId}`;
+    await redis.sadd(userKey, token);
+    await redis.expire(userKey, Math.max(expiresInSeconds, 0));
+  }
 }
 
 export async function isAccessTokenRevoked(token: string): Promise<boolean> {
@@ -33,9 +41,14 @@ export async function revokeAllUserTokens(userId: string): Promise<void> {
     return;
   }
 
-  const pattern = `${DENYLIST_PREFIX}*`;
-  const keys = await redis.keys(pattern);
-  if (keys.length > 0) {
-    await redis.del(...keys);
+  const userKey = `${USER_TOKENS_PREFIX}${userId}`;
+  const tokens = await redis.smembers(userKey);
+  if (tokens.length > 0) {
+    const pipeline = redis.pipeline();
+    for (const token of tokens) {
+      pipeline.del(`${DENYLIST_PREFIX}${token}`);
+    }
+    pipeline.del(userKey);
+    await pipeline.exec();
   }
 }

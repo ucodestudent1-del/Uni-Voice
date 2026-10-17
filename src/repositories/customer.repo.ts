@@ -1,4 +1,4 @@
-import { query, getClient } from "../db/pool.js";
+import { query } from "../db/pool.js";
 import { Decimal } from "decimal.js";
 import type { Customer, CustomerAddress, TaxIdentifier, CustomerStatus } from "../domain/models/index.js";
 import type { Address } from "../domain/value-objects/address.js";

@@ -1,7 +1,6 @@
-import { Decimal } from "decimal.js";
 import { query } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
-import { NotFoundError, ConflictError, BusinessLogicError } from "../domain/errors.js";
+import { NotFoundError, ConflictError } from "../domain/errors.js";
 import type { TaxRule, TaxRuleCreateInput, TaxRuleUpdateInput, TaxRuleSearchQuery, TaxEvaluationContext, TaxRuleConditionInput } from "../domain/schemas/tax-rule.js";
 
 export class TaxRuleService {
@@ -117,7 +116,7 @@ export class TaxRuleService {
     };
   }
 
-  async create(businessId: string, input: TaxRuleCreateInput, userId?: string): Promise<TaxRule> {
+  async create(businessId: string, input: TaxRuleCreateInput): Promise<TaxRule> {
     const existing = await query(
       `SELECT 1 FROM tax_rules WHERE business_id = $1 AND name = $2`,
       [businessId, input.name],

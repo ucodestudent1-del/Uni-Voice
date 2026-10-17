@@ -1,7 +1,6 @@
 import { Decimal } from "decimal.js";
 import { query } from "../db/pool.js";
 import { reportsCache, invalidateReportsCache } from "./reports-cache.js";
-import { rowToDate, toDecimal, type PagedResult } from "../repositories/helpers.js";
 
 export interface ReportFilters {
   dateFrom?: string;
@@ -458,13 +457,7 @@ export class ReportsService {
        ORDER BY ${sortCol} ${sortDir}, i.created_at DESC
        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
       [...vals, limit, offset]
-    );
-
-    const countRes = await query(
-      `SELECT COUNT(*)::int AS total FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
-       WHERE ${conditions.join(" AND ")}`,
-      vals
-    );
+     );
 
     const summaryRes = await query(
       `SELECT
@@ -921,9 +914,7 @@ export class ReportsService {
            AND i.created_at >= $2 AND i.created_at <= $3`,
         [businessId, dateFrom, dateTo]
       ),
-    ]);
-
-    const totalByMonth = byPeriod.rows.reduce((sum: number, r: any) => sum + Number(r.tax_collected ?? 0), 0);
+    ]     );
 
     const result: TaxSummaryReport = {
       summary: {

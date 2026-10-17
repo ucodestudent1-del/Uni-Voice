@@ -610,7 +610,7 @@ export class SpeedOptimizationService {
     }));
   }
 
-  private async checkForActiveDraft(businessId: string, userId?: string): Promise<{ id: string; customerId?: string | null; itemCount: number } | null> {
+  private async checkForActiveDraft(businessId: string, _userId?: string): Promise<{ id: string; customerId?: string | null; itemCount: number } | null> {
     const res = await query(
       `SELECT inv.id, inv.customer_id, COUNT(ii.id) as item_count
        FROM invoices inv

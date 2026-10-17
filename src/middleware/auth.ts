@@ -51,7 +51,35 @@ const REFRESH_TOKEN_COOKIE_OPTIONS = {
   path: "/",
 };
 
+const devUserHeaders = {
+  userIdHeader: "x-dev-user-id",
+  businessIdHeader: "x-dev-business-id",
+  emailHeader: "x-dev-user-email",
+  roleHeader: "x-dev-user-role",
+} as const;
+
+function parseDevHeaders(req: Request): { id: string; businessId?: string; email?: string; role?: string } | null {
+  if (env.AUTH_MODE !== "dev") return null;
+  const userId = req.headers[devUserHeaders.userIdHeader];
+  if (!userId || typeof userId !== "string") return null;
+  return {
+    id: userId,
+    businessId: req.headers[devUserHeaders.businessIdHeader] as string | undefined,
+    email: req.headers[devUserHeaders.emailHeader] as string | undefined,
+    role: req.headers[devUserHeaders.roleHeader] as string | undefined,
+  };
+}
+
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+  if (isDev && env.AUTH_MODE === "dev") {
+    const devUser = parseDevHeaders(req);
+    if (devUser) {
+      req.user = devUser;
+      next();
+      return;
+    }
+  }
+
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : req.cookies?.accessToken;
   if (!token) {
@@ -94,6 +122,15 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 }
 
 export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+  if (isDev && env.AUTH_MODE === "dev") {
+    const devUser = parseDevHeaders(req);
+    if (devUser) {
+      req.user = devUser;
+      next();
+      return;
+    }
+  }
+
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : req.cookies?.accessToken;
   if (token) {

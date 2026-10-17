@@ -1,7 +1,7 @@
 import { Decimal } from "decimal.js";
 import { query } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
-import { NotFoundError, ConflictError, BusinessLogicError } from "../domain/errors.js";
+import { NotFoundError, ConflictError } from "../domain/errors.js";
 import type {
   DiscountRule,
   DiscountRuleCreateInput,
@@ -211,7 +211,7 @@ export class DiscountRuleService {
     totalDiscount: Decimal;
   }> {
     const now = new Date();
-    const { currency, invoiceDate, lineItems, subtotal } = context;
+    const { invoiceDate, subtotal } = context;
 
     const result = await query(
       `SELECT * FROM discount_rules

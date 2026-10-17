@@ -2,7 +2,6 @@ import { query, getClient } from "../db/pool.js";
 import type { InvoiceTemplate, InvoiceTemplateRevision } from "../domain/models/index.js";
 import {
   InvoiceTemplateInputSchema,
-  InvoiceTemplateUpdateSchema,
   InvoiceTemplateRevisionInputSchema,
 } from "../domain/schemas/invoice-template.js";
 
@@ -363,11 +362,10 @@ export class InvoiceTemplateRepository {
       const current = existing.rows[0];
       const newRevision = Number(current.revision) + 1;
 
-      const revRes = await client.query(
+      await client.query(
         `INSERT INTO document_template_revisions
            (template_id, business_id, revision, schema_version, document, html_template, config, change_summary, created_by, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-         RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
         [
           id,
           businessId,
@@ -680,7 +678,7 @@ export class InvoiceTemplateRepository {
        WHERE template_id = $1 AND business_id = $2`,
       [templateId, businessId]
     );
-    return res.rows.map((r: any) => ({ userId: r.user_id, permission: r.permission }));
+    return res.rows.map((r: { user_id: string; permission: string }) => ({ userId: r.user_id, permission: r.permission }));
   }
 
   async checkPermission(businessId: string, templateId: string, userId: string, permission: string): Promise<boolean> {

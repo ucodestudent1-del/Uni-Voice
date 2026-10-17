@@ -444,7 +444,6 @@ export class CalculationEngine {
     context: TaxRuleContext | undefined,
     currency: CurrencyCode,
   ): TaxRuleInput[] {
-    const now = new Date();
     return rules.filter((rule) => {
       if (!rule.conditions || rule.conditions.length === 0) return true;
 
@@ -549,7 +548,7 @@ export class CalculationEngine {
   private evaluateDiscountRules(
     rules: DiscountRuleInput[],
     totalAmount: Decimal,
-    currency: CurrencyCode,
+    _currency: CurrencyCode,
   ): DiscountRuleInput[] {
     const now = new Date();
     return rules.filter((rule) => {
