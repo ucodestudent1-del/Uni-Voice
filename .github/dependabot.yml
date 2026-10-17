@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    groups:
+      backend-deps:
+        patterns:
+          - "*"
+    reviewers:
+      - "team"
+  - package-ecosystem: "npm"
+    directory: "/webapp"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    groups:
+      frontend-deps:
+        patterns:
+          - "*"
+    reviewers:
+      - "team"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "1st"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "team"

@@ -20,7 +20,7 @@ export interface TwoFactorSetupResult {
 export interface TwoFactorVerifyResult {
   token: string;
   refreshToken?: string;
-  user: { id: string; email: string; businessId?: string };
+  user: { id: string; email: string; businessId?: string; role: string };
   usedRecoveryCode: boolean;
 }
 
@@ -152,7 +152,7 @@ export class TwoFactorService {
       return {
         token: accessToken,
         refreshToken,
-        user: { id: userId, email, businessId },
+        user: { id: userId, email, businessId, role: "owner" },
         usedRecoveryCode: false,
       };
     }
@@ -168,7 +168,7 @@ export class TwoFactorService {
       return {
         token: accessToken,
         refreshToken,
-        user: { id: userId, email, businessId },
+        user: { id: userId, email, businessId, role: "owner" },
         usedRecoveryCode: true,
       };
     }

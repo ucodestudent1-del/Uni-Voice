@@ -440,7 +440,7 @@ app.post("/api/auth/register", authRateLimiter, async (req, res) => {
     });
   }
 
-  const userId = crypto.randomUUID();
+   const userId = crypto.randomUUID();
   const businessId = crypto.randomUUID();
   const now = new Date().toISOString();
   const passwordHash = await hashPassword(password);
@@ -466,6 +466,11 @@ app.post("/api/auth/register", authRateLimiter, async (req, res) => {
       `INSERT INTO business_settings (business_id, default_currency, time_zone, locale, created_at, updated_at) VALUES ($1,'USD','UTC','en-US',$2,$2)`,
       [businessId, now],
     );
+    await query(
+      `INSERT INTO business_users (business_id, user_id, role, status, invited_by, invited_at, accepted_at, created_at, updated_at)
+       VALUES ($1, $2, 'owner', 'active', $2, $3, $3, $3, $3)`,
+      [businessId, userId, now],
+    );
     await query("COMMIT");
   } catch (e) {
     await query("ROLLBACK");
@@ -489,6 +494,7 @@ app.post("/api/auth/register", authRateLimiter, async (req, res) => {
         email,
         countryCode: countryCode || "US",
         defaultCurrency: defaultCurrency || "USD",
+        role: "owner",
       },
     });
 });
@@ -516,13 +522,13 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
   const businessId = subResult.rows[0]?.business_id;
 
    // If 2FA is enabled, do NOT issue a token yet — require a second factor.
-  if (user.two_factor_enabled) {
-    return res.json({
-      requiresTwoFactor: true,
-      twoFactorMethod: user.two_factor_method ?? "totp",
-      user: { id: user.id, businessId, email: user.email },
-    });
-  }
+   if (user.two_factor_enabled) {
+     return res.json({
+       requiresTwoFactor: true,
+       twoFactorMethod: user.two_factor_method ?? "totp",
+       user: { id: user.id, businessId, email: user.email, role: "owner" },
+     });
+   }
 
   const { accessToken, refreshToken } = await generateTokenPair({
     userId: user.id,
@@ -531,7 +537,15 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
   });
   setRefreshTokenCookie(res, refreshToken);
   setAccessTokenCookie(res, accessToken);
-  res.json({ user: { id: user.id, businessId, email: user.email } });
+  const roleRes = await query(
+    `SELECT 'owner'::text as role FROM businesses WHERE id = $1 AND owner_id = $2
+     UNION ALL
+     SELECT role::text FROM business_users WHERE business_id = $1 AND user_id = $2 AND status = 'active'
+     LIMIT 1`,
+    [businessId, user.id],
+  );
+  const role = roleRes.rows[0]?.role ?? "owner";
+  res.json({ user: { id: user.id, businessId, email: user.email, role } });
 });
 
 app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
@@ -546,8 +560,19 @@ app.get("/api/auth/me", requireAuth, async (req: AuthRequest, res) => {
     const onboarding = businessId
       ? await onboardingService.getProgress(businessId)
       : null;
+    let role: string | null = null;
+    if (businessId) {
+      const roleRes = await query(
+        `SELECT 'owner'::text as role FROM businesses WHERE id = $1 AND owner_id = $2
+         UNION ALL
+         SELECT role::text FROM business_users WHERE business_id = $1 AND user_id = $2 AND status = 'active'
+         LIMIT 1`,
+        [businessId, req.user.id],
+      );
+      role = roleRes.rows[0]?.role ?? null;
+    }
     res.json({
-      user: req.user,
+      user: { ...req.user, role },
       subscription: sub,
       plan,
       twoFactor,
@@ -696,7 +721,7 @@ app.post("/api/auth/refresh", async (req: AuthRequest, res) => {
    setRefreshTokenCookie(res, newRefreshToken);
    setAccessTokenCookie(res, accessToken);
 
-   res.json({ user: { id: user.id, businessId, email: user.email } });
+    res.json({ user: { id: user.id, businessId, email: user.email, role: businessId ? "owner" : null } });
  });
 
   app.post("/api/auth/logout", async (req: AuthRequest, res) => {
@@ -4791,6 +4816,34 @@ app.delete("/api/tax-rates/:id", requireAuth, async (req: AuthRequest, res) => {
 // STRIPE WEBHOOK HANDLER
 // ============================================================================
 async function handleStripeEvent(event: any): Promise<void> {
+  const eventId = event.id;
+  const idempotencyKey = `stripe_webhook:${eventId}`;
+
+  const existing = await query(
+    `SELECT id FROM payment_events WHERE idempotency_key = $1 LIMIT 1`,
+    [idempotencyKey],
+  );
+  if (existing.rows.length) {
+    logger.info({ eventId, eventType: event.type }, "Stripe webhook event already processed — skipping");
+    return;
+  }
+
+  await query(
+    `INSERT INTO payment_events (business_id, payment_id, amount, currency, status, method, reference, idempotency_key, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+     ON CONFLICT (idempotency_key) DO NOTHING`,
+    [
+      event.data.object?.metadata?.businessId ?? null,
+      null,
+      0,
+      "USD",
+      "processed",
+      "stripe",
+      eventId,
+      idempotencyKey,
+    ],
+  );
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;

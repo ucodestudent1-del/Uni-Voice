@@ -52,6 +52,29 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  backup:
+    image: prodrigestivill/postgres-backup:16
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=invoice_prod
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PORT=5432
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=14
+      - BACKUP_KEEP_WEEKS=8
+      - BACKUP_KEEP_MONTHS=6
+      - DATA_DIR=/backups
+      - HEALTHCHECK_PORT=81
+    volumes:
+      - backup_data:/backups
+    restart: unless-stopped
+    networks:
+      - app-network
 
   redis:
     image: redis:7-alpine
@@ -72,3 +95,4 @@ networks:
 
 volumes:
   postgres_data:
+  backup_data:

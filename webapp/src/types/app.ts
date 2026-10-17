@@ -5,6 +5,7 @@ export interface User {
   id: string;
   businessId?: string;
   email?: string;
+  role?: string | null;
 }
 
 export interface AuthContextType {
