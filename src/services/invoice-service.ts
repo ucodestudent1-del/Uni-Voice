@@ -1,10 +1,11 @@
 import { Decimal } from "decimal.js";
-import { calculationEngine, type InvoiceCalculationInput, type LineItemInput, type FeeInput, type DiscountDefinition, type CalculatedLineItem, type CalculatedFee, computeTaxBreakdown } from "../domain/calculation.js";
+import { calculationEngine, type InvoiceCalculationInput, type LineItemInput, type FeeInput, type DiscountDefinition, type CalculatedLineItem, type CalculatedFee, type CalculationResult, computeTaxBreakdown } from "../domain/calculation.js";
 import { query, getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
 import { NotFoundError, BusinessLogicError, ConflictError } from "../domain/errors.js";
 import { invoiceNumberService, creditNoteNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
+import { enqueuePdfGeneration } from "../services/pdf-job-service.js";
 import { emailService } from "../services/email/email-service.js";
 import { stripeService } from "../services/payments/stripe-service.js";
 import { buildTemplateData, buildCreditNoteData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE } from "../services/templates/template-renderer.js";
@@ -68,6 +69,7 @@ export interface SendInvoiceResult {
   success: boolean;
   messageId: string;
   status: string;
+  invoice?: Record<string, unknown>;
 }
 
 export interface PaymentRecord {
@@ -206,15 +208,20 @@ export class InvoiceService {
 
       const invoiceId = invRes.rows[0].id;
 
-      for (const item of input.items) {
-        await client.query(
-          `INSERT INTO invoice_items (
-            invoice_id, product_id, description, quantity, unit, unit_price,
-            discount, discount_type, tax_rate, tax_name, tax_amount,
-            line_subtotal, line_total, sort_order, is_tax_inclusive
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-          [
-            invoiceId,
+      // Batch insert line items in a single query instead of N sequential queries
+      if (input.items.length > 0) {
+        const itemValues: string[] = [];
+        const itemParams: unknown[] = [invoiceId];
+        let paramIdx = 2;
+        for (const item of input.items) {
+          const calcItem = result.lineItems[itemValues.length];
+          const placeholders: string[] = [];
+          for (let j = 0; j < 14; j++) {
+            placeholders.push(`$${paramIdx + j}`);
+          }
+          paramIdx += 14;
+          itemValues.push("(" + placeholders.join(",") + ")");
+          itemParams.push(
             item.productId ?? null,
             item.description,
             item.quantity ?? 1,
@@ -224,28 +231,49 @@ export class InvoiceService {
             item.discountType ?? "fixed",
             item.taxRate ?? 0,
             item.taxName ?? null,
-            result.lineItems.find((li) => li.description === item.description)?.taxAmount.toFixed() ?? "0",
-            result.lineItems.find((li) => li.description === item.description)?.lineSubtotal.toFixed() ?? "0",
-            result.lineItems.find((li) => li.description === item.description)?.lineTotal.toFixed() ?? "0",
-            item.sortOrder ?? 0,
+            calcItem?.taxAmount.toFixed() ?? "0",
+            calcItem?.lineSubtotal.toFixed() ?? "0",
+            calcItem?.lineTotal.toFixed() ?? "0",
+            item.sortOrder ?? itemValues.length - 1,
             item.isTaxInclusive ?? false,
-          ]
+          );
+        }
+        await client.query(
+          `INSERT INTO invoice_items (
+            invoice_id, product_id, description, quantity, unit, unit_price,
+            discount, discount_type, tax_rate, tax_name, tax_amount,
+            line_subtotal, line_total, sort_order, is_tax_inclusive
+          ) VALUES ${itemValues.join(", ")}`,
+          itemParams
         );
       }
 
-      for (const fee of input.fees ?? []) {
-        await client.query(
-          `INSERT INTO invoice_fees (invoice_id, description, amount, tax_rate, tax_name, tax_amount, sort_order)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [
-            invoiceId,
+      // Batch insert fees in a single query
+      if (input.fees && input.fees.length > 0) {
+        const feeValues: string[] = [];
+        const feeParams: unknown[] = [invoiceId];
+        let paramIdx = 2;
+        for (const fee of input.fees) {
+          const calcFee = result.fees[feeValues.length];
+          const placeholders: string[] = [];
+          for (let j = 0; j < 6; j++) {
+            placeholders.push(`$${paramIdx + j}`);
+          }
+          paramIdx += 6;
+          feeValues.push("(" + placeholders.join(",") + ")");
+          feeParams.push(
             fee.description,
             fee.amount,
             fee.taxRate ?? 0,
             fee.taxName ?? null,
-            result.fees.find((f) => f.description === fee.description)?.taxAmount.toFixed() ?? "0",
-            fee.sortOrder ?? 0,
-          ]
+            calcFee?.taxAmount.toFixed() ?? "0",
+            fee.sortOrder ?? feeValues.length - 1,
+          );
+        }
+        await client.query(
+          `INSERT INTO invoice_fees (invoice_id, description, amount, tax_rate, tax_name, tax_amount, sort_order)
+           VALUES ${feeValues.join(", ")}`,
+          feeParams
         );
       }
 
@@ -257,9 +285,15 @@ export class InvoiceService {
 
       await client.query("COMMIT");
 
-      const invoice = await this.findById(businessId, invoiceId);
+      // Build response from transaction context instead of redundant findById
+      const invoiceRow = invRes.rows[0];
+      const children = await this.fetchInvoiceChildren(invoiceId);
       logger.info(`Created invoice ${invoiceId} for business ${businessId}`);
-      return invoice!;
+      return this.buildInvoiceResponse(invoiceRow, {
+        items: children.items,
+        fees: children.fees,
+        events: children.events,
+      });
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to create invoice for business ${businessId}`);
@@ -342,28 +376,41 @@ export class InvoiceService {
         );
       }
 
+       let calcResult: CalculationResult | null = null;
+      const getCalcResult = () => {
+        if (!calcResult) {
+          const calcInput = this.toCalcInput({
+            customerId: input.customerId ?? invoice.customer_id,
+            currency: input.currency ?? invoice.currency,
+            items: input.items ?? [],
+            fees: input.fees,
+            invoiceDiscount: input.invoiceDiscount ?? invoice.invoice_discount_value,
+            invoiceDiscountType: input.invoiceDiscountType ?? invoice.invoice_discount_type,
+          });
+          calcResult = calculationEngine.calculate(calcInput);
+        }
+        return calcResult;
+      };
+
       if (input.items !== undefined) {
         await client.query(`DELETE FROM invoice_items WHERE invoice_id = $1`, [invoiceId]);
-        const calcInput = this.toCalcInput({
-          customerId: input.customerId ?? invoice.customer_id,
-          currency: input.currency ?? invoice.currency,
-          items: input.items,
-          fees: input.fees,
-          invoiceDiscount: input.invoiceDiscount ?? invoice.invoice_discount_value,
-          invoiceDiscountType: input.invoiceDiscountType ?? invoice.invoice_discount_type,
-        });
-        const result = calculationEngine.calculate(calcInput);
-        for (let idx = 0; idx < input.items.length; idx++) {
-          const item = input.items[idx];
-          const calcItem = result.lineItems[idx];
-          await client.query(
-            `INSERT INTO invoice_items (
-              invoice_id, product_id, description, quantity, unit, unit_price,
-              discount, discount_type, tax_rate, tax_name, tax_amount,
-              line_subtotal, line_total, sort_order, is_tax_inclusive
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-            [
-              invoiceId,
+        const result = getCalcResult();
+
+        // Batch insert line items in a single query
+        if (input.items.length > 0) {
+          const itemValues: string[] = [];
+          const itemParams: unknown[] = [invoiceId];
+          let paramIdx = 2;
+          for (let idx = 0; idx < input.items.length; idx++) {
+            const item = input.items[idx];
+            const calcItem = result.lineItems[idx];
+            const placeholders: string[] = [];
+            for (let j = 0; j < 14; j++) {
+              placeholders.push(`$${paramIdx + j}`);
+            }
+            paramIdx += 14;
+            itemValues.push("(" + placeholders.join(",") + ")");
+            itemParams.push(
               item.productId ?? null,
               item.description,
               item.quantity ?? 1,
@@ -378,7 +425,15 @@ export class InvoiceService {
               calcItem?.lineTotal.toFixed() ?? "0",
               item.sortOrder ?? idx,
               item.isTaxInclusive ?? false,
-            ]
+            );
+          }
+          await client.query(
+            `INSERT INTO invoice_items (
+              invoice_id, product_id, description, quantity, unit, unit_price,
+              discount, discount_type, tax_rate, tax_name, tax_amount,
+              line_subtotal, line_total, sort_order, is_tax_inclusive
+            ) VALUES ${itemValues.join(", ")}`,
+            itemParams
           );
         }
 
@@ -403,12 +458,33 @@ export class InvoiceService {
 
       if (input.fees !== undefined) {
         await client.query(`DELETE FROM invoice_fees WHERE invoice_id = $1`, [invoiceId]);
-        for (let idx = 0; idx < input.fees.length; idx++) {
-          const fee = input.fees[idx];
+        if (input.fees.length > 0) {
+          const result = getCalcResult();
+          const feeValues: string[] = [];
+          const feeParams: unknown[] = [invoiceId];
+          let paramIdx = 2;
+          for (let idx = 0; idx < input.fees.length; idx++) {
+            const fee = input.fees[idx];
+            const calcFee = result.fees[idx];
+            const placeholders: string[] = [];
+            for (let j = 0; j < 6; j++) {
+              placeholders.push(`$${paramIdx + j}`);
+            }
+            paramIdx += 6;
+            feeValues.push("(" + placeholders.join(",") + ")");
+            feeParams.push(
+              fee.description,
+              fee.amount,
+              fee.taxRate ?? 0,
+              fee.taxName ?? null,
+              calcFee?.taxAmount.toFixed() ?? "0",
+              fee.sortOrder ?? idx,
+            );
+          }
           await client.query(
             `INSERT INTO invoice_fees (invoice_id, description, amount, tax_rate, tax_name, tax_amount, sort_order)
-             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-            [invoiceId, fee.description, fee.amount, fee.taxRate ?? 0, fee.taxName ?? null, "0", fee.sortOrder ?? idx]
+             VALUES ${feeValues.join(", ")}`,
+            feeParams
           );
         }
       }
@@ -421,9 +497,30 @@ export class InvoiceService {
 
       await client.query("COMMIT");
 
-      const updated = await this.findById(businessId, invoiceId);
+      // Build response from transaction context instead of redundant findById
+      const updatedInvoiceRow = await client.query(
+        `SELECT i.*,
+                i.subtotal as "subtotal",
+                i.discount_total as "discount_total",
+                i.tax_total as "tax_total",
+                i.fee_total as "fee_total",
+                i.total as "total",
+                i.amount_paid as "amount_paid",
+                i.amount_due as "amount_due",
+                c.name as "customer_name",
+                c.email as "customer_email"
+         FROM invoices i
+         LEFT JOIN customers c ON i.customer_id = c.id AND c.business_id = i.business_id
+         WHERE i.id = $1 AND i.business_id = $2`,
+        [invoiceId, businessId]
+      );
+      const children = await this.fetchInvoiceChildren(invoiceId);
       logger.info(`Updated invoice ${invoiceId} for business ${businessId}`);
-      return updated!;
+      return this.buildInvoiceResponse(updatedInvoiceRow.rows[0], {
+        items: children.items,
+        fees: children.fees,
+        events: children.events,
+      });
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to update invoice ${invoiceId}`);
@@ -456,7 +553,8 @@ export class InvoiceService {
         throw new BusinessLogicError("Invoice is already finalized", "ALREADY_FINALIZED");
       }
 
-      const calcInput = await this.buildCalculationInput(businessId, invoiceId, invoice.currency);
+      // Fetch items/fees/discounts in the same transaction and compute in parallel
+      const calcInput = await this.buildCalculationInput(businessId, invoiceId, invoice.currency, client);
       const result = calculationEngine.calculate(calcInput);
 
       const subtotal = new Decimal(invoice.subtotal);
@@ -520,10 +618,29 @@ export class InvoiceService {
 
       await client.query("COMMIT");
 
-      const finalizedInvoice = await this.findById(businessId, invoiceId);
+      // Build finalized invoice row from the transaction context
+      const finalizedInvoiceRow = {
+        ...invoice,
+        invoice_number: invoiceNumber,
+        is_finalized: true,
+        finalized_at: new Date().toISOString(),
+        status: "sent",
+        version: Number(invoice.version) + 1,
+        updated_at: new Date().toISOString(),
+      };
+      // Fetch children for the response
+      const children = await this.fetchInvoiceChildren(invoiceId);
+      const finalizedInvoice = this.buildInvoiceResponse(finalizedInvoiceRow, {
+        items: children.items,
+        fees: children.fees,
+        events: children.events,
+      });
       logger.info(`Finalized invoice ${invoiceId} with number ${invoiceNumber}`);
 
-      return { invoice: finalizedInvoice!, invoiceNumber, status: (finalizedInvoice as any)?.status ?? "sent" };
+      // Fire-and-forget: enqueue PDF generation so it's cached before send()
+      void enqueuePdfGeneration(businessId, invoiceId, "invoice");
+
+      return { invoice: finalizedInvoice, invoiceNumber, status: (finalizedInvoice as any)?.status ?? "sent" };
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to finalize invoice ${invoiceId}`);
@@ -563,10 +680,42 @@ export class InvoiceService {
         throw new BusinessLogicError("Invoice must be finalized before sending", "NOT_FINALIZED");
       }
 
-      const fullInvoice = await this.findById(businessId, invoiceId);
-      if (!fullInvoice) throw new NotFoundError(`Invoice ${invoiceId} not found`);
-      const pdf = await this.generatePdf(businessId, invoiceId, fullInvoice);
-      const html = await this.renderInvoiceEmail(businessId, invoiceId, fullInvoice as any, data.message);
+      // Fetch children in the same transaction to avoid a separate findById round-trip
+      const [itemsRes, feesRes, eventsRes] = await Promise.all([
+        client.query(
+          `SELECT *, discount_type as "discount_type", is_tax_inclusive as "is_tax_inclusive"
+           FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order, created_at`,
+          [invoiceId]
+        ),
+        client.query(
+          `SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`,
+          [invoiceId]
+        ),
+        client.query(
+          `SELECT id, event_type, actor_id, actor_type, metadata, created_at
+           FROM invoice_events WHERE invoice_id = $1 ORDER BY created_at ASC`,
+          [invoiceId]
+        ),
+      ]);
+
+      // Join customer name/email into the invoice row (already in FOR UPDATE row, but ensure consistency)
+      const fullNameInvoice = {
+        ...invoice,
+        items: itemsRes.rows,
+        fees: feesRes.rows,
+        events: eventsRes.rows,
+      };
+
+      // Fetch business and customer once to pass to both PDF and email rendering
+      const [business, customer] = await Promise.all([
+        this.fetchBusiness(businessId),
+        invoice.customer_id
+          ? this.fetchCustomer(businessId, invoice.customer_id as string)
+          : Promise.resolve(null),
+      ]);
+
+      const pdf = await this.generatePdf(businessId, invoiceId, fullNameInvoice, { business, customer });
+      const html = await this.renderInvoiceEmail(businessId, invoiceId, fullNameInvoice as any, data.message, { business, customer });
 
       const idempotencyKey = `invoice-send:${invoiceId}:${crypto.randomUUID()}`;
       const result = await emailService.sendInvoiceEmail({
@@ -591,9 +740,24 @@ export class InvoiceService {
         [invoiceId, userId ?? null, JSON.stringify({ email: data.to, message_id: result.messageId })]
       );
 
+      const sentInvoiceRow = {
+        ...invoice,
+        sent_at: new Date().toISOString(),
+        status: "sent",
+        version: Number(invoice.version) + 1,
+        updated_at: new Date().toISOString(),
+      };
+      const sentChildren = await this.fetchInvoiceChildren(invoiceId);
+      const sentInvoice = this.buildInvoiceResponse(sentInvoiceRow, {
+        items: sentChildren.items,
+        fees: sentChildren.fees,
+        events: sentChildren.events,
+        payments: sentChildren.payments,
+      });
+
       await client.query("COMMIT");
       logger.info(`Sent invoice ${invoiceId} to ${data.to}`);
-      return { ok: true, success: true, messageId: result.messageId, status: result.status };
+      return { ok: true, success: true, messageId: result.messageId, status: result.status, invoice: sentInvoice };
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to send invoice ${invoiceId}`);
@@ -689,7 +853,13 @@ export class InvoiceService {
         if (dupe.rows.length) {
           await client.query("ROLLBACK");
           logger.info(`Payment already recorded (idempotent): ${data.idempotencyKey}`);
-          return this.findById(businessId, invoiceId) as any;
+          const children = await this.fetchInvoiceChildren(invoiceId);
+          return this.buildInvoiceResponse(invoice, {
+            items: children.items,
+            fees: children.fees,
+            payments: dupe.rows,
+            events: children.events,
+          });
         }
       }
 
@@ -746,11 +916,24 @@ export class InvoiceService {
         [invoiceId, userId ?? null, JSON.stringify({ amount: paymentAmount.toFixed(), method: data.method, provider: data.provider })]
       );
 
+      const updatedInvoiceRow = {
+        ...invoice,
+        amount_paid: newAmountPaid.toFixed(),
+        amount_due: amountDue.gt(0) ? amountDue.toFixed() : "0",
+        status: newStatus,
+        version: Number(invoice.version) + 1,
+        updated_at: new Date().toISOString(),
+        ...(newStatus === "paid" ? { paid_at: new Date().toISOString() } : {}),
+      };
+      const children = await this.fetchInvoiceChildren(invoiceId);
       await client.query("COMMIT");
-
-      const updated = await this.findById(businessId, invoiceId);
       logger.info(`Recorded payment of ${paymentAmount.toFixed()} for invoice ${invoiceId}, status → ${newStatus}`);
-      return updated!;
+      return this.buildInvoiceResponse(updatedInvoiceRow, {
+        items: children.items,
+        fees: children.fees,
+        payments: children.payments,
+        events: children.events,
+      });
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to record payment for invoice ${invoiceId}`);
@@ -799,10 +982,41 @@ export class InvoiceService {
         throw new BusinessLogicError("Invoice must be finalized before sending a reminder", "NOT_FINALIZED");
       }
 
-      const fullInvoice = await this.findById(businessId, invoiceId);
-      if (!fullInvoice) throw new NotFoundError(`Invoice ${invoiceId} not found`);
-      const pdf = await this.generatePdf(businessId, invoiceId, fullInvoice);
-      const html = await this.renderInvoiceEmail(businessId, invoiceId, fullInvoice as any, data.message, { isReminder: true });
+      // Fetch children in the same transaction to avoid a separate findById round-trip
+      const [itemsRes, feesRes, eventsRes] = await Promise.all([
+        client.query(
+          `SELECT *, discount_type as "discount_type", is_tax_inclusive as "is_tax_inclusive"
+           FROM invoice_items WHERE invoice_id = $1 ORDER BY sort_order, created_at`,
+          [invoiceId]
+        ),
+        client.query(
+          `SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`,
+          [invoiceId]
+        ),
+        client.query(
+          `SELECT id, event_type, actor_id, actor_type, metadata, created_at
+           FROM invoice_events WHERE invoice_id = $1 ORDER BY created_at ASC`,
+          [invoiceId]
+        ),
+      ]);
+
+      const fullInvoice = {
+        ...invoice,
+        items: itemsRes.rows,
+        fees: feesRes.rows,
+        events: eventsRes.rows,
+      };
+
+      // Fetch business and customer once to pass to both PDF and email rendering
+      const [business, customer] = await Promise.all([
+        this.fetchBusiness(businessId),
+        invoice.customer_id
+          ? this.fetchCustomer(businessId, invoice.customer_id as string)
+          : Promise.resolve(null),
+      ]);
+
+      const pdf = await this.generatePdf(businessId, invoiceId, fullInvoice, { business, customer });
+      const html = await this.renderInvoiceEmail(businessId, invoiceId, fullInvoice as any, data.message, { isReminder: true, business, customer });
 
       const idempotencyKey = `invoice-reminder:${invoiceId}:${crypto.randomUUID()}`;
       const recipient = data.to ?? invoice.customer_email ?? "";
@@ -924,9 +1138,23 @@ export class InvoiceService {
       );
 
       await client.query("COMMIT");
-      const updated = await this.findById(businessId, invoiceId);
+      const updatedInvoiceRow = {
+        ...invoice,
+        status: "void",
+        amount_due: "0",
+        cancelled_at: new Date().toISOString(),
+        cancelled_reason: reason,
+        version: Number(invoice.version) + 1,
+        updated_at: new Date().toISOString(),
+      };
+      const children = await this.fetchInvoiceChildren(invoiceId);
       logger.info(`Voided invoice ${invoiceId}: ${reason}`);
-      return updated!;
+      return this.buildInvoiceResponse(updatedInvoiceRow, {
+        items: children.items,
+        fees: children.fees,
+        payments: children.payments,
+        events: children.events,
+      });
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;
@@ -983,10 +1211,27 @@ export class InvoiceService {
         [invoiceId, nextStatus === "cancelled" ? "cancelled" : nextStatus, userId ?? null, JSON.stringify(metadata)]
       );
 
+      const updatedInvoiceRow = {
+        ...invoice,
+        status: nextStatus,
+        version: Number(invoice.version) + 1,
+        updated_at: new Date().toISOString(),
+        ...(nextStatus === "cancelled"
+          ? {
+              cancelled_at: new Date().toISOString(),
+              cancelled_reason: metadata.reason,
+            }
+          : {}),
+      };
       await client.query("COMMIT");
-      const updated = await this.findById(businessId, invoiceId);
+      const children = await this.fetchInvoiceChildren(invoiceId);
       logger.info(`Invoice ${invoiceId} status → ${nextStatus}`);
-      return updated!;
+      return this.buildInvoiceResponse(updatedInvoiceRow, {
+        items: children.items,
+        fees: children.fees,
+        payments: children.payments,
+        events: children.events,
+      });
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;
@@ -1047,6 +1292,76 @@ export class InvoiceService {
     return {
       ...invoice,
       status: effectiveStatus,
+      items: itemsRes.rows,
+      fees: feesRes.rows,
+      payments: paymentsRes.rows,
+      events: eventsRes.rows,
+    };
+  }
+
+  /**
+   * Build a full invoice response object from a DB row plus optional child
+   * records, avoiding a redundant `findById` re-fetch inside transactions.
+   *
+   * Usage: after COMMIT, use the invoice row + items/fees/payments/events rows
+   * that were already loaded or modified during the transaction to construct the
+   * response directly instead of issuing 4 additional SELECT queries.
+   */
+  private buildInvoiceResponse(
+    invoiceRow: Record<string, unknown>,
+    children?: {
+      items?: Record<string, unknown>[];
+      fees?: Record<string, unknown>[];
+      payments?: Record<string, unknown>[];
+      events?: Record<string, unknown>[];
+    },
+  ): Record<string, unknown> {
+    const effectiveStatus = computeEffectiveStatus(
+      invoiceRow.status as string,
+      invoiceRow.due_date as string,
+      invoiceRow.amount_due as string,
+    );
+
+    return {
+      ...invoiceRow,
+      status: effectiveStatus,
+      items: children?.items ?? [],
+      fees: children?.fees ?? [],
+      payments: children?.payments ?? [],
+      events: children?.events ?? [],
+    };
+  }
+
+  /**
+   * Fetch all child records for an invoice in a single concurrent batch.
+   * Used when child data is needed but wasn't already loaded during a transaction.
+   */
+  private async fetchInvoiceChildren(invoiceId: string) {
+    const [itemsRes, feesRes, paymentsRes, eventsRes] = await Promise.all([
+      query(
+        `SELECT *, discount_type as "discount_type", is_tax_inclusive as "is_tax_inclusive"
+         FROM invoice_items
+         WHERE invoice_id = $1
+         ORDER BY sort_order, created_at`,
+        [invoiceId]
+      ),
+      query(
+        `SELECT * FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`,
+        [invoiceId]
+      ),
+      query(
+        `SELECT id, amount, currency, status, method, provider, provider_payment_id, paid_at, created_at
+         FROM payments WHERE invoice_id = $1 ORDER BY created_at DESC`,
+        [invoiceId]
+      ),
+      query(
+        `SELECT id, event_type, actor_id, actor_type, metadata, created_at
+         FROM invoice_events WHERE invoice_id = $1 ORDER BY created_at ASC`,
+        [invoiceId]
+      ),
+    ]);
+
+    return {
       items: itemsRes.rows,
       fees: feesRes.rows,
       payments: paymentsRes.rows,
@@ -1299,20 +1614,33 @@ export class InvoiceService {
   private async buildCalculationInput(
     businessId: string,
     invoiceId: string,
-    currency: string
+    currency: string,
+    client?: { query: (text: string, params: unknown[]) => Promise<{ rows: unknown[] }> }
   ): Promise<InvoiceCalculationInput> {
-    const itemsRes = await query(
-      `SELECT description, quantity, unit, unit_price, discount, discount_type,
-              tax_rate, tax_name, is_tax_inclusive, sort_order
-       FROM invoice_items
-       WHERE invoice_id = $1 ORDER BY sort_order`,
-      [invoiceId]
-    );
-    const feesRes = await query(
-      `SELECT description, amount, tax_rate, tax_name, sort_order
-       FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`,
-      [invoiceId]
-    );
+    const q = client ? (t: string, p: unknown[]) => client.query(t, p) : query;
+    const [itemsRes, feesRes, invoiceRes] = await Promise.all([
+      q(
+        `SELECT description, quantity, unit, unit_price, discount, discount_type,
+                tax_rate, tax_name, is_tax_inclusive, sort_order
+         FROM invoice_items
+         WHERE invoice_id = $1 ORDER BY sort_order`,
+        [invoiceId]
+      ),
+      q(
+        `SELECT description, amount, tax_rate, tax_name, sort_order
+         FROM invoice_fees WHERE invoice_id = $1 ORDER BY sort_order`,
+        [invoiceId]
+      ),
+      q(
+        `SELECT invoice_discount_value, invoice_discount_type, amount_paid
+         FROM invoices WHERE id = $1 AND business_id = $2`,
+        [invoiceId, businessId]
+      ),
+    ]) as [
+      { rows: Record<string, unknown>[] },
+      { rows: Record<string, unknown>[] },
+      { rows: Record<string, unknown>[] }
+    ];
 
     const lineItems: LineItemInput[] = itemsRes.rows.map((row: Record<string, unknown>) => ({
       description: row.description as string,
@@ -1336,14 +1664,8 @@ export class InvoiceService {
       sortOrder: Number(row.sort_order),
     }));
 
-    const invoiceRes = await query(
-      `SELECT invoice_discount_value, invoice_discount_type, amount_paid
-       FROM invoices WHERE id = $1 AND business_id = $2`,
-      [invoiceId, businessId]
-    );
-
-    const inv = invoiceRes.rows[0];
-    const discountValue = new Decimal(inv?.invoice_discount_value ?? 0);
+     const inv = invoiceRes.rows[0] as Record<string, unknown>;
+    const discountValue = new Decimal((inv?.invoice_discount_value as string) ?? 0);
     const invoiceDiscount: DiscountDefinition | undefined = discountValue.gt(0)
       ? { type: (inv?.invoice_discount_type ?? "fixed") as "fixed" | "percentage", value: discountValue }
       : undefined;
@@ -1353,7 +1675,7 @@ export class InvoiceService {
       lineItems,
       fees: fees.length > 0 ? fees : undefined,
       invoiceDiscount,
-      amountPaid: inv ? new Decimal(inv.amount_paid ?? 0) : undefined,
+      amountPaid: inv ? new Decimal((inv.amount_paid as string) ?? 0) : undefined,
     };
   }
 
@@ -1456,7 +1778,8 @@ export class InvoiceService {
   async generatePdf(
     businessId: string,
     invoiceId: string,
-    invoice: Record<string, unknown>
+    invoice: Record<string, unknown>,
+    opts?: { business?: TemplateBusiness; customer?: TemplateCustomer | null }
   ): Promise<Buffer> {
     const cached = await query(
       `SELECT pdf_cache, pdf_cache_hash FROM invoices WHERE id = $1`,
@@ -1467,10 +1790,10 @@ export class InvoiceService {
       return cached.rows[0].pdf_cache;
     }
 
-    const business = await this.fetchBusiness(businessId);
-    const customer = invoice.customer_id
+    const business = opts?.business ?? await this.fetchBusiness(businessId);
+    const customer = opts?.customer ?? (invoice.customer_id
       ? await this.fetchCustomer(businessId, invoice.customer_id as string)
-      : null;
+      : null);
 
     // Derive payment terms from customer
     const paymentTerms = customer?.paymentTerms ? `Net ${customer.paymentTerms}` : undefined;
@@ -1764,12 +2087,12 @@ export class InvoiceService {
     invoiceId: string,
     invoice: Record<string, unknown>,
     customMessage?: string,
-    options?: { isReminder?: boolean }
+    options?: { isReminder?: boolean; business?: TemplateBusiness; customer?: TemplateCustomer | null }
   ): Promise<string> {
-    const business = await this.fetchBusiness(businessId);
-    const customer = invoice.customer_id
+    const business = options?.business ?? await this.fetchBusiness(businessId);
+    const customer = options?.customer ?? (invoice.customer_id
       ? await this.fetchCustomer(businessId, invoice.customer_id as string)
-      : null;
+      : null);
 
     const template = await this.getInvoiceEmailTemplate();
     return template({

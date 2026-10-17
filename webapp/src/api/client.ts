@@ -1582,6 +1582,100 @@ export async function getInvoice(id: string): Promise<{ invoice: ApiInvoice }> {
   return res.data;
 }
 
+// --- Speed Optimization API ---
+
+export interface SpeedParsedLineItem {
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  taxRate: number;
+  productId?: string | null;
+  catalogMatch?: {
+    name: string;
+    unitPrice: string;
+    taxRate: string;
+    confidence: number;
+  } | null;
+}
+
+export interface SpeedAutofillResult {
+  customerId?: string | null;
+  currency?: string;
+  issueDate?: string;
+  dueDate?: string;
+  notes?: string | null;
+  terms?: string | null;
+  paymentInstructions?: string | null;
+  templateId?: string | null;
+  taxRate?: string;
+  depositType?: "none" | "fixed" | "percentage";
+  depositValue?: string;
+  depositDueDate?: string | null;
+  depositPaymentPurpose?: string | null;
+  lateFeeType?: "none" | "fixed" | "percentage";
+  lateFeeValue?: string;
+  lateFeeDueDate?: string | null;
+  poNumber?: string | null;
+}
+
+export interface SpeedFrequentlyInvoicedItem {
+  id: string;
+  name: string;
+  description: string | null;
+  unitPrice: string;
+  unit: string;
+  taxRate: string;
+  frequencyScore: number;
+  lastUsed: Date | null;
+}
+
+export interface SpeedLastInvoiceInfo {
+  invoiceId: string;
+  invoiceNumber?: string | null;
+  customer: { id: string; name: string; email?: string | null };
+  items: Array<{
+    description: string;
+    quantity: string;
+    unit: string;
+    unitPrice: string;
+    taxRate: string;
+    productId?: string | null;
+    catalogName?: string | null;
+  }>;
+  currency: string;
+  terms?: string | null;
+  notes?: string | null;
+  paymentInstructions?: string | null;
+  templateId?: string | null;
+  total: string;
+  sentAt?: Date | null;
+  isDraft: boolean;
+}
+
+export interface SpeedQuickActions {
+  lastInvoice: SpeedLastInvoiceInfo | null;
+  frequentlyInvoiced: SpeedFrequentlyInvoicedItem[];
+  recentCustomers: Array<{ id: string; name: string; email?: string | null }>;
+  hasDraft: boolean;
+  draftInfo: { id: string; customerId?: string | null; itemCount: number } | null;
+}
+
+export async function getSuggestedActions(): Promise<SpeedQuickActions> {
+  const res = await api.get("/suggested-actions");
+  return res.data;
+}
+
+export async function getProgressiveAutofill(customerId?: string | null): Promise<SpeedAutofillResult> {
+  const res = await api.get("/progressive-autofill", { params: customerId ? { customerId } : undefined });
+  return res.data;
+}
+
+export async function parseCommandLine(input: string): Promise<{ parsed: SpeedParsedLineItem }> {
+  const res = await api.post("/parse-command-line", { input });
+  return res.data;
+}
+
 export interface CreateInvoiceItemInput {
   description: string;
   quantity: string | number;

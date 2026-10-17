@@ -77,13 +77,20 @@ import {
   type CreateCreditNoteInput,
   getInvoices,
   type ApiInvoiceListItem,
+  getSuggestedActions,
+  getProgressiveAutofill,
+  parseCommandLine,
+  type SpeedQuickActions,
+  type SpeedParsedLineItem,
+  type SpeedLastInvoiceInfo,
+  type SpeedAutofillResult,
 } from "@/api/client";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useMetaTags } from "@/hooks/useMetaTags";
 
-const AUTO_SAVE_DELAY = 500;
+const AUTO_SAVE_DELAY = 1500;
 
 const PAYMENT_TERMS = [
   { value: "custom", label: "Custom" },
@@ -265,6 +272,9 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
   const [availableReferenceInvoices, setAvailableReferenceInvoices] = useState<ApiInvoiceListItem[]>([]);
+  const [quickActions, setQuickActions] = useState<SpeedQuickActions | null>(null);
+  const [commandBarValue, setCommandBarValue] = useState("");
+  const [isParsingCommand, setIsParsingCommand] = useState(false);
 
   const [sendData, setSendData] = useState({
     to: "",
@@ -306,6 +316,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commandBarInputRef = useRef<HTMLInputElement>(null);
 
   const isFinalized = document?.is_finalized ?? false;
 
@@ -316,7 +327,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     })
   );
 
-  useEffect(() => {
+   useEffect(() => {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
     getBusiness().then((d) => setBusiness(d.business ?? d)).catch(() => {});
     getTaxRates().then((d) => setTaxRates(d.taxRates ?? d.rates ?? [])).catch(() => {});
@@ -325,10 +336,43 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     };
     loadProducts();
 
+    // Fetch quick actions (last invoice, frequent items, recent customers, draft)
+    getSuggestedActions().then((d) => setQuickActions(d)).catch(() => {});
+
     if (docType === "credit-note") {
       getInvoices({ limit: 100 }).then((d) => setAvailableReferenceInvoices(d.invoices ?? [])).catch(() => {});
     }
-  }, [docType]);
+
+    // Apply progressive autofill for new documents
+    if (isNew) {
+      getProgressiveAutofill(null).then((af: SpeedAutofillResult) => {
+        setState((prev) => ({
+          ...prev,
+          currency: af.currency ?? prev.currency,
+          issueDate: af.issueDate ?? prev.issueDate,
+          dueDate: af.dueDate ?? prev.dueDate,
+          terms: af.terms ?? prev.terms,
+          notes: af.notes ?? prev.notes,
+          paymentInstructions: af.paymentInstructions ?? prev.paymentInstructions,
+        }));
+      }).catch(() => {});
+    }
+  }, [docType, isNew]);
+
+   // Apply progressive autofill when customer is selected on a new document
+  useEffect(() => {
+    if (!isNew || !state.customerId || !docType || docType !== "invoice") return;
+    getProgressiveAutofill(state.customerId).then((af: SpeedAutofillResult) => {
+      setState((prev) => ({
+        ...prev,
+        currency: af.currency ?? prev.currency,
+        terms: af.terms ?? prev.terms,
+        notes: af.notes ?? prev.notes,
+        paymentInstructions: af.paymentInstructions ?? prev.paymentInstructions,
+        dueDate: af.dueDate ?? prev.dueDate,
+      }));
+    }).catch(() => {});
+  }, [state.customerId, isNew, docType]);
 
   useEffect(() => {
     if (isNew || !document) return;
@@ -612,6 +656,11 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     onSend: () => !isSending && (document?.is_finalized ? setSendDialogOpen(true) : handleFinalizeAndSend()),
     onAddItem: () => handleAddItem(),
     onAddFee: () => handleAddFee(),
+    onFocusSearch: () => {
+      if (!isFinalized && isNew && commandBarInputRef.current) {
+        commandBarInputRef.current.focus();
+      }
+    },
   });
 
   function docTypeLabel(type: DocumentType): string {
@@ -720,11 +769,10 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
     setIsSending(true);
     try {
-      if (docType === "invoice") {
+       if (docType === "invoice") {
         const result: SendInvoiceResult = await sendInvoice(doc.id, sendData);
         toast(`Invoice sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
-        const refreshed = await getInvoice(doc.id);
-        setDocument(refreshed.invoice);
+        setDocument(result.invoice ?? doc);
       } else if (docType === "quote") {
         await sendQuote(doc.id, sendData);
         toast(`Quotation sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
@@ -844,6 +892,65 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       ...prev,
       items: [...prev.items, initialLineItem()],
     }));
+  };
+
+  const handleCommandBarParse = async () => {
+    if (!commandBarValue.trim()) return;
+    setIsParsingCommand(true);
+    try {
+      const { parsed } = await parseCommandLine(commandBarValue);
+      if (parsed) {
+        const newItem: DocumentLineItem = {
+          description: parsed.description,
+          quantity: String(parsed.quantity > 0 ? parsed.quantity : 1),
+          unit: parsed.unit,
+          unitPrice: String(parsed.unitPrice),
+          taxRate: String(parsed.taxRate),
+          taxName: "",
+          isTaxInclusive: false,
+          discount: "0",
+          discountType: "fixed",
+          productId: parsed.productId ?? null,
+          isOptional: false,
+        };
+        setState((prev) => ({
+          ...prev,
+          items: [...prev.items, newItem],
+        }));
+        setCommandBarValue("");
+      }
+    } catch (err: any) {
+      toast(err.message, { type: "error", title: "Parse failed" });
+    } finally {
+      setIsParsingCommand(false);
+    }
+  };
+
+  const handleUseLastInvoice = () => {
+    if (!quickActions?.lastInvoice) return;
+    const last = quickActions.lastInvoice;
+    setState((prev) => ({
+      ...prev,
+      customerId: last.customer.id || prev.customerId,
+      currency: last.currency || prev.currency,
+      notes: last.notes ?? prev.notes,
+      terms: last.terms ?? prev.terms,
+      paymentInstructions: last.paymentInstructions ?? prev.paymentInstructions,
+      items: last.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unit: item.unit,
+        unitPrice: item.unitPrice,
+        taxRate: item.taxRate,
+        taxName: "",
+        isTaxInclusive: false,
+        discount: "0",
+        discountType: "fixed",
+        productId: item.productId ?? null,
+        isOptional: false,
+      })),
+    }));
+    setCommandBarValue("");
   };
 
   const handleRemoveItem = (idx: number) => {
@@ -1087,9 +1194,88 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
             )}
           </div>
         }
-      />
+       />
 
-       <div className="flex-1 overflow-hidden">
+       {/* Command bar + quick actions — only for new/draft documents */}
+       {!isFinalized && isNew && (
+         <div className="px-6 py-4 border-b border-color bg-surface-alt space-y-3">
+           <div className="flex gap-2">
+             <div className="flex-1 relative">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
+               <input
+                 ref={commandBarInputRef}
+                 type="text"
+                 placeholder='Type a line item: "3 x Logo design @ $150" or "Drain repair — 1 hr @ $120/hr"'
+                 value={commandBarValue}
+                 onChange={(e) => setCommandBarValue(e.target.value)}
+                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCommandBarParse(); } }}
+                 className="w-full pl-10 pr-3 py-2 border border-color rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+               />
+               {isParsingCommand && (
+                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-tertiary" />
+               )}
+             </div>
+             <Button
+               variant="ghost"
+               size="sm"
+               icon={<Plus className="h-4 w-4" />}
+               onClick={handleAddItem}
+               disabled={isParsingCommand}
+             >
+               Add Line
+             </Button>
+           </div>
+
+           {/* Frequently invoiced item chips */}
+           {quickActions?.frequentlyInvoiced && quickActions.frequentlyInvoiced.length > 0 && (
+             <div className="flex flex-wrap gap-2">
+               <span className="text-xs text-tertiary">Frequently used:</span>
+               {quickActions.frequentlyInvoiced.slice(0, 6).map((fi) => (
+                 <button
+                   key={fi.id ?? fi.name}
+                   type="button"
+                   onClick={() => {
+                     const newItem: DocumentLineItem = {
+                       description: fi.name,
+                       quantity: "1",
+                       unit: fi.unit,
+                       unitPrice: fi.unitPrice,
+                       taxRate: fi.taxRate,
+                       taxName: "",
+                       isTaxInclusive: false,
+                       discount: "0",
+                       discountType: "fixed",
+                       productId: fi.id ?? null,
+                       isOptional: false,
+                     };
+                     setState((prev) => ({
+                       ...prev,
+                       items: [...prev.items, newItem],
+                     }));
+                   }}
+                   className="px-3 py-1 text-xs rounded-md bg-surface border border-color hover:bg-surface-alt transition-colors"
+                 >
+                   {fi.name} — {fi.unitPrice}
+                 </button>
+               ))}
+             </div>
+           )}
+
+           {/* Use last invoice quick action */}
+           {quickActions?.lastInvoice && (
+             <button
+               type="button"
+               onClick={handleUseLastInvoice}
+               className="text-xs text-primary hover:underline flex items-center gap-1"
+             >
+               <Copy className="h-3 w-3" />
+               Use last invoice for {quickActions.lastInvoice.customer?.name ?? "this customer"}
+             </button>
+           )}
+         </div>
+       )}
+
+        <div className="flex-1 overflow-hidden">
          {/* Mobile tab toggle — hidden on desktop */}
          <div className="lg:hidden flex border-b border-color bg-surface">
            <button

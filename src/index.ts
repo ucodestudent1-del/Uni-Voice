@@ -1696,9 +1696,10 @@ app.post(
         req.params.id,
         req.user!.id,
       );
-      res.json({
+       res.json({
         invoice: result.invoice,
         invoiceNumber: result.invoiceNumber,
+        status: result.status,
       });
     } catch (err) {
       next(err);
