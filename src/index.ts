@@ -2360,13 +2360,12 @@ app.post("/api/quotes/:id/send", emailSendRateLimiter, requireAuth, async (req: 
       req.body,
       req.user!.id
     );
-    const quote = await quoteService.findById(req.user!.businessId, req.params.id);
     res.json({
       success: result.success,
       messageId: result.messageId,
       status: result.status,
       sentAt: new Date().toISOString(),
-      quote,
+      quote: result.quote,
     });
   } catch (err) {
     next(err);

@@ -70,7 +70,8 @@ import {
   sendQuote,
   duplicateQuote,
   type CreateQuoteInput,
-  type FinalizeQuoteResult,
+   type FinalizeQuoteResult,
+   type SendQuoteResult,
   getCreditNote,
   createCreditNoteDraft,
   finalizeCreditNote,
@@ -317,6 +318,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const commandBarInputRef = useRef<HTMLInputElement>(null);
+  const lastSavedStateRef = useRef<DocumentState | null>(null);
 
   const isFinalized = document?.is_finalized ?? false;
 
@@ -361,7 +363,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
    // Apply progressive autofill when customer is selected on a new document
   useEffect(() => {
-    if (!isNew || !state.customerId || !docType || docType !== "invoice") return;
+    if (!isNew || !state.customerId || !docType) return;
     getProgressiveAutofill(state.customerId).then((af: SpeedAutofillResult) => {
       setState((prev) => ({
         ...prev,
@@ -578,9 +580,9 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     } as CreateCreditNoteInput;
   };
 
-  const doSave = useCallback(async () => {
-    const payload = buildPayload();
-    if (!payload.items || payload.items.length === 0) {
+   const doSave = useCallback(async () => {
+    const fullPayload = buildPayload();
+    if (!fullPayload.items || fullPayload.items.length === 0) {
       toast("Add at least one line item before saving.", { type: "warning", title: "Empty document" });
       return;
     }
@@ -588,23 +590,42 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     try {
       if (isNew) {
         if (docType === "invoice") {
-          const res = await createInvoice(payload as CreateInvoiceInput);
+          const res = await createInvoice(fullPayload as CreateInvoiceInput);
           toast(`Created invoice #${res.invoice.invoice_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
           navigate(`/app/invoices/${res.invoice.id}`);
           setDocument(res.invoice);
         } else if (docType === "quote") {
-          const res = await createQuote(payload as CreateQuoteInput);
+          const res = await createQuote(fullPayload as CreateQuoteInput);
           toast(`Created quotation #${res.quote.quote_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
           navigate(`/app/quotes/${res.quote.id}`);
           setDocument(res.quote);
         } else {
-          const res = await createCreditNoteDraft(payload as CreateCreditNoteInput);
+          const res = await createCreditNoteDraft(fullPayload as CreateCreditNoteInput);
           toast(`Created credit note draft.`, { type: "success", title: `${docTypeLabel(docType)} created` });
           navigate(`/app/credit-notes/${res.creditNote.id}/edit`);
           setDocument(res.creditNote);
         }
+        lastSavedStateRef.current = { ...state };
       } else {
         const doc = document as any;
+        const prev = lastSavedStateRef.current;
+        let payload: any;
+
+        if (!prev) {
+          payload = fullPayload;
+        } else {
+          payload = {};
+          const scalarFields = ["customerId", "currency", "issueDate", "dueDate", "expiryDate", "notes", "terms", "paymentInstructions", "poNumber", "quoteDiscount", "quoteDiscountType", "invoiceDiscount", "invoiceDiscountType", "shippingDescription", "shippingAmount", "shippingTaxRate"];
+          for (const field of scalarFields) {
+            if (JSON.stringify((state as any)[field]) !== JSON.stringify((prev as any)[field])) {
+              (payload as any)[field] = (state as any)[field] ?? undefined;
+            }
+          }
+        }
+        payload.items = fullPayload.items;
+        payload.fees = (fullPayload as any).fees;
+        payload.version = doc.version;
+
         if (docType === "invoice") {
           await updateInvoice(doc.id, payload as CreateInvoiceInput);
         } else if (docType === "quote") {
@@ -613,6 +634,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         setSaveState("saved");
         if (saveStateTimerRef.current) clearTimeout(saveStateTimerRef.current);
         saveStateTimerRef.current = setTimeout(() => setSaveState("idle"), 2000);
+        lastSavedStateRef.current = { ...state };
       }
     } catch (err: any) {
       setSaveState("error");
@@ -774,10 +796,9 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         toast(`Invoice sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
         setDocument(result.invoice ?? doc);
       } else if (docType === "quote") {
-        await sendQuote(doc.id, sendData);
+        const result: SendQuoteResult = await sendQuote(doc.id, sendData);
         toast(`Quotation sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
-        const refreshed = await getQuote(doc.id);
-        setDocument(refreshed.quote);
+        setDocument(result.quote ?? doc);
       } else {
         setSendDialogOpen(false);
         toast("Send functionality for credit notes coming soon.", { type: "info", title: "Not available" });

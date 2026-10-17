@@ -79,6 +79,7 @@ export interface SendQuoteResult {
   success: boolean;
   messageId: string;
   status: string;
+  quote?: Record<string, unknown>;
 }
 
 const ALLOWED_QUOTE_STATE_TRANSITIONS: Record<string, string[]> = {
@@ -521,7 +522,7 @@ export class QuoteService {
         throw new BusinessLogicError("Quote must be finalized before sending", "NOT_FINALIZED");
       }
 
-      const fullQuote = await this.findById(businessId, quoteId);
+      const fullQuote = await this.findByIdTx(businessId, quoteId, client);
       if (!fullQuote) throw new NotFoundError(`Quote ${quoteId} not found`);
 
       const pdf = await this.generatePdf(businessId, quoteId, fullQuote);
@@ -551,7 +552,7 @@ export class QuoteService {
 
       await client.query("COMMIT");
       logger.info(`Sent quote ${quoteId} to ${data.to}`);
-      return { ok: true, success: true, messageId: result.messageId, status: "sent" };
+      return { ok: true, success: true, messageId: result.messageId, status: "sent", quote: fullQuote };
     } catch (e) {
       await client.query("ROLLBACK");
       logger.error({ err: e }, `Failed to send quote ${quoteId}`);
@@ -653,9 +654,9 @@ export class QuoteService {
       await this.logQuoteEvent(quoteId, businessId, eventType, userId ?? null, metadata, client);
 
       await client.query("COMMIT");
-      const updated = await this.findById(businessId, quoteId);
+      const updatedQuote = await this.findByIdTx(businessId, quoteId, client);
       logger.info(`Quote ${quoteId} status -> ${nextStatus}`);
-      return updated!;
+      return updatedQuote ?? quote;
     } catch (e) {
       await client.query("ROLLBACK");
       throw e;

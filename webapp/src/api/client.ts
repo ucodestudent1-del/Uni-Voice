@@ -1721,6 +1721,7 @@ export interface CreateInvoiceInput {
   shippingDescription?: string | null;
   shippingAmount?: string | number;
   shippingTaxRate?: string | number;
+  version?: number;
 }
 
 export async function createInvoice(
@@ -2036,6 +2037,7 @@ export interface CreateQuoteInput {
   fees?: CreateQuoteFeeInput[];
   quoteDiscount?: string | number;
   quoteDiscountType?: "fixed" | "percentage" | null;
+  version?: number;
 }
 
 export async function createQuote(
