@@ -62,8 +62,10 @@ export function useMetaTags(options: MetaOptions) {
 
     if (options.url) {
       setMetaTag("og:url", options.url, "property");
+      setMetaTag("og:type", "website", "property");
       setLinkTag("canonical", options.url);
     } else {
+      setMetaTag("og:type", "website", "property");
       setMetaTag("og:locale", "en-US", "property");
     }
 
