@@ -1,6 +1,12 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
-RUN corepack enable
+
+# --- Dependencies layer (production only) -------------------------------------
+FROM base AS deps
+# Install build tools for native modules (argon2, bcrypt)
+RUN apk add --no-cache python3 make g++
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev
 
 # --- Backend build layer -----------------------------------------------------
 FROM base AS backend-builder
@@ -25,9 +31,10 @@ RUN npm run build
 FROM base AS runtime
 WORKDIR /app
 
+# Copy production dependencies (native modules already compiled in deps layer)
+COPY --from=deps /app/node_modules ./node_modules
 # Copy backend build output
 COPY --from=backend-builder /app/dist ./dist
-COPY --from=backend-builder /app/node_modules ./node_modules
 COPY --from=backend-builder /app/package.json ./package.json
 
 # Copy frontend build output
