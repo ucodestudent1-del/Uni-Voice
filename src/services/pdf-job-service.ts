@@ -113,10 +113,28 @@ export async function startPdfWorker(): Promise<void> {
     return;
   }
 
+  try {
+    const redisInfo = await bullConnection.info();
+    const versionMatch = redisInfo.match(/redis_version:(\d+)\.(\d+)\.(\d+)/);
+    if (versionMatch) {
+      const major = parseInt(versionMatch[1], 10);
+      if (major < 5) {
+        logger.warn(
+          `Redis version ${versionMatch[1]}.${versionMatch[2]}.${versionMatch[3]} is below the minimum required (5.0.0) for BullMQ. Background PDF worker will be disabled. PDFs will be generated synchronously.`,
+        );
+        return;
+      }
+    }
+  } catch (err) {
+    logger.warn({ err }, "Could not check Redis version — skipping PDF worker initialization");
+    return;
+  }
+
   const { invoiceService } = await import("./invoice-service.js");
 
-  worker = new Worker(
-    QUEUE_NAME,
+  try {
+    worker = new Worker(
+      QUEUE_NAME,
     async (job: Job) => {
       const { businessId, documentId, docType } = job.data as {
         businessId: string;
@@ -157,15 +175,23 @@ export async function startPdfWorker(): Promise<void> {
     },
   );
 
-  worker.on("completed", (job: Job) => {
-    logger.info({ jobId: job.id }, "PDF generation job completed");
-  });
+   worker.on("completed", (job: Job) => {
+     logger.info({ jobId: job.id }, "PDF generation job completed");
+   });
 
-  worker.on("failed", (job: Job | undefined, err: Error) => {
-    logger.error({ err, jobId: job?.id }, "PDF generation job failed");
-  });
+   worker.on("failed", (job: Job | undefined, err: Error) => {
+     logger.error({ err, jobId: job?.id }, "PDF generation job failed");
+   });
 
-  logger.info("PDF generation worker started");
+   worker.on("error", (err: Error) => {
+     logger.error({ err }, "PDF worker error (non-fatal)");
+   });
+
+   logger.info("PDF generation worker started");
+  } catch (err) {
+    logger.warn({ err }, "Failed to start PDF worker — PDF generation will use synchronous fallback");
+    worker = null;
+  }
 }
 
 export async function stopPdfWorker(): Promise<void> {
