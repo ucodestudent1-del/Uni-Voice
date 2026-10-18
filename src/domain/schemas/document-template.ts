@@ -23,10 +23,13 @@ export const DocumentTemplateInputSchema = z.object({
   config: z.record(z.string(), z.unknown()).default({}),
   is_default: z.boolean().default(false),
   is_active: z.boolean().default(true),
-  document_type: z.enum(["invoice", "recurring_invoice", "credit_note", "quote", "receipt", "purchase_order"]).default("invoice"),
+  document_type: z.enum(["invoice", "recurring_invoice", "credit_note", "debit_note", "payment_voucher", "quote", "receipt", "purchase_order"]).default("invoice"),
+  output_format: z.enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"]).default("pdf"),
+  output_formats: z.array(z.enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"])).default(["pdf"]),
+  default_output_format: z.enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"]).default("pdf"),
 });
 
-export type DocumentTemplateInput = z.infer<typeof DocumentTemplateInputSchema>;
+export type DocumentTemplateInput = z.infer<typeof DocumentTemplateInputSchema>;;
 
 export const DocumentTemplateUpdateSchema = z.object({
   name: z.string().min(1).max(255).optional(),
@@ -38,7 +41,10 @@ export const DocumentTemplateUpdateSchema = z.object({
   config: z.record(z.string(), z.unknown()).optional(),
   is_default: z.boolean().optional(),
   is_active: z.boolean().optional(),
-  document_type: z.enum(["invoice", "recurring_invoice", "credit_note", "quote", "receipt", "purchase_order"]).optional(),
+  document_type: z.enum(["invoice", "recurring_invoice", "credit_note", "debit_note", "payment_voucher", "quote", "receipt", "purchase_order"]).optional(),
+  output_format: z.enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"]).optional(),
+  output_formats: z.array(z.enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"])).optional(),
+  default_output_format: z.enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"]).optional(),
 });
 
 export type DocumentTemplateUpdate = z.infer<typeof DocumentTemplateUpdateSchema>;

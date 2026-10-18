@@ -320,3 +320,106 @@ describe("discountAmount helper", () => {
     expect(d.toFixed(2)).toBe("10.00");
   });
 });
+
+describe("calculateDocument", () => {
+  it("delegates to calculationEngine for invoice type", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "invoice",
+      currency: "USD",
+      lineItems: [
+        { description: "Web dev", quantity: 2, unit: "each", unitPrice: 100, taxRate: 0.1, isTaxInclusive: false },
+      ],
+    });
+    expect(res.total.toFixed(2)).toBe("220.00");
+    expect(res.subtotal.toFixed(2)).toBe("200.00");
+  });
+
+  it("delegates to calculationEngine for credit_note type", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "credit_note",
+      currency: "USD",
+      lineItems: [
+        { description: "Return fee", quantity: 1, unit: "each", unitPrice: 50, taxRate: 0.1, isTaxInclusive: false },
+      ],
+    });
+    expect(res.total.toFixed(2)).toBe("55.00");
+  });
+
+  it("delegates to calculationEngine for debit_note type", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "debit_note",
+      currency: "USD",
+      lineItems: [
+        { description: "Additional charge", quantity: 1, unit: "each", unitPrice: 25, taxRate: 0.1, isTaxInclusive: false },
+      ],
+    });
+    expect(res.total.toFixed(2)).toBe("27.50");
+  });
+
+  it("delegates to calculationEngine for payment_voucher type", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "payment_voucher",
+      currency: "USD",
+      lineItems: [
+        { description: "Expense", quantity: 1, unit: "each", unitPrice: 100, taxRate: 0, isTaxInclusive: false },
+      ],
+    });
+    expect(res.total.toFixed(2)).toBe("100.00");
+  });
+
+  it("delegates to calculationEngine for quote type", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "quote",
+      currency: "USD",
+      lineItems: [
+        { description: "Consulting", quantity: 10, unit: "hour", unitPrice: 75, taxRate: 0.1, isTaxInclusive: false },
+      ],
+    });
+    expect(res.total.toFixed(2)).toBe("825.00");
+  });
+
+  it("delegates to calculationEngine for receipt type", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "receipt",
+      currency: "USD",
+      lineItems: [
+        { description: "Refund", quantity: 1, unit: "each", unitPrice: 200, taxRate: 0, isTaxInclusive: false },
+      ],
+    });
+    expect(res.total.toFixed(2)).toBe("200.00");
+  });
+
+  it("delegates to calculationEngine for purchase_order type", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "purchase_order",
+      currency: "USD",
+      lineItems: [
+        { description: "Materials", quantity: 5, unit: "each", unitPrice: 30, taxRate: 0.08, isTaxInclusive: false },
+      ],
+    });
+    expect(res.total.toFixed(2)).toBe("162.00");
+  });
+
+  it("passes through documentDiscount and amountPaid", async () => {
+    const { calculateDocument } = await import("../src/domain/calculation.js");
+    const res = calculateDocument({
+      docType: "invoice",
+      currency: "USD",
+      lineItems: [
+        { description: "Widget", quantity: 1, unit: "each", unitPrice: 100, taxRate: 0.1, isTaxInclusive: false },
+      ],
+      documentDiscount: { type: "percentage", value: 10 },
+      amountPaid: 50,
+    });
+    expect(res.discountTotal.toFixed(2)).toBe("10.00");
+    expect(res.amountPaid.toFixed(2)).toBe("50.00");
+    expect(res.amountDue.toFixed(2)).toBe("49.00");
+  });
+});

@@ -589,3 +589,34 @@ export class CalculationEngine {
 }
 
 export const calculationEngine = new CalculationEngine();
+
+export type DocumentTypeForCalculation =
+  | "invoice"
+  | "credit_note"
+  | "debit_note"
+  | "payment_voucher"
+  | "quote"
+  | "receipt"
+  | "purchase_order";
+
+export interface DocumentCalculationInput {
+  docType: DocumentTypeForCalculation;
+  currency: CurrencyCode;
+  lineItems: LineItemInput[];
+  fees?: FeeInput[];
+  documentDiscount?: DiscountDefinition;
+  amountPaid?: Decimal.Value;
+  referenceInvoiceTotal?: Decimal.Value;
+  referenceInvoiceAmountDue?: Decimal.Value;
+}
+
+export function calculateDocument(input: DocumentCalculationInput): CalculationResult {
+  return calculationEngine.calculate({
+    currency: input.currency,
+    lineItems: input.lineItems,
+    fees: input.fees,
+    invoiceDiscount: input.documentDiscount,
+    amountPaid: input.amountPaid,
+  });
+}
+

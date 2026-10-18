@@ -392,6 +392,9 @@ export interface DocumentTemplate {
   isDefault: boolean;
   isActive: boolean;
   documentType: string;
+  outputFormat?: string | null;
+  outputFormats?: string[] | null;
+  defaultOutputFormat?: string | null;
   createdAt: Date;
   updatedAt: Date;
   createdBy?: string | null;

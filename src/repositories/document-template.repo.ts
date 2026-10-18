@@ -22,6 +22,9 @@ export interface DocumentTemplateCreateInput {
   is_default?: boolean;
   is_active?: boolean;
   document_type?: string;
+  output_format?: string;
+  output_formats?: string[];
+  default_output_format?: string;
 }
 
 export interface DocumentTemplateUpdateInput {
@@ -35,6 +38,9 @@ export interface DocumentTemplateUpdateInput {
   is_default?: boolean;
   is_active?: boolean;
   document_type?: string;
+  output_format?: string;
+  output_formats?: string[];
+  default_output_format?: string;
   revision?: number;
   version?: number;
 }
@@ -51,8 +57,9 @@ export class DocumentTemplateRepository {
     const res = await query(
       `INSERT INTO document_templates
          (id, business_id, name, description, industry, schema_version, revision, version,
-          document, html_template, config, is_default, is_active, document_type, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+          document, html_template, config, is_default, is_active, document_type,
+          output_format, output_formats, default_output_format, created_at, updated_at, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
         RETURNING *`,
       [
         id,
@@ -69,6 +76,9 @@ export class DocumentTemplateRepository {
         parsed.is_default ?? false,
         parsed.is_active ?? true,
         parsed.document_type ?? "invoice",
+        parsed.output_format ?? "pdf",
+        parsed.output_formats ?? ["pdf"],
+        parsed.default_output_format ?? "pdf",
         now,
         now,
         createdBy ?? null,
@@ -171,6 +181,9 @@ export class DocumentTemplateRepository {
     if (input.is_default !== undefined) { set.push(`is_default = $${i++}`); vals.push(input.is_default); }
     if (input.is_active !== undefined) { set.push(`is_active = $${i++}`); vals.push(input.is_active); }
     if (input.document_type !== undefined) { set.push(`document_type = $${i++}`); vals.push(input.document_type); }
+    if (input.output_format !== undefined) { set.push(`output_format = $${i++}`); vals.push(input.output_format); }
+    if (input.output_formats !== undefined) { set.push(`output_formats = $${i++}`); vals.push(input.output_formats); }
+    if (input.default_output_format !== undefined) { set.push(`default_output_format = $${i++}`); vals.push(input.default_output_format); }
     if (input.revision !== undefined) { set.push(`revision = $${i++}`); vals.push(input.revision); }
     if (input.version !== undefined) { set.push(`version = $${i++}`); vals.push(input.version); }
 
@@ -211,8 +224,9 @@ export class DocumentTemplateRepository {
     const res = await query(
       `INSERT INTO document_templates
          (id, business_id, name, description, industry, schema_version, revision, version,
-          document, html_template, config, is_default, is_active, document_type, created_at, updated_at, created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+          document, html_template, config, is_default, is_active, document_type,
+          output_format, output_formats, default_output_format, created_at, updated_at, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
         RETURNING *`,
       [
         newId,
@@ -229,6 +243,9 @@ export class DocumentTemplateRepository {
         false,
         original.isActive,
         original.documentType ?? "invoice",
+        original.outputFormat ?? "pdf",
+        original.outputFormats ?? ["pdf"],
+        original.defaultOutputFormat ?? "pdf",
         now,
         now,
         createdBy ?? original.createdBy ?? null,
@@ -262,28 +279,31 @@ export class DocumentTemplateRepository {
     }
   }
 
-  private rowToModel(r: Record<string, unknown>): DocumentTemplate {
-    return {
-      id: r.id as string,
-      businessId: r.business_id as string,
-      name: r.name as string,
-      description: r.description as string | null,
-      industry: r.industry as string | null,
-      schemaVersion: (r.schema_version as string) ?? "1.0",
-      revision: Number(r.revision ?? 1),
-      version: Number(r.version ?? 1),
-      document: (r.document as Record<string, unknown>) ?? {},
-      htmlTemplate: r.html_template as string | null ?? null,
-      config: (r.config as Record<string, unknown>) ?? {},
-      isDefault: Boolean(r.is_default),
-      isActive: Boolean(r.is_active),
-      documentType: (r.document_type as string) ?? "invoice",
-      createdAt: new Date(r.created_at as string),
-      updatedAt: new Date(r.updated_at as string),
-      createdBy: r.created_by as string | null,
-      updatedBy: r.updated_by as string | null,
-    };
-  }
+   private rowToModel(r: Record<string, unknown>): DocumentTemplate {
+     return {
+       id: r.id as string,
+       businessId: r.business_id as string,
+       name: r.name as string,
+       description: r.description as string | null,
+       industry: r.industry as string | null,
+       schemaVersion: (r.schema_version as string) ?? "1.0",
+       revision: Number(r.revision ?? 1),
+       version: Number(r.version ?? 1),
+       document: (r.document as Record<string, unknown>) ?? {},
+       htmlTemplate: r.html_template as string | null ?? null,
+       config: (r.config as Record<string, unknown>) ?? {},
+       isDefault: Boolean(r.is_default),
+       isActive: Boolean(r.is_active),
+       documentType: (r.document_type as string) ?? "invoice",
+       outputFormat: (r.output_format as string | null) ?? null,
+       outputFormats: (r.output_formats as string[] | null) ?? null,
+       defaultOutputFormat: (r.default_output_format as string | null) ?? null,
+       createdAt: new Date(r.created_at as string),
+       updatedAt: new Date(r.updated_at as string),
+       createdBy: r.created_by as string | null,
+       updatedBy: r.updated_by as string | null,
+     };
+   }
 }
 
 export const documentTemplateRepository = new DocumentTemplateRepository();

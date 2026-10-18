@@ -1,8 +1,14 @@
 import type { Browser, Page, LaunchOptions, PDFOptions } from "puppeteer";
 import { env } from "../../config/index.js";
-import type { InvoiceTemplateData, CreditNoteTemplateData, QuoteTemplateData } from "../templates/template-renderer.js";
+import type {
+  InvoiceTemplateData,
+  CreditNoteTemplateData,
+  QuoteTemplateData,
+  DebitNoteTemplateData,
+  PaymentVoucherTemplateData,
+} from "../templates/template-renderer.js";
 
-type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData;
+type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData | DebitNoteTemplateData | PaymentVoucherTemplateData;
 
 export interface PdfProvider {
   readonly name: string;
@@ -66,8 +72,24 @@ export class StubPdfService implements PdfProvider {
       ? data.invoice.invoiceNumber ?? "INV"
       : "creditNote" in data
       ? data.creditNote.creditNoteNumber ?? "CN"
-      : data.quote.quoteNumber ?? "QOT";
-    const docType = "invoice" in data ? "Invoice" : "creditNote" in data ? "Credit Note" : "Quote";
+      : "quote" in data
+      ? data.quote.quoteNumber ?? "QOT"
+      : "debitNote" in data
+      ? data.debitNote.debitNoteNumber ?? "DN"
+      : "voucher" in data
+      ? data.voucher.paymentVoucherNumber ?? "PV"
+      : "N/A";
+    const docType = "invoice" in data
+      ? "Invoice"
+      : "creditNote" in data
+      ? "Credit Note"
+      : "quote" in data
+      ? "Quote"
+      : "debitNote" in data
+      ? "Debit Note"
+      : "voucher" in data
+      ? "Payment Voucher"
+      : "Document";
     const pdf =
       `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n` +
       `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n` +

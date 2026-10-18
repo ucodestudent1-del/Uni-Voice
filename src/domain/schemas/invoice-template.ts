@@ -3,8 +3,40 @@ import { z } from "zod";
 export const InvoiceTemplateLifecycleSchema = z.enum(["draft", "published", "archived"]);
 export type InvoiceTemplateLifecycle = z.infer<typeof InvoiceTemplateLifecycleSchema>;
 
-export const DocumentTypeSchema = z.enum(["invoice", "recurring_invoice", "credit_note"]);
+export const DocumentTypeSchema = z.enum([
+  "invoice",
+  "recurring_invoice",
+  "credit_note",
+  "debit_note",
+  "payment_voucher",
+  "receipt",
+  "purchase_order",
+]);
 export type DocumentType = z.infer<typeof DocumentTypeSchema>;
+
+export const DocumentTypeKeySchema = z.enum([
+  "invoice",
+  "credit-note",
+  "quote",
+  "debit-note",
+  "payment-voucher",
+  "receipt",
+  "purchase-order",
+]);
+export type DocumentTypeKey = z.infer<typeof DocumentTypeKeySchema>;
+
+export function normalizeDocumentTypeKey(key: DocumentTypeKey): DocumentType {
+  const map: Record<DocumentTypeKey, DocumentType> = {
+    "invoice": "invoice",
+    "credit-note": "credit_note",
+    "quote": "credit_note",
+    "debit-note": "debit_note",
+    "payment-voucher": "payment_voucher",
+    "receipt": "receipt",
+    "purchase-order": "purchase_order",
+  };
+  return map[key];
+}
 
 export const INVOICE_TEMPLATE_CURRENT_SCHEMA_VERSION = "1.0";
 export const INVOICE_TEMPLATE_SCHEMA_VERSIONS = ["1.0"] as const;

@@ -1856,7 +1856,7 @@ export interface BuildPaymentVoucherInput {
 // UNIFIED BUILDER — single entry point for all document types
 // ============================================================================
 
-export type DocumentTypeKey = "invoice" | "credit-note" | "quote" | "debit-note" | "payment-voucher";
+export type DocumentTypeKey = "invoice" | "credit-note" | "quote" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order";
 
 /**
  * Builds template data for any document type from a unified input object.
