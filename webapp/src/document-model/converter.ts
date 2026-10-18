@@ -12,7 +12,8 @@ import {
 } from "./types";
 import { DocumentBuilder, insertComponent } from "./document-operations";
 import { getComponentDefinition } from "./registry";
-import type { ApiInvoice, ApiCustomer, ApiBusiness } from "../types/api";
+import type { ApiInvoice, ApiCustomer, ApiBusiness, ApiPurchaseOrder } from "../types/api";
+import type { ApiReceipt } from "../api/client";
 
 export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, customer?: ApiCustomer): InvoiceDocument {
   const doc = createEmptyDocument(invoice.business_id as UUID, "Untitled Invoice");
@@ -342,7 +343,6 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
   });
   insert("spacer", { height: 16 });
 
-  const totalsRowId = `row_${makeUUID()}`;
   builder.insertComponent({
     type: "row",
     parentId: doc.rootSectionId,
@@ -432,4 +432,341 @@ function getComponentProp(doc: InvoiceDocument, type: ComponentType, propName: s
   const component = Object.values(doc.components).find((c) => c.type === type);
   if (!component) return undefined;
   return (component.props as Record<string, unknown>)[propName] as string | undefined;
+}
+
+export function receiptToDocument(receipt: ApiReceipt, business: ApiBusiness, customer?: ApiCustomer): InvoiceDocument {
+  const doc = createEmptyDocument(receipt.business_id as UUID, "Receipt");
+  const builder = new DocumentBuilder(doc);
+  const currentParent: ParentId = doc.rootSectionId;
+  let insertIndex = 0;
+
+  const insert = (type: ComponentType, props?: any, style?: StyleProps) => {
+    builder.insertComponent({
+      type,
+      parentId: currentParent,
+      index: insertIndex,
+      props,
+      style,
+    });
+    insertIndex++;
+  };
+
+  insert("businessInfo", {
+    showName: true,
+    showEmail: true,
+    showPhone: !!business.phone,
+    showWebsite: !!business.website,
+    showAddress: !!(business.addressLine1 || business.addressLine2),
+    showLogo: !!business.logoUrl,
+    label: "From",
+  });
+
+  insert("spacer", { height: 16 });
+
+  const rightColProps = { textAlign: "right", fontWeight: "bold" } as StyleProps;
+  builder.insertComponent({
+    type: "row",
+    parentId: currentParent,
+    index: insertIndex++,
+    props: { name: "Header", columns: 2, columnGap: 24, rowGap: 16 },
+  });
+
+  const rows = Object.values(builder.document.rows);
+  const lastRow = rows[rows.length - 1];
+
+  builder.insertComponent({
+    type: "column",
+    parentId: lastRow.id as ParentId,
+    index: 0,
+    props: { name: "Business", span: 6 },
+  });
+  builder.insertComponent({
+    type: "column",
+    parentId: lastRow.id as ParentId,
+    index: 1,
+    props: { name: "Receipt", span: 6 },
+    style: rightColProps,
+  });
+
+  const cols = Object.values(builder.document.columns);
+  const rightCol = cols[cols.length - 1];
+
+  builder.insertComponent({
+    type: "invoiceNumber",
+    parentId: rightCol.id as ParentId,
+    index: 0,
+    props: { prefix: "#", label: "Receipt" },
+    style: rightColProps,
+  });
+  builder.insertComponent({
+    type: "date",
+    parentId: rightCol.id as ParentId,
+    index: 1,
+    props: { dateType: "issue", label: "Issued" },
+  });
+
+  insert("spacer", { height: 24 });
+
+  if (receipt.customer_name) {
+    insert("customerInfo", {
+      showName: true,
+      showCompany: false,
+      showEmail: !!receipt.customer_email,
+      showAddress: false,
+      showPhone: false,
+      label: "Customer",
+    });
+    insert("spacer", { height: 24 });
+  }
+
+  insert("lineItems", {
+    columns: [
+      { key: "description", label: "Description", width: "60%", align: "left", visible: true },
+      { key: "amount", label: "Amount", width: "40%", align: "right", visible: true },
+    ],
+    showHeader: true,
+    showQuantity: false,
+    showUnit: false,
+    showUnitPrice: false,
+    showDiscount: false,
+    showTax: false,
+    showLineTotal: false,
+    currency: receipt.currency,
+    allowMultiPage: true,
+    emptyStateMessage: "No items",
+  });
+
+  insert("spacer", { height: 16 });
+
+  builder.insertComponent({
+    type: "row",
+    parentId: currentParent,
+    index: insertIndex++,
+    props: { name: "Totals", columns: 1, columnGap: 16, rowGap: 16 },
+  });
+
+  const totalRows = Object.values(builder.document.rows);
+  const lastTotalRow = totalRows[totalRows.length - 1];
+  builder.insertComponent({
+    type: "column",
+    parentId: lastTotalRow.id as ParentId,
+    index: 0,
+    props: { name: "Totals Column", span: 12 },
+    style: { display: "flex", flexDirection: "column", alignItems: "flex-end" },
+  });
+
+  const totalCols = Object.values(builder.document.columns);
+  const lastTotalCol = totalCols[totalCols.length - 1];
+
+  builder.insertComponent({
+    type: "total",
+    parentId: lastTotalCol.id as ParentId,
+    index: 0,
+    props: { label: "Total Paid", currency: receipt.currency },
+    style: { paddingTop: "8px", borderTop: "2px solid #e2e8f0", width: "100%" },
+  });
+
+  insert("spacer", { height: 16 });
+  insert("signature", {
+    label: "Authorized Signature",
+    placeholder: "__________________________",
+    showDate: true,
+    showName: true,
+  });
+
+  return builder.document;
+}
+
+export function purchaseOrderToDocument(po: ApiPurchaseOrder, business: ApiBusiness, supplier?: { name?: string; email?: string | null } | null): InvoiceDocument {
+  const doc = createEmptyDocument(po.business_id as UUID, "Purchase Order");
+  const builder = new DocumentBuilder(doc);
+  const currentParent: ParentId = doc.rootSectionId;
+  let insertIndex = 0;
+
+  const insert = (type: ComponentType, props?: any, style?: StyleProps) => {
+    builder.insertComponent({
+      type,
+      parentId: currentParent,
+      index: insertIndex,
+      props,
+      style,
+    });
+    insertIndex++;
+  };
+
+  insert("businessInfo", {
+    showName: true,
+    showEmail: true,
+    showPhone: !!business.phone,
+    showWebsite: !!business.website,
+    showAddress: !!(business.addressLine1 || business.addressLine2),
+    showLogo: !!business.logoUrl,
+    label: "From",
+  });
+
+  insert("spacer", { height: 16 });
+
+  const rightColProps = { textAlign: "right", fontWeight: "bold" } as StyleProps;
+  builder.insertComponent({
+    type: "row",
+    parentId: currentParent,
+    index: insertIndex++,
+    props: { name: "Header", columns: 2, columnGap: 24, rowGap: 16 },
+  });
+
+  const rows = Object.values(builder.document.rows);
+  const lastRow = rows[rows.length - 1];
+
+  builder.insertComponent({
+    type: "column",
+    parentId: lastRow.id as ParentId,
+    index: 0,
+    props: { name: "Business", span: 6 },
+  });
+  builder.insertComponent({
+    type: "column",
+    parentId: lastRow.id as ParentId,
+    index: 1,
+    props: { name: "PO", span: 6 },
+    style: rightColProps,
+  });
+
+  const cols = Object.values(builder.document.columns);
+  const rightCol = cols[cols.length - 1];
+
+  builder.insertComponent({
+    type: "invoiceNumber",
+    parentId: rightCol.id as ParentId,
+    index: 0,
+    props: { prefix: "#", label: "P.O." },
+    style: rightColProps,
+  });
+  builder.insertComponent({
+    type: "date",
+    parentId: rightCol.id as ParentId,
+    index: 1,
+    props: { dateType: "issue", label: "Issue Date" },
+  });
+  if (po.delivery_date) {
+    builder.insertComponent({
+      type: "date",
+      parentId: rightCol.id as ParentId,
+      index: 2,
+      props: { dateType: "custom", customValue: po.delivery_date, label: "Delivery Date" },
+    });
+  }
+
+  const businessCol = cols.find((c) => c.id !== rightCol.id);
+  if (businessCol) {
+    builder.insertComponent({
+      type: "businessInfo",
+      parentId: businessCol.id as ParentId,
+      index: 0,
+      props: {
+        showName: true,
+        showEmail: true,
+        showPhone: !!business.phone,
+        showWebsite: !!business.website,
+        showAddress: false,
+        showLogo: !!business.logoUrl,
+        label: "From",
+      },
+    });
+  }
+
+  insert("spacer", { height: 24 });
+
+  if (supplier?.name) {
+    insert("customerInfo", {
+      showName: true,
+      showCompany: false,
+      showEmail: !!supplier.email,
+      showAddress: false,
+      showPhone: false,
+      label: "Supplier",
+    });
+    insert("spacer", { height: 24 });
+  }
+
+  insert("lineItems", {
+    columns: [
+      { key: "description", label: "Description", width: "50%", align: "left", visible: true },
+      { key: "quantity", label: "Qty", width: "15%", align: "right", visible: true },
+      { key: "unitPrice", label: "Rate", width: "15%", align: "right", visible: true },
+      { key: "amount", label: "Amount", width: "20%", align: "right", visible: true },
+    ],
+    showHeader: true,
+    showQuantity: true,
+    showUnit: false,
+    showUnitPrice: true,
+    showDiscount: false,
+    showTax: true,
+    showLineTotal: true,
+    currency: po.currency,
+    allowMultiPage: true,
+    emptyStateMessage: "No line items added yet",
+  });
+
+  insert("spacer", { height: 16 });
+
+  builder.insertComponent({
+    type: "row",
+    parentId: currentParent,
+    index: insertIndex++,
+    props: { name: "Totals", columns: 1, columnGap: 16, rowGap: 16 },
+  });
+
+  const totalRows = Object.values(builder.document.rows);
+  const lastTotalRow = totalRows[totalRows.length - 1];
+  builder.insertComponent({
+    type: "column",
+    parentId: lastTotalRow.id as ParentId,
+    index: 0,
+    props: { name: "Totals Column", span: 12 },
+    style: { display: "flex", flexDirection: "column", alignItems: "flex-end" },
+  });
+
+  const totalCols = Object.values(builder.document.columns);
+  const lastTotalCol = totalCols[totalCols.length - 1];
+
+  builder.insertComponent({
+    type: "subtotal",
+    parentId: lastTotalCol.id as ParentId,
+    index: 0,
+    props: { label: "Subtotal", currency: po.currency },
+  });
+  builder.insertComponent({
+    type: "tax",
+    parentId: lastTotalCol.id as ParentId,
+    index: 1,
+    props: { label: "Tax", currency: po.currency, showBreakdown: true },
+  });
+  builder.insertComponent({
+    type: "fees",
+    parentId: lastTotalCol.id as ParentId,
+    index: 2,
+    props: { label: "Fees", currency: po.currency, showHeader: false },
+  });
+  builder.insertComponent({
+    type: "total",
+    parentId: lastTotalCol.id as ParentId,
+    index: 3,
+    props: { label: "Total", currency: po.currency },
+    style: { paddingTop: "8px", borderTop: "2px solid #e2e8f0", width: "100%" },
+  });
+
+  if (po.notes) {
+    insert("spacer", { height: 16 });
+    insert("notes", { content: po.notes, label: "Notes" });
+  }
+
+  insert("spacer", { height: 32 });
+  insert("signature", {
+    label: "Authorized Signature",
+    placeholder: "__________________________",
+    showDate: true,
+    showName: true,
+  });
+
+  return builder.document;
 }
