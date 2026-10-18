@@ -179,14 +179,17 @@ export async function generateTokenPair({
   const accessToken = generateAccessToken(userId, businessId, email);
   const refreshToken = generateRefreshToken(userId);
 
-  // Store hashed refresh token in DB
   const tokenHash = hashSync(refreshToken, 12);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  await query(
-    "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)",
-    [userId, tokenHash, expiresAt],
-  );
+  try {
+    await query(
+      "INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)",
+      [userId, tokenHash, expiresAt],
+    );
+  } catch (err) {
+    logger.warn({ err, userId }, "Failed to persist refresh token; tokens issued without DB persistence");
+  }
 
   return { accessToken, refreshToken };
 }

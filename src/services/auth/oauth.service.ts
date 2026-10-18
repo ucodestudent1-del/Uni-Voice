@@ -105,7 +105,23 @@ export class OAuthService {
       throw new UnauthorizedError("Failed to fetch Google user info");
     }
 
-    return (await res.json()) as GoogleUserInfo;
+    const data = (await res.json()) as {
+      sub?: string;
+      email?: string;
+      email_verified?: boolean;
+      name?: string;
+      given_name?: string;
+      family_name?: string;
+      picture?: string;
+      locale?: string;
+    };
+
+    if (!data.sub || !data.email) {
+      logger.error({ data }, "Google user info missing required fields");
+      throw new UnauthorizedError("Invalid Google user info response");
+    }
+
+    return data as GoogleUserInfo;
   }
 
   async handleCallback(code: string): Promise<OAuthResult> {

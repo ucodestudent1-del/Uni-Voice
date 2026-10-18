@@ -297,7 +297,11 @@ function getCookie(header: string | undefined, name: string): string | null {
     .map((c) => c.trim())
     .find((c) => c.startsWith(`${name}=`));
   if (!match) return null;
-  return decodeURIComponent(match.substring(name.length + 1));
+  try {
+    return decodeURIComponent(match.substring(name.length + 1));
+  } catch {
+    return match.substring(name.length + 1);
+  }
 }
 
 // Health
@@ -317,11 +321,19 @@ let nextPrefixId = 0;
 function createRateLimiter(config: Partial<RateLimitOptions>) {
   const skip = isDev || isTest ? () => true : undefined;
   const prefix = `rl:${nextPrefixId++}`;
-  const store = redisAvailable ? createRateLimitStore(prefix) : undefined;
+  let store: ReturnType<typeof createRateLimitStore>;
+  if (redisAvailable) {
+    try {
+      store = createRateLimitStore(prefix);
+    } catch {
+      store = undefined;
+    }
+  }
   return rateLimit({
     ...config,
     skip,
     store,
+    passOnStoreError: true,
   });
 }
 
@@ -895,37 +907,37 @@ app.get("/api/auth/oauth/google", oauthRateLimiter, (req, res) => {
 });
 
 app.get("/api/auth/oauth/google/callback", oauthRateLimiter, async (req, res) => {
-  const { code, error, error_description, state } = req.query as Record<
-    string,
-    string
-  >;
-
-  const stateCookie = getCookie(req.headers.cookie, "oauth_state");
-  res.clearCookie("oauth_state", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: !isDev,
-  });
-
-  if (error) {
-    return res.redirect(
-      `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent(error_description || error)}`,
-    );
-  }
-
-  if (!code) {
-    return res.redirect(
-      `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=no_code`,
-    );
-  }
-
-  if (!state || !stateCookie || state !== stateCookie) {
-    return res.redirect(
-      `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent("Invalid or missing OAuth state parameter")}`,
-    );
-  }
-
   try {
+    const { code, error, error_description, state } = req.query as Record<
+      string,
+      string
+    >;
+
+    const stateCookie = getCookie(req.headers.cookie, "oauth_state");
+    res.clearCookie("oauth_state", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: !isDev,
+    });
+
+    if (error) {
+      return res.redirect(
+        `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent(error_description || error)}`,
+      );
+    }
+
+    if (!code) {
+      return res.redirect(
+        `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=no_code`,
+      );
+    }
+
+    if (!state || !stateCookie || state !== stateCookie) {
+      return res.redirect(
+        `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent("Invalid or missing OAuth state parameter")}`,
+      );
+    }
+
     const result = await oauthService.handleCallback(code);
     if (result.refreshToken) {
       setRefreshTokenCookie(res, result.refreshToken);
@@ -936,10 +948,15 @@ app.get("/api/auth/oauth/google/callback", oauthRateLimiter, async (req, res) =>
   } catch (err: any) {
     const message =
       err instanceof Error ? err.message : "OAuth authentication failed";
-    logger.error({ err, code }, "Google OAuth callback failed");
-    res.redirect(
-      `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent(message)}`,
+    logger.error(
+      { err: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err, url: req.url, method: req.method },
+      "Google OAuth callback failed",
     );
+    if (!res.headersSent) {
+      res.redirect(
+        `${env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL}/login?oauth_error=${encodeURIComponent(message)}`,
+      );
+    }
   }
 });
 
@@ -5340,9 +5357,14 @@ app.use(
       { err, requestId, url: req.url, method: req.method },
       "Unhandled error",
     );
-    res
-      .status(500)
-      .json({ error: "Internal server error", code: "INTERNAL_ERROR", requestId });
+    if (!res.headersSent) {
+      const response: Record<string, unknown> = { error: "Internal server error", code: "INTERNAL_ERROR", requestId };
+      if (isDev) {
+        response.error = err instanceof Error ? err.message : String(err);
+        response.stack = err instanceof Error ? err.stack : undefined;
+      }
+      res.status(500).json(response);
+    }
   },
 );
 

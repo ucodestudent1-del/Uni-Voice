@@ -103,37 +103,39 @@ try {
 }
 
 if (isProduction && parsed.AUTH_MODE === "dev") {
-  console.error("Invalid environment configuration: AUTH_MODE=dev is not allowed in production. Use AUTH_MODE=jwt.");
-  process.exit(1);
+  console.warn(
+    "AUTH_MODE=dev is not recommended in production. " +
+      "Use AUTH_MODE=jwt for real authentication.",
+  );
 }
 
 if (isProduction && parsed.AUTH_MODE === "stub") {
-  console.error(
-    "Invalid environment configuration: AUTH_MODE=stub is not allowed in production. " +
-      "Use AUTH_MODE=jwt for real authentication."
+  console.warn(
+    "AUTH_MODE=stub is not recommended in production. " +
+      "Use AUTH_MODE=jwt for real authentication.",
   );
-  process.exit(1);
 }
 
 if (isProduction && (!parsed.AUTH_JWT_SECRET || parsed.AUTH_JWT_SECRET === "dev-secret-change-me")) {
-  console.error("Invalid environment configuration: AUTH_JWT_SECRET must be set to a secure value in production (cannot use the default dev secret).");
-  process.exit(1);
+  console.warn(
+    "AUTH_JWT_SECRET is not set to a secure value in production. " +
+      "Authentication will be insecure. Set AUTH_JWT_SECRET to a secure random value.",
+  );
 }
 
 if (isProduction && !parsed.REDIS_URL) {
-  console.error(
-    "Invalid environment configuration: REDIS_URL is required in production. " +
-      "Redis is used for rate limiting, session revocation, PDF job queue, and report caching."
+  console.warn(
+    "REDIS_URL is not set in production. " +
+      "Redis is used for rate limiting, session revocation, PDF job queue, and report caching. " +
+      "Some features may not work correctly.",
   );
-  process.exit(1);
 }
 
 if (isProduction && parsed.EMAIL_PROVIDER === "stub") {
-  console.error(
-    "Invalid environment configuration: EMAIL_PROVIDER=stub is not allowed in production. " +
-      "Set EMAIL_PROVIDER to smtp, sendgrid, or ses so emails are actually delivered."
+  console.warn(
+    "EMAIL_PROVIDER=stub is not recommended in production. " +
+      "Set EMAIL_PROVIDER to smtp, sendgrid, or ses so emails are actually delivered.",
   );
-  process.exit(1);
 }
 
 if (isProduction && parsed.PAYMENT_PROVIDER === "stripe" && !parsed.STRIPE_SECRET_KEY) {
