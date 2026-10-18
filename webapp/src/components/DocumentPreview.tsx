@@ -33,11 +33,20 @@ export interface DocumentPreviewProps {
   footerText?: string;
   signedAmounts?: boolean;
   reason?: string | null;
+  customReason?: string | null;
+  referenceInvoiceNumber?: string | null;
   shippingDescription?: string;
   shippingAmount?: string;
   shippingTaxRate?: string;
   status?: string;
   paymentState?: string | null;
+  voucherDate?: string;
+  payeeName?: string;
+  payeeEmail?: string;
+  payeePhone?: string;
+  referenceNumber?: string;
+  paymentMethod?: string;
+  paymentProvider?: string;
 }
 
 const DOCUMENT_LABELS: Record<DocumentType, string> = {
@@ -89,12 +98,21 @@ export default function DocumentPreview({
   scopeOfWork,
   footerText,
   signedAmounts = false,
-  reason,
-  shippingDescription,
-  shippingAmount,
-  shippingTaxRate,
-  status,
-  paymentState,
+   reason,
+   customReason,
+   referenceInvoiceNumber,
+   shippingDescription,
+   shippingAmount,
+   shippingTaxRate,
+   status,
+   paymentState,
+   voucherDate,
+   payeeName,
+   payeeEmail,
+   payeePhone,
+   referenceNumber,
+   paymentMethod,
+   paymentProvider,
 }: DocumentPreviewProps) {
   const label = DOCUMENT_LABELS[documentType];
   const currency = calcResult?.currency ?? sourceInvoice?.currency ?? "USD";
@@ -288,16 +306,16 @@ export default function DocumentPreview({
             </div>
           )}
 
-          {/* Credit Note Reason */}
-          {documentType === "credit-note" && reason && (
-            <div className="mb-6">
-              <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
-                <FileText className="h-4 w-4" />
-                Reason
-              </h4>
-              <div className="text-tertiary">{reason}</div>
-            </div>
-          )}
+           {/* Credit Note / Debit Note Reason */}
+           {(documentType === "credit-note" || documentType === "debit-note") && (reason || customReason) && (
+             <div className="mb-6">
+               <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
+                 <FileText className="h-4 w-4" />
+                 Reason
+               </h4>
+               <div className="text-tertiary">{reason === "other" ? customReason : reason}</div>
+             </div>
+           )}
 
           {/* Credit Note Reference Invoice */}
           {documentType === "credit-note" && sourceInvoice && (
@@ -334,9 +352,76 @@ export default function DocumentPreview({
                 )}
               </div>
             </div>
-          )}
+           )}
 
-          {/* Shipping (Invoice only) */}
+           {/* Debit Note Reference Invoice Number */}
+           {documentType === "debit-note" && referenceInvoiceNumber && (
+             <div className="mb-6">
+               <h4 className="font-medium text-primary mb-1.5">Reference Invoice</h4>
+               <div className="text-sm text-tertiary">
+                 <div>{referenceInvoiceNumber}</div>
+               </div>
+             </div>
+           )}
+
+           {/* Payment Voucher Payee */}
+           {documentType === "payment-voucher" && payeeName && (
+             <div className="mb-6">
+               <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
+                 <FileText className="h-4 w-4" />
+                 Payee
+               </h4>
+               <div className="space-y-1">
+                 <div className="font-medium text-primary">{payeeName}</div>
+                 {payeeEmail && (
+                   <div className="flex items-center gap-1.5 text-sm text-tertiary">
+                     <Mail className="h-3 w-3" />
+                     <a href={`mailto:${payeeEmail}`}>{payeeEmail}</a>
+                   </div>
+                 )}
+                 {payeePhone && (
+                   <div className="flex items-center gap-1.5 text-sm text-tertiary">
+                     <Phone className="h-3 w-3" />
+                     {payeePhone}
+                   </div>
+                 )}
+               </div>
+             </div>
+           )}
+
+           {/* Payment Voucher Details */}
+           {documentType === "payment-voucher" && (
+             <div className="mb-6">
+               <h4 className="font-medium text-primary mb-1.5 flex items-center gap-1.5">
+                 <CreditCard className="h-4 w-4" />
+                 Payment Details
+               </h4>
+               <div className="grid grid-cols-2 gap-2 text-sm">
+                 {voucherDate && (
+                   <div>
+                     <span className="text-tertiary">Date:</span> {formatDate(voucherDate)}
+                   </div>
+                 )}
+                 {paymentMethod && (
+                   <div>
+                     <span className="text-tertiary">Method:</span> {paymentMethod}
+                   </div>
+                 )}
+                 {referenceNumber && (
+                   <div className="col-span-2">
+                     <span className="text-tertiary">Reference:</span> {referenceNumber}
+                   </div>
+                 )}
+                 {paymentProvider && (
+                   <div className="col-span-2">
+                     <span className="text-tertiary">Provider:</span> {paymentProvider}
+                   </div>
+                 )}
+               </div>
+             </div>
+           )}
+
+           {/* Shipping (Invoice only) */}
           {documentType === "invoice" && shippingDescription && (
             <div className="mb-6">
               <h4 className="font-medium text-primary mb-1.5">Shipping</h4>

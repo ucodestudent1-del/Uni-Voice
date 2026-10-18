@@ -1945,29 +1945,38 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
            {/* Preview column — hidden on mobile when editor is active */}
            <div className={`overflow-y-auto ${mobileView === "editor" ? "hidden lg:block" : "block"}`}>
-             <DocumentPreview
-              documentType={docType === "credit-note" ? "credit-note" : docType === "quote" ? "quote" : "invoice"}
-              documentNumber={document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number}
-              calcResult={calcResult}
-              business={business}
-              issueDate={state.issueDate}
-              dueDate={state.dueDate}
-              expiryDate={state.expiryDate}
-              poNumber={state.poNumber}
-              customerId={state.customerId}
-              customers={customers}
-              paymentInstructions={state.paymentInstructions}
-              notes={state.notes}
-              terms={state.terms}
-              scopeOfWork={state.scopeOfWork}
-              signedAmounts={docType === "credit-note"}
-              reason={docType === "credit-note" ? effectiveReason : undefined}
-              shippingDescription={docType === "invoice" ? state.shippingDescription : undefined}
-              shippingAmount={docType === "invoice" ? state.shippingAmount : undefined}
-              shippingTaxRate={docType === "invoice" ? state.shippingTaxRate : undefined}
-              status={document?.status}
-              paymentState={document?.payment_state ?? null}
-            />
+              <DocumentPreview
+               documentType={docType === "credit-note" ? "credit-note" : docType === "quote" ? "quote" : docType === "debit-note" ? "debit-note" : docType === "payment-voucher" ? "payment-voucher" : "invoice"}
+               documentNumber={document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? document?.debit_note_number ?? document?.payment_voucher_number}
+               calcResult={calcResult}
+               business={business}
+               issueDate={state.issueDate}
+               dueDate={state.dueDate}
+               expiryDate={state.expiryDate}
+               poNumber={state.poNumber}
+               customerId={state.customerId}
+               customers={customers}
+               paymentInstructions={docType !== "payment-voucher" ? state.paymentInstructions : undefined}
+               notes={state.notes}
+               terms={state.terms}
+               scopeOfWork={state.scopeOfWork}
+               signedAmounts={docType === "credit-note"}
+               reason={docType === "credit-note" || docType === "debit-note" ? state.reason : undefined}
+               customReason={docType === "credit-note" || docType === "debit-note" ? state.customReason : undefined}
+               referenceInvoiceNumber={docType === "debit-note" ? state.referenceInvoiceNumber : undefined}
+               shippingDescription={docType === "invoice" ? state.shippingDescription : undefined}
+               shippingAmount={docType === "invoice" ? state.shippingAmount : undefined}
+               shippingTaxRate={docType === "invoice" ? state.shippingTaxRate : undefined}
+               status={document?.status}
+               paymentState={document?.payment_state ?? null}
+               voucherDate={docType === "payment-voucher" ? (state.voucherDate ?? state.issueDate) : undefined}
+               payeeName={docType === "payment-voucher" ? state.payeeName : undefined}
+               payeeEmail={docType === "payment-voucher" ? state.payeeEmail : undefined}
+               payeePhone={docType === "payment-voucher" ? state.payeePhone : undefined}
+               referenceNumber={docType === "payment-voucher" ? state.referenceNumber : undefined}
+               paymentMethod={docType === "payment-voucher" ? state.paymentMethod : undefined}
+               paymentProvider={docType === "payment-voucher" ? state.paymentProvider : undefined}
+             />
           </div>
         </div>
       </div>
