@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { UnauthorizedError } from "../domain/errors.js";
 import { env, isDev } from "../config/index.js";
 import { query } from "../db/pool.js";
+import { logger } from "../utils/logger.js";
 import { compareSync, hashSync } from "bcrypt";
 import { isAccessTokenRevoked } from "../services/auth/token-denylist.js";
 import jwt from "jsonwebtoken";
@@ -70,7 +71,7 @@ function parseDevHeaders(req: Request): { id: string; businessId?: string; email
   };
 }
 
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   if (isDev && env.AUTH_MODE === "dev") {
     const devUser = parseDevHeaders(req);
     if (devUser) {
@@ -80,19 +81,19 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     }
   }
 
-  const authHeader = req.headers.authorization;
+   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : req.cookies?.accessToken;
   if (!token) {
-    throw new UnauthorizedError("Missing or invalid authorization");
+    return next(new UnauthorizedError("Missing or invalid authorization"));
   }
 
-  let decoded: { userId: string; businessId?: string; email?: string };
+  let decoded: { userId: string; businessId?: string; email: string };
 
   try {
     const secret = env.AUTH_JWT_SECRET;
     decoded = jwt.verify(token, secret) as typeof decoded;
   } catch {
-    throw new UnauthorizedError("Invalid or expired token");
+    return next(new UnauthorizedError("Invalid or expired token"));
   }
 
   if (!env.REDIS_URL) {
@@ -105,7 +106,8 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     return;
   }
 
-  isAccessTokenRevoked(token).then((revoked) => {
+  try {
+    const revoked = await isAccessTokenRevoked(token);
     if (revoked) {
       throw new UnauthorizedError("Token has been revoked");
     }
@@ -116,9 +118,19 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
       email: decoded.email,
     };
     next();
-  }).catch((err) => {
-    next(err);
-  });
+  } catch (err) {
+    if (err instanceof UnauthorizedError) {
+      next(err);
+    } else {
+      logger.warn({ err }, "Redis unavailable during token revocation check; allowing token");
+      req.user = {
+        id: decoded.userId,
+        businessId: decoded.businessId,
+        email: decoded.email,
+      };
+      next();
+    }
+  }
 }
 
 export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): void {
