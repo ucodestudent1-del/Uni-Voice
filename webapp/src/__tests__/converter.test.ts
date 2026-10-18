@@ -21,9 +21,9 @@ describe("converter", () => {
     postalCode: "12345",
     countryCode: "US",
     logoUrl: "https://test.com/logo.png",
-    currency: "USD",
+    defaultCurrency: "USD",
     taxId: "12-3456789",
-  } as ApiBusiness;
+  };
 
   const mockReceipt: ApiReceipt = {
     id: "receipt-1",
@@ -74,6 +74,9 @@ describe("converter", () => {
     is_finalized: false,
     finalized_at: null,
     sent_at: null,
+    created_at: "2024-01-15T00:00:00Z",
+    updated_at: "2024-01-15T00:00:00Z",
+    items: [],
   };
 
   describe("receiptToDocument", () => {
