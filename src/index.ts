@@ -82,6 +82,7 @@ import { subscriptionRepository } from "./repositories/subscription.repo.js";
 import { onboardingRepository } from "./repositories/onboarding.repo.js";
 import { onboardingService } from "./services/onboarding.service.js";
 import { logger } from "./utils/logger.js";
+import Stripe from "stripe";
 import { stripeService } from "./services/payments/stripe-service.js";
 import {
   DocumentTemplateInputSchema,
@@ -97,6 +98,8 @@ import {
   CustomerUpdateSchema,
   CustomerSearchQuerySchema,
   CustomerImportSchema,
+  TeamInviteSchema,
+  TeamUpdateSchema,
 } from "./domain/schemas/customer.js";
 import {
   CreateProductServiceSchema,
@@ -4543,12 +4546,8 @@ app.post(
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
-    const { email, role, message } = req.body;
-    if (!email || !role)
-      return res.status(400).json({ error: "email and role are required" });
-    const allowedRoles = ["owner", "admin", "member", "viewer"];
-    if (!allowedRoles.includes(role))
-      return res.status(400).json({ error: "Invalid role" });
+    const parsed = TeamInviteSchema.parse(req.body);
+    const { email, role } = parsed;
 
     const existing = await query(
       `SELECT id FROM business_users WHERE business_id = $1 AND (invited_email = $2 OR user_id IN (SELECT id FROM users WHERE email = $2)) LIMIT 1`,
@@ -4573,7 +4572,6 @@ app.post(
      VALUES ($1, $2, $3, 'pending', $4, $5, $6)`,
       [req.user!.businessId, email, role, token, req.user!.id, expiresAt],
     );
-    void message;
     res.status(201).json({ memberId: invRes.rows[0].id, inviteToken: token });
   },
 );
@@ -4586,14 +4584,12 @@ app.patch(
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
-    const { role } = req.body;
-    if (role && !["owner", "admin", "member", "viewer"].includes(role)) {
-      return res.status(400).json({ error: "Invalid role" });
-    }
+    const parsed = TeamUpdateSchema.parse(req.body);
+    const { role } = parsed;
     const sets: string[] = [];
     const vals: unknown[] = [];
     let i = 1;
-    if (role) {
+    if (role !== undefined) {
       sets.push(`role = $${i++}`);
       vals.push(role);
     }
@@ -4854,7 +4850,7 @@ app.delete("/api/tax-rates/:id", requireAuth, async (req: AuthRequest, res) => {
 // ============================================================================
 // STRIPE WEBHOOK HANDLER
 // ============================================================================
-async function handleStripeEvent(event: any): Promise<void> {
+async function handleStripeEvent(event: Stripe.Event): Promise<void> {
   const eventId = event.id;
   const idempotencyKey = `stripe_webhook:${eventId}`;
 
@@ -4872,7 +4868,7 @@ async function handleStripeEvent(event: any): Promise<void> {
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
      ON CONFLICT (idempotency_key) DO NOTHING`,
     [
-      event.data.object?.metadata?.businessId ?? null,
+      (event.data.object as { metadata?: Record<string, string> | null })?.metadata?.businessId ?? null,
       null,
       0,
       "USD",
@@ -4885,10 +4881,10 @@ async function handleStripeEvent(event: any): Promise<void> {
 
   switch (event.type) {
     case "checkout.session.completed": {
-      const session = event.data.object;
-      const businessId = session.metadata?.businessId;
-      const invoiceId = session.metadata?.invoiceId;
-      const planId = session.metadata?.planId;
+      const session = event.data.object as Stripe.Checkout.Session;
+      const businessId = session.metadata?.businessId ?? null;
+      const invoiceId = session.metadata?.invoiceId ?? null;
+      const planId = session.metadata?.planId ?? null;
 
       if (invoiceId) {
         try {
@@ -4911,14 +4907,14 @@ async function handleStripeEvent(event: any): Promise<void> {
       const sub =
         await subscriptionRepository.findSubscriptionByBusinessId(businessId);
       if (sub) {
-        const stripeSubscriptionId = session.subscription;
+        const stripeSubscriptionId = typeof session.subscription === "string" ? session.subscription : null;
         await subscriptionRepository.updateSubscriptionByBusinessId(
           businessId,
           {
             planId,
             status: "active",
             billingCycle: billingCycle ?? "monthly",
-            stripeSubscriptionId: stripeSubscriptionId ?? null,
+            stripeSubscriptionId,
           },
         );
         await subscriptionRepository.recordSubscriptionEvent(
@@ -4926,14 +4922,14 @@ async function handleStripeEvent(event: any): Promise<void> {
           sub.id,
           "checkout_completed",
           undefined,
-          planCode,
+          planCode as "free" | "pro" | undefined,
           { stripeSessionId: session.id },
         );
       }
       break;
     }
     case "customer.subscription.updated": {
-      const stripeSub = event.data.object;
+      const stripeSub = event.data.object as Stripe.Subscription;
       const businessId = await findBusinessByStripeSubscriptionId(stripeSub.id);
       if (!businessId) {
         logger.warn(
@@ -4970,7 +4966,7 @@ async function handleStripeEvent(event: any): Promise<void> {
       break;
     }
     case "customer.subscription.deleted": {
-      const stripeSub = event.data.object;
+      const stripeSub = event.data.object as Stripe.Subscription;
       const businessId = await findBusinessByStripeSubscriptionId(stripeSub.id);
       if (!businessId) return;
 

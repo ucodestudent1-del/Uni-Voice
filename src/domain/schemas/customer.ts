@@ -128,3 +128,17 @@ export type CustomerListItem = z.infer<typeof CustomerListItemSchema>;
 export const CustomerImportSchema = z.object({
   csv: z.string().min(1, "CSV data is required"),
 });
+
+export const TeamInviteSchema = z.object({
+  email: z.string().email("Valid email address is required"),
+  role: z.enum(["owner", "admin", "member", "viewer"]).refine(
+    (val): val is "owner" | "admin" | "member" | "viewer" =>
+      ["owner", "admin", "member", "viewer"].includes(val),
+    { message: "role must be one of: owner, admin, member, viewer" },
+  ),
+  message: z.string().max(1000).optional(),
+});
+
+export const TeamUpdateSchema = z.object({
+  role: z.enum(["owner", "admin", "member", "viewer"]).optional(),
+});
