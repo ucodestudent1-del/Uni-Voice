@@ -1769,3 +1769,130 @@ export interface ApiCreateDebitNoteInput {
   paymentInstructions?: string | null;
   items: ApiDebitNoteItemInput[];
 }
+
+export interface ApiPurchaseOrderItem {
+  id: string;
+  purchase_order_id: string;
+  description: string;
+  quantity: string;
+  unit: string;
+  unit_price: string;
+  tax_rate: string;
+  tax_name?: string | null;
+  tax_amount: string;
+  line_subtotal: string;
+  line_total: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ApiPurchaseOrderItemInput {
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice?: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+}
+
+export interface ApiPurchaseOrderFeeInput {
+  description: string;
+  amount?: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+}
+
+export interface ApiPurchaseOrder {
+  id: string;
+  business_id: string;
+  supplier_id?: string | null;
+  purchase_order_number?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  delivery_date?: string | null;
+  currency: string;
+  supplier_name?: string | null;
+  supplier_email?: string | null;
+  supplier_phone?: string | null;
+  supplier_address_line_1?: string | null;
+  supplier_address_line_2?: string | null;
+  supplier_city?: string | null;
+  supplier_state_or_region?: string | null;
+  supplier_postal_code?: string | null;
+  supplier_country_code?: string | null;
+  supplier_tax_id?: string | null;
+  reference_number?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  amount_due: string;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  cancelled_at?: string | null;
+  cancelled_reason?: string | null;
+  public_token?: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+  version?: number;
+  items: ApiPurchaseOrderItem[];
+  events?: ApiPurchaseOrderEvent[];
+}
+
+export interface ApiPurchaseOrderListItem {
+  id: string;
+  business_id: string;
+  purchase_order_number?: string | null;
+  status: string;
+  issue_date?: string | null;
+  due_date?: string | null;
+  currency: string;
+  supplier_name?: string | null;
+  supplier_email?: string | null;
+  total: string;
+  amount_due: string;
+  is_finalized: boolean;
+  finalized_at?: string | null;
+  sent_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiPurchaseOrderEvent {
+  id: string;
+  purchase_order_id?: string | null;
+  business_id?: string | null;
+  event_type: string;
+  actor_id?: string | null;
+  actor_type?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ApiCreatePurchaseOrderInput {
+  supplierId?: string | null;
+  supplierName?: string | null;
+  supplierEmail?: string | null;
+  supplierPhone?: string | null;
+  supplierAddressLine1?: string | null;
+  supplierAddressLine2?: string | null;
+  supplierCity?: string | null;
+  supplierStateOrRegion?: string | null;
+  supplierPostalCode?: string | null;
+  supplierCountryCode?: string | null;
+  supplierTaxId?: string | null;
+  issueDate?: string | null;
+  dueDate?: string | null;
+  deliveryDate?: string | null;
+  currency?: string;
+  referenceNumber?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  items: ApiPurchaseOrderItemInput[];
+  fees?: ApiPurchaseOrderFeeInput[];
+}

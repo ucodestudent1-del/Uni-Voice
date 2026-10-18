@@ -103,6 +103,14 @@ const DocumentWorkspacePaymentVoucherWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="payment-voucher" />,
   "Payment Voucher Workspace",
 );
+const DocumentWorkspaceReceiptWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="receipt" />,
+  "Receipt Workspace",
+);
+const DocumentWorkspacePurchaseOrderWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="purchase-order" />,
+  "Purchase Order Workspace",
+);
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -209,8 +217,12 @@ export default function App() {
            <Route path="quotes/:id/edit" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
            <Route path="debit-notes/new" element={<DocumentWorkspaceDebitNoteWithBoundary docType="debit-note" />} />
            <Route path="debit-notes/:id/edit" element={<DocumentWorkspaceDebitNoteWithBoundary docType="debit-note" />} />
-           <Route path="payment-vouchers/new" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
-           <Route path="payment-vouchers/:id/edit" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
+            <Route path="payment-vouchers/new" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
+            <Route path="payment-vouchers/:id/edit" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
+            <Route path="receipts/new" element={<DocumentWorkspaceReceiptWithBoundary docType="receipt" />} />
+            <Route path="receipts/:id/edit" element={<DocumentWorkspaceReceiptWithBoundary docType="receipt" />} />
+            <Route path="purchase-orders/new" element={<DocumentWorkspacePurchaseOrderWithBoundary docType="purchase-order" />} />
+            <Route path="purchase-orders/:id/edit" element={<DocumentWorkspacePurchaseOrderWithBoundary docType="purchase-order" />} />
           <Route path="reports" element={<ReportsWithBoundary />} />
           <Route path="report" element={<ReportSectionWithBoundary />} />
           <Route path="reminders" element={<ReminderAutomationWithBoundary />} />

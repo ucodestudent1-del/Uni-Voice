@@ -56,7 +56,7 @@ quoteService.setInvoiceService(invoiceService);
 import { taxRuleService } from "./services/tax-rule-service.js";
 import { discountRuleService } from "./services/discount-rule-service.js";
 import { brandingService } from "./services/branding-service.js";
-import { DocumentService, type DocumentTypeKey, type DocumentHandler, type GeneratedDocumentOutput } from "./services/document-service.js";
+import { DocumentService } from "./services/document-service.js";
 import { outputService } from "./services/output/index.js";
 import type { OutputFormat } from "./services/output/types.js";
 import {

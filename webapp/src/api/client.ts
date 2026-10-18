@@ -56,7 +56,14 @@ import type {
   ApiDebitNoteItem,
   ApiDebitNoteItemInput,
   ApiDebitNoteEvent,
-  ApiCreateDebitNoteInput,
+   ApiCreateDebitNoteInput,
+   ApiPurchaseOrder,
+   ApiPurchaseOrderListItem,
+   ApiPurchaseOrderItem,
+   ApiPurchaseOrderItemInput,
+   ApiPurchaseOrderEvent,
+   ApiPurchaseOrderFeeInput,
+   ApiCreatePurchaseOrderInput,
 } from "../types/api";
 
 // Re-export types from types/api
@@ -100,6 +107,13 @@ export type {
    ApiDebitNoteItemInput,
    ApiDebitNoteEvent,
    ApiCreateDebitNoteInput,
+   ApiPurchaseOrder,
+   ApiPurchaseOrderListItem,
+   ApiPurchaseOrderItem,
+   ApiPurchaseOrderItemInput,
+   ApiPurchaseOrderEvent,
+   ApiPurchaseOrderFeeInput,
+   ApiCreatePurchaseOrderInput,
 } from "../types/api";
 
 // Re-export invoice generator module types
@@ -1966,6 +1980,13 @@ export async function getCreditNoteEvents(
   return res.data;
 }
 
+export async function getCreditNotePdf(id: string): Promise<Blob> {
+  const res = await api.get(`/credit-notes/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+// ============================================================================
+// QUOTES
 // ============================================================================
 // QUOTES
 // ============================================================================
@@ -2411,4 +2432,117 @@ export async function updateBranding(input: ApiBrandingInput): Promise<{ brandin
 export async function generateBrandingPreview(input: ApiBrandingInput): Promise<{ html: string }> {
   const res = await api.post("/branding/preview", input);
   return res.data;
+}
+
+// ============================================================================
+// UNIVERSAL DOCUMENT GENERATION
+// ============================================================================
+
+export interface GenerateDocumentParams {
+  docType: string;
+  docId: string;
+  format?: "pdf" | "html" | "docx" | "txt" | "csv" | "email-html" | "png" | "svg";
+  templateId?: string;
+}
+
+export async function generateDocument(params: GenerateDocumentParams): Promise<Blob> {
+  const res = await api.post("/documents/generate", params, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getDocumentArtifacts(
+  docId: string,
+  docType?: string,
+): Promise<{ artifacts: Array<{ id: string; outputFormat: string; fileUrl: string | null; sha256: string; fileSizeBytes: number; generatedAt: string; metadata: Record<string, unknown> }> }> {
+  const res = await api.get(`/documents/${docId}/artifacts`, { params: docType ? { docType } : undefined });
+  return res.data;
+}
+
+// ============================================================================
+// PURCHASE ORDERS
+// ============================================================================
+
+export interface PurchaseOrderSearchParams {
+  limit?: number;
+  offset?: number;
+  status?: string;
+  search?: string;
+  supplierId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export async function getPurchaseOrders(params?: PurchaseOrderSearchParams): Promise<{
+  purchaseOrders: ApiPurchaseOrderListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}> {
+  const res = await api.get("/purchase-orders", { params });
+  return res.data;
+}
+
+export async function getPurchaseOrder(id: string): Promise<{ purchaseOrder: ApiPurchaseOrder }> {
+  const res = await api.get(`/purchase-orders/${id}`);
+  return res.data;
+}
+
+export async function createPurchaseOrder(
+  data: ApiCreatePurchaseOrderInput,
+): Promise<{ purchaseOrder: ApiPurchaseOrder }> {
+  const res = await api.post("/purchase-orders", data);
+  return res.data;
+}
+
+export async function updatePurchaseOrder(
+  id: string,
+  data: Partial<ApiCreatePurchaseOrderInput>,
+): Promise<{ purchaseOrder: ApiPurchaseOrder }> {
+  const res = await api.patch(`/purchase-orders/${id}`, data);
+  return res.data;
+}
+
+export async function finalizePurchaseOrder(
+  id: string,
+): Promise<{ purchaseOrder: ApiPurchaseOrder; purchaseOrderNumber: string }> {
+  const res = await api.post(`/purchase-orders/${id}/finalize`);
+  return res.data;
+}
+
+export async function sendPurchaseOrder(
+  id: string,
+  data?: { to?: string | null; cc?: string | null; bcc?: string | null; subject?: string | null; message?: string | null },
+): Promise<{ ok: boolean; success: boolean; messageId: string; status: string; purchaseOrder: ApiPurchaseOrder }> {
+  const res = await api.post(`/purchase-orders/${id}/send`, data ?? {});
+  return res.data;
+}
+
+export async function cancelPurchaseOrder(
+  id: string,
+  reason?: string,
+): Promise<{ purchaseOrder: ApiPurchaseOrder }> {
+  const res = await api.post(`/purchase-orders/${id}/cancel`, { reason });
+  return res.data;
+}
+
+export async function getPurchaseOrderPdf(id: string): Promise<Blob> {
+  const res = await api.get(`/purchase-orders/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getPurchaseOrderEvents(
+  purchaseOrderId: string,
+): Promise<{ events: ApiPurchaseOrderEvent[] }> {
+  const res = await api.get(`/purchase-orders/${purchaseOrderId}/events`);
+  return res.data;
+}
+
+// ============================================================================
+// RECEIPTS (additional list detail fetch for workspace)
+// ============================================================================
+
+export async function getReceipt(id: string): Promise<{ receipt: ApiReceipt }> {
+  return getReceiptById(id);
 }

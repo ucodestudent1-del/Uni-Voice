@@ -124,6 +124,29 @@ export const debitNoteStatusConfig = createStatusBadgeConfig(
   "draft"
 );
 
+export const receiptStatusConfig = createStatusBadgeConfig(
+  {
+    issued: { label: "Issued", className: "status-info-bg status-info-text", description: "Receipt has been issued." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Receipt has been sent to the customer." },
+    paid: { label: "Paid", className: "status-success-bg status-success-text", description: "Receipt payment has been processed." },
+    failed: { label: "Failed", className: "status-error-bg status-error-text", description: "Receipt payment failed." },
+    refunded: { label: "Refunded", className: "status-tertiary-bg status-tertiary-text", description: "Receipt has been refunded." },
+  },
+  "issued"
+);
+
+export const purchaseOrderStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Purchase order has not been issued." },
+    issued: { label: "Issued", className: "status-info-bg status-info-text", description: "Purchase order has been issued to the supplier." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Purchase order has been sent." },
+    accepted: { label: "Accepted", className: "status-success-bg status-success-text", description: "Purchase order has been accepted by the supplier." },
+    received: { label: "Received", className: "status-success-bg status-success-text", description: "Goods/services have been received." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Purchase order has been cancelled." },
+  },
+  "draft"
+);
+
 export function isOverdueStatus(status: string, dueDate?: string | null): boolean {
   if (status === "overdue") return true;
   if (status === "paid" || status === "void" || status === "cancelled") return false;
@@ -163,6 +186,8 @@ const STATUS_DOT_COLORS: Record<string, string> = {
   rejected: "rgb(var(--color-error))",
   expired: "rgb(var(--color-text-tertiary))",
   converted: "rgb(var(--color-success))",
+  issued: "rgb(var(--color-info))",
+  received: "rgb(var(--color-success))",
 };
 
 const DEFAULT_DOT_COLOR = "rgb(var(--color-text-tertiary))";

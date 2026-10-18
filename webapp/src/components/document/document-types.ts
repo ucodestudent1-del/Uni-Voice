@@ -1,7 +1,7 @@
 import type { ApiInvoiceItem, ApiInvoiceFee } from "@/types/api";
 import type { ApiQuoteItem, ApiQuoteFee } from "@/types/api";
 
-export type DocumentType = "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher";
+export type DocumentType = "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order";
 
 export interface DocumentLineItem {
   description: string;
@@ -86,8 +86,34 @@ export interface DocumentState {
   payeeTaxId?: string;
   voucherDate?: string;
   referenceNumber?: string;
-  paymentMethod?: string;
-  paymentProvider?: string;
+   paymentMethod?: string;
+   paymentProvider?: string;
+
+   /** Receipt-specific fields */
+   receiptAmount?: string;
+   receiptPaymentMethod?: string;
+   receiptPaymentProvider?: string;
+   receiptProviderPaymentId?: string;
+   receiptIssuedAt?: string;
+
+   /** Purchase-order-specific fields */
+   supplierName?: string;
+   supplierEmail?: string;
+   supplierPhone?: string;
+   supplierTaxId?: string;
+   supplierAddressLine1?: string;
+   supplierAddressLine2?: string;
+   supplierCity?: string;
+   supplierStateOrRegion?: string;
+   supplierPostalCode?: string;
+   supplierCountryCode?: string;
+   deliveryDate?: string;
+   shippingAddressLine1?: string;
+   shippingAddressLine2?: string;
+   shippingCity?: string;
+   shippingStateOrRegion?: string;
+   shippingPostalCode?: string;
+   shippingCountryCode?: string;
 }
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
@@ -157,12 +183,40 @@ export interface DocumentApiResult {
   payee_name?: string | null;
   payee_email?: string | null;
   payee_phone?: string | null;
-  payment_method?: string | null;
-  payment_provider?: string | null;
-  reference_number?: string | null;
+   payment_method?: string | null;
+   payment_provider?: string | null;
+   reference_number?: string | null;
 
-  items: Array<ApiInvoiceItem | ApiInvoiceFee | ApiQuoteItem | ApiQuoteFee>;
-  fees: DocumentFee[];
-  payments?: unknown[];
-  events?: unknown[];
+   /** Receipt fields */
+   receipt_number?: string | null;
+   receipt_amount?: string | null;
+   receipt_payment_method?: string | null;
+   receipt_payment_provider?: string | null;
+   receipt_provider_payment_id?: string | null;
+   issued_at?: string | null;
+
+   /** Purchase-order fields */
+   purchase_order_number?: string | null;
+   supplier_name?: string | null;
+   supplier_email?: string | null;
+   supplier_phone?: string | null;
+   supplier_tax_id?: string | null;
+   supplier_address_line_1?: string | null;
+   supplier_address_line_2?: string | null;
+   supplier_city?: string | null;
+   supplier_state_or_region?: string | null;
+   supplier_postal_code?: string | null;
+   supplier_country_code?: string | null;
+   delivery_date?: string | null;
+   shipping_address_line_1?: string | null;
+   shipping_address_line_2?: string | null;
+   shipping_city?: string | null;
+   shipping_state_or_region?: string | null;
+   shipping_postal_code?: string | null;
+   shipping_country_code?: string | null;
+
+   items: Array<ApiInvoiceItem | ApiInvoiceFee | ApiQuoteItem | ApiQuoteFee>;
+   fees: DocumentFee[];
+   payments?: unknown[];
+   events?: unknown[];
 }

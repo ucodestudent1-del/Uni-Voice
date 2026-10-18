@@ -18,7 +18,7 @@ import {
 import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
 import { SUPPORTED_CURRENCIES, getCurrencyMetadata } from "@/types/currency";
-  import { useToast, Button, FormField, FormTextareaField, PageHeader, StatusBadge, Dialog, SearchInput, invoiceStatusConfig, quoteStatusConfig, creditNoteStatusConfig, debitNoteStatusConfig, paymentVoucherStatusConfig } from "@/components/ui";
+  import { useToast, Button, FormField, FormTextareaField, PageHeader, StatusBadge, Dialog, SearchInput } from "@/components/ui";
 import SectionCard from "@/components/SectionCard";
 import {
   Save,
@@ -53,44 +53,14 @@ import {
   getBusiness,
   getTaxRates,
   getProducts,
-  getInvoice,
-  createInvoice,
-  updateInvoice,
-  finalizeInvoice,
-  sendInvoice,
-  sendReminder,
-  duplicateInvoice,
-  type CreateInvoiceInput,
-  type FinalizeInvoiceResult,
-  type SendInvoiceResult,
-  getQuote,
-  createQuote,
-  updateQuote,
-  finalizeQuote,
-  sendQuote,
-  duplicateQuote,
-  type CreateQuoteInput,
-   type FinalizeQuoteResult,
-   type SendQuoteResult,
-  getCreditNote,
-  createCreditNoteDraft,
-  finalizeCreditNote,
-  type CreateCreditNoteInput,
-  getDebitNote,
-  createDebitNote,
-  updateDebitNote,
-  finalizeDebitNote,
-  sendDebitNote,
-  getDebitNotePdf,
-  type ApiCreateDebitNoteInput,
-  getPaymentVoucher,
-  createPaymentVoucher,
-  updatePaymentVoucher,
-  finalizePaymentVoucher,
-  getPaymentVoucherPdf,
-  type ApiCreatePaymentVoucherInput,
   getInvoices,
+  sendReminder,
   type ApiInvoiceListItem,
+  type CreateInvoiceInput,
+  type CreateQuoteInput,
+  type CreateCreditNoteInput,
+  type ApiCreateDebitNoteInput,
+  type ApiCreatePaymentVoucherInput,
   getSuggestedActions,
   getProgressiveAutofill,
   parseCommandLine,
@@ -99,6 +69,7 @@ import {
   type SpeedLastInvoiceInfo,
   type SpeedAutofillResult,
 } from "@/api/client";
+import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -165,32 +136,12 @@ function useDocumentData(
     setIsLoading(true);
     setError(null);
 
-    if (docType === "invoice") {
-      getInvoice(id)
-        .then((res) => setDocument(res.invoice))
-        .catch((err: any) => setError(err.message))
-        .finally(() => setIsLoading(false));
-    } else if (docType === "quote") {
-      getQuote(id)
-        .then((res) => setDocument(res.quote))
-        .catch((err: any) => setError(err.message))
-        .finally(() => setIsLoading(false));
-    } else if (docType === "credit-note") {
-        getCreditNote(id)
-          .then((res) => setDocument(res.creditNote))
-          .catch((err: any) => setError(err.message))
-          .finally(() => setIsLoading(false));
-      } else if (docType === "debit-note") {
-       getDebitNote(id)
-         .then((res) => setDocument(res.debitNote))
-         .catch((err: any) => setError(err.message))
-         .finally(() => setIsLoading(false));
-     } else if (docType === "payment-voucher") {
-       getPaymentVoucher(id)
-         .then((res) => setDocument(res.voucher))
-         .catch((err: any) => setError(err.message))
-         .finally(() => setIsLoading(false));
-     }
+    const handler = getDocumentHandler(docType);
+    handler
+      .fetchDetail(id)
+      .then((doc) => setDocument(doc))
+      .catch((err: any) => setError(err.message))
+      .finally(() => setIsLoading(false));
   }, [docType, id, isNew]);
 
   return { document, setDocument, isLoading, error };
@@ -701,7 +652,9 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     } as CreateCreditNoteInput;
   };
 
-   const doSave = useCallback(async () => {
+  const handler = useMemo(() => getDocumentHandler(docType), [docType]);
+
+  const doSave = useCallback(async () => {
     const fullPayload = buildPayload();
     if (!fullPayload.items || fullPayload.items.length === 0) {
       toast("Add at least one line item before saving.", { type: "warning", title: "Empty document" });
@@ -710,62 +663,33 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     setSaveState("saving");
     try {
       if (isNew) {
-         if (docType === "invoice") {
-           const res = await createInvoice(fullPayload as CreateInvoiceInput);
-           toast(`Created invoice #${res.invoice.invoice_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-           navigate(`/app/invoices/${res.invoice.id}`);
-           setDocument(res.invoice);
-         } else if (docType === "quote") {
-           const res = await createQuote(fullPayload as CreateQuoteInput);
-           toast(`Created quotation #${res.quote.quote_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-           navigate(`/app/quotes/${res.quote.id}`);
-           setDocument(res.quote);
-         } else if (docType === "debit-note") {
-           const res = await createDebitNote(fullPayload as ApiCreateDebitNoteInput);
-           toast(`Created debit note #${res.debitNote.debit_note_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-           navigate(`/app/debit-notes/${res.debitNote.id}/edit`);
-           setDocument(res.debitNote);
-         } else if (docType === "payment-voucher") {
-           const res = await createPaymentVoucher(fullPayload as ApiCreatePaymentVoucherInput);
-           toast(`Created payment voucher #${res.voucher.payment_voucher_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-           navigate(`/app/payment-vouchers/${res.voucher.id}/edit`);
-           setDocument(res.voucher);
-         } else {
-           const res = await createCreditNoteDraft(fullPayload as CreateCreditNoteInput);
-           toast(`Created credit note draft.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-           navigate(`/app/credit-notes/${res.creditNote.id}/edit`);
-           setDocument(res.creditNote);
-         }
-         lastSavedStateRef.current = { ...state };
-       } else {
-         const doc = document as any;
-         const prev = lastSavedStateRef.current;
-         let payload: any;
+        const res = await handler.create(fullPayload as unknown as Record<string, unknown>);
+        const doc = res.invoice ?? res.quote ?? res.creditNote ?? res.debitNote ?? res.voucher ?? res.purchaseOrder ?? res.receipt;
+        const num = handler.getNumberField(doc);
+        toast(`Created ${docTypeLabelFn(docType)} #${num ?? ""}.`, { type: "success", title: `${docTypeLabelFn(docType)} created` });
+        navigate(`/app/${getDocumentRoutePrefix(docType)}/${doc.id}/edit`);
+        setDocument(doc);
+      } else {
+        const doc = document as any;
+        const prev = lastSavedStateRef.current;
+        let payload: any;
 
-         if (!prev) {
-           payload = fullPayload;
-         } else {
-           payload = {};
-           const scalarFields = ["customerId", "currency", "issueDate", "dueDate", "expiryDate", "notes", "terms", "paymentInstructions", "poNumber", "quoteDiscount", "quoteDiscountType", "invoiceDiscount", "invoiceDiscountType", "shippingDescription", "shippingAmount", "shippingTaxRate", "referenceInvoiceNumber", "voucherDate", "payeeName", "payeeEmail", "payeePhone", "payeeAddressLine1", "payeeAddressLine2", "payeeCity", "payeeStateOrRegion", "payeePostalCode", "payeeCountryCode", "payeeTaxId", "referenceNumber", "paymentMethod", "paymentProvider"];
-           for (const field of scalarFields) {
-             if (JSON.stringify((state as any)[field]) !== JSON.stringify((prev as any)[field])) {
-               (payload as any)[field] = (state as any)[field] ?? undefined;
-             }
-           }
-         }
-         payload.items = fullPayload.items;
-         payload.fees = (fullPayload as any).fees;
-         payload.version = doc.version;
+        if (!prev) {
+          payload = fullPayload;
+        } else {
+          payload = {};
+          const scalarFields = ["customerId", "currency", "issueDate", "dueDate", "expiryDate", "notes", "terms", "paymentInstructions", "poNumber", "quoteDiscount", "quoteDiscountType", "invoiceDiscount", "invoiceDiscountType", "shippingDescription", "shippingAmount", "shippingTaxRate", "referenceInvoiceNumber", "voucherDate", "payeeName", "payeeEmail", "payeePhone", "payeeAddressLine1", "payeeAddressLine2", "payeeCity", "payeeStateOrRegion", "payeePostalCode", "payeeCountryCode", "payeeTaxId", "referenceNumber", "paymentMethod", "paymentProvider"];
+          for (const field of scalarFields) {
+            if (JSON.stringify((state as any)[field]) !== JSON.stringify((prev as any)[field])) {
+              (payload as any)[field] = (state as any)[field] ?? undefined;
+            }
+          }
+        }
+        payload.items = fullPayload.items;
+        payload.fees = (fullPayload as any).fees;
+        payload.version = doc.version;
 
-         if (docType === "invoice") {
-           await updateInvoice(doc.id, payload as CreateInvoiceInput);
-         } else if (docType === "quote") {
-           await updateQuote(doc.id, payload as CreateQuoteInput);
-         } else if (docType === "debit-note") {
-           await updateDebitNote(doc.id, payload as ApiCreateDebitNoteInput);
-         } else if (docType === "payment-voucher") {
-           await updatePaymentVoucher(doc.id, payload as ApiCreatePaymentVoucherInput);
-         }
+        await handler.update(doc.id, payload as Record<string, unknown>);
         setSaveState("saved");
         if (saveStateTimerRef.current) clearTimeout(saveStateTimerRef.current);
         saveStateTimerRef.current = setTimeout(() => setSaveState("idle"), 2000);
@@ -777,7 +701,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     } finally {
       if (saveStateTimerRef.current) clearTimeout(saveStateTimerRef.current);
     }
-  }, [id, isNew, docType, document, state, navigate, toast]);
+  }, [id, isNew, docType, handler, document, state, navigate, toast]);
 
   useEffect(() => {
     if (isFinalized) return;
@@ -820,23 +744,13 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     },
   });
 
-  function docTypeLabel(type: DocumentType): string {
-    switch (type) {
-      case "invoice": return "Invoice";
-      case "quote": return "Quotation";
-      case "credit-note": return "Credit Note";
-      case "debit-note": return "Debit Note";
-      case "payment-voucher": return "Payment Voucher";
-    }
-  }
-
   const getDocumentTitle = () => {
     const doc = document as any;
     if (isNew) {
-      return `New ${docTypeLabel(docType)}`;
+      return `New ${docTypeLabelFn(docType)}`;
     }
-    const num = doc?.invoice_number ?? doc?.quote_number ?? doc?.credit_note_number ?? doc?.debit_note_number ?? doc?.payment_voucher_number ?? "";
-    return `${docTypeLabel(docType)} #${num}`;
+    const num = handler.getNumberField(doc);
+    return `${docTypeLabelFn(docType)} #${num ?? ""}`;
   };
 
   const handleFinalize = useCallback(async () => {
@@ -846,33 +760,23 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     const doc = document as any;
     if (!doc) return;
 
+    if (!handler.supportsFinalize) {
+      toast(`${docTypeLabelFn(docType)}s do not need finalization.`, { type: "info", title: "Not applicable" });
+      return;
+    }
+
     setIsFinalizing(true);
     try {
-      let result: any;
-      if (docType === "invoice") {
-        result = await finalizeInvoice(doc.id) as FinalizeInvoiceResult;
-        toast(`Invoice #${result.invoiceNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else if (docType === "quote") {
-        result = await finalizeQuote(doc.id) as FinalizeQuoteResult;
-        toast(`Quotation #${result.quoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else if (docType === "debit-note") {
-        result = await finalizeDebitNote(doc.id);
-        toast(`Debit note #${result.debitNoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else if (docType === "payment-voucher") {
-        result = await finalizePaymentVoucher(doc.id);
-        toast(`Payment voucher #${result.voucherNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else {
-        result = await finalizeCreditNote(doc.id);
-        toast(`Credit note finalized.`, { type: "success", title: "Finalized" });
-      }
-      setDocument(result.invoice ?? result.quote ?? result.creditNote ?? result.debitNote ?? result.voucher);
+      const result = await handler.finalize(doc.id);
+      setDocument(result.document);
       setSaveState("idle");
+      toast(`${docTypeLabelFn(docType)} #${result.documentNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Finalize failed" });
     } finally {
       setIsFinalizing(false);
     }
-  }, [document, isNew, doSave, docType, toast]);
+  }, [document, isNew, doSave, docType, handler, toast]);
 
   const handleFinalizeAndSend = useCallback(async () => {
     if (isNew && !document) {
@@ -896,34 +800,24 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     const doc = document as any;
     if (!doc) return;
 
+    if (!handler.supportsFinalize) {
+      setSendDialogOpen(true);
+      return;
+    }
+
     setIsFinalizing(true);
     try {
-      let result: any;
-      if (docType === "invoice") {
-        result = await finalizeInvoice(doc.id) as FinalizeInvoiceResult;
-        toast(`Invoice #${result.invoiceNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else if (docType === "quote") {
-        result = await finalizeQuote(doc.id) as FinalizeQuoteResult;
-        toast(`Quotation #${result.quoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else if (docType === "debit-note") {
-        result = await finalizeDebitNote(doc.id);
-        toast(`Debit note #${result.debitNoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else if (docType === "payment-voucher") {
-        result = await finalizePaymentVoucher(doc.id);
-        toast(`Payment voucher #${result.voucherNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      } else {
-        result = await finalizeCreditNote(doc.id);
-        toast(`Credit note finalized.`, { type: "success", title: "Finalized" });
-      }
-      setDocument(result.invoice ?? result.quote ?? result.creditNote ?? result.debitNote ?? result.voucher);
+      const result = await handler.finalize(doc.id);
+      setDocument(result.document);
       setSaveState("idle");
+      toast(`${docTypeLabelFn(docType)} #${result.documentNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
       setSendDialogOpen(true);
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Finalize failed" });
     } finally {
       setIsFinalizing(false);
     }
-  }, [document, docType, toast]);
+  }, [document, docType, handler, toast]);
 
   const handleSend = useCallback(async () => {
     if (isNew && !document) {
@@ -938,56 +832,45 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     const doc = document as any;
     if (!doc) return;
 
+    if (!handler.supportsSend) {
+      setSendDialogOpen(false);
+      toast(`Send functionality for ${docTypeLabelFn(docType).toLowerCase()} is not available.`, { type: "info", title: "Not available" });
+      return;
+    }
+
     setIsSending(true);
     try {
-       if (docType === "invoice") {
-        const result: SendInvoiceResult = await sendInvoice(doc.id, sendData);
-        toast(`Invoice sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
-        setDocument(result.invoice ?? doc);
-      } else if (docType === "quote") {
-        const result: SendQuoteResult = await sendQuote(doc.id, sendData);
-        toast(`Quotation sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
-        setDocument(result.quote ?? doc);
-      } else if (docType === "debit-note") {
-        const result = await sendDebitNote(doc.id, {
-          to: sendData.to || undefined,
-          cc: sendData.cc ? sendData.cc.split(",").map((e) => e.trim()).filter(Boolean) : [],
-          bcc: sendData.bcc ? sendData.bcc.split(",").map((e) => e.trim()).filter(Boolean) : [],
-          subject: sendData.subject || undefined,
-          message: sendData.message || undefined,
-        });
-        toast(`Debit note sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
-      } else {
-        setSendDialogOpen(false);
-        toast(`Send functionality for ${docTypeLabel(docType).toLowerCase()} coming soon.`, { type: "info", title: "Not available" });
-        return;
-      }
+      const result = await handler.send(doc.id, sendData);
+      const recipient = sendData.to || doc.customer_email || doc.payee_email || "recipient";
+      toast(`${docTypeLabelFn(docType)} sent to ${recipient}.`, { type: "success", title: "Sent" });
       setSendDialogOpen(false);
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Send failed" });
     } finally {
       setIsSending(false);
     }
-  }, [document, docType, sendData, toast]);
+  }, [document, docType, handler, sendData, toast]);
 
   const handleDuplicate = useCallback(async () => {
     const doc = document as any;
     if (!doc) return;
 
+    if (!handler.supportsDuplicate) {
+      toast(`Duplicate is not available for ${docTypeLabelFn(docType).toLowerCase()}s.`, { type: "info", title: "Not available" });
+      return;
+    }
+
     try {
-      if (docType === "invoice") {
-        const result = await duplicateInvoice(doc.id);
-        toast("Invoice duplicated.", { type: "success", title: "Duplicated" });
-        navigate(`/app/invoices/${result.invoice.id}`);
-      } else if (docType === "quote") {
-        const result = await duplicateQuote(doc.id);
-        toast("Quotation duplicated.", { type: "success", title: "Duplicated" });
-        navigate(`/app/quotes/${result.quote.id}`);
+      const result = await handler.duplicate(doc.id);
+      toast(`${docTypeLabelFn(docType)} duplicated.`, { type: "success", title: "Duplicated" });
+      const newId = result.invoice?.id ?? result.quote?.id ?? result.purchaseOrder?.id ?? result.voucher?.id;
+      if (newId) {
+        navigate(`/app/${getDocumentRoutePrefix(docType)}/${newId}`);
       }
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Duplicate failed" });
     }
-  }, [document, docType, navigate, toast]);
+  }, [document, docType, handler, navigate, toast]);
 
   const handleSendReminder = useCallback(async () => {
     const doc = document as any;
@@ -996,13 +879,13 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     try {
       await sendReminder(doc.id, {
         to: doc.customer_email ?? "",
-        subject: `Payment Reminder: ${docTypeLabel(docType)} ${doc.invoice_number ?? doc.quote_number ?? ""}`,
+        subject: `Payment Reminder: ${docTypeLabelFn(docType)} ${handler.getNumberField(doc) ?? ""}`,
       });
       toast("Reminder sent.", { type: "success", title: "Sent" });
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Send failed" });
     }
-  }, [document, docType, toast]);
+  }, [document, docType, handler, toast]);
 
   const validateDocument = (): { code: string; message: string; severity: "error" | "warning"; field?: string }[] => {
     const issues: { code: string; message: string; severity: "error" | "warning"; field?: string }[] = [];
@@ -1291,14 +1174,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
           "—"
         : "Select a customer");
 
-  const statusConfig = useMemo(() => {
-    if (docType === "invoice") return invoiceStatusConfig;
-    if (docType === "quote") return quoteStatusConfig;
-    if (docType === "credit-note") return creditNoteStatusConfig;
-    if (docType === "debit-note") return debitNoteStatusConfig;
-    if (docType === "payment-voucher") return paymentVoucherStatusConfig;
-    return creditNoteStatusConfig;
-  }, [docType]);
+  const statusConfig = handler.statusConfig;
 
   if (isLoading) {
     return (
@@ -1314,7 +1190,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   if (error) {
     return (
       <div className="page-container">
-        <PageHeader title={docTypeLabel(docType)} />
+        <PageHeader title={docTypeLabelFn(docType)} />
         <div className="p-4 rounded-md bg-error-bg text-error-text">{error}</div>
       </div>
     );
@@ -1324,13 +1200,13 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     <div className="page-container h-[calc(100vh-4rem)] flex flex-col">
        <PageHeader
          title={getDocumentTitle()}
-         breadcrumbs={
-           !isNew
-             ? [
-                 { label: docType === "invoice" ? "Invoices" : docType === "quote" ? "Quotations" : docType === "credit-note" ? "Credit Notes" : docType === "debit-note" ? "Debit Notes" : docType === "payment-voucher" ? "Payment Vouchers" : "Documents", to: docType === "invoice" ? "/app/invoices" : docType === "quote" ? "/app/quotes" : docType === "credit-note" ? "/app/credit-notes" : docType === "debit-note" ? "/app/debit-notes" : docType === "payment-voucher" ? "/app/payment-vouchers" : "/app/documents" },
-               ]
-             : [{ label: docType === "invoice" ? "Invoices" : docType === "quote" ? "Quotations" : docType === "credit-note" ? "Credit Notes" : docType === "debit-note" ? "Debit Notes" : docType === "payment-voucher" ? "Payment Vouchers" : "Documents", to: docType === "invoice" ? "/app/invoices" : docType === "quote" ? "/app/quotes" : docType === "credit-note" ? "/app/credit-notes" : docType === "debit-note" ? "/app/debit-notes" : docType === "payment-voucher" ? "/app/payment-vouchers" : "/app/documents" }]
-         }
+          breadcrumbs={
+            !isNew
+              ? [
+                  { label: handler.pluralLabel, to: `/app/${handler.routePrefix}` },
+                ]
+              : [{ label: handler.pluralLabel, to: `/app/${handler.routePrefix}` }]
+          }
         primaryAction={
           <div className="flex items-center gap-3">
             {!isNew && document && (
@@ -1984,7 +1860,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       <Dialog
         open={sendDialogOpen}
         onClose={() => setSendDialogOpen(false)}
-        title={`Send ${docTypeLabel(docType)}`}
+        title={`Send ${docTypeLabelFn}`}
         description={(document as any)?.customer_email ? `Sending to ${(document as any).customer_email}` : undefined}
         size="md"
         closeOnOverlayClick={false}
@@ -2013,13 +1889,13 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
           />
           <FormField
             label="Subject"
-            placeholder={`${docTypeLabel(docType)} #${document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? ""}`}
+            placeholder={`${docTypeLabelFn} #${document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? ""}`}
             value={sendData.subject}
             onChange={(e) => setSendData((prev) => ({ ...prev, subject: e.target.value }))}
           />
           <FormTextareaField
             label="Message"
-            placeholder={`Hi, please find your ${docTypeLabel(docType).toLowerCase()} attached.`}
+            placeholder={`Hi, please find your ${docTypeLabelFn(docType).toLowerCase()} attached.`}
             value={sendData.message}
             onChange={(e) => setSendData((prev) => ({ ...prev, message: e.target.value }))}
           />
@@ -2037,7 +1913,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       <Dialog
         open={validationDialogOpen}
         onClose={() => setValidationDialogOpen(false)}
-        title={`Review & Send — ${docTypeLabel(docType)}`}
+        title={`Review & Send — ${docTypeLabelFn}`}
         description="Please review the issues below before sending."
         size="md"
       >
