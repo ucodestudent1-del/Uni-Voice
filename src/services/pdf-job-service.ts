@@ -1,4 +1,6 @@
 import { Queue, Worker, Job } from "bullmq";
+import IORedis from "ioredis";
+import type { Redis as IORedisInstance } from "ioredis";
 import { logger } from "../utils/logger.js";
 import { env } from "../config/index.js";
 import { initRedis, getRedis } from "../utils/redis-singleton.js";
@@ -9,13 +11,23 @@ const PDF_CACHE_TTL_SECONDS = 3600;
 
 let queue: Queue | null = null;
 let worker: Worker | null = null;
+let bullConnection: IORedisInstance | null = null;
+
+function getBullRedisConnection(): IORedisInstance | null {
+  if (!env.REDIS_URL) return null;
+  if (bullConnection) return bullConnection;
+  bullConnection = new IORedis.default(env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+  });
+  return bullConnection;
+}
 
 export function getQueue(): Queue | null {
   if (!env.REDIS_URL) {
     return null;
   }
   if (!queue) {
-    const connection = getRedis();
+    const connection = getBullRedisConnection();
     if (!connection) {
       return null;
     }
@@ -96,6 +108,11 @@ export async function startPdfWorker(): Promise<void> {
     return;
   }
 
+  const bullConnection = getBullRedisConnection();
+  if (!bullConnection) {
+    return;
+  }
+
   const { invoiceService } = await import("./invoice-service.js");
 
   worker = new Worker(
@@ -135,7 +152,7 @@ export async function startPdfWorker(): Promise<void> {
       return { bytes: pdfBuffer.length };
     },
     {
-      connection,
+      connection: bullConnection,
       concurrency: 2,
     },
   );
@@ -159,6 +176,10 @@ export async function stopPdfWorker(): Promise<void> {
   if (queue) {
     await queue.close();
     queue = null;
+  }
+  if (bullConnection) {
+    await bullConnection.quit();
+    bullConnection = null;
   }
 }
 
