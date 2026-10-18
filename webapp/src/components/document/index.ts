@@ -13,4 +13,4 @@ export type {
   DocumentApiResult,
 } from "./document-types";
 export { initialLineItem } from "./document-types";
-export { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel, documentHandlers, type DocumentHandler, type FinalizeResult, type SendResult } from "./document-handlers";
+export { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel, documentHandlers, type DocumentHandler, type DocumentFormConfig, type FinalizeResult, type SendResult } from "./document-handlers";

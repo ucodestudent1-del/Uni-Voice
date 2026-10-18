@@ -70,6 +70,29 @@ export interface SendResult {
   document: any;
 }
 
+export interface DocumentFormConfig {
+  showsDueDate: boolean;
+  showsExpiryDate: boolean;
+  showsPoNumber: boolean;
+  showsShippingFields: boolean;
+  showsQuoteDiscount: boolean;
+  showsInvoiceDiscount: boolean;
+  showsReasonField: boolean;
+  showsReferenceInvoice: boolean;
+  showsPayeeSection: boolean;
+  showsSupplierSection: boolean;
+  showsDeliveryDate: boolean;
+  showsOptionalItems: boolean;
+  discountField: "invoiceDiscount" | "quoteDiscount";
+  totalsCardType: "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher";
+  showSignedAmounts: boolean;
+  isPaymentVoucher: boolean;
+  isCreditNote: boolean;
+  isDebitNote: boolean;
+  isQuote: boolean;
+  isInvoice: boolean;
+}
+
 export interface DocumentHandler {
   create: (data: Record<string, unknown>) => Promise<any>;
   update: (id: string, data: Record<string, unknown>) => Promise<any>;
@@ -90,6 +113,7 @@ export interface DocumentHandler {
   supportsFinalize: boolean;
   supportsDuplicate: boolean;
   requiresCustomer: boolean;
+  formConfig: DocumentFormConfig;
 }
 
 export const documentHandlers: Record<DocumentType, DocumentHandler> = {
@@ -138,6 +162,28 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     supportsFinalize: true,
     supportsDuplicate: true,
     requiresCustomer: true,
+    formConfig: {
+      showsDueDate: true,
+      showsExpiryDate: false,
+      showsPoNumber: true,
+      showsShippingFields: true,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: true,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "invoice",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+       isCreditNote: false,
+       isDebitNote: false,
+       isQuote: false,
+       isInvoice: true,
+    },
   },
 
   quote: {
@@ -184,6 +230,28 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     supportsFinalize: true,
     supportsDuplicate: true,
     requiresCustomer: true,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: true,
+      showsPoNumber: false,
+      showsShippingFields: false,
+      showsQuoteDiscount: true,
+      showsInvoiceDiscount: false,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: true,
+      discountField: "quoteDiscount",
+      totalsCardType: "quote",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+       isCreditNote: false,
+       isDebitNote: false,
+       isQuote: true,
+       isInvoice: false,
+    },
   },
 
   "credit-note": {
@@ -223,6 +291,28 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     supportsFinalize: true,
     supportsDuplicate: false,
     requiresCustomer: true,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: false,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: false,
+      showsReasonField: true,
+      showsReferenceInvoice: true,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "credit-note",
+      showSignedAmounts: true,
+      isPaymentVoucher: false,
+       isCreditNote: true,
+       isDebitNote: false,
+       isQuote: false,
+       isInvoice: false,
+    },
   },
 
   "debit-note": {
@@ -273,6 +363,28 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     supportsFinalize: true,
     supportsDuplicate: false,
     requiresCustomer: false,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: false,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: false,
+      showsReasonField: true,
+      showsReferenceInvoice: true,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "debit-note",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: true,
+      isQuote: false,
+      isInvoice: false,
+    },
   },
 
   "payment-voucher": {
@@ -312,6 +424,28 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     supportsFinalize: true,
     supportsDuplicate: false,
     requiresCustomer: false,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: false,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: false,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: true,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "payment-voucher",
+      showSignedAmounts: false,
+      isPaymentVoucher: true,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: false,
+      isInvoice: false,
+    },
   },
 
   receipt: {
@@ -356,6 +490,28 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     supportsFinalize: false,
     supportsDuplicate: false,
     requiresCustomer: false,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: false,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: false,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "payment-voucher",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: false,
+      isInvoice: false,
+    },
   },
 
   "purchase-order": {
@@ -402,6 +558,28 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     supportsFinalize: true,
     supportsDuplicate: false,
     requiresCustomer: false,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: false,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: false,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: true,
+      showsDeliveryDate: true,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "invoice",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: false,
+      isInvoice: false,
+    },
   },
 };
 

@@ -147,97 +147,6 @@ function useDocumentData(
   return { document, setDocument, isLoading, error };
 }
 
-function useDocumentValidation(
-  state: DocumentState,
-  doc: any,
-  docType: DocumentType,
-) {
-  return useMemo(() => {
-    const issues: { code: string; message: string; severity: "error" | "warning"; field?: string }[] = [];
-
-    if (!doc?.customer_id && !state.customerId && docType !== "payment-voucher") {
-      if (docType === "debit-note") {
-        if (!doc?.customer_id && !state.customerId && !state.payeeName) {
-          issues.push({ code: "MISSING_CUSTOMER", message: "No customer provided", severity: "error" });
-        }
-      } else {
-        issues.push({ code: "MISSING_CUSTOMER", message: "No customer selected", severity: "error" });
-      }
-    }
-    if (docType === "payment-voucher") {
-      if (!state.payeeName) {
-        issues.push({ code: "MISSING_PAYEE", message: "No payee name provided", severity: "error" });
-      }
-      if (!state.voucherDate) {
-        issues.push({ code: "MISSING_DATE", message: "No voucher date set", severity: "error" });
-      }
-    } else {
-      if (!state.issueDate) {
-        issues.push({ code: "MISSING_ISSUE_DATE", message: "No issue date set", severity: "error" });
-      }
-    }
-    if (!state.currency) {
-      issues.push({ code: "MISSING_CURRENCY", message: "No currency selected", severity: "error" });
-    }
-
-    if (docType === "invoice" && state.dueDate && state.issueDate && state.dueDate < state.issueDate) {
-      issues.push({ code: "INVALID_DUE_DATE", message: "Due date is before issue date", severity: "error" });
-    }
-
-    if (docType === "quote" && state.expiryDate && state.issueDate && state.expiryDate < state.issueDate) {
-      issues.push({ code: "INVALID_EXPIRY_DATE", message: "Expiry date is before issue date", severity: "error" });
-    }
-
-    const nonEmptyItems = state.items.filter((item) => item.description.trim());
-    if (nonEmptyItems.length === 0) {
-      issues.push({ code: "EMPTY_LINE_ITEMS", message: "Add at least one line item", severity: "error" });
-    }
-
-    for (let i = 0; i < nonEmptyItems.length; i++) {
-      const item = nonEmptyItems[i];
-      const itemIdx = state.items.indexOf(item);
-      const qty = new Decimal(item.quantity || "0");
-      if (qty.lte(0)) {
-        issues.push({ code: "INVALID_QUANTITY", message: `Line item ${itemIdx + 1} has an invalid quantity`, severity: "error", field: `item-${itemIdx}-quantity` });
-      }
-      const price = new Decimal(item.unitPrice || "0");
-      if (price.isNegative()) {
-        issues.push({ code: "NEGATIVE_UNIT_PRICE", message: `Line item ${itemIdx + 1} has a negative unit price`, severity: "error" });
-      }
-      const rate = new Decimal(item.taxRate || "0");
-      if (rate.isNegative()) {
-        issues.push({ code: "INVALID_TAX_RATE", message: `Line item ${itemIdx + 1} has an invalid tax rate`, severity: "error" });
-      }
-    }
-
-    if (docType !== "payment-voucher") {
-      if (!doc?.payment_instructions && !state.paymentInstructions) {
-        issues.push({ code: "MISSING_PAYMENT_INSTRUCTIONS", message: "No payment instructions provided", severity: "warning" });
-      }
-      if (!doc?.notes && !state.notes) {
-        issues.push({ code: "MISSING_NOTES", message: "No notes provided for the customer", severity: "warning" });
-      }
-      if (!doc?.customer_email && !state.customerId) {
-        issues.push({ code: "MISSING_CUSTOMER_EMAIL", message: "Customer has no email address", severity: "warning" });
-      }
-    }
-
-    if (docType === "quote") {
-      if (!state.scopeOfWork) {
-        issues.push({ code: "MISSING_SCOPE_OF_WORK", message: "No scope of work provided", severity: "warning" });
-      }
-    }
-
-    if (docType === "credit-note" || docType === "debit-note") {
-      if (!state.reason && !state.customReason) {
-        issues.push({ code: "MISSING_REASON", message: `No reason provided for this ${docType === "credit-note" ? "credit note" : "debit note"}`, severity: "error" });
-      }
-    }
-
-    return issues;
-  }, [state, doc, docType]);
-}
-
 export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   useMetaTags({
     title: "Document Workspace — InvoiceFlow",
@@ -338,7 +247,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     // Fetch quick actions (last invoice, frequent items, recent customers, draft)
     getSuggestedActions().then((d) => setQuickActions(d)).catch(() => {});
 
-    if (docType === "credit-note") {
+    if (handler.formConfig.isCreditNote) {
       getInvoices({ limit: 100 }).then((d) => setAvailableReferenceInvoices(d.invoices ?? [])).catch(() => {});
     }
 
@@ -468,7 +377,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       }));
 
     let invoiceDiscountDef: DiscountDefinition | undefined;
-    if (docType === "quote") {
+    if (handler.formConfig.isQuote) {
       const discValue = state.quoteDiscount ?? "0";
       invoiceDiscountDef =
         Number(discValue) > 0
@@ -550,7 +459,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         })),
     };
 
-    if (docType === "invoice") {
+    if (handler.formConfig.isInvoice) {
       return {
         ...commonPayload,
         dueDate: state.dueDate || undefined,
@@ -563,7 +472,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       } as CreateInvoiceInput;
     }
 
-     if (docType === "quote") {
+    if (handler.formConfig.isQuote) {
        return {
          ...commonPayload,
          expiryDate: state.expiryDate || undefined,
@@ -574,7 +483,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
        } as CreateQuoteInput;
      }
 
-     if (docType === "debit-note") {
+     if (handler.formConfig.isDebitNote) {
        return {
          customerId: state.customerId || undefined,
          issueDate: state.issueDate || undefined,
@@ -600,7 +509,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
        } as ApiCreateDebitNoteInput;
      }
 
-     if (docType === "payment-voucher") {
+     if (handler.formConfig.isPaymentVoucher) {
        return {
          voucherDate: state.voucherDate || state.issueDate || undefined,
          currency: state.currency,
@@ -893,11 +802,11 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     const doc = document as any;
 
     // Customer/payee validation — payment vouchers use payeeName, debit notes use customerId or customerName
-    if (docType === "payment-voucher") {
+    if (handler.formConfig.isPaymentVoucher) {
       if (!state.payeeName) {
         issues.push({ code: "MISSING_PAYEE", message: "No payee name provided", severity: "error" });
       }
-     } else if (docType === "debit-note") {
+     } else if (handler.formConfig.showsReferenceInvoice) {
       // Debit notes can use either customer_id (linked customer) or flat customer name
       if (!doc?.customer_id && !state.customerId) {
         issues.push({ code: "MISSING_CUSTOMER", message: "No customer provided", severity: "error" });
@@ -908,17 +817,14 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       }
     }
 
-    if (docType === "payment-voucher") {
+    if (handler.formConfig.isPaymentVoucher) {
       if (!state.voucherDate) {
-        issues.push({ code: "MISSING_DATE", message: "No date set", severity: "error" });
+        issues.push({ code: "MISSING_DATE", message: "No voucher date set", severity: "error" });
       }
     } else {
       if (!state.issueDate) {
         issues.push({ code: "MISSING_ISSUE_DATE", message: "No issue date set", severity: "error" });
       }
-    }
-
-    if (docType !== "payment-voucher") {
       if (state.dueDate && state.issueDate && state.dueDate < state.issueDate) {
         issues.push({ code: "INVALID_DUE_DATE", message: "Due date is before issue date", severity: "error" });
       }
@@ -951,7 +857,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       }
     }
 
-    if (docType !== "payment-voucher") {
+    if (!handler.formConfig.isPaymentVoucher) {
       if (!doc?.payment_instructions && !state.paymentInstructions) {
         issues.push({ code: "MISSING_PAYMENT_INSTRUCTIONS", message: "No payment instructions provided", severity: "warning" });
       }
@@ -963,7 +869,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       }
     }
 
-    if (docType === "debit-note") {
+    if (handler.formConfig.showsReferenceInvoice) {
       if (!state.reason && !state.customReason) {
         issues.push({ code: "MISSING_REASON", message: "No reason provided for this debit note", severity: "error" });
       }
@@ -1166,7 +1072,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   };
 
   const taxRateOptions = buildTaxRateOptions(taxRates);
-  const customerName = docType === "payment-voucher"
+  const customerName = handler.formConfig.isPaymentVoucher
     ? (state.payeeName ?? "Enter payee name")
     : (state.customerId
         ? customers.find((c) => c.id === state.customerId)?.name ??
@@ -1234,7 +1140,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
             </div>
             {isFinalized && !isNew ? (
               <>
-                {docType === "invoice" && (
+                {handler.formConfig.isInvoice && (
                   <Button
                     variant="ghost"
                     icon={<Bell className="h-4 w-4" />}
@@ -1249,7 +1155,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   icon={<Copy className="h-4 w-4" />}
                   onClick={handleDuplicate}
                   size="sm"
-                  disabled={docType === "credit-note"}
+                  disabled={!handler.supportsDuplicate}
                 >
                   Duplicate
                 </Button>
@@ -1257,7 +1163,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   variant="primary"
                   icon={<Send className="h-4 w-4" />}
                   onClick={() => setSendDialogOpen(true)}
-                  disabled={isSending || docType === "credit-note"}
+                  disabled={isSending || !handler.supportsSend}
                   loading={isSending}
                 >
                   Send
@@ -1398,9 +1304,9 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-8rem)] overflow-hidden">
            {/* Editor column — hidden on mobile when preview is active */}
            <div className={`overflow-y-auto space-y-6 pr-2 ${mobileView === "preview" ? "hidden lg:block" : "block"}`}>
-            <SectionCard title={docType === "payment-voucher" ? "Payee" : "Customer"}>
-               <div className="p-5 space-y-3">
-                 {docType === "payment-voucher" ? (
+             <SectionCard title={handler.formConfig.isPaymentVoucher ? "Payee" : handler.formConfig.showsSupplierSection ? "Supplier" : "Customer"}>
+                <div className="p-5 space-y-3">
+                  {handler.formConfig.isPaymentVoucher ? (
                    <>
                      <FormField
                        label="Payee Name"
@@ -1492,7 +1398,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   />
                 </div>
 
-                {docType === "invoice" && (
+                {handler.formConfig.isInvoice && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
@@ -1548,7 +1454,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   </>
                 )}
 
-                {docType === "quote" && (
+                {handler.formConfig.isQuote && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                      <FormField
@@ -1590,7 +1496,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   </>
                 )}
 
-                 {docType === "credit-note" && (
+                 {handler.formConfig.isCreditNote && (
                    <>
                      <FormField
                        label="Reference Invoice"
@@ -1645,7 +1551,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                    </>
                  )}
 
-                 {docType === "debit-note" && (
+                 {handler.formConfig.showsReferenceInvoice && (
                    <>
                      <FormField
                        label="Reference Invoice"
@@ -1701,7 +1607,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                    </>
                  )}
 
-                 {docType === "payment-voucher" && (
+                  {handler.formConfig.isPaymentVoucher && (
                    <>
                      <div className="grid grid-cols-2 gap-4">
                        <FormField
@@ -1744,7 +1650,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   items={state.items}
                   isFinalized={isFinalized}
                   taxRateOptions={taxRateOptions}
-                  showOptional={docType === "quote"}
+                  showOptional={handler.formConfig.showsOptionalItems}
                   onUpdate={handleUpdateItem}
                   onRemove={handleRemoveItem}
                   onDuplicate={handleDuplicateItem}
@@ -1756,18 +1662,18 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
             <DocumentTotalsCard
               calcResult={calcResult}
               currency={state.currency}
-              invoiceDiscount={docType === "quote" ? state.quoteDiscount : state.invoiceDiscount}
-              invoiceDiscountType={docType === "quote" ? state.quoteDiscountType : state.invoiceDiscountType}
-              onDiscountChange={(v) =>
-                docType === "quote"
-                  ? setState((prev) => ({ ...prev, quoteDiscount: v }))
-                  : setState((prev) => ({ ...prev, invoiceDiscount: v }))
-              }
-              onDiscountTypeChange={(v) =>
-                docType === "quote"
-                  ? setState((prev) => ({ ...prev, quoteDiscountType: v }))
-                  : setState((prev) => ({ ...prev, invoiceDiscountType: v }))
-              }
+               invoiceDiscount={handler.formConfig.isQuote ? state.quoteDiscount : state.invoiceDiscount}
+               invoiceDiscountType={handler.formConfig.isQuote ? state.quoteDiscountType : state.invoiceDiscountType}
+               onDiscountChange={(v) =>
+                 handler.formConfig.isQuote
+                   ? setState((prev) => ({ ...prev, quoteDiscount: v }))
+                   : setState((prev) => ({ ...prev, invoiceDiscount: v }))
+               }
+               onDiscountTypeChange={(v) =>
+                 handler.formConfig.isQuote
+                   ? setState((prev) => ({ ...prev, quoteDiscountType: v }))
+                   : setState((prev) => ({ ...prev, invoiceDiscountType: v }))
+               }
               isFinalized={isFinalized}
             />
 
@@ -1792,8 +1698,8 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   paymentInstructions={state.paymentInstructions}
                   scopeOfWork={state.scopeOfWork}
                   internalNotes={state.internalNotes}
-                  isQuote={docType === "quote"}
-                  isCreditNote={docType === "credit-note"}
+                   isQuote={handler.formConfig.isQuote}
+                   isCreditNote={handler.formConfig.isCreditNote}
                   onNotesChange={(v) => setState((prev) => ({ ...prev, notes: v }))}
                   onTermsChange={(v) => setState((prev) => ({ ...prev, terms: v }))}
                   onPaymentInstructionsChange={(v) =>
@@ -1821,38 +1727,38 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
            {/* Preview column — hidden on mobile when editor is active */}
            <div className={`overflow-y-auto ${mobileView === "editor" ? "hidden lg:block" : "block"}`}>
-              <DocumentPreview
-               documentType={docType === "credit-note" ? "credit-note" : docType === "quote" ? "quote" : docType === "debit-note" ? "debit-note" : docType === "payment-voucher" ? "payment-voucher" : "invoice"}
-               documentNumber={document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? document?.debit_note_number ?? document?.payment_voucher_number}
-               calcResult={calcResult}
-               business={business}
-               issueDate={state.issueDate}
-               dueDate={state.dueDate}
-               expiryDate={state.expiryDate}
-               poNumber={state.poNumber}
-               customerId={state.customerId}
-               customers={customers}
-               paymentInstructions={docType !== "payment-voucher" ? state.paymentInstructions : undefined}
-               notes={state.notes}
-               terms={state.terms}
-               scopeOfWork={state.scopeOfWork}
-               signedAmounts={docType === "credit-note"}
-               reason={docType === "credit-note" || docType === "debit-note" ? state.reason : undefined}
-               customReason={docType === "credit-note" || docType === "debit-note" ? state.customReason : undefined}
-               referenceInvoiceNumber={docType === "debit-note" ? state.referenceInvoiceNumber : undefined}
-               shippingDescription={docType === "invoice" ? state.shippingDescription : undefined}
-               shippingAmount={docType === "invoice" ? state.shippingAmount : undefined}
-               shippingTaxRate={docType === "invoice" ? state.shippingTaxRate : undefined}
-               status={document?.status}
-               paymentState={document?.payment_state ?? null}
-               voucherDate={docType === "payment-voucher" ? (state.voucherDate ?? state.issueDate) : undefined}
-               payeeName={docType === "payment-voucher" ? state.payeeName : undefined}
-               payeeEmail={docType === "payment-voucher" ? state.payeeEmail : undefined}
-               payeePhone={docType === "payment-voucher" ? state.payeePhone : undefined}
-               referenceNumber={docType === "payment-voucher" ? state.referenceNumber : undefined}
-               paymentMethod={docType === "payment-voucher" ? state.paymentMethod : undefined}
-               paymentProvider={docType === "payment-voucher" ? state.paymentProvider : undefined}
-             />
+               <DocumentPreview
+                documentType={handler.formConfig.totalsCardType}
+                documentNumber={document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? document?.debit_note_number ?? document?.payment_voucher_number}
+                calcResult={calcResult}
+                business={business}
+                issueDate={state.issueDate}
+                dueDate={state.dueDate}
+                expiryDate={state.expiryDate}
+                poNumber={state.poNumber}
+                customerId={state.customerId}
+                customers={customers}
+                paymentInstructions={handler.formConfig.isPaymentVoucher ? undefined : state.paymentInstructions}
+                notes={state.notes}
+                terms={state.terms}
+                scopeOfWork={state.scopeOfWork}
+                signedAmounts={handler.formConfig.isCreditNote}
+                reason={handler.formConfig.showsReasonField ? state.reason : undefined}
+                customReason={handler.formConfig.showsReasonField ? state.customReason : undefined}
+                referenceInvoiceNumber={handler.formConfig.showsReferenceInvoice ? state.referenceInvoiceNumber : undefined}
+                shippingDescription={handler.formConfig.showsShippingFields ? state.shippingDescription : undefined}
+                shippingAmount={handler.formConfig.showsShippingFields ? state.shippingAmount : undefined}
+                shippingTaxRate={handler.formConfig.showsShippingFields ? state.shippingTaxRate : undefined}
+                status={document?.status}
+                paymentState={document?.payment_state ?? null}
+                voucherDate={handler.formConfig.isPaymentVoucher ? (state.voucherDate ?? state.issueDate) : undefined}
+                payeeName={handler.formConfig.isPaymentVoucher ? state.payeeName : undefined}
+                payeeEmail={handler.formConfig.isPaymentVoucher ? state.payeeEmail : undefined}
+                payeePhone={handler.formConfig.isPaymentVoucher ? state.payeePhone : undefined}
+                referenceNumber={handler.formConfig.isPaymentVoucher ? state.referenceNumber : undefined}
+                paymentMethod={handler.formConfig.isPaymentVoucher ? state.paymentMethod : undefined}
+                paymentProvider={handler.formConfig.isPaymentVoucher ? state.paymentProvider : undefined}
+              />
           </div>
         </div>
       </div>
