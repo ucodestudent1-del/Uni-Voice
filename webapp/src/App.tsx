@@ -31,8 +31,6 @@ const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
 const Reports = lazy(() => import("./pages/Reports"));
 const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const Documents = lazy(() => import("./pages/Documents"));
-const PaymentVoucherGenerator = lazy(() => import("./pages/PaymentVoucherGenerator"));
-const DebitNoteGenerator = lazy(() => import("./pages/DebitNoteGenerator"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 
@@ -83,8 +81,6 @@ const ReceiptDetailWithBoundary = withErrorBoundary(ReceiptDetail, "Receipt Deta
 const ReminderAutomationWithBoundary = withErrorBoundary(ReminderAutomation, "Reminder Automation");
 const ReportsWithBoundary = withErrorBoundary(Reports, "Reports");
 const DocumentsWithBoundary = withErrorBoundary(Documents, "Documents");
-const PaymentVoucherGeneratorWithBoundary = withErrorBoundary(PaymentVoucherGenerator, "Payment Voucher Generator");
-const DebitNoteGeneratorWithBoundary = withErrorBoundary(DebitNoteGenerator, "Debit Note Generator");
 const PublicInvoiceWithBoundary = withErrorBoundary(PublicInvoice, "Invoice");
 const PaymentSuccessWithBoundary = withErrorBoundary(PaymentSuccess, "Payment Success");
 const DocumentWorkspaceInvoiceWithBoundary = withErrorBoundary(
@@ -98,6 +94,14 @@ const DocumentWorkspaceCreditNoteWithBoundary = withErrorBoundary(
 const DocumentWorkspaceQuoteWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="quote" />,
   "Quote Workspace",
+);
+const DocumentWorkspaceDebitNoteWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="debit-note" />,
+  "Debit Note Workspace",
+);
+const DocumentWorkspacePaymentVoucherWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="payment-voucher" />,
+  "Payment Voucher Workspace",
 );
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -196,15 +200,17 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectDetailWithBoundary />} />
           <Route path="receipts" element={<ReceiptsWithBoundary />} />
           <Route path="receipts/:id" element={<ReceiptDetailWithBoundary />} />
-          <Route path="documents" element={<DocumentsWithBoundary />} />
-          <Route path="payment-vouchers/new" element={<PaymentVoucherGeneratorWithBoundary />} />
-          <Route path="debit-notes/new" element={<DebitNoteGeneratorWithBoundary />} />
-          <Route path="invoices/new" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
-          <Route path="invoices/:id/edit" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
-          <Route path="credit-notes/new" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
-          <Route path="credit-notes/:id/edit" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
-          <Route path="quotes/new" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
-          <Route path="quotes/:id/edit" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
+           <Route path="documents" element={<DocumentsWithBoundary />} />
+           <Route path="invoices/new" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
+           <Route path="invoices/:id/edit" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
+           <Route path="credit-notes/new" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
+           <Route path="credit-notes/:id/edit" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
+           <Route path="quotes/new" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
+           <Route path="quotes/:id/edit" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
+           <Route path="debit-notes/new" element={<DocumentWorkspaceDebitNoteWithBoundary docType="debit-note" />} />
+           <Route path="debit-notes/:id/edit" element={<DocumentWorkspaceDebitNoteWithBoundary docType="debit-note" />} />
+           <Route path="payment-vouchers/new" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
+           <Route path="payment-vouchers/:id/edit" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
           <Route path="reports" element={<ReportsWithBoundary />} />
           <Route path="report" element={<ReportSectionWithBoundary />} />
           <Route path="reminders" element={<ReminderAutomationWithBoundary />} />

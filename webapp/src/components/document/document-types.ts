@@ -1,7 +1,7 @@
 import type { ApiInvoiceItem, ApiInvoiceFee } from "@/types/api";
 import type { ApiQuoteItem, ApiQuoteFee } from "@/types/api";
 
-export type DocumentType = "invoice" | "quote" | "credit-note";
+export type DocumentType = "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher";
 
 export interface DocumentLineItem {
   description: string;
@@ -69,6 +69,25 @@ export interface DocumentState {
   shippingDescription?: string;
   shippingAmount?: string;
   shippingTaxRate?: string;
+
+   /** Debit-note-specific fields */
+   referenceInvoiceNumber?: string;
+
+  /** Payment-voucher-specific fields */
+  payeeName?: string;
+  payeeEmail?: string;
+  payeePhone?: string;
+  payeeAddressLine1?: string;
+  payeeAddressLine2?: string;
+  payeeCity?: string;
+  payeeStateOrRegion?: string;
+  payeePostalCode?: string;
+  payeeCountryCode?: string;
+  payeeTaxId?: string;
+  voucherDate?: string;
+  referenceNumber?: string;
+  paymentMethod?: string;
+  paymentProvider?: string;
 }
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
@@ -93,6 +112,8 @@ export interface DocumentApiResult {
   invoice_number?: string | null;
   quote_number?: string | null;
   credit_note_number?: string | null;
+  debit_note_number?: string | null;
+  payment_voucher_number?: string | null;
   status: string;
   is_finalized: boolean;
   customer_id?: string | null;
@@ -117,6 +138,7 @@ export interface DocumentApiResult {
   quote_discount_value?: string | null;
   quote_discount_type?: "fixed" | "percentage" | null;
   reference_invoice_id?: string | null;
+  reference_invoice_number?: string | null;
   reason?: string | null;
 
   invoice_discount?: string | null;
@@ -129,6 +151,15 @@ export interface DocumentApiResult {
   customer_email?: string | null;
   customer_phone?: string | null;
   customer_address?: string | null;
+
+  /** Payment voucher fields */
+  voucher_date?: string | null;
+  payee_name?: string | null;
+  payee_email?: string | null;
+  payee_phone?: string | null;
+  payment_method?: string | null;
+  payment_provider?: string | null;
+  reference_number?: string | null;
 
   items: Array<ApiInvoiceItem | ApiInvoiceFee | ApiQuoteItem | ApiQuoteFee>;
   fees: DocumentFee[];

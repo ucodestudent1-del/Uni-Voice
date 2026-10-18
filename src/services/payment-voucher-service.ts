@@ -6,6 +6,15 @@ import { paymentVoucherNumberService } from "../services/invoice-number-service.
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import Handlebars from "handlebars";
+import {
+  fetchBusinessSnapshot,
+  type TemplateBusiness,
+  type TemplateCustomer,
+  type TemplateLineItem,
+  type TemplateFee,
+  type TemplateTotals,
+  type PaymentVoucherTemplateData,
+} from "./templates/template-renderer.js";
 
 export interface PaymentVoucherItemInput {
   description: string;
@@ -50,7 +59,7 @@ const PAYMENT_VOUCHER_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Payment Voucher {{voucher.voucherNumber}}</title>
+  <title>Payment Voucher {{voucher.paymentVoucherNumber}}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 32px; color: #222; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
@@ -70,7 +79,7 @@ const PAYMENT_VOUCHER_TEMPLATE = `<!DOCTYPE html>
   <div class="header">
     <div>
       <h1 style="margin:0 0 4px;">Payment Voucher</h1>
-      <h2 style="margin:0; font-size: 22px;">{{voucher.voucherNumber}}</h2>
+       <h2 style="margin:0; font-size: 22px;">{{voucher.paymentVoucherNumber}}</h2>
     </div>
     <div style="text-align:right">
       <h2 style="margin:0">{{business.name}}</h2>
@@ -654,7 +663,7 @@ export class PaymentVoucherService {
   }
 
   async generatePdf(businessId: string, voucherId: string, voucher: Record<string, unknown>): Promise<Buffer> {
-    const business = await this.fetchBusiness(businessId);
+    const business = await fetchBusinessSnapshot(businessId);
 
     const currency = (voucher.currency as string) ?? "USD";
 
@@ -681,32 +690,48 @@ export class PaymentVoucherService {
       amountDue: new Decimal(voucher.total as string),
     };
 
+    // Build payee as TemplateCustomer from flat stored fields
+    const payee: TemplateCustomer | null = voucher.payee_name ? {
+      id: voucher.payee_name as string,
+      name: voucher.payee_name as string,
+      companyName: null,
+      email: voucher.payee_email as string | null | undefined,
+      phone: voucher.payee_phone as string | null | undefined,
+      taxId: voucher.payee_tax_id as string | null | undefined,
+      address: {
+        addressLine1: voucher.payee_address_line_1 as string || "",
+        addressLine2: voucher.payee_address_line_2 as string | null | undefined,
+        city: voucher.payee_city as string || "",
+        stateOrRegion: voucher.payee_state_or_region as string || "",
+        postalCode: voucher.payee_postal_code as string || "",
+        countryCode: voucher.payee_country_code as string || "",
+      },
+      countryCode: voucher.payee_country_code as string || null,
+      notes: null,
+      paymentTerms: null,
+    } : null;
+
     const templateData: PaymentVoucherTemplateData = {
-      business,
+      business: business as TemplateBusiness,
+      payee,
       voucher: {
         id: voucher.id as string,
-        voucherNumber: voucher.payment_voucher_number as string | null,
+        paymentVoucherNumber: voucher.payment_voucher_number as string | null,
         status: voucher.status as string,
         voucherDate: voucher.voucher_date ? new Date(voucher.voucher_date as string).toISOString().slice(0, 10) : null,
         currency: currency as CurrencyCode,
         payeeName: voucher.payee_name as string | null,
         payeeEmail: voucher.payee_email as string | null,
         payeePhone: voucher.payee_phone as string | null,
-        payeeAddressLine1: voucher.payee_address_line_1 as string | null,
-        payeeAddressLine2: voucher.payee_address_line_2 as string | null,
-        payeeCity: voucher.payee_city as string | null,
-        payeeStateOrRegion: voucher.payee_state_or_region as string | null,
-        payeePostalCode: voucher.payee_postal_code as string | null,
-        payeeCountryCode: voucher.payee_country_code as string | null,
-        payeeTaxId: voucher.payee_tax_id as string | null,
         referenceNumber: voucher.reference_number as string | null,
         paymentMethod: voucher.payment_method as string | null,
         paymentProvider: voucher.payment_provider as string | null,
         notes: voucher.notes as string | null | undefined,
         terms: voucher.terms as string | null | undefined,
       },
-      items,
-      totals,
+      lineItems: items as TemplateLineItem[],
+      fees: [] as TemplateFee[],
+      totals: totals as unknown as TemplateTotals,
       config: { currency } as Record<string, unknown>,
     };
 
@@ -737,111 +762,18 @@ export class PaymentVoucherService {
     });
   }
 
-  private async fetchBusiness(businessId: string): Promise<PaymentVoucherBusiness> {
-    const res = await query(
-      `SELECT id, name, legal_name, email, phone, website, tax_id, registration_number,
-              address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
-              default_currency, logo_url
-       FROM businesses WHERE id = $1`,
-      [businessId]
-    );
-    const r = res.rows[0];
-    if (!r) throw new NotFoundError(`Business ${businessId} not found`);
-    return {
-      id: r.id,
-      name: r.name,
-      legalName: r.legal_name,
-      email: r.email,
-      phone: r.phone,
-      website: r.website,
-      taxId: r.tax_id,
-      registrationNumber: r.registration_number,
-      address: r.address_line_1 ? {
-        addressLine1: r.address_line_1,
-        addressLine2: r.address_line_2,
-        city: r.city,
-        stateOrRegion: r.state_or_region,
-        postalCode: r.postal_code,
-        countryCode: r.country_code,
-      } : { addressLine1: "", addressLine2: null, city: "", stateOrRegion: "", postalCode: "", countryCode: "US" },
-      countryCode: r.country_code,
-      defaultCurrency: r.default_currency,
-      logoUrl: r.logo_url,
-    };
+  private async fetchBusiness(businessId: string): Promise<TemplateBusiness> {
+    return fetchBusinessSnapshot(businessId);
   }
 }
 
-export interface PaymentVoucherBusiness {
-  id: string;
-  name: string;
-  legalName?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  website?: string | null;
-  taxId?: string | null;
-  registrationNumber?: string | null;
-  address: {
-    addressLine1: string;
-    addressLine2?: string | null;
-    city: string;
-    stateOrRegion?: string | null;
-    postalCode?: string | null;
-    countryCode: string;
-  };
-  countryCode: string;
-  defaultCurrency: string;
-  logoUrl?: string | null;
-}
-
-export interface PaymentVoucherTemplateItem {
-  description: string;
-  quantity: Decimal.Value;
-  unit: string;
-  unitPrice: Decimal.Value;
-  taxRate: Decimal.Value;
-  taxAmount: Decimal.Value;
-  lineSubtotal: Decimal.Value;
-  lineTotal: Decimal.Value;
-  isTaxInclusive: boolean;
-}
-
-export interface PaymentVoucherTemplateTotals {
-  subtotal: Decimal.Value;
-  discountTotal: Decimal.Value;
-  taxTotal: Decimal.Value;
-  feeTotal: Decimal.Value;
-  total: Decimal.Value;
-  amountPaid: Decimal.Value;
-  amountDue: Decimal.Value;
-}
-
-export interface PaymentVoucherTemplateData {
-  business: PaymentVoucherBusiness;
-  voucher: {
-    id: string;
-    voucherNumber: string | null;
-    status: string;
-    voucherDate: string | null;
-    currency: CurrencyCode;
-    payeeName?: string | null;
-    payeeEmail?: string | null;
-    payeePhone?: string | null;
-    payeeAddressLine1?: string | null;
-    payeeAddressLine2?: string | null;
-    payeeCity?: string | null;
-    payeeStateOrRegion?: string | null;
-    payeePostalCode?: string | null;
-    payeeCountryCode?: string | null;
-    payeeTaxId?: string | null;
-    referenceNumber?: string | null;
-    paymentMethod?: string | null;
-    paymentProvider?: string | null;
-    notes?: string | null;
-    terms?: string | null;
-  };
-  items: PaymentVoucherTemplateItem[];
-  totals: PaymentVoucherTemplateTotals;
-  config: Record<string, unknown>;
-}
+// Re-export shared types for backward compatibility
+export type {
+  TemplateBusiness as PaymentVoucherBusiness,
+  TemplateCustomer as PaymentVoucherPayee,
+  TemplateLineItem as PaymentVoucherTemplateItem,
+  TemplateFee as PaymentVoucherTemplateFee,
+  TemplateTotals as PaymentVoucherTemplateTotals,
+};
 
 export const paymentVoucherService = new PaymentVoucherService();

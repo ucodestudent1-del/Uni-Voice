@@ -4,7 +4,7 @@ import { formatDate, formatTaxRateWithName, formatCurrency } from "@/utils/forma
 import type { CalculationResult } from "@/types/calculation";
 import type { ApiCustomer, ApiBusiness } from "@/types/api";
 
-export type DocumentType = "invoice" | "credit-note" | "receipt" | "purchase-order" | "quote";
+export type DocumentType = "invoice" | "credit-note" | "receipt" | "purchase-order" | "quote" | "debit-note" | "payment-voucher";
 
 export interface DocumentPreviewProps {
   documentType: DocumentType;
@@ -46,6 +46,8 @@ const DOCUMENT_LABELS: Record<DocumentType, string> = {
   receipt: "Receipt",
   "purchase-order": "Purchase Order",
   quote: "Quotation",
+  "debit-note": "Debit Note",
+  "payment-voucher": "Payment Voucher",
 };
 
 function AddressLines({ line1, line2, city, state, postal, country }: {

@@ -4,6 +4,7 @@ import type { Address } from "../../domain/value-objects/address.js";
 import { formatMoney, getCurrencyMetadata, type CurrencyCode } from "../../domain/value-objects/currency.js";
 import { Decimal } from "decimal.js";
 import { env } from "../../config/index.js";
+import { query } from "../../db/pool.js";
 
 export interface TemplateLineItem {
   description: string;
@@ -194,6 +195,64 @@ export interface QuoteTemplateData {
   totals: TemplateTotals;
   config: Record<string, unknown>;
 }
+
+export interface DebitNoteTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  debitNote: {
+    id: string;
+    debitNoteNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    dueDate: string | null;
+    currency: CurrencyCode;
+    referenceInvoiceId: string | null;
+    referenceInvoiceNumber: string | null;
+    reason?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    paymentInstructions?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
+export interface PaymentVoucherTemplateData {
+  business: TemplateBusiness;
+  payee: TemplateCustomer | null;
+  voucher: {
+    id: string;
+    paymentVoucherNumber: string | null;
+    status: string;
+    voucherDate: string | null;
+    currency: CurrencyCode;
+    payeeName: string | null;
+    payeeEmail: string | null;
+    payeePhone: string | null;
+    referenceNumber: string | null;
+    paymentMethod: string | null;
+    paymentProvider: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
+export type DocumentTemplateData =
+  | InvoiceTemplateData
+  | CreditNoteTemplateData
+  | QuoteTemplateData
+  | DebitNoteTemplateData
+  | PaymentVoucherTemplateData;
 
 export interface RenderOptions {
   currency: CurrencyCode;
@@ -1701,5 +1760,362 @@ export function buildQuoteData(
     fees,
     totals,
     config,
+  };
+}
+
+// ============================================================================
+// SHARED BUILDER INPUTS (for unified builder)
+// ============================================================================
+
+export interface UnifiedBuildInvoiceInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  paymentInstructions?: TemplatePaymentInstructions | null;
+  config?: Record<string, unknown>;
+}
+
+export interface UnifiedBuildCreditNoteInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  applications: Array<{
+    invoiceId: string;
+    invoiceNumber: string;
+    amount: Decimal.Value;
+    appliedAt: string;
+  }>;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildQuoteInputData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildDebitNoteInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  debitNote: {
+    id: string;
+    debitNoteNumber: string | null;
+    status: string;
+    issueDate?: Date | null;
+    dueDate?: Date | null;
+    currency: CurrencyCode;
+    referenceInvoiceId: string | null;
+    referenceInvoiceNumber: string | null;
+    reason?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    paymentInstructions?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildPaymentVoucherInput {
+  business: TemplateBusiness;
+  payee: TemplateCustomer | null;
+  voucher: {
+    id: string;
+    paymentVoucherNumber: string | null;
+    status: string;
+    voucherDate?: Date | null;
+    currency: CurrencyCode;
+    payeeName: string | null;
+    payeeEmail: string | null;
+    payeePhone: string | null;
+    referenceNumber: string | null;
+    paymentMethod: string | null;
+    paymentProvider: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
+// ============================================================================
+// UNIFIED BUILDER — single entry point for all document types
+// ============================================================================
+
+export type DocumentTypeKey = "invoice" | "credit-note" | "quote" | "debit-note" | "payment-voucher";
+
+/**
+ * Builds template data for any document type from a unified input object.
+ * Each document type has its own input interface but shares common fields
+ * (business, customer/payee, items, fees, totals).
+ */
+export function buildDocumentTemplateData(
+  docType: DocumentTypeKey,
+  input: UnifiedBuildInvoiceInput | UnifiedBuildCreditNoteInput | BuildQuoteInputData | BuildDebitNoteInput | BuildPaymentVoucherInput,
+): DocumentTemplateData {
+  switch (docType) {
+    case "invoice": {
+      const i = input as UnifiedBuildInvoiceInput;
+      return {
+        business: i.business,
+        customer: i.customer,
+        invoice: {
+          id: "",
+          invoiceNumber: null,
+          status: "draft",
+          issueDate: null,
+          dueDate: null,
+          currency: "USD",
+          poNumber: null,
+          notes: null,
+          terms: null,
+          paymentInstructions: null,
+          language: undefined,
+          title: null,
+          depositType: null,
+          depositValue: null,
+          depositDueDate: null,
+          depositPaid: null,
+          isFinalized: false,
+          depositAmount: null,
+          projectId: null,
+          projectName: null,
+          paymentTerms: null,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        paymentInstructions: i.paymentInstructions ?? null,
+        config: i.config ?? {},
+      } as unknown as InvoiceTemplateData;
+    }
+    case "credit-note": {
+      const i = input as UnifiedBuildCreditNoteInput;
+      return {
+        business: i.business,
+        customer: i.customer,
+        creditNote: {
+          id: "",
+          creditNoteNumber: null,
+          status: "draft",
+          issueDate: null,
+          dueDate: null,
+          currency: "USD",
+          referenceInvoiceNumber: null,
+          referenceInvoiceId: null,
+          reason: null,
+          notes: null,
+          terms: null,
+          language: undefined,
+          isFinalized: false,
+          appliedTotal: null,
+          amountDue: null,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        applications: i.applications,
+        config: i.config ?? {},
+      } as unknown as CreditNoteTemplateData;
+    }
+    case "quote": {
+      const i = input as BuildQuoteInputData;
+      return {
+        business: i.business,
+        customer: i.customer,
+        quote: {
+          id: "",
+          quoteNumber: null,
+          status: "draft",
+          issueDate: null,
+          expiryDate: null,
+          currency: "USD",
+          scopeOfWork: null,
+          notes: null,
+          terms: null,
+          paymentInstructions: null,
+          language: undefined,
+          isFinalized: false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as QuoteTemplateData;
+    }
+    case "debit-note": {
+      const i = input as BuildDebitNoteInput;
+      return {
+        business: i.business,
+        customer: i.customer,
+        debitNote: {
+          id: i.debitNote.id,
+          debitNoteNumber: i.debitNote.debitNoteNumber,
+          status: i.debitNote.status,
+          issueDate: i.debitNote.issueDate ? i.debitNote.issueDate.toISOString().slice(0, 10) : null,
+          dueDate: i.debitNote.dueDate ? i.debitNote.dueDate.toISOString().slice(0, 10) : null,
+          currency: i.debitNote.currency,
+          referenceInvoiceId: i.debitNote.referenceInvoiceId,
+          referenceInvoiceNumber: i.debitNote.referenceInvoiceNumber,
+          reason: i.debitNote.reason ?? null,
+          notes: i.debitNote.notes ?? null,
+          terms: i.debitNote.terms ?? null,
+          paymentInstructions: i.debitNote.paymentInstructions ?? null,
+          language: i.debitNote.language ?? undefined,
+          isFinalized: i.debitNote.isFinalized ?? false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as DebitNoteTemplateData;
+    }
+    case "payment-voucher": {
+      const i = input as BuildPaymentVoucherInput;
+      return {
+        business: i.business,
+        payee: i.payee,
+        voucher: {
+          id: i.voucher.id,
+          paymentVoucherNumber: i.voucher.paymentVoucherNumber,
+          status: i.voucher.status,
+          voucherDate: i.voucher.voucherDate ? i.voucher.voucherDate.toISOString().slice(0, 10) : null,
+          currency: i.voucher.currency,
+          payeeName: i.voucher.payeeName,
+          payeeEmail: i.voucher.payeeEmail,
+          payeePhone: i.voucher.payeePhone,
+          referenceNumber: i.voucher.referenceNumber,
+          paymentMethod: i.voucher.paymentMethod,
+          paymentProvider: i.voucher.paymentProvider,
+          notes: i.voucher.notes ?? null,
+          terms: i.voucher.terms ?? null,
+          language: i.voucher.language ?? undefined,
+          isFinalized: i.voucher.isFinalized ?? false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as PaymentVoucherTemplateData;
+    }
+    default:
+      throw new Error(`Unknown document type: ${docType}`);
+  }
+}
+
+// ============================================================================
+// SHARED CUSTOMER SNAPSHOT — eliminates fetchCustomer() duplication
+// ============================================================================
+
+/**
+ * Shared helper to fetch a customer as a `TemplateCustomer` snapshot from the DB.
+ * Consolidates the previously duplicated `fetchCustomer()` logic found in
+ * InvoiceService and QuoteService.
+ */
+export async function fetchCustomerSnapshot(
+  businessId: string,
+  customerId: string,
+): Promise<TemplateCustomer | null> {
+  const res = await query(
+    `SELECT id, name, company_name, email, phone, tax_id,
+            address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
+            default_currency, notes, payment_terms, shipping_address_id
+     FROM customers WHERE id = $1 AND business_id = $2`,
+    [customerId, businessId]
+  );
+  if (!res.rows.length) return null;
+  const r = res.rows[0];
+  const customer: TemplateCustomer = {
+    id: r.id,
+    name: r.name,
+    companyName: r.company_name,
+    email: r.email,
+    phone: r.phone,
+    taxId: r.tax_id,
+    address: r.address_line_1 ? {
+      addressLine1: r.address_line_1,
+      addressLine2: r.address_line_2,
+      city: r.city,
+      stateOrRegion: r.state_or_region,
+      postalCode: r.postal_code,
+      countryCode: r.country_code,
+    } : { addressLine1: "", addressLine2: null, city: "", stateOrRegion: "", postalCode: "", countryCode: "US" },
+    countryCode: r.country_code,
+    notes: r.notes,
+    paymentTerms: r.payment_terms,
+  };
+  if (r.shipping_address_id) {
+    const addrRes = await query(
+      `SELECT address_line_1, address_line_2, city, state_or_region, postal_code, country_code
+       FROM customer_addresses WHERE id = $1 AND customer_id = $2`,
+      [r.shipping_address_id, customerId]
+    );
+    if (addrRes.rows.length) {
+      const a = addrRes.rows[0];
+      customer.shippingAddress = {
+        addressLine1: a.address_line_1,
+        addressLine2: a.address_line_2,
+        city: a.city,
+        stateOrRegion: a.state_or_region,
+        postalCode: a.postal_code,
+        countryCode: a.country_code,
+      };
+    }
+  }
+  return customer;
+}
+
+// ============================================================================
+// SHARED BUSINESS SNAPSHOT
+// ============================================================================
+
+/**
+ * Shared helper to fetch a business as a `TemplateBusiness` snapshot.
+ * Reduces boilerplate duplication across document services.
+ */
+export async function fetchBusinessSnapshot(businessId: string): Promise<TemplateBusiness> {
+  const res = await query(
+    `SELECT id, name, legal_name, email, phone, website, tax_id, registration_number,
+            address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
+            default_currency, logo_url
+     FROM businesses WHERE id = $1`,
+    [businessId]
+  );
+  if (!res.rows.length) throw new Error("Business not found");
+  const r = res.rows[0];
+  return {
+    id: r.id,
+    name: r.name,
+    legalName: r.legal_name,
+    email: r.email,
+    phone: r.phone,
+    website: r.website,
+    taxId: r.tax_id,
+    registrationNumber: r.registration_number,
+    address: {
+      addressLine1: r.address_line_1 || "",
+      addressLine2: r.address_line_2 || null,
+      city: r.city || "",
+      stateOrRegion: r.state_or_region || "",
+      postalCode: r.postal_code || "",
+      countryCode: r.country_code || "",
+    },
+    countryCode: r.country_code || "",
+    defaultCurrency: r.default_currency || "USD",
+    logoUrl: r.logo_url,
   };
 }

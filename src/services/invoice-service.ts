@@ -9,7 +9,7 @@ import { pdfService } from "../services/pdf/pdf-service.js";
 import { enqueuePdfGeneration } from "../services/pdf-job-service.js";
 import { emailService } from "../services/email/email-service.js";
 import { stripeService } from "../services/payments/stripe-service.js";
-import { buildTemplateData, buildCreditNoteData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE } from "../services/templates/template-renderer.js";
+import { buildTemplateData, buildCreditNoteData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE, fetchCustomerSnapshot } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";
@@ -2148,54 +2148,7 @@ export class InvoiceService {
   }
 
   private async fetchCustomer(businessId: string, customerId: string): Promise<TemplateCustomer | null> {
-    const res = await query(
-      `SELECT id, name, company_name, email, phone, tax_id,
-              address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
-              default_currency, notes, payment_terms, shipping_address_id
-       FROM customers WHERE id = $1 AND business_id = $2`,
-      [customerId, businessId]
-    );
-    if (!res.rows.length) return null;
-    const r = res.rows[0];
-    const customer: TemplateCustomer = {
-      id: r.id,
-      name: r.name,
-      companyName: r.company_name,
-      email: r.email,
-      phone: r.phone,
-      taxId: r.tax_id,
-      address: r.address_line_1 ? {
-        addressLine1: r.address_line_1,
-        addressLine2: r.address_line_2,
-        city: r.city,
-        stateOrRegion: r.state_or_region,
-        postalCode: r.postal_code,
-        countryCode: r.country_code,
-      } : { addressLine1: "", addressLine2: null, city: "", stateOrRegion: "", postalCode: "", countryCode: "US" },
-      countryCode: r.country_code,
-      notes: r.notes,
-      paymentTerms: r.payment_terms,
-    };
-    // Fetch shipping address if available
-    if (r.shipping_address_id) {
-      const addrRes = await query(
-        `SELECT address_line_1, address_line_2, city, state_or_region, postal_code, country_code
-         FROM customer_addresses WHERE id = $1 AND customer_id = $2`,
-        [r.shipping_address_id, customerId]
-      );
-      if (addrRes.rows.length) {
-        const a = addrRes.rows[0];
-        customer.shippingAddress = {
-          addressLine1: a.address_line_1,
-          addressLine2: a.address_line_2,
-          city: a.city,
-          stateOrRegion: a.state_or_region,
-          postalCode: a.postal_code,
-          countryCode: a.country_code,
-        };
-      }
-    }
-    return customer;
+    return fetchCustomerSnapshot(businessId, customerId);
   }
 
   private async getInvoiceTemplate(businessId: string, templateId: string | null): Promise<Handlebars.TemplateDelegate> {

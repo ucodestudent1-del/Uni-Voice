@@ -18,6 +18,7 @@ import {
   type TemplateBusiness,
   type TemplateCustomer,
   type QuoteTemplateData,
+  fetchCustomerSnapshot,
 } from "./templates/template-renderer.js";
 import type { InvoiceService } from "./invoice-service.js";
 import { quoteEmailTemplate } from "./quote-email-template.js";
@@ -1349,35 +1350,7 @@ export class QuoteService {
   }
 
   private async fetchCustomer(businessId: string, customerId: string): Promise<TemplateCustomer | null> {
-    const res = await query(
-      `SELECT id, name, company_name, email, phone, tax_id,
-              address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
-              notes, payment_terms
-       FROM customers WHERE id = $1`,
-      [customerId]
-    );
-    if (!res.rows.length) return null;
-    const r = res.rows[0];
-    const customer: TemplateCustomer = {
-      id: r.id,
-      name: r.name,
-      companyName: r.company_name,
-      email: r.email,
-      phone: r.phone,
-      taxId: r.tax_id,
-      address: r.address_line_1 ? {
-        addressLine1: r.address_line_1,
-        addressLine2: r.address_line_2,
-        city: r.city,
-        stateOrRegion: r.state_or_region,
-        postalCode: r.postal_code,
-        countryCode: r.country_code,
-      } : { addressLine1: "", addressLine2: null, city: "", stateOrRegion: "", postalCode: "", countryCode: "US" },
-      countryCode: r.country_code ?? "US",
-      notes: r.notes,
-      paymentTerms: r.payment_terms,
-    };
-    return customer;
+    return fetchCustomerSnapshot(businessId, customerId);
   }
 
   private async logQuoteEvent(

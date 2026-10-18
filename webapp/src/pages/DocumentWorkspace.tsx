@@ -18,7 +18,7 @@ import {
 import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
 import { SUPPORTED_CURRENCIES, getCurrencyMetadata } from "@/types/currency";
-  import { useToast, Button, FormField, FormTextareaField, PageHeader, StatusBadge, Dialog, SearchInput, invoiceStatusConfig, quoteStatusConfig, creditNoteStatusConfig } from "@/components/ui";
+  import { useToast, Button, FormField, FormTextareaField, PageHeader, StatusBadge, Dialog, SearchInput, invoiceStatusConfig, quoteStatusConfig, creditNoteStatusConfig, debitNoteStatusConfig, paymentVoucherStatusConfig } from "@/components/ui";
 import SectionCard from "@/components/SectionCard";
 import {
   Save,
@@ -76,6 +76,19 @@ import {
   createCreditNoteDraft,
   finalizeCreditNote,
   type CreateCreditNoteInput,
+  getDebitNote,
+  createDebitNote,
+  updateDebitNote,
+  finalizeDebitNote,
+  sendDebitNote,
+  getDebitNotePdf,
+  type ApiCreateDebitNoteInput,
+  getPaymentVoucher,
+  createPaymentVoucher,
+  updatePaymentVoucher,
+  finalizePaymentVoucher,
+  getPaymentVoucherPdf,
+  type ApiCreatePaymentVoucherInput,
   getInvoices,
   type ApiInvoiceListItem,
   getSuggestedActions,
@@ -163,11 +176,21 @@ function useDocumentData(
         .catch((err: any) => setError(err.message))
         .finally(() => setIsLoading(false));
     } else if (docType === "credit-note") {
-      getCreditNote(id)
-        .then((res) => setDocument(res.creditNote))
-        .catch((err: any) => setError(err.message))
-        .finally(() => setIsLoading(false));
-    }
+        getCreditNote(id)
+          .then((res) => setDocument(res.creditNote))
+          .catch((err: any) => setError(err.message))
+          .finally(() => setIsLoading(false));
+      } else if (docType === "debit-note") {
+       getDebitNote(id)
+         .then((res) => setDocument(res.debitNote))
+         .catch((err: any) => setError(err.message))
+         .finally(() => setIsLoading(false));
+     } else if (docType === "payment-voucher") {
+       getPaymentVoucher(id)
+         .then((res) => setDocument(res.voucher))
+         .catch((err: any) => setError(err.message))
+         .finally(() => setIsLoading(false));
+     }
   }, [docType, id, isNew]);
 
   return { document, setDocument, isLoading, error };
@@ -181,11 +204,26 @@ function useDocumentValidation(
   return useMemo(() => {
     const issues: { code: string; message: string; severity: "error" | "warning"; field?: string }[] = [];
 
-    if (!doc?.customer_id && !state.customerId) {
-      issues.push({ code: "MISSING_CUSTOMER", message: "No customer selected", severity: "error" });
+    if (!doc?.customer_id && !state.customerId && docType !== "payment-voucher") {
+      if (docType === "debit-note") {
+        if (!doc?.customer_id && !state.customerId && !state.payeeName) {
+          issues.push({ code: "MISSING_CUSTOMER", message: "No customer provided", severity: "error" });
+        }
+      } else {
+        issues.push({ code: "MISSING_CUSTOMER", message: "No customer selected", severity: "error" });
+      }
     }
-    if (!state.issueDate) {
-      issues.push({ code: "MISSING_ISSUE_DATE", message: "No issue date set", severity: "error" });
+    if (docType === "payment-voucher") {
+      if (!state.payeeName) {
+        issues.push({ code: "MISSING_PAYEE", message: "No payee name provided", severity: "error" });
+      }
+      if (!state.voucherDate) {
+        issues.push({ code: "MISSING_DATE", message: "No voucher date set", severity: "error" });
+      }
+    } else {
+      if (!state.issueDate) {
+        issues.push({ code: "MISSING_ISSUE_DATE", message: "No issue date set", severity: "error" });
+      }
     }
     if (!state.currency) {
       issues.push({ code: "MISSING_CURRENCY", message: "No currency selected", severity: "error" });
@@ -221,8 +259,16 @@ function useDocumentValidation(
       }
     }
 
-    if (!doc?.payment_instructions && !state.paymentInstructions) {
-      issues.push({ code: "MISSING_PAYMENT_INSTRUCTIONS", message: "No payment instructions provided", severity: "warning" });
+    if (docType !== "payment-voucher") {
+      if (!doc?.payment_instructions && !state.paymentInstructions) {
+        issues.push({ code: "MISSING_PAYMENT_INSTRUCTIONS", message: "No payment instructions provided", severity: "warning" });
+      }
+      if (!doc?.notes && !state.notes) {
+        issues.push({ code: "MISSING_NOTES", message: "No notes provided for the customer", severity: "warning" });
+      }
+      if (!doc?.customer_email && !state.customerId) {
+        issues.push({ code: "MISSING_CUSTOMER_EMAIL", message: "Customer has no email address", severity: "warning" });
+      }
     }
 
     if (docType === "quote") {
@@ -231,9 +277,9 @@ function useDocumentValidation(
       }
     }
 
-    if (docType === "credit-note") {
+    if (docType === "credit-note" || docType === "debit-note") {
       if (!state.reason && !state.customReason) {
-        issues.push({ code: "MISSING_REASON", message: "No reason provided for this credit note", severity: "error" });
+        issues.push({ code: "MISSING_REASON", message: `No reason provided for this ${docType === "credit-note" ? "credit note" : "debit note"}`, severity: "error" });
       }
     }
 
@@ -376,54 +422,71 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     }).catch(() => {});
   }, [state.customerId, isNew, docType]);
 
-  useEffect(() => {
-    if (isNew || !document) return;
+   useEffect(() => {
+     if (isNew || !document) return;
 
-    const doc = document as any;
-    setState((prev) => ({
-      ...prev,
-      customerId: doc.customer_id ?? "",
-      currency: doc.currency ?? "USD",
-      issueDate: doc.issue_date ? new Date(doc.issue_date).toISOString().split("T")[0] : defaultIssueDate,
-      notes: doc.notes ?? "",
-      terms: doc.terms ?? "",
-      paymentInstructions: doc.payment_instructions ?? "",
-      poNumber: doc.po_number ?? "",
-      dueDate: doc.due_date ? new Date(doc.due_date).toISOString().split("T")[0] : prev.dueDate,
-      expiryDate: doc.expiry_date ? new Date(doc.expiry_date).toISOString().split("T")[0] : prev.expiryDate,
-      scopeOfWork: doc.scope_of_work ?? "",
-      internalNotes: doc.internal_notes ?? "",
-      invoiceDiscount: doc.invoice_discount ?? "0",
-      invoiceDiscountType: doc.invoice_discount_type ?? "fixed",
-      shippingDescription: doc.shipping_description ?? "",
-      shippingAmount: doc.shipping_amount ?? "0",
-      shippingTaxRate: doc.shipping_tax_rate ?? "0",
-      quoteDiscount: doc.quote_discount_value ?? "0",
-      quoteDiscountType: doc.quote_discount_type ?? "fixed",
-      referenceInvoiceId: doc.reference_invoice_id ?? "",
-      reason: doc.reason ?? "",
-      paymentTerms: "custom",
-      items: (doc.items ?? []).map((item: any) => ({
-        description: item.description,
-        quantity: item.quantity,
-        unit: item.unit ?? "each",
-        unitPrice: item.unit_price,
-        taxRate: item.tax_rate,
-        taxName: item.tax_name ?? "",
-        isTaxInclusive: item.is_tax_inclusive,
-        discount: item.discount ?? "0",
-        discountType: item.discount_type ?? "percentage",
-        productId: item.product_id ?? null,
-        isOptional: item.is_optional ?? false,
-      })),
-      fees: (doc.fees ?? []).map((fee: any) => ({
-        description: fee.description,
-        amount: fee.amount,
-        taxRate: fee.tax_rate,
-        taxName: fee.tax_name ?? "",
-      })),
-    }));
-  }, [document, isNew, defaultIssueDate]);
+     const doc = document as any;
+     setState((prev) => ({
+       ...prev,
+       customerId: doc.customer_id ?? "",
+       currency: doc.currency ?? "USD",
+       issueDate: doc.issue_date ? new Date(doc.issue_date).toISOString().split("T")[0] : defaultIssueDate,
+       notes: doc.notes ?? "",
+       terms: doc.terms ?? "",
+       paymentInstructions: doc.payment_instructions ?? "",
+       poNumber: doc.po_number ?? "",
+       dueDate: doc.due_date ? new Date(doc.due_date).toISOString().split("T")[0] : prev.dueDate,
+       expiryDate: doc.expiry_date ? new Date(doc.expiry_date).toISOString().split("T")[0] : prev.expiryDate,
+       scopeOfWork: doc.scope_of_work ?? "",
+       internalNotes: doc.internal_notes ?? "",
+       invoiceDiscount: doc.invoice_discount ?? "0",
+       invoiceDiscountType: doc.invoice_discount_type ?? "fixed",
+       shippingDescription: doc.shipping_description ?? "",
+       shippingAmount: doc.shipping_amount ?? "0",
+       shippingTaxRate: doc.shipping_tax_rate ?? "0",
+       quoteDiscount: doc.quote_discount_value ?? "0",
+       quoteDiscountType: doc.quote_discount_type ?? "fixed",
+        referenceInvoiceId: doc.reference_invoice_id ?? "",
+        reason: doc.reason ?? "",
+        paymentTerms: "custom",
+        /** Debit-note fields */
+        referenceInvoiceNumber: doc.reference_invoice_number ?? "",
+        /** Payment-voucher fields */
+        payeeName: doc.payee_name ?? "",
+        payeeEmail: doc.payee_email ?? "",
+        payeePhone: doc.payee_phone ?? "",
+        payeeAddressLine1: doc.payee_address_line_1 ?? "",
+        payeeAddressLine2: doc.payee_address_line_2 ?? "",
+        payeeCity: doc.payee_city ?? "",
+        payeeStateOrRegion: doc.payee_state_or_region ?? "",
+        payeePostalCode: doc.payee_postal_code ?? "",
+        payeeCountryCode: doc.payee_country_code ?? "",
+        payeeTaxId: doc.payee_tax_id ?? "",
+        voucherDate: doc.voucher_date ? new Date(doc.voucher_date).toISOString().split("T")[0] : prev.voucherDate,
+        referenceNumber: doc.reference_number ?? "",
+        paymentMethod: doc.payment_method ?? "",
+        paymentProvider: doc.payment_provider ?? "",
+        items: (doc.items ?? []).map((item: any) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit ?? "each",
+          unitPrice: item.unit_price,
+          taxRate: item.tax_rate,
+          taxName: item.tax_name ?? "",
+          isTaxInclusive: item.is_tax_inclusive,
+          discount: item.discount ?? "0",
+          discountType: item.discount_type ?? "percentage",
+          productId: item.product_id ?? null,
+          isOptional: item.is_optional ?? false,
+        })),
+        fees: (doc.fees ?? []).map((fee: any) => ({
+          description: fee.description,
+          amount: fee.amount,
+          taxRate: fee.tax_rate,
+          taxName: fee.tax_name ?? "",
+        })),
+      }));
+   }, [document, isNew, defaultIssueDate]);
 
   const calcInput: InvoiceCalculationInput = useMemo(() => {
     const currencyCode = (state.currency as any) ?? "USD";
@@ -549,18 +612,76 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       } as CreateInvoiceInput;
     }
 
-    if (docType === "quote") {
-      return {
-        ...commonPayload,
-        expiryDate: state.expiryDate || undefined,
-        scopeOfWork: state.scopeOfWork || undefined,
-        internalNotes: state.internalNotes || undefined,
-        quoteDiscount: state.quoteDiscount,
-        quoteDiscountType: state.quoteDiscountType,
-      } as CreateQuoteInput;
-    }
+     if (docType === "quote") {
+       return {
+         ...commonPayload,
+         expiryDate: state.expiryDate || undefined,
+         scopeOfWork: state.scopeOfWork || undefined,
+         internalNotes: state.internalNotes || undefined,
+         quoteDiscount: state.quoteDiscount,
+         quoteDiscountType: state.quoteDiscountType,
+       } as CreateQuoteInput;
+     }
 
-    const effectiveReason = state.reason === "other" ? state.customReason : state.reason;
+     if (docType === "debit-note") {
+       return {
+         customerId: state.customerId || undefined,
+         issueDate: state.issueDate || undefined,
+         dueDate: state.dueDate || undefined,
+         currency: state.currency,
+         notes: state.notes || undefined,
+         terms: state.terms || undefined,
+         paymentInstructions: state.paymentInstructions || undefined,
+         referenceInvoiceId: state.referenceInvoiceId || undefined,
+         referenceInvoiceNumber: state.referenceInvoiceNumber || undefined,
+         reason: state.reason === "other" ? state.customReason : state.reason,
+         items: state.items
+           .filter((item) => item.description.trim())
+           .map((item) => ({
+             description: item.description,
+             quantity: item.quantity,
+             unit: item.unit,
+             unitPrice: item.unitPrice,
+             taxRate: item.taxRate,
+             taxName: item.taxName || undefined,
+             isTaxInclusive: item.isTaxInclusive,
+           })),
+       } as ApiCreateDebitNoteInput;
+     }
+
+     if (docType === "payment-voucher") {
+       return {
+         voucherDate: state.voucherDate || state.issueDate || undefined,
+         currency: state.currency,
+         payeeName: state.payeeName,
+         payeeEmail: state.payeeEmail || null,
+         payeePhone: state.payeePhone || null,
+         payeeAddressLine1: state.payeeAddressLine1 || null,
+         payeeAddressLine2: state.payeeAddressLine2 || null,
+         payeeCity: state.payeeCity || null,
+         payeeStateOrRegion: state.payeeStateOrRegion || null,
+         payeePostalCode: state.payeePostalCode || null,
+         payeeCountryCode: state.payeeCountryCode || null,
+         payeeTaxId: state.payeeTaxId || null,
+         referenceNumber: state.referenceNumber || null,
+         paymentMethod: state.paymentMethod || null,
+         paymentProvider: state.paymentProvider || null,
+         notes: state.notes || undefined,
+         terms: state.terms || undefined,
+         items: state.items
+           .filter((item) => item.description.trim())
+           .map((item) => ({
+             description: item.description,
+             quantity: item.quantity,
+             unit: item.unit,
+             unitPrice: item.unitPrice,
+             taxRate: item.taxRate,
+             taxName: item.taxName || undefined,
+           })),
+       } as ApiCreatePaymentVoucherInput;
+     }
+
+     const effectiveReason = state.reason === "other" ? state.customReason : state.reason;
     return {
       invoiceId: state.referenceInvoiceId || "",
       reason: effectiveReason || undefined,
@@ -589,48 +710,62 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     setSaveState("saving");
     try {
       if (isNew) {
-        if (docType === "invoice") {
-          const res = await createInvoice(fullPayload as CreateInvoiceInput);
-          toast(`Created invoice #${res.invoice.invoice_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-          navigate(`/app/invoices/${res.invoice.id}`);
-          setDocument(res.invoice);
-        } else if (docType === "quote") {
-          const res = await createQuote(fullPayload as CreateQuoteInput);
-          toast(`Created quotation #${res.quote.quote_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-          navigate(`/app/quotes/${res.quote.id}`);
-          setDocument(res.quote);
-        } else {
-          const res = await createCreditNoteDraft(fullPayload as CreateCreditNoteInput);
-          toast(`Created credit note draft.`, { type: "success", title: `${docTypeLabel(docType)} created` });
-          navigate(`/app/credit-notes/${res.creditNote.id}/edit`);
-          setDocument(res.creditNote);
-        }
-        lastSavedStateRef.current = { ...state };
-      } else {
-        const doc = document as any;
-        const prev = lastSavedStateRef.current;
-        let payload: any;
+         if (docType === "invoice") {
+           const res = await createInvoice(fullPayload as CreateInvoiceInput);
+           toast(`Created invoice #${res.invoice.invoice_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
+           navigate(`/app/invoices/${res.invoice.id}`);
+           setDocument(res.invoice);
+         } else if (docType === "quote") {
+           const res = await createQuote(fullPayload as CreateQuoteInput);
+           toast(`Created quotation #${res.quote.quote_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
+           navigate(`/app/quotes/${res.quote.id}`);
+           setDocument(res.quote);
+         } else if (docType === "debit-note") {
+           const res = await createDebitNote(fullPayload as ApiCreateDebitNoteInput);
+           toast(`Created debit note #${res.debitNote.debit_note_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
+           navigate(`/app/debit-notes/${res.debitNote.id}/edit`);
+           setDocument(res.debitNote);
+         } else if (docType === "payment-voucher") {
+           const res = await createPaymentVoucher(fullPayload as ApiCreatePaymentVoucherInput);
+           toast(`Created payment voucher #${res.voucher.payment_voucher_number ?? ""}.`, { type: "success", title: `${docTypeLabel(docType)} created` });
+           navigate(`/app/payment-vouchers/${res.voucher.id}/edit`);
+           setDocument(res.voucher);
+         } else {
+           const res = await createCreditNoteDraft(fullPayload as CreateCreditNoteInput);
+           toast(`Created credit note draft.`, { type: "success", title: `${docTypeLabel(docType)} created` });
+           navigate(`/app/credit-notes/${res.creditNote.id}/edit`);
+           setDocument(res.creditNote);
+         }
+         lastSavedStateRef.current = { ...state };
+       } else {
+         const doc = document as any;
+         const prev = lastSavedStateRef.current;
+         let payload: any;
 
-        if (!prev) {
-          payload = fullPayload;
-        } else {
-          payload = {};
-          const scalarFields = ["customerId", "currency", "issueDate", "dueDate", "expiryDate", "notes", "terms", "paymentInstructions", "poNumber", "quoteDiscount", "quoteDiscountType", "invoiceDiscount", "invoiceDiscountType", "shippingDescription", "shippingAmount", "shippingTaxRate"];
-          for (const field of scalarFields) {
-            if (JSON.stringify((state as any)[field]) !== JSON.stringify((prev as any)[field])) {
-              (payload as any)[field] = (state as any)[field] ?? undefined;
-            }
-          }
-        }
-        payload.items = fullPayload.items;
-        payload.fees = (fullPayload as any).fees;
-        payload.version = doc.version;
+         if (!prev) {
+           payload = fullPayload;
+         } else {
+           payload = {};
+           const scalarFields = ["customerId", "currency", "issueDate", "dueDate", "expiryDate", "notes", "terms", "paymentInstructions", "poNumber", "quoteDiscount", "quoteDiscountType", "invoiceDiscount", "invoiceDiscountType", "shippingDescription", "shippingAmount", "shippingTaxRate", "referenceInvoiceNumber", "voucherDate", "payeeName", "payeeEmail", "payeePhone", "payeeAddressLine1", "payeeAddressLine2", "payeeCity", "payeeStateOrRegion", "payeePostalCode", "payeeCountryCode", "payeeTaxId", "referenceNumber", "paymentMethod", "paymentProvider"];
+           for (const field of scalarFields) {
+             if (JSON.stringify((state as any)[field]) !== JSON.stringify((prev as any)[field])) {
+               (payload as any)[field] = (state as any)[field] ?? undefined;
+             }
+           }
+         }
+         payload.items = fullPayload.items;
+         payload.fees = (fullPayload as any).fees;
+         payload.version = doc.version;
 
-        if (docType === "invoice") {
-          await updateInvoice(doc.id, payload as CreateInvoiceInput);
-        } else if (docType === "quote") {
-          await updateQuote(doc.id, payload as CreateQuoteInput);
-        }
+         if (docType === "invoice") {
+           await updateInvoice(doc.id, payload as CreateInvoiceInput);
+         } else if (docType === "quote") {
+           await updateQuote(doc.id, payload as CreateQuoteInput);
+         } else if (docType === "debit-note") {
+           await updateDebitNote(doc.id, payload as ApiCreateDebitNoteInput);
+         } else if (docType === "payment-voucher") {
+           await updatePaymentVoucher(doc.id, payload as ApiCreatePaymentVoucherInput);
+         }
         setSaveState("saved");
         if (saveStateTimerRef.current) clearTimeout(saveStateTimerRef.current);
         saveStateTimerRef.current = setTimeout(() => setSaveState("idle"), 2000);
@@ -690,6 +825,8 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       case "invoice": return "Invoice";
       case "quote": return "Quotation";
       case "credit-note": return "Credit Note";
+      case "debit-note": return "Debit Note";
+      case "payment-voucher": return "Payment Voucher";
     }
   }
 
@@ -698,7 +835,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     if (isNew) {
       return `New ${docTypeLabel(docType)}`;
     }
-    const num = doc?.invoice_number ?? doc?.quote_number ?? doc?.credit_note_number ?? "";
+    const num = doc?.invoice_number ?? doc?.quote_number ?? doc?.credit_note_number ?? doc?.debit_note_number ?? doc?.payment_voucher_number ?? "";
     return `${docTypeLabel(docType)} #${num}`;
   };
 
@@ -718,11 +855,17 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       } else if (docType === "quote") {
         result = await finalizeQuote(doc.id) as FinalizeQuoteResult;
         toast(`Quotation #${result.quoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
+      } else if (docType === "debit-note") {
+        result = await finalizeDebitNote(doc.id);
+        toast(`Debit note #${result.debitNoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
+      } else if (docType === "payment-voucher") {
+        result = await finalizePaymentVoucher(doc.id);
+        toast(`Payment voucher #${result.voucherNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
       } else {
         result = await finalizeCreditNote(doc.id);
         toast(`Credit note finalized.`, { type: "success", title: "Finalized" });
       }
-      setDocument(result.invoice ?? result.quote ?? result.creditNote);
+      setDocument(result.invoice ?? result.quote ?? result.creditNote ?? result.debitNote ?? result.voucher);
       setSaveState("idle");
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Finalize failed" });
@@ -762,11 +905,17 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       } else if (docType === "quote") {
         result = await finalizeQuote(doc.id) as FinalizeQuoteResult;
         toast(`Quotation #${result.quoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
+      } else if (docType === "debit-note") {
+        result = await finalizeDebitNote(doc.id);
+        toast(`Debit note #${result.debitNoteNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
+      } else if (docType === "payment-voucher") {
+        result = await finalizePaymentVoucher(doc.id);
+        toast(`Payment voucher #${result.voucherNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
       } else {
         result = await finalizeCreditNote(doc.id);
         toast(`Credit note finalized.`, { type: "success", title: "Finalized" });
       }
-      setDocument(result.invoice ?? result.quote ?? result.creditNote);
+      setDocument(result.invoice ?? result.quote ?? result.creditNote ?? result.debitNote ?? result.voucher);
       setSaveState("idle");
       setSendDialogOpen(true);
     } catch (err: any) {
@@ -799,9 +948,18 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         const result: SendQuoteResult = await sendQuote(doc.id, sendData);
         toast(`Quotation sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
         setDocument(result.quote ?? doc);
+      } else if (docType === "debit-note") {
+        const result = await sendDebitNote(doc.id, {
+          to: sendData.to || undefined,
+          cc: sendData.cc ? sendData.cc.split(",").map((e) => e.trim()).filter(Boolean) : [],
+          bcc: sendData.bcc ? sendData.bcc.split(",").map((e) => e.trim()).filter(Boolean) : [],
+          subject: sendData.subject || undefined,
+          message: sendData.message || undefined,
+        });
+        toast(`Debit note sent to ${sendData.to || doc.customer_email || "customer"}.`, { type: "success", title: "Sent" });
       } else {
         setSendDialogOpen(false);
-        toast("Send functionality for credit notes coming soon.", { type: "info", title: "Not available" });
+        toast(`Send functionality for ${docTypeLabel(docType).toLowerCase()} coming soon.`, { type: "info", title: "Not available" });
         return;
       }
       setSendDialogOpen(false);
@@ -850,15 +1008,39 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     const issues: { code: string; message: string; severity: "error" | "warning"; field?: string }[] = [];
 
     const doc = document as any;
-    if (!doc?.customer_id && !state.customerId) {
-      issues.push({ code: "MISSING_CUSTOMER", message: "No customer selected", severity: "error" });
+
+    // Customer/payee validation — payment vouchers use payeeName, debit notes use customerId or customerName
+    if (docType === "payment-voucher") {
+      if (!state.payeeName) {
+        issues.push({ code: "MISSING_PAYEE", message: "No payee name provided", severity: "error" });
+      }
+     } else if (docType === "debit-note") {
+      // Debit notes can use either customer_id (linked customer) or flat customer name
+      if (!doc?.customer_id && !state.customerId) {
+        issues.push({ code: "MISSING_CUSTOMER", message: "No customer provided", severity: "error" });
+      }
+    } else {
+      if (!doc?.customer_id && !state.customerId) {
+        issues.push({ code: "MISSING_CUSTOMER", message: "No customer selected", severity: "error" });
+      }
     }
-    if (!state.issueDate) {
-      issues.push({ code: "MISSING_ISSUE_DATE", message: "No issue date set", severity: "error" });
+
+    if (docType === "payment-voucher") {
+      if (!state.voucherDate) {
+        issues.push({ code: "MISSING_DATE", message: "No date set", severity: "error" });
+      }
+    } else {
+      if (!state.issueDate) {
+        issues.push({ code: "MISSING_ISSUE_DATE", message: "No issue date set", severity: "error" });
+      }
     }
-    if (state.dueDate && state.issueDate && state.dueDate < state.issueDate) {
-      issues.push({ code: "INVALID_DUE_DATE", message: "Due date is before issue date", severity: "error" });
+
+    if (docType !== "payment-voucher") {
+      if (state.dueDate && state.issueDate && state.dueDate < state.issueDate) {
+        issues.push({ code: "INVALID_DUE_DATE", message: "Due date is before issue date", severity: "error" });
+      }
     }
+
     if (!state.currency) {
       issues.push({ code: "MISSING_CURRENCY", message: "No currency selected", severity: "error" });
     }
@@ -886,15 +1068,27 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       }
     }
 
-    if (!doc?.payment_instructions && !state.paymentInstructions) {
-      issues.push({ code: "MISSING_PAYMENT_INSTRUCTIONS", message: "No payment instructions provided", severity: "warning" });
+    if (docType !== "payment-voucher") {
+      if (!doc?.payment_instructions && !state.paymentInstructions) {
+        issues.push({ code: "MISSING_PAYMENT_INSTRUCTIONS", message: "No payment instructions provided", severity: "warning" });
+      }
+      if (!doc?.notes && !state.notes) {
+        issues.push({ code: "MISSING_NOTES", message: "No notes provided for the customer", severity: "warning" });
+      }
+      if (!doc?.customer_email && !state.customerId) {
+        issues.push({ code: "MISSING_CUSTOMER_EMAIL", message: "Customer has no email address", severity: "warning" });
+      }
     }
-    if (!doc?.notes && !state.notes) {
-      issues.push({ code: "MISSING_NOTES", message: "No notes provided for the customer", severity: "warning" });
+
+    if (docType === "debit-note") {
+      if (!state.reason && !state.customReason) {
+        issues.push({ code: "MISSING_REASON", message: "No reason provided for this debit note", severity: "error" });
+      }
+      if (!state.customerId) {
+        issues.push({ code: "MISSING_CUSTOMER_ID", message: "No customer selected — link to a customer for proper tracking", severity: "warning" });
+      }
     }
-    if (!doc?.customer_email && !state.customerId) {
-      issues.push({ code: "MISSING_CUSTOMER_EMAIL", message: "Customer has no email address", severity: "warning" });
-    }
+
     return issues;
   };
 
@@ -1089,15 +1283,20 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   };
 
   const taxRateOptions = buildTaxRateOptions(taxRates);
-  const customerName = state.customerId
-    ? customers.find((c) => c.id === state.customerId)?.name ??
-      customers.find((c) => c.id === state.customerId)?.email ??
-      "—"
-    : "Select a customer";
+  const customerName = docType === "payment-voucher"
+    ? (state.payeeName ?? "Enter payee name")
+    : (state.customerId
+        ? customers.find((c) => c.id === state.customerId)?.name ??
+          customers.find((c) => c.id === state.customerId)?.email ??
+          "—"
+        : "Select a customer");
 
   const statusConfig = useMemo(() => {
     if (docType === "invoice") return invoiceStatusConfig;
     if (docType === "quote") return quoteStatusConfig;
+    if (docType === "credit-note") return creditNoteStatusConfig;
+    if (docType === "debit-note") return debitNoteStatusConfig;
+    if (docType === "payment-voucher") return paymentVoucherStatusConfig;
     return creditNoteStatusConfig;
   }, [docType]);
 
@@ -1123,15 +1322,15 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
   return (
     <div className="page-container h-[calc(100vh-4rem)] flex flex-col">
-      <PageHeader
-        title={getDocumentTitle()}
-        breadcrumbs={
-          !isNew
-            ? [
-                { label: docTypeLabel(docType) === "Invoice" ? "Invoices" : docTypeLabel(docType) === "Quotation" ? "Quotations" : "Credit Notes", to: `/app/${docType === "credit-note" ? "credit-notes" : docType === "quote" ? "quotes" : "invoices"}` },
-              ]
-            : [{ label: docTypeLabel(docType) === "Invoice" ? "Invoices" : docTypeLabel(docType) === "Quotation" ? "Quotations" : "Credit Notes", to: `/app/${docType === "credit-note" ? "credit-notes" : docType === "quote" ? "quotes" : "invoices"}` }]
-        }
+       <PageHeader
+         title={getDocumentTitle()}
+         breadcrumbs={
+           !isNew
+             ? [
+                 { label: docType === "invoice" ? "Invoices" : docType === "quote" ? "Quotations" : docType === "credit-note" ? "Credit Notes" : docType === "debit-note" ? "Debit Notes" : docType === "payment-voucher" ? "Payment Vouchers" : "Documents", to: docType === "invoice" ? "/app/invoices" : docType === "quote" ? "/app/quotes" : docType === "credit-note" ? "/app/credit-notes" : docType === "debit-note" ? "/app/debit-notes" : docType === "payment-voucher" ? "/app/payment-vouchers" : "/app/documents" },
+               ]
+             : [{ label: docType === "invoice" ? "Invoices" : docType === "quote" ? "Quotations" : docType === "credit-note" ? "Credit Notes" : docType === "debit-note" ? "Debit Notes" : docType === "payment-voucher" ? "Payment Vouchers" : "Documents", to: docType === "invoice" ? "/app/invoices" : docType === "quote" ? "/app/quotes" : docType === "credit-note" ? "/app/credit-notes" : docType === "debit-note" ? "/app/debit-notes" : docType === "payment-voucher" ? "/app/payment-vouchers" : "/app/documents" }]
+         }
         primaryAction={
           <div className="flex items-center gap-3">
             {!isNew && document && (
@@ -1323,35 +1522,64 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-8rem)] overflow-hidden">
            {/* Editor column — hidden on mobile when preview is active */}
            <div className={`overflow-y-auto space-y-6 pr-2 ${mobileView === "preview" ? "hidden lg:block" : "block"}`}>
-             <SectionCard title="Customer">
-              <div className="p-5 space-y-3">
-                <FormField
-                  label="Customer"
-                  select
-                  value={state.customerId}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "__new__") {
-                      setNewCustomerDialogOpen(true);
-                    } else {
-                      setState((prev) => ({ ...prev, customerId: val }));
-                    }
-                  }}
-                  disabled={isFinalized}
-                  helperText={customerName !== "Select a customer" ? customerName : undefined}
-                >
-                  <option value="">Select a customer</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name ?? c.email ?? c.id}
-                    </option>
-                  ))}
-                  <option value="__new__" className="font-medium text-primary">
-                    + Add new customer…
-                  </option>
-                </FormField>
-              </div>
-            </SectionCard>
+            <SectionCard title={docType === "payment-voucher" ? "Payee" : "Customer"}>
+               <div className="p-5 space-y-3">
+                 {docType === "payment-voucher" ? (
+                   <>
+                     <FormField
+                       label="Payee Name"
+                       placeholder="Payee name"
+                       value={state.payeeName ?? ""}
+                       onChange={(e) => setState((prev) => ({ ...prev, payeeName: e.target.value }))}
+                       disabled={isFinalized}
+                     />
+                     <div className="grid grid-cols-2 gap-4">
+                       <FormField
+                         label="Email"
+                         type="email"
+                         placeholder="payee@example.com"
+                         value={state.payeeEmail ?? ""}
+                         onChange={(e) => setState((prev) => ({ ...prev, payeeEmail: e.target.value }))}
+                         disabled={isFinalized}
+                       />
+                       <FormField
+                         label="Phone"
+                         placeholder="+1 (555) 123-4567"
+                         value={state.payeePhone ?? ""}
+                         onChange={(e) => setState((prev) => ({ ...prev, payeePhone: e.target.value }))}
+                         disabled={isFinalized}
+                       />
+                     </div>
+                   </>
+                 ) : (
+                   <FormField
+                     label="Customer"
+                     select
+                     value={state.customerId}
+                     onChange={(e) => {
+                       const val = e.target.value;
+                       if (val === "__new__") {
+                         setNewCustomerDialogOpen(true);
+                       } else {
+                         setState((prev) => ({ ...prev, customerId: val }));
+                       }
+                     }}
+                     disabled={isFinalized}
+                     helperText={customerName !== "Select a customer" ? customerName : undefined}
+                   >
+                     <option value="">Select a customer</option>
+                     {customers.map((c) => (
+                       <option key={c.id} value={c.id}>
+                         {c.name ?? c.email ?? c.id}
+                       </option>
+                     ))}
+                     <option value="__new__" className="font-medium text-primary">
+                       + Add new customer…
+                     </option>
+                   </FormField>
+                 )}
+               </div>
+             </SectionCard>
 
             <SectionCard title="Document Details">
               <div className="p-5 space-y-4">
@@ -1486,60 +1714,151 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                   </>
                 )}
 
-                {docType === "credit-note" && (
-                  <>
-                    <FormField
-                      label="Reference Invoice"
-                      select
-                      value={state.referenceInvoiceId ?? ""}
-                      onChange={(e) =>
-                        setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
-                      }
-                      disabled={isFinalized}
-                    >
-                      <option value="">Select source invoice</option>
-                      {availableReferenceInvoices.map((inv) => (
-                        <option key={inv.id} value={inv.id}>
-                          {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "—"}
-                        </option>
-                      ))}
-                    </FormField>
+                 {docType === "credit-note" && (
+                   <>
+                     <FormField
+                       label="Reference Invoice"
+                       select
+                       value={state.referenceInvoiceId ?? ""}
+                       onChange={(e) =>
+                         setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
+                       }
+                       disabled={isFinalized}
+                     >
+                       <option value="">Select source invoice</option>
+                       {availableReferenceInvoices.map((inv) => (
+                         <option key={inv.id} value={inv.id}>
+                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "—"}
+                         </option>
+                       ))}
+                     </FormField>
 
-                    <FormField
-                      label="Reason"
-                      select
-                      value={state.reason === "other" ? state.reason : state.reason ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setState((prev) => ({
-                          ...prev,
-                          reason: val,
-                          customReason: val === "other" ? prev.customReason : "",
-                        }));
-                      }}
-                      disabled={isFinalized}
-                    >
-                      <option value="">Select a reason</option>
-                      {REASON_OPTIONS.slice(1).map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </FormField>
+                     <FormField
+                       label="Reason"
+                       select
+                       value={state.reason === "other" ? state.reason : state.reason ?? ""}
+                       onChange={(e) => {
+                         const val = e.target.value;
+                         setState((prev) => ({
+                           ...prev,
+                           reason: val,
+                           customReason: val === "other" ? prev.customReason : "",
+                         }));
+                       }}
+                       disabled={isFinalized}
+                     >
+                       <option value="">Select a reason</option>
+                       {REASON_OPTIONS.slice(1).map((opt) => (
+                         <option key={opt.value} value={opt.value}>
+                           {opt.label}
+                         </option>
+                       ))}
+                     </FormField>
 
-                    {state.reason === "other" && (
-                      <FormField
-                        label="Custom Reason"
-                        placeholder="Enter reason..."
-                        value={state.customReason ?? ""}
-                        onChange={(e) =>
-                          setState((prev) => ({ ...prev, customReason: e.target.value }))
-                        }
-                        disabled={isFinalized}
-                      />
-                    )}
-                  </>
-                )}
+                     {state.reason === "other" && (
+                       <FormField
+                         label="Custom Reason"
+                         placeholder="Enter reason..."
+                         value={state.customReason ?? ""}
+                         onChange={(e) =>
+                           setState((prev) => ({ ...prev, customReason: e.target.value }))
+                         }
+                         disabled={isFinalized}
+                       />
+                     )}
+                   </>
+                 )}
+
+                 {docType === "debit-note" && (
+                   <>
+                     <FormField
+                       label="Reference Invoice"
+                       select
+                       value={state.referenceInvoiceId ?? ""}
+                       onChange={(e) =>
+                         setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
+                       }
+                       disabled={isFinalized}
+                       helperText="Optional — link to an invoice this debit note relates to"
+                     >
+                       <option value="">None</option>
+                       {availableReferenceInvoices.map((inv) => (
+                         <option key={inv.id} value={inv.id}>
+                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "—"}
+                         </option>
+                       ))}
+                     </FormField>
+
+                     <FormField
+                       label="Reason"
+                       select
+                       value={state.reason === "other" ? state.reason : state.reason ?? ""}
+                       onChange={(e) => {
+                         const val = e.target.value;
+                         setState((prev) => ({
+                           ...prev,
+                           reason: val,
+                           customReason: val === "other" ? prev.customReason : "",
+                         }));
+                       }}
+                       disabled={isFinalized}
+                     >
+                       <option value="">Select a reason</option>
+                       {REASON_OPTIONS.slice(1).map((opt) => (
+                         <option key={opt.value} value={opt.value}>
+                           {opt.label}
+                         </option>
+                       ))}
+                     </FormField>
+
+                     {state.reason === "other" && (
+                       <FormField
+                         label="Custom Reason"
+                         placeholder="Enter reason..."
+                         value={state.customReason ?? ""}
+                         onChange={(e) =>
+                           setState((prev) => ({ ...prev, customReason: e.target.value }))
+                         }
+                         disabled={isFinalized}
+                       />
+                     )}
+                   </>
+                 )}
+
+                 {docType === "payment-voucher" && (
+                   <>
+                     <div className="grid grid-cols-2 gap-4">
+                       <FormField
+                         label="Voucher Date"
+                         type="date"
+                         value={state.voucherDate ?? state.issueDate}
+                         onChange={(e) => setState((prev) => ({ ...prev, voucherDate: e.target.value }))}
+                         disabled={isFinalized}
+                       />
+                       <FormField
+                         label="Payment Method"
+                         placeholder="e.g. Bank Transfer, Cash, Credit Card"
+                         value={state.paymentMethod ?? ""}
+                         onChange={(e) => setState((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+                         disabled={isFinalized}
+                       />
+                     </div>
+                     <FormField
+                       label="Reference Number"
+                       placeholder="Optional"
+                       value={state.referenceNumber ?? ""}
+                       onChange={(e) => setState((prev) => ({ ...prev, referenceNumber: e.target.value }))}
+                       disabled={isFinalized}
+                     />
+                     <FormField
+                       label="Payment Provider"
+                       placeholder="e.g. Stripe, PayPal, Bank of America"
+                       value={state.paymentProvider ?? ""}
+                       onChange={(e) => setState((prev) => ({ ...prev, paymentProvider: e.target.value }))}
+                       disabled={isFinalized}
+                     />
+                   </>
+                 )}
               </div>
             </SectionCard>
 

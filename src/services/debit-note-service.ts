@@ -6,6 +6,16 @@ import { debitNoteNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import Handlebars from "handlebars";
+import {
+  fetchCustomerSnapshot,
+  fetchBusinessSnapshot,
+  type TemplateCustomer,
+  type TemplateBusiness,
+  type TemplateLineItem,
+  type TemplateFee,
+  type TemplateTotals,
+  type DebitNoteTemplateData,
+} from "./templates/template-renderer.js";
 
 export interface DebitNoteItemInput {
   description: string;
@@ -53,7 +63,7 @@ const DEBIT_NOTE_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Debit Note {{note.debitNoteNumber}}</title>
+  <title>Debit Note {{debitNote.debitNoteNumber}}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 32px; color: #222; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
@@ -73,7 +83,7 @@ const DEBIT_NOTE_TEMPLATE = `<!DOCTYPE html>
   <div class="header">
     <div>
       <h1 style="margin:0 0 4px;">Debit Note</h1>
-      <h2 style="margin:0; font-size: 22px;">{{note.debitNoteNumber}}</h2>
+       <h2 style="margin:0; font-size: 22px;">{{debitNote.debitNoteNumber}}</h2>
     </div>
     <div style="text-align:right">
       <h2 style="margin:0">{{business.name}}</h2>
@@ -83,18 +93,20 @@ const DEBIT_NOTE_TEMPLATE = `<!DOCTYPE html>
   </div>
 
   <table>
-    <tr><td><span class="muted">Issue Date</span></td><td>{{note.issueDate}}</td></tr>
-    <tr><td><span class="muted">Due Date</span></td><td>{{note.dueDate}}</td></tr>
-    <tr><td><span class="muted">Customer</span></td><td>{{note.customerName}}</td></tr>
-    {{#if note.customerEmail}}
-    <tr><td><span class="muted">Customer Email</span></td><td>{{note.customerEmail}}</td></tr>
+    <tr><td><span class="muted">Issue Date</span></td><td>{{debitNote.issueDate}}</td></tr>
+    <tr><td><span class="muted">Due Date</span></td><td>{{debitNote.dueDate}}</td></tr>
+    {{#if customer}}
+    <tr><td><span class="muted">Customer</span></td><td>{{customer.name}}</td></tr>
+    {{#if customer.email}}
+    <tr><td><span class="muted">Customer Email</span></td><td>{{customer.email}}</td></tr>
     {{/if}}
-    {{#if note.referenceInvoiceNumber}}
-    <tr><td><span class="muted">Reference Invoice</span></td><td>{{note.referenceInvoiceNumber}}</td></tr>
     {{/if}}
-    <tr><td><span class="muted">Reason</span></td><td>{{note.reason}}</td></tr>
-    <tr><td><span class="muted">Currency</span></td><td>{{note.currency}}</td></tr>
-    <tr><td><span class="muted">Status</span></td><td><span class="badge">{{note.status}}</span></td></tr>
+    {{#if debitNote.referenceInvoiceNumber}}
+    <tr><td><span class="muted">Reference Invoice</span></td><td>{{debitNote.referenceInvoiceNumber}}</td></tr>
+    {{/if}}
+    <tr><td><span class="muted">Reason</span></td><td>{{debitNote.reason}}</td></tr>
+    <tr><td><span class="muted">Currency</span></td><td>{{debitNote.currency}}</td></tr>
+    <tr><td><span class="muted">Status</span></td><td><span class="badge">{{debitNote.status}}</span></td></tr>
   </table>
 
   <table style="margin-top: 24px;">
@@ -133,17 +145,17 @@ const DEBIT_NOTE_TEMPLATE = `<!DOCTYPE html>
     </table>
   </div>
 
-  {{#if note.notes}}
+  {{#if debitNote.notes}}
   <div style="margin-top: 24px;">
     <h3 style="margin:0 0 8px; font-size:13px; color:#666;">Notes</h3>
-    <p style="font-size:13px; white-space:pre-wrap;">{{note.notes}}</p>
+    <p style="font-size:13px; white-space:pre-wrap;">{{debitNote.notes}}</p>
   </div>
   {{/if}}
 
-  {{#if note.terms}}
+  {{#if debitNote.terms}}
   <div style="margin-top: 16px;">
     <h3 style="margin:0 0 8px; font-size:13px; color:#666;">Terms</h3>
-    <p style="font-size:13px; white-space:pre-wrap;">{{note.terms}}</p>
+    <p style="font-size:13px; white-space:pre-wrap;">{{debitNote.terms}}</p>
   </div>
   {{/if}}
 
@@ -771,9 +783,11 @@ export class DebitNoteService {
   }
 
   async generatePdf(businessId: string, noteId: string, note: Record<string, unknown>): Promise<Buffer> {
-    const business = await this.fetchBusiness(businessId);
+    const business = await fetchBusinessSnapshot(businessId);
 
     const currency = (note.currency as string) ?? "USD";
+
+    const customer = await fetchCustomerSnapshot(businessId, note.customer_id as string);
 
     const items = (note.items as Record<string, unknown>[]).map((item) => ({
       description: item.description as string,
@@ -795,11 +809,12 @@ export class DebitNoteService {
       feeTotal: new Decimal(0),
       total: new Decimal(note.total as string),
       amountPaid: new Decimal(0),
-      amountDue: new Decimal(note.amount_due as string),
+      amountDue: new Decimal(note.amount_due as string) as Decimal.Value,
     };
 
     const templateData: DebitNoteTemplateData = {
-      business,
+      business: business as TemplateBusiness,
+      customer,
       debitNote: {
         id: note.id as string,
         debitNoteNumber: note.debit_note_number as string | null,
@@ -807,23 +822,15 @@ export class DebitNoteService {
         issueDate: note.issue_date ? new Date(note.issue_date as string).toISOString().slice(0, 10) : null,
         dueDate: note.due_date ? new Date(note.due_date as string).toISOString().slice(0, 10) : null,
         currency: currency as CurrencyCode,
-        customerName: note.customer_name as string | null,
-        customerEmail: note.customer_email as string | null,
-        customerAddressLine1: note.customer_address_line_1 as string | null,
-        customerAddressLine2: note.customer_address_line_2 as string | null,
-        customerCity: note.customer_city as string | null,
-        customerStateOrRegion: note.customer_state_or_region as string | null,
-        customerPostalCode: note.customer_postal_code as string | null,
-        customerCountryCode: note.customer_country_code as string | null,
-        customerTaxId: note.customer_tax_id as string | null,
         referenceInvoiceNumber: note.reference_invoice_number as string | null,
         referenceInvoiceId: note.reference_invoice_id as string | null,
         reason: note.reason as string | null | undefined,
         notes: note.notes as string | null | undefined,
         terms: note.terms as string | null | undefined,
       },
-      items,
-      totals,
+      lineItems: items as TemplateLineItem[],
+      fees: [] as TemplateFee[],
+      totals: totals as unknown as TemplateTotals,
       config: { currency } as Record<string, unknown>,
     };
 
@@ -855,112 +862,18 @@ export class DebitNoteService {
     });
   }
 
-  private async fetchBusiness(businessId: string): Promise<DebitNoteBusiness> {
-    const res = await query(
-      `SELECT id, name, legal_name, email, phone, website, tax_id, registration_number,
-              address_line_1, address_line_2, city, state_or_region, postal_code, country_code,
-              default_currency, logo_url
-       FROM businesses WHERE id = $1`,
-      [businessId]
-    );
-    const r = res.rows[0];
-    if (!r) throw new NotFoundError(`Business ${businessId} not found`);
-    return {
-      id: r.id,
-      name: r.name,
-      legalName: r.legal_name,
-      email: r.email,
-      phone: r.phone,
-      website: r.website,
-      taxId: r.tax_id,
-      registrationNumber: r.registration_number,
-      address: r.address_line_1 ? {
-        addressLine1: r.address_line_1,
-        addressLine2: r.address_line_2,
-        city: r.city,
-        stateOrRegion: r.state_or_region,
-        postalCode: r.postal_code,
-        countryCode: r.country_code,
-      } : { addressLine1: "", addressLine2: null, city: "", stateOrRegion: "", postalCode: "", countryCode: "US" },
-      countryCode: r.country_code,
-      defaultCurrency: r.default_currency,
-      logoUrl: r.logo_url,
-    };
+  private async fetchBusiness(businessId: string): Promise<TemplateBusiness> {
+    return fetchBusinessSnapshot(businessId);
   }
 }
 
-export interface DebitNoteBusiness {
-  id: string;
-  name: string;
-  legalName?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  website?: string | null;
-  taxId?: string | null;
-  registrationNumber?: string | null;
-  address: {
-    addressLine1: string;
-    addressLine2?: string | null;
-    city: string;
-    stateOrRegion?: string | null;
-    postalCode?: string | null;
-    countryCode: string;
-  };
-  countryCode: string;
-  defaultCurrency: string;
-  logoUrl?: string | null;
-}
-
-export interface DebitNoteTemplateItem {
-  description: string;
-  quantity: Decimal.Value;
-  unit: string;
-  unitPrice: Decimal.Value;
-  taxRate: Decimal.Value;
-  taxName?: string | null;
-  taxAmount: Decimal.Value;
-  lineSubtotal: Decimal.Value;
-  lineTotal: Decimal.Value;
-  isTaxInclusive: boolean;
-}
-
-export interface DebitNoteTemplateTotals {
-  subtotal: Decimal.Value;
-  discountTotal: Decimal.Value;
-  taxTotal: Decimal.Value;
-  feeTotal: Decimal.Value;
-  total: Decimal.Value;
-  amountPaid: Decimal.Value;
-  amountDue: Decimal.Value;
-}
-
-export interface DebitNoteTemplateData {
-  business: DebitNoteBusiness;
-  debitNote: {
-    id: string;
-    debitNoteNumber: string | null;
-    status: string;
-    issueDate: string | null;
-    dueDate: string | null;
-    currency: CurrencyCode;
-    customerName?: string | null;
-    customerEmail?: string | null;
-    customerAddressLine1?: string | null;
-    customerAddressLine2?: string | null;
-    customerCity?: string | null;
-    customerStateOrRegion?: string | null;
-    customerPostalCode?: string | null;
-    customerCountryCode?: string | null;
-    customerTaxId?: string | null;
-    referenceInvoiceNumber?: string | null;
-    referenceInvoiceId?: string | null;
-    reason?: string | null;
-    notes?: string | null;
-    terms?: string | null;
-  };
-  items: DebitNoteTemplateItem[];
-  totals: DebitNoteTemplateTotals;
-  config: Record<string, unknown>;
-}
+// Re-export shared types for backward compatibility
+export type {
+  TemplateCustomer as DebitNoteCustomer,
+  TemplateBusiness as DebitNoteBusiness,
+  TemplateLineItem as DebitNoteTemplateItem,
+  TemplateFee as DebitNoteTemplateFee,
+  TemplateTotals as DebitNoteTemplateTotals,
+};
 
 export const debitNoteService = new DebitNoteService();
