@@ -247,12 +247,64 @@ export interface PaymentVoucherTemplateData {
   config: Record<string, unknown>;
 }
 
+export interface ReceiptTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  receipt: {
+    id: string;
+    receiptNumber: string | null;
+    status: string;
+    issuedAt: string | null;
+    currency: CurrencyCode;
+    amount: Decimal.Value;
+    paymentMethod: string | null;
+    paymentProvider: string | null;
+    providerPaymentId: string | null;
+    invoiceNumber: string | null;
+    referenceNumber: string | null;
+    notes?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
+export interface PurchaseOrderTemplateData {
+  business: TemplateBusiness;
+  supplier: TemplateCustomer | null;
+  purchaseOrder: {
+    id: string;
+    purchaseOrderNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    dueDate: string | null;
+    currency: CurrencyCode;
+    supplierName: string | null;
+    supplierEmail: string | null;
+    supplierPhone: string | null;
+    referenceNumber: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
 export type DocumentTemplateData =
   | InvoiceTemplateData
   | CreditNoteTemplateData
   | QuoteTemplateData
   | DebitNoteTemplateData
-  | PaymentVoucherTemplateData;
+  | PaymentVoucherTemplateData
+  | ReceiptTemplateData
+  | PurchaseOrderTemplateData;
 
 export interface RenderOptions {
   currency: CurrencyCode;
@@ -298,7 +350,16 @@ Handlebars.registerHelper("nl2br", (str: string | null | undefined): string => {
 });
 
 Handlebars.registerHelper("formatMoney", function (v: Decimal.Value, options: any): string {
-  const currency = options?.data?.root?.invoice?.currency ?? "USD";
+  const root = options?.data?.root;
+  const currency =
+    root?.invoice?.currency ??
+    root?.creditNote?.currency ??
+    root?.quote?.currency ??
+    root?.debitNote?.currency ??
+    root?.voucher?.currency ??
+    root?.receipt?.currency ??
+    root?.purchaseOrder?.currency ??
+    "USD";
   return fmt(v, currency as CurrencyCode);
 });
 
@@ -1455,15 +1516,1099 @@ export const DEFAULT_QUOTE_TEMPLATE = `<!DOCTYPE html>
 
 templateCache.set(DEFAULT_QUOTE_TEMPLATE, Handlebars.compile(DEFAULT_QUOTE_TEMPLATE, { noEscape: false }));
 
+export const DEFAULT_DEBIT_NOTE_TEMPLATE = `<!DOCTYPE html>
+<html lang="{{debitNote.language}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Debit Note {{debitNote.debitNoteNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #1e293b; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #2563eb;
+      --color-destructive: #dc2626;
+      --color-destructive-bg: #fee2e2;
+      --color-success: #065f46;
+      --color-success-bg: #d1fae5;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid var(--color-destructive); position: relative; }
+    .header-section::after { content: "DEBIT NOTE"; position: absolute; top: 0; right: 0; font-size: 80px; font-weight: 800; color: #ffebee; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-success-bg); color: var(--color-success); }
+    .status-issued { background: #dbeafe; color: #1e40af; }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-paid { background: var(--color-success-bg); color: var(--color-success); }
+    .status-void { background: #f1f5f9; color: var(--color-text-secondary); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-destructive); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .reference-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Debit Note</h1>
+        <span class="reference-chip">Debit #{{debitNote.debitNoteNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if debitNote.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{debitNote.status}}">{{debitNote.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if debitNote.issueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Issue Date</span>
+            <span class="meta-value">{{formatDate debitNote.issueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if debitNote.dueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Due Date</span>
+            <span class="meta-value">{{formatDate debitNote.dueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if debitNote.referenceInvoiceNumber}}
+          <div class="meta-item">
+            <span class="meta-label">Reference Invoice</span>
+            <span class="meta-value">{{debitNote.referenceInvoiceNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{#if debitNote.reason}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Reason for Debit</h3>
+    <div class="info-box">
+      <p>{{debitNote.reason}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if customer}}
+  <div class="section">
+    <h3>Bill To</h3>
+    <p class="meta-value">{{customer.name}}</p>
+    {{#if customer.companyName}}<p class="muted">{{customer.companyName}}</p>{{/if}}
+    {{#if customer.email}}<p class="muted">{{customer.email}}</p>{{/if}}
+    {{#if customer.address}}
+    <p class="muted" style="white-space: pre-line;">
+      {{customer.address.addressLine1}}<br />
+      {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+      {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+      {{customer.address.countryCode}}
+    </p>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+      {{#if totals.amountDue}}
+      <tr>
+        <td class="totals-label">Amount Due</td>
+        <td class="totals-value">{{formatMoney totals.amountDue}}</td>
+      </tr>
+      {{/if}}
+    </table>
+  </div>
+
+  {{#if debitNote.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br debitNote.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if debitNote.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br debitNote.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if debitNote.isFinalized}}
+    <p>Debit Note #{{debitNote.debitNoteNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft debit note. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_DEBIT_NOTE_TEMPLATE, Handlebars.compile(DEFAULT_DEBIT_NOTE_TEMPLATE, { noEscape: false }));
+
+export const DEFAULT_PAYMENT_VOUCHER_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Voucher {{voucher.paymentVoucherNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #1e293b; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 800px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #2563eb;
+      --color-success: #065f46;
+      --color-success-bg: #d1fae5;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid var(--color-brand); position: relative; }
+    .header-section::after { content: "PAYMENT VOUCHER"; position: absolute; top: 0; right: 0; font-size: 64px; font-weight: 800; color: #f1f5f9; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-issued { background: #dbeafe; color: #1e40af; }
+    .status-paid { background: var(--color-success-bg); color: var(--color-success); }
+    .status-void { background: #f1f5f9; color: var(--color-text-secondary); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-brand); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .method-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 36px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Payment Voucher</h1>
+        <span class="method-chip">Voucher #{{voucher.paymentVoucherNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if voucher.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{voucher.status}}">{{voucher.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if voucher.voucherDate}}
+          <div class="meta-item">
+            <span class="meta-label">Date</span>
+            <span class="meta-value">{{formatDate voucher.voucherDate}}</span>
+          </div>
+          {{/if}}
+          {{#if voucher.payeeName}}
+          <div class="meta-item">
+            <span class="meta-label">Payee</span>
+            <span class="meta-value">{{voucher.payeeName}}</span>
+          </div>
+          {{/if}}
+          {{#if voucher.referenceNumber}}
+          <div class="meta-item">
+            <span class="meta-label">Reference</span>
+            <span class="meta-value">{{voucher.referenceNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Payment Method</span>
+            <span class="meta-value">{{voucher.paymentMethod}}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{#if voucher.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Notes</h3>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br voucher.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if voucher.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br voucher.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if voucher.isFinalized}}
+    <p>Payment Voucher #{{voucher.paymentVoucherNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft payment voucher. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_PAYMENT_VOUCHER_TEMPLATE, Handlebars.compile(DEFAULT_PAYMENT_VOUCHER_TEMPLATE, { noEscape: false }));
+
+export const DEFAULT_RECEIPT_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receipt {{receipt.receiptNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #1e293b; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 800px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #2563eb;
+      --color-success: #065f46;
+      --color-success-bg: #d1fae5;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid var(--color-success); position: relative; }
+    .header-section::after { content: "RECEIPT"; position: absolute; top: 0; right: 0; font-size: 80px; font-weight: 800; color: #ecfdf5; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-issued { background: #dbeafe; color: #1e40af; }
+    .status-paid { background: var(--color-success-bg); color: var(--color-success); }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-refunded { background: #f1f5f9; color: var(--color-text-secondary); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-success); }
+    .paid-amount { color: var(--color-success); font-weight: 600; }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .method-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Receipt</h1>
+        <span class="method-chip">Receipt #{{receipt.receiptNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if receipt.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{receipt.status}}">{{receipt.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if receipt.issuedAt}}
+          <div class="meta-item">
+            <span class="meta-label">Date</span>
+            <span class="meta-value">{{formatDate receipt.issuedAt}}</span>
+          </div>
+          {{/if}}
+          {{#if receipt.paymentMethod}}
+          <div class="meta-item">
+            <span class="meta-label">Payment Method</span>
+            <span class="meta-value">{{receipt.paymentMethod}}</span>
+          </div>
+          {{/if}}
+          {{#if receipt.paymentProvider}}
+          <div class="meta-item">
+            <span class="meta-label">Provider</span>
+            <span class="meta-value">{{receipt.paymentProvider}}</span>
+          </div>
+          {{/if}}
+          {{#if receipt.invoiceNumber}}
+          <div class="meta-item">
+            <span class="meta-label">Invoice #</span>
+            <span class="meta-value">{{receipt.invoiceNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{#if customer}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Customer</h3>
+    <p class="meta-value">{{customer.name}}</p>
+    {{#if customer.email}}<p class="muted">{{customer.email}}</p>{{/if}}
+    {{#if customer.address}}
+    <p class="muted" style="white-space: pre-line;">
+      {{customer.address.addressLine1}}<br />
+      {{#if customer.address.addressLine2}}{{customer.address.addressLine2}}<br />{{/if}}
+      {{customer.address.city}}, {{customer.address.stateOrRegion}} {{customer.address.postalCode}}<br />
+      {{customer.address.countryCode}}
+    </p>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <div class="section">
+    <div class="section-title">Payment Details</div>
+    <table class="items-table">
+      <tbody>
+        <tr>
+          <td><span class="meta-label">Amount Paid</span></td>
+          <td class="text-right paid-amount">{{formatMoney receipt.amount}}</td>
+        </tr>
+        {{#if receipt.paymentMethod}}
+        <tr>
+          <td><span class="meta-label">Method</span></td>
+          <td class="text-right">{{receipt.paymentMethod}}</td>
+        </tr>
+        {{/if}}
+        {{#if receipt.paymentProvider}}
+        <tr>
+          <td><span class="meta-label">Provider</span></td>
+          <td class="text-right">{{receipt.paymentProvider}}</td>
+        </tr>
+        {{/if}}
+        {{#if receipt.providerPaymentId}}
+        <tr>
+          <td><span class="meta-label">Transaction ID</span></td>
+          <td class="text-right">{{receipt.providerPaymentId}}</span></td>
+        </tr>
+        {{/if}}
+        {{#if receipt.notes}}
+        <tr>
+          <td><span class="meta-label">Notes</span></td>
+          <td class="text-right">{{receipt.notes}}</td>
+        </tr>
+        {{/if}}
+      </tbody>
+    </table>
+  </div>
+
+  {{#if lineItems.length}}
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{/if}}
+
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+      <tr>
+        <td class="totals-label paid-amount">Amount Paid</td>
+        <td class="totals-value paid-amount">+{{formatMoney totals.amountPaid}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if receipt.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br receipt.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if receipt.isFinalized}}
+    <p>Receipt #{{receipt.receiptNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft receipt. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your payment!</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_RECEIPT_TEMPLATE, Handlebars.compile(DEFAULT_RECEIPT_TEMPLATE, { noEscape: false }));
+
+export const DEFAULT_PURCHASE_ORDER_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Purchase Order {{purchaseOrder.purchaseOrderNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #1e293b; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #2563eb;
+      --color-brand-hover: #1d4ed8;
+      --color-success: #065f46;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --color-error: #991b1b;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid #8b5cf6; position: relative; }
+    .header-section::after { content: "PURCHASE ORDER"; position: absolute; top: 0; right: 0; font-size: 70px; font-weight: 800; color: #f5f3ff; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-issued { background: #dbeafe; color: #1e40af; }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-cancelled { background: #f1f5f9; color: var(--color-text-secondary); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: #8b5cf6; }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .supplier-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Purchase Order</h1>
+        <span class="supplier-chip">PO #{{purchaseOrder.purchaseOrderNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if purchaseOrder.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{purchaseOrder.status}}">{{purchaseOrder.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if purchaseOrder.issueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Issue Date</span>
+            <span class="meta-value">{{formatDate purchaseOrder.issueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if purchaseOrder.dueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Due Date</span>
+            <span class="meta-value">{{formatDate purchaseOrder.dueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if purchaseOrder.referenceNumber}}
+          <div class="meta-item">
+            <span class="meta-label">Reference</span>
+            <span class="meta-value">{{purchaseOrder.referenceNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{#if purchaseOrder.supplierName}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <h3>Vendor</h3>
+    <p class="meta-value">{{purchaseOrder.supplierName}}</p>
+    {{#if purchaseOrder.supplierEmail}}<p class="muted">{{purchaseOrder.supplierEmail}}</p>{{/if}}
+    {{#if purchaseOrder.supplierPhone}}<p class="muted">{{purchaseOrder.supplierPhone}}</p>{{/if}}
+  </div>
+  {{/if}}
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items added.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="divider"></div>
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if purchaseOrder.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br purchaseOrder.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if purchaseOrder.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br purchaseOrder.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if purchaseOrder.isFinalized}}
+    <p>Purchase Order #{{purchaseOrder.purchaseOrderNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft purchase order. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_PURCHASE_ORDER_TEMPLATE, Handlebars.compile(DEFAULT_PURCHASE_ORDER_TEMPLATE, { noEscape: false }));
+
 export class TemplateRenderer {
   private defaultTemplate: string;
   private defaultCreditNoteTemplate: string;
   private defaultQuoteTemplate: string;
+  private defaultDebitNoteTemplate: string;
+  private defaultPaymentVoucherTemplate: string;
+  private defaultReceiptTemplate: string;
+  private defaultPurchaseOrderTemplate: string;
 
-  constructor(defaultTemplate?: string, defaultCreditNoteTemplate?: string, defaultQuoteTemplate?: string) {
+  constructor(
+    defaultTemplate?: string,
+    defaultCreditNoteTemplate?: string,
+    defaultQuoteTemplate?: string,
+    defaultDebitNoteTemplate?: string,
+    defaultPaymentVoucherTemplate?: string,
+    defaultReceiptTemplate?: string,
+    defaultPurchaseOrderTemplate?: string,
+  ) {
     this.defaultTemplate = defaultTemplate ?? DEFAULT_INVOICE_TEMPLATE;
     this.defaultCreditNoteTemplate = defaultCreditNoteTemplate ?? DEFAULT_CREDIT_NOTE_TEMPLATE;
     this.defaultQuoteTemplate = defaultQuoteTemplate ?? DEFAULT_QUOTE_TEMPLATE;
+    this.defaultDebitNoteTemplate = defaultDebitNoteTemplate ?? DEFAULT_DEBIT_NOTE_TEMPLATE;
+    this.defaultPaymentVoucherTemplate = defaultPaymentVoucherTemplate ?? DEFAULT_PAYMENT_VOUCHER_TEMPLATE;
+    this.defaultReceiptTemplate = defaultReceiptTemplate ?? DEFAULT_RECEIPT_TEMPLATE;
+    this.defaultPurchaseOrderTemplate = defaultPurchaseOrderTemplate ?? DEFAULT_PURCHASE_ORDER_TEMPLATE;
   }
 
   build(data: InvoiceTemplateData): any {
@@ -1476,6 +2621,22 @@ export class TemplateRenderer {
 
   buildQuote(data: QuoteTemplateData): any {
     return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultQuoteTemplate);
+  }
+
+  buildDebitNote(data: DebitNoteTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultDebitNoteTemplate);
+  }
+
+  buildPaymentVoucher(data: PaymentVoucherTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultPaymentVoucherTemplate);
+  }
+
+  buildReceipt(data: ReceiptTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultReceiptTemplate);
+  }
+
+  buildPurchaseOrder(data: PurchaseOrderTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultPurchaseOrderTemplate);
   }
 
   async render(data: InvoiceTemplateData, templateHtml?: string): Promise<string> {
@@ -1533,6 +2694,98 @@ export class TemplateRenderer {
       appBaseUrl: env.APP_PUBLIC_BASE_URL,
       viewQuoteUrl,
     });
+  }
+
+  async renderDebitNote(data: DebitNoteTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultDebitNoteTemplate
+    );
+
+    const viewDebitNoteUrl = data.debitNote.id
+      ? `${env.APP_PUBLIC_BASE_URL}/debit-notes/${data.debitNote.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.debitNote.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewDebitNoteUrl,
+    });
+  }
+
+  async renderPaymentVoucher(data: PaymentVoucherTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultPaymentVoucherTemplate
+    );
+
+    const viewVoucherUrl = data.voucher.id
+      ? `${env.APP_PUBLIC_BASE_URL}/payment-vouchers/${data.voucher.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.voucher.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewVoucherUrl,
+    });
+  }
+
+  async renderReceipt(data: ReceiptTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultReceiptTemplate
+    );
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.receipt.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+    });
+  }
+
+  async renderPurchaseOrder(data: PurchaseOrderTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultPurchaseOrderTemplate
+    );
+
+    const viewPurchaseOrderUrl = data.purchaseOrder.id
+      ? `${env.APP_PUBLIC_BASE_URL}/purchase-orders/${data.purchaseOrder.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.purchaseOrder.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewPurchaseOrderUrl,
+    });
+  }
+
+  /**
+   * Unified rendering entry point — dispatches to the correct render method
+   * based on the document type key.
+   */
+  async renderUnified(
+    docType: DocumentTypeKey,
+    data: DocumentTemplateData,
+    templateHtml?: string,
+  ): Promise<string> {
+    switch (docType) {
+      case "invoice":
+        return this.render(data as InvoiceTemplateData, templateHtml);
+      case "credit-note":
+        return this.renderCreditNote(data as CreditNoteTemplateData, templateHtml);
+      case "quote":
+        return this.renderQuote(data as QuoteTemplateData, templateHtml);
+      case "debit-note":
+        return this.renderDebitNote(data as DebitNoteTemplateData, templateHtml);
+      case "payment-voucher":
+        return this.renderPaymentVoucher(data as PaymentVoucherTemplateData, templateHtml);
+      case "receipt":
+        return this.renderReceipt(data as ReceiptTemplateData, templateHtml);
+      case "purchase-order":
+        return this.renderPurchaseOrder(data as PurchaseOrderTemplateData, templateHtml);
+      default:
+        throw new Error(`Unsupported document type for rendering: ${docType}`);
+    }
   }
 }
 
@@ -1775,6 +3028,29 @@ export interface UnifiedBuildInvoiceInput {
   totals: TemplateTotals;
   paymentInstructions?: TemplatePaymentInstructions | null;
   config?: Record<string, unknown>;
+  invoice?: {
+    id?: string;
+    invoiceNumber?: string | null;
+    status?: string;
+    issueDate?: Date | null;
+    dueDate?: Date | null;
+    currency?: CurrencyCode;
+    poNumber?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    paymentInstructions?: string | null;
+    language?: string;
+    title?: string | null;
+    depositType?: string | null;
+    depositValue?: string | null;
+    depositDueDate?: Date | string | null;
+    depositPaid?: boolean | null;
+    isFinalized?: boolean;
+    depositAmount?: string | null;
+    projectId?: string | null;
+    projectName?: string | null;
+    paymentTerms?: string | null;
+  };
 }
 
 export interface UnifiedBuildCreditNoteInput {
@@ -1852,6 +3128,56 @@ export interface BuildPaymentVoucherInput {
   config?: Record<string, unknown>;
 }
 
+export interface BuildReceiptInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  receipt: {
+    id: string;
+    receiptNumber: string | null;
+    status: string;
+    issuedAt?: Date | null;
+    currency: CurrencyCode;
+    amount: Decimal.Value;
+    paymentMethod: string | null;
+    paymentProvider: string | null;
+    providerPaymentId: string | null;
+    invoiceNumber: string | null;
+    referenceNumber: string | null;
+    notes?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildPurchaseOrderInput {
+  business: TemplateBusiness;
+  supplier: TemplateCustomer | null;
+  purchaseOrder: {
+    id: string;
+    purchaseOrderNumber: string | null;
+    status: string;
+    issueDate?: Date | null;
+    dueDate?: Date | null;
+    currency: CurrencyCode;
+    supplierName: string | null;
+    supplierEmail: string | null;
+    supplierPhone: string | null;
+    referenceNumber: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
 // ============================================================================
 // UNIFIED BUILDER — single entry point for all document types
 // ============================================================================
@@ -1865,36 +3191,37 @@ export type DocumentTypeKey = "invoice" | "credit-note" | "quote" | "debit-note"
  */
 export function buildDocumentTemplateData(
   docType: DocumentTypeKey,
-  input: UnifiedBuildInvoiceInput | UnifiedBuildCreditNoteInput | BuildQuoteInputData | BuildDebitNoteInput | BuildPaymentVoucherInput,
+  input: UnifiedBuildInvoiceInput | UnifiedBuildCreditNoteInput | BuildQuoteInputData | BuildDebitNoteInput | BuildPaymentVoucherInput | BuildReceiptInput | BuildPurchaseOrderInput,
 ): DocumentTemplateData {
   switch (docType) {
     case "invoice": {
       const i = input as UnifiedBuildInvoiceInput;
+      const inv = i.invoice ?? {};
       return {
         business: i.business,
         customer: i.customer,
         invoice: {
-          id: "",
-          invoiceNumber: null,
-          status: "draft",
-          issueDate: null,
-          dueDate: null,
-          currency: "USD",
-          poNumber: null,
-          notes: null,
-          terms: null,
-          paymentInstructions: null,
-          language: undefined,
-          title: null,
-          depositType: null,
-          depositValue: null,
-          depositDueDate: null,
-          depositPaid: null,
-          isFinalized: false,
-          depositAmount: null,
-          projectId: null,
-          projectName: null,
-          paymentTerms: null,
+          id: inv.id ?? "",
+          invoiceNumber: inv.invoiceNumber ?? null,
+          status: inv.status ?? "draft",
+          issueDate: inv.issueDate ? inv.issueDate.toISOString().slice(0, 10) : null,
+          dueDate: inv.dueDate ? inv.dueDate.toISOString().slice(0, 10) : null,
+          currency: inv.currency ?? "USD",
+          poNumber: inv.poNumber ?? null,
+          notes: inv.notes ?? null,
+          terms: inv.terms ?? null,
+          paymentInstructions: inv.paymentInstructions ?? null,
+          language: inv.language ?? undefined,
+          title: inv.title ?? null,
+          depositType: inv.depositType ?? null,
+          depositValue: inv.depositValue ?? null,
+          depositDueDate: inv.depositDueDate ? (typeof inv.depositDueDate === "string" ? inv.depositDueDate : inv.depositDueDate.toISOString().slice(0, 10)) : null,
+          depositPaid: inv.depositPaid ?? null,
+          isFinalized: inv.isFinalized ?? false,
+          depositAmount: inv.depositAmount ?? null,
+          projectId: inv.projectId ?? null,
+          projectName: inv.projectName ?? null,
+          paymentTerms: inv.paymentTerms ?? null,
         },
         lineItems: i.items,
         fees: i.fees,
@@ -2011,6 +3338,60 @@ export function buildDocumentTemplateData(
         totals: i.totals,
         config: i.config ?? {},
       } as unknown as PaymentVoucherTemplateData;
+    }
+    case "receipt": {
+      const i = input as BuildReceiptInput;
+      return {
+        business: i.business,
+        customer: i.customer,
+        receipt: {
+          id: i.receipt.id,
+          receiptNumber: i.receipt.receiptNumber,
+          status: i.receipt.status,
+          issuedAt: i.receipt.issuedAt ? i.receipt.issuedAt.toISOString().slice(0, 10) : null,
+          currency: i.receipt.currency,
+          amount: i.receipt.amount,
+          paymentMethod: i.receipt.paymentMethod,
+          paymentProvider: i.receipt.paymentProvider,
+          providerPaymentId: i.receipt.providerPaymentId,
+          invoiceNumber: i.receipt.invoiceNumber,
+          referenceNumber: i.receipt.referenceNumber,
+          notes: i.receipt.notes ?? null,
+          language: i.receipt.language ?? undefined,
+          isFinalized: i.receipt.isFinalized ?? false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as ReceiptTemplateData;
+    }
+    case "purchase-order": {
+      const i = input as BuildPurchaseOrderInput;
+      return {
+        business: i.business,
+        supplier: i.supplier,
+        purchaseOrder: {
+          id: i.purchaseOrder.id,
+          purchaseOrderNumber: i.purchaseOrder.purchaseOrderNumber,
+          status: i.purchaseOrder.status,
+          issueDate: i.purchaseOrder.issueDate ? i.purchaseOrder.issueDate.toISOString().slice(0, 10) : null,
+          dueDate: i.purchaseOrder.dueDate ? i.purchaseOrder.dueDate.toISOString().slice(0, 10) : null,
+          currency: i.purchaseOrder.currency,
+          supplierName: i.purchaseOrder.supplierName,
+          supplierEmail: i.purchaseOrder.supplierEmail,
+          supplierPhone: i.purchaseOrder.supplierPhone,
+          referenceNumber: i.purchaseOrder.referenceNumber,
+          notes: i.purchaseOrder.notes ?? null,
+          terms: i.purchaseOrder.terms ?? null,
+          language: i.purchaseOrder.language ?? undefined,
+          isFinalized: i.purchaseOrder.isFinalized ?? false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as PurchaseOrderTemplateData;
     }
     default:
       throw new Error(`Unknown document type: ${docType}`);

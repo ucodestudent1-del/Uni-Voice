@@ -4,10 +4,9 @@ import { logger } from "../utils/logger.js";
 import { NotFoundError, BusinessLogicError } from "../domain/errors.js";
 import { receiptRepository, type ReceiptRow, type ReceiptFilter } from "../repositories/receipt.repo.js";
 import { businessRepository } from "../repositories/business.repo.js";
-import { buildTemplateData, type TemplateLineItem, type TemplateFee, type TemplateTotals, type InvoiceTemplateData } from "../services/templates/template-renderer.js";
+import { buildDocumentTemplateData, type BuildReceiptInput, type ReceiptTemplateData as UnifiedReceiptTemplateData, templateRenderer } from "../services/templates/template-renderer.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
 import { emailService, type ReceiptEmailData } from "../services/email/email-service.js";
-import type { CurrencyCode } from "../domain/value-objects/currency.js";
 import type { Payment } from "../domain/models/index.js";
 import Handlebars from "handlebars";
 
@@ -141,7 +140,7 @@ const RECEIPT_TEMPLATE = `<!DOCTYPE html>
 
 const compiledReceiptTemplate = Handlebars.compile(RECEIPT_TEMPLATE, { noEscape: false });
 
-export interface ReceiptTemplateData {
+export interface ReceiptEmailTemplateData {
   business: { name: string; email?: string | null; phone?: string | null; address?: Record<string, unknown> | null };
   receipt: {
     receiptNumber: string;
@@ -286,7 +285,7 @@ export class ReceiptService {
 
     const r = client.rows[0] as Record<string, unknown>;
     const metadata = (r.metadata as Record<string, unknown>) ?? {};
-    const data: ReceiptTemplateData = {
+    const data: ReceiptEmailTemplateData = {
       business: {
         name: r.business_name as string,
         email: r.business_email as string | null,
@@ -307,27 +306,21 @@ export class ReceiptService {
       formatMoney: (v: Decimal.Value) => new Decimal(v).toFixed(2),
     };
 
-    const html = this.renderReceipt(data);
-    const pdf = await pdfService.generatePdfFromHtml(html, this.toTemplateData(r, data));
+    const templateData = await this.toTemplateData(r, data);
+    const html = await templateRenderer.renderReceipt(templateData);
+    const pdf = await pdfService.generatePdfFromHtml(html, templateData);
     await receiptRepository.storePdf(receiptId, pdf);
     return { pdf, receiptNumber: r.receipt_number as string };
   }
 
-  private renderReceipt(data: ReceiptTemplateData): string {
+  private renderReceipt(data: ReceiptEmailTemplateData): string {
     return compiledReceiptTemplate(data);
   }
 
-  private toTemplateData(r: Record<string, unknown>, receiptData: ReceiptTemplateData): InvoiceTemplateData {
-    return buildTemplateData(
-      {
-        id: r.id as string,
-        invoiceNumber: null,
-        status: "paid",
-        issueDate: null,
-        dueDate: null,
-        currency: r.currency as CurrencyCode,
-      },
-      {
+  private async toTemplateData(r: Record<string, unknown>, receiptData: ReceiptEmailTemplateData): Promise<UnifiedReceiptTemplateData> {
+    const metadata = (r.metadata as Record<string, unknown>) ?? {};
+    const input: BuildReceiptInput = {
+      business: {
         id: r.business_id as string,
         name: r.business_name as string,
         legalName: null,
@@ -342,28 +335,43 @@ export class ReceiptService {
           stateOrRegion: r.state_or_region as string,
           postalCode: r.postal_code as string,
           countryCode: r.country_code as string,
-          taxId: null,
         },
         countryCode: r.country_code as string,
-        defaultCurrency: r.currency as CurrencyCode,
+        defaultCurrency: r.currency as any,
         logoUrl: null,
       },
-      null,
-      [] as TemplateLineItem[],
-      [] as TemplateFee[],
-      {
-        subtotal: String(receiptData.receipt.amount),
+      customer: null,
+      receipt: {
+        id: r.id as string,
+        receiptNumber: r.receipt_number as string | null,
+        status: r.status as string,
+        issuedAt: r.issued_at ? new Date(r.issued_at as string) : null,
+        currency: r.currency as any,
+        amount: receiptData.receipt.amount,
+        paymentMethod: r.payment_method as string | null,
+        paymentProvider: (metadata.provider as string) ?? "unknown",
+        providerPaymentId: (metadata.providerPaymentId as string) ?? null,
+        invoiceNumber: receiptData.receipt.invoiceNumber,
+        referenceNumber: null,
+        notes: null,
+        language: undefined,
+        isFinalized: true,
+      },
+      items: [],
+      fees: [],
+      totals: {
+        subtotal: "0",
         discountTotal: "0",
         taxTotal: "0",
         feeTotal: "0",
         total: String(receiptData.receipt.amount),
         amountPaid: String(receiptData.receipt.amount),
         amountDue: "0",
-       } as TemplateTotals,
-        null,
-        {}
-      );
-   }
+      } as any,
+      config: {},
+    };
+    return buildDocumentTemplateData("receipt", input) as UnifiedReceiptTemplateData;
+  }
 
   async getDetailResponse(businessId: string, id: string): Promise<Record<string, unknown>> {
     const result = await query(
@@ -453,7 +461,7 @@ export class ReceiptService {
     return { messageId: result.messageId, status: result.status };
   }
 
-  private async buildReceiptTemplateData(receipt: ReceiptRow): Promise<ReceiptTemplateData> {
+  async buildReceiptTemplateData(receipt: ReceiptRow): Promise<ReceiptEmailTemplateData> {
     const metadata = receipt.metadata ?? {};
     return {
       business: { name: "", email: null, phone: null, address: null },

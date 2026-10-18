@@ -1129,11 +1129,11 @@ export class QuoteService {
     };
   }
 
-  async generatePdf(
+  async buildTemplateDataForQuote(
     businessId: string,
     quoteId: string,
-    quote: Record<string, unknown>
-  ): Promise<Buffer> {
+    quote: Record<string, unknown>,
+  ): Promise<QuoteTemplateData> {
     const business = await this.fetchBusiness(businessId);
     const customer = quote.customer_id
       ? await this.fetchCustomer(businessId, quote.customer_id as string)
@@ -1259,6 +1259,16 @@ export class QuoteService {
         htmlTemplate: await this.getQuoteTemplateHtml(businessId, quote.template_id as string | null),
       }
     );
+
+    return data;
+  }
+
+  async generatePdf(
+    businessId: string,
+    quoteId: string,
+    quote: Record<string, unknown>
+  ): Promise<Buffer> {
+    const data = await this.buildTemplateDataForQuote(businessId, quoteId, quote);
 
     const html = await templateRenderer.renderQuote(data);
     const pdf = await pdfService.generatePdfFromHtml(html, data);

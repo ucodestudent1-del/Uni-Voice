@@ -6,9 +6,11 @@ import type {
   QuoteTemplateData,
   DebitNoteTemplateData,
   PaymentVoucherTemplateData,
+  ReceiptTemplateData,
+  PurchaseOrderTemplateData,
 } from "../templates/template-renderer.js";
 
-type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData | DebitNoteTemplateData | PaymentVoucherTemplateData;
+type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData | DebitNoteTemplateData | PaymentVoucherTemplateData | ReceiptTemplateData | PurchaseOrderTemplateData;
 
 export interface PdfProvider {
   readonly name: string;
@@ -78,6 +80,10 @@ export class StubPdfService implements PdfProvider {
       ? data.debitNote.debitNoteNumber ?? "DN"
       : "voucher" in data
       ? data.voucher.paymentVoucherNumber ?? "PV"
+      : "receipt" in data
+      ? data.receipt.receiptNumber ?? "RCPT"
+      : "purchaseOrder" in data
+      ? data.purchaseOrder.purchaseOrderNumber ?? "PO"
       : "N/A";
     const docType = "invoice" in data
       ? "Invoice"
@@ -89,6 +95,10 @@ export class StubPdfService implements PdfProvider {
       ? "Debit Note"
       : "voucher" in data
       ? "Payment Voucher"
+      : "receipt" in data
+      ? "Receipt"
+      : "purchaseOrder" in data
+      ? "Purchase Order"
       : "Document";
     const pdf =
       `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n` +

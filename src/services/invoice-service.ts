@@ -9,7 +9,7 @@ import { pdfService } from "../services/pdf/pdf-service.js";
 import { enqueuePdfGeneration } from "../services/pdf-job-service.js";
 import { emailService } from "../services/email/email-service.js";
 import { stripeService } from "../services/payments/stripe-service.js";
-import { buildTemplateData, buildCreditNoteData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE, fetchCustomerSnapshot } from "../services/templates/template-renderer.js";
+import { buildDocumentTemplateData, buildTemplateData, buildCreditNoteData, type UnifiedBuildInvoiceInput, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE, fetchCustomerSnapshot } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";
@@ -1784,30 +1784,19 @@ export class InvoiceService {
     };
   }
 
-  async generatePdf(
+  async buildTemplateDataForInvoice(
     businessId: string,
     invoiceId: string,
     invoice: Record<string, unknown>,
     opts?: { business?: TemplateBusiness; customer?: TemplateCustomer | null }
-  ): Promise<Buffer> {
-    const cached = await query(
-      `SELECT pdf_cache, pdf_cache_hash FROM invoices WHERE id = $1`,
-      [invoiceId]
-    );
-
-    if (cached.rows.length && cached.rows[0].pdf_cache) {
-      return cached.rows[0].pdf_cache;
-    }
-
+  ): Promise<InvoiceTemplateData> {
     const business = opts?.business ?? await this.fetchBusiness(businessId);
     const customer = opts?.customer ?? (invoice.customer_id
       ? await this.fetchCustomer(businessId, invoice.customer_id as string)
       : null);
 
-    // Derive payment terms from customer
     const paymentTerms = customer?.paymentTerms ? `Net ${customer.paymentTerms}` : undefined;
 
-    // Build payment instructions if available
     const paymentInstructions: TemplatePaymentInstructions | null = invoice.payment_instructions
       ? {
           methods: [],
@@ -1815,7 +1804,7 @@ export class InvoiceService {
           paymentLink: null,
           lateFeeType: invoice.late_fee_type as "none" | "fixed" | "percentage" | null,
           lateFeeValue: invoice.late_fee_value?.toString() ?? null,
-          lateFeePeriodDays: null, // Not stored on invoice, could be added later
+          lateFeePeriodDays: null,
           taxExemption: null,
           deliveryDetails: null,
           warrantyInfo: null,
@@ -1824,8 +1813,10 @@ export class InvoiceService {
         }
       : null;
 
-    const data = buildTemplateData(
-      {
+    const unifiedInput: UnifiedBuildInvoiceInput = {
+      business,
+      customer,
+      invoice: {
         id: invoice.id as string,
         invoiceNumber: invoice.invoice_number as string | null,
         status: invoice.status as string,
@@ -1848,9 +1839,7 @@ export class InvoiceService {
         projectName: null,
         paymentTerms,
       },
-      business,
-      customer,
-      (invoice.items as Record<string, unknown>[]).map((item): TemplateLineItem => ({
+      items: (invoice.items as Record<string, unknown>[]).map((item: Record<string, unknown>): TemplateLineItem => ({
         description: item.description as string,
         quantity: new Decimal(item.quantity as string),
         unit: item.unit as string,
@@ -1868,14 +1857,14 @@ export class InvoiceService {
         catalogUnitPrice: item.catalog_unit_price as string | null | undefined,
         catalogTaxRate: item.catalog_tax_rate as string | null | undefined,
       })),
-      (invoice.fees as Record<string, unknown>[]).map((fee): TemplateFee => ({
+      fees: (invoice.fees as Record<string, unknown>[]).map((fee: Record<string, unknown>): TemplateFee => ({
         description: fee.description as string,
         amount: new Decimal(fee.amount as string),
         taxRate: new Decimal(fee.tax_rate as string),
         taxName: fee.tax_name as string | null | undefined,
         taxAmount: new Decimal(fee.tax_amount as string),
       })),
-      {
+      totals: {
         subtotal: new Decimal(invoice.subtotal as string),
         discountTotal: new Decimal(invoice.discount_total as string),
         taxTotal: new Decimal(invoice.tax_total as string),
@@ -1884,7 +1873,7 @@ export class InvoiceService {
         amountPaid: new Decimal(invoice.amount_paid as string),
         amountDue: new Decimal(invoice.amount_due as string),
         taxByRate: computeTaxBreakdown(
-          (invoice.items as Record<string, unknown>[]).map((item): CalculatedLineItem => ({
+          (invoice.items as Record<string, unknown>[]).map((item: Record<string, unknown>): CalculatedLineItem => ({
             description: item.description as string,
             quantity: new Decimal(item.quantity as string),
             unit: item.unit as string,
@@ -1898,7 +1887,7 @@ export class InvoiceService {
             taxAmount: new Decimal(item.tax_amount as string),
             lineTotal: new Decimal(item.line_total as string),
           })),
-          (invoice.fees as Record<string, unknown>[]).map((fee): CalculatedFee => ({
+          (invoice.fees as Record<string, unknown>[]).map((fee: Record<string, unknown>): CalculatedFee => ({
             description: fee.description as string,
             amount: new Decimal(fee.amount as string),
             taxRate: new Decimal(fee.tax_rate as string),
@@ -1910,10 +1899,29 @@ export class InvoiceService {
         ),
       },
       paymentInstructions,
-      {
-        htmlTemplate: await this.getInvoiceTemplateHtml(businessId, invoice.template_id as string | null),
-      }
+      config: { htmlTemplate: await this.getInvoiceTemplateHtml(businessId, invoice.template_id as string | null) },
+    };
+
+    const data = buildDocumentTemplateData("invoice", unifiedInput);
+    return data as InvoiceTemplateData;
+  }
+
+  async generatePdf(
+    businessId: string,
+    invoiceId: string,
+    invoice: Record<string, unknown>,
+    opts?: { business?: TemplateBusiness; customer?: TemplateCustomer | null }
+  ): Promise<Buffer> {
+    const cached = await query(
+      `SELECT pdf_cache, pdf_cache_hash FROM invoices WHERE id = $1`,
+      [invoiceId]
     );
+
+    if (cached.rows.length && cached.rows[0].pdf_cache) {
+      return cached.rows[0].pdf_cache;
+    }
+
+    const data = await this.buildTemplateDataForInvoice(businessId, invoiceId, invoice, opts);
 
     const html = await templateRenderer.render(data);
     const pdf = await pdfService.generatePdfFromHtml(html, data);

@@ -56,6 +56,9 @@ quoteService.setInvoiceService(invoiceService);
 import { taxRuleService } from "./services/tax-rule-service.js";
 import { discountRuleService } from "./services/discount-rule-service.js";
 import { brandingService } from "./services/branding-service.js";
+import { DocumentService, type DocumentTypeKey, type DocumentHandler, type GeneratedDocumentOutput } from "./services/document-service.js";
+import { outputService } from "./services/output/index.js";
+import type { OutputFormat } from "./services/output/types.js";
 import {
   TaxRuleCreateSchema,
   TaxRuleUpdateSchema,
@@ -119,9 +122,69 @@ import {
 } from "./domain/schemas/project-time-entry.js";
 import { hashPassword, verifyPassword, validatePasswordPolicy, checkPasswordBreach } from "./services/auth/password.js";
 import { camelToSnake } from "./utils/case-conversion.js";
+import { NotFoundError } from "./domain/errors.js";
 
 const app = express();
 app.disable("x-powered-by");
+
+const documentService = new DocumentService({
+  outputService: outputService,
+  handlers: new Map(),
+});
+
+documentService.registerHandler("invoice", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const invoice = await invoiceService.findById(businessId, docId);
+    if (!invoice) throw new NotFoundError(`Invoice ${docId} not found`);
+    return invoiceService.buildTemplateDataForInvoice(businessId, docId, invoice) as any;
+  },
+  finalize: async (businessId: string, docId: string, userId?: string) => {
+    const result = await invoiceService.finalize(businessId, docId, userId);
+    return {
+      document: result.invoice,
+      documentNumber: result.invoiceNumber,
+      status: result.status,
+    };
+  },
+  send: async (businessId: string, docId: string, payload: any, userId?: string) => {
+    return invoiceService.send(businessId, docId, payload, userId);
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    const invoice = await invoiceService.findById(businessId, docId);
+    if (!invoice) throw new NotFoundError(`Invoice ${docId} not found`);
+    return invoiceService.generatePdf(businessId, docId, invoice);
+  },
+});
+
+documentService.registerHandler("quote", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const quote = await quoteService.findById(businessId, docId);
+    if (!quote) throw new NotFoundError(`Quote ${docId} not found`);
+    return quoteService.buildTemplateDataForQuote(businessId, docId, quote) as any;
+  },
+  finalize: async (businessId: string, docId: string, userId?: string) => {
+    const result = await quoteService.finalize(businessId, docId, userId);
+    return {
+      document: result.quote,
+      documentNumber: result.quoteNumber,
+      status: result.status,
+    };
+  },
+  send: async (businessId: string, docId: string, payload: any, userId?: string) => {
+    return quoteService.send(businessId, docId, payload, userId);
+  },
+});
+
+documentService.registerHandler("receipt", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const receipt = await receiptRepository.findByIdRaw(docId);
+    if (!receipt) throw new NotFoundError(`Receipt ${docId} not found`);
+    return receiptService.buildReceiptTemplateData(receipt) as any;
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    return receiptService.generatePdf(docId);
+  },
+});
 app.set("trust proxy", isDev ? true : 1);
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
 
@@ -5246,6 +5309,81 @@ function setNoCacheHeaders(res: express.Response) {
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
 }
+
+const GenerateDocumentSchema = z.object({
+  docType: z.enum([
+    "invoice",
+    "credit-note",
+    "quote",
+    "debit-note",
+    "payment-voucher",
+    "receipt",
+    "purchase-order",
+  ]),
+  docId: z.string().uuid(),
+  format: z
+    .enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"])
+    .default("pdf")
+    .optional(),
+});
+
+app.post(
+  "/api/documents/generate",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = GenerateDocumentSchema.parse(req.body);
+      const format: OutputFormat = parsed.format ?? "pdf";
+      const output = await documentService.generateOutput(
+        parsed.docType,
+        req.user!.businessId,
+        parsed.docId,
+        format,
+      );
+
+      res.setHeader("Content-Type", output.mimeType);
+      res.setHeader("Content-Disposition", `inline; filename="${output.filename}"`);
+      res.setHeader("X-Document-From-Cache", String(output.fromCache));
+      res.setHeader("X-Document-Hash", output.sha256);
+
+      if (typeof output.data === "string") {
+        res.send(output.data);
+      } else {
+        res.send(output.data);
+      }
+    } catch (err: any) {
+      if (err?.code === "NOT_FOUND" || err?.name === "NotFoundError") {
+        return res.status(404).json({ error: err.message });
+      }
+      if (err?.message?.includes("No document handler registered")) {
+        return res.status(400).json({ error: err.message });
+      }
+      next(err);
+    }
+  },
+);
+
+app.get(
+  "/api/documents/:docId/artifacts",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const docType = req.query.docType as string | undefined;
+      const artifacts = await documentService.getDocumentArtifacts(
+        req.user!.businessId,
+        req.params.docId,
+        docType,
+      );
+      res.json({ artifacts });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 if (!isDev) {
   const assetsDir = path.join(FRONTEND_DIST, "assets");
