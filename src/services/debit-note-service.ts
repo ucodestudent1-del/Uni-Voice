@@ -15,6 +15,7 @@ import {
   type TemplateFee,
   type TemplateTotals,
   type DebitNoteTemplateData,
+  templateRenderer,
 } from "./templates/template-renderer.js";
 
 export interface DebitNoteItemInput {
@@ -782,7 +783,11 @@ export class DebitNoteService {
     return result.rows;
   }
 
-  async generatePdf(businessId: string, noteId: string, note: Record<string, unknown>): Promise<Buffer> {
+  async buildTemplateDataForDebitNote(
+    businessId: string,
+    noteId: string,
+    note: Record<string, unknown>,
+  ): Promise<DebitNoteTemplateData> {
     const business = await fetchBusinessSnapshot(businessId);
 
     const currency = (note.currency as string) ?? "USD";
@@ -834,8 +839,14 @@ export class DebitNoteService {
       config: { currency } as Record<string, unknown>,
     };
 
-    const html = this.renderDebitNote(templateData);
-    const pdf = await pdfService.generatePdfFromHtml(html, templateData as unknown as Parameters<typeof pdfService.generatePdfFromHtml>[1]);
+    return templateData;
+  }
+
+  async generatePdf(businessId: string, noteId: string, note: Record<string, unknown>): Promise<Buffer> {
+    const templateData = await this.buildTemplateDataForDebitNote(businessId, noteId, note);
+
+    const html = await templateRenderer.renderDebitNote(templateData);
+    const pdf = await pdfService.generatePdfFromHtml(html, templateData as any);
     return pdf;
   }
 

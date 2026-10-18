@@ -14,6 +14,7 @@ import {
   type TemplateFee,
   type TemplateTotals,
   type PaymentVoucherTemplateData,
+  templateRenderer,
 } from "./templates/template-renderer.js";
 
 export interface PaymentVoucherItemInput {
@@ -662,7 +663,11 @@ export class PaymentVoucherService {
     return result.rows;
   }
 
-  async generatePdf(businessId: string, voucherId: string, voucher: Record<string, unknown>): Promise<Buffer> {
+  async buildTemplateDataForPaymentVoucher(
+    businessId: string,
+    voucherId: string,
+    voucher: Record<string, unknown>,
+  ): Promise<PaymentVoucherTemplateData> {
     const business = await fetchBusinessSnapshot(businessId);
 
     const currency = (voucher.currency as string) ?? "USD";
@@ -735,8 +740,14 @@ export class PaymentVoucherService {
       config: { currency } as Record<string, unknown>,
     };
 
-    const html = this.renderVoucher(templateData);
-    const pdf = await pdfService.generatePdfFromHtml(html, templateData as unknown as Parameters<typeof pdfService.generatePdfFromHtml>[1]);
+    return templateData;
+  }
+
+  async generatePdf(businessId: string, voucherId: string, voucher: Record<string, unknown>): Promise<Buffer> {
+    const templateData = await this.buildTemplateDataForPaymentVoucher(businessId, voucherId, voucher);
+
+    const html = await templateRenderer.renderPaymentVoucher(templateData);
+    const pdf = await pdfService.generatePdfFromHtml(html, templateData as any);
     return pdf;
   }
 

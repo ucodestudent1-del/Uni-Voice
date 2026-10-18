@@ -185,6 +185,96 @@ documentService.registerHandler("receipt", {
     return receiptService.generatePdf(docId);
   },
 });
+
+documentService.registerHandler("credit-note", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const creditNote = await invoiceService.getCreditNoteById(businessId, docId);
+    if (!creditNote) throw new NotFoundError(`Credit note ${docId} not found`);
+    return invoiceService.buildTemplateDataForCreditNote(businessId, docId, creditNote) as any;
+  },
+  finalize: async (businessId: string, docId: string, userId?: string) => {
+    const result = await invoiceService.finalizeCreditNote(businessId, docId, userId ?? null);
+    return {
+      document: result.creditNote,
+      documentNumber: result.creditNoteNumber,
+      status: "finalized",
+    };
+  },
+  send: async (businessId: string, docId: string, payload: any, userId?: string) => {
+    const result = await invoiceService.sendCreditNote(businessId, docId, payload, userId);
+    return {
+      ok: result.ok,
+      success: result.ok,
+      messageId: result.messageId,
+      status: result.status,
+    };
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    const creditNote = await invoiceService.getCreditNoteById(businessId, docId);
+    if (!creditNote) throw new NotFoundError(`Credit note ${docId} not found`);
+    return invoiceService.generateCreditNotePdf(businessId, docId, creditNote);
+  },
+});
+
+documentService.registerHandler("debit-note", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const note = await debitNoteService.findById(businessId, docId);
+    if (!note) throw new NotFoundError(`Debit note ${docId} not found`);
+    return debitNoteService.buildTemplateDataForDebitNote(businessId, docId, note) as any;
+  },
+  finalize: async (businessId: string, docId: string, userId?: string) => {
+    const result = await debitNoteService.finalize(businessId, docId, userId);
+    return {
+      document: result.debitNote,
+      documentNumber: result.debitNoteNumber,
+      status: "finalized",
+    };
+  },
+  send: async (businessId: string, docId: string, payload: any, userId?: string) => {
+    const result = await debitNoteService.send(businessId, docId, payload, userId);
+    return {
+      ok: result.ok,
+      success: result.ok,
+      messageId: result.messageId,
+      status: result.status,
+    };
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    const note = await debitNoteService.findById(businessId, docId);
+    if (!note) throw new NotFoundError(`Debit note ${docId} not found`);
+    return debitNoteService.generatePdf(businessId, docId, note);
+  },
+});
+
+documentService.registerHandler("payment-voucher", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const voucher = await paymentVoucherService.findById(businessId, docId);
+    if (!voucher) throw new NotFoundError(`Payment voucher ${docId} not found`);
+    return paymentVoucherService.buildTemplateDataForPaymentVoucher(businessId, docId, voucher) as any;
+  },
+  finalize: async (businessId: string, docId: string, userId?: string) => {
+    const result = await paymentVoucherService.finalize(businessId, docId, userId);
+    return {
+      document: result.voucher,
+      documentNumber: result.voucherNumber,
+      status: "issued",
+    };
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    const voucher = await paymentVoucherService.findById(businessId, docId);
+    if (!voucher) throw new NotFoundError(`Payment voucher ${docId} not found`);
+    return paymentVoucherService.generatePdf(businessId, docId, voucher);
+  },
+});
+
+documentService.registerHandler("purchase-order", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    throw new NotFoundError("Purchase order document support not yet implemented");
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    throw new NotFoundError("Purchase order document support not yet implemented");
+  },
+});
 app.set("trust proxy", isDev ? true : 1);
 const frontendBaseUrl = env.APP_FRONTEND_URL || env.APP_PUBLIC_BASE_URL;
 

@@ -9,7 +9,7 @@ import { pdfService } from "../services/pdf/pdf-service.js";
 import { enqueuePdfGeneration } from "../services/pdf-job-service.js";
 import { emailService } from "../services/email/email-service.js";
 import { stripeService } from "../services/payments/stripe-service.js";
-import { buildDocumentTemplateData, buildTemplateData, buildCreditNoteData, type UnifiedBuildInvoiceInput, type InvoiceTemplateData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE, fetchCustomerSnapshot } from "../services/templates/template-renderer.js";
+import { buildDocumentTemplateData, buildTemplateData, buildCreditNoteData, type UnifiedBuildInvoiceInput, type InvoiceTemplateData, type CreditNoteTemplateData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE, fetchCustomerSnapshot } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";
@@ -1934,20 +1934,11 @@ export class InvoiceService {
     return pdf;
   }
 
-  async generateCreditNotePdf(
+  async buildTemplateDataForCreditNote(
     businessId: string,
     creditNoteId: string,
-    creditNote: Record<string, unknown>
-  ): Promise<Buffer> {
-    const cached = await query(
-      `SELECT pdf_cache, pdf_cache_hash FROM credit_notes WHERE id = $1`,
-      [creditNoteId]
-    );
-
-    if (cached.rows.length && cached.rows[0].pdf_cache) {
-      return cached.rows[0].pdf_cache;
-    }
-
+    creditNote: Record<string, unknown>,
+  ): Promise<CreditNoteTemplateData> {
     const business = await this.fetchBusiness(businessId);
     const customer = creditNote.customer_id
       ? await this.fetchCustomer(businessId, creditNote.customer_id as string)
@@ -2059,6 +2050,25 @@ export class InvoiceService {
         htmlTemplate: await this.getCreditNoteTemplateHtml(businessId, creditNote.template_id as string | null),
       }
     );
+
+    return data;
+  }
+
+  async generateCreditNotePdf(
+    businessId: string,
+    creditNoteId: string,
+    creditNote: Record<string, unknown>
+  ): Promise<Buffer> {
+    const cached = await query(
+      `SELECT pdf_cache, pdf_cache_hash FROM credit_notes WHERE id = $1`,
+      [creditNoteId]
+    );
+
+    if (cached.rows.length && cached.rows[0].pdf_cache) {
+      return cached.rows[0].pdf_cache;
+    }
+
+    const data = await this.buildTemplateDataForCreditNote(businessId, creditNoteId, creditNote);
 
     const html = await templateRenderer.renderCreditNote(data);
     const pdf = await pdfService.generatePdfFromHtml(html, data);

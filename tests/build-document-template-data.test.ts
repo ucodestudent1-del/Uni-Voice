@@ -60,7 +60,7 @@ describe("buildDocumentTemplateData", () => {
         isFinalized: true,
       },
     };
-    const data = buildDocumentTemplateData("invoice", input);
+    const data = buildDocumentTemplateData("invoice", input) as any;
     expect(data).toHaveProperty("invoice");
     expect(data.invoice.id).toBe("inv-1");
     expect(data.invoice.invoiceNumber).toBe("INV-001");
@@ -91,7 +91,7 @@ describe("buildDocumentTemplateData", () => {
       fees: [],
       totals: makeTotals(),
     };
-    const data = buildDocumentTemplateData("receipt", input);
+    const data = buildDocumentTemplateData("receipt", input) as any;
     expect(data).toHaveProperty("receipt");
     expect(data.receipt.receiptNumber).toBe("RCPT-2024-000001");
     expect(data.receipt.status).toBe("paid");
@@ -127,7 +127,7 @@ describe("buildDocumentTemplateData", () => {
       fees: [],
       totals: makeTotals(),
     };
-    const data = buildDocumentTemplateData("purchase-order", input);
+    const data = buildDocumentTemplateData("purchase-order", input) as any;
     expect(data).toHaveProperty("purchaseOrder");
     expect(data.purchaseOrder.purchaseOrderNumber).toBe("PO-2024-001");
     expect(data.purchaseOrder.status).toBe("draft");
