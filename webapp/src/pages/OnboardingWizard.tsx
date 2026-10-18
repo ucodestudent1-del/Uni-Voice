@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingProgress from "../components/OnboardingProgress";
 import {
@@ -74,7 +74,7 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
     complete: (
       <div className="text-center py-8">
         <div className="w-16 h-16 status-success-bg rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="status-success-text text-2xl">✓</span>
+          <span className="status-success-text text-2xl">âœ“</span>
         </div>
         <h2 className="text-2xl font-bold text-primary mb-2">You're all set!</h2>
         <p className="text-secondary mb-6">
@@ -94,7 +94,7 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
 
 export default function OnboardingWizard() {
   useMetaTags({
-    title: "Welcome — Let's Set Up Your Business | InvoiceFlow",
+    title: "Welcome — Let's Set Up Your Business | DocForge",
     description: "Complete your onboarding to set up your business profile, payment methods, and start creating professional invoices.",
     noIndex: true,
   });
@@ -239,6 +239,7 @@ export default function OnboardingWizard() {
     </div>
   );
 }
+
 
 
 

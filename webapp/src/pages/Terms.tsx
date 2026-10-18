@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import LegalPage from "../components/LegalPage";
 import { useMetaTags } from "@/hooks/useMetaTags";
 
 export default function Terms() {
   useMetaTags({
-    title: "Terms of Service — InvoiceFlow",
-    description: "InvoiceFlow Terms of Service — legal agreement governing your access to and use of our invoice management platform.",
+    title: "Terms of Service — DocForge",
+    description: "DocForge Terms of Service — legal agreement governing your access to and use of our invoice management platform.",
   });
 
   return (
@@ -16,8 +16,8 @@ export default function Terms() {
 
       <p>
         These Terms of Service ("Terms") govern your access to and use of the
-        InvoiceFlow websites, mobile and desktop applications, APIs, and related
-        services (collectively, the "Service") operated by InvoiceFlow Inc.
+        DocForge websites, mobile and desktop applications, APIs, and related
+        services (collectively, the "Service") operated by DocForge Inc.
         ("we", "us", or "our").
       </p>
 
@@ -148,7 +148,7 @@ export default function Terms() {
 
       <h2>10. Indemnification</h2>
       <p>
-        You agree to indemnify, defend, and hold harmless InvoiceFlow, its
+        You agree to indemnify, defend, and hold harmless DocForge, its
         affiliates, officers, directors, employees, and agents from and against
         any claims, liabilities, damages, losses, and expenses arising out of
         or in any way connected with your access to or use of the Service or
@@ -226,7 +226,7 @@ export default function Terms() {
         </li>
         <li>
           <strong>Contact:</strong> For questions about these Terms, contact
-          us at <a href="mailto:support@invoiceflow.com">support@invoiceflow.com</a>.
+           us at <a href="mailto:support@docforge.app">support@docforge.app</a>.
         </li>
       </ul>
       <p>
@@ -235,3 +235,4 @@ export default function Terms() {
     </LegalPage>
   );
 }
+

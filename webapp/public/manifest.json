@@ -1,6 +1,6 @@
 {
-  "name": "InvoiceFlow — Professional Invoice Generator",
-  "short_name": "InvoiceFlow",
+  "name": "DocForge — Professional Invoice Generator",
+  "short_name": "DocForge",
   "description": "Create, send, and track invoices in seconds.",
   "start_url": "/",
   "display": "standalone",

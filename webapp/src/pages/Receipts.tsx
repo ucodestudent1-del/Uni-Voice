@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+﻿import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   getReceipts,
@@ -58,7 +58,7 @@ const SORT_OPTIONS = [
 
 export default function Receipts() {
   useMetaTags({
-    title: "Receipts — InvoiceFlow",
+    title: "Receipts — DocForge",
     description: "Manage and track all payment receipts. Filter by status, date, and provider.",
     noIndex: true,
   });
@@ -215,7 +215,7 @@ export default function Receipts() {
                 {r.receipt_number || `#${String(r.id).slice(0, 8)}`}
               </Link>
               <span className="text-xs text-tertiary">
-                {r.issued_at ? new Date(r.issued_at).toLocaleDateString() : r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
+                {r.issued_at ? new Date(r.issued_at).toLocaleDateString() : r.created_at ? new Date(r.created_at).toLocaleDateString() : "”"}
               </span>
             </div>
           );
@@ -234,7 +234,7 @@ export default function Receipts() {
                 to={r.invoice_id ? `/app/invoices/${r.invoice_id}` : "#"}
                 className={`text-sm font-medium ${r.invoice_id ? "text-primary-brand hover:underline" : "text-secondary"}`}
               >
-                {r.invoice_number || "—"}
+                {r.invoice_number || "”"}
               </Link>
               {r.customer_name && (
                 <span className="text-xs text-tertiary">{r.customer_name}</span>
@@ -253,7 +253,7 @@ export default function Receipts() {
           const date = r.issued_at || r.created_at;
           return (
             <span className="text-sm text-secondary">
-              {date ? formatDate(date) : "—"}
+              {date ? formatDate(date) : "”"}
             </span>
           );
         },
@@ -276,7 +276,7 @@ export default function Receipts() {
         accessor: "provider",
         cell: (row) => (
           <span className="text-sm text-secondary capitalize">
-            {(row as ApiReceipt).provider || "—"}
+            {(row as ApiReceipt).provider || "”"}
           </span>
         ),
         sortable: false,
@@ -287,7 +287,7 @@ export default function Receipts() {
         accessor: "sent_to",
         cell: (row) => (
           <span className="text-sm text-secondary truncate max-w-[180px] inline-block">
-            {(row as ApiReceipt).sent_to || "—"}
+            {(row as ApiReceipt).sent_to || "”"}
           </span>
         ),
         sortable: false,
@@ -658,7 +658,7 @@ export default function Receipts() {
                       to={r.invoice_id ? `/app/invoices/${r.invoice_id}` : "#"}
                       className="text-xs text-secondary block mt-0.5"
                     >
-                      {r.invoice_number || "—"}
+                      {r.invoice_number || "”"}
                     </Link>
                     {r.customer_name && (
                       <span className="text-xs text-tertiary">{r.customer_name}</span>
@@ -673,7 +673,7 @@ export default function Receipts() {
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <span className="text-xs text-tertiary">
-                    {r.issued_at ? formatDate(r.issued_at) : r.created_at ? formatDate(r.created_at) : "—"}
+                    {r.issued_at ? formatDate(r.issued_at) : r.created_at ? formatDate(r.created_at) : "”"}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
@@ -751,3 +751,4 @@ export default function Receipts() {
     </div>
   );
 }
+

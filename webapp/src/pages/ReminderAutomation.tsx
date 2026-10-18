@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
   getBusinessSettings,
@@ -41,7 +41,7 @@ const DEFAULT_REMINDER_CONFIG: ApiReminderConfig = {
 
 export default function ReminderAutomation() {
   useMetaTags({
-    title: "Reminder Automation — InvoiceFlow",
+    title: "Reminder Automation — DocForge",
     description: "Configure automated payment reminders for overdue invoices. Set up reminder schedules and customize email templates.",
     noIndex: true,
   });
@@ -471,7 +471,7 @@ function ReminderSection({
                     title="Move up"
                     className="text-xs"
                   >
-                    ↑ Up
+                    â†‘ Up
                   </Button>
                 )}
                 {index < sequences.length - 1 && (
@@ -482,7 +482,7 @@ function ReminderSection({
                     title="Move down"
                     className="text-xs"
                   >
-                    ↓ Down
+                    â†“ Down
                   </Button>
                 )}
               </div>
@@ -605,6 +605,7 @@ function TemplateDialog({
     </div>
   );
 }
+
 
 
 

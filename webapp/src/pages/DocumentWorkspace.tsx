@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { CalculationEngine } from "@/utils/calculation";
@@ -132,7 +132,7 @@ function useDocumentData(
 
 export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   useMetaTags({
-    title: "Document Workspace — InvoiceFlow",
+    title: "Document Workspace — DocForge",
     description: "Create and edit your invoice, quote, or credit note with automatic calculations and professional formatting.",
     noIndex: true,
   });
@@ -1052,7 +1052,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     : (state.customerId
         ? customers.find((c) => c.id === state.customerId)?.name ??
           customers.find((c) => c.id === state.customerId)?.email ??
-          "—"
+          "”"
         : "Select a customer");
 
   const statusConfig = handler.statusConfig;
@@ -1485,7 +1485,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                        <option value="">Select source invoice</option>
                        {availableReferenceInvoices.map((inv) => (
                          <option key={inv.id} value={inv.id}>
-                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "—"}
+                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
                          </option>
                        ))}
                      </FormField>
@@ -1541,7 +1541,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                        <option value="">None</option>
                        {availableReferenceInvoices.map((inv) => (
                          <option key={inv.id} value={inv.id}>
-                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "—"}
+                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
                          </option>
                        ))}
                      </FormField>
@@ -2053,3 +2053,4 @@ function ValidationIssuesList({ issues, onProceed, onCancel, isFinalizing }: Val
     </div>
   );
 }
+

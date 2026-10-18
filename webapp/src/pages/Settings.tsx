@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+﻿import { useParams, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import SettingsSidebar from "../components/settings/SettingsSidebar";
 import GeneralSettings from "../components/settings/GeneralSettings";
@@ -167,7 +167,7 @@ const accountSection: SettingsSection = { id: "account", items: accountNavItems 
 
 export default function Settings() {
   useMetaTags({
-    title: "Settings — InvoiceFlow",
+    title: "Settings — DocForge",
     description: "Configure your business profile, invoicing preferences, payment methods, tax rates, and account settings.",
     noIndex: true,
   });
@@ -247,3 +247,4 @@ export default function Settings() {
     </div>
   );
 }
+

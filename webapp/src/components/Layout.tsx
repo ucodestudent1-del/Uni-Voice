@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+﻿import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -96,11 +96,11 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-page flex">
+       <div className="min-h-screen bg-page flex">
       <SkipLink href="#main-content" />
-      <div className="hidden md:flex md:flex-col md:w-64 md:border-r md:border-color md:bg-surface md:shadow-sm">
-        <div className="flex items-center h-16 px-6 border-b border-color">
-          <h1 className="text-xl font-bold text-primary">InvoiceFlow</h1>
+      <div className="hidden md:flex md:flex-col md:w-64 md:border-r md:border-color-strong md:bg-surface md:shadow-md">
+        <div className="flex items-center h-16 px-6 border-b border-color-strong">
+          <h1 className="text-xl font-bold tracking-tight text-secondary-brand">DocForge</h1>
         </div>
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-3">
@@ -166,7 +166,7 @@ export default function Layout() {
           )}
           <button
             onClick={handleLogout}
-            className="w-full text-left text-sm font-medium text-secondary hover:text-primary hover:bg-surface-alt rounded-lg px-3 py-2"
+            className="w-full text-left text-sm font-medium text-secondary-brand hover:text-secondary hover:bg-secondary-bg rounded-lg px-3 py-2 transition-colors"
           >
             Sign out
           </button>
@@ -175,33 +175,33 @@ export default function Layout() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header - visible on mobile, hidden on desktop */}
-        <header className="flex md:hidden items-center justify-between h-16 border-b border-color bg-surface px-4">
+        <header className="flex md:hidden items-center justify-between h-14 border-b border-color-strong bg-surface px-4">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden"
+            className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden focus:outline-none focus:ring-2 focus:ring-secondary"
             aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <span className="text-sm text-tertiary truncate">{user?.email}</span>
+          <span className="text-sm text-tertiary truncate font-mono-sm">{user?.email}</span>
         </header>
 
         {/* Desktop header - hidden on mobile, visible on desktop */}
-        <header className="hidden md:flex items-center justify-between h-16 border-b border-color bg-surface px-6">
+        <header className="hidden md:flex items-center justify-between h-14 border-b border-color-strong bg-surface px-6">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden"
+              className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden focus:outline-none focus:ring-2 focus:ring-secondary"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span className="text-sm text-tertiary">{user?.email}</span>
+            <span className="text-sm text-tertiary font-mono-sm">{user?.email}</span>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShortcutsOpen(true)}
-              className="rounded-lg p-2 text-secondary hover:bg-surface-alt focus:outline-none focus:ring-2 focus:ring-primary"
+              className="rounded-lg p-2 text-secondary hover:bg-surface-alt focus:outline-none focus:ring-2 focus:ring-secondary"
               aria-label="Keyboard shortcuts (Ctrl+?)"
               title="Keyboard shortcuts"
             >
@@ -222,8 +222,8 @@ export default function Layout() {
             onClick={() => setMobileMenuOpen(false)}
           />
           <div className="fixed inset-y-0 left-0 w-64 bg-surface shadow-xl overflow-y-auto">
-            <div className="flex items-center h-16 px-6 border-b border-color">
-              <h1 className="text-xl font-bold text-primary">InvoiceFlow</h1>
+            <div className="flex items-center h-16 px-6 border-b border-color-strong">
+              <h1 className="text-xl font-bold tracking-tight text-secondary-brand">DocForge</h1>
             </div>
             <nav className="py-4">
               <ul className="space-y-1 px-3">
@@ -284,3 +284,4 @@ export default function Layout() {
     </div>
   );
 }
+

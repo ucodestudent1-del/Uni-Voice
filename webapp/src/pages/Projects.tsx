@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { Edit2, Trash2, Plus } from "lucide-react";
 import {
   getProjects,
@@ -35,7 +35,7 @@ const STATUS_FILTERS = [
 
 export default function Projects({ customers }: ProjectsProps) {
   useMetaTags({
-    title: "Projects — InvoiceFlow",
+    title: "Projects — DocForge",
     description: "Manage your client projects, track time and progress, and create invoices from completed work.",
     noIndex: true,
   });
@@ -250,7 +250,7 @@ const [search, setSearch] = useState("");
                   >
                     Due Date
                     {sortBy === "due_date" && (
-                      <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>
+                      <span className="ml-1">{sortOrder === "asc" ? "â†‘" : "â†“"}</span>
                     )}
                   </th>
                   <th className="px-4 py-3 text-xs font-medium text-tertiary uppercase">Tags</th>
@@ -335,6 +335,7 @@ const [search, setSearch] = useState("");
     </div>
   );
 }
+
 
 
 

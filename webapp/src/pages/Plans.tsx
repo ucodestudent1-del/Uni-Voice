@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { getPlans, upgradeSubscription, cancelSubscription } from "../api/client";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import type { ApiPlan } from "../types/api";
@@ -22,8 +22,8 @@ const PLAN_FEATURES: Record<string, { label: string; available: boolean }[]> = {
 
 export default function Plans() {
   useMetaTags({
-    title: "Plans & Pricing — InvoiceFlow",
-    description: "Upgrade your InvoiceFlow plan for advanced features like multi-currency, time tracking, and automated reminders.",
+    title: "Plans & Pricing — DocForge",
+    description: "Upgrade your DocForge plan for advanced features like multi-currency, time tracking, and automated reminders.",
     noIndex: true,
   });
 
@@ -154,7 +154,7 @@ export default function Plans() {
                         <span
                           className={`text-xs ${f.available ? "status-success-text" : "text-muted"}`}
                         >
-                          {f.available ? "✓" : "✕"}
+                          {f.available ? "âœ“" : "âœ•"}
                         </span>
                         <span className="text-sm text-secondary">{f.label}</span>
                       </div>
@@ -192,3 +192,4 @@ export default function Plans() {
     </div>
   );
 }
+

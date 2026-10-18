@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Edit2, Trash2, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getProducts, createProduct as apiCreateProduct, deleteProduct as apiDeleteProduct, updateProduct as apiUpdateProduct } from "../api/client";
@@ -10,7 +10,7 @@ import { useMetaTags } from "@/hooks/useMetaTags";
 
 export default function Products() {
   useMetaTags({
-    title: "Products — InvoiceFlow",
+    title: "Products — DocForge",
     description: "Manage your product catalog. Set prices, tax rates, and SKUs for invoice line items.",
     noIndex: true,
   });
@@ -239,7 +239,7 @@ export default function Products() {
                     <p className="text-sm font-medium text-primary">{p.name}</p>
                     {p.description && <p className="text-xs text-secondary">{p.description}</p>}
                   </td>
-                  <td className="py-3 px-4 text-sm text-secondary">{p.sku || "—"}</td>
+                  <td className="py-3 px-4 text-sm text-secondary">{p.sku || "”"}</td>
                   <td className="py-3 px-4 text-right text-sm font-medium text-primary">${parseFloat(p.defaultUnitPrice).toFixed(2)}</td>
                   <td className="py-3 px-4 text-right text-sm text-secondary">{(parseFloat(p.defaultTaxRate) * 100).toFixed(0)}%</td>
                    <td className="py-3 px-4 text-right">
@@ -269,6 +269,7 @@ export default function Products() {
     </div>
   );
 }
+
 
 
 

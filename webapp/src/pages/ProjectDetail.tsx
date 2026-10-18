@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getProject,
@@ -35,7 +35,7 @@ const STATUS_OPTIONS = [
 
 export default function ProjectDetail() {
   useMetaTags({
-    title: "Project Details — InvoiceFlow",
+    title: "Project Details — DocForge",
     description: "View project details, track time and progress, and manage related invoices.",
     noIndex: true,
   });
@@ -154,7 +154,7 @@ export default function ProjectDetail() {
           onClick={onBack}
           className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary"
         >
-          ← Back
+          â† Back
         </Button>
         <div className="flex items-center gap-2">
           <Button
@@ -451,6 +451,7 @@ function ProjectActivity({ projectId }: { projectId: string }) {
     </div>
   );
 }
+
 
 
 

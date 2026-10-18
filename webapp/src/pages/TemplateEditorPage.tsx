@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+﻿import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { EditorProvider, useEditor } from "../document-model/editor/EditorContext";
 import {
@@ -284,7 +284,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
             className="rounded-lg border border-input-border px-2.5 py-1.5 text-sm text-secondary hover:bg-surface-alt disabled:opacity-50"
             title="Undo (Ctrl+Z)"
           >
-            ↶
+            â†¶
           </button>
           <button
             onClick={redo}
@@ -292,7 +292,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
             className="rounded-lg border border-input-border px-2.5 py-1.5 text-sm text-secondary hover:bg-surface-alt disabled:opacity-50"
             title="Redo (Ctrl+Y)"
           >
-            ↷
+            â†·
           </button>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${lifecycleBadge.bg} ${lifecycleBadge.text}`}>
             {lifecycleBadge.label}
@@ -333,7 +333,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
 
 export default function TemplateEditorPage() {
   useMetaTags({
-    title: "Template Editor — InvoiceFlow",
+    title: "Template Editor — DocForge",
     description: "Design and customize your invoice document templates with our visual editor.",
     noIndex: true,
   });
@@ -436,6 +436,7 @@ export default function TemplateEditorPage() {
     </EditorProvider>
   );
 }
+
 
 
 

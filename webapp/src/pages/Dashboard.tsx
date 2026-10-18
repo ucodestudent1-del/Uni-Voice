@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
@@ -33,7 +33,7 @@ function deriveNameFromEmail(email: string | undefined): string {
 
 export default function Dashboard() {
   useMetaTags({
-    title: "Dashboard — InvoiceFlow",
+    title: "Dashboard — DocForge",
     description: "Overview of your invoices, payments, and revenue. Track outstanding balances, overdue items, and monthly trends.",
     noIndex: true,
   });
@@ -185,3 +185,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

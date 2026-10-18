@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getPublicInvoice, createPaymentSession } from "@/api/client";
 import { Money, StatusBadge, invoiceStatusConfig } from "@/components/ui";
@@ -22,7 +22,7 @@ export default function PublicInvoice() {
   const currency = invoice?.currency ?? "USD";
 
   useMetaTags({
-    title: invoiceNumber ? `${invoiceNumber} — InvoiceFlow` : "Invoice — InvoiceFlow",
+    title: invoiceNumber ? `${invoiceNumber} — DocForge` : "Invoice — DocForge",
     description: invoiceNumber
       ? `View invoice ${invoiceNumber} for ${totalAmount} ${currency}. Secure online payment available.`
       : "View your invoice and make a secure online payment.",
@@ -114,7 +114,7 @@ export default function PublicInvoice() {
                 <FileText className="h-8 w-8 text-tertiary" />
                 <div>
                   <h1 className="text-2xl font-bold text-primary">
-                    Invoice {invoice.invoice_number ?? "—"}
+                    Invoice {invoice.invoice_number ?? "”"}
                   </h1>
                 </div>
               </div>
@@ -126,12 +126,12 @@ export default function PublicInvoice() {
           <div className="p-6 border-b border-color grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="text-xs font-medium text-tertiary uppercase mb-2">From</h3>
-              <div className="font-medium text-primary">{business?.name ?? "—"}</div>
+              <div className="font-medium text-primary">{business?.name ?? "”"}</div>
               {business?.address && <div className="text-sm text-tertiary">{business.address}</div>}
             </div>
             <div>
               <h3 className="text-xs font-medium text-tertiary uppercase mb-2">Bill To</h3>
-              <div className="font-medium text-primary">{invoice.customer_name ?? "—"}</div>
+              <div className="font-medium text-primary">{invoice.customer_name ?? "”"}</div>
               {invoice.customer_email && <div className="text-sm text-tertiary">{invoice.customer_email}</div>}
               {invoice.customer_address_line_1 && <div className="text-sm text-tertiary">{invoice.customer_address_line_1}</div>}
             </div>
@@ -141,15 +141,15 @@ export default function PublicInvoice() {
           <div className="p-6 border-b border-color grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <h4 className="text-xs font-medium text-tertiary uppercase">Invoice Date</h4>
-              <p className="mt-1 text-sm text-primary">{invoice.issue_date ? formatDate(invoice.issue_date) : "—"}</p>
+              <p className="mt-1 text-sm text-primary">{invoice.issue_date ? formatDate(invoice.issue_date) : "”"}</p>
             </div>
             <div>
               <h4 className="text-xs font-medium text-tertiary uppercase">Due Date</h4>
-              <p className="mt-1 text-sm text-primary">{invoice.due_date ? formatDate(invoice.due_date) : "—"}</p>
+              <p className="mt-1 text-sm text-primary">{invoice.due_date ? formatDate(invoice.due_date) : "”"}</p>
             </div>
             <div>
               <h4 className="text-xs font-medium text-tertiary uppercase">Po Number</h4>
-              <p className="mt-1 text-sm text-primary">{invoice.po_number ?? "—"}</p>
+              <p className="mt-1 text-sm text-primary">{invoice.po_number ?? "”"}</p>
             </div>
             <div>
               <h4 className="text-xs font-medium text-tertiary uppercase">Currency</h4>
@@ -183,7 +183,7 @@ export default function PublicInvoice() {
                         <td className="text-right py-2">
                           {Number(item.tax_rate) > 0
                             ? `${(Number(item.tax_rate) * 100).toFixed(2)}%${item.tax_name ? ` ${item.tax_name}` : ""}`
-                            : "—"}
+                            : "”"}
                         </td>
                         <td className="text-right py-2 font-medium">{item.line_total}</td>
                       </tr>
@@ -270,3 +270,4 @@ export default function PublicInvoice() {
     </div>
   );
 }
+

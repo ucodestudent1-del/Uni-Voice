@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import FormField from "./FormField";
 import SavedIndicator from "./SavedIndicator";
 import { Button } from "../ui/Button";
@@ -64,7 +64,7 @@ export default function NotificationsSettings() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-secondary">Email Notifications</p>
-            <p className="text-xs text-secondary">Enable email notifications from InvoiceFlow.</p>
+            <p className="text-xs text-secondary">Enable email notifications from DocForge.</p>
           </div>
           <label className="relative inline-flex h-5 w-9 items-center rounded-full">
             <input
@@ -205,6 +205,7 @@ function ToggleSwitch({
     </label>
   );
 }
+
 
 
 

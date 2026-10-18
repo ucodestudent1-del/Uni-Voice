@@ -27,7 +27,7 @@ export interface BrandingSettings {
 
 const DEFAULT_BRANDING: Omit<BrandingSettings, "businessId" | "createdAt" | "updatedAt"> = {
   primaryColor: "#2563eb",
-  secondaryColor: "#64748b",
+  secondaryColor: "#ea5804",          /* orange-600 — DocForge forge-heated accent */
   fontFamily: null,
   logoUrl: null,
   logoWidthPx: null,

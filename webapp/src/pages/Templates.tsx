@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   getInvoiceTemplates,
@@ -25,7 +25,7 @@ interface PresetChoiceState {
 
 export default function Templates() {
   useMetaTags({
-    title: "Templates — InvoiceFlow",
+    title: "Templates — DocForge",
     description: "Customize your invoice and document templates. Choose colors, fonts, and layouts that match your brand.",
     noIndex: true,
   });
@@ -268,7 +268,7 @@ export default function Templates() {
                         to={`/app/templates/${t.id}/edit`}
                         className="text-xs font-medium text-primary-brand hover:text-primary-brand"
                       >
-                        Edit template →
+                        Edit template â†’
                       </Link>
                     </div>
                   </div>
@@ -287,7 +287,7 @@ export default function Templates() {
                   onClick={() => setShowPresetGallery(false)}
                   className="text-tertiary hover:text-tertiary dark:hover:text-tertiary"
                 >
-                  ✕
+                  âœ•
                 </button>
             </div>
             <div className="p-6">
@@ -299,6 +299,7 @@ export default function Templates() {
     </div>
   );
 }
+
 
 
 

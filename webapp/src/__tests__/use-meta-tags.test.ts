@@ -33,7 +33,7 @@ describe("useMetaTags", () => {
 
   it("sets default title when no title provided", () => {
     renderHook(() => useMetaTags({}));
-    expect(document.title).toBe("InvoiceFlow — Professional Invoice Generator");
+    expect(document.title).toBe("DocForge — Professional Invoice Generator");
   });
 
   it("sets description meta tag", () => {

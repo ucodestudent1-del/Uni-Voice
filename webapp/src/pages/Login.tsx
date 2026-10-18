@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { login as apiLogin } from "../api/client";
@@ -9,8 +9,8 @@ type LoginStep = "credentials" | "two-factor";
 
 export default function Login() {
   useMetaTags({
-    title: "Login — InvoiceFlow",
-    description: "Sign in to your InvoiceFlow account to manage invoices, customers, and payments.",
+    title: "Login — DocForge",
+    description: "Sign in to your DocForge account to manage invoices, customers, and payments.",
     noIndex: true,
   });
 
@@ -105,7 +105,7 @@ export default function Login() {
               <h1 className="text-3xl font-bold text-primary">
                 {step === "two-factor" ? "Two-factor authentication" : "Sign in to your account"}
               </h1>
-               <p className="text-xs text-tertiary mt-2">InvoiceFlow — Professional invoices without the accounting headache</p>
+               <p className="text-xs text-tertiary mt-2">DocForge — Professional invoices without the accounting headache</p>
             </div>
 
                {step === "credentials" && (
@@ -189,7 +189,7 @@ export default function Login() {
                      value={code}
                      onChange={(e) => handleCodeChange(e.target.value)}
                      className="w-full rounded-lg border border-input-border bg-surface-alt px-4 py-2.5 text-center text-2xl tracking-[0.3em] font-mono text-primary focus:outline-none focus:ring-2 focus: ring-primary"
-                     placeholder="—— ——"
+                     placeholder="”” ””"
                      maxLength={7}
                    />
                 </div>
@@ -207,7 +207,7 @@ export default function Login() {
                     onClick={() => setStep("credentials")}
                     className="text-sm text-tertiary hover:text-primary"
                   >
-                    ← Use a different account
+                    â† Use a different account
                   </button>
                   <Link to="/login" className="text-sm text-tertiary hover:text-primary">
                     Didn't receive a code?
@@ -233,7 +233,7 @@ export default function Login() {
 
             <div className="mt-4 text-center">
               <Link to="/" className="text-sm text-tertiary hover:text-secondary">
-                ← Back to homepage
+                â† Back to homepage
               </Link>
             </div>
           </div>
@@ -242,6 +242,7 @@ export default function Login() {
     </div>
   );
 }
+
 
 
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+﻿import { useState, useCallback } from "react";
 import {
   Button,
   FormField,
@@ -49,7 +49,7 @@ interface SendDialogData {
 
 export default function DebitNoteGenerator() {
   useMetaTags({
-    title: "Debit Note Generator — InvoiceFlow",
+    title: "Debit Note Generator — DocForge",
     description: "Create and send professional debit notes. Automatic tax calculations and currency conversion.",
     noIndex: true,
   });
@@ -718,3 +718,4 @@ export default function DebitNoteGenerator() {
     </div>
   );
 }
+

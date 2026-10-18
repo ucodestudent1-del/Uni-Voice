@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
@@ -243,7 +243,7 @@ function eventStatusColor(status: string): string {
 
 export default function PaymentDetail() {
   useMetaTags({
-    title: "Payment Detail — InvoiceFlow",
+    title: "Payment Detail — DocForge",
     description: "View payment details, transaction history, and refund options.",
     noIndex: true,
   });
@@ -451,7 +451,7 @@ export default function PaymentDetail() {
               <div>
                 <dt className="text-tertiary">Payment Method</dt>
                 <dd className="text-primary mt-0.5 capitalize">
-                  {payment.method || payment.provider || "—"}
+                  {payment.method || payment.provider || "”"}
                 </dd>
               </div>
               <div>
@@ -469,7 +469,7 @@ export default function PaymentDetail() {
               <div>
                 <dt className="text-tertiary">Paid On</dt>
                 <dd className="text-primary mt-0.5">
-                  {payment.paid_at ? formatDate(payment.paid_at) : "—"}
+                  {payment.paid_at ? formatDate(payment.paid_at) : "”"}
                 </dd>
               </div>
               {payment.idempotency_key && (
@@ -483,7 +483,7 @@ export default function PaymentDetail() {
               <div>
                 <dt className="text-tertiary">Created At</dt>
                 <dd className="text-primary mt-0.5">
-                  {payment.created_at ? formatDate(payment.created_at) : "—"}
+                  {payment.created_at ? formatDate(payment.created_at) : "”"}
                 </dd>
               </div>
             </dl>
@@ -552,7 +552,7 @@ export default function PaymentDetail() {
                         </p>
                       )}
                       <p className="text-xs text-tertiary mt-0.5">
-                        {event.created_at ? formatDate(event.created_at) : "—"}
+                        {event.created_at ? formatDate(event.created_at) : "”"}
                       </p>
                     </div>
                   </div>
@@ -571,31 +571,31 @@ export default function PaymentDetail() {
               <div>
                 <dt className="text-tertiary">Invoice Number</dt>
                 <dd className="text-primary mt-0.5">
-                  {payment.invoice_number || (payment.invoice_id ? `#${payment.invoice_id.slice(0, 8)}` : "—")}
+                  {payment.invoice_number || (payment.invoice_id ? `#${payment.invoice_id.slice(0, 8)}` : "”")}
                 </dd>
               </div>
               <div>
                 <dt className="text-tertiary">Invoice Status</dt>
                 <dd className="text-primary mt-0.5 capitalize">
-                  {payment.invoice_status || "—"}
+                  {payment.invoice_status || "”"}
                 </dd>
               </div>
               <div>
                 <dt className="text-tertiary">Invoice Total</dt>
                 <dd className="text-primary mt-0.5">
-                  {payment.invoice_total ? formatCurrency(payment.invoice_total, currency) : "—"}
+                  {payment.invoice_total ? formatCurrency(payment.invoice_total, currency) : "”"}
                 </dd>
               </div>
               <div>
                 <dt className="text-tertiary">Invoice Balance Due</dt>
                 <dd className="text-primary mt-0.5">
-                  {payment.invoice_amount_due ? formatCurrency(payment.invoice_amount_due, currency) : "—"}
+                  {payment.invoice_amount_due ? formatCurrency(payment.invoice_amount_due, currency) : "”"}
                 </dd>
               </div>
               <div>
                 <dt className="text-tertiary">Invoice Paid</dt>
                 <dd className="text-primary mt-0.5">
-                  {payment.invoice_amount_paid ? formatCurrency(payment.invoice_amount_paid, currency) : "—"}
+                  {payment.invoice_amount_paid ? formatCurrency(payment.invoice_amount_paid, currency) : "”"}
                 </dd>
               </div>
               {payment.invoice_due_date && (
@@ -691,3 +691,4 @@ export default function PaymentDetail() {
     </div>
   );
 }
+

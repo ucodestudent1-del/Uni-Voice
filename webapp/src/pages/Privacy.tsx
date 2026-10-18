@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import LegalPage from "../components/LegalPage";
 import { useMetaTags } from "@/hooks/useMetaTags";
 
 export default function Privacy() {
   useMetaTags({
-    title: "Privacy Policy — InvoiceFlow",
-    description: "InvoiceFlow Privacy Policy — how we collect, use, and protect your data when you use our invoice management service.",
+    title: "Privacy Policy — DocForge",
+    description: "DocForge Privacy Policy — how we collect, use, and protect your data when you use our invoice management service.",
   });
 
   return (
@@ -15,7 +15,7 @@ export default function Privacy() {
       </p>
 
       <p>
-        InvoiceFlow ("we", "us", or "our") operates the InvoiceFlow service
+        DocForge ("we", "us", or "our") operates the DocForge service
         (the "Service"). This Privacy Policy explains how we collect, use,
         disclose, and protect your information when you use our website,
         applications, and services.
@@ -109,7 +109,7 @@ export default function Privacy() {
       </ul>
       <p>
         To make such requests, contact us at{" "}
-        <a href="mailto:support@invoiceflow.com">support@invoiceflow.com</a>.
+        <a href="mailto:support@docforge.app">support@docforge.app</a>.
         We may need to verify your identity before fulfilling your request.
       </p>
 
@@ -172,8 +172,8 @@ export default function Privacy() {
         If you have questions about this Privacy Policy, contact us at:
       </p>
       <p>
-        InvoiceFlow<br />
-        Email: <a href="mailto:support@invoiceflow.com">support@invoiceflow.com</a>
+        DocForge<br />
+        Email: <a href="mailto:support@docforge.app">support@docforge.app</a>
       </p>
       <p>
         <Link to="/terms">Read our Terms of Service</Link>
@@ -181,3 +181,4 @@ export default function Privacy() {
     </LegalPage>
   );
 }
+

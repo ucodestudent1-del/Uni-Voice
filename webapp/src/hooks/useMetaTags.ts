@@ -9,7 +9,7 @@ interface MetaOptions {
   canonical?: string;
 }
 
-const DEFAULT_TITLE = "InvoiceFlow — Professional Invoice Generator";
+const DEFAULT_TITLE = "DocForge — Professional Invoice Generator";
 
 export function useMetaTags(options: MetaOptions) {
   useEffect(() => {

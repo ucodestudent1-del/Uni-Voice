@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+﻿import { useState, useCallback } from "react";
 import {
   Button,
   FormField,
@@ -42,7 +42,7 @@ const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "INR", "CHF"];
 
 export default function PaymentVoucherGenerator() {
   useMetaTags({
-    title: "Payment Voucher Generator — InvoiceFlow",
+    title: "Payment Voucher Generator — DocForge",
     description: "Create and manage payment vouchers for business expenses. Automatic calculations and multi-currency support.",
     noIndex: true,
   });
@@ -609,3 +609,4 @@ export default function PaymentVoucherGenerator() {
     </div>
   );
 }
+

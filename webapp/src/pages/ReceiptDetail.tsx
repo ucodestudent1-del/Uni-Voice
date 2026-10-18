@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   getReceiptDetail,
@@ -33,7 +33,7 @@ type ActionMenuState = "closed" | "email" | "refund" | "delete";
 
 export default function ReceiptDetail() {
   useMetaTags({
-    title: "Receipt Detail — InvoiceFlow",
+    title: "Receipt Detail — DocForge",
     description: "View receipt details, payment status, and download PDF.",
     noIndex: true,
   });
@@ -266,7 +266,7 @@ export default function ReceiptDetail() {
       {receipt.status === "issued" && (
         <div className="p-3 status-info-bg border status-info-border rounded-lg">
           <p className="text-sm status-info-text">
-            Receipt issued on {receipt.issued_at ? formatDate(receipt.issued_at) : "—"}.
+            Receipt issued on {receipt.issued_at ? formatDate(receipt.issued_at) : "”"}.
           </p>
         </div>
       )}
@@ -390,7 +390,7 @@ export default function ReceiptDetail() {
               <div>
                 <dt className="text-tertiary">Receipt Number</dt>
                 <dd className="text-primary font-medium mt-0.5 flex items-center gap-2">
-                  {receipt.receipt_number || "—"}
+                  {receipt.receipt_number || "”"}
                   {receipt.receipt_number && (
                     <button
                       onClick={handleCopyReceiptNumber}
@@ -413,20 +413,20 @@ export default function ReceiptDetail() {
                       {receipt.invoice_number || `#${receipt.invoice_id.slice(0, 8)}`}
                     </Link>
                   ) : (
-                    "—"
+                    "”"
                   )}
                 </dd>
               </div>
               <div>
                 <dt className="text-tertiary">Date Issued</dt>
                 <dd className="text-primary mt-0.5">
-                  {receipt.issued_at ? formatDate(receipt.issued_at) : "—"}
+                  {receipt.issued_at ? formatDate(receipt.issued_at) : "”"}
                 </dd>
               </div>
               <div>
                 <dt className="text-tertiary">Due Date</dt>
                 <dd className="text-primary mt-0.5">
-                  {receipt.invoice_due_date ? formatDate(receipt.invoice_due_date) : "—"}
+                  {receipt.invoice_due_date ? formatDate(receipt.invoice_due_date) : "”"}
                 </dd>
               </div>
               <div>
@@ -475,7 +475,7 @@ export default function ReceiptDetail() {
                   ) : (
                     items.map((item, i) => (
                       <tr key={item.description || i} className="border-b border-color-subtle last:border-b-0">
-                        <td className="py-2 text-sm text-primary">{item.description || "—"}</td>
+                        <td className="py-2 text-sm text-primary">{item.description || "”"}</td>
                         <td className="py-2 text-right text-sm text-secondary">
                           {item.quantity} {item.unit || ""}
                         </td>
@@ -485,7 +485,7 @@ export default function ReceiptDetail() {
                         <td className="py-2 text-right text-sm text-secondary">
                           {Number(item.tax_rate) > 0
                             ? `${(Number(item.tax_rate) * 100).toFixed(2)}%`
-                            : "—"}
+                            : "”"}
                         </td>
                         <td className="py-2 text-right text-sm font-medium text-primary">
                           {formatCurrency(item.line_total, receipt.currency)}
@@ -579,7 +579,7 @@ export default function ReceiptDetail() {
                     ) : payment.provider ? (
                       <span className="capitalize">{payment.provider}</span>
                     ) : (
-                      "—"
+                      "”"
                     )}
                   </dd>
                 </div>
@@ -592,7 +592,7 @@ export default function ReceiptDetail() {
                 <div>
                   <dt className="text-tertiary">Paid On</dt>
                   <dd className="text-primary mt-0.5">
-                    {payment.paid_at ? formatDate(payment.paid_at) : "—"}
+                    {payment.paid_at ? formatDate(payment.paid_at) : "”"}
                   </dd>
                 </div>
                 {payment.provider_payment_id && (
@@ -698,3 +698,4 @@ export default function ReceiptDetail() {
     </div>
   );
 }
+

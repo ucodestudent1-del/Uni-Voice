@@ -17,7 +17,7 @@ export interface TotpOptions {
 export const DEFAULT_STEP = 30;
 export const DEFAULT_DIGITS = 6;
 export const DEFAULT_WINDOW = 1;
-export const ISSUER = "InvoiceFlow";
+export const ISSUER = "DocForge";
 
 export function bytesToBase32(bytes: Uint8Array | Buffer): string {
   const buf = Buffer.from(bytes);

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+﻿import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   getPaymentsByBusiness,
@@ -42,7 +42,7 @@ const PROVIDER_OPTIONS = [
 
 export default function Payments() {
   useMetaTags({
-    title: "Payments — InvoiceFlow",
+    title: "Payments — DocForge",
     description: "Track and manage all payment transactions. View payment status, export records, and monitor payment trends.",
     noIndex: true,
   });
@@ -142,7 +142,7 @@ export default function Payments() {
           return (
             <div className="flex flex-col">
               <span className="text-sm font-medium text-primary">
-                {p.customer_name || "—"}
+                {p.customer_name || "”"}
               </span>
               {p.customer_email && (
                 <span className="text-xs text-secondary truncate">{p.customer_email}</span>
@@ -177,7 +177,7 @@ export default function Payments() {
           const p = row as ApiPaymentWithInvoice;
           return (
             <span className="text-sm text-secondary">
-              {p.paid_at ? formatDate(new Date(p.paid_at)) : "—"}
+              {p.paid_at ? formatDate(new Date(p.paid_at)) : "”"}
             </span>
           );
         },
@@ -189,7 +189,7 @@ export default function Payments() {
         accessor: "method",
         cell: (row) => {
           const p = row as ApiPaymentWithInvoice;
-          const method = p.method || p.provider || "—";
+          const method = p.method || p.provider || "”";
           const label = method === "manual" || method === "stub"
             ? "Manual"
             : method.charAt(0).toUpperCase() + method.slice(1);
@@ -421,3 +421,4 @@ export default function Payments() {
     </div>
   );
 }
+

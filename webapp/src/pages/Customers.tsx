@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
@@ -141,7 +141,7 @@ const SORT_OPTIONS = [
 
 export default function Customers() {
   useMetaTags({
-    title: "Customers — InvoiceFlow",
+    title: "Customers — DocForge",
     description: "Manage your customer list. View outstanding balances, invoice history, and contact information.",
     noIndex: true,
   });
@@ -508,7 +508,7 @@ export default function Customers() {
                             )}
                           </div>
                         ) : (
-                          <span className="text-tertiary text-sm">—</span>
+                          <span className="text-tertiary text-sm">”</span>
                         )}
                        </td>
                         <td className="py-3.5 px-4 text-center text-sm text-primary align-top">
@@ -526,11 +526,11 @@ export default function Customers() {
                              </span>
                            )
                          ) : (
-                           <span className="text-sm text-tertiary">— paid</span>
+                           <span className="text-sm text-tertiary">” paid</span>
                          )}
                        </td>
                        <td className="py-3.5 px-4 text-right text-sm text-secondary align-top">
-                         {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-tertiary">—</span>}
+                         {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : <span className="text-tertiary">”</span>}
                        </td>
                        <td className="py-3.5 px-4 text-center align-top">
                          <CustomerStatusBadge status={c.status} />
@@ -617,13 +617,13 @@ export default function Customers() {
                         <span className={cn("ml-1 font-tabular-nums", hasBalance ? (hasOverdue ? "status-error-text font-medium" : "text-secondary") : "text-tertiary")}>
                           {hasBalance
                             ? formatCurrency(hasOverdue ? (c.totalOverdue || "0") : (c.totalOutstanding || "0"), c.defaultCurrency || "USD")
-                            : "— paid"}
+                            : "” paid"}
                         </span>
                       </div>
                       <div>
                         <span className="text-xs text-tertiary">Last Invoice</span>
                         <span className="text-sm text-secondary ml-1">
-                          {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : "—"}
+                          {c.mostRecentInvoiceDate ? formatDate(c.mostRecentInvoiceDate) : "”"}
                         </span>
                       </div>
                       <div className="text-right">
@@ -682,6 +682,7 @@ export default function Customers() {
     </div>
   );
 }
+
 
 
 

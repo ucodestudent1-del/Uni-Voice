@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+﻿import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import { useMetaTags } from "@/hooks/useMetaTags";
 
@@ -7,7 +7,7 @@ export default function PaymentSuccess() {
   const token = searchParams.get("token");
 
   useMetaTags({
-    title: "Payment Successful — InvoiceFlow",
+    title: "Payment Successful — DocForge",
     description: "Your payment has been processed successfully.",
     noIndex: true,
   });
@@ -34,3 +34,4 @@ export default function PaymentSuccess() {
     </div>
   );
 }
+

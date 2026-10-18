@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getPlans, upgradeSubscription } from "../api/client";
 import type { ApiPlan } from "../types/api";
@@ -49,7 +49,7 @@ export default function Plans() {
   const [error, setError] = useState<string | null>(null);
 
   useMetaTags({
-    title: "Simple, Transparent Pricing | InvoiceFlow",
+    title: "Simple, Transparent Pricing | DocForge",
     description: "One flat monthly rate. No per-invoice fees. Cancel anytime. Start with our forever-free plan or upgrade to Pro for full automation.",
   });
 
@@ -226,7 +226,7 @@ export default function Plans() {
               FAQs
             </Link>{" "}
             or{" "}
-            <a href="mailto:support@invoiceflow.com" className="text-primary-brand hover:text-primary-hover font-medium">
+            <a href="mailto:support@docforge.app" className="text-primary-brand hover:text-primary-hover font-medium">
               contact us
             </a>
             .
@@ -254,7 +254,7 @@ function CheckCell({ value }: { value: boolean }) {
       </svg>
     );
   }
-  return <span className="text-tertiary mx-auto block">—</span>;
+  return <span className="text-tertiary mx-auto block">”</span>;
 }
 
 function CheckIcon() {
@@ -273,3 +273,4 @@ function CheckIcon() {
     </svg>
   );
 }
+

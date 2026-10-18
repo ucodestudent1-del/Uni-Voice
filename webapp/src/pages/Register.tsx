@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { register as apiRegister } from "../api/client";
@@ -7,8 +7,8 @@ import { useMetaTags } from "../hooks/useMetaTags";
 
 export default function Register() {
   useMetaTags({
-    title: "Create Account — InvoiceFlow",
-    description: "Start your free InvoiceFlow account. No credit card required. Create professional invoices in seconds.",
+    title: "Create Account — DocForge",
+    description: "Start your free DocForge account. No credit card required. Create professional invoices in seconds.",
     noIndex: true,
   });
 
@@ -206,6 +206,7 @@ export default function Register() {
     </div>
   );
 }
+
 
 
 

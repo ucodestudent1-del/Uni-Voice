@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
@@ -16,7 +16,7 @@ import type { ApiCustomer, ApiCustomerSummary } from "../types/api";
 
 export default function CustomerDetail() {
   useMetaTags({
-    title: "Customer Profile — InvoiceFlow",
+    title: "Customer Profile — DocForge",
     description: "View customer details, invoice history, and outstanding balances.",
     noIndex: true,
   });
@@ -189,7 +189,7 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
                     customer.address?.stateOrRegion,
                     customer.address?.postalCode,
                     customer.address?.countryCode,
-                  ].filter(Boolean).join(", ") || "—"
+                  ].filter(Boolean).join(", ") || "”"
                 }
               />
               {customer.notes && <InfoRow label="Notes" value={customer.notes} preWrap />}
@@ -301,7 +301,7 @@ function renderFinancialSummary(
       />
       <FinancialSummaryCard
         title="Overdue Balance"
-        value={hasOverdue ? formatCurrency(summary.totalOverdue || "0", currency) : "—"}
+        value={hasOverdue ? formatCurrency(summary.totalOverdue || "0", currency) : "”"}
         subtitle={hasOverdue ? "Past due" : "None overdue"}
         color={hasOverdue ? "red" : "slate"}
       />
@@ -316,6 +316,7 @@ function renderFinancialSummary(
     </div>
   );
 }
+
 
 
 

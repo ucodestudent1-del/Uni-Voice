@@ -108,7 +108,7 @@ export default function BrandingEditor({ onBrandingChange }: BrandingEditorProps
           label="Secondary Color"
           value={draft.secondaryColor ?? ""}
           onChange={(e) => updateDraft({ secondaryColor: e.target.value })}
-          placeholder="#64748b"
+          placeholder="#ea5804"
         />
       </div>
 

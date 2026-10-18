@@ -1,6 +1,7 @@
-import { ReactNode } from "react";
+﻿import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
+import { SkipLink } from "./ui/AppShell";
 
 interface LegalPageProps {
   title: string;
@@ -11,19 +12,20 @@ export default function LegalPage({ title, children }: LegalPageProps) {
   const year = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-surface-alt text-primary flex flex-col">
+      <div className="min-h-screen bg-surface-alt text-primary flex flex-col">
+      <SkipLink href="#main-content" />
       <header className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <nav className="flex items-center justify-between h-16 py-4">
-          <Link to="/" className="text-xl font-bold text-primary">InvoiceFlow</Link>
+        <nav className="flex items-center justify-between h-16 py-4 border-b border-color-subtle">
+          <Link to="/" className="text-xl font-bold tracking-tight text-secondary-brand">DocForge</Link>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/privacy" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Privacy</Link>
-            <Link to="/terms" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Terms</Link>
-            <Link to="/login" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Login</Link>
+            <Link to="/privacy" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Privacy</Link>
+            <Link to="/terms" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Terms</Link>
+            <Link to="/login" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Login</Link>
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Link
                 to="/register"
-                className="inline-flex items-center rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover"
+                className="inline-flex items-center rounded-lg bg-primary-action px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-hover shadow-sm"
               >
                 Create Free Invoice
               </Link>
@@ -48,14 +50,14 @@ export default function LegalPage({ title, children }: LegalPageProps) {
         </article>
       </main>
 
-      <footer className="border-t border-color-subtle border-color py-8">
+      <footer className="border-t border-color-strong border-color py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-tertiary">© {year} InvoiceFlow. All rights reserved.</p>
+            <p className="text-sm text-tertiary">© {year} DocForge. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link to="/privacy" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Privacy</Link>
-              <Link to="/terms" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Terms</Link>
-              <a href="mailto:support@invoiceflow.com" className="text-sm text-tertiary hover:text-primary dark:hover:text-tertiary">Contact</a>
+              <Link to="/privacy" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Privacy</Link>
+              <Link to="/terms" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Terms</Link>
+              <a href="mailto:support@docforge.app" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Contact</a>
             </div>
           </div>
         </div>
@@ -63,3 +65,4 @@ export default function LegalPage({ title, children }: LegalPageProps) {
     </div>
   );
 }
+

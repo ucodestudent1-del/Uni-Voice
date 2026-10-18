@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Plus, FileText, Quote as QuoteIcon, CreditCard, Receipt, ShoppingCart } from "lucide-react";
 import {
@@ -94,7 +94,7 @@ const createOptions: CreateOption[] = [
 
 export default function Documents() {
   useMetaTags({
-    title: "Documents — InvoiceFlow",
+    title: "Documents — DocForge",
     description: "Manage your invoices, quotes, credit notes, and debit notes. Create, send, and track all your business documents.",
     noIndex: true,
   });
@@ -181,7 +181,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiInvoiceListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "—"}
+          {row.customer_name || "”"}
         </span>
       ),
       sortable: false,
@@ -192,7 +192,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiInvoiceListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "—"}
+          {row.issue_date ? formatDate(row.issue_date) : "”"}
         </span>
       ),
       sortable: false,
@@ -245,7 +245,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiQuoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "—"}
+          {row.customer_name || "”"}
         </span>
       ),
       sortable: false,
@@ -256,7 +256,7 @@ export default function Documents() {
       accessor: "expiry_date" as const,
       cell: (row: ApiQuoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.expiry_date ? formatDate(row.expiry_date) : "—"}
+          {row.expiry_date ? formatDate(row.expiry_date) : "”"}
         </span>
       ),
       sortable: false,
@@ -309,7 +309,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "—"}
+          {row.customer_name || "”"}
         </span>
       ),
       sortable: false,
@@ -320,7 +320,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "—"}
+          {row.issue_date ? formatDate(row.issue_date) : "”"}
         </span>
       ),
       sortable: false,
@@ -373,7 +373,7 @@ export default function Documents() {
       accessor: "supplier_name" as const,
       cell: (row: ApiPurchaseOrderListItem) => (
         <span className="text-sm text-secondary">
-          {row.supplier_name || "—"}
+          {row.supplier_name || "”"}
         </span>
       ),
       sortable: false,
@@ -384,7 +384,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiPurchaseOrderListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "—"}
+          {row.issue_date ? formatDate(row.issue_date) : "”"}
         </span>
       ),
       sortable: false,
@@ -437,7 +437,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiReceipt) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "—"}
+          {row.customer_name || "”"}
         </span>
       ),
       sortable: false,
@@ -459,7 +459,7 @@ export default function Documents() {
       accessor: "issued_at" as const,
       cell: (row: ApiReceipt) => (
         <span className="text-sm text-secondary">
-          {row.issued_at ? formatDate(row.issued_at) : "—"}
+          {row.issued_at ? formatDate(row.issued_at) : "”"}
         </span>
       ),
       sortable: false,
@@ -683,3 +683,4 @@ export default function Documents() {
     </div>
   );
 }
+

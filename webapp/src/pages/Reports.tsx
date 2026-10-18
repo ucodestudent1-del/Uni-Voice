@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+﻿import { useEffect, useState, useCallback, useMemo } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import {
   getDashboardSummary,
@@ -50,7 +50,7 @@ const TAB_FILTERS: Record<ReportTab, { showDateRange: boolean; showCustomer: boo
 
 export default function Reports() {
   useMetaTags({
-    title: "Reports — InvoiceFlow",
+    title: "Reports — DocForge",
     description: "Financial reports, revenue trends, payment analytics, and client summaries. Export data to CSV for accounting.",
     noIndex: true,
   });
@@ -525,3 +525,4 @@ function QuickStats({ summary, currency }: { summary: any; currency: string }) {
     </div>
   );
 }
+
