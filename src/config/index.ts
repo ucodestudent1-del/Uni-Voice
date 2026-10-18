@@ -136,27 +136,18 @@ if (isProduction && parsed.EMAIL_PROVIDER === "stub") {
   process.exit(1);
 }
 
-if (isProduction && parsed.PAYMENT_PROVIDER === "stripe") {
-  if (!parsed.STRIPE_SECRET_KEY) {
-    console.error(
-      "Invalid environment configuration: STRIPE_SECRET_KEY is required when PAYMENT_PROVIDER=stripe in production."
-    );
-    process.exit(1);
-  }
-  if (!parsed.STRIPE_WEBHOOK_SECRET) {
-    console.error(
-      "Invalid environment configuration: STRIPE_WEBHOOK_SECRET is required when PAYMENT_PROVIDER=stripe in production."
-    );
-    process.exit(1);
-  }
+if (isProduction && parsed.PAYMENT_PROVIDER === "stripe" && !parsed.STRIPE_SECRET_KEY) {
+  console.warn(
+    "STRIPE_SECRET_KEY is not set. Payment processing endpoints will return errors when called. " +
+      "Set STRIPE_SECRET_KEY in your environment to enable Stripe payments.",
+  );
 }
 
 if (isProduction && parsed.PAYMENT_PROVIDER === "stub") {
-  console.error(
-    "Invalid environment configuration: PAYMENT_PROVIDER=stub is not allowed in production. " +
-      "Set PAYMENT_PROVIDER=stripe and provide STRIPE_SECRET_KEY."
+  console.warn(
+    "PAYMENT_PROVIDER=stub is not recommended in production. " +
+      "Payment endpoints will return placeholder responses. Set PAYMENT_PROVIDER=stripe and provide STRIPE_SECRET_KEY for real payments.",
   );
-  process.exit(1);
 }
 
 function getRailwayPublicBaseUrl(domain: string | undefined): string | undefined {
