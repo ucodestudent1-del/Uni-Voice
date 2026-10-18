@@ -240,14 +240,14 @@ app.use((req, res, next) => {
   const timeout = setTimeout(() => {
     if (!res.headersSent) {
       logger.error(
-        { url: req.url, method: req.method, requestId },
-        "Request timed out — possible unhandled async error",
+        { url: req.url, method: req.method, requestId, duration: Date.now() - start },
+        "Request timed out — possible unhandled async error or slow dependency",
       );
       res
         .status(500)
         .json({ error: "Request timed out", code: "REQUEST_TIMEOUT" });
     }
-  }, 20000);
+  }, 60000);
   res.on("finish", () => clearTimeout(timeout));
   res.on("close", () => clearTimeout(timeout));
   const done = () => {
