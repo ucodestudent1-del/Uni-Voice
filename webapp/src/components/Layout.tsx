@@ -100,7 +100,7 @@ export default function Layout() {
       <SkipLink href="#main-content" />
       <div className="hidden md:flex md:flex-col md:w-64 md:border-r md:border-color-strong md:bg-surface md:shadow-md">
         <div className="flex items-center h-16 px-6 border-b border-color-strong">
-          <h1 className="text-xl font-bold tracking-tight text-secondary-brand">DocForge</h1>
+          <h1 className="text-xl font-bold tracking-tight text-primary-brand">DocForge</h1>
         </div>
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-3">
@@ -166,7 +166,7 @@ export default function Layout() {
           )}
           <button
             onClick={handleLogout}
-            className="w-full text-left text-sm font-medium text-secondary-brand hover:text-secondary hover:bg-secondary-bg rounded-lg px-3 py-2 transition-colors"
+            className="w-full text-left text-sm font-medium text-primary-brand hover:text-primary hover:bg-primary-bg rounded-lg px-3 py-2 transition-colors"
           >
             Sign out
           </button>
@@ -178,12 +178,12 @@ export default function Layout() {
         <header className="flex md:hidden items-center justify-between h-14 border-b border-color-strong bg-surface px-4">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden focus:outline-none focus:ring-2 focus:ring-secondary"
+            className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <span className="text-sm text-tertiary truncate font-mono-sm">{user?.email}</span>
+          <span className="text-sm text-secondary font-mono-sm">{user?.email}</span>
         </header>
 
         {/* Desktop header - hidden on mobile, visible on desktop */}
@@ -191,7 +191,7 @@ export default function Layout() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="rounded-lg p-2 text-secondary hover:bg-surface-alt md:hidden focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -201,7 +201,7 @@ export default function Layout() {
             <button
               type="button"
               onClick={() => setShortcutsOpen(true)}
-              className="rounded-lg p-2 text-secondary hover:bg-surface-alt focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="rounded-lg p-2 text-secondary hover:bg-surface-alt focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label="Keyboard shortcuts (Ctrl+?)"
               title="Keyboard shortcuts"
             >
@@ -223,7 +223,7 @@ export default function Layout() {
           />
           <div className="fixed inset-y-0 left-0 w-64 bg-surface shadow-xl overflow-y-auto">
             <div className="flex items-center h-16 px-6 border-b border-color-strong">
-              <h1 className="text-xl font-bold tracking-tight text-secondary-brand">DocForge</h1>
+              <h1 className="text-xl font-bold tracking-tight text-primary-brand">DocForge</h1>
             </div>
             <nav className="py-4">
               <ul className="space-y-1 px-3">

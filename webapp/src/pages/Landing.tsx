@@ -23,13 +23,13 @@ export default function Landing() {
     <div className="min-h-screen bg-page text-primary">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center justify-between h-16 py-4 border-b border-color-subtle">
-          <div className="text-xl font-bold tracking-tight text-secondary-brand">DocForge</div>
+          <div className="text-xl font-bold tracking-tight text-primary-brand">DocForge</div>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="#templates" className="text-sm text-tertiary hover:text-secondary-brand transition-colors">Templates</Link>
-            <Link to="#features" className="text-sm text-tertiary hover:text-secondary-brand transition-colors">Features</Link>
-            <Link to="/pricing" className="text-sm text-tertiary hover:text-secondary-brand transition-colors">Pricing</Link>
-            <Link to="#faq" className="text-sm text-tertiary hover:text-secondary-brand transition-colors">FAQ</Link>
-            <button onClick={() => navigate("/login")} className="text-sm text-tertiary hover:text-secondary-brand transition-colors">
+            <Link to="#templates" className="text-sm text-tertiary hover:text-primary transition-colors">Templates</Link>
+            <Link to="#features" className="text-sm text-tertiary hover:text-primary transition-colors">Features</Link>
+            <Link to="/pricing" className="text-sm text-tertiary hover:text-primary transition-colors">Pricing</Link>
+            <Link to="#faq" className="text-sm text-tertiary hover:text-primary transition-colors">FAQ</Link>
+            <button onClick={() => navigate("/login")} className="text-sm text-tertiary hover:text-primary transition-colors">
               Login
             </button>
             <button
@@ -83,7 +83,7 @@ export default function Landing() {
       {/* Value proposition */}
       <Section bg="slate-50" className="py-16 border-t border-color-subtle">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-secondary-bg px-4 py-1.5 text-sm font-medium text-secondary-brand mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary-bg px-4 py-1.5 text-sm font-medium text-primary-brand mb-4">
             <CheckCircle className="h-4 w-4" />
             Simple, transparent pricing
           </div>
@@ -96,17 +96,17 @@ export default function Landing() {
         </div>
         <div className="mt-12 grid md:grid-cols-3 gap-8">
           <ValueCard
-            icon={<Smartphone className="h-7 w-7 text-secondary-brand" />}
+            icon={<Smartphone className="h-7 w-7 text-primary-brand" />}
             title="Create in seconds"
             description="Fill in your details and line items. Calculations are automatic and always accurate."
           />
           <ValueCard
-            icon={<Send className="h-7 w-7 text-secondary-brand" />}
+            icon={<Send className="h-7 w-7 text-primary-brand" />}
             title="Send with confidence"
             description="Email invoices with a secure payment link. Customers can pay online in one click."
           />
           <ValueCard
-            icon={<BarChart3 className="h-7 w-7 text-secondary-brand" />}
+            icon={<BarChart3 className="h-7 w-7 text-primary-brand" />}
             title="Get paid faster"
             description="Real-time payment tracking, automatic reminders, and detailed analytics."
           />
@@ -180,9 +180,9 @@ export default function Landing() {
           <div className="flex items-center justify-between">
             <p className="text-tertiary">© 2026 DocForge. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link to="/privacy" className="text-sm text-tertiary hover:text-secondary-brand transition-colors">Privacy</Link>
-              <Link to="/terms" className="text-sm text-tertiary hover:text-secondary-brand transition-colors">Terms</Link>
-              <Link to="/pricing" className="text-sm text-tertiary hover:text-secondary-brand transition-colors">Pricing</Link>
+              <Link to="/privacy" className="text-sm text-tertiary hover:text-primary-brand transition-colors">Privacy</Link>
+              <Link to="/terms" className="text-sm text-tertiary hover:text-primary-brand transition-colors">Terms</Link>
+              <Link to="/pricing" className="text-sm text-tertiary hover:text-primary-brand transition-colors">Pricing</Link>
             </div>
           </div>
         </div>
@@ -198,7 +198,7 @@ function ValueCard({ icon, title, description }: {
 }) {
   return (
     <div className="flex flex-col items-center text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary-bg text-secondary-brand">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-bg text-primary-brand">
         {icon}
       </div>
       <h3 className="text-xl font-semibold text-primary mb-2">{title}</h3>

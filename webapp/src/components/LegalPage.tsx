@@ -16,11 +16,11 @@ export default function LegalPage({ title, children }: LegalPageProps) {
       <SkipLink href="#main-content" />
       <header className="container mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center justify-between h-16 py-4 border-b border-color-subtle">
-          <Link to="/" className="text-xl font-bold tracking-tight text-secondary-brand">DocForge</Link>
+          <Link to="/" className="text-xl font-bold tracking-tight text-primary-brand">DocForge</Link>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/privacy" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Privacy</Link>
-            <Link to="/terms" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Terms</Link>
-            <Link to="/login" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Login</Link>
+            <Link to="/privacy" className="text-sm text-tertiary hover:text-primary-brand dark:hover:text-tertiary">Privacy</Link>
+            <Link to="/terms" className="text-sm text-tertiary hover:text-primary-brand dark:hover:text-tertiary">Terms</Link>
+            <Link to="/login" className="text-sm text-tertiary hover:text-primary-brand dark:hover:text-tertiary">Login</Link>
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Link
@@ -55,9 +55,9 @@ export default function LegalPage({ title, children }: LegalPageProps) {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-tertiary">© {year} DocForge. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link to="/privacy" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Privacy</Link>
-              <Link to="/terms" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Terms</Link>
-              <a href="mailto:support@docforge.app" className="text-sm text-tertiary hover:text-secondary-brand dark:hover:text-tertiary">Contact</a>
+              <Link to="/privacy" className="text-sm text-tertiary hover:text-primary-brand dark:hover:text-tertiary">Privacy</Link>
+              <Link to="/terms" className="text-sm text-tertiary hover:text-primary-brand dark:hover:text-tertiary">Terms</Link>
+              <a href="mailto:support@docforge.app" className="text-sm text-tertiary hover:text-primary-brand dark:hover:text-tertiary">Contact</a>
             </div>
           </div>
         </div>

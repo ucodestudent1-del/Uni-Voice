@@ -14,7 +14,7 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
       --color-text-primary: #0f172a;
       --color-text-secondary: #475569;
       --color-text-tertiary: #94a3a5;
-      --color-brand: #2563eb;
+      --color-brand: #ea5804;
     }
     .header-section { padding-bottom: 24px; border-bottom: 3px solid var(--color-brand); }
     .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }

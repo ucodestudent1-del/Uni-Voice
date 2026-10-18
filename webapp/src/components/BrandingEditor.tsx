@@ -102,13 +102,13 @@ export default function BrandingEditor({ onBrandingChange }: BrandingEditorProps
           label="Primary Color"
           value={draft.primaryColor ?? ""}
           onChange={(e) => updateDraft({ primaryColor: e.target.value })}
-          placeholder="#2563eb"
+          placeholder="#ea5804"
         />
         <FormField
           label="Secondary Color"
           value={draft.secondaryColor ?? ""}
           onChange={(e) => updateDraft({ secondaryColor: e.target.value })}
-          placeholder="#ea5804"
+          placeholder="#2563eb"
         />
       </div>
 

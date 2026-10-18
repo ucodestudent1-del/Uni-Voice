@@ -30,12 +30,12 @@ const ogSvg = Buffer.from(`
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect x="120" y="120" width="180" height="180" rx="24" fill="#2563eb"/>
+  <rect x="120" y="120" width="180" height="180" rx="24" fill="#ea5804"/>
   <path d="M160 200h100M160 260h60M160 320 h30" stroke="white" stroke-width="8" stroke-linecap="round"/>
-  <text x="340" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="700" fill="white">InvoiceFlow</text>
+  <text x="340" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="700" fill="white">DocForge</text>
   <text x="340" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#94a3b8">Professional Invoice Generator</text>
   <text x="340" y="330" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#94a3b8">Create, send, and track invoices in seconds. Free plan available.</text>
-  <text x="340" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#60a5fb">invoiceflow.app</text>
+  <text x="340" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#60a5fb">docforge.app</text>
 </svg>
 `);
 

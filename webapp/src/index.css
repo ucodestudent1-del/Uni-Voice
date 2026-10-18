@@ -47,26 +47,26 @@
     --color-input-placeholder: 100 117 149; /* slate-500 — raised from 400 for AA on white */
     --color-input-disabled: 241 245 249; /* slate-100    */
 
-    /* —— Primary / brand (steel blue — industrial) —— */
-    --color-primary: 37 99 232;           /* blue-600          */
-    --color-primary-hover: 29 78 216;     /* blue-700          */
-    --color-primary-active: 30 62 180;    /* blue-800          */
-    --color-primary-bg: 239 246 255;      /* blue-50 — raised from 100 for AA contrast with blue-600 */
-    --color-primary-bg-strong: 219 233 255; /* blue-100 */
-    --color-primary-text: 30 62 180;      /* blue-800          */
-    --color-primary-text-strong: 29 78 216; /* blue-700       */
-    --color-primary-ring: 37 99 232;     /* blue-600          */
+    /* —— Primary / brand (orange — forge-heated) —— */
+    --color-primary: 234 88 4;             /* orange-600        */
+    --color-primary-hover: 217 67 5;       /* orange-700        */
+    --color-primary-active: 180 83 9;      /* orange-800 — was 180 83 9 (amber-800) */
+    --color-primary-bg: 255 237 217;        /* orange-50         */
+    --color-primary-bg-strong: 255 221 193; /* orange-100       */
+    --color-primary-text: 153 56 6;        /* orange-800        */
+    --color-primary-text-strong: 180 83 9; /* orange-800        */
+    --color-primary-ring: 234 88 4;        /* orange-600        */
     --color-primary-ring-offset: 255 255 255;
 
-    /* —— Secondary / accent (orange — forge-heated steel) —— */
-    --color-secondary: 234 88 4;          /* orange-600        */
-    --color-secondary-hover: 217 67 5;    /* orange-700        */
-    --color-secondary-bg: 255 237 217;     /* orange-50         */
-    --color-secondary-text: 153 56 6;     /* orange-800        */
-    --color-secondary-ring: 234 88 4;     /* orange-600        */
+    /* —— Secondary / accent (steel blue — industrial) —— */
+    --color-secondary: 37 99 232;           /* blue-600          */
+    --color-secondary-hover: 29 78 216;    /* blue-700          */
+    --color-secondary-bg: 239 246 255;      /* blue-50           */
+    --color-secondary-text: 30 62 180;     /* blue-800          */
+    --color-secondary-ring: 37 99 232;     /* blue-600          */
 
     /* —— Focus indicator —— */
-    --color-focus-ring: 37 99 232;        /* blue-600 */
+    --color-focus-ring: 234 88 4;          /* orange-600 */
     --color-focus-ring-offset: 255 255 255;
 
     /* —— Shadows —— */
@@ -152,26 +152,26 @@
     --color-input-placeholder: 148 163 184; /* slate-500 */
     --color-input-disabled: 38 45 62;   /* slate-800      */
 
-    /* —— Primary / brand (steel blue — industrial) —— */
-    --color-primary: 96 165 250;        /* blue-400         */
-    --color-primary-hover: 126 185 255; /* blue-300         */
-    --color-primary-active: 153 193 255;/* blue-200         */
-    --color-primary-bg: 20 45 90;       /* blue-950 — darkened for AA contrast */
-    --color-primary-bg-strong: 23 41 76;/* blue-900          */
-    --color-primary-text: 191 219 254;  /* blue-200          */
-    --color-primary-text-strong: 147 197 253; /* blue-300 */
-    --color-primary-ring: 96 165 250;  /* blue-400          */
+    /* —— Primary / brand (orange — forge-heated) —— */
+    --color-primary: 251 191 21;            /* orange-400        */
+    --color-primary-hover: 253 186 10;     /* orange-300        */
+    --color-primary-active: 251 146 42;    /* orange-500        */
+    --color-primary-bg: 75 34 12;          /* orange-950 — darkened for AA contrast */
+    --color-primary-bg-strong: 94 39 12;   /* orange-900        */
+    --color-primary-text: 252 211 77;      /* orange-300        */
+    --color-primary-text-strong: 253 186 10; /* orange-300      */
+    --color-primary-ring: 251 191 21;      /* orange-400        */
     --color-primary-ring-offset: 15 23 42;
 
-    /* —— Secondary / accent (orange — forge-heated steel) —— */
-    --color-secondary: 251 191 21;      /* orange-400        */
-    --color-secondary-hover: 253 186 10;/* orange-300        */
-    --color-secondary-bg: 75 34 12;     /* orange-950        */
-    --color-secondary-text: 252 211 77; /* orange-300        */
-    --color-secondary-ring: 251 191 21;/* orange-400        */
+    /* —— Secondary / accent (steel blue — industrial) —— */
+    --color-secondary: 96 165 250;          /* blue-400          */
+    --color-secondary-hover: 126 185 255;  /* blue-300          */
+    --color-secondary-bg: 20 45 90;        /* blue-950          */
+    --color-secondary-text: 191 219 254;   /* blue-200          */
+    --color-secondary-ring: 96 165 250;    /* blue-400          */
 
     /* —— Focus indicator —— */
-    --color-focus-ring: 96 165 250;     /* blue-400 */
+    --color-focus-ring: 251 191 21;         /* orange-400 */
     --color-focus-ring-offset: 15 23 42;
 
     /* —— Shadows —— */
@@ -238,32 +238,32 @@
     html:not([data-theme]) {
       color-scheme: dark;
     }
-    html:not([data-theme]) {
-      --color-text: 255 255 255;
-      --color-text-secondary: 203 213 225;
-      --color-text-tertiary: 148 163 184;
-      --color-text-muted: 148 163 184;
-      --color-text-inverse: 15 23 42;
-      --color-text-disabled: 148 163 184;
-      --color-page-bg: 3 7 18;
-      --color-surface: 24 35 54;
-      --color-surface-alt: 31 41 59;
-      --color-border: 44 49 61;
-      --color-border-strong: 71 86 106;
-      --color-border-subtle: 33 45 66;
-      --color-hover: 38 45 62;
-      --color-active: 60 68 86;
-      --color-input-bg: 24 35 54;
-       --color-input-border: 100 117 149;
-       --color-primary: 96 165 250;
-       --color-primary-hover: 126 185 255;
-       --color-primary-active: 153 193 255;
-       --color-primary-bg: 20 45 90;
-       --color-primary-text: 191 219 254;
-       --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.10);
-       --color-overlay: 0 0 0 / 0.6;
-       color-scheme: dark;
-    }
+     html:not([data-theme]) {
+       --color-text: 255 255 255;
+       --color-text-secondary: 203 213 225;
+       --color-text-tertiary: 148 163 184;
+       --color-text-muted: 148 163 184;
+       --color-text-inverse: 15 23 42;
+       --color-text-disabled: 148 163 184;
+       --color-page-bg: 3 7 18;
+       --color-surface: 24 35 54;
+       --color-surface-alt: 31 41 59;
+       --color-border: 44 49 61;
+       --color-border-strong: 71 86 106;
+       --color-border-subtle: 33 45 66;
+       --color-hover: 38 45 62;
+       --color-active: 60 68 86;
+       --color-input-bg: 24 35 54;
+        --color-input-border: 100 117 149;
+        --color-primary: 251 191 21;
+        --color-primary-hover: 253 186 10;
+        --color-primary-active: 251 146 42;
+        --color-primary-bg: 75 34 12;
+        --color-primary-text: 252 211 77;
+        --color-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+        --color-overlay: 0 0 0 / 0.6;
+        color-scheme: dark;
+     }
   }
 
   body {

@@ -16,8 +16,8 @@ describe("BrandingService", () => {
       const branding = await brandingService.get(businessId);
 
       expect(branding.businessId).toBe(businessId);
-      expect(branding.primaryColor).toBe("#2563eb");
-      expect(branding.secondaryColor).toBe("#64748b");
+      expect(branding.primaryColor).toBe("#ea5804");
+      expect(branding.secondaryColor).toBe("#2563eb");
       expect(branding.showLogo).toBe(true);
       expect(branding.showPageNumbers).toBe(true);
       expect(branding.showQrCode).toBe(false);

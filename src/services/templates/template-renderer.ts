@@ -426,8 +426,8 @@ export const DEFAULT_INVOICE_TEMPLATE = `<!DOCTYPE html>
       --color-text-primary: #0f172a;
       --color-text-secondary: #475569;
       --color-text-tertiary: #94a3a5;
-      --color-brand: #2563eb;
-      --color-brand-hover: #1d4ed8;
+      --color-brand: #ea5804;
+      --color-brand-hover: #c24107;
       --color-success: #065f46;
       --color-success-bg: #d1fae5;
       --color-warning: #92400e;
@@ -1059,8 +1059,8 @@ export const DEFAULT_CREDIT_NOTE_TEMPLATE = `<!DOCTYPE html>
       --color-text-primary: #0f172a;
       --color-text-secondary: #475569;
       --color-text-tertiary: #94a3a5;
-      --color-brand: #2563eb;
-      --color-brand-hover: #1d4ed8;
+      --color-brand: #ea5804;
+      --color-brand-hover: #c24107;
       --color-destructive: #dc2626;
       --color-destructive-bg: #fee2e2;
       --color-success: #065f46;
@@ -1533,7 +1533,7 @@ export const DEFAULT_DEBIT_NOTE_TEMPLATE = `<!DOCTYPE html>
       --color-text-primary: #0f172a;
       --color-text-secondary: #475569;
       --color-text-tertiary: #94a3a5;
-      --color-brand: #2563eb;
+      --color-brand: #ea5804;
       --color-destructive: #dc2626;
       --color-destructive-bg: #fee2e2;
       --color-success: #065f46;
@@ -1799,7 +1799,7 @@ export const DEFAULT_PAYMENT_VOUCHER_TEMPLATE = `<!DOCTYPE html>
       --color-text-primary: #0f172a;
       --color-text-secondary: #475569;
       --color-text-tertiary: #94a3a5;
-      --color-brand: #2563eb;
+      --color-brand: #ea5804;
       --color-success: #065f46;
       --color-success-bg: #d1fae5;
       --color-warning: #92400e;
@@ -2029,7 +2029,7 @@ export const DEFAULT_RECEIPT_TEMPLATE = `<!DOCTYPE html>
       --color-text-primary: #0f172a;
       --color-text-secondary: #475569;
       --color-text-tertiary: #94a3a5;
-      --color-brand: #2563eb;
+      --color-brand: #ea5804;
       --color-success: #065f46;
       --color-success-bg: #d1fae5;
       --color-warning: #92400e;
@@ -2335,8 +2335,8 @@ export const DEFAULT_PURCHASE_ORDER_TEMPLATE = `<!DOCTYPE html>
       --color-text-primary: #0f172a;
       --color-text-secondary: #475569;
       --color-text-tertiary: #94a3a5;
-      --color-brand: #2563eb;
-      --color-brand-hover: #1d4ed8;
+      --color-brand: #ea5804;
+      --color-brand-hover: #c24107;
       --color-success: #065f46;
       --color-warning: #92400e;
       --color-warning-bg: #fef3c7;

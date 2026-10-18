@@ -3066,7 +3066,7 @@ const INVOICE_EMAIL_TEMPLATE = `<!DOCTYPE html>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 32px; background: #f8fafc; color: #333; }
     .container { max-width: 640px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .button { display: inline-block; background: #2563eb; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; }
+    .button { display: inline-block; background: #ea5804; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; }
     .muted { color: #666; font-size: 13px; }
   </style>
 </head>
