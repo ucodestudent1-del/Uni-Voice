@@ -2,6 +2,7 @@ import { Decimal } from "decimal.js";
 import { calculationEngine, type InvoiceCalculationInput, type LineItemInput, type FeeInput, type DiscountDefinition, type CalculatedLineItem, type CalculatedFee, type CalculationResult, computeTaxBreakdown } from "../domain/calculation.js";
 import { query, getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
+import { invalidateSpeedCache } from "../services/speed-optimization-service.js";
 import { NotFoundError, BusinessLogicError, ConflictError } from "../domain/errors.js";
 import { invoiceNumberService, creditNoteNumberService } from "../services/invoice-number-service.js";
 import { pdfService } from "../services/pdf/pdf-service.js";
@@ -286,6 +287,8 @@ export class InvoiceService {
 
       await client.query("COMMIT");
 
+      void invalidateSpeedCache(businessId, userId ?? undefined);
+
       // Build response from transaction context instead of redundant findById
       const invoiceRow = invRes.rows[0];
       const children = await this.fetchInvoiceChildren(invoiceId);
@@ -498,6 +501,8 @@ export class InvoiceService {
 
       await client.query("COMMIT");
 
+      void invalidateSpeedCache(businessId, userId ?? undefined);
+
       // Build response from transaction context instead of redundant findById
       const updatedInvoiceRow = await client.query(
         `SELECT i.*,
@@ -618,6 +623,9 @@ export class InvoiceService {
       );
 
       await client.query("COMMIT");
+
+      // Invalidate speed optimization caches (last invoice, quick actions, progressive autofill)
+      void invalidateSpeedCache(invoice.business_id as string, userId ?? undefined);
 
       // Build finalized invoice row from the transaction context
       const finalizedInvoiceRow = {

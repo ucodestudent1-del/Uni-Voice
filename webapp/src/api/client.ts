@@ -1145,8 +1145,8 @@ export async function getVolumeTrendReport(params?: {
   period?: "day" | "week" | "month";
   months?: number;
 }) {
-  const res = await api.get("/reports/volume-trend", { params });
-  return res.data;
+  const res = await cachedGet("/reports/volume-trend", params, { ttlMs: 60 * 1000 });
+  return res;
 }
 
 export async function exportInvoicesJson() {
@@ -1662,13 +1662,11 @@ export interface SpeedQuickActions {
 }
 
 export async function getSuggestedActions(): Promise<SpeedQuickActions> {
-  const res = await api.get("/suggested-actions");
-  return res.data;
+  return cachedGet("/suggested-actions", undefined, { ttlMs: 30 * 1000 });
 }
 
 export async function getProgressiveAutofill(customerId?: string | null): Promise<SpeedAutofillResult> {
-  const res = await api.get("/progressive-autofill", { params: customerId ? { customerId } : undefined });
-  return res.data;
+  return cachedGet("/progressive-autofill", customerId ? { customerId } : undefined, { ttlMs: 60 * 1000 });
 }
 
 export async function parseCommandLine(input: string): Promise<{ parsed: SpeedParsedLineItem }> {

@@ -50,19 +50,6 @@ const CURRENCY_METADATA: Record<string, CurrencyMetadata> = {
   VND: { code: "VND", name: "Vietnamese Đồng", symbol: "₫", decimalPlaces: 0, minorUnitName: "hào", localeKey: "vi-VN" },
 };
 
-export function getCurrencyMetadata(code: string): CurrencyMetadata {
-  const upper = code.toUpperCase();
-  const meta = CURRENCY_METADATA[upper];
-  if (!meta) {
-    throw new Error(`Unsupported currency: ${upper}`);
-  }
-  return meta;
-}
-
-export function getDefaultCurrency(): CurrencyCode {
-  return "USD";
-}
-
 export function formatMoney(amount: Decimal.Value, currency: CurrencyCode, locale?: string): string {
   const meta = getCurrencyMetadata(currency);
   const d = new Decimal(amount);
@@ -74,4 +61,23 @@ export function formatMoney(amount: Decimal.Value, currency: CurrencyCode, local
     minimumFractionDigits: meta.decimalPlaces,
     maximumFractionDigits: meta.decimalPlaces,
   }).format(Number(rounded.toFixed(meta.decimalPlaces)));
+}
+
+const METADATA_CACHE = new Map<string, CurrencyMetadata>();
+
+export function getCurrencyMetadata(code: string): CurrencyMetadata {
+  const upper = code.toUpperCase();
+  let meta = METADATA_CACHE.get(upper);
+  if (!meta) {
+    meta = CURRENCY_METADATA[upper as CurrencyCode];
+    if (!meta) {
+      throw new Error(`Unsupported currency: ${upper}`);
+    }
+    METADATA_CACHE.set(upper, meta);
+  }
+  return meta;
+}
+
+export function getDefaultCurrency(): CurrencyCode {
+  return "USD";
 }

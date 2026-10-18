@@ -1,6 +1,9 @@
 import { Decimal } from "decimal.js";
 import { getCurrencyMetadata, type CurrencyCode } from "@/types/currency";
 
+const ZERO = new Decimal(0);
+const ONE = new Decimal(1);
+
 export type {
   DiscountType,
   DiscountDefinition,
@@ -16,17 +19,17 @@ export type {
 import type { DiscountDefinition, InvoiceCalculationInput, CalculationResult, TaxBreakdownEntry, CalculatedFee, CalculatedLineItem } from "@/types/calculation";
 
 export function discountAmount(discount: DiscountDefinition | undefined, base: Decimal, currency: CurrencyCode): Decimal {
-  if (!discount) return new Decimal(0);
+  if (!discount) return ZERO;
   const meta = getCurrencyMetadata(currency);
-  const d = new Decimal(discount.value);
+  const d = discount.value instanceof Decimal ? discount.value : new Decimal(discount.value);
   let amount: Decimal;
   if (discount.type === "percentage") {
     amount = base.mul(d.div(100));
   } else {
-    amount = new Decimal(d);
+    amount = d;
   }
   if (amount.gt(base)) amount = base;
-  if (amount.isNegative()) amount = new Decimal(0);
+  if (amount.isNegative()) return ZERO;
   return amount.toDecimalPlaces(meta.decimalPlaces, Decimal.ROUND_HALF_UP);
 }
 
@@ -73,9 +76,9 @@ export class CalculationEngine {
       });
     }
 
-    let subtotal = new Decimal(0);
-    let lineDiscountTotal = new Decimal(0);
-    let totalNet = new Decimal(0);
+    let subtotal = ZERO;
+    let lineDiscountTotal = ZERO;
+    let totalNet = ZERO;
 
     for (const li of lineItems) {
       subtotal = subtotal.plus(li.lineSubtotal);
@@ -86,7 +89,7 @@ export class CalculationEngine {
     const invoiceDiscount = discountAmount(input.invoiceDiscount, subtotal.minus(lineDiscountTotal), currency);
     const discountTotal = round(lineDiscountTotal.plus(invoiceDiscount));
 
-    const lineShares = new Array(lineItems.length).fill(new Decimal(0));
+    const lineShares = new Array(lineItems.length).fill(ZERO);
     if (!totalNet.isZero()) {
       for (let i = 0; i < lineItems.length; i++) {
         const net = lineItems[i].lineSubtotal.minus(lineItems[i].discountAmount);
@@ -94,8 +97,8 @@ export class CalculationEngine {
       }
     }
 
-    let taxTotal = new Decimal(0);
-    let total = new Decimal(0);
+    let taxTotal = ZERO;
+    let total = ZERO;
 
     for (let i = 0; i < lineItems.length; i++) {
       const li = lineItems[i];
@@ -103,11 +106,11 @@ export class CalculationEngine {
 
       let taxAmount: Decimal;
 
-      if (li.isTaxInclusive) {
-        if (li.taxRate.isZero() || effectiveTaxable.isZero()) {
-          taxAmount = round(new Decimal(0));
-        } else {
-          const ratio = li.taxRate.div(new Decimal(1).plus(li.taxRate));
+    if (li.isTaxInclusive) {
+         if (li.taxRate.isZero() || effectiveTaxable.isZero()) {
+           taxAmount = round(ZERO);
+         } else {
+           const ratio = li.taxRate.div(ONE.plus(li.taxRate));
           taxAmount = round(effectiveTaxable.mul(ratio));
         }
         const netAmount = round(effectiveTaxable.minus(taxAmount));
@@ -126,7 +129,7 @@ export class CalculationEngine {
     }
 
     const fees: CalculatedFee[] = [];
-    let feeTotal = new Decimal(0);
+    let feeTotal = ZERO;
 
     for (const fee of input.fees ?? []) {
       const feeBase = round(new Decimal(fee.amount));
@@ -149,7 +152,7 @@ export class CalculationEngine {
       total = total.plus(feeLineTotal);
     }
 
-    const amountPaid = round(new Decimal(input.amountPaid ?? 0));
+    const amountPaid = round(input.amountPaid ?? 0);
     if (amountPaid.isNegative()) {
       throw new Error("Amount paid must be >= 0");
     }
@@ -192,38 +195,38 @@ export function computeTaxBreakdown(
   const groups = new Map<string, { rate: Decimal; name: string; taxableAmount: Decimal; taxAmount: Decimal }>();
 
   for (const li of lineItems) {
-    const rate = new Decimal(li.taxRate ?? 0);
+    const rate = li.taxRate instanceof Decimal ? li.taxRate : new Decimal(li.taxRate ?? 0);
     if (rate.isZero()) continue;
     const key = `${rate.toFixed(4)}|${li.tax_name ?? ""}`;
     const existing = groups.get(key);
     if (existing) {
-      existing.taxableAmount = existing.taxableAmount.plus(li.taxableAmount);
-      existing.taxAmount = existing.taxAmount.plus(li.taxAmount);
+      existing.taxableAmount = existing.taxableAmount.plus(li.taxableAmount ?? li.lineSubtotal);
+      existing.taxAmount = existing.taxAmount.plus(li.taxAmount ?? ZERO);
     } else {
       groups.set(key, {
         rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
         name: li.tax_name ?? "",
-        taxableAmount: new Decimal(li.taxableAmount),
-        taxAmount: new Decimal(li.taxAmount),
+        taxableAmount: li.taxableAmount instanceof Decimal ? li.taxableAmount : new Decimal(li.taxableAmount ?? li.lineSubtotal),
+        taxAmount: li.taxAmount instanceof Decimal ? li.taxAmount : new Decimal(li.taxAmount ?? 0),
       });
     }
   }
 
   for (const fee of fees) {
-    const rate = new Decimal(fee.taxRate ?? 0);
+    const rate = fee.taxRate instanceof Decimal ? fee.taxRate : new Decimal(fee.taxRate ?? 0);
     if (rate.isZero()) continue;
     const key = `${rate.toFixed(4)}|${fee.tax_name ?? ""}`;
     const existing = groups.get(key);
-    const feeTaxable = new Decimal(fee.amount);
+    const feeTaxable = fee.amount instanceof Decimal ? fee.amount : new Decimal(fee.amount);
     if (existing) {
       existing.taxableAmount = existing.taxableAmount.plus(feeTaxable);
-      existing.taxAmount = existing.taxAmount.plus(fee.taxAmount);
+      existing.taxAmount = existing.taxAmount.plus(fee.taxAmount ?? ZERO);
     } else {
       groups.set(key, {
         rate: rate.toDecimalPlaces(4, Decimal.ROUND_HALF_UP),
         name: fee.tax_name ?? "",
         taxableAmount: feeTaxable,
-        taxAmount: new Decimal(fee.taxAmount),
+        taxAmount: fee.taxAmount instanceof Decimal ? fee.taxAmount : new Decimal(fee.taxAmount ?? 0),
       });
     }
   }

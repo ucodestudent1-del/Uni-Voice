@@ -1,5 +1,8 @@
 import { query, getClient } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
+import { TtlCache } from "../utils/ttl-cache.js";
+
+const quickActionsCache = new TtlCache<unknown>(30 * 1000);
 
 export interface ParsedLineItem {
   description: string;
@@ -458,7 +461,11 @@ export class SpeedOptimizationService {
   /**
    * Get quick-start actions for the dashboard / new invoice page.
    */
-  async getQuickActions(businessId: string, userId?: string): Promise<QuickActions> {
+   async getQuickActions(businessId: string, userId?: string): Promise<QuickActions> {
+    const cacheKey = `quick-actions:${businessId}:${userId ?? ""}`;
+    const cached = quickActionsCache.get(cacheKey);
+    if (cached) return cached as QuickActions;
+
     try {
       const [lastInvoice, frequentlyInvoiced, recentCustomers, draftInfo] = await Promise.all([
         this.getLastInvoice(businessId),
@@ -467,13 +474,15 @@ export class SpeedOptimizationService {
         this.checkForActiveDraft(businessId, userId),
       ]);
 
-      return {
-        lastInvoice,
-        frequentlyInvoiced,
-        recentCustomers,
-        hasDraft: !!draftInfo,
-        draftInfo,
-      };
+       const result = {
+         lastInvoice,
+         frequentlyInvoiced,
+         recentCustomers,
+         hasDraft: !!draftInfo,
+         draftInfo,
+       };
+       quickActionsCache.set(cacheKey, result);
+       return result;
     } catch (err) {
       logger.warn({ err, businessId }, "Failed to fetch quick actions");
       return {
@@ -490,13 +499,17 @@ export class SpeedOptimizationService {
    * Get progressive autofill values for a new invoice based on context.
    * Priority: recent history → customer defaults → business defaults → industry presets → system defaults
    */
-  async getProgressiveAutofill(
-    businessId: string,
-    customerId?: string | null
-  ): Promise<AutofillResult> {
-    const autofill: AutofillResult = { ...SYSTEM_DEFAULTS };
+   async getProgressiveAutofill(
+     businessId: string,
+     customerId?: string | null
+   ): Promise<AutofillResult> {
+     const cacheKey = `progressive-autofill:${businessId}:${customerId ?? ""}`;
+    const cached = quickActionsCache.get(cacheKey);
+    if (cached) return cached as AutofillResult;
 
-    try {
+     const autofill: AutofillResult = { ...SYSTEM_DEFAULTS };
+
+     try {
       // 1. Business defaults
       const biz = await this.getBusinessDefaults(businessId);
       Object.assign(autofill, biz);
@@ -536,10 +549,11 @@ export class SpeedOptimizationService {
       }
     } catch (err) {
       logger.warn({ err, businessId, customerId }, "Failed progressive autofill");
-    }
+     }
 
-    return autofill;
-  }
+     quickActionsCache.set(cacheKey, autofill);
+     return autofill;
+   }
 
   private async getBusinessDefaults(businessId: string): Promise<Partial<AutofillResult> & { industry?: string }> {
     const res = await query(
@@ -857,3 +871,12 @@ export class SpeedOptimizationService {
 }
 
 export const speedOptimizationService = new SpeedOptimizationService();
+
+export async function invalidateSpeedCache(businessId: string, userId?: string): Promise<void> {
+  quickActionsCache.delete(`quick-actions:${businessId}:${userId ?? ""}`);
+  quickActionsCache.delete(`quick-actions:${businessId}:`);
+  quickActionsCache.delete(`progressive-autofill:${businessId}:`);
+  if (userId) {
+    quickActionsCache.delete(`progressive-autofill:${businessId}:${userId}`);
+  }
+}

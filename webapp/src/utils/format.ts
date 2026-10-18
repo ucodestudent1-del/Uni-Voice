@@ -1,5 +1,7 @@
 import { Decimal } from "decimal.js";
-import { getCurrencyMetadata } from "@/types/currency";
+import { SUPPORTED_CURRENCIES } from "@/types/currency";
+
+const SUPPORTED_CURRENCY_SET = new Set(SUPPORTED_CURRENCIES as readonly string[]);
 
 // Cache Intl.NumberFormat instances per currency/locale to avoid the overhead
 // of constructing a new formatter on every formatCurrency call.
@@ -21,12 +23,7 @@ function getCurrencyFormatter(currency: string, decimalPlaces = 2): Intl.NumberF
 }
 
 function isSupportedCurrency(currency: string): boolean {
-  try {
-    getCurrencyMetadata(currency);
-    return true;
-  } catch {
-    return false;
-  }
+  return SUPPORTED_CURRENCY_SET.has(currency.toUpperCase());
 }
 
 export function formatCurrency(amount: Decimal.Value, currency: string, decimalPlaces = 2): string {

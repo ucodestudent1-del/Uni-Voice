@@ -1014,6 +1014,10 @@ export class ReportsService {
     paid: string;
     count: number;
   }>> {
+    const cacheKey = `volume-trend:${businessId}:${months}:${period}`;
+    const cached = await reportsCache.get(cacheKey);
+    if (cached) return cached;
+
     const dateTrunc = period === "day" ? "day" : period === "week" ? "week" : "month";
     const format = period === "day" ? "YYYY-MM-DD" : period === "week" ? "IYYY-IW" : "YYYY-MM";
     const cutoff = new Date();
@@ -1069,7 +1073,9 @@ export class ReportsService {
       }
     }
 
-    return Array.from(merged.values()).sort((a, b) => a.period.localeCompare(b.period));
+    const result = Array.from(merged.values()).sort((a, b) => a.period.localeCompare(b.period));
+    await reportsCache.set(cacheKey, result);
+    return result;
   }
 
   async getPaymentMetrics(businessId: string, _monthStart: Date): Promise<{
@@ -1081,6 +1087,10 @@ export class ReportsService {
     collectionRate: number;
     paidInvoiceCount: number;
   } | null> {
+    const cacheKey = `payment-metrics:${businessId}`;
+    const cached = await reportsCache.get(cacheKey);
+    if (cached) return cached;
+
     try {
       const res = await query(
         `SELECT
@@ -1107,15 +1117,17 @@ export class ReportsService {
       const totalInvoicedNum = Number(totalInvoiced);
       const collectionRate = totalInvoicedNum > 0 ? Math.round((Number(totalPaid) / totalInvoicedNum) * 100) : 0;
 
-      return {
-        totalInvoiced,
-        totalPaid,
-        totalOutstanding,
-        totalOverdue,
-        averagePaymentTimeDays,
-        collectionRate,
-        paidInvoiceCount,
-      };
+       const result = {
+         totalInvoiced,
+         totalPaid,
+         totalOutstanding,
+         totalOverdue,
+         averagePaymentTimeDays,
+         collectionRate,
+         paidInvoiceCount,
+       };
+       await reportsCache.set(cacheKey, result);
+      return result;
     } catch {
       return null;
     }
