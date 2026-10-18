@@ -710,32 +710,49 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     if (!doc) return;
 
     if (!handler.supportsFinalize) {
-      setSendDialogOpen(true);
+      setIsSending(true);
+      try {
+        const sendResult = await handler.send(doc.id, sendData);
+        const recipient = sendData.to || doc.customer_email || doc.payee_email || "recipient";
+        toast(`${docTypeLabelFn(docType)} sent to ${recipient}.`, { type: "success", title: "Sent" });
+        setSendDialogOpen(false);
+      } catch (err: any) {
+        toast(err.message, { type: "error", title: "Send failed" });
+      } finally {
+        setIsSending(false);
+      }
       return;
     }
 
     setIsFinalizing(true);
     try {
-      const result = await handler.finalize(doc.id);
-      setDocument(result.document);
+      const finalizeResult = await handler.finalize(doc.id);
+      const finalizedDoc = finalizeResult.document;
+      setDocument(finalizedDoc);
       setSaveState("idle");
-      toast(`${docTypeLabelFn(docType)} #${result.documentNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
-      setSendDialogOpen(true);
+      toast(`${docTypeLabelFn(docType)} #${finalizeResult.documentNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
+
+      if (handler.supportsSend) {
+        setIsSending(true);
+        try {
+          const sendResult = await handler.send(finalizedDoc.id ?? doc.id, sendData);
+          const recipient = sendData.to || finalizedDoc.customer_email || finalizedDoc.payee_email || doc.customer_email || doc.payee_email || "recipient";
+          toast(`${docTypeLabelFn(docType)} sent to ${recipient}.`, { type: "success", title: "Sent" });
+          setSendDialogOpen(false);
+        } catch (err: any) {
+          toast(err.message, { type: "error", title: "Send failed" });
+        } finally {
+          setIsSending(false);
+        }
+      } else {
+        setSendDialogOpen(true);
+      }
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Finalize failed" });
     } finally {
       setIsFinalizing(false);
     }
-  }, [document, docType, handler, toast]);
-
-  const handleSend = useCallback(async () => {
-    if (isNew && !document) {
-      await doSave();
-    }
-    const doc = document as any;
-    if (!doc || doc.is_finalized) return;
-    setSendDialogOpen(true);
-  }, [document, isNew, doSave]);
+  }, [document, docType, handler, sendData, toast]);
 
   const confirmSend = useCallback(async () => {
     const doc = document as any;
