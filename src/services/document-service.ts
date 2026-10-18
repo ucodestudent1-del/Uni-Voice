@@ -90,7 +90,7 @@ export class DocumentService {
     docType: DocumentTypeKey,
     businessId: string,
     docId: string,
-    input: Record<string, unknown>,
+    _input: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     const handler = this.getHandler(docType);
     if (handler.toTemplateData) {

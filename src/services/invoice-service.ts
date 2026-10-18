@@ -9,7 +9,7 @@ import { pdfService } from "../services/pdf/pdf-service.js";
 import { enqueuePdfGeneration } from "../services/pdf-job-service.js";
 import { emailService } from "../services/email/email-service.js";
 import { stripeService } from "../services/payments/stripe-service.js";
-import { buildDocumentTemplateData, buildTemplateData, buildCreditNoteData, type UnifiedBuildInvoiceInput, type InvoiceTemplateData, type CreditNoteTemplateData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE, fetchCustomerSnapshot } from "../services/templates/template-renderer.js";
+import { buildDocumentTemplateData, buildCreditNoteData, type UnifiedBuildInvoiceInput, type InvoiceTemplateData, type CreditNoteTemplateData, type TemplateLineItem, type TemplateFee, type TemplateBusiness, type TemplateCustomer, type TemplatePaymentInstructions, templateRenderer, DEFAULT_CREDIT_NOTE_TEMPLATE, fetchCustomerSnapshot } from "../services/templates/template-renderer.js";
 import { getCurrencyMetadata, type CurrencyCode } from "../domain/value-objects/currency.js";
 import Handlebars from "handlebars";
 import crypto from "node:crypto";

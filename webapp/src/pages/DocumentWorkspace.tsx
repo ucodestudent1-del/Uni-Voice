@@ -1,20 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import type { DragEndEvent } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { useNavigate, useParams } from "react-router-dom";
+
 import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
 import { SUPPORTED_CURRENCIES, getCurrencyMetadata } from "@/types/currency";
@@ -31,7 +17,6 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  Trash2,
 } from "lucide-react";
 import { Decimal } from "decimal.js";
 import DocumentPreview from "@/components/DocumentPreview";
@@ -65,8 +50,6 @@ import {
   getProgressiveAutofill,
   parseCommandLine,
   type SpeedQuickActions,
-  type SpeedParsedLineItem,
-  type SpeedLastInvoiceInfo,
   type SpeedAutofillResult,
 } from "@/api/client";
 import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
@@ -155,7 +138,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   });
 
   const { id } = useParams<{ id?: string }>();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const isNew = !id || id === "new";
@@ -228,14 +210,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
   const isFinalized = document?.is_finalized ?? false;
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-   useEffect(() => {
+  useEffect(() => {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
     getBusiness().then((d) => setBusiness(d.business ?? d)).catch(() => {});
     getTaxRates().then((d) => setTaxRates(d.taxRates ?? d.rates ?? [])).catch(() => {});
@@ -407,11 +382,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       return null;
     }
   }, [calcInput, calcEngine]);
-
-  const effectiveReason = useMemo(
-    () => (docType === "credit-note" && state.reason === "other" ? state.customReason : state.reason),
-    [docType, state.reason, state.customReason]
-  );
 
   function hasUnsavedChanges(): boolean {
     if (isNew) return true;
@@ -712,7 +682,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     if (!handler.supportsFinalize) {
       setIsSending(true);
       try {
-        const sendResult = await handler.send(doc.id, sendData);
+        await handler.send(doc.id, sendData);
         const recipient = sendData.to || doc.customer_email || doc.payee_email || "recipient";
         toast(`${docTypeLabelFn(docType)} sent to ${recipient}.`, { type: "success", title: "Sent" });
         setSendDialogOpen(false);
@@ -735,7 +705,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       if (handler.supportsSend) {
         setIsSending(true);
         try {
-          const sendResult = await handler.send(finalizedDoc.id ?? doc.id, sendData);
+          await handler.send(finalizedDoc.id ?? doc.id, sendData);
           const recipient = sendData.to || finalizedDoc.customer_email || finalizedDoc.payee_email || doc.customer_email || doc.payee_email || "recipient";
           toast(`${docTypeLabelFn(docType)} sent to ${recipient}.`, { type: "success", title: "Sent" });
           setSendDialogOpen(false);
@@ -766,7 +736,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
     setIsSending(true);
     try {
-      const result = await handler.send(doc.id, sendData);
+      await handler.send(doc.id, sendData);
       const recipient = sendData.to || doc.customer_email || doc.payee_email || "recipient";
       toast(`${docTypeLabelFn(docType)} sent to ${recipient}.`, { type: "success", title: "Sent" });
       setSendDialogOpen(false);
@@ -1005,18 +975,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       ...prev,
       fees: prev.fees.map((fee, i) => (i === idx ? { ...fee, [field]: value } : fee)),
     }));
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      const oldIndex = Number(String(active.id).replace("item-", ""));
-      const newIndex = Number(String(over.id).replace("item-", ""));
-      setState((prev) => ({
-        ...prev,
-        items: arrayMove(prev.items, oldIndex, newIndex),
-      }));
-    }
   };
 
   const handleApplyProduct = (itemIdx: number, product: ApiProduct) => {

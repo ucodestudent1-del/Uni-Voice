@@ -1,17 +1,12 @@
 import {
   InvoiceDocument,
-  AnyComponent,
-  ComponentId,
   ComponentType,
   ParentId,
   StyleProps,
   createEmptyDocument,
-  createComponent,
   UUID,
-  makeUUID,
 } from "./types";
-import { DocumentBuilder, insertComponent } from "./document-operations";
-import { getComponentDefinition } from "./registry";
+import { DocumentBuilder } from "./document-operations";
 import type { ApiInvoice, ApiCustomer, ApiBusiness, ApiPurchaseOrder } from "../types/api";
 import type { ApiReceipt } from "../api/client";
 
@@ -44,10 +39,6 @@ export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, cu
   });
 
   insert("spacer", { height: 16 });
-
-  const headerRowId = `row_${makeUUID()}`;
-  const headerCompanyColId = `col_${makeUUID()}`;
-  const headerInvoiceColId = `col_${makeUUID()}`;
 
   builder.insertComponent({
     type: "row",
@@ -148,8 +139,6 @@ export function invoiceToDocument(invoice: ApiInvoice, business: ApiBusiness, cu
 
   insert("spacer", { height: 16 });
 
-  const totalsRowParent = currentParent;
-  const totalsRowId = `row_${makeUUID()}`;
   builder.insertComponent({
     type: "row",
     parentId: currentParent,
@@ -259,9 +248,6 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
   });
   insert("spacer", { height: 16 });
 
-  const rowId = `row_${makeUUID()}`;
-  const col1 = `col_${makeUUID()}`;
-  const col2 = `col_${makeUUID()}`;
   builder.insertComponent({
     type: "row",
     parentId: doc.rootSectionId,
@@ -418,13 +404,13 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
   return builder.document;
 }
 
-export function documentToInvoice(doc: InvoiceDocument, existingInvoice?: Partial<any>): any {
+export function documentToInvoice(doc: InvoiceDocument, _existingInvoice?: Partial<any>): any {
   return {
     currency: doc.settings.currency,
     notes: getComponentProp(doc, "notes", "content"),
     terms: getComponentProp(doc, "terms", "content"),
     paymentInstructions: getComponentProp(doc, "paymentInstructions", "content"),
-    templateId: existingInvoice?.templateId || undefined,
+    templateId: _existingInvoice?.templateId || undefined,
   };
 }
 
@@ -434,7 +420,7 @@ function getComponentProp(doc: InvoiceDocument, type: ComponentType, propName: s
   return (component.props as Record<string, unknown>)[propName] as string | undefined;
 }
 
-export function receiptToDocument(receipt: ApiReceipt, business: ApiBusiness, customer?: ApiCustomer): InvoiceDocument {
+export function receiptToDocument(receipt: ApiReceipt, business: ApiBusiness, _customer?: ApiCustomer): InvoiceDocument {
   const doc = createEmptyDocument(receipt.business_id as UUID, "Receipt");
   const builder = new DocumentBuilder(doc);
   const currentParent: ParentId = doc.rootSectionId;

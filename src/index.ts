@@ -268,10 +268,10 @@ documentService.registerHandler("payment-voucher", {
 });
 
 documentService.registerHandler("purchase-order", {
-  toTemplateData: async (businessId: string, docId: string) => {
+  toTemplateData: async (_businessId: string, _docId: string) => {
     throw new NotFoundError("Purchase order document support not yet implemented");
   },
-  generatePdf: async (businessId: string, docId: string) => {
+  generatePdf: async (_businessId: string, _docId: string) => {
     throw new NotFoundError("Purchase order document support not yet implemented");
   },
 });

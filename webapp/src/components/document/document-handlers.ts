@@ -455,7 +455,7 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     update: async () => {
       throw new Error("Receipts cannot be updated");
     },
-    finalize: async (id) => {
+    finalize: async () => {
       throw new Error("Receipts are already finalized when issued");
     },
     send: async (id, data) => {
