@@ -71,7 +71,7 @@ function parseDevHeaders(req: Request): { id: string; businessId?: string; email
   };
 }
 
-export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   if (isDev && env.AUTH_MODE === "dev") {
     const devUser = parseDevHeaders(req);
     if (devUser) {
@@ -106,19 +106,17 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
     return;
   }
 
-  try {
-    const revoked = await isAccessTokenRevoked(token);
+  isAccessTokenRevoked(token).then((revoked) => {
     if (revoked) {
-      throw new UnauthorizedError("Token has been revoked");
+      return next(new UnauthorizedError("Token has been revoked"));
     }
-
     req.user = {
       id: decoded.userId,
       businessId: decoded.businessId,
       email: decoded.email,
     };
     next();
-  } catch (err) {
+  }).catch((err) => {
     if (err instanceof UnauthorizedError) {
       next(err);
     } else {
@@ -130,7 +128,7 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
       };
       next();
     }
-  }
+  });
 }
 
 export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): void {

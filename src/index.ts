@@ -275,8 +275,11 @@ app.use((req, res, next) => {
   res.on("finish", done);
   res.on("close", done);
   runWithRequestContext(() => next(), requestId).catch((err) => {
+    const errorDetails = err instanceof Error
+      ? { name: err.name, message: err.message, stack: err.stack }
+      : String(err);
     logger.error(
-      { err, requestId, url: req.url, method: req.method },
+      { err: errorDetails, requestId, url: req.url, method: req.method },
       "Unhandled error in request pipeline",
     );
     if (!res.headersSent) {
@@ -698,44 +701,50 @@ app.post("/api/auth/refresh", async (req: AuthRequest, res) => {
     return res.status(401).json({ error: "Refresh token required" });
   }
 
-  const result = await consumeRefreshToken(
-    refreshToken,
-    req.ip,
-    req.get("user-agent") || undefined,
-  );
+  try {
+    const result = await consumeRefreshToken(
+      refreshToken,
+      req.ip,
+      req.get("user-agent") || undefined,
+    );
 
-  if (!result) {
-    clearRefreshTokenCookie(res);
-    return res.status(401).json({ error: "Invalid or expired refresh token" });
-  }
+    if (!result) {
+      clearRefreshTokenCookie(res);
+      return res.status(401).json({ error: "Invalid or expired refresh token" });
+    }
 
-  const { userId } = result;
-  const userRes = await query(
-    "SELECT id, email FROM users WHERE id = $1",
-    [userId],
-  );
-  if (!userRes.rows.length) {
-    clearRefreshTokenCookie(res);
-    return res.status(401).json({ error: "User not found" });
-  }
+    const { userId } = result;
+    const userRes = await query(
+      "SELECT id, email FROM users WHERE id = $1",
+      [userId],
+    );
+    if (!userRes.rows.length) {
+      clearRefreshTokenCookie(res);
+      return res.status(401).json({ error: "User not found" });
+    }
 
-  const user = userRes.rows[0];
-  const subResult = await query(
-    "SELECT id AS business_id FROM businesses WHERE owner_id = $1 LIMIT 1",
-    [user.id],
-  );
-  const businessId = subResult.rows[0]?.business_id;
+    const user = userRes.rows[0];
+    const subResult = await query(
+      "SELECT id AS business_id FROM businesses WHERE owner_id = $1 LIMIT 1",
+      [user.id],
+    );
+    const businessId = subResult.rows[0]?.business_id;
 
-  const { accessToken, refreshToken: newRefreshToken } = await generateTokenPair({
-    userId: user.id,
-    businessId,
-    email: user.email,
-  });
-   setRefreshTokenCookie(res, newRefreshToken);
-   setAccessTokenCookie(res, accessToken);
+    const { accessToken, refreshToken: newRefreshToken } = await generateTokenPair({
+      userId: user.id,
+      businessId,
+      email: user.email,
+    });
+    setRefreshTokenCookie(res, newRefreshToken);
+    setAccessTokenCookie(res, accessToken);
 
     res.json({ user: { id: user.id, businessId, email: user.email, role: businessId ? "owner" : null } });
- });
+  } catch (err) {
+    logger.error({ err, requestId: req.headers["x-request-id"] }, "Token refresh failed");
+    clearRefreshTokenCookie(res);
+    return res.status(401).json({ error: "Session expired. Please sign in again." });
+  }
+});
 
   app.post("/api/auth/logout", async (req: AuthRequest, res) => {
     const accessToken = req.cookies?.accessToken || (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : null);
