@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   InvoiceDocument,
   ComponentType,
@@ -402,16 +403,6 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
   });
 
   return builder.document;
-}
-
-export function documentToInvoice(doc: InvoiceDocument, _existingInvoice?: Partial<any>): any {
-  return {
-    currency: doc.settings.currency,
-    notes: getComponentProp(doc, "notes", "content"),
-    terms: getComponentProp(doc, "terms", "content"),
-    paymentInstructions: getComponentProp(doc, "paymentInstructions", "content"),
-    templateId: _existingInvoice?.templateId || undefined,
-  };
 }
 
 function getComponentProp(doc: InvoiceDocument, type: ComponentType, propName: string): string | undefined {

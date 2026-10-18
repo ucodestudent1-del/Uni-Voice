@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+﻿/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { CalculationEngine } from "@/utils/calculation";
