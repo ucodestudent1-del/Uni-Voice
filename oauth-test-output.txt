@@ -1,0 +1,198 @@
+﻿node.exe : npm notice run universal-invoice-generator@1.0.0 npx
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\New User\AppData\Roami ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run ...rator@1.0.0 npx:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run tests/google-oauth.test.ts
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/New User/Desktop/New folder[39m
+
+[16:50:59.809] [32mINFO[39m (11668): [36mConnected to Redis — distributed cache active[39m
+[16:51:01.451] [32mINFO[39m (11668): [36mDropped 92 tables (rollback)[39m
+Slow query (1505ms): 
+    CREATE TABLE IF NOT EXISTS migrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NO
+[16:51:03.631] [32mINFO[39m (11668): [36mApplied migration: 001_initial_schema.sql[39m
+[16:51:03.776] [32mINFO[39m (11668): [36mApplied migration: 002_customers_enhancements.sql[39m
+[16:51:03.835] [32mINFO[39m (11668): [36mApplied migration: 002_discounts_and_types.sql[39m
+[16:51:03.975] [32mINFO[39m (11668): [36mApplied migration: 003_plans_and_subscriptions.sql[39m
+[16:51:03.989] [32mINFO[39m (11668): [36mApplied migration: 004_users.sql[39m
+[16:51:04.013] [32mINFO[39m (11668): [36mApplied migration: 005_users_2fa.sql[39m
+[16:51:04.023] [32mINFO[39m (11668): [36mApplied migration: 006_google_oauth.sql[39m
+[16:51:04.040] [32mINFO[39m (11668): [36mApplied migration: 007_onboarding.sql[39m
+[16:51:04.083] [32mINFO[39m (11668): [36mApplied migration: 008_document_composition.sql[39m
+[16:51:04.088] [32mINFO[39m (11668): [36mApplied migration: 009_document_templates.sql[39m
+[16:51:04.169] [32mINFO[39m (11668): [36mApplied migration: 010_invoice_templates_lifecycle.sql[39m
+[16:51:04.205] [32mINFO[39m (11668): [36mApplied migration: 010_product_service_catalog.sql[39m
+[16:51:04.255] [32mINFO[39m (11668): [36mApplied migration: 011_invoice_reminders_and_payments.sql[39m
+[16:51:04.351] [32mINFO[39m (11668): [36mApplied migration: 012_projects.sql[39m
+[16:51:04.364] [32mINFO[39m (11668): [36mApplied migration: 012_user_sessions.sql[39m
+[16:51:04.606] [32mINFO[39m (11668): [36mApplied migration: 013_invoice_lifecycle.sql[39m
+[16:51:04.666] [32mINFO[39m (11668): [36mApplied migration: 014_project_time_tracking.sql[39m
+[16:51:04.675] [32mINFO[39m (11668): [36mApplied migration: 015_document_template_type.sql[39m
+[16:51:04.683] [32mINFO[39m (11668): [36mApplied migration: 016_business_reminder_settings.sql[39m
+[16:51:04.697] [32mINFO[39m (11668): [36mApplied migration: 018_invoice_perf_indexes.sql[39m
+[16:51:04.710] [32mINFO[39m (11668): [36mApplied migration: 019_receipts_and_indexes.sql[39m
+[16:51:04.770] [32mINFO[39m (11668): [36mApplied migration: 020_team_access.sql[39m
+[16:51:04.782] [32mINFO[39m (11668): [36mApplied migration: 021_quote_number_sequences.sql[39m
+[16:51:04.786] [32mINFO[39m (11668): [36mApplied migration: 022_payment_events_idempotency.sql[39m
+[16:51:04.802] [32mINFO[39m (11668): [36mApplied migration: 023_quote_schema.sql[39m
+[16:51:04.805] [32mINFO[39m (11668): [36mApplied migration: 024_invoice_list_indexes.sql[39m
+[16:51:04.807] [32mINFO[39m (11668): [36mApplied migration: 025_default_invoice_terms.sql[39m
+[16:51:04.819] [32mINFO[39m (11668): [36mApplied migration: 026_performance_indexes.sql[39m
+[16:51:04.822] [32mINFO[39m (11668): [36mApplied migration: 027_tax_report_index.sql[39m
+[16:51:04.839] [32mINFO[39m (11668): [36mApplied migration: 028_additional_perf_indexes.sql[39m
+[16:51:04.843] [32mINFO[39m (11668): [36mApplied migration: 029_quote_perf_indexes.sql[39m
+[16:51:04.865] [32mINFO[39m (11668): [36mApplied migration: 030_pdf_cache_and_indexes.sql[39m
+[16:51:04.877] [32mINFO[39m (11668): [36mApplied migration: 031_performance_optimizations.sql[39m
+[16:51:04.922] [32mINFO[39m (11668): [36mApplied migration: 033_invoice_late_fee.sql[39m
+[16:51:04.924] [32mINFO[39m (11668): [36mApplied migration: 035_credit_note_pdf_cache.sql[39m
+[16:51:05.010] [32mINFO[39m (11668): [36mApplied migration: 036_simplify_plans.sql[39m
+[16:51:05.053] [32mINFO[39m (11668): [36mApplied migration: 037_speed_optimization_tables.sql[39m
+[16:51:05.067] [32mINFO[39m (11668): [36mApplied migration: 040_payment_risk_scoring.sql[39m
+[16:51:05.082] [32mINFO[39m (11668): [36mApplied migration: 041_invoice_attachments.sql[39m
+[16:51:05.102] [32mINFO[39m (11668): [36mApplied migration: 042_quote_deposit_fields.sql[39m
+[16:51:05.105] [32mINFO[39m (11668): [36mApplied migration: 043_business_quote_validity.sql[39m
+[16:51:05.109] [32mINFO[39m (11668): [36mApplied migration: 044_quote_content_fields.sql[39m
+[16:51:05.111] [32mINFO[39m (11668): [36mApplied migration: 045_quote_status_viewed.sql[39m
+[16:51:05.120] [32mINFO[39m (11668): [36mApplied migration: 046_credit_note_fees_table.sql[39m
+[16:51:05.122] [32mINFO[39m (11668): [36mApplied migration: 047_credit_note_status_applied.sql[39m
+[16:51:05.123] [32mINFO[39m (11668): [36mApplied migration: 048_credit_note_internal_notes.sql[39m
+[16:51:05.135] [32mINFO[39m (11668): [36mApplied migration: 049_quote_events_table.sql[39m
+[16:51:05.137] [32mINFO[39m (11668): [36mApplied migration: 050_quote_internal_notes.sql[39m
+[16:51:05.138] [32mINFO[39m (11668): [36mApplied migration: 051_invoice_po_number.sql[39m
+[16:51:05.166] [32mINFO[39m (11668): [36mApplied migration: 052_invoice_discount_shipping.sql[39m
+[16:51:05.168] [32mINFO[39m (11668): [36mApplied migration: 053_add_viewed_to_quote_status_enum.sql[39m
+[16:51:05.171] [32mINFO[39m (11668): [36mApplied migration: 054_credit_note_status_extends.sql[39m
+[16:51:05.174] [32mINFO[39m (11668): [36mApplied migration: 055_business_payment_instructions.sql[39m
+[16:51:05.178] [32mINFO[39m (11668): [36mApplied migration: 055_credit_note_public_token.sql[39m
+[16:51:05.184] [32mINFO[39m (11668): [36mApplied migration: 056_invoice_tax_name_and_numbering.sql[39m
+[16:51:05.186] [32mINFO[39m (11668): [36mApplied migration: 057_quote_version_and_converted.sql[39m
+[16:51:05.189] [32mINFO[39m (11668): [36mApplied migration: 058_quote_numbering_config.sql[39m
+[16:51:05.194] [32mINFO[39m (11668): [36mApplied migration: 059_quote_schema_completeness.sql[39m
+[16:51:05.198] [32mINFO[39m (11668): [36mApplied migration: 060_document_template_types_credit_note_quote.sql[39m
+[16:51:05.211] [32mINFO[39m (11668): [36mApplied migration: 061_credit_note_events.sql[39m
+[16:51:05.295] [32mINFO[39m (11668): [36mApplied migration: 061_invoice_generator_schema.sql[39m
+[16:51:05.302] [32mINFO[39m (11668): [36mApplied migration: 062_credit_note_application_method_index.sql[39m
+[16:51:05.306] [32mINFO[39m (11668): [36mApplied migration: 063_quote_missing_columns.sql[39m
+[16:51:05.311] [32mINFO[39m (11668): [36mApplied migration: 064_quote_missing_columns_v2.sql[39m
+[16:51:05.322] [32mINFO[39m (11668): [36mApplied migration: 065_refresh_tokens.sql[39m
+[16:51:05.437] [32mINFO[39m (11668): [36mApplied migration: 066_payment_vouchers_debit_notes.sql[39m
+[16:51:05.453] [32mINFO[39m (11668): [36mApplied migration: 067_sms_log.sql[39m
+[16:51:05.453] [32mINFO[39m (11668): [36mCompleted 67 migrations[39m
+[16:51:06.315] [32mINFO[39m (13404): [36mConnected to Redis — distributed cache active[39m
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2misEnabled[2m > 
+[22m[2mreturns false when Google OAuth is not configured
+[22m[39mSlow query (1367ms): SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE 
+'pg_%' AND tablen
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2misEnabled[2m > 
+[22m[2mreturns false when Google OAuth is not configured
+[22m[39mSlow query (1292ms): TRUNCATE TABLE "products", "invoice_number_sequences", "businesses", "templates", 
+"business_settings
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2misEnabled[2m > 
+[22m[2mreturns true when both client ID and secret are configured
+[22m[39mSlow query (1380ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2misEnabled[2m > 
+[22m[2mreturns false when only client ID is set
+[22m[39mSlow query (1820ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mgenerateAuthUrl[2m > 
+[22m[2mthrows when Google OAuth is not configured
+[22m[39mSlow query (2743ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mgenerateAuthUrl[2m > 
+[22m[2mgenerates a valid auth URL with correct parameters
+[22m[39mSlow query (1919ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mgenerateAuthUrl[2m > 
+[22m[2mderives the callback from APP_PUBLIC_BASE_URL when no explicit callback is set
+[22m[39mSlow query (1600ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mgenerateAuthUrl[2m > 
+[22m[2muses the Railway public domain in production when APP_PUBLIC_BASE_URL is unset
+[22m[39mSlow query (1488ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mhandleCallback[2m > 
+[22m[2mcreates a new user when none exists for the Google email
+[22m[39mSlow query (1626ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[16:51:26.033] [32mINFO[39m (13404): [36mCreated new user via Google OAuth[39m
+    [35muserId[39m: "8f2aebcc-9905-4a3e-ae25-b61a26ebff9b"
+    [35mgoogleId[39m: "google-user-123"
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mhandleCallback[2m > 
+[22m[2mlinks Google identity to an existing password-based user
+[22m[39mSlow query (2000ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[16:51:28.745] [32mINFO[39m (13404): [36mLinked Google OAuth identity to existing user[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mhandleCallback[2m > 
+[22m[2mpreserves existing business when linking Google to a password user
+[22m[39mSlow query (1533ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[16:51:31.383] [32mINFO[39m (13404): [36mLinked Google OAuth identity to existing user[39m
+    [35muserId[39m: "11111111-1111-1111-1111-111111111111"
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mhandleCallback[2m > 
+[22m[2mthrows when Google token exchange fails
+[22m[39mSlow query (2117ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[16:51:34.164] [31mERROR[39m (13404): [36mGoogle token exchange failed[39m
+    [35mstatus[39m: 400
+    [35mbody[39m: "{\"error\":\"invalid_grant\"}"
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mhandleCallback[2m > 
+[22m[2mthrows when email is not verified
+[22m[39mSlow query (1960ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mhandleCallback[2m > 
+[22m[2mthrows when OAuth is not configured
+[22m[39mSlow query (3374ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[90mstderr[2m | tests/google-oauth.test.ts[2m > [22m[2mOAuthService[2m > [22m[2mhandleCallback[2m > 
+[22m[2mgenerates a valid JWT token with correct payload for new users
+[22m[39mSlow query (2571ms): TRUNCATE TABLE "invoice_number_sequences", "products", "businesses", "invoice_fees", 
+"invoice_items"
+
+[16:51:43.382] [32mINFO[39m (13404): [36mCreated new user via Google OAuth[39m
+    [35muserId[39m: "6f8c9fcb-59ae-4a87-89aa-9658b0c69f83"
+    [35mgoogleId[39m: "google-user-123"
+ [32m✓[39m tests/google-oauth.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 36989[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22misEnabled[2m > [22mreturns false when Google OAuth is not configured [33m 3797[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22misEnabled[2m > [22mreturns true when both client ID and secret are configured [33m 1655[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22misEnabled[2m > [22mreturns false when only client ID is set [33m 2536[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mgenerateAuthUrl[2m > [22mthrows when Google OAuth is not configured [33m 2971[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mgenerateAuthUrl[2m > [22mgenerates a valid auth URL with correct parameters [33m 2532[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mgenerateAuthUrl[2m > [22mderives the callback from APP_PUBLIC_BASE_URL when no explicit callback is set [33m 1843[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mgenerateAuthUrl[2m > [22muses the Railway public domain in production when APP_PUBLIC_BASE_URL is unset [33m 1739[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mhandleCallback[2m > [22mcreates a new user when none exists for the Google email [33m 2572[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mhandleCallback[2m > [22mlinks Google identity to an existing password-based user [33m 3089[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mhandleCallback[2m > [22mpreserves existing business when linking Google to a password user [33m 2698[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mhandleCallback[2m > [22mthrows when Google token exchange fails [33m 2324[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mhandleCallback[2m > [22mthrows when email is not verified [33m 2217[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mhandleCallback[2m > [22mthrows when OAuth is not configured [33m 3594[2mms[22m[39m
+   [33m[2m✓[22m[39m OAuthService[2m > [22mhandleCallback[2m > [22mgenerates a valid JWT token with correct payload for new users [33m 3419[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m14 passed[39m[22m[90m (14)[39m
+[2m   Start at [22m 16:50:59
+[2m   Duration [22m 44.18s[2m (transform 449ms, setup 0ms, collect 473ms, tests 36.99s, environment 0ms, prepare 161ms)[22m
+
+close timed out after 10000ms
+Tests closed successfully but something prevents Vite server from exiting
+You can try to identify the cause by enabling "hanging-process" reporter. See https://vitest.dev/config/#reporters

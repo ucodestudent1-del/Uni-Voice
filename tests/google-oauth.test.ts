@@ -69,6 +69,14 @@ describe("OAuthService", () => {
     delete process.env.GOOGLE_CLIENT_ID;
     delete process.env.GOOGLE_CLIENT_SECRET;
     delete process.env.GOOGLE_CALLBACK_URL;
+    delete process.env.APP_ENV;
+    delete process.env.AUTH_MODE;
+    delete process.env.AUTH_JWT_SECRET;
+    delete process.env.REDIS_URL;
+    delete process.env.EMAIL_PROVIDER;
+    delete process.env.PAYMENT_PROVIDER;
+    delete process.env.STRIPE_SECRET_KEY;
+    delete process.env.STRIPE_WEBHOOK_SECRET;
   });
 
   describe("isEnabled", () => {
