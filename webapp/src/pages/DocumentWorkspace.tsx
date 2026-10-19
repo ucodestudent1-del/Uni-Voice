@@ -43,6 +43,7 @@ import {
   getProducts,
   getInvoices,
   sendReminder,
+  createDocumentPreset,
   type ApiInvoiceListItem,
   type CreateInvoiceInput,
   type CreateQuoteInput,
@@ -56,6 +57,7 @@ import {
   type SpeedAutofillResult,
 } from "@/api/client";
 import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
+import { PresetSelector } from "@/components/document";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -927,9 +929,57 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     } finally {
       setIsParsingCommand(false);
     }
-  };
+   };
 
-  const handleUseLastInvoice = () => {
+   const handleApplyPreset = (data: Record<string, unknown>) => {
+     setState((prev) => ({
+       ...prev,
+       customerId: (data.customerId as string) ?? prev.customerId,
+       currency: (data.currency as string) ?? prev.currency,
+       issueDate: (data.issueDate as string) ?? prev.issueDate,
+       dueDate: (data.dueDate as string) ?? prev.dueDate,
+       notes: (data.notes as string) ?? prev.notes,
+       terms: (data.terms as string) ?? prev.terms,
+       paymentInstructions: (data.paymentInstructions as string) ?? prev.paymentInstructions,
+       paymentTerms: (data.paymentTerms as string) ?? prev.paymentTerms,
+       poNumber: (data.poNumber as string) ?? prev.poNumber,
+       items: (data.items as DocumentLineItem[]) ?? prev.items,
+       fees: (data.fees as DocumentFee[]) ?? prev.fees,
+       invoiceDiscount: (data.invoiceDiscount as string) ?? prev.invoiceDiscount,
+       invoiceDiscountType: (data.invoiceDiscountType as "fixed" | "percentage") ?? prev.invoiceDiscountType,
+       scopeOfWork: (data.scopeOfWork as string) ?? prev.scopeOfWork,
+       internalNotes: (data.internalNotes as string) ?? prev.internalNotes,
+       quoteDiscount: (data.quoteDiscount as string) ?? prev.quoteDiscount,
+       quoteDiscountType: (data.quoteDiscountType as "fixed" | "percentage") ?? prev.quoteDiscountType,
+       expiryDate: (data.expiryDate as string) ?? prev.expiryDate,
+       reason: (data.reason as string) ?? prev.reason,
+       referenceInvoiceId: (data.referenceInvoiceId as string) ?? prev.referenceInvoiceId,
+       referenceInvoiceNumber: (data.referenceInvoiceNumber as string) ?? prev.referenceInvoiceNumber,
+       shippingDescription: (data.shippingDescription as string) ?? prev.shippingDescription,
+       shippingAmount: (data.shippingAmount as string) ?? prev.shippingAmount,
+       shippingTaxRate: (data.shippingTaxRate as string) ?? prev.shippingTaxRate,
+       voucherDate: (data.voucherDate as string) ?? prev.voucherDate,
+       payeeName: (data.payeeName as string) ?? prev.payeeName,
+       payeeEmail: (data.payeeEmail as string) ?? prev.payeeEmail,
+       payeePhone: (data.payeePhone as string) ?? prev.payeePhone,
+       payeeTaxId: (data.payeeTaxId as string) ?? prev.payeeTaxId,
+       referenceNumber: (data.referenceNumber as string) ?? prev.referenceNumber,
+       paymentMethod: (data.paymentMethod as string) ?? prev.paymentMethod,
+       paymentProvider: (data.paymentProvider as string) ?? prev.paymentProvider,
+       receiptAmount: (data.receiptAmount as string) ?? prev.receiptAmount,
+       receiptPaymentMethod: (data.receiptPaymentMethod as string) ?? prev.receiptPaymentMethod,
+       receiptPaymentProvider: (data.receiptPaymentProvider as string) ?? prev.receiptPaymentProvider,
+       receiptProviderPaymentId: (data.receiptProviderPaymentId as string) ?? prev.receiptProviderPaymentId,
+       receiptIssuedAt: (data.receiptIssuedAt as string) ?? prev.receiptIssuedAt,
+       supplierName: (data.supplierName as string) ?? prev.supplierName,
+       supplierEmail: (data.supplierEmail as string) ?? prev.supplierEmail,
+       supplierPhone: (data.supplierPhone as string) ?? prev.supplierPhone,
+       supplierTaxId: (data.supplierTaxId as string) ?? prev.supplierTaxId,
+        deliveryDate: (data.deliveryDate as string) ?? prev.deliveryDate,
+      }));
+   };
+
+   const handleUseLastInvoice = () => {
     if (!quickActions?.lastInvoice) return;
     const last = quickActions.lastInvoice;
     setState((prev) => ({
@@ -1126,11 +1176,19 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                  ]
                : [{ label: handler.pluralLabel, to: `/app/${handler.routePrefix}` }]
            }
-         primaryAction={
-           <div className="flex items-center gap-3">
-             {!isNew && document && (
-               <StatusBadge status={document.status} config={statusConfig} />
-             )}
+          primaryAction={
+            <div className="flex items-center gap-3">
+              {!isNew && document && (
+                <StatusBadge status={document.status} config={statusConfig} />
+              )}
+              {!isFinalized && isNew && workflowStep === "edit" && (
+                <PresetSelector
+                  docType={docType}
+                  onApply={handleApplyPreset}
+                  currentData={state}
+                  disabled={false}
+                />
+              )}
              <div className="flex items-center gap-2 text-sm">
                {saveState === "saving" && (
                  <>
@@ -1206,15 +1264,40 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                </>
              ) : (
                <>
-                 <Button
-                   variant="ghost"
-                   icon={<Save className="h-4 w-4" />}
-                   onClick={doSave}
-                   disabled={saveState === "saving"}
-                   loading={saveState === "saving"}
-                 >
-                   Save Draft
-                 </Button>
+                  <Button
+                    variant="ghost"
+                    icon={<Save className="h-4 w-4" />}
+                    onClick={doSave}
+                    disabled={saveState === "saving"}
+                    loading={saveState === "saving"}
+                  >
+                    Save Draft
+                  </Button>
+                  {!isFinalized && (
+                    <Button
+                      variant="ghost"
+                      icon={<Copy className="h-4 w-4" />}
+                      onClick={() => {
+                        const saveName = prompt("Save as preset", "");
+                        if (saveName) {
+                          createDocumentPreset({
+                            name: saveName,
+                            description: undefined,
+                            documentType: docType,
+                             data: state as unknown as Record<string, unknown>,
+                          }).then(() => {
+                            toast("Preset saved!");
+                          }).catch(() => {
+                            toast("Failed to save preset", { type: "error" });
+                          });
+                        }
+                      }}
+                      size="sm"
+                      title="Save current state as a preset"
+                    >
+                      Save as Preset
+                    </Button>
+                  )}
                  <Button
                    variant="primary"
                    icon={<Eye className="h-4 w-4" />}

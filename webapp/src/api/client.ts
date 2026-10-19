@@ -2592,3 +2592,95 @@ export async function getPurchaseOrderEvents(
 export async function getReceipt(id: string): Promise<{ receipt: ApiReceipt }> {
   return getReceiptById(id);
 }
+
+// ============================================================================
+// DOCUMENT PRESETS (pre-filled creation templates)
+// ============================================================================
+
+export interface ApiDocumentPreset {
+  id: string;
+  business_id: string;
+  name: string;
+  description: string | null;
+  document_type: string;
+  data: Record<string, unknown>;
+  is_default: boolean;
+  is_active: boolean;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DocumentPresetListParams {
+  limit?: number;
+  offset?: number;
+  documentType?: string;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export async function getDocumentPresets(
+  params?: DocumentPresetListParams,
+): Promise<{ presets: ApiDocumentPreset[]; limit: number; offset: number }> {
+  const res = await api.get("/document-presets", { params });
+  return res.data;
+}
+
+export async function getDefaultDocumentPreset(
+  documentType?: string,
+): Promise<{ preset: ApiDocumentPreset | null }> {
+  const res = await api.get("/document-presets/default", { params: documentType ? { documentType } : {} });
+  return res.data;
+}
+
+export async function getDocumentPreset(id: string): Promise<{ preset: ApiDocumentPreset }> {
+  const res = await api.get(`/document-presets/${id}`);
+  return res.data;
+}
+
+export async function createDocumentPreset(data: {
+  name: string;
+  description?: string | null;
+  documentType?: string;
+  data: Record<string, unknown>;
+  isDefault?: boolean;
+  isActive?: boolean;
+}): Promise<{ preset: ApiDocumentPreset }> {
+  const res = await api.post("/document-presets", data);
+  return res.data;
+}
+
+export async function updateDocumentPreset(
+  id: string,
+  data: Partial<{
+    name: string;
+    description: string | null;
+    documentType: string;
+    data: Record<string, unknown>;
+    isDefault: boolean;
+    isActive: boolean;
+  }>,
+): Promise<{ preset: ApiDocumentPreset }> {
+  const res = await api.patch(`/document-presets/${id}`, data);
+  return res.data;
+}
+
+export async function deleteDocumentPreset(id: string): Promise<void> {
+  await api.delete(`/document-presets/${id}`);
+}
+
+export async function setDefaultDocumentPreset(
+  id: string,
+  documentType?: string,
+): Promise<{ preset: ApiDocumentPreset }> {
+  const res = await api.post(`/document-presets/${id}/set-default`, {}, {
+    params: documentType ? { documentType } : {},
+  });
+  return res.data;
+}
+
+export async function duplicateDocumentPreset(id: string): Promise<{ preset: ApiDocumentPreset }> {
+  const res = await api.post(`/document-presets/${id}/duplicate`);
+  return res.data;
+}

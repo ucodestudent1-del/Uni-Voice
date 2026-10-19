@@ -81,6 +81,7 @@ import { customerRepository } from "./repositories/customer.repo.js";
 import { receiptRepository } from "./repositories/receipt.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { documentTemplateRepository } from "./repositories/document-template.repo.js";
+import { documentPresetRepository } from "./repositories/document-preset.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
 import { onboardingRepository } from "./repositories/onboarding.repo.js";
 import { onboardingService } from "./services/onboarding.service.js";
@@ -91,6 +92,11 @@ import {
   DocumentTemplateInputSchema,
   DocumentTemplateUpdateSchema,
 } from "./domain/schemas/document-template.js";
+import {
+  DocumentPresetInputSchema,
+  DocumentPresetUpdateSchema,
+  type FindManyPresetOptions,
+} from "./domain/schemas/document-preset.js";
 import {
   ProjectCreateSchema,
   ProjectUpdateSchema,
@@ -4012,6 +4018,186 @@ app.post(
       req.params.id,
     );
     res.json({ template });
+  },
+);
+
+// ============================================================================
+// DOCUMENT PRESETS (pre-filled creation templates)
+// ============================================================================
+app.get(
+  "/api/document-presets",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    const limit = Math.min(Number(req.query.limit ?? 50), 200);
+    const offset = Number(req.query.offset ?? 0);
+    const documentType = req.query.documentType ? String(req.query.documentType) : undefined;
+    const isDefault =
+      req.query.isDefault !== undefined
+        ? Boolean(req.query.isDefault)
+        : undefined;
+    const isActive =
+      req.query.isActive !== undefined
+        ? Boolean(req.query.isActive)
+        : undefined;
+    const opts: FindManyPresetOptions = {
+      limit,
+      offset,
+      ...(documentType ? { documentType } : {}),
+      ...(isDefault !== undefined ? { isDefault } : {}),
+      ...(isActive !== undefined ? { isActive } : {}),
+    };
+    const presets = await documentPresetRepository.findMany(req.user!.businessId, opts);
+    res.json({ presets, limit, offset });
+  },
+);
+
+app.post(
+  "/api/document-presets",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    const parsed = DocumentPresetInputSchema.parse(req.body);
+    const preset = await documentPresetRepository.create(
+      req.user!.businessId,
+      {
+        name: parsed.name,
+        description: parsed.description ?? null,
+        documentType: parsed.documentType,
+        data: parsed.data as Record<string, unknown>,
+        isDefault: parsed.isDefault,
+        isActive: parsed.isActive,
+      },
+      req.user!.id,
+    );
+    res.status(201).json({ preset });
+  },
+);
+
+app.get(
+  "/api/document-presets/default",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    const documentType = req.query.documentType ? String(req.query.documentType) : undefined;
+    const preset = documentType
+      ? await documentPresetRepository.findDefault(req.user!.businessId, documentType)
+      : await documentPresetRepository.findDefault(req.user!.businessId);
+    res.json({ preset });
+  },
+);
+
+app.get(
+  "/api/document-presets/:id",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const preset = await documentPresetRepository.findById(
+        req.user!.businessId,
+        req.params.id,
+      );
+      res.json({ preset });
+    } catch (e) {
+      res.status(404).json({ error: "Preset not found" });
+    }
+  },
+);
+
+app.patch(
+  "/api/document-presets/:id",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    const parsed = DocumentPresetUpdateSchema.parse(req.body);
+    try {
+      const preset = await documentPresetRepository.update(
+        req.user!.businessId,
+        req.params.id,
+        {
+          name: parsed.name,
+          description: parsed.description,
+          documentType: parsed.documentType,
+          data: parsed.data,
+          isDefault: parsed.isDefault,
+          isActive: parsed.isActive,
+        },
+        req.user!.id,
+      );
+      res.json({ preset });
+    } catch (e) {
+      res.status(404).json({ error: "Preset not found" });
+    }
+  },
+);
+
+app.delete(
+  "/api/document-presets/:id",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      await documentPresetRepository.delete(req.user!.businessId, req.params.id);
+      res.status(204).send();
+    } catch (e) {
+      res.status(404).json({ error: "Preset not found" });
+    }
+  },
+);
+
+app.post(
+  "/api/document-presets/:id/set-default",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    const documentType = req.query.documentType ? String(req.query.documentType) : undefined;
+    try {
+      const preset = await documentPresetRepository.setDefault(
+        req.user!.businessId,
+        req.params.id,
+        documentType,
+      );
+      res.json({ preset });
+    } catch (e) {
+      res.status(404).json({ error: "Preset not found" });
+    }
+  },
+);
+
+app.post(
+  "/api/document-presets/:id/duplicate",
+  requireAuth,
+  async (req: AuthRequest, res) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const original = await documentPresetRepository.findById(
+        req.user!.businessId,
+        req.params.id,
+      );
+      const preset = await documentPresetRepository.create(
+        req.user!.businessId,
+        {
+          name: `${original.name} (Copy)`,
+          description: original.description ?? null,
+          documentType: original.documentType,
+          data: original.data,
+          isDefault: false,
+          isActive: original.isActive,
+        },
+        req.user!.id,
+      );
+      res.status(201).json({ preset });
+    } catch (e) {
+      res.status(404).json({ error: "Preset not found" });
+    }
   },
 );
 

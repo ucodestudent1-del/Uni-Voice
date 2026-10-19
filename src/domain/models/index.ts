@@ -444,6 +444,21 @@ export interface InvoiceTemplateWithRevisions extends InvoiceTemplate {
   revisions: InvoiceTemplateRevision[];
 }
 
+export interface DocumentPreset {
+  id: string;
+  businessId: string;
+  name: string;
+  description?: string | null;
+  documentType: string;
+  data: Record<string, unknown>;
+  isDefault: boolean;
+  isActive: boolean;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "archived";
 
 export interface ProjectTag {
