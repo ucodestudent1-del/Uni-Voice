@@ -85,7 +85,7 @@ export function SmartDefaultsBar({
 
         {business?.logoUrl && (
           <div className="flex items-center gap-2">
-            <img src={business.logoUrl} alt={business.name} className="h-6 w-auto" />
+            <img src={business.logoUrl} alt={business.name} loading="lazy" className="h-6 w-auto" />
             <span className="text-tertiary">Logo from business settings</span>
           </div>
         )}

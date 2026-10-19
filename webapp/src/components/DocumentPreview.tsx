@@ -176,7 +176,7 @@ export default function DocumentPreview({
           <div className="flex justify-between items-start mb-6 pb-4 border-b border-color">
             <div className="flex items-start gap-3">
               {business?.logoUrl && (
-                <img src={business.logoUrl} alt={business.name} className="h-12 w-12 object-contain rounded" />
+                <img src={business.logoUrl} alt={business.name} loading="lazy" className="h-12 w-12 object-contain rounded" />
               )}
               <div>
                 <div className="font-bold text-lg text-primary">{business?.legalName || business?.name}</div>

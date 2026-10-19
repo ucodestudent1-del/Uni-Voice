@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +11,7 @@ import {
 import { getDashboardData, getVolumeTrendReport } from "../api/client";
 import type { ApiDashboardData } from "../types/api";
 import { KPICard, Skeleton } from "@/components/ui";
-import RevenueChart from "../components/dashboard/RevenueChart";
+const RevenueChart = lazy(() => import("../components/dashboard/RevenueChart"));
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { formatCurrencyValue } from "@/lib/utils";
 import { Button } from "../components/ui/Button";
@@ -182,7 +182,9 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <RevenueChart currency={currency} />
+          <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+            <RevenueChart currency={currency} />
+          </Suspense>
         </div>
       </div>
     </div>

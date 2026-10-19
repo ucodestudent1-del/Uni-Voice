@@ -8,6 +8,7 @@ import {
   exportCustomersCsv,
   type CustomerSearchParams,
 } from "../api/client";
+import { useDebouncedCallback } from "../hooks/useDebouncedCallback";
 import FeatureGate from "../components/FeatureGate";
 import UpgradePrompt from "../components/UpgradePrompt";
 import CustomerStatusBadge from "../components/CustomerStatusBadge";
@@ -154,6 +155,10 @@ export default function Customers() {
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
   const [search, setSearch] = useState("");
+  const debouncedSetSearch = useDebouncedCallback((value: string) => {
+    setSearch(value);
+    setOffset(0);
+  }, 300);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -347,9 +352,9 @@ export default function Customers() {
            <div className="lg:col-span-4">
                  <label className="filter-label-secondary">Search</label>
                  <div className="relative">
-                   <SearchInput
-                     value={search}
-                     onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
+                    <SearchInput
+                      value={search}
+                      onChange={(e) => debouncedSetSearch(e.target.value)}
                      placeholder="Name, email, or company"
                    />
                  </div>

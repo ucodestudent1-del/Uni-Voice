@@ -1712,7 +1712,7 @@ function registerBusinessInfoComponent() {
           {business && (
             <div className="space-y-1">
               {showLogo && business.logoUrl && (
-                <img src={business.logoUrl} alt={business.name} className="h-12 w-auto mb-2" />
+                <img src={business.logoUrl} alt={business.name} loading="lazy" className="h-12 w-auto mb-2" />
               )}
               {showName && business.name && <p className="text-xl font-bold text-primary">{business.name}</p>}
               {showEmail && business.email && <p className="text-sm text-secondary">{business.email}</p>}

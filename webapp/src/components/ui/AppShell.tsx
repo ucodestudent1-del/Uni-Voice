@@ -96,7 +96,7 @@ export function TopBar({
               aria-haspopup="menu"
             >
               {user.avatar ? (
-                <img src={user.avatar} alt={user.name} className="h-7 w-7 rounded-full object-cover" />
+                <img src={user.avatar} alt={user.name} loading="lazy" className="h-7 w-7 rounded-full object-cover" />
               ) : (
                 <User className="h-6 w-6" />
               )}

@@ -310,7 +310,7 @@ export default function BusinessProfileSettings() {
           <FormField label="Business Logo" description="Upload or paste a logo URL.">
             <div className="flex flex-col items-center gap-3">
               {form.logoUrl ? (
-                <img src={form.logoUrl} alt="Business logo" className="h-24 w-24 rounded-lg border border-color-subtle object-cover" />
+                <img src={form.logoUrl} alt="Business logo" loading="lazy" className="h-24 w-24 rounded-lg border border-color-subtle object-cover" />
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed border-color-subtle text-tertiary">
                   <span className="text-xs">No logo</span>
