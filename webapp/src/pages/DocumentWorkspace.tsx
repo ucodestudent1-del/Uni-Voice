@@ -18,6 +18,8 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  ArrowLeft,
+  Eye,
 } from "lucide-react";
 import { Decimal } from "decimal.js";
 import DocumentPreview from "@/components/DocumentPreview";
@@ -203,7 +205,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     quoteDiscountType: "fixed",
   });
 
-  const [mobileView, setMobileView] = useState<"editor" | "preview">("editor");
+  const [workflowStep, setWorkflowStep] = useState<"edit" | "preview">("edit");
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -211,6 +213,13 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   const lastSavedStateRef = useRef<DocumentState | null>(null);
 
   const isFinalized = document?.is_finalized ?? false;
+
+  useEffect(() => {
+    if (isFinalized && !isNew) {
+      setWorkflowStep("preview");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFinalized, isNew]);
 
   useEffect(() => {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
@@ -612,13 +621,18 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   useKeyboardShortcuts({
     enabled: !isFinalized,
     onSave: () => doSave(),
-    onFinalize: () => !isFinalizing && handleFinalize(),
+    onFinalize: () => !isFinalizing && (workflowStep === "edit" ? handleProceedToPreview() : handleFinalize()),
     onSend: () => !isSending && (document?.is_finalized ? setSendDialogOpen(true) : handleFinalizeAndSend()),
     onAddItem: () => handleAddItem(),
     onAddFee: () => handleAddFee(),
     onFocusSearch: () => {
-      if (!isFinalized && isNew && commandBarInputRef.current) {
+      if (!isFinalized && isNew && workflowStep === "edit" && commandBarInputRef.current) {
         commandBarInputRef.current.focus();
+      }
+    },
+    onTogglePreview: () => {
+      if (!isFinalized) {
+        setWorkflowStep(workflowStep === "edit" ? "preview" : "edit");
       }
     },
   });
@@ -644,11 +658,12 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       return;
     }
 
-    setIsFinalizing(true);
+     setIsFinalizing(true);
     try {
       const result = await handler.finalize(doc.id);
       setDocument(result.document);
       setSaveState("idle");
+      setWorkflowStep("preview");
       toast(`${docTypeLabelFn(docType)} #${result.documentNumber ?? ""} finalized.`, { type: "success", title: "Finalized" });
     } catch (err: any) {
       toast(err.message, { type: "error", title: "Finalize failed" });
@@ -1077,666 +1092,766 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     );
   }
 
+  const handleProceedToPreview = useCallback(async () => {
+    const issues = validateDocument();
+    const errors = issues.filter((i) => i.severity === "error");
+    if (errors.length > 0) {
+      setValidationDialogOpen(true);
+      return;
+    }
+
+    if (isNew && !document) {
+      await doSave();
+    }
+
+    if (isNew && !document) {
+      return;
+    }
+
+    setWorkflowStep("preview");
+  }, [document, isNew, doSave]);
+
+  const handleBackToEdit = useCallback(() => {
+    setWorkflowStep("edit");
+  }, []);
+
   return (
     <div className="page-container h-[calc(100vh-4rem)] flex flex-col">
        <PageHeader
-         title={getDocumentTitle()}
-          breadcrumbs={
-            !isNew
-              ? [
-                  { label: handler.pluralLabel, to: `/app/${handler.routePrefix}` },
-                ]
-              : [{ label: handler.pluralLabel, to: `/app/${handler.routePrefix}` }]
-          }
-        primaryAction={
-          <div className="flex items-center gap-3">
-            {!isNew && document && (
-              <StatusBadge status={document.status} config={statusConfig} />
-            )}
-            <div className="flex items-center gap-2 text-sm">
-              {saveState === "saving" && (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin text-info" />
-                  <span className="text-tertiary">Saving…</span>
-                </>
-              )}
-              {saveState === "saved" && (
-                <>
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="text-tertiary">Saved</span>
-                </>
-              )}
-              {saveState === "error" && (
-                <>
-                  <AlertCircle className="h-4 w-4 text-error" />
-                  <span className="text-error">Save failed</span>
-                </>
-              )}
-            </div>
-            {isFinalized && !isNew ? (
-              <>
-                {handler.formConfig.isInvoice && (
-                  <Button
-                    variant="ghost"
-                    icon={<Bell className="h-4 w-4" />}
-                    onClick={handleSendReminder}
-                    size="sm"
-                  >
-                    Send Reminder
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  icon={<Copy className="h-4 w-4" />}
-                  onClick={handleDuplicate}
-                  size="sm"
-                  disabled={!handler.supportsDuplicate}
-                >
-                  Duplicate
-                </Button>
-                <Button
-                  variant="primary"
-                  icon={<Send className="h-4 w-4" />}
-                  onClick={() => setSendDialogOpen(true)}
-                  disabled={isSending || !handler.supportsSend}
-                  loading={isSending}
-                >
-                  Send
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  icon={<Save className="h-4 w-4" />}
-                  onClick={doSave}
-                  disabled={saveState === "saving"}
-                  loading={saveState === "saving"}
-                >
-                  Save Draft
-                </Button>
-                <Button
-                  variant="primary"
-                  icon={<FileText className="h-4 w-4" />}
-                  onClick={handleFinalizeAndSend}
-                  disabled={isFinalizing}
-                  loading={isFinalizing}
-                >
-                  {isNew ? "Create & Send" : "Review & Send"}
-                </Button>
-              </>
-            )}
-          </div>
-        }
-       />
-
-       {/* Command bar + quick actions — only for new/draft documents */}
-       {!isFinalized && isNew && (
-         <div className="px-6 py-4 border-b border-color bg-surface-alt space-y-3">
-           <div className="flex gap-2">
-             <div className="flex-1 relative">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
-               <input
-                 ref={commandBarInputRef}
-                 type="text"
-                 placeholder='Type a line item: "3 x Logo design @ $150" or "Drain repair — 1 hr @ $120/hr"'
-                 value={commandBarValue}
-                 onChange={(e) => setCommandBarValue(e.target.value)}
-                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCommandBarParse(); } }}
-                 className="w-full pl-10 pr-3 py-2 border border-color rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-               />
-               {isParsingCommand && (
-                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-tertiary" />
+          title={getDocumentTitle()}
+           breadcrumbs={
+             !isNew
+               ? [
+                   { label: handler.pluralLabel, to: `/app/${handler.routePrefix}` },
+                 ]
+               : [{ label: handler.pluralLabel, to: `/app/${handler.routePrefix}` }]
+           }
+         primaryAction={
+           <div className="flex items-center gap-3">
+             {!isNew && document && (
+               <StatusBadge status={document.status} config={statusConfig} />
+             )}
+             <div className="flex items-center gap-2 text-sm">
+               {saveState === "saving" && (
+                 <>
+                   <Loader2 className="h-4 w-4 animate-spin text-info" />
+                   <span className="text-tertiary">Saving…</span>
+                 </>
+               )}
+               {saveState === "saved" && (
+                 <>
+                   <CheckCircle className="h-4 w-4 text-success" />
+                   <span className="text-tertiary">Saved</span>
+                 </>
+               )}
+               {saveState === "error" && (
+                 <>
+                   <AlertCircle className="h-4 w-4 text-error" />
+                   <span className="text-error">Save failed</span>
+                 </>
                )}
              </div>
-             <Button
-               variant="ghost"
-               size="sm"
-               icon={<Plus className="h-4 w-4" />}
-               onClick={handleAddItem}
-               disabled={isParsingCommand}
-             >
-               Add Line
-             </Button>
-           </div>
-
-           {/* Frequently invoiced item chips */}
-           {quickActions?.frequentlyInvoiced && quickActions.frequentlyInvoiced.length > 0 && (
-             <div className="flex flex-wrap gap-2">
-               <span className="text-xs text-tertiary">Frequently used:</span>
-               {quickActions.frequentlyInvoiced.slice(0, 6).map((fi) => (
-                 <button
-                   key={fi.id ?? fi.name}
-                   type="button"
-                   onClick={() => {
-                     const newItem: DocumentLineItem = {
-                       description: fi.name,
-                       quantity: "1",
-                       unit: fi.unit,
-                       unitPrice: fi.unitPrice,
-                       taxRate: fi.taxRate,
-                       taxName: "",
-                       isTaxInclusive: false,
-                       discount: "0",
-                       discountType: "fixed",
-                       productId: fi.id ?? null,
-                       isOptional: false,
-                     };
-                     setState((prev) => ({
-                       ...prev,
-                       items: [...prev.items, newItem],
-                     }));
-                   }}
-                   className="px-3 py-1 text-xs rounded-md bg-surface border border-color hover:bg-surface-alt transition-colors"
+             {workflowStep === "preview" ? (
+               <>
+                 <Button
+                   variant="ghost"
+                   icon={<ArrowLeft className="h-4 w-4" />}
+                   onClick={handleBackToEdit}
+                   size="sm"
                  >
-                   {fi.name} — {fi.unitPrice}
-                 </button>
-               ))}
-             </div>
-           )}
-
-           {/* Use last invoice quick action */}
-           {quickActions?.lastInvoice && (
-             <button
-               type="button"
-               onClick={handleUseLastInvoice}
-               className="text-xs text-primary hover:underline flex items-center gap-1"
-             >
-               <Copy className="h-3 w-3" />
-               Use last invoice for {quickActions.lastInvoice.customer?.name ?? "this customer"}
-             </button>
-           )}
-         </div>
-       )}
-
-        <div className="flex-1 overflow-hidden">
-         {/* Mobile tab toggle — hidden on desktop */}
-         <div className="lg:hidden flex border-b border-color bg-surface">
-           <button
-             onClick={() => setMobileView("editor")}
-             className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 ${
-               mobileView === "editor"
-                 ? "border-primary text-primary"
-                 : "border-transparent text-tertiary hover:text-primary"
-             }`}
-             aria-label="Edit document"
-           >
-             Edit
-           </button>
-           <button
-             onClick={() => setMobileView("preview")}
-             className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 ${
-               mobileView === "preview"
-                 ? "border-primary text-primary"
-                 : "border-transparent text-tertiary hover:text-primary"
-             }`}
-             aria-label="Preview document"
-           >
-             Preview
-           </button>
-         </div>
-
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-8rem)] overflow-hidden">
-           {/* Editor column — hidden on mobile when preview is active */}
-           <div className={`overflow-y-auto space-y-6 pr-2 ${mobileView === "preview" ? "hidden lg:block" : "block"}`}>
-             <SectionCard title={handler.formConfig.isPaymentVoucher ? "Payee" : handler.formConfig.showsSupplierSection ? "Supplier" : "Customer"}>
-                <div className="p-5 space-y-3">
-                  {handler.formConfig.isPaymentVoucher ? (
+                   Back to Edit
+                 </Button>
+                 {isFinalized ? (
                    <>
-                     <FormField
-                       label="Payee Name"
-                       placeholder="Payee name"
-                       value={state.payeeName ?? ""}
-                       onChange={(e) => setState((prev) => ({ ...prev, payeeName: e.target.value }))}
-                       disabled={isFinalized}
-                     />
-                     <div className="grid grid-cols-2 gap-4">
-                       <FormField
-                         label="Email"
-                         type="email"
-                         placeholder="payee@example.com"
-                         value={state.payeeEmail ?? ""}
-                         onChange={(e) => setState((prev) => ({ ...prev, payeeEmail: e.target.value }))}
-                         disabled={isFinalized}
-                       />
-                       <FormField
-                         label="Phone"
-                         placeholder="+1 (555) 123-4567"
-                         value={state.payeePhone ?? ""}
-                         onChange={(e) => setState((prev) => ({ ...prev, payeePhone: e.target.value }))}
-                         disabled={isFinalized}
-                       />
-                     </div>
+                     {handler.formConfig.isInvoice && (
+                       <Button
+                         variant="ghost"
+                         icon={<Bell className="h-4 w-4" />}
+                         onClick={handleSendReminder}
+                         size="sm"
+                       >
+                         Send Reminder
+                       </Button>
+                     )}
+                     <Button
+                       variant="ghost"
+                       icon={<Copy className="h-4 w-4" />}
+                       onClick={handleDuplicate}
+                       size="sm"
+                       disabled={!handler.supportsDuplicate}
+                     >
+                       Duplicate
+                     </Button>
+                     <Button
+                       variant="primary"
+                       icon={<Send className="h-4 w-4" />}
+                       onClick={() => setSendDialogOpen(true)}
+                       disabled={isSending || !handler.supportsSend}
+                       loading={isSending}
+                     >
+                       Send
+                     </Button>
                    </>
                  ) : (
-                   <FormField
-                     label="Customer"
-                     select
-                     value={state.customerId}
-                     onChange={(e) => {
-                       const val = e.target.value;
-                       if (val === "__new__") {
-                         setNewCustomerDialogOpen(true);
-                       } else {
-                         setState((prev) => ({ ...prev, customerId: val }));
-                       }
-                     }}
-                     disabled={isFinalized}
-                     helperText={customerName !== "Select a customer" ? customerName : undefined}
+                   <Button
+                     variant="primary"
+                     icon={<FileText className="h-4 w-4" />}
+                     onClick={handleFinalizeAndSend}
+                     disabled={isFinalizing || !handler.supportsFinalize}
+                     loading={isFinalizing}
                    >
-                     <option value="">Select a customer</option>
-                     {customers.map((c) => (
-                       <option key={c.id} value={c.id}>
-                         {c.name ?? c.email ?? c.id}
-                       </option>
-                     ))}
-                     <option value="__new__" className="font-medium text-primary">
-                       + Add new customer…
-                     </option>
-                   </FormField>
+                     Finalize & Send
+                   </Button>
                  )}
-               </div>
-             </SectionCard>
+               </>
+             ) : (
+               <>
+                 <Button
+                   variant="ghost"
+                   icon={<Save className="h-4 w-4" />}
+                   onClick={doSave}
+                   disabled={saveState === "saving"}
+                   loading={saveState === "saving"}
+                 >
+                   Save Draft
+                 </Button>
+                 <Button
+                   variant="primary"
+                   icon={<Eye className="h-4 w-4" />}
+                   onClick={handleProceedToPreview}
+                   disabled={isFinalizing}
+                 >
+                   {isNew ? "Create & Review" : "Review & Send"}
+                 </Button>
+               </>
+             )}
+           </div>
+         }
+        />
 
-            <SectionCard title="Document Details">
-              <div className="p-5 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    label="Currency"
-                    select
-                    value={state.currency}
-                    onChange={(e) => setState((prev) => ({ ...prev, currency: e.target.value }))}
-                    disabled={isFinalized}
+       {workflowStep === "preview" && (
+         <div className="px-6 py-3 border-b border-color bg-surface-alt">
+           <div className="flex items-center gap-3 text-sm">
+              <div
+                className="px-3 py-1 rounded-md text-xs font-medium text-tertiary"
+              >
+                1. Edit
+              </div>
+             <div className="flex-1 h-px bg-color-subtle" />
+             <div
+               className={`px-3 py-1 rounded-md text-xs font-medium ${
+                 workflowStep === "preview"
+                   ? "bg-primary-bg text-primary-brand"
+                   : "text-tertiary"
+               }`}
+             >
+               2. Review & Send
+             </div>
+           </div>
+         </div>
+        )}
+
+        {/* Command bar + quick actions — only for new/draft documents in edit step */}
+        {!isFinalized && isNew && workflowStep === "edit" && (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
+                <input
+                  ref={commandBarInputRef}
+                  type="text"
+                  placeholder='Type a line item: "3 x Logo design @ $150" or "Drain repair — 1 hr @ $120/hr"'
+                  value={commandBarValue}
+                  onChange={(e) => setCommandBarValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCommandBarParse(); } }}
+                  className="w-full pl-10 pr-3 py-2 border border-color rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                />
+                {isParsingCommand && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-tertiary" />
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Plus className="h-4 w-4" />}
+                onClick={handleAddItem}
+                disabled={isParsingCommand}
+              >
+                Add Line
+              </Button>
+            </div>
+
+            {/* Frequently invoiced item chips */}
+            {quickActions?.frequentlyInvoiced && quickActions.frequentlyInvoiced.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-tertiary">Frequently used:</span>
+                {quickActions.frequentlyInvoiced.slice(0, 6).map((fi) => (
+                  <button
+                    key={fi.id ?? fi.name}
+                    type="button"
+                    onClick={() => {
+                      const newItem: DocumentLineItem = {
+                        description: fi.name,
+                        quantity: "1",
+                        unit: fi.unit,
+                        unitPrice: fi.unitPrice,
+                        taxRate: fi.taxRate,
+                        taxName: "",
+                        isTaxInclusive: false,
+                        discount: "0",
+                        discountType: "fixed",
+                        productId: fi.id ?? null,
+                        isOptional: false,
+                      };
+                      setState((prev) => ({
+                        ...prev,
+                        items: [...prev.items, newItem],
+                      }));
+                    }}
+                    className="px-3 py-1 text-xs rounded-md bg-surface border border-color hover:bg-surface-alt transition-colors"
                   >
-                    {SUPPORTED_CURRENCIES.map((c) => {
-                      const meta = (() => {
-                        try {
-                          return getCurrencyMetadata(c);
-                        } catch {
-                          return null;
-                        }
-                      })();
-                      return (
-                        <option key={c} value={c}>
-                          {c} {meta ? `(${meta.symbol}, ${meta.decimalPlaces}dp)` : ""}
-                        </option>
-                      );
-                    })}
-                  </FormField>
+                    {fi.name} — {fi.unitPrice}
+                  </button>
+                ))}
+              </div>
+            )}
 
-                  <FormField
-                    label="Issue Date"
-                    type="date"
-                    value={state.issueDate}
-                    onChange={(e) => setState((prev) => ({ ...prev, issueDate: e.target.value }))}
-                    disabled={isFinalized}
-                  />
-                </div>
+            {/* Use last invoice quick action */}
+            {quickActions?.lastInvoice && (
+              <button
+                type="button"
+                onClick={handleUseLastInvoice}
+                className="text-xs text-primary hover:underline flex items-center gap-1"
+              >
+                <Copy className="h-3 w-3" />
+                Use last invoice for {quickActions.lastInvoice.customer?.name ?? "this customer"}
+              </button>
+            )}
+          </div>
+        )}
 
-                {handler.formConfig.isInvoice && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
+        {/* --- Step 1: Edit --- */}
+        {workflowStep === "edit" && (
+          <div className="flex-1 overflow-y-auto">
+            <div className="space-y-6 pr-2">
+              <SectionCard title={handler.formConfig.isPaymentVoucher ? "Payee" : handler.formConfig.showsSupplierSection ? "Supplier" : "Customer"}>
+                 <div className="p-5 space-y-3">
+                   {handler.formConfig.isPaymentVoucher ? (
+                    <>
                       <FormField
-                        label="Payment Terms"
-                        select
-                        value={state.paymentTerms ?? "30"}
-                        onChange={(e) => {
-                          const terms = e.target.value;
-                          if (terms === "custom") {
-                            setState((prev) => ({ ...prev, paymentTerms: "custom" }));
-                          } else {
-                            const days = parseInt(terms, 10);
-                            const issue = new Date(state.issueDate);
-                            const due = new Date(issue);
-                            due.setDate(issue.getDate() + days);
-                            setState((prev) => ({
-                              ...prev,
-                              paymentTerms: terms,
-                              dueDate: due.toISOString().split("T")[0],
-                            }));
-                          }
-                        }}
-                        disabled={isFinalized}
-                      >
-                        {PAYMENT_TERMS.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
-                          </option>
-                        ))}
-                      </FormField>
-                      <FormField
-                        label="Due Date"
-                        type="date"
-                        value={state.dueDate ?? ""}
-                        onChange={(e) =>
-                          setState((prev) => ({
-                            ...prev,
-                            dueDate: e.target.value,
-                            paymentTerms: "custom",
-                          }))
-                        }
+                        label="Payee Name"
+                        placeholder="Payee name"
+                        value={state.payeeName ?? ""}
+                        onChange={(e) => setState((prev) => ({ ...prev, payeeName: e.target.value }))}
                         disabled={isFinalized}
                       />
-                    </div>
-
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          label="Email"
+                          type="email"
+                          placeholder="payee@example.com"
+                          value={state.payeeEmail ?? ""}
+                          onChange={(e) => setState((prev) => ({ ...prev, payeeEmail: e.target.value }))}
+                          disabled={isFinalized}
+                        />
+                        <FormField
+                          label="Phone"
+                          placeholder="+1 (555) 123-4567"
+                          value={state.payeePhone ?? ""}
+                          onChange={(e) => setState((prev) => ({ ...prev, payeePhone: e.target.value }))}
+                          disabled={isFinalized}
+                        />
+                      </div>
+                    </>
+                  ) : (
                     <FormField
-                      label="PO Number"
-                      placeholder="Optional"
-                      value={state.poNumber ?? ""}
-                      onChange={(e) => setState((prev) => ({ ...prev, poNumber: e.target.value }))}
+                      label="Customer"
+                      select
+                      value={state.customerId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "__new__") {
+                          setNewCustomerDialogOpen(true);
+                        } else {
+                          setState((prev) => ({ ...prev, customerId: val }));
+                        }
+                      }}
                       disabled={isFinalized}
-                    />
-                  </>
-                )}
+                      helperText={customerName !== "Select a customer" ? customerName : undefined}
+                    >
+                      <option value="">Select a customer</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name ?? c.email ?? c.id}
+                        </option>
+                      ))}
+                      <option value="__new__" className="font-medium text-primary">
+                        + Add new customer…
+                      </option>
+                    </FormField>
+                  )}
+                </div>
+              </SectionCard>
 
-                {handler.formConfig.isQuote && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                     <FormField
-                         label="Validity Period"
+             <SectionCard title="Document Details">
+               <div className="p-5 space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                   <FormField
+                     label="Currency"
+                     select
+                     value={state.currency}
+                     onChange={(e) => setState((prev) => ({ ...prev, currency: e.target.value }))}
+                     disabled={isFinalized}
+                   >
+                     {SUPPORTED_CURRENCIES.map((c) => {
+                       const meta = (() => {
+                         try {
+                           return getCurrencyMetadata(c);
+                         } catch {
+                           return null;
+                         }
+                       })();
+                       return (
+                         <option key={c} value={c}>
+                           {c} {meta ? `(${meta.symbol}, ${meta.decimalPlaces}dp)` : ""}
+                         </option>
+                       );
+                     })}
+                   </FormField>
+
+                   <FormField
+                     label="Issue Date"
+                     type="date"
+                     value={state.issueDate}
+                     onChange={(e) => setState((prev) => ({ ...prev, issueDate: e.target.value }))}
+                     disabled={isFinalized}
+                   />
+                 </div>
+
+                 {handler.formConfig.isInvoice && (
+                   <>
+                     <div className="grid grid-cols-2 gap-4">
+                       <FormField
+                         label="Payment Terms"
                          select
-                         value={state.expiryDate ? "custom" : state.paymentTerms ?? "30"}
+                         value={state.paymentTerms ?? "30"}
                          onChange={(e) => {
-                           const val = e.target.value;
-                           if (val === "custom") {
+                           const terms = e.target.value;
+                           if (terms === "custom") {
                              setState((prev) => ({ ...prev, paymentTerms: "custom" }));
                            } else {
-                             const days = parseInt(val, 10);
+                             const days = parseInt(terms, 10);
                              const issue = new Date(state.issueDate);
-                             const expiry = new Date(issue);
-                             expiry.setDate(issue.getDate() + days);
+                             const due = new Date(issue);
+                             due.setDate(issue.getDate() + days);
                              setState((prev) => ({
                                ...prev,
-                               paymentTerms: val,
-                               expiryDate: expiry.toISOString().split("T")[0],
+                               paymentTerms: terms,
+                               dueDate: due.toISOString().split("T")[0],
                              }));
                            }
                          }}
                          disabled={isFinalized}
                        >
-                        {VALIDITY_DAYS_OPTIONS.map((v) => (
-                          <option key={v.value} value={v.value}>
-                            {v.label}
-                          </option>
-                        ))}
-                      </FormField>
-                      <FormField
-                        label="Expiry Date"
-                        type="date"
-                        value={state.expiryDate ?? ""}
-                        onChange={(e) => setState((prev) => ({ ...prev, expiryDate: e.target.value }))}
-                        disabled={isFinalized}
-                      />
-                    </div>
-                  </>
-                )}
-
-                 {handler.formConfig.isCreditNote && (
-                   <>
-                     <FormField
-                       label="Reference Invoice"
-                       select
-                       value={state.referenceInvoiceId ?? ""}
-                       onChange={(e) =>
-                         setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
-                       }
-                       disabled={isFinalized}
-                     >
-                       <option value="">Select source invoice</option>
-                       {availableReferenceInvoices.map((inv) => (
-                         <option key={inv.id} value={inv.id}>
-                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
-                         </option>
-                       ))}
-                     </FormField>
-
-                     <FormField
-                       label="Reason"
-                       select
-                       value={state.reason === "other" ? state.reason : state.reason ?? ""}
-                       onChange={(e) => {
-                         const val = e.target.value;
-                         setState((prev) => ({
-                           ...prev,
-                           reason: val,
-                           customReason: val === "other" ? prev.customReason : "",
-                         }));
-                       }}
-                       disabled={isFinalized}
-                     >
-                       <option value="">Select a reason</option>
-                       {REASON_OPTIONS.slice(1).map((opt) => (
-                         <option key={opt.value} value={opt.value}>
-                           {opt.label}
-                         </option>
-                       ))}
-                     </FormField>
-
-                     {state.reason === "other" && (
+                         {PAYMENT_TERMS.map((t) => (
+                           <option key={t.value} value={t.value}>
+                             {t.label}
+                           </option>
+                         ))}
+                       </FormField>
                        <FormField
-                         label="Custom Reason"
-                         placeholder="Enter reason..."
-                         value={state.customReason ?? ""}
-                         onChange={(e) =>
-                           setState((prev) => ({ ...prev, customReason: e.target.value }))
-                         }
-                         disabled={isFinalized}
-                       />
-                     )}
-                   </>
-                 )}
-
-                 {handler.formConfig.showsReferenceInvoice && (
-                   <>
-                     <FormField
-                       label="Reference Invoice"
-                       select
-                       value={state.referenceInvoiceId ?? ""}
-                       onChange={(e) =>
-                         setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
-                       }
-                       disabled={isFinalized}
-                       helperText="Optional — link to an invoice this debit note relates to"
-                     >
-                       <option value="">None</option>
-                       {availableReferenceInvoices.map((inv) => (
-                         <option key={inv.id} value={inv.id}>
-                           {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
-                         </option>
-                       ))}
-                     </FormField>
-
-                     <FormField
-                       label="Reason"
-                       select
-                       value={state.reason === "other" ? state.reason : state.reason ?? ""}
-                       onChange={(e) => {
-                         const val = e.target.value;
-                         setState((prev) => ({
-                           ...prev,
-                           reason: val,
-                           customReason: val === "other" ? prev.customReason : "",
-                         }));
-                       }}
-                       disabled={isFinalized}
-                     >
-                       <option value="">Select a reason</option>
-                       {REASON_OPTIONS.slice(1).map((opt) => (
-                         <option key={opt.value} value={opt.value}>
-                           {opt.label}
-                         </option>
-                       ))}
-                     </FormField>
-
-                     {state.reason === "other" && (
-                       <FormField
-                         label="Custom Reason"
-                         placeholder="Enter reason..."
-                         value={state.customReason ?? ""}
-                         onChange={(e) =>
-                           setState((prev) => ({ ...prev, customReason: e.target.value }))
-                         }
-                         disabled={isFinalized}
-                       />
-                     )}
-                   </>
-                 )}
-
-                  {handler.formConfig.isPaymentVoucher && (
-                   <>
-                     <div className="grid grid-cols-2 gap-4">
-                       <FormField
-                         label="Voucher Date"
+                         label="Due Date"
                          type="date"
-                         value={state.voucherDate ?? state.issueDate}
-                         onChange={(e) => setState((prev) => ({ ...prev, voucherDate: e.target.value }))}
-                         disabled={isFinalized}
-                       />
-                       <FormField
-                         label="Payment Method"
-                         placeholder="e.g. Bank Transfer, Cash, Credit Card"
-                         value={state.paymentMethod ?? ""}
-                         onChange={(e) => setState((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+                         value={state.dueDate ?? ""}
+                         onChange={(e) =>
+                           setState((prev) => ({
+                             ...prev,
+                             dueDate: e.target.value,
+                             paymentTerms: "custom",
+                           }))
+                         }
                          disabled={isFinalized}
                        />
                      </div>
+
                      <FormField
-                       label="Reference Number"
+                       label="PO Number"
                        placeholder="Optional"
-                       value={state.referenceNumber ?? ""}
-                       onChange={(e) => setState((prev) => ({ ...prev, referenceNumber: e.target.value }))}
-                       disabled={isFinalized}
-                     />
-                     <FormField
-                       label="Payment Provider"
-                       placeholder="e.g. Stripe, PayPal, Bank of America"
-                       value={state.paymentProvider ?? ""}
-                       onChange={(e) => setState((prev) => ({ ...prev, paymentProvider: e.target.value }))}
+                       value={state.poNumber ?? ""}
+                       onChange={(e) => setState((prev) => ({ ...prev, poNumber: e.target.value }))}
                        disabled={isFinalized}
                      />
                    </>
                  )}
-              </div>
-            </SectionCard>
 
-            <SectionCard title="Line Items">
-              <div className="p-5">
-                <DocumentLineItems
-                  items={state.items}
-                  isFinalized={isFinalized}
-                  taxRateOptions={taxRateOptions}
-                  showOptional={handler.formConfig.showsOptionalItems}
-                  onUpdate={handleUpdateItem}
-                  onRemove={handleRemoveItem}
-                  onDuplicate={handleDuplicateItem}
-                  onAdd={handleAddItem}
-                />
-              </div>
-            </SectionCard>
+                 {handler.formConfig.isQuote && (
+                   <>
+                     <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                          label="Validity Period"
+                          select
+                          value={state.expiryDate ? "custom" : state.paymentTerms ?? "30"}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "custom") {
+                              setState((prev) => ({ ...prev, paymentTerms: "custom" }));
+                            } else {
+                              const days = parseInt(val, 10);
+                              const issue = new Date(state.issueDate);
+                              const expiry = new Date(issue);
+                              expiry.setDate(issue.getDate() + days);
+                              setState((prev) => ({
+                                ...prev,
+                                paymentTerms: val,
+                                expiryDate: expiry.toISOString().split("T")[0],
+                              }));
+                            }
+                          }}
+                          disabled={isFinalized}
+                        >
+                         {VALIDITY_DAYS_OPTIONS.map((v) => (
+                           <option key={v.value} value={v.value}>
+                             {v.label}
+                           </option>
+                         ))}
+                       </FormField>
+                       <FormField
+                         label="Expiry Date"
+                         type="date"
+                         value={state.expiryDate ?? ""}
+                         onChange={(e) => setState((prev) => ({ ...prev, expiryDate: e.target.value }))}
+                         disabled={isFinalized}
+                       />
+                     </div>
+                   </>
+                 )}
 
-            <DocumentTotalsCard
-              calcResult={calcResult}
-              currency={state.currency}
-               invoiceDiscount={handler.formConfig.isQuote ? state.quoteDiscount : state.invoiceDiscount}
-               invoiceDiscountType={handler.formConfig.isQuote ? state.quoteDiscountType : state.invoiceDiscountType}
-               onDiscountChange={(v) =>
-                 handler.formConfig.isQuote
-                   ? setState((prev) => ({ ...prev, quoteDiscount: v }))
-                   : setState((prev) => ({ ...prev, invoiceDiscount: v }))
-               }
-               onDiscountTypeChange={(v) =>
-                 handler.formConfig.isQuote
-                   ? setState((prev) => ({ ...prev, quoteDiscountType: v }))
-                   : setState((prev) => ({ ...prev, invoiceDiscountType: v }))
-               }
-              isFinalized={isFinalized}
-            />
+                  {handler.formConfig.isCreditNote && (
+                    <>
+                      <FormField
+                        label="Reference Invoice"
+                        select
+                        value={state.referenceInvoiceId ?? ""}
+                        onChange={(e) =>
+                          setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
+                        }
+                        disabled={isFinalized}
+                      >
+                        <option value="">Select source invoice</option>
+                        {availableReferenceInvoices.map((inv) => (
+                          <option key={inv.id} value={inv.id}>
+                            {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
+                          </option>
+                        ))}
+                      </FormField>
 
-            <SectionCard title="Fees">
-              <div className="p-5">
-                <DocumentFees
-                  fees={state.fees}
-                  isFinalized={isFinalized}
-                  taxRateOptions={taxRateOptions}
-                  onUpdate={handleUpdateFee}
-                  onRemove={handleRemoveFee}
-                  onAdd={handleAddFee}
-                />
-              </div>
-            </SectionCard>
+                      <FormField
+                        label="Reason"
+                        select
+                        value={state.reason === "other" ? state.reason : state.reason ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setState((prev) => ({
+                            ...prev,
+                            reason: val,
+                            customReason: val === "other" ? prev.customReason : "",
+                          }));
+                        }}
+                        disabled={isFinalized}
+                      >
+                        <option value="">Select a reason</option>
+                        {REASON_OPTIONS.slice(1).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </FormField>
 
-            <SectionCard title="Notes & Terms">
-              <div className="p-5">
-                <DocumentNotesSection
-                  notes={state.notes}
-                  terms={state.terms}
-                  paymentInstructions={state.paymentInstructions}
-                  scopeOfWork={state.scopeOfWork}
-                  internalNotes={state.internalNotes}
-                   isQuote={handler.formConfig.isQuote}
-                   isCreditNote={handler.formConfig.isCreditNote}
-                  onNotesChange={(v) => setState((prev) => ({ ...prev, notes: v }))}
-                  onTermsChange={(v) => setState((prev) => ({ ...prev, terms: v }))}
-                  onPaymentInstructionsChange={(v) =>
-                    setState((prev) => ({ ...prev, paymentInstructions: v }))
-                  }
-                  onScopeOfWorkChange={(v) =>
-                    setState((prev) => ({ ...prev, scopeOfWork: v }))
-                  }
-                  onInternalNotesChange={(v) =>
-                    setState((prev) => ({ ...prev, internalNotes: v }))
-                  }
-                  disabled={isFinalized}
-                />
-              </div>
-            </SectionCard>
+                      {state.reason === "other" && (
+                        <FormField
+                          label="Custom Reason"
+                          placeholder="Enter reason..."
+                          value={state.customReason ?? ""}
+                          onChange={(e) =>
+                            setState((prev) => ({ ...prev, customReason: e.target.value }))
+                          }
+                          disabled={isFinalized}
+                        />
+                      )}
+                    </>
+                  )}
 
-            {!isFinalized && (
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setProductPickerOpen(true); setProductSearch(""); }} disabled={products.length === 0}>
-                  Add from Product
-                </Button>
-              </div>
-            )}
-           </div>
+                  {handler.formConfig.showsReferenceInvoice && (
+                    <>
+                      <FormField
+                        label="Reference Invoice"
+                        select
+                        value={state.referenceInvoiceId ?? ""}
+                        onChange={(e) =>
+                          setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
+                        }
+                        disabled={isFinalized}
+                        helperText="Optional — link to an invoice this debit note relates to"
+                      >
+                        <option value="">None</option>
+                        {availableReferenceInvoices.map((inv) => (
+                          <option key={inv.id} value={inv.id}>
+                            {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
+                          </option>
+                        ))}
+                      </FormField>
 
-           {/* Preview column — hidden on mobile when editor is active */}
-           <div className={`overflow-y-auto ${mobileView === "editor" ? "hidden lg:block" : "block"}`}>
-               <DocumentPreview
-                documentType={handler.formConfig.totalsCardType}
-                documentNumber={document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? document?.debit_note_number ?? document?.payment_voucher_number}
-                calcResult={calcResult}
-                business={business}
-                issueDate={state.issueDate}
-                dueDate={state.dueDate}
-                expiryDate={state.expiryDate}
-                poNumber={state.poNumber}
-                customerId={state.customerId}
-                customers={customers}
-                paymentInstructions={handler.formConfig.isPaymentVoucher ? undefined : state.paymentInstructions}
-                notes={state.notes}
-                terms={state.terms}
-                scopeOfWork={state.scopeOfWork}
-                signedAmounts={handler.formConfig.isCreditNote}
-                reason={handler.formConfig.showsReasonField ? state.reason : undefined}
-                customReason={handler.formConfig.showsReasonField ? state.customReason : undefined}
-                referenceInvoiceNumber={handler.formConfig.showsReferenceInvoice ? state.referenceInvoiceNumber : undefined}
-                shippingDescription={handler.formConfig.showsShippingFields ? state.shippingDescription : undefined}
-                shippingAmount={handler.formConfig.showsShippingFields ? state.shippingAmount : undefined}
-                shippingTaxRate={handler.formConfig.showsShippingFields ? state.shippingTaxRate : undefined}
-                status={document?.status}
-                paymentState={document?.payment_state ?? null}
-                voucherDate={handler.formConfig.isPaymentVoucher ? (state.voucherDate ?? state.issueDate) : undefined}
-                payeeName={handler.formConfig.isPaymentVoucher ? state.payeeName : undefined}
-                payeeEmail={handler.formConfig.isPaymentVoucher ? state.payeeEmail : undefined}
-                payeePhone={handler.formConfig.isPaymentVoucher ? state.payeePhone : undefined}
-                referenceNumber={handler.formConfig.isPaymentVoucher ? state.referenceNumber : undefined}
-                paymentMethod={handler.formConfig.isPaymentVoucher ? state.paymentMethod : undefined}
-                paymentProvider={handler.formConfig.isPaymentVoucher ? state.paymentProvider : undefined}
-              />
+                      <FormField
+                        label="Reason"
+                        select
+                        value={state.reason === "other" ? state.reason : state.reason ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setState((prev) => ({
+                            ...prev,
+                            reason: val,
+                            customReason: val === "other" ? prev.customReason : "",
+                          }));
+                        }}
+                        disabled={isFinalized}
+                      >
+                        <option value="">Select a reason</option>
+                        {REASON_OPTIONS.slice(1).map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </FormField>
+
+                      {state.reason === "other" && (
+                        <FormField
+                          label="Custom Reason"
+                          placeholder="Enter reason..."
+                          value={state.customReason ?? ""}
+                          onChange={(e) =>
+                            setState((prev) => ({ ...prev, customReason: e.target.value }))
+                          }
+                          disabled={isFinalized}
+                        />
+                      )}
+                    </>
+                  )}
+
+                   {handler.formConfig.isPaymentVoucher && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          label="Voucher Date"
+                          type="date"
+                          value={state.voucherDate ?? state.issueDate}
+                          onChange={(e) => setState((prev) => ({ ...prev, voucherDate: e.target.value }))}
+                          disabled={isFinalized}
+                        />
+                        <FormField
+                          label="Payment Method"
+                          placeholder="e.g. Bank Transfer, Cash, Credit Card"
+                          value={state.paymentMethod ?? ""}
+                          onChange={(e) => setState((prev) => ({ ...prev, paymentMethod: e.target.value }))}
+                          disabled={isFinalized}
+                        />
+                      </div>
+                      <FormField
+                        label="Reference Number"
+                        placeholder="Optional"
+                        value={state.referenceNumber ?? ""}
+                        onChange={(e) => setState((prev) => ({ ...prev, referenceNumber: e.target.value }))}
+                        disabled={isFinalized}
+                      />
+                      <FormField
+                        label="Payment Provider"
+                        placeholder="e.g. Stripe, PayPal, Bank of America"
+                        value={state.paymentProvider ?? ""}
+                        onChange={(e) => setState((prev) => ({ ...prev, paymentProvider: e.target.value }))}
+                        disabled={isFinalized}
+                      />
+                    </>
+                  )}
+               </div>
+             </SectionCard>
+
+             <SectionCard title="Line Items">
+               <div className="p-5">
+                 <DocumentLineItems
+                   items={state.items}
+                   isFinalized={isFinalized}
+                   taxRateOptions={taxRateOptions}
+                   showOptional={handler.formConfig.showsOptionalItems}
+                   onUpdate={handleUpdateItem}
+                   onRemove={handleRemoveItem}
+                   onDuplicate={handleDuplicateItem}
+                   onAdd={handleAddItem}
+                 />
+               </div>
+             </SectionCard>
+
+             <DocumentTotalsCard
+               calcResult={calcResult}
+               currency={state.currency}
+                invoiceDiscount={handler.formConfig.isQuote ? state.quoteDiscount : state.invoiceDiscount}
+                invoiceDiscountType={handler.formConfig.isQuote ? state.quoteDiscountType : state.invoiceDiscountType}
+                onDiscountChange={(v) =>
+                  handler.formConfig.isQuote
+                    ? setState((prev) => ({ ...prev, quoteDiscount: v }))
+                    : setState((prev) => ({ ...prev, invoiceDiscount: v }))
+                }
+                onDiscountTypeChange={(v) =>
+                  handler.formConfig.isQuote
+                    ? setState((prev) => ({ ...prev, quoteDiscountType: v }))
+                    : setState((prev) => ({ ...prev, invoiceDiscountType: v }))
+                }
+               isFinalized={isFinalized}
+             />
+
+             <SectionCard title="Fees">
+               <div className="p-5">
+                 <DocumentFees
+                   fees={state.fees}
+                   isFinalized={isFinalized}
+                   taxRateOptions={taxRateOptions}
+                   onUpdate={handleUpdateFee}
+                   onRemove={handleRemoveFee}
+                   onAdd={handleAddFee}
+                 />
+               </div>
+             </SectionCard>
+
+             <SectionCard title="Notes & Terms">
+               <div className="p-5">
+                 <DocumentNotesSection
+                   notes={state.notes}
+                   terms={state.terms}
+                   paymentInstructions={state.paymentInstructions}
+                   scopeOfWork={state.scopeOfWork}
+                   internalNotes={state.internalNotes}
+                    isQuote={handler.formConfig.isQuote}
+                    isCreditNote={handler.formConfig.isCreditNote}
+                   onNotesChange={(v) => setState((prev) => ({ ...prev, notes: v }))}
+                   onTermsChange={(v) => setState((prev) => ({ ...prev, terms: v }))}
+                   onPaymentInstructionsChange={(v) =>
+                     setState((prev) => ({ ...prev, paymentInstructions: v }))
+                   }
+                   onScopeOfWorkChange={(v) =>
+                     setState((prev) => ({ ...prev, scopeOfWork: v }))
+                   }
+                   onInternalNotesChange={(v) =>
+                     setState((prev) => ({ ...prev, internalNotes: v }))
+                   }
+                   disabled={isFinalized}
+                 />
+               </div>
+             </SectionCard>
+
+             {!isFinalized && (
+               <div className="flex gap-2">
+                 <Button variant="ghost" size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setProductPickerOpen(true); setProductSearch(""); }} disabled={products.length === 0}>
+                   Add from Product
+                 </Button>
+               </div>
+             )}
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+
+        {/* --- Step 2: Preview & Send --- */}
+        {workflowStep === "preview" && (
+          <div className="flex-1 overflow-y-auto">
+            <div className="space-y-6 pr-2">
+              {/* Validation Issues Summary */}
+              {!isFinalized && (
+                <SectionCard title="Review Summary">
+                  <div className="p-5">
+                    {(() => {
+                      const issues = validateDocument();
+                      const errors = issues.filter((i) => i.severity === "error");
+                      const warnings = issues.filter((i) => i.severity === "warning");
+                      if (issues.length === 0) {
+                        return (
+                          <div className="flex items-center gap-2 text-success">
+                            <CheckCircle className="h-5 w-5" />
+                            <p>No issues found. You're ready to send.</p>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="space-y-3">
+                          {errors.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-error mb-1 flex items-center gap-1.5">
+                                <AlertCircle className="h-4 w-4" />
+                                Errors ({errors.length})
+                              </h4>
+                              <ul className="space-y-0.5 text-sm text-error-text">
+                                {errors.map((issue, i) => (
+                                  <li key={i}>• {issue.message}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {warnings.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-warning-text mb-1 flex items-center gap-1.5">
+                                <AlertCircle className="h-4 w-4" />
+                                Warnings ({warnings.length})
+                              </h4>
+                              <ul className="space-y-0.5 text-sm text-secondary">
+                                {warnings.map((issue, i) => (
+                                  <li key={i}>• {issue.message}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </SectionCard>
+              )}
+
+              {/* Live Preview (now a distinct step, not inline during editing) */}
+              <SectionCard title="Document Preview">
+                <div className="p-6">
+                  <DocumentPreview
+                    documentType={handler.formConfig.totalsCardType}
+                    documentNumber={document?.invoice_number ?? document?.quote_number ?? document?.credit_note_number ?? document?.debit_note_number ?? document?.payment_voucher_number}
+                    calcResult={calcResult}
+                    business={business}
+                    issueDate={state.issueDate}
+                    dueDate={state.dueDate}
+                    expiryDate={state.expiryDate}
+                    poNumber={state.poNumber}
+                    customerId={state.customerId}
+                    customers={customers}
+                    paymentInstructions={handler.formConfig.isPaymentVoucher ? undefined : state.paymentInstructions}
+                    notes={state.notes}
+                    terms={state.terms}
+                    scopeOfWork={state.scopeOfWork}
+                    signedAmounts={handler.formConfig.isCreditNote}
+                    reason={handler.formConfig.showsReasonField ? state.reason : undefined}
+                    customReason={handler.formConfig.showsReasonField ? state.customReason : undefined}
+                    referenceInvoiceNumber={handler.formConfig.showsReferenceInvoice ? state.referenceInvoiceNumber : undefined}
+                    shippingDescription={handler.formConfig.showsShippingFields ? state.shippingDescription : undefined}
+                    shippingAmount={handler.formConfig.showsShippingFields ? state.shippingAmount : undefined}
+                    shippingTaxRate={handler.formConfig.showsShippingFields ? state.shippingTaxRate : undefined}
+                    status={document?.status}
+                    paymentState={document?.payment_state ?? null}
+                    voucherDate={handler.formConfig.isPaymentVoucher ? (state.voucherDate ?? state.issueDate) : undefined}
+                    payeeName={handler.formConfig.isPaymentVoucher ? state.payeeName : undefined}
+                    payeeEmail={handler.formConfig.isPaymentVoucher ? state.payeeEmail : undefined}
+                    payeePhone={handler.formConfig.isPaymentVoucher ? state.payeePhone : undefined}
+                    referenceNumber={handler.formConfig.isPaymentVoucher ? state.referenceNumber : undefined}
+                    paymentMethod={handler.formConfig.isPaymentVoucher ? state.paymentMethod : undefined}
+                    paymentProvider={handler.formConfig.isPaymentVoucher ? state.paymentProvider : undefined}
+                  />
+                </div>
+              </SectionCard>
+            </div>
+          </div>
+        )}
 
       <Dialog
         open={sendDialogOpen}
