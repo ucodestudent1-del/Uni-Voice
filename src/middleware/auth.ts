@@ -5,6 +5,7 @@ import { query } from "../db/pool.js";
 import { logger } from "../utils/logger.js";
 import { compareSync, hashSync } from "bcrypt";
 import { isAccessTokenRevoked } from "../services/auth/token-denylist.js";
+import { isRedisReady } from "../db/redis.js";
 import jwt from "jsonwebtoken";
 
 /**
@@ -96,7 +97,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     return next(new UnauthorizedError("Invalid or expired token"));
   }
 
-  if (!env.REDIS_URL) {
+  if (!env.REDIS_URL || !isRedisReady()) {
     req.user = {
       id: decoded.userId,
       businessId: decoded.businessId,

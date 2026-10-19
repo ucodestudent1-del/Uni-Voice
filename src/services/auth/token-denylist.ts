@@ -1,4 +1,4 @@
-import { getRedisClient } from "../../db/redis.js";
+import { getRedisClient, isRedisReady } from "../../db/redis.js";
 import { logger } from "../../utils/logger.js";
 
 const DENYLIST_PREFIX = "jwt:denylist:";
@@ -26,12 +26,19 @@ export async function revokeAccessToken(
 }
 
 export async function isAccessTokenRevoked(token: string): Promise<boolean> {
+  if (!isRedisReady()) return false;
+
   const redis = getRedisClient();
   if (!redis) return false;
 
   const key = `${DENYLIST_PREFIX}${token}`;
-  const result = await redis.exists(key);
-  return result > 0;
+  try {
+    const result = await redis.exists(key);
+    return result > 0;
+  } catch (err) {
+    logger.warn({ err }, "Redis unavailable during token revocation check; allowing token");
+    return false;
+  }
 }
 
 export async function revokeAllUserTokens(userId: string): Promise<void> {
