@@ -12,7 +12,7 @@ import {
   logout as logoutApi,
 } from "@/api/client";
 import type { OnboardingProgress } from "@/types/api";
-import { clearSubscriptionCache } from "@/contexts/SubscriptionContext";
+import { clearSubscriptionCache } from "@/lib/subscription-cache";
 
 export type { User, AuthContextType };
 

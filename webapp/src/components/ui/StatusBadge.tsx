@@ -1,28 +1,21 @@
 import { forwardRef, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
-import type { StatusBadgeProps, StatusConfig } from "@/types/components";
+import type { StatusBadgeProps, StatusConfig, StatusBadgeConfig } from "@/types/components";
 
-export type { StatusBadgeProps, StatusConfig };
+export type { StatusBadgeProps, StatusConfig, StatusBadgeConfig };
 
-interface InternalStatusConfig extends StatusConfig {
-  icon?: ComponentType<{ className?: string }>;
-}
+type StatusConfigRecord = Record<string, StatusConfig & { icon?: ComponentType<{ className?: string }> }>;
 
-type StatusConfigRecord = Record<string, InternalStatusConfig>;
-
-interface StatusBadgeConfig {
-  getConfig: (status: string) => InternalStatusConfig;
-  configs: StatusConfigRecord;
-}
+type InternalStatusConfig = StatusConfig & { icon?: ComponentType<{ className?: string }> };
 
 export function createStatusBadgeConfig(configs: StatusConfigRecord, defaultKey: string): StatusBadgeConfig {
-  return {
-    getConfig: (status: string): InternalStatusConfig => {
-      return configs[status] ?? configs[defaultKey];
-    },
-    configs,
-  };
-}
+   return {
+     getConfig: (status: string): InternalStatusConfig => {
+       return configs[status] ?? configs[defaultKey];
+     },
+     configs,
+   };
+ }
 
 export const invoiceStatusConfig = createStatusBadgeConfig(
   {

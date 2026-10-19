@@ -182,7 +182,12 @@ export interface StatusBadgeProps {
   showIcon?: boolean;
   showLabel?: boolean;
   className?: string;
-  config?: ReturnType<typeof import("@/components/ui/StatusBadge").createStatusBadgeConfig>;
+  config?: StatusBadgeConfig;
+}
+
+export interface StatusBadgeConfig {
+  getConfig: (status: string) => StatusConfig;
+  configs: Record<string, StatusConfig>;
 }
 
 export interface StatusConfig {
