@@ -142,6 +142,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isNew = !id || id === "new";
+  const handler = useMemo(() => getDocumentHandler(docType), [docType]);
 
   const { document, setDocument, isLoading, error } = useDocumentData(docType, id, isNew);
 
@@ -531,8 +532,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         })),
     } as CreateCreditNoteInput;
   };
-
-  const handler = useMemo(() => getDocumentHandler(docType), [docType]);
 
   const doSave = useCallback(async () => {
     const fullPayload = buildPayload();
