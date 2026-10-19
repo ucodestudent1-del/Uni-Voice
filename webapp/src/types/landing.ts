@@ -27,4 +27,11 @@ export type FeatureIcon =
   | "shield-lock"
   | "globe-currency"
   | "clock-arrow"
-  | "document-sparkle";
+  | "document-sparkle"
+  | "credit-card"
+  | "bar-chart"
+  | "bot"
+  | "repeat"
+  | "mail"
+  | "file-text"
+  | "users";

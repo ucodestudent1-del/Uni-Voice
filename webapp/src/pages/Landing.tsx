@@ -4,9 +4,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { Section } from "../components/ui/Section";
 import FeaturesSection from "../components/ui/FeaturesSection";
 import FaqSection from "../components/ui/FaqSection";
-import TemplateGallery from "../components/ui/TemplateGallery";
 import ThemeToggle from "../components/ThemeToggle";
-import { pricingFeatures, faqs, templateModules } from "../data/landing";
+import { pricingFeatures, faqs } from "../data/landing";
 import { useMetaTags } from "../hooks/useMetaTags";
 import { CreditCard, Send, Smartphone, BarChart3, CheckCircle } from "lucide-react";
 
@@ -25,7 +24,6 @@ export default function Landing() {
         <nav className="flex items-center justify-between h-16 py-4 border-b border-color-subtle">
           <div className="text-xl font-bold tracking-tight text-primary-brand">DocForge</div>
           <div className="hidden md:flex items-center gap-8">
-            <Link to="#templates" className="text-sm text-tertiary hover:text-primary transition-colors">Templates</Link>
             <Link to="#features" className="text-sm text-tertiary hover:text-primary transition-colors">Features</Link>
             <Link to="/pricing" className="text-sm text-tertiary hover:text-primary transition-colors">Pricing</Link>
             <Link to="#faq" className="text-sm text-tertiary hover:text-primary transition-colors">FAQ</Link>
@@ -111,19 +109,6 @@ export default function Landing() {
             description="Real-time payment tracking, automatic reminders, and detailed analytics."
           />
         </div>
-      </Section>
-
-      {/* Templates */}
-      <Section id="templates" className="py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-primary sm:text-4xl">
-            Beautiful templates, professionally designed
-          </h2>
-          <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto">
-            Choose from premium templates that match your brand — customizable with your logo, colors, and fonts.
-          </p>
-        </div>
-        <TemplateGallery items={templateModules} className="mx-auto max-w-5xl" />
       </Section>
 
       {/* Features */}

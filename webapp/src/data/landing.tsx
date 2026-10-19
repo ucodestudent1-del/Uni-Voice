@@ -1,4 +1,4 @@
-import type { FeatureItem, FaqItem, TemplateModule } from "@/types/landing";
+import type { FeatureItem, FaqItem } from "@/types/landing";
 
 export const pricingFeatures: FeatureItem[] = [
   {
@@ -14,6 +14,18 @@ export const pricingFeatures: FeatureItem[] = [
     ),
   },
   {
+    title: "Multiple document types",
+    description: "Create invoices, quotes, credit notes, debit notes, receipts, payment vouchers, and purchase orders — all with consistent branding and calculations.",
+    icon: "file-text",
+    details: (
+      <ul className="mt-2 space-y-1 text-sm text-tertiary">
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Invoices, quotes, credit & debit notes</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Receipts, payment vouchers, purchase orders</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Recurring invoices for subscriptions</li>
+      </ul>
+    ),
+  },
+  {
     title: "Secure public invoice pages",
     description: "Share invoices with customers via secure tokenized links. Track views and enable online payments.",
     icon: "document-lock",
@@ -22,6 +34,78 @@ export const pricingFeatures: FeatureItem[] = [
         <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Unique secure links per invoice</li>
         <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Page-view tracking in real time</li>
         <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Embedded card payments via Stripe</li>
+      </ul>
+    ),
+  },
+  {
+    title: "Online payments & payouts",
+    description: "Accept payments via Stripe with support for cards, ACH, and more. Track payments and reconcile automatically.",
+    icon: "credit-card",
+    details: (
+      <ul className="mt-2 space-y-1 text-sm text-tertiary">
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Stripe integration with card & ACH</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Real-time payment status tracking</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Payment history & reconciliation</li>
+      </ul>
+    ),
+  },
+  {
+    title: "Smart automations",
+    description: "Scheduled sends and automatic payment reminders save you hours each month.",
+    icon: "clock-arrow",
+    details: (
+      <ul className="mt-2 space-y-1 text-sm text-tertiary">
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Scheduled invoice sends</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Smart payment reminders</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Auto-followups for overdue invoices</li>
+      </ul>
+    ),
+  },
+  {
+    title: "Recurring invoices",
+    description: "Set up subscription-style billing with automatic invoice generation and scheduled delivery.",
+    icon: "repeat",
+    details: (
+      <ul className="mt-2 space-y-1 text-sm text-tertiary">
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Custom billing intervals</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Auto-generation of invoices</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Scheduled email delivery</li>
+      </ul>
+    ),
+  },
+  {
+    title: "Reports & analytics",
+    description: "Track revenue, taxes, client balances, and payment performance with detailed reports.",
+    icon: "bar-chart",
+    details: (
+      <ul className="mt-2 space-y-1 text-sm text-tertiary">
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Revenue, tax & client reports</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Aging & payment metrics</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Export to CSV / PDF</li>
+      </ul>
+    ),
+  },
+  {
+    title: "AI-powered assistance",
+    description: "Leverage AI to parse email conversations and auto-generate draft invoices with line items.",
+    icon: "bot",
+    details: (
+      <ul className="mt-2 space-y-1 text-sm text-tertiary">
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Email-to-invoice parsing</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Smart default line items</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Suggested invoice fields</li>
+      </ul>
+    ),
+  },
+  {
+    title: "Brandable templates",
+    description: "Customizable, print-ready templates that match your brand — for invoices and receipts.",
+    icon: "document-sparkle",
+    details: (
+      <ul className="mt-2 space-y-1 text-sm text-tertiary">
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Upload your logo & brand colors</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Print & PDF export</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Templates for invoices, receipts</li>
       </ul>
     ),
   },
@@ -50,26 +134,14 @@ export const pricingFeatures: FeatureItem[] = [
     ),
   },
   {
-    title: "Smart automations",
-    description: "Scheduled sends and automatic payment reminders save you hours each month.",
-    icon: "clock-arrow",
+    title: "Customer & project management",
+    description: "Organize customers into groups and track time against projects — all linked to your invoices.",
+    icon: "users",
     details: (
       <ul className="mt-2 space-y-1 text-sm text-tertiary">
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Scheduled invoice sends</li>
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Smart payment reminders</li>
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Auto-followups for overdue invoices</li>
-      </ul>
-    ),
-  },
-  {
-    title: "Brandable templates",
-    description: "Customizable, print-ready templates that match your brand — for invoices and receipts.",
-    icon: "document-sparkle",
-    details: (
-      <ul className="mt-2 space-y-1 text-sm text-tertiary">
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Upload your logo & brand colors</li>
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Print & PDF export</li>
-        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Templates for invoices, receipts</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Customer groups & contacts</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Project time tracking</li>
+        <li className="flex items-start gap-2"><span className="mt-0.5 h-1 w-1 rounded-full bg-success-text" aria-hidden="true" />Import customers from CSV</li>
       </ul>
     ),
   },
@@ -96,162 +168,10 @@ export const faqs: FaqItem[] = [
     question: "Can I customize templates with my branding?",
     answer: "Yes. On Pro you can upload your logo, choose brand colors, and customize fonts for every document.",
   },
-];
-
-export const templateModules: TemplateModule[] = [
   {
-    id: "classic",
-    name: "Classic",
-    description: "Clean and professional for consulting and services",
-    color: "slate",
-    accentColor: "slate",
-    preview: (
-      <div className="aspect-[3/4] rounded-lg border border-color bg-surface-alt/30 p-3 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-5 w-24 rounded bg-slate-300 dark:bg-slate-600" />
-            <div className="h-3 w-12 rounded bg-slate-200 dark:bg-slate-700" />
-          </div>
-          <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-700 mb-1" />
-          <div className="h-3 w-3/4 rounded bg-slate-200 dark:bg-slate-700 mb-3" />
-          <div className="space-y-1">
-            <div className="h-2.5 w-full rounded bg-slate-200 dark:bg-slate-700" />
-            <div className="h-2.5 w-full rounded bg-slate-200 dark:bg-slate-700" />
-            <div className="h-2.5 w-3/4 rounded bg-slate-200 dark:bg-slate-700" />
-          </div>
-        </div>
-        <div className="pt-2 border-t border-color-subtle">
-          <div className="space-y-1">
-            <div className="flex justify-between h-2.5"><span className="w-10 rounded bg-slate-200 dark:bg-slate-700" /><span className="w-16 rounded bg-slate-300 dark:bg-slate-600" /></div>
-            <div className="flex justify-between h-2.5"><span className="w-12 rounded bg-slate-200 dark:bg-slate-700" /><span className="w-20 rounded bg-slate-300 dark:bg-slate-600" /></div>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "modern",
-    name: "Modern",
-    description: "Bold contemporary design for creative agencies",
-    color: "primary",
-    accentColor: "primary",
-    preview: (
-      <div className="aspect-[3/4] rounded-lg border-2 border-primary-500 bg-surface p-3 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-5 w-20 rounded bg-primary-500/30" />
-            <div className="h-3 w-10 rounded bg-primary-500/20" />
-          </div>
-          <div className="h-3 w-full rounded bg-primary-100/30 dark:bg-primary-400/20 mb-1" />
-          <div className="h-3 w-3/4 rounded bg-primary-100/30 dark:bg-primary-400/20 mb-3" />
-          <div className="space-y-1">
-            <div className="h-2 w-full rounded bg-primary-100/20 dark:bg-primary-400/10" />
-            <div className="h-2 w-full rounded bg-primary-100/20 dark:bg-primary-400/10" />
-            <div className="h-2 w-3/4 rounded bg-primary-100/20 dark:bg-primary-400/10" />
-          </div>
-        </div>
-        <div className="pt-2 border-t border-color-subtle">
-          <div className="space-y-1">
-            <div className="flex justify-between h-2.5"><span className="w-10 rounded bg-primary-100/30 dark:bg-primary-400/20" /><span className="w-16 rounded bg-primary-500/40" /></div>
-            <div className="flex justify-between h-2.5"><span className="w-12 rounded bg-primary-100/30 dark:bg-primary-400/20" /><span className="w-20 rounded bg-primary-500/40" /></div>
-          </div>
-          <div className="mt-2 h-7 w-full rounded bg-primary-action" />
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "minimal",
-    name: "Minimal",
-    description: "Ultra-clean with ample whitespace",
-    color: "slate",
-    accentColor: "slate",
-    preview: (
-      <div className="aspect-[3/4] rounded-lg border border-color bg-surface p-3 flex flex-col justify-between">
-        <div>
-          <div className="h-4 w-16 mb-4 rounded bg-slate-400 dark:bg-slate-500" />
-          <div className="h-2.5 w-full rounded bg-slate-200 dark:bg-slate-700 mb-1" />
-          <div className="h-2.5 w-2/3 rounded bg-slate-200 dark:bg-slate-700 mb-4" />
-          <div className="space-y-1">
-            <div className="h-2 w-full rounded bg-slate-100 dark:bg-slate-800" />
-            <div className="h-2 w-full rounded bg-slate-100 dark:bg-slate-800" />
-            <div className="h-2 w-1/2 rounded bg-slate-100 dark:bg-slate-800" />
-          </div>
-        </div>
-        <div className="pt-2 border-t border-color-subtle">
-          <div className="space-y-1">
-            <div className="flex justify-between h-2"><span className="w-8 rounded bg-slate-200 dark:bg-slate-700" /><span className="w-12 rounded bg-slate-200 dark:bg-slate-700" /></div>
-            <div className="flex justify-between h-2"><span className="w-10 rounded bg-slate-200 dark:bg-slate-700" /><span className="w-14 rounded bg-slate-300 dark:bg-slate-600" /></div>
-            <div className="mt-2 h-6 w-full rounded bg-slate-200 dark:bg-slate-700" />
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "elegant",
-    name: "Elegant",
-    description: "Sophisticated serif typography for premium brands",
-    color: "teal",
-    accentColor: "teal",
-    preview: (
-      <div className="aspect-[3/4] rounded-lg border border-teal-500 bg-surface p-3 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-4 w-20 rounded bg-teal-400 dark:bg-teal-500" />
-            <div className="h-2.5 w-10 rounded bg-teal-200 dark:bg-teal-600" />
-          </div>
-          <div className="h-2.5 w-full rounded bg-teal-200 dark:bg-teal-700 mb-1" />
-          <div className="h-2.5 w-3/4 rounded bg-teal-200 dark:bg-teal-700 mb-3" />
-          <div className="space-y-1">
-            <div className="h-2 w-full rounded bg-teal-100 dark:bg-teal-800" />
-            <div className="h-2 w-full rounded bg-teal-100 dark:bg-teal-800" />
-            <div className="h-2 w-3/4 rounded bg-teal-100 dark:bg-teal-800" />
-          </div>
-        </div>
-        <div className="pt-2 border-t border-color-subtle">
-          <div className="space-y-1">
-            <div className="flex justify-between h-2.5"><span className="w-10 rounded bg-teal-200 dark:bg-teal-700" /><span className="w-16 rounded bg-teal-400 dark:bg-teal-500" /></div>
-            <div className="flex justify-between h-2.5"><span className="w-12 rounded bg-teal-200 dark:bg-teal-700" /><span className="w-20 rounded bg-teal-400 dark:bg-teal-500" /></div>
-          </div>
-          <div className="mt-2 h-7 w-full rounded bg-teal-500" />
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "compact",
-    name: "Compact",
-    description: "Space-efficient layout for detailed line items",
-    color: "amber",
-    accentColor: "amber",
-    preview: (
-      <div className="aspect-[3/4] rounded-lg border border-amber-500 bg-surface p-3 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-4 w-18 rounded bg-amber-400 dark:bg-amber-500" />
-            <div className="h-2.5 w-10 rounded bg-amber-200 dark:bg-amber-600" />
-          </div>
-          <div className="h-2.5 w-full rounded bg-amber-200 dark:bg-amber-700 mb-1" />
-          <div className="h-2.5 w-3/4 rounded bg-amber-200 dark:bg-amber-700 mb-3" />
-          <div className="space-y-1">
-            <div className="h-2 w-full rounded bg-amber-100 dark:bg-amber-800" />
-            <div className="h-2 w-full rounded bg-amber-100 dark:bg-amber-800" />
-            <div className="h-2 w-2/3 rounded bg-amber-100 dark:bg-amber-800" />
-            <div className="h-2 w-full rounded bg-amber-100 dark:bg-amber-800" />
-            <div className="h-2 w-3/4 rounded bg-amber-100 dark:bg-amber-800" />
-          </div>
-        </div>
-        <div className="pt-2 border-t border-color-subtle">
-          <div className="space-y-1">
-            <div className="flex justify-between h-2.5"><span className="w-12 rounded bg-amber-200 dark:bg-amber-700" /><span className="w-14 rounded bg-amber-300 dark:bg-amber-600" /></div>
-            <div className="flex justify-between h-2.5"><span className="w-10 rounded bg-amber-200 dark:bg-amber-700" /><span className="w-18 rounded bg-amber-400 dark:bg-amber-500" /></div>
-            <div className="mt-2 h-7 w-full rounded bg-amber-500" />
-          </div>
-        </div>
-      </div>
-    ),
+    question: "What payment providers do you support?",
+    answer: "We integrate with Stripe to accept card payments, ACH transfers, and more from customers worldwide.",
   },
 ];
 
-export type { FeatureItem, FaqItem, TemplateModule };
+export type { FeatureItem, FaqItem };

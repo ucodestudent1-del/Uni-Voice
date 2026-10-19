@@ -1,17 +1,24 @@
 import type { FeatureItem, FeatureIcon } from "@/types/landing";
 import { Section, SectionHeader } from "./Section";
-import { Calculator, FileLock, Shield, Globe, Clock, FileText } from "lucide-react";
+import { Calculator, FileLock, Shield, Globe, Clock, FileText, CreditCard, BarChart, Bot, Repeat, Mail, Users } from "lucide-react";
 import type { ComponentType } from "react";
 import type { SVGProps } from "react";
 
 const iconMap: Record<FeatureIcon, ComponentType<SVGProps<SVGSVGElement>>> = {
-  calculator: Calculator,
-  "document-lock": FileLock,
-  "shield-lock": Shield,
-  "globe-currency": Globe,
-  "clock-arrow": Clock,
-  "document-sparkle": FileText,
-};
+   calculator: Calculator,
+   "document-lock": FileLock,
+   "shield-lock": Shield,
+   "globe-currency": Globe,
+   "clock-arrow": Clock,
+   "document-sparkle": FileText,
+   "credit-card": CreditCard,
+   "bar-chart": BarChart,
+   "bot": Bot,
+   "repeat": Repeat,
+   "mail": Mail,
+   "file-text": FileText,
+   "users": Users,
+ };
 
 export interface FeaturesSectionProps {
   title: string;
