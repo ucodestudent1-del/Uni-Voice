@@ -2684,3 +2684,35 @@ export async function duplicateDocumentPreset(id: string): Promise<{ preset: Api
   const res = await api.post(`/document-presets/${id}/duplicate`);
   return res.data;
 }
+
+export interface ApiRelatedDocument {
+  id: string;
+  docType: string;
+  docNumber: string | null;
+  status: string;
+  total: string;
+  currency: string;
+  issueDate: string | null;
+  dueDate: string | null;
+  isFinalized: boolean;
+  relationType: string;
+  relationDirection: "source" | "target";
+  createdAt: string;
+}
+
+export type DocumentTypeParam =
+  | "invoice"
+  | "quote"
+  | "credit-note"
+  | "debit-note"
+  | "payment-voucher"
+  | "receipt"
+  | "purchase-order";
+
+export async function getRelatedDocuments(
+  docType: DocumentTypeParam,
+  docId: string,
+): Promise<{ related: ApiRelatedDocument[] }> {
+  const res = await api.get(`/documents/${docType}/${docId}/related`);
+  return res.data;
+}

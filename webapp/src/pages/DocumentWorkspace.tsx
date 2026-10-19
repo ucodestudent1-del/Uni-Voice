@@ -57,7 +57,7 @@ import {
   type SpeedAutofillResult,
 } from "@/api/client";
 import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
-import { PresetSelector } from "@/components/document";
+import { PresetSelector, RelatedDocuments } from "@/components/document";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -1837,6 +1837,12 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                </div>
              )}
             </div>
+          </div>
+        )}
+
+        {!isNew && document && (
+          <div className="px-1 pb-6">
+            <RelatedDocuments docType={docType} docId={document.id} />
           </div>
         )}
 

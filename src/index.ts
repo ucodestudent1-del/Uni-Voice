@@ -82,6 +82,7 @@ import { receiptRepository } from "./repositories/receipt.repo.js";
 import { templateRepository } from "./repositories/template.repo.js";
 import { documentTemplateRepository } from "./repositories/document-template.repo.js";
 import { documentPresetRepository } from "./repositories/document-preset.repo.js";
+import { documentRelationRepository, type RelatedDocument } from "./repositories/document-relation.repo.js";
 import { subscriptionRepository } from "./repositories/subscription.repo.js";
 import { onboardingRepository } from "./repositories/onboarding.repo.js";
 import { onboardingService } from "./services/onboarding.service.js";
@@ -4197,6 +4198,57 @@ app.post(
       res.status(201).json({ preset });
     } catch (e) {
       res.status(404).json({ error: "Preset not found" });
+    }
+  },
+);
+
+// ============================================================================
+// DOCUMENT RELATIONS (links between related documents like credit notes -> invoice)
+// ============================================================================
+
+const GetRelatedDocumentsSchema = z.object({
+  docType: z.enum([
+    "invoice",
+    "quote",
+    "credit-note",
+    "debit-note",
+    "payment-voucher",
+    "receipt",
+    "purchase-order",
+  ]),
+  docId: z.string().uuid(),
+});
+
+app.get(
+  "/api/documents/:docType/:docId/related",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const parsed = GetRelatedDocumentsSchema.parse({
+        docType: req.params.docType,
+        docId: req.params.docId,
+      });
+
+      let related: RelatedDocument[];
+
+      if (parsed.docType === "invoice") {
+        related = await documentRelationRepository.findRelatedByInvoice(
+          req.user!.businessId,
+          parsed.docId,
+        );
+      } else {
+        related = await documentRelationRepository.findRelatedDocuments(
+          req.user!.businessId,
+          parsed.docType,
+          parsed.docId,
+        );
+      }
+
+      res.json({ related });
+    } catch (e) {
+      next(e);
     }
   },
 );

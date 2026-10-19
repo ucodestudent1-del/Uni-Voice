@@ -3,6 +3,7 @@ export { DocumentFees } from "./DocumentFees";
 export { DocumentTotalsCard } from "./DocumentTotalsCard";
 export { DocumentNotesSection } from "./DocumentNotesSection";
 export { default as PresetSelector } from "./PresetSelector";
+export { RelatedDocuments } from "./RelatedDocuments";
 export type {
   DocumentLineItem,
   DocumentFee,
