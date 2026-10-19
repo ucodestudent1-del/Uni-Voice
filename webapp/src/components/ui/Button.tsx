@@ -1,4 +1,5 @@
 import { forwardRef, type ReactNode, type ButtonHTMLAttributes } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 

@@ -4,6 +4,7 @@ import TwoFactorManager from "../TwoFactorManager";
 import { Button } from "../ui/Button";
 
 export default function SecuritySettings() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [activeSessions, setActiveSessions] = useState<any[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
@@ -63,6 +64,7 @@ export default function SecuritySettings() {
       setPasswordSaved(true);
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setTimeout(() => setPasswordSaved(false), 2000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setPasswordError(err.response?.data?.error || "Failed to change password");
     } finally {

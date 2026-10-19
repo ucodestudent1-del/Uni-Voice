@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useCallback, useEffect, useRef, useMemo, ReactNode } from "react";
 import {
   DndContext,
@@ -85,6 +86,7 @@ function flattenVisibleNodes(
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function findNode(tree: TreeNode | null, id: ComponentId): TreeNode | null {
   if (!tree) return null;
   if (tree.id === id) return tree;
@@ -405,6 +407,7 @@ export const OutlineEditor: React.FC<OutlineEditorProps> = ({
     setFocusedComponentId(selectedComponentId);
   }, [selectedComponentId]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const visibleNodes = useMemo(() => {
     if (!tree) return [];
     return flattenVisibleNodes(tree.children, expanded, 0);

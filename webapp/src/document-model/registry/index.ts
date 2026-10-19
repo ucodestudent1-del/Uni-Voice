@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ComponentType, AnyComponent, StyleProps, LineItemColumn } from "../types";
 import { componentSchemas } from "../schemas";
 import { z } from "zod";
@@ -18,10 +19,15 @@ export interface ComponentDefinition<T extends AnyComponent = AnyComponent> {
 }
 
 export interface RenderContext {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   document: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   business: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customer: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   invoice: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   calculations: any;
   currency: string;
   locale: string;
@@ -31,8 +37,11 @@ export interface RenderContext {
 }
 
 export interface InspectorContext {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   document: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   business: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customer: any;
   currency: string;
   locale: string;

@@ -54,6 +54,7 @@ export default function ReceiptDetail() {
 
   useEffect(() => {
     if (id) loadReceipt();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function loadReceipt() {

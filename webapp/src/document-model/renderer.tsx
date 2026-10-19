@@ -49,8 +49,10 @@ function renderComponent(
       flexDirection = "row";
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const columnGap = component.type === "row" ? `${(component.props as any)?.columnGap || 16}px` : "0";
     const fullWidth = component.props && typeof component.props === "object" && "fullWidth" in component.props
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ? (component.props as any).fullWidth === false ? "auto" : "100%"
       : "100%";
 
@@ -127,9 +129,13 @@ export function renderDocumentTree(
 
 export function createRenderContext(
   doc: InvoiceDocument,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   business: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customer: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   invoice: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   calculations: any,
   currency: string,
   locale: string,

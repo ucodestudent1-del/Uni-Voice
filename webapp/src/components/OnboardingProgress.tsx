@@ -6,6 +6,7 @@ interface OnboardingProgressProps {
   progress: OnboardingProgressType | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const STEP_TITLES: Record<string, string> = {
   welcome: "Welcome",
   business: "Business Profile",

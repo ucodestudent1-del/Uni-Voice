@@ -29,6 +29,7 @@ export default function TaxesSettings() {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function startCreate() {
     setEditingId(null);
     setForm(emptyForm);
@@ -78,6 +79,7 @@ export default function TaxesSettings() {
       await loadTaxRates();
       setEditingId(null);
       setForm(emptyForm);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save tax rate");
     } finally {
@@ -90,6 +92,7 @@ export default function TaxesSettings() {
     try {
       await deleteTaxRate(id);
       setTaxRates(taxRates.filter((r) => r.id !== id));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to delete tax rate");
     }

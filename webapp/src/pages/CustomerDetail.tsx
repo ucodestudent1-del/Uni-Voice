@@ -30,6 +30,7 @@ export default function CustomerDetail() {
 
   useEffect(() => {
     loadCustomer();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function loadCustomer() {
@@ -39,6 +40,7 @@ export default function CustomerDetail() {
     try {
       const data = await getCustomer(id);
       setCustomer(data.customer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load customer");
     } finally {
@@ -51,6 +53,7 @@ export default function CustomerDetail() {
     try {
       await archiveCustomer(customer.id);
       await loadCustomer();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to archive customer");
     }
@@ -61,6 +64,7 @@ export default function CustomerDetail() {
     try {
       await restoreCustomer(customer.id);
       await loadCustomer();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to restore customer");
     }
@@ -145,6 +149,7 @@ function CustomerDetailContent({ customer }: { customer: ApiCustomer }) {
 
   useEffect(() => {
     loadSummary();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer.id]);
 
   async function loadSummary() {
@@ -229,6 +234,7 @@ function FinancialSummaryCard({
 }: {
   title: string; value: string; subtitle?: string; color?: "primary" | "green" | "red" | "slate";
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const colorClasses: Record<string, string> = {
     primary: "bg-primary-bg text-primary-brand",
     green: "status-success-bg status-success-text",

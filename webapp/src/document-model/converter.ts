@@ -405,6 +405,7 @@ export function getDefaultDocument(businessId: string): InvoiceDocument {
   return builder.document;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getComponentProp(doc: InvoiceDocument, type: ComponentType, propName: string): string | undefined {
   const component = Object.values(doc.components).find((c) => c.type === type);
   if (!component) return undefined;

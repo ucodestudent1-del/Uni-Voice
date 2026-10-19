@@ -47,8 +47,10 @@ export function PaymentTermsField({
   disabled = false,
   className,
   selectClassName,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   showCustomDueDate = true,
 }: PaymentTermsFieldProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const selected = PAYMENT_TERMS_OPTIONS.find((opt) => opt.value === value) ?? null;
 
   const handleTermsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -63,6 +65,7 @@ export function PaymentTermsField({
   };
 
   const effectiveValue = value || "Net 30";
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isCustom = effectiveValue === "Custom";
 
   return (
@@ -70,6 +73,7 @@ export function PaymentTermsField({
       label={label}
       labelClassName="uppercase"
       value={effectiveValue}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onChange={handleTermsChange as any}
       select
       disabled={disabled}

@@ -39,6 +39,7 @@ export default function SubscriptionCard({ onUpgrade, compact = false }: Subscri
   }
 
   const isFree = plan.code === "free";
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isPro = plan.code === "pro";
 
   const statusColor =

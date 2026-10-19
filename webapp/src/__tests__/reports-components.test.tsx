@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { render, screen, fireEvent } from "@testing-library/react";
 import PaymentsReport from "../components/reports/PaymentsReport";
 import type { ApiPaymentsReport } from "@/types/api";

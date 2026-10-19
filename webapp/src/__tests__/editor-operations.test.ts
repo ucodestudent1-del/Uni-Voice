@@ -157,6 +157,7 @@ describe("editor-operations", () => {
       const siblings = getChildren(duplicatedDoc, columnId);
 
       const origIdx1 = siblings.indexOf(componentId1);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const origIdx2 = siblings.indexOf(componentId2);
       const duplicatedId = Object.keys(duplicatedDoc.components).find(
         (id) => id !== componentId1 && id !== componentId2
@@ -606,6 +607,7 @@ describe("editor-operations", () => {
         index: 1,
         props: { content: "Second", format: "plain" },
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const id2 = Object.keys(docWithText2.components).find((id) => id !== id1)!;
 
       const onMove = vi.fn();

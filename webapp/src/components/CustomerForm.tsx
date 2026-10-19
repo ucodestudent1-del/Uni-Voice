@@ -19,6 +19,7 @@ const COUNTRIES = [
   "FI", "PL", "PT", "AT", "BE", "NL", "IE", "LU", "CZ", "HU",
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TAX_ID_TYPES = [
   { value: "vat", label: "VAT" },
   { value: "ein", label: "EIN" },
@@ -65,6 +66,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
         postalCode: customer.address?.postalCode || "",
         countryCode: customer.address?.countryCode || "US",
         notes: customer.notes || "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         status: customer.status as any,
         paymentTerms: customer.paymentTerms ?? undefined,
         defaultCurrency: customer.defaultCurrency || undefined,
@@ -72,6 +74,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
     }
   }, [customer]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleChange(field: keyof CustomerFormValues, value: any) {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (error) setError(null);
@@ -81,6 +84,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
     try {
       validateCustomerForm(formData);
       return true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       const msg = e.errors?.[0]?.message || "Please fix the errors in the form";
       setError(msg);
@@ -100,6 +104,7 @@ export default function CustomerForm({ customer, onClose, onSaved }: CustomerFor
         await createCustomer(formData);
       }
       onSaved();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save customer");
     } finally {

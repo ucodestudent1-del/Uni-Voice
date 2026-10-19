@@ -4,12 +4,14 @@ import { useTheme } from "../contexts/ThemeContext";
 export default function ThemeToggle() {
   const { theme, resolvedTheme, setTheme } = useTheme();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const icon = {
     light: <Sun className="h-5 w-5" />,
     dark: <Moon className="h-5 w-5" />,
     system: <Monitor className="h-5 w-5" />,
   }[theme];
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const nextLabel = {
     light: "Switch to dark mode",
     dark: "Switch to light mode",

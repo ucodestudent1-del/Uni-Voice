@@ -43,6 +43,7 @@ export default function CustomerImport({ onClose, onImported }: CustomerImportPr
         errors: res.errors ?? [],
       });
       onImported();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to import customers");
     } finally {

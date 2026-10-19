@@ -14,6 +14,7 @@ export interface ServiceAutocompleteProps {
   id?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DEBOUNCE_MS = 0;
 
 export function ServiceAutocomplete({

@@ -107,6 +107,7 @@ export class ChunkErrorBoundary extends Component<ChunkErrorBoundaryProps, Chunk
 		return { hasError: true, isChunkError };
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	componentDidCatch(error: unknown, errorInfo: { componentStack?: string }) {
 		if (isChunkLoadError(error)) {
 			if (typeof window !== "undefined" && window.location) {

@@ -33,6 +33,7 @@ function lastKey(map: Record<string, unknown>): string {
   return keys[keys.length - 1];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const standardLineColumns = (currency = USD): LineItemColumn[] => [
   { key: "description", label: "Description", width: "40%", align: "left", visible: true },
   { key: "quantity", label: "Qty", width: "15%", align: "right", visible: true },

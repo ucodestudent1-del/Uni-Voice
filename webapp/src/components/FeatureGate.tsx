@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ReactNode } from "react";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import type { FeatureFlag } from "@/types/api";

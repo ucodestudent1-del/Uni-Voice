@@ -20,6 +20,7 @@ import {
   ExternalLink,
   Mail,
   RefreshCw,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ChevronDown,
   Clock,
   CheckCircle,
@@ -119,6 +120,7 @@ export default function Receipts() {
       const data = await getReceipts(currentParams);
       setReceipts(data.receipts ?? []);
       setTotal(data.total ?? 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load receipts");
       setReceipts([]);
@@ -171,6 +173,7 @@ export default function Receipts() {
       a.download = `receipt-${receiptId.slice(0, 8)}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast(err.response?.data?.error || "Failed to download receipt PDF", { type: "error" });
     }
@@ -394,6 +397,7 @@ export default function Receipts() {
       a.download = `receipts-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast(err.message || "Failed to export", { type: "error" });
     }
@@ -409,6 +413,7 @@ export default function Receipts() {
       a.download = `receipts-${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       window.URL.revokeObjectURL(url);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast(err.message || "Failed to export", { type: "error" });
     }

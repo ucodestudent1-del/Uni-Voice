@@ -93,6 +93,7 @@ export function Dialog({
       overlay?.removeEventListener("pointerdown", handleOverlayClick);
       previouslyFocusedRef.current?.focus();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;

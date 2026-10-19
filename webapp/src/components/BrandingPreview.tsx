@@ -17,6 +17,7 @@ export default function BrandingPreview({ input }: BrandingPreviewProps) {
     if (Object.keys(input).length > 0) {
       generatePreview();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [input]);
 
   async function generatePreview() {

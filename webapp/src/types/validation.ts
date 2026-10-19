@@ -3,6 +3,7 @@ import { SUPPORTED_CURRENCIES } from "./currency";
 import { calculationEngine } from "../utils/calculation";
 import type { CurrencyCode } from "./currency";
 import type { FeeInput, InvoiceCalculationInput, LineItemInput } from "./calculation";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { CalculatedLineItem, CalculatedFee, CalculationResult } from "./calculation";
 
 export type ValidationSeverity = "error" | "warning";

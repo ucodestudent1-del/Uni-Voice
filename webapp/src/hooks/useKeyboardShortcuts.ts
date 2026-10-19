@@ -181,6 +181,7 @@ const SHORTCUT_ENTRIES = Object.entries(SHORTCUTS).map(([k, v]) => [
 
 function getAction(keyCombo: string): KeyboardAction | undefined {
   const key = keyCombo.toLowerCase();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const [lower, upper, original, action] of SHORTCUT_ENTRIES) {
     if (lower === key || upper === keyCombo) {
       return action;

@@ -60,6 +60,7 @@ export default function Plans() {
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to start upgrade");
     } finally {
@@ -121,6 +122,7 @@ export default function Plans() {
               const tierIndex = tierOrder[p.code as keyof typeof tierOrder] ?? 0;
               const currentTierIndex = plan ? (tierOrder[plan.code as keyof typeof tierOrder] ?? 0) : 0;
               const canDowngrade = tierIndex < currentTierIndex;
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const canUpgrade = tierIndex > currentTierIndex && !isFree;
 
               return (

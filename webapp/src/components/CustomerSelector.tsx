@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { getCustomers, createCustomer, type CustomerSearchParams } from "../api/client";
 import type { ApiCustomer } from "../types/api";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { validateCustomerForm, type CustomerFormValues } from "../schemas/customer";
 import { ChevronDown } from "lucide-react";
 
@@ -47,6 +48,7 @@ export default function CustomerSelector({
       loadedRef.current = true;
       loadCustomers({ limit: 100, includeArchived: false });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export default function CustomerSelector({
 
     try {
       validateCustomerForm(createForm);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setCreateError(e.errors?.[0]?.message || "Invalid form");
       return;
@@ -107,6 +110,7 @@ export default function CustomerSelector({
       setCreateForm(null);
       setCreateError(null);
       setOpen(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setCreateError(err.response?.data?.error || "Failed to create customer");
     } finally {

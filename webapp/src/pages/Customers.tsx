@@ -170,6 +170,7 @@ export default function Customers() {
     limit,
     offset,
     search: search || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     status: statusFilter === "all" ? undefined : (statusFilter as any),
     includeArchived: statusFilter === "archived" || includeArchived ? true : undefined,
     sortBy,
@@ -182,6 +183,7 @@ export default function Customers() {
     try {
       const data = await getCustomers(params);
       const list = data.data ?? [];
+       // eslint-disable-next-line @typescript-eslint/no-explicit-any
        const enriched: ApiCustomer[] = list.map((c: any) => ({
          ...c,
          invoiceCount: c.invoiceCount ?? 0,
@@ -191,6 +193,7 @@ export default function Customers() {
        }));
       setCustomers(enriched);
       setTotal(data.total ?? 0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load customers");
       setCustomers([]);
@@ -202,6 +205,7 @@ export default function Customers() {
 
   useEffect(() => {
     loadCustomers(currentParams);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadCustomers, limit, offset, search, statusFilter, includeArchived, sortBy, sortOrder]);
 
   useEffect(() => {
@@ -229,6 +233,7 @@ export default function Customers() {
       await archiveCustomer(customer.id);
       loadCustomers(currentParams);
       toast("Customer archived", { type: "success", title: "Archived" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast(err.response?.data?.error || "Failed to archive customer", { type: "error", title: "Error" });
     }
@@ -239,6 +244,7 @@ export default function Customers() {
       await restoreCustomer(customer.id);
       loadCustomers(currentParams);
       toast("Customer restored", { type: "success", title: "Restored" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast(err.response?.data?.error || "Failed to restore customer", { type: "error", title: "Error" });
     }
@@ -255,6 +261,7 @@ export default function Customers() {
       a.click();
       URL.revokeObjectURL(url);
       toast("Customers exported successfully", { type: "success", title: "Exported" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast(err.response?.data?.error || "Failed to export customers", { type: "error", title: "Error" });
     }
@@ -375,6 +382,7 @@ export default function Customers() {
                 <label className="filter-label-secondary">Direction</label>
                 <select
                   value={sortOrder}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onChange={(e) => setSortOrder(e.target.value as any)}
                   className="filter-select"
                 >

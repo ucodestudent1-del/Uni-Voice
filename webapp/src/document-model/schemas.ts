@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   ComponentType,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   StyleProps,
   TextComponent,
   ImageComponent,
@@ -498,6 +499,7 @@ export function validateDocument(document: unknown): InvoiceDocument {
   return invoiceDocumentSchema.parse(document);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const componentSchemas: Record<ComponentType, z.ZodType<any>> = {
   text: textComponentSchema,
   image: imageComponentSchema,

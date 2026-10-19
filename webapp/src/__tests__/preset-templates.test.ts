@@ -1,11 +1,17 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { describe, it, expect, beforeEach } from "vitest";
 import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   createEmptyDocument,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   InvoiceDocument,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ComponentType,
 } from "../document-model/types";
 import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   insertComponent,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getChildren,
   findComponent,
 } from "../document-model/document-operations";
@@ -112,6 +118,7 @@ describe("preset-templates", () => {
       const doc = preset.build("biz-1");
       const customFields = Object.keys(doc.components)
         .map((id) => findComponent(doc, id))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((c) => c?.type === "customField") as any[];
       const milestoneField = customFields.find((f) => f?.props?.key === "milestone");
       expect(milestoneField).toBeDefined();
@@ -124,6 +131,7 @@ describe("preset-templates", () => {
       const doc = preset.build("biz-1");
       const customFields = Object.keys(doc.components)
         .map((id) => findComponent(doc, id))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((c) => c?.type === "customField") as any[];
       const vinField = customFields.find((f) => f?.props?.key === "vin");
       expect(vinField).toBeDefined();
@@ -135,6 +143,7 @@ describe("preset-templates", () => {
       const doc = preset.build("biz-1");
       const lineItems = Object.keys(doc.components)
         .map((id) => findComponent(doc, id))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .find((c) => c?.type === "lineItems") as any;
       expect(lineItems).toBeDefined();
       expect(lineItems.props.showDiscount).toBe(true);

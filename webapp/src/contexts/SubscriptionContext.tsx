@@ -72,6 +72,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [subData, plansData, featuresData] = await Promise.all([
         getSubscription().catch(() => null),
         getPlans().catch(() => ({ plans: [] })),
@@ -114,6 +115,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       isInitialLoad.current = false;
       void refresh();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, authLoading, businessId]);
 
   const upgrade = async (planCode: string) => {

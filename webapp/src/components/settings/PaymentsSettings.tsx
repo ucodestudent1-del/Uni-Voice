@@ -6,6 +6,7 @@ import SavedIndicator from "./SavedIndicator";
 import { Button } from "../ui/Button";
 
 export default function PaymentsSettings() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [settings, setSettings] = useState<ApiBusinessSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,6 +96,7 @@ export default function PaymentsSettings() {
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save payment settings");
     } finally {

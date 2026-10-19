@@ -150,6 +150,7 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({
           new Decimal(typeof value === "string" || typeof value === "number" ? value : 0),
           currency
         ),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       computeLineTotal: (item: any) => calcLineTotal(item),
     };
 

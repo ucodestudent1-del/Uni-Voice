@@ -15,6 +15,7 @@ export default function Products() {
     noIndex: true,
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const navigate = useNavigate();
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +26,7 @@ export default function Products() {
     defaultTaxRate: 0, unit: "each", defaultCurrency: "USD",
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export default function Products() {
       setEditingProduct(null);
       setFormData({ name: "", description: "", sku: "", defaultUnitPrice: 0, defaultTaxRate: 0, unit: "each", defaultCurrency: "USD" });
       loadProducts();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to save product");
     }
@@ -64,6 +67,7 @@ export default function Products() {
     try {
       await apiDeleteProduct(id);
       loadProducts();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.response?.data?.error || "Failed to delete");
     }

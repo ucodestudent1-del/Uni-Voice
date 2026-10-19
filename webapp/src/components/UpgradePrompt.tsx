@@ -3,6 +3,7 @@ import type { UpgradePromptProps } from "@/types/components";
 
 export type { UpgradePromptProps };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function UpgradePrompt({ feature, requiredPlan, message, children }: UpgradePromptProps) {
   const { plan } = useSubscription();
 

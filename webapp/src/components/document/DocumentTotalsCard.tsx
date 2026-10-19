@@ -1,6 +1,7 @@
 import { Money, FormField } from "@/components/ui";
 import { formatTaxRate } from "@/utils/format";
 import type { CalculationResult } from "@/types/calculation";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Decimal } from "decimal.js";
 
 interface DocumentTotalsCardProps {

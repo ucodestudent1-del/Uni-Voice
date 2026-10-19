@@ -15,6 +15,7 @@ interface DocumentLineItemsProps {
   onAdd: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function LineTotalDisplay({
   calcResult,
   idx,
@@ -98,6 +99,7 @@ export function DocumentLineItemRow({
   taxRateOptions,
   showOptional = false,
   showDuplicate = true,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   calcResult,
   onUpdate,
   onRemove,

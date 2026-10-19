@@ -1,6 +1,7 @@
 ﻿import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useTheme } from "../contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import BottomTabBar from "./BottomTabBar";

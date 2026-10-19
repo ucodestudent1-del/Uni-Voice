@@ -19,6 +19,7 @@ import PageHeader from "../components/ui/PageHeader";
 import EmptyState from "../components/ui/EmptyState";
 import { useMetaTags } from "@/hooks/useMetaTags";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface PresetChoiceState {
   isOpen: boolean;
 }

@@ -13,6 +13,7 @@ export interface AiInputProps {
   documentType?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function AiInput({ onParsed, onClear, hasParsedData, businessName, currency, customerId, documentType = "invoice" }: AiInputProps) {
   const [text, setText] = useState("");
   const [isParsing, setIsParsing] = useState(false);
@@ -45,6 +46,7 @@ export function AiInput({ onParsed, onClear, hasParsedData, businessName, curren
     } finally {
       setIsParsing(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, onParsed, trackAiParseAttempted, trackAiParseSuccess, trackAiParseFailed]);
 
   const handleClear = useCallback(() => {

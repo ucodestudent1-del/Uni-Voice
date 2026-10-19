@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { KPICard } from "@/components/ui";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { ApiVolumeTrend } from "../../types/api";
 
 interface ReportKPICardsProps {

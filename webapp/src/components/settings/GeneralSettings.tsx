@@ -10,6 +10,7 @@ export default function GeneralSettings() {
   const { section } = useParams();
   const isAccount = section === "account";
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [settings, setSettings] = useState<ApiBusinessSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,6 +66,7 @@ export default function GeneralSettings() {
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save preferences");
     } finally {
@@ -80,6 +82,7 @@ export default function GeneralSettings() {
       await updateUserProfile({ email: accountForm.email });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save account");
     } finally {

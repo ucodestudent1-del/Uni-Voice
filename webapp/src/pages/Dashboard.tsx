@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useMemo } from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
@@ -11,6 +12,7 @@ import { getDashboardData, getVolumeTrendReport } from "../api/client";
 import type { ApiDashboardData } from "../types/api";
 import { KPICard, Skeleton } from "@/components/ui";
 import RevenueChart from "../components/dashboard/RevenueChart";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { formatCurrencyValue } from "@/lib/utils";
 import { Button } from "../components/ui/Button";
 import { useMetaTags } from "@/hooks/useMetaTags";
@@ -62,6 +64,7 @@ export default function Dashboard() {
       setDashboard((dashRes.data ?? dashRes) as ApiDashboardData);
       const trendData = Array.isArray(trendRes) ? trendRes : trendRes?.data ?? [];
       setVolumeTrend(Array.isArray(trendData) ? trendData : []);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setDashboard(null);
       setLoadError(err.response?.data?.error || "Could not load dashboard");

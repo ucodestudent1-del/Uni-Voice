@@ -42,6 +42,7 @@ export default function PaymentStatusPie({ data = [] }: PaymentStatusPieProps) {
               </Pie>
               <Tooltip
                 formatter={(value, name) => {
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   const segment = segments.find((s) => s.label === name);
                   const pct = total > 0 ? Math.round((Number(value) / total) * 100) : 0;
                   return [`${value} (${pct}%)`, name];

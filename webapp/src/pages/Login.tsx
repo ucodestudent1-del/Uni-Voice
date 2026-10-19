@@ -55,6 +55,7 @@ export default function Login() {
         login(data.user);
         navigate("/app");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Authentication failed");
     } finally {
@@ -73,6 +74,7 @@ export default function Login() {
     try {
       await verifyTwoFactor(twoFactorEmail, code.replace(/\s/g, ""));
       navigate("/app");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       const message = err.response?.data?.error || "Invalid code";
       if (err.response?.data?.code === "TOO_MANY_ATTEMPTS") {

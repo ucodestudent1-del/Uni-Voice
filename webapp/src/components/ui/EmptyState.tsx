@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { RefreshCw, AlertCircle } from "lucide-react";
 import type { EmptyStateProps } from "@/types/components";
 

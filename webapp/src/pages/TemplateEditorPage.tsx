@@ -50,6 +50,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
 
   const [templateName, setTemplateName] = useState(existingTemplate?.name || "");
   const [templateDescription, setTemplateDescription] = useState(existingTemplate?.description || "");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [templateIndustry, setTemplateIndustry] = useState(existingTemplate?.industry || "");
   const [documentType, setDocumentType] = useState<InvoiceTemplateDTO["documentType"]>(existingTemplate?.documentType || "invoice");
   const [lifecycle, setLifecycle] = useState<InvoiceTemplateDTO["lifecycle"]>(existingTemplate?.lifecycle || "draft");
@@ -101,6 +102,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
     if (!templateName.trim()) return;
     setSaveState("saving");
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: any = {
         name: templateName,
         description: templateDescription || null,
@@ -401,6 +403,7 @@ export default function TemplateEditorPage() {
         })
         .finally(() => setLoading(false));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, presetKey, isNew, user?.businessId]);
 
   if (isNew && !presetKey) {

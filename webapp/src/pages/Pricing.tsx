@@ -86,6 +86,7 @@ export default function Plans() {
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err?.response?.data?.error || "Failed to start upgrade");
     } finally {

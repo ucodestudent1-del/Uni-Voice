@@ -33,6 +33,7 @@ export default function TeamPermissionsSettings() {
     try {
       const data = await getTeam();
       setTeam(data.team ?? []);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load team");
       setTeam([]);
@@ -55,6 +56,7 @@ export default function TeamPermissionsSettings() {
       setActionMessage(`Invitation sent to ${inviteEmail}`);
       setInviteEmail("");
       loadTeam();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to send invitation");
     } finally {
@@ -67,6 +69,7 @@ export default function TeamPermissionsSettings() {
       await updateTeamMember(memberId, { role });
       setActionMessage("Role updated");
       loadTeam();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to update role");
     }
@@ -78,6 +81,7 @@ export default function TeamPermissionsSettings() {
       await removeTeamMember(memberId);
       setActionMessage("Team member removed");
       loadTeam();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to remove team member");
     }
@@ -87,6 +91,7 @@ export default function TeamPermissionsSettings() {
     try {
       await resendTeamInvite(memberId);
       setActionMessage("Invitation resent");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to resend invitation");
     }

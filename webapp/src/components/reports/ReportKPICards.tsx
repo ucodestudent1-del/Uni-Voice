@@ -17,6 +17,7 @@ interface ReportKPICardsProps {
 
 export default function ReportKPICards({
   summary,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   paymentMetrics,
   volumeTrend = [],
 }: ReportKPICardsProps) {

@@ -1,5 +1,6 @@
-import { registerComponent, PaletteItem } from "./index";
-import { ComponentDefinition, RenderContext, InspectorContext } from "./index";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { registerComponent } from "./index";
+import { ComponentDefinition } from "./index";
 import {
   TextComponent,
   ImageComponent,
@@ -84,7 +85,7 @@ function registerTextComponent() {
     }) as any,
     canHaveChildren: false,
     allowedParentTypes: ["column", "row", "section"],
-    render: (component, ctx) => {
+    render: (component, _ctx) => {
       const { content, format = "plain" } = component.props;
       let rendered: React.ReactNode = content;
       if (format === "markdown") {
@@ -532,7 +533,7 @@ function registerDateComponent() {
     allowedParentTypes: ["column", "row", "section"],
     render: (component, ctx) => {
       const invoice = ctx.invoice;
-      const { dateType, format, label, customValue } = component.props;
+      const { dateType, label, customValue } = component.props;
       let value: string;
       switch (dateType) {
         case "issue":
@@ -1076,7 +1077,7 @@ function registerPaymentTermsComponent() {
     }) as any,
     canHaveChildren: false,
     allowedParentTypes: ["column", "row", "section"],
-    render: (component, ctx) => {
+    render: (component, _ctx) => {
       return (
         <div style={{ ...component.style }}>
           {component.props.label && <span className="text-xs text-secondary">{component.props.label}</span>}

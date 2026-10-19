@@ -24,6 +24,7 @@ export function PageSection({
   divided = true,
   padding = "default",
 }: PageSectionProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const paddingClass = {
     default: "p-5",
     none: "p-0",

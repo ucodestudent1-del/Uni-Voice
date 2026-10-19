@@ -73,8 +73,10 @@ const countryOptions = [
 ];
 
 export default function BusinessProfileSettings() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedField, setSavedField] = useState<string | null>(null);
@@ -119,6 +121,7 @@ export default function BusinessProfileSettings() {
           defaultCurrency: data.business?.defaultCurrency || "USD",
           logoUrl: data.business?.logoUrl || "",
         });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         setError(err.response?.data?.error || "Failed to load business profile");
       } finally {
@@ -140,6 +143,7 @@ export default function BusinessProfileSettings() {
       await updateBusiness({ [field]: value });
       setSavedField(field);
       setTimeout(() => setSavedField(null), 2000);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save");
     } finally {

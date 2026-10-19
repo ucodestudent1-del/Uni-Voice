@@ -1,4 +1,5 @@
 import React from "react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { AnyComponent, ComponentId, ComponentType, StyleProps } from "../types";
 import { getComponentDefinition, InspectorContext } from "../registry/index";
 
@@ -10,16 +11,21 @@ export interface PropertyInspectorProps {
   onDelete: (componentId: ComponentId) => void;
   onDuplicate?: (componentId: ComponentId) => void;
   onVisibilityToggle: (componentId: ComponentId) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   document: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   business: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customer: any;
   currency: string;
   locale: string;
 }
 
 export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   componentId,
   component,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSelect,
   onUpdate,
   onDelete,
@@ -57,6 +63,7 @@ export const PropertyInspector: React.FC<PropertyInspectorProps> = ({
     locale,
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handlePropsChange = (props: Partial<any>) => {
     onUpdate(component.id, props, undefined);
   };

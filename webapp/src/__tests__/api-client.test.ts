@@ -42,6 +42,7 @@ describe("API client cache utilities", () => {
 
   describe("invalidateCache", () => {
     it("clears the entire cache when called with no pattern", () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const key = getCacheKey("/api/test", { a: "1" });
       invalidateCache();
     });
@@ -169,6 +170,7 @@ describe("getAgingReport", () => {
     invalidateCache();
     const originalGet = api.get;
     const error = new Error("Request failed with status code 404");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error as any).response = { status: 404 };
     api.get = vi.fn().mockRejectedValue(error);
     try {
@@ -224,6 +226,7 @@ describe("getPaymentMetricsReport", () => {
     invalidateCache();
     const originalGet = api.get;
     const error = new Error("Request failed with status code 404");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error as any).response = { status: 404 };
     api.get = vi.fn().mockRejectedValue(error);
     try {

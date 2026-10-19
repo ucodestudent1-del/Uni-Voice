@@ -10,6 +10,7 @@ interface TestRow {
   amount?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const columns: any[] = [
   { header: "Name", accessor: "name", sortable: true, align: "left" },
   { header: "Status", accessor: "status", sortable: false, align: "center" },
@@ -190,6 +191,7 @@ describe("DataTable", () => {
 
   describe("custom cell rendering", () => {
     it("renders custom cell content when cell function provided", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const customColumns: any[] = [
         {
           header: "Name",
@@ -203,6 +205,7 @@ describe("DataTable", () => {
 
     it("renders null value as '—' in cells", () => {
       const customData = [{ id: "1", name: null, status: undefined, amount: "" }];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const customColumns: any[] = [{ header: "Name", accessor: "name" }];
       render(<DataTable columns={customColumns} data={customData} rowKey="id" />);
       expect(screen.getByText("—")).toBeInTheDocument();

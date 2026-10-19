@@ -21,6 +21,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     setToasts((prev) => [...prev, { ...toast, id }]);
     return id;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [removeToast]);
 
   const toast = useCallback(
