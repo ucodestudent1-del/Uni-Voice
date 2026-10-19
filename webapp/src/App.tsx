@@ -31,6 +31,8 @@ const ReminderAutomation = lazy(() => import("./pages/ReminderAutomation"));
 const Reports = lazy(() => import("./pages/Reports"));
 const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const Documents = lazy(() => import("./pages/Documents"));
+const CreateDocument = lazy(() => import("./pages/CreateDocument"));
+const AccountBilling = lazy(() => import("./pages/AccountBilling"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 
@@ -111,6 +113,8 @@ const DocumentWorkspacePurchaseOrderWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="purchase-order" />,
   "Purchase Order Workspace",
 );
+const CreateDocumentWithBoundary = withErrorBoundary(CreateDocument, "Create Document");
+const AccountBillingWithBoundary = withErrorBoundary(AccountBilling, "Account & Billing");
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -196,6 +200,8 @@ export default function App() {
             }
           >
           <Route index element={<DashboardWithBoundary />} />
+          <Route path="create" element={<CreateDocumentWithBoundary />} />
+          <Route path="account" element={<AccountBillingWithBoundary />} />
           <Route path="customers" element={<CustomersWithBoundary />} />
           <Route path="customers/:id" element={<CustomerDetailWithBoundary />} />
           <Route path="products" element={<ProductsWithBoundary />} />
@@ -209,6 +215,7 @@ export default function App() {
           <Route path="receipts" element={<ReceiptsWithBoundary />} />
           <Route path="receipts/:id" element={<ReceiptDetailWithBoundary />} />
            <Route path="documents" element={<DocumentsWithBoundary />} />
+           <Route path="documents/new" element={<Navigate to="/app/create" replace />} />
            <Route path="invoices/new" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
            <Route path="invoices/:id/edit" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
            <Route path="credit-notes/new" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />

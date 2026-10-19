@@ -1,17 +1,18 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Users,
-  Receipt,
   FileText,
+  Plus,
+  CreditCard,
 } from "lucide-react";
 
 export default function BottomTabBar() {
   const items = [
     { name: "Dashboard", to: "/app", icon: LayoutDashboard },
-    { name: "Customers", to: "/app/customers", icon: Users },
     { name: "Documents", to: "/app/documents", icon: FileText },
-    { name: "Payments", to: "/app/payments", icon: Receipt },
+    { name: "Create", to: "/app/create", icon: Plus },
+    { name: "Templates", to: "/app/templates", icon: FileText },
+    { name: "Account", to: "/app/account", icon: CreditCard },
   ];
 
   return (

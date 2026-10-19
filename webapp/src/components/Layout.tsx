@@ -9,7 +9,7 @@ import ThemeToggle from "./ThemeToggle";
 import KeyboardShortcutsHelp from "./KeyboardShortcutsHelp";
 import { SkipLink } from "./ui/AppShell";
 import type { ComponentType } from "react";
-import { FileText, Menu, Lock, HelpCircle } from "lucide-react";
+import { FileText, Menu, Lock, HelpCircle, Plus, Edit, LayoutDashboard, CreditCard } from "lucide-react";
 
 import type { PlanTier } from "@/types/app";
 
@@ -19,6 +19,7 @@ interface NavItem {
   icon?: ComponentType<{ className?: string }>;
   feature?: string;
   requiredPlan?: PlanTier;
+  tooltip?: string;
 }
 
 export default function Layout() {
@@ -48,13 +49,40 @@ export default function Layout() {
     {
       name: "Dashboard",
       to: "/app",
+      icon: LayoutDashboard,
       feature: undefined,
       requiredPlan: undefined,
     },
-    { name: "Customers", to: "/app/customers" },
-    { name: "Products", to: "/app/products" },
-    { name: "Documents", to: "/app/documents", icon: FileText },
-    { name: "Payments", to: "/app/payments" },
+    {
+      name: "Create Document",
+      to: "/app/create",
+      icon: Plus,
+      feature: undefined,
+      requiredPlan: undefined,
+    },
+    {
+      name: "Document Editor",
+      to: "/app/documents/new",
+      icon: Edit,
+      tooltip: "Start editing a new document",
+      feature: undefined,
+      requiredPlan: undefined,
+    },
+    { name: "Templates", to: "/app/templates", icon: FileText },
+    { name: "My Documents", to: "/app/documents" },
+    {
+      name: "Customers",
+      to: "/app/customers",
+      feature: undefined,
+      requiredPlan: undefined,
+    },
+    {
+      name: "Products",
+      to: "/app/products",
+      feature: undefined,
+      requiredPlan: undefined,
+    },
+    { name: "Payments", to: "/app/payments", feature: undefined, requiredPlan: undefined },
     {
       name: "Receipts",
       to: "/app/receipts",
@@ -62,22 +90,11 @@ export default function Layout() {
       requiredPlan: "pro" as PlanTier,
     },
     {
-      name: "Templates",
-      to: "/app/templates",
-      feature: "templates.enabled",
-      requiredPlan: "pro" as PlanTier,
-    },
-    {
-      name: "Projects",
-      to: "/app/projects",
-      feature: "projects.enabled",
-      requiredPlan: "free" as PlanTier,
-    },
-    {
-      name: "Reports",
-      to: "/app/reports",
-      feature: "reports.revenue",
-      requiredPlan: "pro" as PlanTier,
+      name: "Account & Billing",
+      to: "/app/account",
+      icon: CreditCard,
+      feature: undefined,
+      requiredPlan: undefined,
     },
     { name: "Plans", to: "/app/plans" },
     { name: "Settings", to: "/app/settings" },
