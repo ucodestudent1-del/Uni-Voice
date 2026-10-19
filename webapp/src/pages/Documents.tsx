@@ -181,7 +181,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiInvoiceListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "”"}
+          {row.customer_name || "—"}
         </span>
       ),
       sortable: false,
@@ -192,7 +192,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiInvoiceListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "”"}
+          {row.issue_date ? formatDate(row.issue_date) : "—"}
         </span>
       ),
       sortable: false,
@@ -245,7 +245,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiQuoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "”"}
+          {row.customer_name || "—"}
         </span>
       ),
       sortable: false,
@@ -256,7 +256,7 @@ export default function Documents() {
       accessor: "expiry_date" as const,
       cell: (row: ApiQuoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.expiry_date ? formatDate(row.expiry_date) : "”"}
+          {row.expiry_date ? formatDate(row.expiry_date) : "—"}
         </span>
       ),
       sortable: false,
@@ -309,7 +309,18 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "”"}
+          {row.customer_name || "—"}
+        </span>
+      ),
+      sortable: false,
+      align: "left" as const,
+    },
+    {
+      header: "Reference Invoice",
+      accessor: (row: ApiCreditNoteListItem) => row.reference_invoice_number ?? null,
+      cell: (row: ApiCreditNoteListItem) => (
+        <span className="text-sm text-secondary">
+          {row.reference_invoice_number || "—"}
         </span>
       ),
       sortable: false,
@@ -320,18 +331,29 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "”"}
+          {row.issue_date ? formatDate(row.issue_date) : "—"}
         </span>
       ),
       sortable: false,
       align: "left" as const,
     },
     {
-      header: "Total",
+      header: "Amount",
       accessor: "total" as const,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm font-medium text-primary font-tabular-nums">
           {formatCurrencyValue(row.total, row.currency)}
+        </span>
+      ),
+      sortable: false,
+      align: "right" as const,
+    },
+    {
+      header: "Applied",
+      accessor: "applied_total" as const,
+      cell: (row: ApiCreditNoteListItem) => (
+        <span className="text-sm font-tabular-nums text-secondary">
+          {formatCurrencyValue(row.applied_total, row.currency)}
         </span>
       ),
       sortable: false,
@@ -373,7 +395,7 @@ export default function Documents() {
       accessor: "supplier_name" as const,
       cell: (row: ApiPurchaseOrderListItem) => (
         <span className="text-sm text-secondary">
-          {row.supplier_name || "”"}
+          {row.supplier_name || "—"}
         </span>
       ),
       sortable: false,
@@ -384,7 +406,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiPurchaseOrderListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "”"}
+          {row.issue_date ? formatDate(row.issue_date) : "—"}
         </span>
       ),
       sortable: false,
@@ -437,7 +459,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiReceipt) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "”"}
+          {row.customer_name || "—"}
         </span>
       ),
       sortable: false,
@@ -459,7 +481,7 @@ export default function Documents() {
       accessor: "issued_at" as const,
       cell: (row: ApiReceipt) => (
         <span className="text-sm text-secondary">
-          {row.issued_at ? formatDate(row.issued_at) : "”"}
+          {row.issued_at ? formatDate(row.issued_at) : "—"}
         </span>
       ),
       sortable: false,
