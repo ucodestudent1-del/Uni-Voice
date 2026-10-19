@@ -40,6 +40,15 @@ export default defineConfig({
             if (id.includes("@sentry") || id.includes("rrweb")) {
               return "monitoring";
             }
+            if (id.includes("decimal.js")) {
+              return "decimal";
+            }
+            if (id.includes("zod")) {
+              return "validation";
+            }
+            if (id.includes("axios")) {
+              return "http";
+            }
             return "vendor";
           }
         },
@@ -49,6 +58,12 @@ export default defineConfig({
     assetsInlineLimit: 4096,
     assetsHash: true,
     chunkSizeWarningLimit: 2000,
+    minify: "esbuild",
+    cssCodeSplit: true,
+    reportCompressedSize: false,
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
   },
   optimizeDeps: {
     include: ["react", "react-dom", "axios", "react-router-dom"],

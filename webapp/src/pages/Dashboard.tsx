@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo, lazy, Suspense } from "react";
+﻿import { useMemo, lazy, Suspense } from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,7 @@ import {
 import { getDashboardData, getVolumeTrendReport } from "../api/client";
 import type { ApiDashboardData } from "../types/api";
 import { KPICard, Skeleton } from "@/components/ui";
+import { useQuery } from "@tanstack/react-query";
 const RevenueChart = lazy(() => import("../components/dashboard/RevenueChart"));
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { formatCurrencyValue } from "@/lib/utils";
@@ -43,35 +44,30 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { plan } = useSubscription();
 
-  const [dashboard, setDashboard] = useState<ApiDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [retryKey, setRetryKey] = useState(0);
-  const [volumeTrend, setVolumeTrend] = useState<{ period: string; invoiced: string; paid: string }[]>([]);
+  const {
+    data: dashboard,
+    isLoading: loading,
+    isError: loadError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () =>
+      getDashboardData().then((res) => (res.data ?? res) as ApiDashboardData),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
-  useEffect(() => {
-    loadAll();
-  }, [retryKey]);
-
-  async function loadAll() {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const [dashRes, trendRes] = await Promise.all([
-        getDashboardData(),
-        getVolumeTrendReport({ period: "day", months: 1 }).catch(() => []),
-      ]);
-      setDashboard((dashRes.data ?? dashRes) as ApiDashboardData);
-      const trendData = Array.isArray(trendRes) ? trendRes : trendRes?.data ?? [];
-      setVolumeTrend(Array.isArray(trendData) ? trendData : []);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setDashboard(null);
-      setLoadError(err.response?.data?.error || "Could not load dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { data: volumeTrend = [] } = useQuery({
+    queryKey: ["volume-trend-day-1"],
+    queryFn: () =>
+      getVolumeTrendReport({ period: "day", months: 1 })
+        .then((res) => (Array.isArray(res) ? res : (res?.data ?? [])) as Array<{ period: string; invoiced: string; paid: string }>)
+        .catch(() => []),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
 
   const displayName = deriveNameFromEmail(user?.email);
   const greeting = useMemo(() => getGreeting(displayName), [displayName]);
@@ -113,12 +109,10 @@ export default function Dashboard() {
   if (loadError) {
     return (
       <div className="rounded-xl border border-error-border bg-error-bg p-6 text-center">
-        <p className="text-sm font-medium text-error-text mb-4">{loadError}</p>
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => setRetryKey((key) => key + 1)}
-        >
+        <p className="text-sm font-medium text-error-text mb-4">
+          {error instanceof Error ? error.message : "Could not load dashboard"}
+        </p>
+        <Button variant="primary" size="md" onClick={() => refetch()}>
           Try again
         </Button>
       </div>
@@ -190,4 +184,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

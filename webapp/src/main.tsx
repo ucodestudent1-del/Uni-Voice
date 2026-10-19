@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
@@ -9,6 +10,17 @@ import { ThemeProvider, applyInitialTheme } from "./contexts/ThemeContext";
 import { ToastProvider } from "./components/ui/ToastProvider";
 import { initSentry } from "./lib/sentry";
 import "./index.css";
+
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 60_000,
+			gcTime: 5 * 60_000,
+			retry: 1,
+			refetchOnWindowFocus: false,
+		},
+	},
+});
 
 initSentry();
 
@@ -99,6 +111,7 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
 	<React.StrictMode>
+		<QueryClientProvider client={queryClient}>
 		<BrowserRouter>
 			<HelmetProvider>
 				<AuthProvider>
@@ -118,7 +131,8 @@ ReactDOM.createRoot(rootElement).render(
 						</ThemeProvider>
 					</SubscriptionProvider>
 				</AuthProvider>
-			</HelmetProvider>
+		</HelmetProvider>
 		</BrowserRouter>
+		</QueryClientProvider>
 	</React.StrictMode>,
 );
