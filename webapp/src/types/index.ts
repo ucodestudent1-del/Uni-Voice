@@ -1,5 +1,4 @@
 export * from "./api";
-export * from "./settings";
 
 export type {
   DiscountType,

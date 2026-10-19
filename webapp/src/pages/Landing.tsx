@@ -25,7 +25,7 @@ export default function Landing() {
           <div className="text-xl font-bold tracking-tight text-primary-brand">DocForge</div>
           <div className="hidden md:flex items-center gap-8">
             <Link to="#features" className="text-sm text-tertiary hover:text-primary transition-colors">Features</Link>
-            <Link to="/pricing" className="text-sm text-tertiary hover:text-primary transition-colors">Pricing</Link>
+            <Link to="/app/account" className="text-sm text-tertiary hover:text-primary transition-colors">Pricing</Link>
             <Link to="#faq" className="text-sm text-tertiary hover:text-primary transition-colors">FAQ</Link>
             <button onClick={() => navigate("/login")} className="text-sm text-tertiary hover:text-primary transition-colors">
               Login
@@ -129,7 +129,7 @@ export default function Landing() {
         </div>
         <div className="mt-8 flex justify-center">
           <Link
-            to="/pricing"
+            to="/app/account"
             className="inline-flex items-center rounded-lg bg-primary-action px-6 py-3 text-base font-semibold text-on-primary hover:bg-primary-hover shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary transition-all"
           >
             View Full Pricing
@@ -167,7 +167,6 @@ export default function Landing() {
             <div className="flex gap-6">
               <Link to="/privacy" className="text-sm text-tertiary hover:text-primary-brand transition-colors">Privacy</Link>
               <Link to="/terms" className="text-sm text-tertiary hover:text-primary-brand transition-colors">Terms</Link>
-              <Link to="/pricing" className="text-sm text-tertiary hover:text-primary-brand transition-colors">Pricing</Link>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Decimal } from "decimal.js";
 import {
   X,
@@ -7,14 +7,11 @@ import {
   Phone,
   MapPin,
   FileText,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Plus,
   Pencil,
-  Building2,
-  CalendarDays,
   Receipt,
   AlertCircle,
   CheckCircle2,
+  CalendarDays,
   Landmark,
 } from "lucide-react";
 import { getCustomerSummary } from "../api/client";
@@ -41,8 +38,7 @@ interface CustomerQuickViewProps {
   onEdit?: (customer: ApiCustomer) => void;
 }
 
-export default function CustomerQuickView({ customer, onClose, onEdit }: CustomerQuickViewProps) {
-  const navigate = useNavigate();
+export default function CustomerQuickView({ customer, onClose }: CustomerQuickViewProps) {
   const [summary, setSummary] = useState<ApiCustomerSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -123,7 +119,7 @@ export default function CustomerQuickView({ customer, onClose, onEdit }: Custome
             action={
               summary && summary.totalInvoiceCount > (summary.invoices?.length ?? 0) ? (
                 <Link
-                  to={`/app/customers/${customer.id}`}
+                  to="/app/documents"
                   onClick={onClose}
                   className="text-xs font-medium text-primary-brand hover:underline"
                 >
@@ -153,18 +149,18 @@ export default function CustomerQuickView({ customer, onClose, onEdit }: Custome
             variant="secondary"
             size="md"
             icon={<Pencil className="h-4 w-4" />}
-            onClick={() => (onEdit ? onEdit(customer) : navigate(`/app/customers/${customer.id}`))}
+            onClick={() => onClose()}
             className="w-full"
           >
-            Edit details
+            Close
           </Button>
           <Link
-            to={`/app/customers/${customer.id}`}
+            to="/app/documents"
             onClick={onClose}
             className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-primary-brand hover:bg-surface-alt"
           >
-            <Building2 className="h-4 w-4" />
-            Open full profile
+            <FileText className="h-4 w-4" />
+            View My Documents
           </Link>
         </div>
       </aside>

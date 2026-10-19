@@ -19,13 +19,13 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-primary">Tell us about your business</h2>
         <p className="text-secondary">
-          You can update your business details in Settings at any time.
+          You can update your business details in Account &amp; Billing at any time.
         </p>
         <button
-          onClick={() => navigate("/app/settings")}
+          onClick={() => navigate("/app/account")}
           className="px-4 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
         >
-          Open Business Profile
+          Open Account &amp; Billing
         </button>
       </div>
     ),
@@ -36,10 +36,10 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
           Customers help you create invoices faster and track who owes what.
         </p>
         <button
-          onClick={() => navigate("/app/customers")}
+          onClick={() => navigate("/app/create")}
           className="px-4 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
         >
-          Add Customer
+          Create Invoice
         </button>
       </div>
     ),
@@ -50,10 +50,10 @@ function buildStepComponents(navigate: ReturnType<typeof useNavigate>): Record<s
           Save line items so you can add them to invoices quickly.
         </p>
         <button
-          onClick={() => navigate("/app/products")}
+          onClick={() => navigate("/app/create")}
           className="px-4 py-2 bg-primary-action text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
         >
-          Add Product/Service
+          Create Invoice
         </button>
       </div>
     ),

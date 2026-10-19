@@ -30,7 +30,7 @@ export default function UpgradePrompt({ feature, requiredPlan, message, children
             {message ?? `This feature requires a ${requiredPlan} plan. Upgrade to unlock it.`}
           </p>
           <div className="mt-2">
-            <a href="/app/plans" className="text-sm font-medium text-warning-text underline hover:opacity-80">
+            <a href="/app/account?upgrade=true" className="text-sm font-medium text-warning-text underline hover:opacity-80">
               View Plans
             </a>
           </div>

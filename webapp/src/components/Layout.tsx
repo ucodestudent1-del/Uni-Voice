@@ -71,33 +71,12 @@ export default function Layout() {
     { name: "Templates", to: "/app/templates", icon: FileText },
     { name: "My Documents", to: "/app/documents" },
     {
-      name: "Customers",
-      to: "/app/customers",
-      feature: undefined,
-      requiredPlan: undefined,
-    },
-    {
-      name: "Products",
-      to: "/app/products",
-      feature: undefined,
-      requiredPlan: undefined,
-    },
-    { name: "Payments", to: "/app/payments", feature: undefined, requiredPlan: undefined },
-    {
-      name: "Receipts",
-      to: "/app/receipts",
-      feature: "receipts.create",
-      requiredPlan: "pro" as PlanTier,
-    },
-    {
       name: "Account & Billing",
       to: "/app/account",
       icon: CreditCard,
       feature: undefined,
       requiredPlan: undefined,
     },
-    { name: "Plans", to: "/app/plans" },
-    { name: "Settings", to: "/app/settings" },
   ];
 
   const tierOrder = { free: 0, pro: 1 };
@@ -107,7 +86,7 @@ export default function Layout() {
 
   function handleNavClick(isLocked: boolean, item: NavItem) {
     if (isLocked) {
-      navigate(`/app/plans?upgrade=${item.requiredPlan || "pro"}`);
+      navigate(`/app/account?upgrade=${item.requiredPlan || "pro"}`);
     } else {
       navigate(item.to);
     }
