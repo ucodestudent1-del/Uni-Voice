@@ -2720,6 +2720,1339 @@ export const DEFAULT_PURCHASE_ORDER_TEMPLATE = `<!DOCTYPE html>
 
 templateCache.set(DEFAULT_PURCHASE_ORDER_TEMPLATE, Handlebars.compile(DEFAULT_PURCHASE_ORDER_TEMPLATE, { noEscape: false }));
 
+export const DEFAULT_RECURRING_INVOICE_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recurring Invoice {{recurringInvoice.recurringInvoiceNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #1e2931; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #2563eb;
+      --color-brand-hover: #1d4ed8;
+      --color-success: #065f46;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --color-error: #991b1b;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid #2563eb; position: relative; }
+    .header-section::after { content: "RECURRING"; position: absolute; top: 0; right: 0; font-size: 70px; font-weight: 800; color: #dbeafe; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-active { background: #dbeafe; color: #1e40af; }
+    .status-paused { background: #f1f5f9; color: var(--color-text-secondary); }
+    .status-cancelled { background: #f1f5f9; color: var(--color-text-secondary); }
+    .status-void { background: #fee2e2; color: var(--color-error); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-brand); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .schedule-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Recurring Invoice</h1>
+        <span class="schedule-chip">RI #{{recurringInvoice.recurringInvoiceNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if recurringInvoice.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{recurringInvoice.status}}">{{recurringInvoice.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if recurringInvoice.frequency}}
+          <div class="meta-item">
+            <span class="meta-label">Frequency</span>
+            <span class="meta-value">{{recurringInvoice.frequency}} {{#if recurringInvoice.intervalCount}}(every {{recurringInvoice.intervalCount}}){{/if}}</span>
+          </div>
+          {{/if}}
+          {{#if recurringInvoice.nextGenerationAt}}
+          <div class="meta-item">
+            <span class="meta-label">Next Generation</span>
+            <span class="meta-value">{{formatDate recurringInvoice.nextGenerationAt}}</span>
+          </div>
+          {{/if}}
+          {{#if recurringInvoice.endDate}}
+          <div class="meta-item">
+            <span class="meta-label">End Date</span>
+            <span class="meta-value">{{formatDate recurringInvoice.endDate}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items added.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if recurringInvoice.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br recurringInvoice.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if recurringInvoice.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br recurringInvoice.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if recurringInvoice.isFinalized}}
+    <p>Recurring Invoice #{{recurringInvoice.recurringInvoiceNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft recurring invoice template. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_RECURRING_INVOICE_TEMPLATE, Handlebars.compile(DEFAULT_RECURRING_INVOICE_TEMPLATE, { noEscape: false }));
+
+export const DEFAULT_DELIVERY_NOTE_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delivery Note {{deliveryNote.deliveryNoteNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #0f172a; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f8fafc;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #059669;
+      --color-brand-hover: #047857;
+      --color-success: #065f46;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --color-error: #991b1b;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid #059669; position: relative; }
+    .header-section::after { content: "DELIVERY"; position: absolute; top: 0; right: 0; font-size: 70px; font-weight: 800; color: #d1fae5; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-finalized { background: #dbeafe; color: #1e40af; }
+    .status-shipped { background: #f0fdf4; color: var(--color-success); }
+    .status-delivered { background: #f0fdf4; color: var(--color-success); }
+    .status-returned { background: #ffebee; color: var(--color-error); }
+    .status-cancelled { background: #f1f5f9; color: var(--color-text-secondary); }
+    .status-void { background: #fee2e2; color: var(--color-error); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-brand); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .doc-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Delivery Note</h1>
+        <span class="doc-chip">DN #{{deliveryNote.deliveryNoteNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if deliveryNote.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{deliveryNote.status}}">{{deliveryNote.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if deliveryNote.issueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Issue Date</span>
+            <span class="meta-value">{{formatDate deliveryNote.issueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if deliveryNote.deliveredAt}}
+          <div class="meta-item">
+            <span class="meta-label">Delivered</span>
+            <span class="meta-value">{{formatDate deliveryNote.deliveredAt}}</span>
+          </div>
+          {{/if}}
+          {{#if deliveryNote.referenceInvoiceNumber}}
+          <div class="meta-item">
+            <span class="meta-label">Invoice</span>
+            <span class="meta-value">{{deliveryNote.referenceInvoiceNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items added.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if deliveryNote.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br deliveryNote.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if deliveryNote.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br deliveryNote.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if deliveryNote.isFinalized}}
+    <p>Delivery Note #{{deliveryNote.deliveryNoteNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft delivery note. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_DELIVERY_NOTE_TEMPLATE, Handlebars.compile(DEFAULT_DELIVERY_NOTE_TEMPLATE, { noEscape: false }));
+
+export const DEFAULT_PACKING_SLIP_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Packing Slip {{packingSlip.packingSlipNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #7c3aed; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f5f3ff;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #7c3aed;
+      --color-brand-hover: #6d28d9;
+      --color-success: #065f46;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --color-error: #991b1b;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid #7c3aed; position: relative; }
+    .header-section::after { content: "PACKING"; position: absolute; top: 0; right: 0; font-size: 70px; font-weight: 800; color: #ede9fe; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-finalized { background: #ede9fe; color: #5b21b6; }
+    .status-packed { background: #dcfce8; color: var(--color-success); }
+    .status-shipped { background: #dbeafe; color: #1e40af; }
+    .status-delivered { background: #dcfce8; color: var(--color-success); }
+    .status-returned { background: #fee2e2; color: var(--color-error); }
+    .status-cancelled { background: #f1f5f9; color: var(--color-text-secondary); }
+    .status-void { background: #fee2e2; color: var(--color-error); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-brand); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .doc-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Packing Slip</h1>
+        <span class="doc-chip">PS #{{packingSlip.packingSlipNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if packingSlip.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{packingSlip.status}}">{{packingSlip.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if packingSlip.issueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Issue Date</span>
+            <span class="meta-value">{{formatDate packingSlip.issueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if packingSlip.referencePurchaseOrderNumber}}
+          <div class="meta-item">
+            <span class="meta-label">P.O. #</span>
+            <span class="meta-value">{{packingSlip.referencePurchaseOrderNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items added.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if packingSlip.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br packingSlip.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if packingSlip.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br packingSlip.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if packingSlip.isFinalized}}
+    <p>Packing Slip #{{packingSlip.packingSlipNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft packing slip. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_PACKING_SLIP_TEMPLATE, Handlebars.compile(DEFAULT_PACKING_SLIP_TEMPLATE, { noEscape: false }));
+
+export const DEFAULT_PRO_FORMA_INVOICE_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pro Forma Invoice {{proFormaInvoice.proFormaInvoiceNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #0f172a; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #f0fdf4;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #0ea5e9;
+      --color-brand-hover: #0282c8;
+      --color-success: #065f46;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --color-error: #991b1b;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid #0ea5e9; position: relative; }
+    .header-section::after { content: "PRO FORMA"; position: absolute; top: 0; right: 0; font-size: 70px; font-weight: 800; color: #cffafe; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-viewed { background: #ede9fe; color: #5b21b6; }
+    .status-accepted { background: #dcfce8; color: var(--color-success); }
+    .status-rejected { background: #fee2e2; color: var(--color-error); }
+    .status-expired { background: #ffebee; color: var(--color-error); }
+    .status-converted { background: #dcfce8; color: var(--color-success); }
+    .status-cancelled { background: #f1f5f9; color: var(--color-text-secondary); }
+    .status-void { background: #fee2e2; color: var(--color-error); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-brand); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .doc-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Pro Forma Invoice</h1>
+        <span class="doc-chip">PI #{{proFormaInvoice.proFormaInvoiceNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if proFormaInvoice.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{proFormaInvoice.status}}">{{proFormaInvoice.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if proFormaInvoice.issueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Issue Date</span>
+            <span class="meta-value">{{formatDate proFormaInvoice.issueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if proFormaInvoice.dueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Due Date</span>
+            <span class="meta-value">{{formatDate proFormaInvoice.dueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if proFormaInvoice.expiryDate}}
+          <div class="meta-item">
+            <span class="meta-label">Expiry Date</span>
+            <span class="meta-value">{{formatDate proFormaInvoice.expiryDate}}</span>
+          </div>
+          {{/if}}
+          {{#if proFormaInvoice.poNumber}}
+          <div class="meta-item">
+            <span class="meta-label">P.O. #</span>
+            <span class="meta-value">{{proFormaInvoice.poNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items added.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if proFormaInvoice.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br proFormaInvoice.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if proFormaInvoice.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br proFormaInvoice.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if paymentInstructions}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Payment Instructions</div>
+    <div class="info-box">
+      {{#if paymentInstructions.paymentLink}}
+      <p>Online payment: <a href="{{paymentInstructions.paymentLink}}" style="color: var(--color-brand);">{{paymentInstructions.paymentLink}}</a></p>
+      {{/if}}
+      {{#if paymentInstructions.bankDetails}}
+      <p style="white-space: pre-line;">{{{nl2br paymentInstructions.bankDetails}}}</p>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if proFormaInvoice.isFinalized}}
+    <p>Pro Forma Invoice #{{proFormaInvoice.proFormaInvoiceNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft pro forma invoice. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+templateCache.set(DEFAULT_PRO_FORMA_INVOICE_TEMPLATE, Handlebars.compile(DEFAULT_PRO_FORMA_INVOICE_TEMPLATE, { noEscape: false }));
+
+export const DEFAULT_ESTIMATE_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estimate {{estimate.estimateNumber}}</title>
+  <style>
+    body { margin: 0; padding: 0; color: #0f172a; background: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; line-height: 1.5; }
+    .page { max-width: 900px; margin: 0 auto; padding: 56px 40px; }
+    :root {
+      --color-bg: #ffffff;
+      --color-surface: #fffbeb;
+      --color-border: #e2e8f0;
+      --color-border-strong: #cbd5e1;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-tertiary: #94a3a5;
+      --color-brand: #d97706;
+      --color-brand-hover: #b45309;
+      --color-success: #065f46;
+      --color-warning: #92400e;
+      --color-warning-bg: #fef3c7;
+      --color-error: #991b1b;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-full: 20px;
+    }
+    .header-section { padding-bottom: 24px; border-bottom: 3px solid #d97706; position: relative; }
+    .header-section::after { content: "ESTIMATE"; position: absolute; top: 0; right: 0; font-size: 70px; font-weight: 800; color: #fef3c7; transform: rotate(20deg); pointer-events: none; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; position: relative; z-index: 1; }
+    .business-col { text-align: right; }
+    .logo { max-height: 80px; max-width: 240px; object-contain; }
+    .section { padding: 32px 0; border-bottom: 1px solid var(--color-border); }
+    .section:last-child { border-bottom: none; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); margin-bottom: 16px; }
+    .muted { color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+    .tertiary { color: var(--color-text-tertiary); font-size: 12px; line-height: 1.4; }
+    h1 { margin: 0; font-size: 28px; color: var(--color-text-primary); font-weight: 700; }
+    h2 { margin: 4px 0 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700; }
+    h3 { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .meta-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; }
+    .meta-value { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .status-draft { background: var(--color-warning-bg); color: var(--color-warning); }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-viewed { background: #ede9fe; color: #5b21b6; }
+    .status-accepted { background: #dcfce8; color: var(--color-success); }
+    .status-rejected { background: #fee2e2; color: var(--color-error); }
+    .status-expired { background: #ffebee; color: var(--color-error); }
+    .status-converted { background: #dcfce8; color: var(--color-success); }
+    .status-cancelled { background: #f1f5f9; color: var(--color-text-secondary); }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th { background: var(--color-surface); padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); border-bottom: 2px solid var(--color-border); }
+    .items-table td { padding: 14px 16px; border-bottom: 1px solid var(--color-border); font-size: 13px; line-height: 1.5; }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .text-right { text-align: right; }
+    .align-top { vertical-align: top; }
+    .totals-table { width: 100%; max-width: 380px; margin-left: auto; border-collapse: collapse; }
+    .totals-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--color-border); }
+    .totals-label { color: var(--color-text-tertiary); font-weight: 500; }
+    .totals-value { color: var(--color-text-primary); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+    .big-total-row td { font-weight: 700; font-size: 16px; }
+    .big-total-value { color: var(--color-brand); }
+    .info-box { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 16px 20px; }
+    .info-box p { margin: 0 0 8px 0; font-size: 13px; color: #334155; line-height: 1.5; }
+    .doc-chip { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+    .footer { padding: 24px 0; font-size: 12px; color: var(--color-text-tertiary); border-top: 1px solid var(--color-border); }
+    .footer p { margin: 0; }
+    .footer p + p { margin-top: 4px; }
+    .thank-you { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px; }
+      .header-section::after { font-size: 40px; }
+      .header-grid { grid-template-columns: 1fr; }
+      .business-col { text-align: left; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .totals-table { max-width: 100%; }
+    }
+    @page {
+      margin: 20mm;
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 10px;
+        color: var(--color-text-tertiary);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header-section">
+    <div class="header-grid" style="position: relative; z-index: 1;">
+      <div>
+        {{#if business.logoUrl}}
+        <img class="logo" src="{{business.logoUrl}}" alt="{{business.name}}" />
+        {{/if}}
+        <div style="margin-top: 8px;">
+          <h3 style="margin: 0; font-size: 20px; color: var(--color-text-primary); font-weight: 700;">{{business.name}}</h3>
+          {{#if business.email}}<p class="muted" style="margin: 2px 0 0;">{{business.email}}</p>{{/if}}
+          {{#if business.phone}}<p class="muted" style="margin: 2px 0 0;">{{business.phone}}</p>{{/if}}
+          {{#if business.taxId}}<p class="tertiary" style="margin: 2px 0 0;">Tax ID: {{business.taxId}}</p>{{/if}}
+          {{#if business.address}}
+          <p class="muted" style="margin: 4px 0 0; white-space: pre-line;">
+            {{business.address.addressLine1}}<br />
+            {{#if business.address.addressLine2}}{{business.address.addressLine2}}<br />{{/if}}
+            {{business.address.city}}, {{business.address.stateOrRegion}} {{business.address.postalCode}}<br />
+            {{business.address.countryCode}}
+          </p>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="business-col">
+        <h1>Estimate</h1>
+        <span class="doc-chip">EST #{{estimate.estimateNumber}}</span>
+        <div class="meta-grid" style="justify-items: end; margin-top: 16px;">
+          {{#if estimate.status}}
+          <div class="meta-item">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">
+              <span class="status-badge status-{{estimate.status}}">{{estimate.status}}</span>
+            </span>
+          </div>
+          {{/if}}
+          {{#if estimate.issueDate}}
+          <div class="meta-item">
+            <span class="meta-label">Issue Date</span>
+            <span class="meta-value">{{formatDate estimate.issueDate}}</span>
+          </div>
+          {{/if}}
+          {{#if estimate.expiryDate}}
+          <div class="meta-item">
+            <span class="meta-label">Valid Until</span>
+            <span class="meta-value">{{formatDate estimate.expiryDate}}</span>
+          </div>
+          {{/if}}
+          {{#if estimate.poNumber}}
+          <div class="meta-item">
+            <span class="meta-label">P.O. #</span>
+            <span class="meta-value">{{estimate.poNumber}}</span>
+          </div>
+          {{/if}}
+          {{#if estimate.quoteNumber}}
+          <div class="meta-item">
+            <span class="meta-label">Quote #</span>
+            <span class="meta-value">{{estimate.quoteNumber}}</span>
+          </div>
+          {{/if}}
+          <div class="meta-item">
+            <span class="meta-label">Currency</span>
+            <span class="meta-value">{{meta.code}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{#if estimate.scopeOfWork}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Scope of Work</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br estimate.scopeOfWork}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="section">
+    <div class="section-title">Line Items</div>
+    {{#if lineItems.length}}
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 4%;">#</th>
+          <th style="width: 36%;">Description</th>
+          <th style="width: 7%;" class="text-right">Qty</th>
+          <th style="width: 12%;" class="text-right">Unit Price</th>
+          <th style="width: 9%;" class="text-right">Tax</th>
+          <th style="width: 10%;" class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each lineItems}}
+        <tr>
+          <td class="align-top">{{add @index 1}}</td>
+          <td class="align-top">{{description}}</td>
+          <td class="text-right align-top">{{quantity}} {{unit}}</td>
+          <td class="text-right align-top">{{formatMoney unitPrice}}</td>
+          <td class="text-right align-top">{{formatRateWithName taxRate taxName}}</td>
+          <td class="text-right align-top">{{formatMoney lineTotal}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="info-box">
+      <p style="margin: 0; color: var(--color-text-tertiary); font-style: italic;">No line items added.</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Summary</div>
+    <table class="totals-table">
+      <tr>
+        <td class="totals-label">Subtotal</td>
+        <td class="totals-value">{{formatMoney totals.subtotal}}</td>
+      </tr>
+      {{#if (gt (length totals.taxByRate) 0)}}
+      <tr class="tax-breakdown-row">
+        <td class="totals-label" colspan="2">
+          <span style="display: block; margin-bottom: 4px;">Tax Breakdown</span>
+          <table class="tax-table">
+            <tbody>
+              {{#each totals.taxByRate}}
+              <tr>
+                <td class="tax-rate-cell">{{formatRate rate}}{{#if name}} ({{name}}){{/if}}</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxableAmount}}</td>
+              </tr>
+              <tr>
+                <td class="tax-rate-cell">Tax</td>
+                <td class="text-right tax-rate-cell">{{formatMoney taxAmount}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {{/if}}
+      <tr>
+        <td class="totals-label">Tax Total</td>
+        <td class="totals-value">{{formatMoney totals.taxTotal}}</td>
+      </tr>
+      <tr class="big-total-row">
+        <td class="big-total-label">Total</td>
+        <td class="big-total-value">{{formatMoney totals.total}}</td>
+      </tr>
+    </table>
+  </div>
+
+  {{#if estimate.paymentTerms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Payment Terms</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br estimate.paymentTerms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if estimate.notes}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Notes</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br estimate.notes}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  {{#if estimate.terms}}
+  <div class="section" style="padding-top: 0; border-bottom: none;">
+    <div class="section-title">Terms &amp; Conditions</div>
+    <div class="info-box">
+      <p style="white-space: pre-line;">{{{nl2br estimate.terms}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    {{#if estimate.isFinalized}}
+    <p>Estimate #{{estimate.estimateNumber}} — {{business.name}}</p>
+    {{#if business.email}}<p>Contact: {{business.email}}</p>{{/if}}
+    {{else}}
+    <p>This is a draft estimate. Not yet finalized.</p>
+    {{/if}}
+    <p style="margin-top: 8px;" class="thank-you">Thank you for your business.</p>
+  </div>
+
+</div>
+</body>
+</html>`;
+
 export class TemplateRenderer {
   private defaultTemplate: string;
   private defaultCreditNoteTemplate: string;
@@ -2728,6 +4061,11 @@ export class TemplateRenderer {
   private defaultPaymentVoucherTemplate: string;
   private defaultReceiptTemplate: string;
   private defaultPurchaseOrderTemplate: string;
+  private defaultRecurringInvoiceTemplate: string;
+  private defaultDeliveryNoteTemplate: string;
+  private defaultPackingSlipTemplate: string;
+  private defaultProFormaInvoiceTemplate: string;
+  private defaultEstimateTemplate: string;
 
   constructor(
     defaultTemplate?: string,
@@ -2737,6 +4075,11 @@ export class TemplateRenderer {
     defaultPaymentVoucherTemplate?: string,
     defaultReceiptTemplate?: string,
     defaultPurchaseOrderTemplate?: string,
+    defaultRecurringInvoiceTemplate?: string,
+    defaultDeliveryNoteTemplate?: string,
+    defaultPackingSlipTemplate?: string,
+    defaultProFormaInvoiceTemplate?: string,
+    defaultEstimateTemplate?: string,
   ) {
     this.defaultTemplate = defaultTemplate ?? DEFAULT_INVOICE_TEMPLATE;
     this.defaultCreditNoteTemplate = defaultCreditNoteTemplate ?? DEFAULT_CREDIT_NOTE_TEMPLATE;
@@ -2745,6 +4088,11 @@ export class TemplateRenderer {
     this.defaultPaymentVoucherTemplate = defaultPaymentVoucherTemplate ?? DEFAULT_PAYMENT_VOUCHER_TEMPLATE;
     this.defaultReceiptTemplate = defaultReceiptTemplate ?? DEFAULT_RECEIPT_TEMPLATE;
     this.defaultPurchaseOrderTemplate = defaultPurchaseOrderTemplate ?? DEFAULT_PURCHASE_ORDER_TEMPLATE;
+    this.defaultRecurringInvoiceTemplate = defaultRecurringInvoiceTemplate ?? DEFAULT_RECURRING_INVOICE_TEMPLATE;
+    this.defaultDeliveryNoteTemplate = defaultDeliveryNoteTemplate ?? DEFAULT_DELIVERY_NOTE_TEMPLATE;
+    this.defaultPackingSlipTemplate = defaultPackingSlipTemplate ?? DEFAULT_PACKING_SLIP_TEMPLATE;
+    this.defaultProFormaInvoiceTemplate = defaultProFormaInvoiceTemplate ?? DEFAULT_PRO_FORMA_INVOICE_TEMPLATE;
+    this.defaultEstimateTemplate = defaultEstimateTemplate ?? DEFAULT_ESTIMATE_TEMPLATE;
   }
 
   build(data: InvoiceTemplateData): any {
@@ -2773,6 +4121,26 @@ export class TemplateRenderer {
 
   buildPurchaseOrder(data: PurchaseOrderTemplateData): any {
     return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultPurchaseOrderTemplate);
+  }
+
+  buildRecurringInvoice(data: RecurringInvoiceTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultRecurringInvoiceTemplate);
+  }
+
+  buildDeliveryNote(data: DeliveryNoteTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultDeliveryNoteTemplate);
+  }
+
+  buildPackingSlip(data: PackingSlipTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultPackingSlipTemplate);
+  }
+
+  buildProFormaInvoice(data: ProFormaInvoiceTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultProFormaInvoiceTemplate);
+  }
+
+  buildEstimate(data: EstimateTemplateData): any {
+    return compileTemplate((data.config?.htmlTemplate as string | undefined) ?? this.defaultEstimateTemplate);
   }
 
   async render(data: InvoiceTemplateData, templateHtml?: string): Promise<string> {
@@ -2895,6 +4263,91 @@ export class TemplateRenderer {
     });
   }
 
+  async renderRecurringInvoice(data: RecurringInvoiceTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultRecurringInvoiceTemplate
+    );
+
+    const viewRecurringInvoiceUrl = data.recurringInvoice.id
+      ? `${env.APP_PUBLIC_BASE_URL}/recurring-invoices/${data.recurringInvoice.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.recurringInvoice.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewRecurringInvoiceUrl,
+    });
+  }
+
+  async renderDeliveryNote(data: DeliveryNoteTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultDeliveryNoteTemplate
+    );
+
+    const viewDeliveryNoteUrl = data.deliveryNote.id
+      ? `${env.APP_PUBLIC_BASE_URL}/delivery-notes/${data.deliveryNote.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.deliveryNote.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewDeliveryNoteUrl,
+    });
+  }
+
+  async renderPackingSlip(data: PackingSlipTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultPackingSlipTemplate
+    );
+
+    const viewPackingSlipUrl = data.packingSlip.id
+      ? `${env.APP_PUBLIC_BASE_URL}/packing-slips/${data.packingSlip.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.packingSlip.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewPackingSlipUrl,
+    });
+  }
+
+  async renderProFormaInvoice(data: ProFormaInvoiceTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultProFormaInvoiceTemplate
+    );
+
+    const viewProFormaInvoiceUrl = data.proFormaInvoice.id
+      ? `${env.APP_PUBLIC_BASE_URL}/pro-forma-invoices/${data.proFormaInvoice.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.proFormaInvoice.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewProFormaInvoiceUrl,
+    });
+  }
+
+  async renderEstimate(data: EstimateTemplateData, templateHtml?: string): Promise<string> {
+    const template = compileTemplate(
+      templateHtml ?? (data.config?.htmlTemplate as string | undefined) ?? this.defaultEstimateTemplate
+    );
+
+    const viewEstimateUrl = data.estimate.id
+      ? `${env.APP_PUBLIC_BASE_URL}/estimates/${data.estimate.id}`
+      : null;
+
+    return template({
+      ...data,
+      meta: getCurrencyMetadata(data.estimate.currency),
+      appBaseUrl: env.APP_PUBLIC_BASE_URL,
+      viewEstimateUrl,
+    });
+  }
+
   /**
    * Unified rendering entry point — dispatches to the correct render method
    * based on the document type key.
@@ -2919,6 +4372,16 @@ export class TemplateRenderer {
         return this.renderReceipt(data as ReceiptTemplateData, templateHtml);
       case "purchase-order":
         return this.renderPurchaseOrder(data as PurchaseOrderTemplateData, templateHtml);
+      case "recurring-invoice":
+        return this.renderRecurringInvoice(data as RecurringInvoiceTemplateData, templateHtml);
+      case "delivery-note":
+        return this.renderDeliveryNote(data as DeliveryNoteTemplateData, templateHtml);
+      case "packing-slip":
+        return this.renderPackingSlip(data as PackingSlipTemplateData, templateHtml);
+      case "pro-forma-invoice":
+        return this.renderProFormaInvoice(data as ProFormaInvoiceTemplateData, templateHtml);
+      case "estimate":
+        return this.renderEstimate(data as EstimateTemplateData, templateHtml);
       default:
         throw new Error(`Unsupported document type for rendering: ${docType}`);
     }
