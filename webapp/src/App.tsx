@@ -14,7 +14,8 @@ const Templates = lazy(() => import("./pages/Templates"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
 const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const Documents = lazy(() => import("./pages/Documents"));
-const CreateDocument = lazy(() => import("./pages/InvoiceMaker"));
+const CreateDocument = lazy(() => import("./pages/CreateDocumentFlow"));
+const DocumentMaker = lazy(() => import("./pages/DocumentMaker"));
 const AccountBilling = lazy(() => import("./pages/AccountBilling"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
@@ -51,7 +52,7 @@ const OnboardingWizardWithBoundary = withErrorBoundary(OnboardingWizard, "Onboar
 const TemplatesWithBoundary = withErrorBoundary(Templates, "Templates");
 const TemplateEditorPageWithBoundary = withErrorBoundary(TemplateEditorPage, "Template Editor");
 const DocumentsWithBoundary = withErrorBoundary(Documents, "Documents");
-const CreateDocumentWithBoundary = withErrorBoundary(CreateDocument, "Invoice Maker");
+const CreateDocumentWithBoundary = withErrorBoundary(CreateDocument, "Create Document");
 const AccountBillingWithBoundary = withErrorBoundary(AccountBilling, "Account & Billing");
 const PublicInvoiceWithBoundary = withErrorBoundary(PublicInvoice, "Invoice");
 const PaymentSuccessWithBoundary = withErrorBoundary(PaymentSuccess, "Payment Success");
@@ -84,6 +85,34 @@ const DocumentWorkspaceReceiptWithBoundary = withErrorBoundary(
 const DocumentWorkspacePurchaseOrderWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="purchase-order" />,
   "Purchase Order Workspace",
+);
+const DocumentMakerInvoiceWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="invoice" />,
+  "Invoice Maker",
+);
+const DocumentMakerQuoteWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="quote" />,
+  "Quotation Maker",
+);
+const DocumentMakerCreditNoteWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="credit-note" />,
+  "Credit Note Maker",
+);
+const DocumentMakerDebitNoteWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="debit-note" />,
+  "Debit Note Maker",
+);
+const DocumentMakerPaymentVoucherWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="payment-voucher" />,
+  "Payment Voucher Maker",
+);
+const DocumentMakerReceiptWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="receipt" />,
+  "Receipt Maker",
+);
+const DocumentMakerPurchaseOrderWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="purchase-order" />,
+  "Purchase Order Maker",
 );
 
 function OnboardedRoute({ children }: { children: React.ReactNode }) {
@@ -160,19 +189,19 @@ export default function App() {
           <Route path="account" element={<AccountBillingWithBoundary />} />
           <Route path="documents" element={<DocumentsWithBoundary />} />
           <Route path="documents/new" element={<Navigate to="/app/create" replace />} />
-          <Route path="invoices/new" element={<Navigate to="/app/create" replace />} />
+          <Route path="invoices/new" element={<DocumentMakerInvoiceWithBoundary docType="invoice" />} />
           <Route path="invoices/:id/edit" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
-          <Route path="credit-notes/new" element={<Navigate to="/app/create?type=credit-note" replace />} />
+          <Route path="credit-notes/new" element={<DocumentMakerCreditNoteWithBoundary docType="credit-note" />} />
           <Route path="credit-notes/:id/edit" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
-          <Route path="quotes/new" element={<Navigate to="/app/create?type=quote" replace />} />
+          <Route path="quotes/new" element={<DocumentMakerQuoteWithBoundary docType="quote" />} />
           <Route path="quotes/:id/edit" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
-          <Route path="debit-notes/new" element={<Navigate to="/app/create?type=debit-note" replace />} />
+          <Route path="debit-notes/new" element={<DocumentMakerDebitNoteWithBoundary docType="debit-note" />} />
           <Route path="debit-notes/:id/edit" element={<DocumentWorkspaceDebitNoteWithBoundary docType="debit-note" />} />
-          <Route path="payment-vouchers/new" element={<Navigate to="/app/create?type=payment-voucher" replace />} />
+          <Route path="payment-vouchers/new" element={<DocumentMakerPaymentVoucherWithBoundary docType="payment-voucher" />} />
           <Route path="payment-vouchers/:id/edit" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
-          <Route path="receipts/new" element={<Navigate to="/app/create?type=receipt" replace />} />
+          <Route path="receipts/new" element={<DocumentMakerReceiptWithBoundary docType="receipt" />} />
           <Route path="receipts/:id/edit" element={<DocumentWorkspaceReceiptWithBoundary docType="receipt" />} />
-          <Route path="purchase-orders/new" element={<Navigate to="/app/create?type=purchase-order" replace />} />
+          <Route path="purchase-orders/new" element={<DocumentMakerPurchaseOrderWithBoundary docType="purchase-order" />} />
           <Route path="purchase-orders/:id/edit" element={<DocumentWorkspacePurchaseOrderWithBoundary docType="purchase-order" />} />
           <Route path="templates" element={<TemplatesWithBoundary />} />
           <Route path="templates/new" element={<TemplateEditorPageWithBoundary />} />

@@ -54,7 +54,7 @@ export default function Layout() {
       requiredPlan: undefined,
     },
     {
-      name: "Invoice Maker",
+      name: "Create Document",
       to: "/app/create",
       icon: Plus,
       feature: undefined,

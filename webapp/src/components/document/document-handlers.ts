@@ -92,6 +92,7 @@ export interface DocumentFormConfig {
   isDebitNote: boolean;
   isQuote: boolean;
   isInvoice: boolean;
+  requiresCustomer: boolean;
 }
 
 export interface DocumentHandler {
@@ -183,13 +184,14 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
        isCreditNote: false,
        isDebitNote: false,
        isQuote: false,
-       isInvoice: true,
-    },
-  },
+        isInvoice: true,
+        requiresCustomer: true,
+     },
+   },
 
-  quote: {
-    create: async (data) => {
-      return createQuote(data as unknown as CreateQuoteInput);
+   quote: {
+     create: async (data) => {
+       return createQuote(data as unknown as CreateQuoteInput);
     },
     update: async (id, data) => {
       return updateQuote(id, data as unknown as Partial<CreateQuoteInput>);
@@ -250,12 +252,13 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
       isPaymentVoucher: false,
        isCreditNote: false,
        isDebitNote: false,
-       isQuote: true,
-       isInvoice: false,
-    },
-  },
+        isQuote: true,
+        isInvoice: false,
+        requiresCustomer: true,
+     },
+   },
 
-  "credit-note": {
+   "credit-note": {
     create: async (data) => {
       return createCreditNoteDraft(data as unknown as CreateCreditNoteInput);
     },
@@ -312,11 +315,12 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
        isCreditNote: true,
        isDebitNote: false,
        isQuote: false,
-       isInvoice: false,
-    },
-  },
+        isInvoice: false,
+        requiresCustomer: true,
+     },
+   },
 
-  "debit-note": {
+   "debit-note": {
     create: async (data) => {
       return createDebitNote(data as unknown as ApiCreateDebitNoteInput);
     },
@@ -385,6 +389,7 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
       isDebitNote: true,
       isQuote: false,
       isInvoice: false,
+      requiresCustomer: true,
     },
   },
 
@@ -446,6 +451,7 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
       isDebitNote: false,
       isQuote: false,
       isInvoice: false,
+      requiresCustomer: false,
     },
   },
 
@@ -512,6 +518,7 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
       isDebitNote: false,
       isQuote: false,
       isInvoice: false,
+      requiresCustomer: false,
     },
   },
 
@@ -580,6 +587,7 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
       isDebitNote: false,
       isQuote: false,
       isInvoice: false,
+      requiresCustomer: false,
     },
   },
 };

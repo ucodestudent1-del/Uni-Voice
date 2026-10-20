@@ -4,29 +4,30 @@ import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
 import { useToast, PageHeader } from "@/components/ui";
 import {
-  InvoiceMakerForm,
-  InvoiceMakerPreview,
-  InvoiceMakerActions,
+  DocumentMakerForm,
+  DocumentMakerPreview,
+  DocumentMakerActions,
 } from "@/components/invoice-maker";
 import {
   getCustomers,
   getBusiness,
   getTaxRates,
   getProducts,
-  createInvoice,
-  duplicateInvoice,
-  getInvoicePdf,
   getSuggestedActions,
   getProgressiveAutofill,
   type SpeedQuickActions,
   type SpeedAutofillResult,
 } from "@/api/client";
-import type { ApiBusiness, ApiCustomer, ApiProduct, ApiTaxRate, ApiInvoice } from "@/types/api";
+import type { ApiBusiness, ApiCustomer, ApiProduct, ApiTaxRate } from "@/types/api";
 import {
   type DocumentState,
   type DocumentLineItem,
   type DocumentFee,
   type TaxRateOption,
+  type DocumentType,
+  type DocumentFormConfig,
+  getDocumentHandler,
+  docTypeLabel,
   initialLineItem,
 } from "@/components/document";
 import { Decimal } from "decimal.js";
@@ -52,26 +53,28 @@ function buildTaxRateOptions(taxRates: ApiTaxRate[]): TaxRateOption[] {
   return opts;
 }
 
-function getInvoiceNumber(doc: ApiInvoice): string {
-  return doc.invoice_number ?? doc.id?.slice(0, 8) ?? "—";
+function getDisplayName(docType: DocumentType): string {
+  return docTypeLabel(docType);
 }
 
-export default function InvoiceMaker() {
+export default function DocumentMaker({ docType }: { docType: DocumentType }) {
   useMetaTags({
-    title: "Invoice Maker — DocForge",
-    description: "Create a professional invoice with live preview. Enter your details, add items, and download as PDF.",
+    title: `${getDisplayName(docType)} Maker — DocForge`,
+    description: `Create a professional ${getDisplayName(docType).toLowerCase()} with live preview.`,
     noIndex: true,
   });
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const handler = useMemo(() => getDocumentHandler(docType), [docType]);
+  const formConfig: DocumentFormConfig = handler.formConfig;
 
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
   const [business, setBusiness] = useState<ApiBusiness | null>(null);
   const [taxRates, setTaxRates] = useState<ApiTaxRate[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
 
-  const [savedInvoice, setSavedInvoice] = useState<ApiInvoice | null>(null);
+  const [savedDoc, setSavedDoc] = useState<Record<string, unknown> | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [itemDrawerOpen, setItemDrawerOpen] = useState(false);
@@ -99,6 +102,25 @@ export default function InvoiceMaker() {
     invoiceDiscount: "0",
     invoiceDiscountType: "fixed",
     dueDate: defaultDueDate,
+    expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    quoteDiscount: "0",
+    quoteDiscountType: "fixed",
+    scopeOfWork: "",
+    internalNotes: "",
+    voucherDate: "",
+    payeeName: "",
+    payeeEmail: "",
+    payeePhone: "",
+    referenceNumber: "",
+    paymentMethod: "",
+    paymentProvider: "",
+    supplierName: "",
+    supplierEmail: "",
+    supplierPhone: "",
+    referenceInvoiceId: "",
+    referenceInvoiceNumber: "",
+    reason: "",
+    customReason: "",
   });
 
   useEffect(() => {
@@ -131,13 +153,10 @@ export default function InvoiceMaker() {
         }));
       })
       .catch(() => {});
-  }, []);
+  }, [docType]);
 
   useEffect(() => {
-    if (customers.length > 0 && !state.customerId && !state.customerName) {
-      return;
-    }
-    if (state.customerId && customers.length > 0) {
+    if (state.customerId) {
       getProgressiveAutofill(state.customerId)
         .then((af: SpeedAutofillResult) => {
           setState((prev) => ({
@@ -151,7 +170,7 @@ export default function InvoiceMaker() {
         })
         .catch(() => {});
     }
-  }, [state.customerId, customers.length, state.customerName]);
+  }, [state.customerId, docType]);
 
   const calcInput: InvoiceCalculationInput = useMemo(() => {
     const currencyCode = state.currency;
@@ -181,11 +200,20 @@ export default function InvoiceMaker() {
         sortOrder: idx,
       }));
 
-    const discValue = state.invoiceDiscount ?? "0";
-    const invoiceDiscountDef: DiscountDefinition | undefined =
-      Number(discValue) > 0
-        ? ({ type: state.invoiceDiscountType ?? "fixed", value: new Decimal(discValue) } as DiscountDefinition)
-        : undefined;
+    let invoiceDiscountDef: DiscountDefinition | undefined;
+    if (formConfig.isQuote) {
+      const discValue = state.quoteDiscount ?? "0";
+      invoiceDiscountDef =
+        Number(discValue) > 0
+          ? ({ type: state.quoteDiscountType ?? "fixed", value: new Decimal(discValue) } as DiscountDefinition)
+          : undefined;
+    } else {
+      const discValue = state.invoiceDiscount ?? "0";
+      invoiceDiscountDef =
+        Number(discValue) > 0
+          ? ({ type: state.invoiceDiscountType ?? "fixed", value: new Decimal(discValue) } as DiscountDefinition)
+          : undefined;
+    }
 
     return {
       currency: currencyCode as InvoiceCalculationInput["currency"],
@@ -193,7 +221,7 @@ export default function InvoiceMaker() {
       fees,
       invoiceDiscount: invoiceDiscountDef,
     };
-  }, [state.items, state.fees, state.invoiceDiscount, state.invoiceDiscountType, state.currency]);
+  }, [state.items, state.fees, state.invoiceDiscount, state.invoiceDiscountType, state.quoteDiscount, state.quoteDiscountType, state.currency, formConfig.isQuote]);
 
   const calcEngine = useMemo(() => new CalculationEngine(), []);
   const calcResult = useMemo(() => {
@@ -206,96 +234,234 @@ export default function InvoiceMaker() {
   }, [calcInput, calcEngine]);
 
   const taxRateOptions = useMemo(() => buildTaxRateOptions(taxRates), [taxRates]);
-  const hasSaved = !!savedInvoice;
+  const hasSaved = !!savedDoc;
   const isSaving = saveState === "saving";
 
   const buildPayload = useCallback(() => {
-    const items = state.items
-      .filter((item) => item.description.trim())
-      .map((item) => ({
-        description: item.description,
-        quantity: item.quantity,
-        unit: item.unit,
-        unitPrice: item.unitPrice,
-        discount: item.discount,
-        discountType: item.discountType,
-        taxRate: item.taxRate,
-        taxName: item.taxName || undefined,
-        isTaxInclusive: item.isTaxInclusive,
-        sortOrder: 0,
-        productId: item.productId,
-        isOptional: item.isOptional,
-      }));
-
-    const fees = state.fees
-      .filter((f) => f.description.trim())
-      .map((fee) => ({
-        description: fee.description,
-        amount: fee.amount,
-        taxRate: fee.taxRate,
-        taxName: fee.taxName || undefined,
-      }));
-
-    return {
+    const commonPayload: Record<string, unknown> = {
       customerId: state.customerId || undefined,
       currency: state.currency,
       issueDate: state.issueDate || undefined,
-      dueDate: state.dueDate || undefined,
-      poNumber: state.poNumber || undefined,
-      terms: state.terms || undefined,
       notes: state.notes || undefined,
+      terms: state.terms || undefined,
       paymentInstructions: state.paymentInstructions || undefined,
-      items,
-      fees,
-      invoiceDiscount: state.invoiceDiscount,
-      invoiceDiscountType: state.invoiceDiscountType,
-      shippingDescription: state.shippingDescription || undefined,
-      shippingAmount: state.shippingAmount,
-      shippingTaxRate: state.shippingTaxRate,
+      items: state.items
+        .filter((item) => item.description.trim())
+        .map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitPrice: item.unitPrice,
+          discount: item.discount,
+          discountType: item.discountType,
+          taxRate: item.taxRate,
+          taxName: item.taxName || undefined,
+          isTaxInclusive: item.isTaxInclusive,
+          sortOrder: 0,
+          productId: item.productId,
+          isOptional: item.isOptional,
+        })),
+      fees: state.fees
+        .filter((f) => f.description.trim())
+        .map((fee) => ({
+          description: fee.description,
+          amount: fee.amount,
+          taxRate: fee.taxRate,
+          taxName: fee.taxName || undefined,
+        })),
     };
-  }, [state.items, state.fees, state.invoiceDiscount, state.invoiceDiscountType, state.currency, state.customerId, state.issueDate, state.dueDate, state.poNumber, state.terms, state.notes, state.paymentInstructions, state.shippingDescription, state.shippingAmount, state.shippingTaxRate]);
+
+    if (formConfig.isInvoice) {
+      return {
+        ...commonPayload,
+        dueDate: state.dueDate || undefined,
+        poNumber: state.poNumber ?? undefined,
+        invoiceDiscount: state.invoiceDiscount,
+        invoiceDiscountType: state.invoiceDiscountType,
+        shippingDescription: state.shippingDescription || undefined,
+        shippingAmount: state.shippingAmount,
+        shippingTaxRate: state.shippingTaxRate,
+      };
+    }
+
+    if (formConfig.isQuote) {
+      return {
+        ...commonPayload,
+        expiryDate: state.expiryDate || undefined,
+        scopeOfWork: state.scopeOfWork || undefined,
+        internalNotes: state.internalNotes || undefined,
+        quoteDiscount: state.quoteDiscount,
+        quoteDiscountType: state.quoteDiscountType,
+      };
+    }
+
+    if (formConfig.isDebitNote) {
+      return {
+        customerId: state.customerId || undefined,
+        issueDate: state.issueDate || undefined,
+        dueDate: state.dueDate || undefined,
+        currency: state.currency,
+        notes: state.notes || undefined,
+        terms: state.terms || undefined,
+        paymentInstructions: state.paymentInstructions || undefined,
+        referenceInvoiceId: state.referenceInvoiceId || undefined,
+        referenceInvoiceNumber: state.referenceInvoiceNumber || undefined,
+        reason: state.reason === "other" ? state.customReason : state.reason,
+        items: state.items
+          .filter((item) => item.description.trim())
+          .map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unitPrice,
+            taxRate: item.taxRate,
+            taxName: item.taxName || undefined,
+            isTaxInclusive: item.isTaxInclusive,
+          })),
+      };
+    }
+
+    if (formConfig.isPaymentVoucher) {
+      return {
+        voucherDate: state.voucherDate || state.issueDate || undefined,
+        currency: state.currency,
+        payeeName: state.payeeName,
+        payeeEmail: state.payeeEmail || null,
+        payeePhone: state.payeePhone || null,
+        payeeAddressLine1: state.payeeAddressLine1 || null,
+        payeeAddressLine2: state.payeeAddressLine2 || null,
+        payeeCity: state.payeeCity || null,
+        payeeStateOrRegion: state.payeeStateOrRegion || null,
+        payeePostalCode: state.payeePostalCode || null,
+        payeeCountryCode: state.payeeCountryCode || null,
+        payeeTaxId: state.payeeTaxId || null,
+        referenceNumber: state.referenceNumber || null,
+        paymentMethod: state.paymentMethod || null,
+        paymentProvider: state.paymentProvider || null,
+        notes: state.notes || undefined,
+        terms: state.terms || undefined,
+        items: state.items
+          .filter((item) => item.description.trim())
+          .map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unitPrice,
+            taxRate: item.taxRate,
+            taxName: item.taxName || undefined,
+          })),
+      };
+    }
+
+    if (formConfig.isCreditNote) {
+      const effectiveReason = state.reason === "other" ? state.customReason : state.reason;
+      return {
+        invoiceId: state.referenceInvoiceId || "",
+        reason: effectiveReason || undefined,
+        notes: state.notes || undefined,
+        terms: state.terms || undefined,
+        items: state.items
+          .filter((item) => item.description.trim())
+          .map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            unitPrice: item.unitPrice,
+            taxRate: item.taxRate,
+            taxName: item.taxName || undefined,
+            isTaxInclusive: item.isTaxInclusive,
+          })),
+      };
+    }
+
+    if (formConfig.showsSupplierSection) {
+      return {
+        ...commonPayload,
+        dueDate: state.dueDate || undefined,
+        poNumber: state.poNumber ?? undefined,
+        supplierName: state.supplierName || undefined,
+        supplierEmail: state.supplierEmail || undefined,
+        supplierPhone: state.supplierPhone || undefined,
+        supplierTaxId: state.supplierTaxId || undefined,
+        supplierAddressLine1: state.supplierAddressLine1 || undefined,
+        supplierAddressLine2: state.supplierAddressLine2 || undefined,
+        supplierCity: state.supplierCity || undefined,
+        supplierStateOrRegion: state.supplierStateOrRegion || undefined,
+        supplierPostalCode: state.supplierPostalCode || undefined,
+        supplierCountryCode: state.supplierCountryCode || undefined,
+        deliveryDate: state.deliveryDate || undefined,
+        shippingDescription: state.shippingDescription || undefined,
+        shippingAmount: state.shippingAmount || undefined,
+        shippingTaxRate: state.shippingTaxRate || undefined,
+        shippingAddressLine1: state.shippingAddressLine1 || undefined,
+        shippingAddressLine2: state.shippingAddressLine2 || undefined,
+        shippingCity: state.shippingCity || undefined,
+        shippingStateOrRegion: state.shippingStateOrRegion || undefined,
+        shippingPostalCode: state.shippingPostalCode || undefined,
+        shippingCountryCode: state.shippingCountryCode || undefined,
+      };
+    }
+
+    return commonPayload;
+  }, [
+    state,
+    formConfig.isInvoice,
+    formConfig.isQuote,
+    formConfig.isDebitNote,
+    formConfig.isPaymentVoucher,
+    formConfig.isCreditNote,
+    formConfig.showsSupplierSection,
+  ]);
 
   const doSaveDraft = useCallback(async () => {
+    if (!handler.supportsFinalize) {
+      toast(`${getDisplayName(docType)}s cannot be created directly.`, { type: "error" });
+      return;
+    }
+
     const nonEmptyItems = state.items.filter((item) => item.description.trim());
     if (nonEmptyItems.length === 0) {
       toast("Add at least one line item before saving.", {
         type: "warning",
-        title: "Empty invoice",
+        title: "Empty document",
       });
       return;
     }
 
     setSaveState("saving");
     try {
-      const res = await createInvoice(buildPayload());
-      const doc: ApiInvoice = res.invoice;
-      setSavedInvoice(doc);
+      const res = await handler.create(buildPayload());
+      const doc = res.invoice ?? res.quote ?? res.creditNote ?? res.debitNote ?? res.voucher ?? res.purchaseOrder ?? res.receipt;
+      if (!doc) throw new Error("Failed to create document");
+      setSavedDoc(doc);
+      const num = handler.getNumberField(doc);
       setState((prev) => ({
         ...prev,
-        invoiceNumber: doc.invoice_number ?? prev.invoiceNumber,
+        invoiceNumber: num ?? prev.invoiceNumber,
       }));
       setSaveState("saved");
       if (saveStateTimerRef.current) clearTimeout(saveStateTimerRef.current);
       saveStateTimerRef.current = setTimeout(() => setSaveState("idle"), 2000);
-      toast("Draft saved.", { type: "success", title: `${getInvoiceNumber(doc)} saved` });
+      toast(`${getDisplayName(docType)} saved.`, { type: "success", title: `${getDisplayName(docType)} #${num ?? ""} saved` });
     } catch (err: unknown) {
       setSaveState("error");
       toast(err instanceof Error ? err.message : "Save failed", { type: "error", title: "Save failed" });
     } finally {
       if (saveStateTimerRef.current) clearTimeout(saveStateTimerRef.current);
     }
-  }, [state, toast, buildPayload]);
+  }, [handler, docType, buildPayload, state.items, toast]);
 
   const doDownloadPdf = useCallback(async () => {
-    if (!savedInvoice) return;
+    if (!savedDoc) return;
 
     setIsGeneratingPdf(true);
     try {
-      const blob = await getInvoicePdf(savedInvoice.id);
+      const blob = await handler.getPdf(savedDoc.id as string);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${savedInvoice.invoice_number ?? "invoice"}.pdf`;
+      const num = handler.getNumberField(savedDoc);
+      a.download = `${num ?? "document"}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -306,28 +472,32 @@ export default function InvoiceMaker() {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [savedInvoice, toast]);
+  }, [savedDoc, handler, toast]);
 
   const doDuplicate = useCallback(async () => {
-    if (!savedInvoice) return;
+    if (!handler.supportsDuplicate) {
+      toast(`Duplicate is not supported for ${getDisplayName(docType).toLowerCase()}.`, { type: "info" });
+      return;
+    }
+    if (!savedDoc) return;
 
     try {
-      const res = await duplicateInvoice(savedInvoice.id);
-      const newDoc: ApiInvoice = res.invoice;
-      const newInvoiceNumber = getInvoiceNumber(newDoc);
-      toast(`Duplicated as ${newInvoiceNumber}.`, {
+      const res = await handler.duplicate(savedDoc.id as string);
+      const newDoc = res.invoice ?? res.quote ?? res.creditNote ?? res.debitNote ?? res.voucher ?? res.purchaseOrder;
+      const newNum = handler.getNumberField(newDoc);
+      toast(`${getDisplayName(docType)} duplicated as #${newNum ?? ""}.`, {
         type: "success",
         title: "Duplicated",
       });
-      setSavedInvoice(newDoc);
+      setSavedDoc(newDoc);
       setState((prev) => ({
         ...prev,
-        invoiceNumber: newDoc.invoice_number ?? prev.invoiceNumber,
+        invoiceNumber: newNum ?? prev.invoiceNumber,
       }));
     } catch (err: unknown) {
       toast(err instanceof Error ? err.message : "Duplicate failed", { type: "error", title: "Duplicate failed" });
     }
-  }, [savedInvoice, toast]);
+  }, [handler, docType, savedDoc, toast]);
 
   const handleItemDrawerSave = (item: DocumentLineItem) => {
     setState((prev) => ({
@@ -337,7 +507,8 @@ export default function InvoiceMaker() {
   };
 
   useEffect(() => {
-    if (hasSaved) return;
+    const hasSavedCheck = !!savedDoc;
+    if (hasSavedCheck) return;
     const nonEmptyItems = state.items.filter((item) => item.description.trim());
     if (nonEmptyItems.length === 0 && state.items.length <= 1) return;
 
@@ -350,7 +521,7 @@ export default function InvoiceMaker() {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [state.items, state.customerId, state.currency, state.notes, doSaveDraft, hasSaved]);
+   }, [state.items, state.customerId, state.currency, state.notes, doSaveDraft, savedDoc]);
 
   const handleUpdateItem = useCallback(
     (idx: number, field: keyof DocumentLineItem, value: unknown) => {
@@ -406,26 +577,40 @@ export default function InvoiceMaker() {
   }, []);
 
   const handleDiscountChange = useCallback((value: string) => {
-    setState((prev) => ({ ...prev, invoiceDiscount: value }));
-  }, []);
+    if (formConfig.isQuote) {
+      setState((prev) => ({ ...prev, quoteDiscount: value }));
+    } else {
+      setState((prev) => ({ ...prev, invoiceDiscount: value }));
+    }
+  }, [formConfig.isQuote]);
 
   const handleDiscountTypeChange = useCallback((value: "fixed" | "percentage") => {
-    setState((prev) => ({ ...prev, invoiceDiscountType: value }));
-  }, []);
+    if (formConfig.isQuote) {
+      setState((prev) => ({ ...prev, quoteDiscountType: value }));
+    } else {
+      setState((prev) => ({ ...prev, invoiceDiscountType: value }));
+    }
+  }, [formConfig.isQuote]);
 
   const handleStateChange = useCallback((patch: Partial<DocumentState>) => {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  const documentNumber = savedDoc
+    ? handler.getNumberField(savedDoc) ?? state.invoiceNumber ?? ""
+    : state.invoiceNumber ?? "";
+
+  const label = getDisplayName(docType);
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Invoice Maker"
+        title={`${label} Maker`}
         breadcrumbs={[
           { label: "Home", to: "/app" },
-          { label: "Invoice Maker" },
+          { label: `${label} Maker` },
         ]}
-        description="Enter your details on the left and see a live preview on the right."
+        description={`Enter your details on the left and see a live preview on the right.`}
         primaryAction={
           <button
             onClick={() => navigate("/app/documents")}
@@ -438,9 +623,11 @@ export default function InvoiceMaker() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <InvoiceMakerForm
+          <DocumentMakerForm
+            docType={docType}
             state={state}
             calcResult={calcResult}
+            formConfig={formConfig}
             business={business}
             customers={customers}
             taxRateOptions={taxRateOptions}
@@ -494,23 +681,29 @@ export default function InvoiceMaker() {
               </div>
             )}
 
-          <InvoiceMakerActions
+          <DocumentMakerActions
             saveState={saveState}
             isSaving={isSaving}
             hasSaved={hasSaved}
             isGeneratingPdf={isGeneratingPdf}
+            supportsDuplicate={handler.supportsDuplicate}
+            supportsSend={handler.supportsSend}
             onSaveDraft={doSaveDraft}
             onDownloadPdf={doDownloadPdf}
             onDuplicate={doDuplicate}
+            onSend={() => {}}
           />
         </div>
 
         <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
-          <InvoiceMakerPreview
+          <DocumentMakerPreview
+            docType={docType}
             state={state}
             calcResult={calcResult}
+            formConfig={formConfig}
             business={business}
             customers={customers}
+            documentNumber={documentNumber}
             onDownloadPdf={doDownloadPdf}
             canDownload={hasSaved}
             isGeneratingPdf={isGeneratingPdf}

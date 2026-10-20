@@ -1,3 +1,3 @@
-export { InvoiceMakerForm } from "./InvoiceMakerForm";
-export { InvoiceMakerPreview } from "./InvoiceMakerPreview";
-export { InvoiceMakerActions } from "./InvoiceMakerActions";
+export { DocumentMakerForm } from "./DocumentMakerForm";
+export { DocumentMakerPreview } from "./DocumentMakerPreview";
+export { DocumentMakerActions } from "./DocumentMakerActions";
