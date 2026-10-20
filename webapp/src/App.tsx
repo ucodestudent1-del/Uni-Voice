@@ -14,7 +14,7 @@ const Templates = lazy(() => import("./pages/Templates"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
 const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const Documents = lazy(() => import("./pages/Documents"));
-const CreateDocument = lazy(() => import("./pages/CreateDocument"));
+const CreateDocument = lazy(() => import("./pages/CreateDocumentFlow"));
 const AccountBilling = lazy(() => import("./pages/AccountBilling"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
@@ -160,19 +160,19 @@ export default function App() {
           <Route path="account" element={<AccountBillingWithBoundary />} />
           <Route path="documents" element={<DocumentsWithBoundary />} />
           <Route path="documents/new" element={<Navigate to="/app/create" replace />} />
-          <Route path="invoices/new" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
+          <Route path="invoices/new" element={<Navigate to="/app/create?type=invoice" replace />} />
           <Route path="invoices/:id/edit" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
-          <Route path="credit-notes/new" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
+          <Route path="credit-notes/new" element={<Navigate to="/app/create?type=credit-note" replace />} />
           <Route path="credit-notes/:id/edit" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
-          <Route path="quotes/new" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
+          <Route path="quotes/new" element={<Navigate to="/app/create?type=quote" replace />} />
           <Route path="quotes/:id/edit" element={<DocumentWorkspaceQuoteWithBoundary docType="quote" />} />
-          <Route path="debit-notes/new" element={<DocumentWorkspaceDebitNoteWithBoundary docType="debit-note" />} />
+          <Route path="debit-notes/new" element={<Navigate to="/app/create?type=debit-note" replace />} />
           <Route path="debit-notes/:id/edit" element={<DocumentWorkspaceDebitNoteWithBoundary docType="debit-note" />} />
-          <Route path="payment-vouchers/new" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
+          <Route path="payment-vouchers/new" element={<Navigate to="/app/create?type=payment-voucher" replace />} />
           <Route path="payment-vouchers/:id/edit" element={<DocumentWorkspacePaymentVoucherWithBoundary docType="payment-voucher" />} />
-          <Route path="receipts/new" element={<DocumentWorkspaceReceiptWithBoundary docType="receipt" />} />
+          <Route path="receipts/new" element={<Navigate to="/app/create?type=receipt" replace />} />
           <Route path="receipts/:id/edit" element={<DocumentWorkspaceReceiptWithBoundary docType="receipt" />} />
-          <Route path="purchase-orders/new" element={<DocumentWorkspacePurchaseOrderWithBoundary docType="purchase-order" />} />
+          <Route path="purchase-orders/new" element={<Navigate to="/app/create?type=purchase-order" replace />} />
           <Route path="purchase-orders/:id/edit" element={<DocumentWorkspacePurchaseOrderWithBoundary docType="purchase-order" />} />
           <Route path="templates" element={<TemplatesWithBoundary />} />
           <Route path="templates/new" element={<TemplateEditorPageWithBoundary />} />

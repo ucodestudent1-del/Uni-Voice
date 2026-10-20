@@ -4,22 +4,18 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
-import { SUPPORTED_CURRENCIES, getCurrencyMetadata } from "@/types/currency";
   import { useToast, Button, FormField, FormTextareaField, PageHeader, StatusBadge, Dialog, SearchInput } from "@/components/ui";
 import SectionCard from "@/components/SectionCard";
 import {
-  Save,
   Send,
   Plus,
   FileText,
   Bell,
   Copy,
-  Search,
   AlertCircle,
   CheckCircle,
   Loader2,
    ArrowLeft,
-   Eye,
 } from "lucide-react";
 import { Decimal } from "decimal.js";
 import DocumentPreview from "@/components/DocumentPreview";
@@ -28,7 +24,10 @@ import {
   DocumentTotalsCard,
   DocumentNotesSection,
   DocumentDetailsAccordion,
-  SimpleLineItems,
+  SimpleDocumentLineItems,
+  DocumentActionBar,
+  LayoutSelector,
+  ItemEntryDrawer,
   type DocumentState,
   type DocumentLineItem,
   type DocumentFee,
@@ -42,10 +41,7 @@ import {
   getBusiness,
   getTaxRates,
   getProducts,
-  getInvoices,
   sendReminder,
-  createDocumentPreset,
-  type ApiInvoiceListItem,
   type CreateInvoiceInput,
   type CreateQuoteInput,
   type CreateCreditNoteInput,
@@ -53,44 +49,18 @@ import {
   type ApiCreatePaymentVoucherInput,
   getSuggestedActions,
   getProgressiveAutofill,
-  parseCommandLine,
   getDocumentTemplate,
   type SpeedQuickActions,
   type SpeedAutofillResult,
 } from "@/api/client";
 import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
 import { RelatedDocuments } from "@/components/document";
-import { SaveAsTemplateDialog } from "@/components/template";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useMetaTags } from "@/hooks/useMetaTags";
 
 const AUTO_SAVE_DELAY = 1500;
-
-const PAYMENT_TERMS = [
-  { value: "custom", label: "Custom" },
-  { value: "0", label: "Due on receipt" },
-  { value: "7", label: "Net 7" },
-  { value: "15", label: "Net 15" },
-  { value: "30", label: "Net 30" },
-  { value: "60", label: "Net 60" },
-];
-
-const VALIDITY_DAYS_OPTIONS = [
-  { value: "30", label: "30 days" },
-  { value: "60", label: "60 days" },
-  { value: "90", label: "90 days" },
-  { value: "custom", label: "Custom" },
-];
-
-const REASON_OPTIONS = [
-  { value: "", label: "Select a reason" },
-  { value: "return", label: "Return" },
-  { value: "abatement", label: "Abatement" },
-  { value: "correction", label: "Correction" },
-  { value: "other", label: "Other" },
-];
 
 interface DocumentWorkspaceProps {
   docType: DocumentType;
@@ -165,17 +135,14 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   const [isSending, setIsSending] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
-  const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [newCustomerDialogOpen, setNewCustomerDialogOpen] = useState(false);
   const [newProductDialogOpen, setNewProductDialogOpen] = useState(false);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
-  const [availableReferenceInvoices, setAvailableReferenceInvoices] = useState<ApiInvoiceListItem[]>([]);
   const [quickActions, setQuickActions] = useState<SpeedQuickActions | null>(null);
-  const [commandBarValue, setCommandBarValue] = useState("");
-  const [isParsingCommand, setIsParsingCommand] = useState(false);
+  const [itemDrawerOpen, setItemDrawerOpen] = useState(false);
 
   const [sendData, setSendData] = useState({
     to: "",
@@ -217,7 +184,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const commandBarInputRef = useRef<HTMLInputElement>(null);
   const lastSavedStateRef = useRef<DocumentState | null>(null);
 
   const isFinalized = document?.is_finalized ?? false;
@@ -227,8 +193,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
       setWorkflowStep("preview");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFinalized, isNew]);
-
+  }, [isFinalized && !isNew]);
   useEffect(() => {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});
     getBusiness().then((d) => setBusiness(d.business ?? d)).catch(() => {});
@@ -240,10 +205,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
     // Fetch quick actions (last invoice, frequent items, recent customers, draft)
     getSuggestedActions().then((d) => setQuickActions(d)).catch(() => {});
-
-    if (handler.formConfig.isCreditNote) {
-      getInvoices({ limit: 100 }).then((d) => setAvailableReferenceInvoices(d.invoices ?? [])).catch(() => {});
-    }
 
     // Apply progressive autofill for new documents
     if (isNew) {
@@ -654,8 +615,8 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     onAddItem: () => handleAddItem(),
     onAddFee: () => handleAddFee(),
     onFocusSearch: () => {
-      if (!isFinalized && isNew && workflowStep === "edit" && commandBarInputRef.current) {
-        commandBarInputRef.current.focus();
+      if (!isFinalized && isNew && workflowStep === "edit") {
+        setItemDrawerOpen(true);
       }
     },
     onTogglePreview: () => {
@@ -790,27 +751,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     }
   }, [document, docType, handler, sendData, toast]);
 
-  const handleDuplicate = useCallback(async () => {
-    const doc = document as any;
-    if (!doc) return;
-
-    if (!handler.supportsDuplicate) {
-      toast(`Duplicate is not available for ${docTypeLabelFn(docType).toLowerCase()}s.`, { type: "info", title: "Not available" });
-      return;
-    }
-
-    try {
-      const result = await handler.duplicate(doc.id);
-      toast(`${docTypeLabelFn(docType)} duplicated.`, { type: "success", title: "Duplicated" });
-      const newId = result.invoice?.id ?? result.quote?.id ?? result.purchaseOrder?.id ?? result.voucher?.id;
-      if (newId) {
-        navigate(`/app/${getDocumentRoutePrefix(docType)}/${newId}`);
-      }
-    } catch (err: any) {
-      toast(err.message, { type: "error", title: "Duplicate failed" });
-    }
-  }, [document, docType, handler, navigate, toast]);
-
   const handleSendReminder = useCallback(async () => {
     const doc = document as any;
     if (!doc) return;
@@ -925,85 +865,43 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     }));
   };
 
-  const handleCommandBarParse = async () => {
-    if (!commandBarValue.trim()) return;
-    setIsParsingCommand(true);
-    try {
-      const { parsed } = await parseCommandLine(commandBarValue);
-      if (parsed) {
-        const newItem: DocumentLineItem = {
-          description: parsed.description,
-          quantity: String(parsed.quantity > 0 ? parsed.quantity : 1),
-          unit: parsed.unit,
-          unitPrice: String(parsed.unitPrice),
-          taxRate: String(parsed.taxRate),
-          taxName: "",
-          isTaxInclusive: false,
-          discount: "0",
-          discountType: "fixed",
-          productId: parsed.productId ?? null,
-          isOptional: false,
-        };
-        setState((prev) => ({
-          ...prev,
-          items: [...prev.items, newItem],
-        }));
-        setCommandBarValue("");
-      }
-    } catch (err: any) {
-      toast(err.message, { type: "error", title: "Parse failed" });
-    } finally {
-      setIsParsingCommand(false);
-    }
-   };
+  const handleApplyPreset = (data: Record<string, unknown>) => {
+    const config = data.config as Record<string, unknown> | undefined;
+    const layoutData = config ? { ...data, ...config } : data;
 
-   const handleApplyPreset = (data: Record<string, unknown>) => {
-     setState((prev) => ({
-       ...prev,
-       customerId: (data.customerId as string) ?? prev.customerId,
-       currency: (data.currency as string) ?? prev.currency,
-       issueDate: (data.issueDate as string) ?? prev.issueDate,
-       dueDate: (data.dueDate as string) ?? prev.dueDate,
-       notes: (data.notes as string) ?? prev.notes,
-       terms: (data.terms as string) ?? prev.terms,
-       paymentInstructions: (data.paymentInstructions as string) ?? prev.paymentInstructions,
-       paymentTerms: (data.paymentTerms as string) ?? prev.paymentTerms,
-       poNumber: (data.poNumber as string) ?? prev.poNumber,
-       items: (data.items as DocumentLineItem[]) ?? prev.items,
-       fees: (data.fees as DocumentFee[]) ?? prev.fees,
-       invoiceDiscount: (data.invoiceDiscount as string) ?? prev.invoiceDiscount,
-       invoiceDiscountType: (data.invoiceDiscountType as "fixed" | "percentage") ?? prev.invoiceDiscountType,
-       scopeOfWork: (data.scopeOfWork as string) ?? prev.scopeOfWork,
-       internalNotes: (data.internalNotes as string) ?? prev.internalNotes,
-       quoteDiscount: (data.quoteDiscount as string) ?? prev.quoteDiscount,
-       quoteDiscountType: (data.quoteDiscountType as "fixed" | "percentage") ?? prev.quoteDiscountType,
-       expiryDate: (data.expiryDate as string) ?? prev.expiryDate,
-       reason: (data.reason as string) ?? prev.reason,
-       referenceInvoiceId: (data.referenceInvoiceId as string) ?? prev.referenceInvoiceId,
-       referenceInvoiceNumber: (data.referenceInvoiceNumber as string) ?? prev.referenceInvoiceNumber,
-       shippingDescription: (data.shippingDescription as string) ?? prev.shippingDescription,
-       shippingAmount: (data.shippingAmount as string) ?? prev.shippingAmount,
-       shippingTaxRate: (data.shippingTaxRate as string) ?? prev.shippingTaxRate,
-       voucherDate: (data.voucherDate as string) ?? prev.voucherDate,
-       payeeName: (data.payeeName as string) ?? prev.payeeName,
-       payeeEmail: (data.payeeEmail as string) ?? prev.payeeEmail,
-       payeePhone: (data.payeePhone as string) ?? prev.payeePhone,
-       payeeTaxId: (data.payeeTaxId as string) ?? prev.payeeTaxId,
-       referenceNumber: (data.referenceNumber as string) ?? prev.referenceNumber,
-       paymentMethod: (data.paymentMethod as string) ?? prev.paymentMethod,
-       paymentProvider: (data.paymentProvider as string) ?? prev.paymentProvider,
-       receiptAmount: (data.receiptAmount as string) ?? prev.receiptAmount,
-       receiptPaymentMethod: (data.receiptPaymentMethod as string) ?? prev.receiptPaymentMethod,
-       receiptPaymentProvider: (data.receiptPaymentProvider as string) ?? prev.receiptPaymentProvider,
-       receiptProviderPaymentId: (data.receiptProviderPaymentId as string) ?? prev.receiptProviderPaymentId,
-       receiptIssuedAt: (data.receiptIssuedAt as string) ?? prev.receiptIssuedAt,
-       supplierName: (data.supplierName as string) ?? prev.supplierName,
-       supplierEmail: (data.supplierEmail as string) ?? prev.supplierEmail,
-       supplierPhone: (data.supplierPhone as string) ?? prev.supplierPhone,
-       supplierTaxId: (data.supplierTaxId as string) ?? prev.supplierTaxId,
-        deliveryDate: (data.deliveryDate as string) ?? prev.deliveryDate,
-      }));
-   };
+    setState((prev) => ({
+      ...prev,
+      customerId: (layoutData.customerId as string) ?? prev.customerId,
+      currency: (layoutData.currency as string) ?? prev.currency,
+      issueDate: (layoutData.issueDate as string) ?? prev.issueDate,
+      dueDate: (layoutData.dueDate as string) ?? prev.dueDate,
+      notes: (layoutData.notes as string) ?? prev.notes,
+      terms: (layoutData.terms as string) ?? prev.terms,
+      paymentInstructions: (layoutData.paymentInstructions as string) ?? prev.paymentInstructions,
+      paymentTerms: (layoutData.paymentTerms as string) ?? prev.paymentTerms,
+      poNumber: (layoutData.poNumber as string) ?? prev.poNumber,
+      items: (layoutData.items as DocumentLineItem[]) ?? prev.items,
+      fees: (layoutData.fees as DocumentFee[]) ?? prev.fees,
+      invoiceDiscount: (layoutData.invoiceDiscount as string) ?? prev.invoiceDiscount,
+      invoiceDiscountType: (layoutData.invoiceDiscountType as "fixed" | "percentage") ?? prev.invoiceDiscountType,
+      scopeOfWork: (layoutData.scopeOfWork as string) ?? prev.scopeOfWork,
+      internalNotes: (layoutData.internalNotes as string) ?? prev.internalNotes,
+      quoteDiscount: (layoutData.quoteDiscount as string) ?? prev.quoteDiscount,
+      quoteDiscountType: (layoutData.quoteDiscountType as "fixed" | "percentage") ?? prev.quoteDiscountType,
+      expiryDate: (layoutData.expiryDate as string) ?? prev.expiryDate,
+      reason: (layoutData.reason as string) ?? prev.reason,
+      referenceInvoiceId: (layoutData.referenceInvoiceId as string) ?? prev.referenceInvoiceId,
+      referenceInvoiceNumber: (layoutData.referenceInvoiceNumber as string) ?? prev.referenceInvoiceNumber,
+      shippingDescription: (layoutData.shippingDescription as string) ?? prev.shippingDescription,
+      shippingAmount: (layoutData.shippingAmount as string) ?? prev.shippingAmount,
+      shippingTaxRate: (layoutData.shippingTaxRate as string) ?? prev.shippingTaxRate,
+      voucherDate: (layoutData.voucherDate as string) ?? prev.voucherDate,
+      payeeName: (layoutData.payeeName as string) ?? prev.payeeName,
+      payeeEmail: (layoutData.payeeEmail as string) ?? prev.payeeEmail,
+      payeePhone: (layoutData.payeePhone as string) ?? prev.payeePhone,
+      deliveryDate: (layoutData.deliveryDate as string) ?? prev.deliveryDate,
+    }));
+  };
 
    const handleUseLastInvoice = () => {
     if (!quickActions?.lastInvoice) return;
@@ -1029,7 +927,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         isOptional: false,
       })),
     }));
-    setCommandBarValue("");
   };
 
   const handleRemoveItem = (idx: number) => {
@@ -1044,10 +941,10 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     setState((prev) => ({
       ...prev,
       items: [...prev.items, { ...item, description: `${item.description} (copy)` }],
-    }));
-  };
+     }));
+   };
 
-  const handleAddFee = () => {
+   const handleAddFee = () => {
     setState((prev) => ({
       ...prev,
       fees: [...prev.fees, { description: "", amount: "0.00", taxRate: "0", taxName: "" }],
@@ -1276,58 +1173,24 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                 </>
               ) : (
                 <>
-                   <Button
-                     variant="ghost"
-                     icon={<Save className="h-4 w-4" />}
-                     onClick={doSave}
-                     disabled={saveState === "saving"}
-                     loading={saveState === "saving"}
-                     size="sm"
-                   >
-                     Save Draft
-                   </Button>
-                   {!isFinalized && !isNew && (
-                     <button
-                       type="button"
-                       onClick={async () => {
-                         const saveName = prompt("Save as preset", "");
-                         if (saveName) {
-                           try {
-                             await createDocumentPreset({
-                               name: saveName,
-                               description: undefined,
-                               documentType: docType,
-                               data: state as unknown as Record<string, unknown>,
-                             });
-                             toast("Preset saved!", { type: "success" });
-                           } catch {
-                             toast("Failed to save preset", { type: "error" });
-                           }
-                         }
-                       }}
-                       className="text-xs text-tertiary hover:text-primary underline"
-                      >
-                        Save as preset
-                      </button>
-                   )}
-                   {!isFinalized && !isNew && (
-                     <button
-                       type="button"
-                       onClick={() => setSaveTemplateDialogOpen(true)}
-                       className="text-xs text-tertiary hover:text-primary underline"
-                     >
-                       Save as Template
-                     </button>
-                   )}
-                  <Button
-                    variant="primary"
-                    icon={<Eye className="h-4 w-4" />}
-                    onClick={handleProceedToPreview}
-                    disabled={isFinalizing}
-                    size="sm"
-                  >
-                    {isNew ? "Create & Review" : "Review & Send"}
-                  </Button>
+                  {!isFinalized && !isNew && (
+                    <div className="flex items-center gap-2">
+                      <LayoutSelector
+                        docType={docType}
+                        onApply={handleApplyPreset}
+                        currentData={state as unknown as Record<string, unknown>}
+                      />
+                    </div>
+                  )}
+                  <DocumentActionBar
+                    isFinalized={isFinalized}
+                    saveState={saveState}
+                    isFinalizing={isFinalizing}
+                    isSending={isSending}
+                    onSave={doSave}
+                    onFinalize={handleProceedToPreview}
+                    onSend={() => setSendDialogOpen(true)}
+                  />
                 </>
               )}
             </div>
@@ -1356,33 +1219,25 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
           </div>
          )}
 
-        {/* Command bar + quick actions — only for new/draft documents in edit step */}
+        {/* Quick actions — only for new/draft documents in edit step */}
         {!isFinalized && isNew && workflowStep === "edit" && (
           <div className="space-y-3">
             <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-tertiary" />
-                <input
-                  ref={commandBarInputRef}
-                  type="text"
-                  placeholder='Type a line item: "3 x Logo design @ $150" or "Drain repair — 1 hr @ $120/hr"'
-                  value={commandBarValue}
-                  onChange={(e) => setCommandBarValue(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCommandBarParse(); } }}
-                  className="w-full pl-10 pr-3 py-2 border border-color rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                />
-                {isParsingCommand && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-tertiary" />
-                )}
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<Plus className="h-4 w-4" />}
+                onClick={() => setItemDrawerOpen(true)}
+              >
+                Add Line Item
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 icon={<Plus className="h-4 w-4" />}
                 onClick={handleAddItem}
-                disabled={isParsingCommand}
               >
-                Add Line
+                Quick Add
               </Button>
             </div>
 
@@ -1509,11 +1364,10 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
 
               <SectionCard title="Line Items">
                 <div className="p-5">
-                  <SimpleLineItems
+                  <SimpleDocumentLineItems
                     items={state.items}
                     isFinalized={isFinalized}
                     taxRateOptions={taxRateOptions}
-                    showOptional={handler.formConfig.showsOptionalItems}
                     onUpdate={handleUpdateItem}
                     onRemove={handleRemoveItem}
                     onDuplicate={handleDuplicateItem}
@@ -1900,11 +1754,19 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
         </div>
       </Dialog>
 
-      <SaveAsTemplateDialog
-        open={saveTemplateDialogOpen}
-        onClose={() => setSaveTemplateDialogOpen(false)}
-        docType={docType}
-        currentState={state}
+      <ItemEntryDrawer
+        open={itemDrawerOpen}
+        onClose={() => setItemDrawerOpen(false)}
+        item={null}
+        onSave={(item) => {
+          setState((prev) => ({
+            ...prev,
+            items: [...prev.items, item],
+          }));
+          setItemDrawerOpen(false);
+        }}
+        taxRateOptions={taxRateOptions}
+        products={products}
       />
     </div>
   );
