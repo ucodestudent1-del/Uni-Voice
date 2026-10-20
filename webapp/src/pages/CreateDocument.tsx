@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FileText,
@@ -8,6 +9,8 @@ import {
 } from "lucide-react";
 import { Button, PageHeader } from "@/components/ui";
 import { useMetaTags } from "@/hooks/useMetaTags";
+import { getDocumentTemplates } from "@/api/client";
+import type { ApiTemplate } from "@/types/api";
 
 type DocType =
   | "invoice"
@@ -78,6 +81,33 @@ export default function CreateDocument() {
   });
 
   const navigate = useNavigate();
+  const [templates, setTemplates] = useState<ApiTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  async function loadTemplates() {
+    try {
+      const data = await getDocumentTemplates({ limit: 50 });
+      setTemplates(data.templates ?? []);
+    } catch {
+      setTemplates([]);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  }
+
+  const customTemplateMap = templates.filter((t) => t.config?.type === "custom").reduce(
+    (acc, t) => {
+      const docType = t.config?.documentType as string | undefined;
+      if (docType && !acc[docType]) acc[docType] = [];
+      if (docType) acc[docType].push(t);
+      return acc;
+    },
+    {} as Record<string, ApiTemplate[]>,
+  );
 
   return (
     <div className="space-y-6">
@@ -110,6 +140,28 @@ export default function CreateDocument() {
         ))}
       </div>
 
+      {!templatesLoading && Object.keys(customTemplateMap).length > 0 && (
+        <div className="pt-4">
+          <h3 className="text-sm font-medium text-tertiary mb-3">Quick Templates</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Object.entries(customTemplateMap).map(([docType, docs]) =>
+              docs.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => navigate(`/app/${getRoutePrefix(docType)}/new?template=${t.id}`)}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-color-subtle bg-surface hover:bg-surface-alt transition-colors text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm text-primary truncate">{t.name}</div>
+                    <div className="text-xs text-tertiary truncate">{getDocTypeLabel(docType)}</div>
+                  </div>
+                </button>
+              )),
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="pt-4">
         <Button variant="secondary" onClick={() => navigate("/app/documents")}>
           Browse existing documents
@@ -117,4 +169,30 @@ export default function CreateDocument() {
       </div>
     </div>
   );
+}
+
+function getRoutePrefix(docType: string): string {
+  const map: Record<string, string> = {
+    invoice: "invoices",
+    quote: "quotes",
+    "credit-note": "credit-notes",
+    "debit-note": "debit-notes",
+    "payment-voucher": "payment-vouchers",
+    receipt: "receipts",
+    "purchase-order": "purchase-orders",
+  };
+  return map[docType] ?? docType;
+}
+
+function getDocTypeLabel(docType: string): string {
+  const map: Record<string, string> = {
+    invoice: "Invoice",
+    quote: "Quote",
+    "credit-note": "Credit Note",
+    "debit-note": "Debit Note",
+    "payment-voucher": "Payment Voucher",
+    receipt: "Receipt",
+    "purchase-order": "Purchase Order",
+  };
+  return map[docType] ?? docType;
 }

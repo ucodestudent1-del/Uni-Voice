@@ -1,6 +1,6 @@
 ﻿/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
@@ -54,11 +54,13 @@ import {
   getSuggestedActions,
   getProgressiveAutofill,
   parseCommandLine,
+  getDocumentTemplate,
   type SpeedQuickActions,
   type SpeedAutofillResult,
 } from "@/api/client";
 import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
 import { RelatedDocuments } from "@/components/document";
+import { SaveAsTemplateDialog } from "@/components/template";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -144,6 +146,8 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   });
 
   const { id } = useParams<{ id?: string }>();
+  const [searchParams] = useSearchParams();
+  const templateId = searchParams.get("template");
   const navigate = useNavigate();
   const { toast } = useToast();
   const isNew = !id || id === "new";
@@ -161,6 +165,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   const [isSending, setIsSending] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [newCustomerDialogOpen, setNewCustomerDialogOpen] = useState(false);
@@ -256,7 +261,27 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     }
   }, [docType, isNew]);
 
-   // Apply progressive autofill when customer is selected on a new document
+  useEffect(() => {
+    if (!isNew || !templateId || isLoading) return;
+
+    getDocumentTemplate(templateId).then((res) => {
+      const template = res.template;
+      if (template?.config?.layout) {
+        const layout = template.config.layout as any;
+        setState((prev) => ({
+          ...prev,
+          currency: layout.style?.currency ?? prev.currency,
+          notes: layout.notes ?? prev.notes,
+          terms: layout.terms ?? prev.terms,
+          paymentInstructions: layout.paymentInstructions ?? prev.paymentInstructions,
+          scopeOfWork: layout.scopeOfWork ?? prev.scopeOfWork,
+          internalNotes: layout.internalNotes ?? prev.internalNotes,
+        }));
+      }
+    }).catch(() => {});
+  }, [isNew, templateId, isLoading]);
+
+  // Apply progressive autofill when customer is selected on a new document
   useEffect(() => {
     if (!isNew || !state.customerId || !docType) return;
     getProgressiveAutofill(state.customerId).then((af: SpeedAutofillResult) => {
@@ -1281,8 +1306,17 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                          }
                        }}
                        className="text-xs text-tertiary hover:text-primary underline"
+                      >
+                        Save as preset
+                      </button>
+                   )}
+                   {!isFinalized && !isNew && (
+                     <button
+                       type="button"
+                       onClick={() => setSaveTemplateDialogOpen(true)}
+                       className="text-xs text-tertiary hover:text-primary underline"
                      >
-                       Save as preset
+                       Save as Template
                      </button>
                    )}
                   <Button
@@ -1865,6 +1899,13 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
           </Button>
         </div>
       </Dialog>
+
+      <SaveAsTemplateDialog
+        open={saveTemplateDialogOpen}
+        onClose={() => setSaveTemplateDialogOpen(false)}
+        docType={docType}
+        currentState={state}
+      />
     </div>
   );
 }

@@ -131,15 +131,25 @@ export default function Templates() {
         title="Templates"
         breadcrumbs={[{ label: "Home", to: "/app" }, { label: "Templates" }]}
         description="Choose a preset to get started or customize an existing template."
-        primaryAction={
-          <Button
-            variant="primary"
-            size="md"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={() => setShowPresetGallery(true)}
-          >
-            New Template
-          </Button>
+         primaryAction={
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => setShowPresetGallery(true)}
+            >
+              New Template
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              icon={<Plus className="w-4 h-4" />}
+              onClick={() => navigate("/app/create")}
+            >
+              Create from Document
+            </Button>
+          </div>
         }
       />
 
