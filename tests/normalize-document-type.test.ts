@@ -29,4 +29,24 @@ describe("normalizeDocumentTypeKey", () => {
   it("maps purchase-order to purchase_order", () => {
     expect(normalizeDocumentTypeKey("purchase-order")).toBe("purchase_order");
   });
+
+  it("maps recurring-invoice to recurring_invoice", () => {
+    expect(normalizeDocumentTypeKey("recurring-invoice")).toBe("recurring_invoice");
+  });
+
+  it("maps delivery-note to delivery_note", () => {
+    expect(normalizeDocumentTypeKey("delivery-note")).toBe("delivery_note");
+  });
+
+  it("maps packing-slip to packing_slip", () => {
+    expect(normalizeDocumentTypeKey("packing-slip")).toBe("packing_slip");
+  });
+
+  it("maps pro-forma-invoice to pro_forma_invoice", () => {
+    expect(normalizeDocumentTypeKey("pro-forma-invoice")).toBe("pro_forma_invoice");
+  });
+
+  it("maps estimate to estimate", () => {
+    expect(normalizeDocumentTypeKey("estimate")).toBe("estimate");
+  });
 });

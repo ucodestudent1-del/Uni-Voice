@@ -297,6 +297,137 @@ export interface PurchaseOrderTemplateData {
   config: Record<string, unknown>;
 }
 
+export interface RecurringInvoiceTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  recurringInvoice: {
+    id: string;
+    recurringInvoiceNumber: string | null;
+    name: string;
+    status: string;
+    frequency: "daily" | "weekly" | "monthly" | "yearly";
+    intervalCount: number;
+    nextGenerationAt: string | null;
+    endDate: string | null;
+    currency: CurrencyCode;
+    notes?: string | null;
+    terms?: string | null;
+    paymentInstructions?: string | null;
+    isFinalized?: boolean;
+    isActive?: boolean;
+    autoSend?: boolean;
+    deliveryMethod?: string | null;
+    depositAmount?: string | null;
+    depositType?: "none" | "fixed" | "percentage" | null;
+    issueOffsetDays?: number | null;
+    dueOffsetDays?: number | null;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
+export interface DeliveryNoteTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  deliveryNote: {
+    id: string;
+    deliveryNoteNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    dueDate: string | null;
+    shippedAt: string | null;
+    deliveredAt: string | null;
+    currency: CurrencyCode;
+    referenceInvoiceNumber?: string | null;
+    referencePurchaseOrderNumber?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
+export interface PackingSlipTemplateData {
+  business: TemplateBusiness;
+  supplier: TemplateCustomer | null;
+  packingSlip: {
+    id: string;
+    packingSlipNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    dueDate: string | null;
+    shippedAt: string | null;
+    deliveredAt: string | null;
+    currency: CurrencyCode;
+    referencePurchaseOrderNumber?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
+export interface ProFormaInvoiceTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  proFormaInvoice: {
+    id: string;
+    proFormaInvoiceNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    dueDate: string | null;
+    expiryDate: string | null;
+    validUntil: string | null;
+    currency: CurrencyCode;
+    poNumber?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    paymentInstructions?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  paymentInstructions?: TemplatePaymentInstructions | null;
+  config: Record<string, unknown>;
+}
+
+export interface EstimateTemplateData {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  estimate: {
+    id: string;
+    estimateNumber: string | null;
+    status: string;
+    issueDate: string | null;
+    expiryDate: string | null;
+    currency: CurrencyCode;
+    poNumber?: string | null;
+    scopeOfWork?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    paymentTerms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+    quoteNumber?: string | null;
+  };
+  lineItems: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config: Record<string, unknown>;
+}
+
 export type DocumentTemplateData =
   | InvoiceTemplateData
   | CreditNoteTemplateData
@@ -304,7 +435,12 @@ export type DocumentTemplateData =
   | DebitNoteTemplateData
   | PaymentVoucherTemplateData
   | ReceiptTemplateData
-  | PurchaseOrderTemplateData;
+  | PurchaseOrderTemplateData
+  | RecurringInvoiceTemplateData
+  | DeliveryNoteTemplateData
+  | PackingSlipTemplateData
+  | ProFormaInvoiceTemplateData
+  | EstimateTemplateData;
 
 export interface RenderOptions {
   currency: CurrencyCode;
@@ -3178,11 +3314,142 @@ export interface BuildPurchaseOrderInput {
   config?: Record<string, unknown>;
 }
 
+export interface BuildRecurringInvoiceInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  recurringInvoice: {
+    id: string;
+    recurringInvoiceNumber?: string | null;
+    name: string;
+    status?: string;
+    frequency: "daily" | "weekly" | "monthly" | "yearly";
+    intervalCount?: number;
+    nextGenerationAt?: Date | null;
+    endDate?: Date | null;
+    currency: CurrencyCode;
+    notes?: string | null;
+    terms?: string | null;
+    paymentInstructions?: string | null;
+    isFinalized?: boolean;
+    isActive?: boolean;
+    autoSend?: boolean;
+    deliveryMethod?: string | null;
+    depositAmount?: string | null;
+    depositType?: "none" | "fixed" | "percentage" | null;
+    issueOffsetDays?: number | null;
+    dueOffsetDays?: number | null;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildDeliveryNoteInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  deliveryNote: {
+    id: string;
+    deliveryNoteNumber?: string | null;
+    status?: string;
+    issueDate?: Date | null;
+    dueDate?: Date | null;
+    shippedAt?: Date | null;
+    deliveredAt?: Date | null;
+    currency: CurrencyCode;
+    referenceInvoiceNumber?: string | null;
+    referencePurchaseOrderNumber?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildPackingSlipInput {
+  business: TemplateBusiness;
+  supplier: TemplateCustomer | null;
+  packingSlip: {
+    id: string;
+    packingSlipNumber?: string | null;
+    status?: string;
+    issueDate?: Date | null;
+    dueDate?: Date | null;
+    shippedAt?: Date | null;
+    deliveredAt?: Date | null;
+    currency: CurrencyCode;
+    referencePurchaseOrderNumber?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildProFormaInvoiceInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  proFormaInvoice: {
+    id: string;
+    proFormaInvoiceNumber?: string | null;
+    status?: string;
+    issueDate?: Date | null;
+    dueDate?: Date | null;
+    expiryDate?: Date | null;
+    validUntil?: Date | null;
+    currency: CurrencyCode;
+    poNumber?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    paymentInstructions?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  paymentInstructions?: TemplatePaymentInstructions | null;
+  config?: Record<string, unknown>;
+}
+
+export interface BuildEstimateInput {
+  business: TemplateBusiness;
+  customer: TemplateCustomer | null;
+  estimate: {
+    id: string;
+    estimateNumber?: string | null;
+    status?: string;
+    issueDate?: Date | null;
+    expiryDate?: Date | null;
+    currency: CurrencyCode;
+    poNumber?: string | null;
+    scopeOfWork?: string | null;
+    notes?: string | null;
+    terms?: string | null;
+    paymentTerms?: string | null;
+    language?: string;
+    isFinalized?: boolean;
+    quoteNumber?: string | null;
+  };
+  items: TemplateLineItem[];
+  fees: TemplateFee[];
+  totals: TemplateTotals;
+  config?: Record<string, unknown>;
+}
+
 // ============================================================================
 // UNIFIED BUILDER — single entry point for all document types
 // ============================================================================
 
-export type DocumentTypeKey = "invoice" | "credit-note" | "quote" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order";
+export type DocumentTypeKey = "invoice" | "credit-note" | "quote" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order" | "recurring-invoice" | "delivery-note" | "packing-slip" | "pro-forma-invoice" | "estimate";
 
 /**
  * Builds template data for any document type from a unified input object.
@@ -3191,7 +3458,7 @@ export type DocumentTypeKey = "invoice" | "credit-note" | "quote" | "debit-note"
  */
 export function buildDocumentTemplateData(
   docType: DocumentTypeKey,
-  input: UnifiedBuildInvoiceInput | UnifiedBuildCreditNoteInput | BuildQuoteInputData | BuildDebitNoteInput | BuildPaymentVoucherInput | BuildReceiptInput | BuildPurchaseOrderInput,
+  input: UnifiedBuildInvoiceInput | UnifiedBuildCreditNoteInput | BuildQuoteInputData | BuildDebitNoteInput | BuildPaymentVoucherInput | BuildReceiptInput | BuildPurchaseOrderInput | BuildRecurringInvoiceInput | BuildDeliveryNoteInput | BuildPackingSlipInput | BuildProFormaInvoiceInput | BuildEstimateInput,
 ): DocumentTemplateData {
   switch (docType) {
     case "invoice": {
@@ -3392,6 +3659,152 @@ export function buildDocumentTemplateData(
         totals: i.totals,
         config: i.config ?? {},
       } as unknown as PurchaseOrderTemplateData;
+    }
+    case "recurring-invoice": {
+      const i = input as BuildRecurringInvoiceInput;
+      const ri = i.recurringInvoice;
+      return {
+        business: i.business,
+        customer: i.customer,
+        recurringInvoice: {
+          id: ri.id,
+          recurringInvoiceNumber: ri.recurringInvoiceNumber ?? null,
+          name: ri.name,
+          status: ri.status ?? "draft",
+          frequency: ri.frequency,
+          intervalCount: ri.intervalCount ?? 1,
+          nextGenerationAt: ri.nextGenerationAt ? ri.nextGenerationAt.toISOString().slice(0, 10) : null,
+          endDate: ri.endDate ? ri.endDate.toISOString().slice(0, 10) : null,
+          currency: ri.currency,
+          notes: ri.notes ?? null,
+          terms: ri.terms ?? null,
+          paymentInstructions: ri.paymentInstructions ?? null,
+          isFinalized: ri.isFinalized ?? false,
+          isActive: ri.isActive ?? true,
+          autoSend: ri.autoSend ?? false,
+          deliveryMethod: ri.deliveryMethod ?? null,
+          depositAmount: ri.depositAmount ?? null,
+          depositType: ri.depositType ?? null,
+          issueOffsetDays: ri.issueOffsetDays ?? null,
+          dueOffsetDays: ri.dueOffsetDays ?? null,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as RecurringInvoiceTemplateData;
+    }
+    case "delivery-note": {
+      const i = input as BuildDeliveryNoteInput;
+      const dn = i.deliveryNote;
+      return {
+        business: i.business,
+        customer: i.customer,
+        deliveryNote: {
+          id: dn.id,
+          deliveryNoteNumber: dn.deliveryNoteNumber ?? null,
+          status: dn.status ?? "draft",
+          issueDate: dn.issueDate ? dn.issueDate.toISOString().slice(0, 10) : null,
+          dueDate: dn.dueDate ? dn.dueDate.toISOString().slice(0, 10) : null,
+          shippedAt: dn.shippedAt ? dn.shippedAt.toISOString().slice(0, 10) : null,
+          deliveredAt: dn.deliveredAt ? dn.deliveredAt.toISOString().slice(0, 10) : null,
+          currency: dn.currency,
+          referenceInvoiceNumber: dn.referenceInvoiceNumber ?? null,
+          referencePurchaseOrderNumber: dn.referencePurchaseOrderNumber ?? null,
+          notes: dn.notes ?? null,
+          terms: dn.terms ?? null,
+          language: dn.language ?? undefined,
+          isFinalized: dn.isFinalized ?? false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as DeliveryNoteTemplateData;
+    }
+    case "packing-slip": {
+      const i = input as BuildPackingSlipInput;
+      const ps = i.packingSlip;
+      return {
+        business: i.business,
+        supplier: i.supplier,
+        packingSlip: {
+          id: ps.id,
+          packingSlipNumber: ps.packingSlipNumber ?? null,
+          status: ps.status ?? "draft",
+          issueDate: ps.issueDate ? ps.issueDate.toISOString().slice(0, 10) : null,
+          dueDate: ps.dueDate ? ps.dueDate.toISOString().slice(0, 10) : null,
+          shippedAt: ps.shippedAt ? ps.shippedAt.toISOString().slice(0, 10) : null,
+          deliveredAt: ps.deliveredAt ? ps.deliveredAt.toISOString().slice(0, 10) : null,
+          currency: ps.currency,
+          referencePurchaseOrderNumber: ps.referencePurchaseOrderNumber ?? null,
+          notes: ps.notes ?? null,
+          terms: ps.terms ?? null,
+          language: ps.language ?? undefined,
+          isFinalized: ps.isFinalized ?? false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as PackingSlipTemplateData;
+    }
+    case "pro-forma-invoice": {
+      const i = input as BuildProFormaInvoiceInput;
+      const pi = i.proFormaInvoice;
+      return {
+        business: i.business,
+        customer: i.customer,
+        proFormaInvoice: {
+          id: pi.id,
+          proFormaInvoiceNumber: pi.proFormaInvoiceNumber ?? null,
+          status: pi.status ?? "draft",
+          issueDate: pi.issueDate ? pi.issueDate.toISOString().slice(0, 10) : null,
+          dueDate: pi.dueDate ? pi.dueDate.toISOString().slice(0, 10) : null,
+          expiryDate: pi.expiryDate ? pi.expiryDate.toISOString().slice(0, 10) : null,
+          validUntil: pi.validUntil ? pi.validUntil.toISOString().slice(0, 10) : null,
+          currency: pi.currency,
+          poNumber: pi.poNumber ?? null,
+          notes: pi.notes ?? null,
+          terms: pi.terms ?? null,
+          paymentInstructions: pi.paymentInstructions ?? null,
+          language: pi.language ?? undefined,
+          isFinalized: pi.isFinalized ?? false,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        paymentInstructions: i.paymentInstructions ?? null,
+        config: i.config ?? {},
+      } as unknown as ProFormaInvoiceTemplateData;
+    }
+    case "estimate": {
+      const i = input as BuildEstimateInput;
+      const est = i.estimate;
+      return {
+        business: i.business,
+        customer: i.customer,
+        estimate: {
+          id: est.id,
+          estimateNumber: est.estimateNumber ?? null,
+          status: est.status ?? "draft",
+          issueDate: est.issueDate ? est.issueDate.toISOString().slice(0, 10) : null,
+          expiryDate: est.expiryDate ? est.expiryDate.toISOString().slice(0, 10) : null,
+          currency: est.currency,
+          poNumber: est.poNumber ?? null,
+          scopeOfWork: est.scopeOfWork ?? null,
+          notes: est.notes ?? null,
+          terms: est.terms ?? null,
+          paymentTerms: est.paymentTerms ?? null,
+          language: est.language ?? undefined,
+          isFinalized: est.isFinalized ?? false,
+          quoteNumber: est.quoteNumber ?? null,
+        },
+        lineItems: i.items,
+        fees: i.fees,
+        totals: i.totals,
+        config: i.config ?? {},
+      } as unknown as EstimateTemplateData;
     }
     default:
       throw new Error(`Unknown document type: ${docType}`);

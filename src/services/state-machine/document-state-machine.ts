@@ -7,7 +7,12 @@ export type DocumentTypeKey =
   | "debit-note"
   | "payment-voucher"
   | "receipt"
-  | "purchase-order";
+  | "purchase-order"
+  | "recurring-invoice"
+  | "delivery-note"
+  | "packing-slip"
+  | "pro-forma-invoice"
+  | "estimate";
 
 export interface DocumentStateTransition {
   from: string;
@@ -101,6 +106,67 @@ export const DOCUMENT_STATE_MACHINES: Record<DocumentTypeKey, StateMachineEntry>
       void: [],
     },
     terminalStatuses: new Set(["cancelled", "void"]),
+  },
+  "recurring-invoice": {
+    transitions: {
+      draft: ["active", "cancelled", "void"],
+      active: ["paused", "cancelled", "void"],
+      paused: ["active", "cancelled", "void"],
+      cancelled: [],
+      void: [],
+    },
+    terminalStatuses: new Set(["cancelled", "void"]),
+  },
+  "delivery-note": {
+    transitions: {
+      draft: ["finalized", "cancelled", "void"],
+      finalized: ["shipped", "cancelled", "void"],
+      shipped: ["delivered", "returned", "cancelled", "void"],
+      delivered: ["cancelled", "void"],
+      returned: ["cancelled", "void"],
+      cancelled: [],
+      void: [],
+    },
+    terminalStatuses: new Set(["cancelled", "void"]),
+  },
+  "packing-slip": {
+    transitions: {
+      draft: ["finalized", "cancelled"],
+      finalized: ["packed", "shipped", "cancelled", "void"],
+      packed: ["shipped", "cancelled", "void"],
+      shipped: ["delivered", "returned", "cancelled", "void"],
+      delivered: ["cancelled", "void"],
+      returned: ["cancelled", "void"],
+      cancelled: [],
+      void: [],
+    },
+    terminalStatuses: new Set(["cancelled", "void"]),
+  },
+  "pro-forma-invoice": {
+    transitions: {
+      draft: ["sent", "cancelled", "void"],
+      sent: ["viewed", "accepted", "rejected", "expired", "cancelled", "void"],
+      viewed: ["accepted", "rejected", "expired", "cancelled", "void"],
+      accepted: ["converted", "cancelled"],
+      rejected: ["cancelled"],
+      expired: ["cancelled"],
+      converted: [],
+      cancelled: [],
+      void: [],
+    },
+    terminalStatuses: new Set(["accepted", "converted", "cancelled", "void"]),
+  },
+  estimate: {
+    transitions: {
+      draft: ["sent", "rejected", "expired", "cancelled"],
+      sent: ["accepted", "rejected", "expired", "cancelled"],
+      accepted: ["converted", "cancelled"],
+      rejected: ["cancelled"],
+      expired: ["cancelled"],
+      converted: [],
+      cancelled: [],
+    },
+    terminalStatuses: new Set(["accepted", "converted", "cancelled"]),
   },
 };
 
@@ -219,6 +285,47 @@ export class DocumentStateMachine {
         received: "received",
         cancelled: "cancelled",
         void: "voided",
+      },
+      "recurring-invoice": {
+        active: "activated",
+        paused: "paused",
+        cancelled: "cancelled",
+        void: "voided",
+      },
+      "delivery-note": {
+        finalized: "finalized",
+        shipped: "shipped",
+        delivered: "delivered",
+        returned: "returned",
+        cancelled: "cancelled",
+        void: "voided",
+      },
+      "packing-slip": {
+        finalized: "finalized",
+        packed: "packed",
+        shipped: "shipped",
+        delivered: "delivered",
+        returned: "returned",
+        cancelled: "cancelled",
+        void: "voided",
+      },
+      "pro-forma-invoice": {
+        sent: "sent",
+        viewed: "viewed",
+        accepted: "accepted",
+        rejected: "rejected",
+        expired: "expired",
+        converted: "converted",
+        cancelled: "cancelled",
+        void: "voided",
+      },
+      estimate: {
+        sent: "sent",
+        accepted: "accepted",
+        rejected: "rejected",
+        expired: "expired",
+        converted: "converted",
+        cancelled: "cancelled",
       },
     };
 

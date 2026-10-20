@@ -9,7 +9,12 @@ export type DocumentTypeKey =
   | "debit-note"
   | "payment-voucher"
   | "receipt"
-  | "purchase-order";
+  | "purchase-order"
+  | "recurring-invoice"
+  | "delivery-note"
+  | "packing-slip"
+  | "pro-forma-invoice"
+  | "estimate";
 
 export interface DocumentNumberConfig {
   prefix: string;
@@ -25,6 +30,11 @@ const DEFAULT_CONFIGS: Record<DocumentTypeKey, DocumentNumberConfig> = {
   "payment-voucher": { prefix: "PV", padding: 6, includesYear: true },
   receipt: { prefix: "REC", padding: 6, includesYear: true },
   "purchase-order": { prefix: "PO", padding: 6, includesYear: true },
+  "recurring-invoice": { prefix: "RI", padding: 6, includesYear: true },
+  "delivery-note": { prefix: "DN", padding: 6, includesYear: true },
+  "packing-slip": { prefix: "PS", padding: 6, includesYear: true },
+  "pro-forma-invoice": { prefix: "PI", padding: 6, includesYear: true },
+  estimate: { prefix: "EST", padding: 6, includesYear: true },
 };
 
 const SETTING_COLUMNS: Record<DocumentTypeKey, string> = {
@@ -35,6 +45,11 @@ const SETTING_COLUMNS: Record<DocumentTypeKey, string> = {
   "payment-voucher": "payment_voucher_prefix",
   receipt: "receipt_prefix",
   "purchase-order": "purchase_order_prefix",
+  "recurring-invoice": "recurring_invoice_prefix",
+  "delivery-note": "delivery_note_prefix",
+  "packing-slip": "packing_slip_prefix",
+  "pro-forma-invoice": "pro_forma_invoice_prefix",
+  estimate: "estimate_prefix",
 };
 
 const SEQUENCE_TABLES: Record<DocumentTypeKey, string> = {
@@ -45,6 +60,11 @@ const SEQUENCE_TABLES: Record<DocumentTypeKey, string> = {
   "payment-voucher": "payment_voucher_number_sequences",
   receipt: "receipt_number_sequences",
   "purchase-order": "purchase_order_number_sequences",
+  "recurring-invoice": "recurring_invoice_number_sequences",
+  "delivery-note": "delivery_note_number_sequences",
+  "packing-slip": "packing_slip_number_sequences",
+  "pro-forma-invoice": "pro_forma_invoice_number_sequences",
+  estimate: "estimate_number_sequences",
 };
 
 function pad(num: number, size: number): string {

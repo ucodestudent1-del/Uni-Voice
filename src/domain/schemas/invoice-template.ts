@@ -12,6 +12,10 @@ export const DocumentTypeSchema = z.enum([
   "receipt",
   "purchase_order",
   "quote",
+  "delivery_note",
+  "packing_slip",
+  "pro_forma_invoice",
+  "estimate",
 ]);
 export type DocumentType = z.infer<typeof DocumentTypeSchema>;
 
@@ -23,6 +27,11 @@ export const DocumentTypeKeySchema = z.enum([
   "payment-voucher",
   "receipt",
   "purchase-order",
+  "recurring-invoice",
+  "delivery-note",
+  "packing-slip",
+  "pro-forma-invoice",
+  "estimate",
 ]);
 export type DocumentTypeKey = z.infer<typeof DocumentTypeKeySchema>;
 
@@ -30,11 +39,16 @@ export function normalizeDocumentTypeKey(key: DocumentTypeKey): DocumentType {
   const map: Record<DocumentTypeKey, DocumentType> = {
     "invoice": "invoice",
     "credit-note": "credit_note",
-     "quote": "quote",
+    "quote": "quote",
     "debit-note": "debit_note",
     "payment-voucher": "payment_voucher",
     "receipt": "receipt",
     "purchase-order": "purchase_order",
+    "recurring-invoice": "recurring_invoice",
+    "delivery-note": "delivery_note",
+    "packing-slip": "packing_slip",
+    "pro-forma-invoice": "pro_forma_invoice",
+    "estimate": "estimate",
   };
   return map[key];
 }

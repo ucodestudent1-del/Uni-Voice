@@ -83,7 +83,7 @@ export async function rollbackAll() {
       await adminClient.query(`DROP TABLE IF EXISTS "${t}" CASCADE`);
     }
     await adminClient.query(
-      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status, onboarding_step_status, customer_status, customer_event_type, invoice_template_lifecycle, product_service_type, product_service_status, project_status, project_event_type, payment_voucher_status, debit_note_status, sms_status CASCADE`
+      `DROP TYPE IF EXISTS invoice_status, payment_status, email_status, quote_status, recurring_frequency, invoice_event_type, subscription_plan, subscription_status, onboarding_step_status, customer_status, customer_event_type, invoice_template_lifecycle, product_service_type, product_service_status, project_status, project_event_type, payment_voucher_status, debit_note_status, sms_status, recurring_invoice_status, delivery_note_status, packing_slip_status, pro_forma_invoice_status, estimate_status CASCADE`
     );
     await adminClient.query(`DROP TABLE IF EXISTS migrations CASCADE`);
     const typeRes = await adminClient.query(

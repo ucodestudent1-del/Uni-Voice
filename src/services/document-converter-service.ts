@@ -38,13 +38,18 @@ export interface ConversionAuditEntry {
 export type ConversionMap = Record<DocumentTypeKey, DocumentTypeKey[]>;
 
 export const AVAILABLE_CONVERSIONS: ConversionMap = {
-  invoice: ["purchase-order", "credit-note", "debit-note"],
-  quote: ["invoice", "purchase-order", "credit-note", "debit-note"],
+  invoice: ["purchase-order", "credit-note", "debit-note", "delivery-note", "pro-forma-invoice"],
+  quote: ["invoice", "purchase-order", "credit-note", "debit-note", "pro-forma-invoice", "estimate"],
   "credit-note": ["invoice"],
   "debit-note": ["invoice"],
   "payment-voucher": ["receipt"],
   receipt: [],
-  "purchase-order": ["invoice", "debit-note"],
+  "purchase-order": ["invoice", "debit-note", "delivery-note", "packing-slip"],
+  "recurring-invoice": ["invoice"],
+  "delivery-note": ["invoice"],
+  "packing-slip": ["purchase-order"],
+  "pro-forma-invoice": ["invoice"],
+  estimate: ["quote", "invoice"],
 };
 
 export class DocumentConverterService {

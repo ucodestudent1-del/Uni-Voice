@@ -8,9 +8,14 @@ import type {
   PaymentVoucherTemplateData,
   ReceiptTemplateData,
   PurchaseOrderTemplateData,
+  RecurringInvoiceTemplateData,
+  DeliveryNoteTemplateData,
+  PackingSlipTemplateData,
+  ProFormaInvoiceTemplateData,
+  EstimateTemplateData,
 } from "../templates/template-renderer.js";
 
-type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData | DebitNoteTemplateData | PaymentVoucherTemplateData | ReceiptTemplateData | PurchaseOrderTemplateData;
+type TemplateData = InvoiceTemplateData | CreditNoteTemplateData | QuoteTemplateData | DebitNoteTemplateData | PaymentVoucherTemplateData | ReceiptTemplateData | PurchaseOrderTemplateData | RecurringInvoiceTemplateData | DeliveryNoteTemplateData | PackingSlipTemplateData | ProFormaInvoiceTemplateData | EstimateTemplateData;
 
 export interface PdfProvider {
   readonly name: string;
@@ -84,6 +89,16 @@ export class StubPdfService implements PdfProvider {
       ? data.receipt.receiptNumber ?? "RCPT"
       : "purchaseOrder" in data
       ? data.purchaseOrder.purchaseOrderNumber ?? "PO"
+      : "recurringInvoice" in data
+      ? data.recurringInvoice.recurringInvoiceNumber ?? "RI"
+      : "deliveryNote" in data
+      ? data.deliveryNote.deliveryNoteNumber ?? "DN"
+      : "packingSlip" in data
+      ? data.packingSlip.packingSlipNumber ?? "PS"
+      : "proFormaInvoice" in data
+      ? data.proFormaInvoice.proFormaInvoiceNumber ?? "PI"
+      : "estimate" in data
+      ? data.estimate.estimateNumber ?? "EST"
       : "N/A";
     const docType = "invoice" in data
       ? "Invoice"
@@ -99,6 +114,16 @@ export class StubPdfService implements PdfProvider {
       ? "Receipt"
       : "purchaseOrder" in data
       ? "Purchase Order"
+      : "recurringInvoice" in data
+      ? "Recurring Invoice"
+      : "deliveryNote" in data
+      ? "Delivery Note"
+      : "packingSlip" in data
+      ? "Packing Slip"
+      : "proFormaInvoice" in data
+      ? "Pro Forma Invoice"
+      : "estimate" in data
+      ? "Estimate"
       : "Document";
     const pdf =
       `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n` +

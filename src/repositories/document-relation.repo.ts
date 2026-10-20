@@ -1,6 +1,6 @@
 import { query } from "../db/pool.js";
 
-export type DocumentTypeForRelation = "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order" | "recurring-invoice";
+export type DocumentTypeForRelation = "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order" | "recurring-invoice" | "delivery-note" | "packing-slip" | "pro-forma-invoice" | "estimate";
 
 export interface RelatedDocument {
   id: string;
@@ -234,6 +234,10 @@ export class DocumentRelationRepository {
       "receipt": "receipts",
       "purchase-order": "purchase_orders",
       "recurring-invoice": "recurring_invoices",
+      "delivery-note": "delivery_notes",
+      "packing-slip": "packing_slips",
+      "pro-forma-invoice": "pro_forma_invoices",
+      "estimate": "estimates",
     };
 
     const table = tableMap[docType];
