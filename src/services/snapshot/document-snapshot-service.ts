@@ -102,6 +102,19 @@ export class DocumentSnapshotService {
     return this.rowToModel(result.rows[0]);
   }
 
+  async findById(
+    snapshotId: string,
+    businessId: string,
+  ): Promise<DocumentSnapshot | null> {
+    const result = await query(
+      `SELECT * FROM document_snapshots WHERE id = $1 AND business_id = $2`,
+      [snapshotId, businessId]
+    );
+
+    if (!result.rows.length) return null;
+    return this.rowToModel(result.rows[0]);
+  }
+
   /**
    * Verifies a snapshot's integrity by recomputing the hash.
    * Returns true if the snapshot matches (is immutable and untampered).

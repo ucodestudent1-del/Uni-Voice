@@ -2502,7 +2502,7 @@ export async function generateBrandingPreview(input: ApiBrandingInput): Promise<
 export interface GenerateDocumentParams {
   docType: string;
   docId: string;
-  format?: "pdf" | "html" | "docx" | "txt" | "csv" | "email-html" | "png" | "svg";
+   format?: "pdf" | "html" | "docx" | "txt" | "csv" | "email-html" | "png" | "svg" | "markdown" | "xml";
   templateId?: string;
 }
 
@@ -2729,5 +2729,64 @@ export async function getRelatedDocuments(
   docId: string,
 ): Promise<{ related: ApiRelatedDocument[] }> {
   const res = await api.get(`/documents/${docType}/${docId}/related`);
+  return res.data;
+}
+
+// ============================================================================
+// DOCUMENT CONVERTER
+// ============================================================================
+
+export interface ConvertDocumentParams {
+  docType: DocumentTypeParam;
+  docId: string;
+  targetType: DocumentTypeParam;
+  copyItems?: boolean;
+  copyCustomer?: boolean;
+  overrideFields?: Record<string, unknown>;
+}
+
+export interface ConvertDocumentResult {
+  conversionId: string;
+  targetDocumentId: string;
+  targetDocumentType: DocumentTypeParam;
+  sourceDocumentId: string;
+  sourceDocumentType: DocumentTypeParam;
+  status: "draft" | "finalized";
+  auditTrail: Array<{
+    timestamp: string;
+    action: string;
+    field: string;
+    sourceValue: unknown;
+    targetValue: unknown;
+  }>;
+}
+
+export async function getAvailableConversions(
+  docType: DocumentTypeParam,
+  docId: string,
+): Promise<{ conversions: DocumentTypeParam[] }> {
+  const res = await api.get(`/documents/${docType}/${docId}/available-conversions`);
+  return res.data;
+}
+
+export async function convertDocument(
+  params: ConvertDocumentParams,
+): Promise<ConvertDocumentResult> {
+  const res = await api.post(`/documents/${params.docType}/${params.docId}/convert`, {
+    targetType: params.targetType,
+    copyItems: params.copyItems ?? true,
+    copyCustomer: params.copyCustomer ?? true,
+    overrideFields: params.overrideFields ?? {},
+  });
+  return res.data;
+}
+
+export async function convertFromSnapshot(
+  snapshotId: string,
+  targetType: DocumentTypeParam,
+): Promise<ConvertDocumentResult> {
+  const res = await api.post(`/documents/convert-from-snapshot/${snapshotId}`, {
+    targetType,
+  });
   return res.data;
 }

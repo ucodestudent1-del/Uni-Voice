@@ -58,8 +58,10 @@ import { taxRuleService } from "./services/tax-rule-service.js";
 import { discountRuleService } from "./services/discount-rule-service.js";
 import { brandingService } from "./services/branding-service.js";
 import { DocumentService } from "./services/document-service.js";
+import type { DocumentTypeKey } from "./services/templates/template-renderer.js";
 import { outputService } from "./services/output/index.js";
 import type { OutputFormat } from "./services/output/types.js";
+import { DocumentConverterService } from "./services/document-converter-service.js";
 import {
   TaxRuleCreateSchema,
   TaxRuleUpdateSchema,
@@ -139,6 +141,8 @@ const documentService = new DocumentService({
   outputService: outputService,
   handlers: new Map(),
 });
+
+const documentConverterService = new DocumentConverterService(documentService);
 
 documentService.registerHandler("invoice", {
   toTemplateData: async (businessId: string, docId: string) => {
@@ -5854,7 +5858,7 @@ const GenerateDocumentSchema = z.object({
   ]),
   docId: z.string().uuid(),
   format: z
-    .enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg"])
+     .enum(["pdf", "html", "docx", "txt", "csv", "email-html", "png", "svg", "markdown", "xml"])
     .default("pdf")
     .optional(),
 });
@@ -5911,6 +5915,75 @@ app.get(
         docType,
       );
       res.json({ artifacts });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.get(
+  "/api/documents/:docType/:docId/available-conversions",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const docType = req.params.docType as DocumentTypeKey;
+      const conversions = documentConverterService.getAvailableConversions(docType);
+      res.json({ conversions });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.post(
+  "/api/documents/:docType/:docId/convert",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const sourceType = req.params.docType as DocumentTypeKey;
+      const targetType = req.body.targetType as DocumentTypeKey;
+      const copyItems = req.body.copyItems ?? true;
+      const copyCustomer = req.body.copyCustomer ?? true;
+      const overrideFields = req.body.overrideFields ?? {};
+
+      const result = await documentConverterService.convert(
+        req.user!.businessId,
+        {
+          sourceId: req.params.docId,
+          sourceType,
+          targetType,
+          copyItems,
+          copyCustomer,
+          overrideFields,
+          userId: req.user!.id,
+        },
+      );
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+app.post(
+  "/api/documents/:docType/:docId/convert-from-snapshot/:snapshotId",
+  requireAuth,
+  async (req: AuthRequest, res, next) => {
+    if (!req.user?.businessId)
+      return res.status(400).json({ error: "No business context" });
+    try {
+      const targetType = req.body.targetType as DocumentTypeKey;
+      const result = await documentConverterService.convertFromSnapshot(
+        req.user!.businessId,
+        req.params.snapshotId,
+        targetType,
+        req.user!.id,
+      );
+      res.json(result);
     } catch (err) {
       next(err);
     }

@@ -10,6 +10,8 @@ const DEFAULT_MIME_TYPES: Record<OutputFormat, string> = {
   "email-html": "text/html",
   png: "image/png",
   svg: "image/svg+xml",
+  markdown: "text/markdown",
+  xml: "application/xml",
 };
 
 export class OutputService {

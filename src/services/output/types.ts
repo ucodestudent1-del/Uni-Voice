@@ -8,7 +8,9 @@ export type OutputFormat =
   | "csv"
   | "email-html"
   | "png"
-  | "svg";
+  | "svg"
+  | "markdown"
+  | "xml";
 
 export interface OutputOptions {
   format: OutputFormat;
