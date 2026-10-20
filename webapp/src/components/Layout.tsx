@@ -54,7 +54,7 @@ export default function Layout() {
       requiredPlan: undefined,
     },
     {
-      name: "Create Document",
+      name: "Invoice Maker",
       to: "/app/create",
       icon: Plus,
       feature: undefined,
@@ -62,9 +62,9 @@ export default function Layout() {
     },
     {
       name: "Document Editor",
-      to: "/app/documents/new",
+      to: "/app/invoices/new",
       icon: Edit,
-      tooltip: "Start editing a new document",
+      tooltip: "Full-featured document editor",
       feature: undefined,
       requiredPlan: undefined,
     },

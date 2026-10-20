@@ -44,6 +44,7 @@ export interface DocumentState {
   customerId: string;
   currency: string;
   issueDate: string;
+  invoiceNumber?: string;
   notes: string;
   terms: string;
   paymentInstructions: string;
@@ -55,6 +56,7 @@ export interface DocumentState {
   dueDate?: string;
   poNumber?: string;
   paymentTerms?: string;
+  customerName?: string;
 
   expiryDate?: string;
   scopeOfWork?: string;

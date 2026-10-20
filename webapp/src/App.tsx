@@ -14,7 +14,7 @@ const Templates = lazy(() => import("./pages/Templates"));
 const TemplateEditorPage = lazy(() => import("./pages/TemplateEditorPage"));
 const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const Documents = lazy(() => import("./pages/Documents"));
-const CreateDocument = lazy(() => import("./pages/CreateDocumentFlow"));
+const CreateDocument = lazy(() => import("./pages/InvoiceMaker"));
 const AccountBilling = lazy(() => import("./pages/AccountBilling"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
@@ -51,7 +51,7 @@ const OnboardingWizardWithBoundary = withErrorBoundary(OnboardingWizard, "Onboar
 const TemplatesWithBoundary = withErrorBoundary(Templates, "Templates");
 const TemplateEditorPageWithBoundary = withErrorBoundary(TemplateEditorPage, "Template Editor");
 const DocumentsWithBoundary = withErrorBoundary(Documents, "Documents");
-const CreateDocumentWithBoundary = withErrorBoundary(CreateDocument, "Create Document");
+const CreateDocumentWithBoundary = withErrorBoundary(CreateDocument, "Invoice Maker");
 const AccountBillingWithBoundary = withErrorBoundary(AccountBilling, "Account & Billing");
 const PublicInvoiceWithBoundary = withErrorBoundary(PublicInvoice, "Invoice");
 const PaymentSuccessWithBoundary = withErrorBoundary(PaymentSuccess, "Payment Success");
@@ -160,7 +160,7 @@ export default function App() {
           <Route path="account" element={<AccountBillingWithBoundary />} />
           <Route path="documents" element={<DocumentsWithBoundary />} />
           <Route path="documents/new" element={<Navigate to="/app/create" replace />} />
-          <Route path="invoices/new" element={<Navigate to="/app/create?type=invoice" replace />} />
+          <Route path="invoices/new" element={<Navigate to="/app/create" replace />} />
           <Route path="invoices/:id/edit" element={<DocumentWorkspaceInvoiceWithBoundary docType="invoice" />} />
           <Route path="credit-notes/new" element={<Navigate to="/app/create?type=credit-note" replace />} />
           <Route path="credit-notes/:id/edit" element={<DocumentWorkspaceCreditNoteWithBoundary docType="credit-note" />} />
