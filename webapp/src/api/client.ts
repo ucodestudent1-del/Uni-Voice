@@ -2782,11 +2782,14 @@ export async function convertDocument(
 }
 
 export async function convertFromSnapshot(
+  docType: DocumentTypeParam,
+  docId: string,
   snapshotId: string,
   targetType: DocumentTypeParam,
 ): Promise<ConvertDocumentResult> {
-  const res = await api.post(`/documents/convert-from-snapshot/${snapshotId}`, {
-    targetType,
-  });
+  const res = await api.post(
+    `/documents/${docType}/${docId}/convert-from-snapshot/${snapshotId}`,
+    { targetType },
+  );
   return res.data;
 }

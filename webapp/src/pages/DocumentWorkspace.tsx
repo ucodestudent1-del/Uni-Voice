@@ -54,6 +54,7 @@ import {
   type SpeedAutofillResult,
 } from "@/api/client";
 import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
+import { DocumentConverter } from "@/components/document";
 import { RelatedDocuments } from "@/components/document";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
@@ -135,6 +136,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
   const [isSending, setIsSending] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [converterDialogOpen, setConverterDialogOpen] = useState(false);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [newCustomerDialogOpen, setNewCustomerDialogOpen] = useState(false);
@@ -1191,6 +1193,16 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                     onFinalize={handleProceedToPreview}
                     onSend={() => setSendDialogOpen(true)}
                   />
+                  {!isNew && document?.id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={<Copy className="h-4 w-4" />}
+                      onClick={() => setConverterDialogOpen(true)}
+                    >
+                      Convert
+                    </Button>
+                  )}
                 </>
               )}
             </div>
@@ -1450,6 +1462,21 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
           </div>
         )}
 
+        {!isNew && !isFinalized && document && document.id && (
+          <DocumentConverter
+            open={converterDialogOpen}
+            onClose={() => setConverterDialogOpen(false)}
+            docType={docType}
+            docId={document.id}
+            onConversionComplete={(result) => {
+              toast(
+                `Converted to ${result.targetDocumentType} successfully`,
+                { type: "success" },
+              );
+            }}
+          />
+        )}
+        
         {/* --- Step 2: Preview & Send --- */}
         {workflowStep === "preview" && (
           <div className="flex-1 overflow-y-auto">
