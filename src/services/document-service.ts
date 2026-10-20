@@ -207,6 +207,11 @@ export class DocumentService {
     if ("voucher" in data) return data.voucher.currency;
     if ("receipt" in data) return data.receipt.currency;
     if ("purchaseOrder" in data) return data.purchaseOrder.currency;
+    if ("recurringInvoice" in data) return data.recurringInvoice.currency;
+    if ("deliveryNote" in data) return data.deliveryNote.currency;
+    if ("packingSlip" in data) return data.packingSlip.currency;
+    if ("proFormaInvoice" in data) return data.proFormaInvoice.currency;
+    if ("estimate" in data) return data.estimate.currency;
     return "USD";
   }
 }

@@ -4053,6 +4053,8 @@ export const DEFAULT_ESTIMATE_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
+templateCache.set(DEFAULT_ESTIMATE_TEMPLATE, Handlebars.compile(DEFAULT_ESTIMATE_TEMPLATE, { noEscape: false }));
+
 export class TemplateRenderer {
   private defaultTemplate: string;
   private defaultCreditNoteTemplate: string;
