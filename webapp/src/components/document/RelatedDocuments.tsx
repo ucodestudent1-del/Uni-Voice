@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SectionCard from "@/components/SectionCard";
-import { getDocumentRoutePrefix, docTypeLabel } from "@/components/document";
+import { getDocumentRoutePrefix } from "@/components/document";
 import { getRelatedDocuments, type ApiRelatedDocument, type DocumentTypeParam } from "@/api/client";
-import { Loader2, ExternalLink, FileText, CreditCard, Receipt, FileInput, FileOutput, ClipboardList } from "lucide-react";
+import { Loader2, ExternalLink, FileText, CreditCard, Receipt, FileInput, FileOutput, ClipboardList, ChevronDown, ChevronRight } from "lucide-react";
 
 const docTypeIconMap: Record<string, React.ElementType> = {
   "invoice": FileText,
@@ -34,6 +34,7 @@ export function RelatedDocuments({ docType, docId }: RelatedDocumentsProps) {
   const [related, setRelated] = useState<ApiRelatedDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,78 +59,80 @@ export function RelatedDocuments({ docType, docId }: RelatedDocumentsProps) {
     navigate(`/app/${routePrefix}/${relDoc.id}`);
   };
 
-  if (loading && related.length === 0) {
-    return (
-      <SectionCard title="Related Documents">
-        <div className="p-5">
-          <div className="flex items-center space-x-2 text-sm text-tertiary">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Loading related documents…</span>
-          </div>
-        </div>
-      </SectionCard>
-    );
-  }
-
-  if (error) {
-    return (
-      <SectionCard title="Related Documents">
-        <div className="p-5">
-          <p className="text-sm text-error">{error}</p>
-        </div>
-      </SectionCard>
-    );
-  }
-
-  if (related.length === 0) {
-    return (
-      <SectionCard title="Related Documents">
-        <div className="p-5">
-          <p className="text-sm text-tertiary">No related documents found.</p>
-        </div>
-      </SectionCard>
-    );
-  }
+  const statusColor = (rel: ApiRelatedDocument) => {
+    if (rel.isFinalized) return "text-success";
+    if (rel.status === "sent" || rel.status === "paid") return "text-info";
+    return "text-warning";
+  };
 
   return (
     <SectionCard title="Related Documents">
       <div className="p-5">
-        <div className="space-y-3">
-          {related.map((rel) => {
-            const Icon = docTypeIconMap[rel.docType] ?? FileText;
-            const label = docTypeLabelMap[rel.docType] ?? rel.docType;
-            const statusColor = rel.isFinalized
-              ? "text-success"
-              : rel.status === "sent" || rel.status === "paid"
-                ? "text-info"
-                : "text-warning";
-
-            return (
-              <div
-                key={`${rel.docType}-${rel.id}`}
-                className="flex items-center justify-between p-3 rounded-lg border border-color-subtle hover:bg-bg-tertiary cursor-pointer transition-colors"
-                onClick={() => handleNavigate(rel)}
+        {loading && related.length === 0 ? (
+          <div className="flex items-center space-x-2 text-sm text-tertiary">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading related documents…</span>
+          </div>
+        ) : error ? (
+          <p className="text-sm text-error">{error}</p>
+        ) : related.length === 0 ? (
+          <p className="text-sm text-tertiary">No related documents found.</p>
+        ) : (
+          <>
+            {related.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setExpanded(!expanded)}
+                className="w-full flex items-center justify-between text-left mb-3"
               >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-5 w-5 text-tertiary" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{label}</span>
-                      <span className={`text-xs font-medium capitalize ${statusColor}`}>{rel.status}</span>
-                      {rel.relationType && (
-                        <span className="text-xs text-tertiary">· {rel.relationType}</span>
-                      )}
+                <span className="text-sm font-medium text-primary">
+                  {related.length} related {related.length === 1 ? "document" : "documents"}
+                </span>
+                {expanded ? (
+                  <ChevronDown className="h-4 w-4 text-tertiary" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-tertiary" />
+                )}
+              </button>
+            )}
+
+            {expanded && (
+              <div className="space-y-3">
+                {related.map((rel) => {
+                  const Icon = docTypeIconMap[rel.docType] ?? FileText;
+                  const label = docTypeLabelMap[rel.docType] ?? rel.docType;
+
+                  return (
+                    <div
+                      key={`${rel.docType}-${rel.id}`}
+                      className="flex items-center justify-between p-3 rounded-lg border border-color-subtle hover:bg-bg-tertiary cursor-pointer transition-colors"
+                      onClick={() => handleNavigate(rel)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-5 w-5 text-tertiary" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{label}</span>
+                            <span className={`text-xs font-medium capitalize ${statusColor(rel)}`}>
+                              {rel.status}
+                            </span>
+                            {rel.relationType && (
+                              <span className="text-xs text-tertiary">· {rel.relationType}</span>
+                            )}
+                          </div>
+                          {rel.docNumber && (
+                            <p className="text-sm text-tertiary mt-0.5">#{rel.docNumber}</p>
+                          )}
+                        </div>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-tertiary" />
                     </div>
-                    {rel.docNumber && (
-                      <p className="text-sm text-tertiary mt-0.5">#{rel.docNumber}</p>
-                    )}
-                  </div>
-                </div>
-                <ExternalLink className="h-4 w-4 text-tertiary" />
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            )}
+          </>
+        )}
       </div>
     </SectionCard>
   );

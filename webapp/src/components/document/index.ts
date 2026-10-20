@@ -2,6 +2,9 @@ export { DocumentLineItems, DocumentLineItemRow } from "./DocumentLineItems";
 export { DocumentFees } from "./DocumentFees";
 export { DocumentTotalsCard } from "./DocumentTotalsCard";
 export { DocumentNotesSection } from "./DocumentNotesSection";
+export { DocumentDetailsAccordion } from "./DocumentDetailsAccordion";
+export { SimpleLineItems } from "./SimpleLineItems";
+export { ActionBar } from "./ActionBar";
 export { default as PresetSelector } from "./PresetSelector";
 export { RelatedDocuments } from "./RelatedDocuments";
 export type {

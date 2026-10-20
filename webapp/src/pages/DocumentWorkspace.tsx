@@ -18,16 +18,17 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  ArrowLeft,
-  Eye,
+   ArrowLeft,
+   Eye,
 } from "lucide-react";
 import { Decimal } from "decimal.js";
 import DocumentPreview from "@/components/DocumentPreview";
 import {
-  DocumentLineItems,
   DocumentFees,
   DocumentTotalsCard,
   DocumentNotesSection,
+  DocumentDetailsAccordion,
+  SimpleLineItems,
   type DocumentState,
   type DocumentLineItem,
   type DocumentFee,
@@ -57,7 +58,7 @@ import {
   type SpeedAutofillResult,
 } from "@/api/client";
 import { getDocumentHandler, getDocumentRoutePrefix, docTypeLabel as docTypeLabelFn } from "@/components/document";
-import { PresetSelector, RelatedDocuments } from "@/components/document";
+import { RelatedDocuments } from "@/components/document";
 import type { ApiBusiness, ApiCustomer, ApiTaxRate, ApiProduct } from "@/types/api";
 import { formatTaxRate } from "@/utils/format";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -1165,7 +1166,7 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     setWorkflowStep("edit");
   }, []);
 
-  return (
+   return (
     <div className="page-container h-[calc(100vh-4rem)] flex flex-col">
        <PageHeader
           title={getDocumentTitle()}
@@ -1181,158 +1182,145 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
               {!isNew && document && (
                 <StatusBadge status={document.status} config={statusConfig} />
               )}
-              {!isFinalized && isNew && workflowStep === "edit" && (
-                <PresetSelector
-                  docType={docType}
-                  onApply={handleApplyPreset}
-                  currentData={state}
-                  disabled={false}
-                />
-              )}
-             <div className="flex items-center gap-2 text-sm">
-               {saveState === "saving" && (
-                 <>
-                   <Loader2 className="h-4 w-4 animate-spin text-info" />
-                   <span className="text-tertiary">Saving…</span>
-                 </>
-               )}
-               {saveState === "saved" && (
-                 <>
-                   <CheckCircle className="h-4 w-4 text-success" />
-                   <span className="text-tertiary">Saved</span>
-                 </>
-               )}
-               {saveState === "error" && (
-                 <>
-                   <AlertCircle className="h-4 w-4 text-error" />
-                   <span className="text-error">Save failed</span>
-                 </>
-               )}
-             </div>
-             {workflowStep === "preview" ? (
-               <>
-                 <Button
-                   variant="ghost"
-                   icon={<ArrowLeft className="h-4 w-4" />}
-                   onClick={handleBackToEdit}
-                   size="sm"
-                 >
-                   Back to Edit
-                 </Button>
-                 {isFinalized ? (
-                   <>
-                     {handler.formConfig.isInvoice && (
-                       <Button
-                         variant="ghost"
-                         icon={<Bell className="h-4 w-4" />}
-                         onClick={handleSendReminder}
-                         size="sm"
-                       >
-                         Send Reminder
-                       </Button>
-                     )}
-                     <Button
-                       variant="ghost"
-                       icon={<Copy className="h-4 w-4" />}
-                       onClick={handleDuplicate}
-                       size="sm"
-                       disabled={!handler.supportsDuplicate}
-                     >
-                       Duplicate
-                     </Button>
-                     <Button
-                       variant="primary"
-                       icon={<Send className="h-4 w-4" />}
-                       onClick={() => setSendDialogOpen(true)}
-                       disabled={isSending || !handler.supportsSend}
-                       loading={isSending}
-                     >
-                       Send
-                     </Button>
-                   </>
-                 ) : (
-                   <Button
-                     variant="primary"
-                     icon={<FileText className="h-4 w-4" />}
-                     onClick={handleFinalizeAndSend}
-                     disabled={isFinalizing || !handler.supportsFinalize}
-                     loading={isFinalizing}
-                   >
-                     Finalize & Send
-                   </Button>
-                 )}
-               </>
-             ) : (
-               <>
+              <div className="flex items-center gap-2 text-sm">
+                {saveState === "saving" && (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-info" />
+                    <span className="text-tertiary">Saving…</span>
+                  </>
+                )}
+                {saveState === "saved" && (
+                  <>
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span className="text-tertiary">Saved</span>
+                  </>
+                )}
+                {saveState === "error" && (
+                  <>
+                    <AlertCircle className="h-4 w-4 text-error" />
+                    <span className="text-error">Save failed</span>
+                  </>
+                )}
+              </div>
+
+              {workflowStep === "preview" ? (
+                <>
                   <Button
                     variant="ghost"
-                    icon={<Save className="h-4 w-4" />}
-                    onClick={doSave}
-                    disabled={saveState === "saving"}
-                    loading={saveState === "saving"}
+                    icon={<ArrowLeft className="h-4 w-4" />}
+                    onClick={handleBackToEdit}
+                    size="sm"
                   >
-                    Save Draft
+                    Back to Edit
                   </Button>
-                  {!isFinalized && (
+                  {isFinalized ? (
+                    <>
+                      {handler.formConfig.isInvoice && (
+                        <Button
+                          variant="ghost"
+                          icon={<Bell className="h-4 w-4" />}
+                          onClick={handleSendReminder}
+                          size="sm"
+                        >
+                          Send Reminder
+                        </Button>
+                      )}
+                      <Button
+                        variant="primary"
+                        icon={<Send className="h-4 w-4" />}
+                        onClick={() => setSendDialogOpen(true)}
+                        disabled={isSending || !handler.supportsSend}
+                        loading={isSending}
+                        size="sm"
+                      >
+                        Send
+                      </Button>
+                    </>
+                  ) : (
                     <Button
-                      variant="ghost"
-                      icon={<Copy className="h-4 w-4" />}
-                      onClick={() => {
-                        const saveName = prompt("Save as preset", "");
-                        if (saveName) {
-                          createDocumentPreset({
-                            name: saveName,
-                            description: undefined,
-                            documentType: docType,
-                             data: state as unknown as Record<string, unknown>,
-                          }).then(() => {
-                            toast("Preset saved!");
-                          }).catch(() => {
-                            toast("Failed to save preset", { type: "error" });
-                          });
-                        }
-                      }}
+                      variant="primary"
+                      icon={<FileText className="h-4 w-4" />}
+                      onClick={handleFinalizeAndSend}
+                      disabled={isFinalizing || !handler.supportsFinalize}
+                      loading={isFinalizing}
                       size="sm"
-                      title="Save current state as a preset"
                     >
-                      Save as Preset
+                      Finalize & Send
                     </Button>
                   )}
-                 <Button
-                   variant="primary"
-                   icon={<Eye className="h-4 w-4" />}
-                   onClick={handleProceedToPreview}
-                   disabled={isFinalizing}
-                 >
-                   {isNew ? "Create & Review" : "Review & Send"}
-                 </Button>
-               </>
-             )}
-           </div>
-         }
-        />
+                </>
+              ) : (
+                <>
+                   <Button
+                     variant="ghost"
+                     icon={<Save className="h-4 w-4" />}
+                     onClick={doSave}
+                     disabled={saveState === "saving"}
+                     loading={saveState === "saving"}
+                     size="sm"
+                   >
+                     Save Draft
+                   </Button>
+                   {!isFinalized && !isNew && (
+                     <button
+                       type="button"
+                       onClick={async () => {
+                         const saveName = prompt("Save as preset", "");
+                         if (saveName) {
+                           try {
+                             await createDocumentPreset({
+                               name: saveName,
+                               description: undefined,
+                               documentType: docType,
+                               data: state as unknown as Record<string, unknown>,
+                             });
+                             toast("Preset saved!", { type: "success" });
+                           } catch {
+                             toast("Failed to save preset", { type: "error" });
+                           }
+                         }
+                       }}
+                       className="text-xs text-tertiary hover:text-primary underline"
+                     >
+                       Save as preset
+                     </button>
+                   )}
+                  <Button
+                    variant="primary"
+                    icon={<Eye className="h-4 w-4" />}
+                    onClick={handleProceedToPreview}
+                    disabled={isFinalizing}
+                    size="sm"
+                  >
+                    {isNew ? "Create & Review" : "Review & Send"}
+                  </Button>
+                </>
+              )}
+            </div>
+          }
+         />
 
-       {workflowStep === "preview" && (
-         <div className="px-6 py-3 border-b border-color bg-surface-alt">
-           <div className="flex items-center gap-3 text-sm">
+        {workflowStep === "preview" && (
+          <div className="px-6 py-3 border-b border-color bg-surface-alt">
+            <div className="flex items-center gap-3 text-sm">
+               <div
+                 className="px-3 py-1 rounded-md text-xs font-medium text-tertiary"
+               >
+                 1. Edit
+               </div>
+              <div className="flex-1 h-px bg-color-subtle" />
               <div
-                className="px-3 py-1 rounded-md text-xs font-medium text-tertiary"
+                className={`px-3 py-1 rounded-md text-xs font-medium ${
+                  workflowStep === "preview"
+                    ? "bg-primary-bg text-primary-brand"
+                    : "text-tertiary"
+                }`}
               >
-                1. Edit
+                2. Review & Send
               </div>
-             <div className="flex-1 h-px bg-color-subtle" />
-             <div
-               className={`px-3 py-1 rounded-md text-xs font-medium ${
-                 workflowStep === "preview"
-                   ? "bg-primary-bg text-primary-brand"
-                   : "text-tertiary"
-               }`}
-             >
-               2. Review & Send
-             </div>
-           </div>
-         </div>
-        )}
+            </div>
+          </div>
+         )}
 
         {/* Command bar + quick actions — only for new/draft documents in edit step */}
         {!isFinalized && isNew && workflowStep === "edit" && (
@@ -1476,301 +1464,29 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                 </div>
               </SectionCard>
 
-             <SectionCard title="Document Details">
-               <div className="p-5 space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                   <FormField
-                     label="Currency"
-                     select
-                     value={state.currency}
-                     onChange={(e) => setState((prev) => ({ ...prev, currency: e.target.value }))}
-                     disabled={isFinalized}
-                   >
-                     {SUPPORTED_CURRENCIES.map((c) => {
-                       const meta = (() => {
-                         try {
-                           return getCurrencyMetadata(c);
-                         } catch {
-                           return null;
-                         }
-                       })();
-                       return (
-                         <option key={c} value={c}>
-                           {c} {meta ? `(${meta.symbol}, ${meta.decimalPlaces}dp)` : ""}
-                         </option>
-                       );
-                     })}
-                   </FormField>
+              <DocumentDetailsAccordion
+                docType={docType}
+                state={state}
+                isFinalized={isFinalized}
+                onStateChange={(patch) => setState((prev) => ({ ...prev, ...patch }))}
+              />
 
-                   <FormField
-                     label="Issue Date"
-                     type="date"
-                     value={state.issueDate}
-                     onChange={(e) => setState((prev) => ({ ...prev, issueDate: e.target.value }))}
-                     disabled={isFinalized}
-                   />
-                 </div>
 
-                 {handler.formConfig.isInvoice && (
-                   <>
-                     <div className="grid grid-cols-2 gap-4">
-                       <FormField
-                         label="Payment Terms"
-                         select
-                         value={state.paymentTerms ?? "30"}
-                         onChange={(e) => {
-                           const terms = e.target.value;
-                           if (terms === "custom") {
-                             setState((prev) => ({ ...prev, paymentTerms: "custom" }));
-                           } else {
-                             const days = parseInt(terms, 10);
-                             const issue = new Date(state.issueDate);
-                             const due = new Date(issue);
-                             due.setDate(issue.getDate() + days);
-                             setState((prev) => ({
-                               ...prev,
-                               paymentTerms: terms,
-                               dueDate: due.toISOString().split("T")[0],
-                             }));
-                           }
-                         }}
-                         disabled={isFinalized}
-                       >
-                         {PAYMENT_TERMS.map((t) => (
-                           <option key={t.value} value={t.value}>
-                             {t.label}
-                           </option>
-                         ))}
-                       </FormField>
-                       <FormField
-                         label="Due Date"
-                         type="date"
-                         value={state.dueDate ?? ""}
-                         onChange={(e) =>
-                           setState((prev) => ({
-                             ...prev,
-                             dueDate: e.target.value,
-                             paymentTerms: "custom",
-                           }))
-                         }
-                         disabled={isFinalized}
-                       />
-                     </div>
 
-                     <FormField
-                       label="PO Number"
-                       placeholder="Optional"
-                       value={state.poNumber ?? ""}
-                       onChange={(e) => setState((prev) => ({ ...prev, poNumber: e.target.value }))}
-                       disabled={isFinalized}
-                     />
-                   </>
-                 )}
-
-                 {handler.formConfig.isQuote && (
-                   <>
-                     <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                          label="Validity Period"
-                          select
-                          value={state.expiryDate ? "custom" : state.paymentTerms ?? "30"}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "custom") {
-                              setState((prev) => ({ ...prev, paymentTerms: "custom" }));
-                            } else {
-                              const days = parseInt(val, 10);
-                              const issue = new Date(state.issueDate);
-                              const expiry = new Date(issue);
-                              expiry.setDate(issue.getDate() + days);
-                              setState((prev) => ({
-                                ...prev,
-                                paymentTerms: val,
-                                expiryDate: expiry.toISOString().split("T")[0],
-                              }));
-                            }
-                          }}
-                          disabled={isFinalized}
-                        >
-                         {VALIDITY_DAYS_OPTIONS.map((v) => (
-                           <option key={v.value} value={v.value}>
-                             {v.label}
-                           </option>
-                         ))}
-                       </FormField>
-                       <FormField
-                         label="Expiry Date"
-                         type="date"
-                         value={state.expiryDate ?? ""}
-                         onChange={(e) => setState((prev) => ({ ...prev, expiryDate: e.target.value }))}
-                         disabled={isFinalized}
-                       />
-                     </div>
-                   </>
-                 )}
-
-                  {handler.formConfig.isCreditNote && (
-                    <>
-                      <FormField
-                        label="Reference Invoice"
-                        select
-                        value={state.referenceInvoiceId ?? ""}
-                        onChange={(e) =>
-                          setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
-                        }
-                        disabled={isFinalized}
-                      >
-                        <option value="">Select source invoice</option>
-                        {availableReferenceInvoices.map((inv) => (
-                          <option key={inv.id} value={inv.id}>
-                            {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
-                          </option>
-                        ))}
-                      </FormField>
-
-                      <FormField
-                        label="Reason"
-                        select
-                        value={state.reason === "other" ? state.reason : state.reason ?? ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setState((prev) => ({
-                            ...prev,
-                            reason: val,
-                            customReason: val === "other" ? prev.customReason : "",
-                          }));
-                        }}
-                        disabled={isFinalized}
-                      >
-                        <option value="">Select a reason</option>
-                        {REASON_OPTIONS.slice(1).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </FormField>
-
-                      {state.reason === "other" && (
-                        <FormField
-                          label="Custom Reason"
-                          placeholder="Enter reason..."
-                          value={state.customReason ?? ""}
-                          onChange={(e) =>
-                            setState((prev) => ({ ...prev, customReason: e.target.value }))
-                          }
-                          disabled={isFinalized}
-                        />
-                      )}
-                    </>
-                  )}
-
-                  {handler.formConfig.showsReferenceInvoice && (
-                    <>
-                      <FormField
-                        label="Reference Invoice"
-                        select
-                        value={state.referenceInvoiceId ?? ""}
-                        onChange={(e) =>
-                          setState((prev) => ({ ...prev, referenceInvoiceId: e.target.value }))
-                        }
-                        disabled={isFinalized}
-                        helperText="Optional — link to an invoice this debit note relates to"
-                      >
-                        <option value="">None</option>
-                        {availableReferenceInvoices.map((inv) => (
-                          <option key={inv.id} value={inv.id}>
-                            {inv.invoice_number ?? inv.id} — {inv.customer_name ?? "”"}
-                          </option>
-                        ))}
-                      </FormField>
-
-                      <FormField
-                        label="Reason"
-                        select
-                        value={state.reason === "other" ? state.reason : state.reason ?? ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setState((prev) => ({
-                            ...prev,
-                            reason: val,
-                            customReason: val === "other" ? prev.customReason : "",
-                          }));
-                        }}
-                        disabled={isFinalized}
-                      >
-                        <option value="">Select a reason</option>
-                        {REASON_OPTIONS.slice(1).map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </FormField>
-
-                      {state.reason === "other" && (
-                        <FormField
-                          label="Custom Reason"
-                          placeholder="Enter reason..."
-                          value={state.customReason ?? ""}
-                          onChange={(e) =>
-                            setState((prev) => ({ ...prev, customReason: e.target.value }))
-                          }
-                          disabled={isFinalized}
-                        />
-                      )}
-                    </>
-                  )}
-
-                   {handler.formConfig.isPaymentVoucher && (
-                    <>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          label="Voucher Date"
-                          type="date"
-                          value={state.voucherDate ?? state.issueDate}
-                          onChange={(e) => setState((prev) => ({ ...prev, voucherDate: e.target.value }))}
-                          disabled={isFinalized}
-                        />
-                        <FormField
-                          label="Payment Method"
-                          placeholder="e.g. Bank Transfer, Cash, Credit Card"
-                          value={state.paymentMethod ?? ""}
-                          onChange={(e) => setState((prev) => ({ ...prev, paymentMethod: e.target.value }))}
-                          disabled={isFinalized}
-                        />
-                      </div>
-                      <FormField
-                        label="Reference Number"
-                        placeholder="Optional"
-                        value={state.referenceNumber ?? ""}
-                        onChange={(e) => setState((prev) => ({ ...prev, referenceNumber: e.target.value }))}
-                        disabled={isFinalized}
-                      />
-                      <FormField
-                        label="Payment Provider"
-                        placeholder="e.g. Stripe, PayPal, Bank of America"
-                        value={state.paymentProvider ?? ""}
-                        onChange={(e) => setState((prev) => ({ ...prev, paymentProvider: e.target.value }))}
-                        disabled={isFinalized}
-                      />
-                    </>
-                  )}
-               </div>
-             </SectionCard>
-
-             <SectionCard title="Line Items">
-               <div className="p-5">
-                 <DocumentLineItems
-                   items={state.items}
-                   isFinalized={isFinalized}
-                   taxRateOptions={taxRateOptions}
-                   showOptional={handler.formConfig.showsOptionalItems}
-                   onUpdate={handleUpdateItem}
-                   onRemove={handleRemoveItem}
-                   onDuplicate={handleDuplicateItem}
-                   onAdd={handleAddItem}
-                 />
-               </div>
-             </SectionCard>
+              <SectionCard title="Line Items">
+                <div className="p-5">
+                  <SimpleLineItems
+                    items={state.items}
+                    isFinalized={isFinalized}
+                    taxRateOptions={taxRateOptions}
+                    showOptional={handler.formConfig.showsOptionalItems}
+                    onUpdate={handleUpdateItem}
+                    onRemove={handleRemoveItem}
+                    onDuplicate={handleDuplicateItem}
+                    onAdd={handleAddItem}
+                  />
+                </div>
+              </SectionCard>
 
              <DocumentTotalsCard
                calcResult={calcResult}
@@ -1803,31 +1519,31 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
                </div>
              </SectionCard>
 
-             <SectionCard title="Notes & Terms">
-               <div className="p-5">
-                 <DocumentNotesSection
-                   notes={state.notes}
-                   terms={state.terms}
-                   paymentInstructions={state.paymentInstructions}
-                   scopeOfWork={state.scopeOfWork}
-                   internalNotes={state.internalNotes}
-                    isQuote={handler.formConfig.isQuote}
-                    isCreditNote={handler.formConfig.isCreditNote}
-                   onNotesChange={(v) => setState((prev) => ({ ...prev, notes: v }))}
-                   onTermsChange={(v) => setState((prev) => ({ ...prev, terms: v }))}
-                   onPaymentInstructionsChange={(v) =>
-                     setState((prev) => ({ ...prev, paymentInstructions: v }))
-                   }
-                   onScopeOfWorkChange={(v) =>
-                     setState((prev) => ({ ...prev, scopeOfWork: v }))
-                   }
-                   onInternalNotesChange={(v) =>
-                     setState((prev) => ({ ...prev, internalNotes: v }))
-                   }
-                   disabled={isFinalized}
-                 />
-               </div>
-             </SectionCard>
+              <SectionCard title="Notes & Terms">
+                <div className="p-5">
+                  <DocumentNotesSection
+                    notes={state.notes}
+                    terms={state.terms}
+                    paymentInstructions={state.paymentInstructions}
+                    scopeOfWork={state.scopeOfWork}
+                    internalNotes={state.internalNotes}
+                     isQuote={handler.formConfig.isQuote}
+                     isCreditNote={handler.formConfig.isCreditNote}
+                    onNotesChange={(v) => setState((prev) => ({ ...prev, notes: v }))}
+                    onTermsChange={(v) => setState((prev) => ({ ...prev, terms: v }))}
+                    onPaymentInstructionsChange={(v) =>
+                      setState((prev) => ({ ...prev, paymentInstructions: v }))
+                    }
+                    onScopeOfWorkChange={(v) =>
+                      setState((prev) => ({ ...prev, scopeOfWork: v }))
+                    }
+                    onInternalNotesChange={(v) =>
+                      setState((prev) => ({ ...prev, internalNotes: v }))
+                    }
+                    disabled={isFinalized}
+                  />
+                </div>
+              </SectionCard>
 
              {!isFinalized && (
                <div className="flex gap-2">
