@@ -602,6 +602,24 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
+app.get("/api/health/database", async (_req, res) => {
+  try {
+    await query("SELECT 1");
+    res.json({
+      status: "ok",
+      database: "connected",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: "degraded",
+      database: "unavailable",
+      error: isDev ? (err instanceof Error ? err.message : String(err)) : undefined,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 if (isDev) {
   app.get("/", (_req, res) => {
     res.json({
@@ -6132,20 +6150,27 @@ async function start() {
     );
     process.exit(1);
   }
-  await runMigrations();
   server = app.listen(PORT, () => {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);
-    subscriptionService
-      .ensureDefaults()
-      .catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
-  });
+    runMigrations()
+      .then(() => {
+        logger.info("Database migrations completed successfully");
+        subscriptionService
+          .ensureDefaults()
+          .catch((e) => logger.error({ err: e }, "Failed to seed defaults"));
+      })
+      .catch((e) => {
+        logger.error({ err: e }, "Failed to run database migrations — server is running but DB may be unavailable");
+      });
 
-  if (env.REDIS_URL) {
-    const { startPdfWorker } = await import("./services/pdf-job-service.js");
-    startPdfWorker().catch((e) =>
-      logger.error({ err: e }, "Failed to start PDF worker"),
-    );
-  }
+    if (env.REDIS_URL) {
+      void import("./services/pdf-job-service.js").then(({ startPdfWorker }) => {
+        startPdfWorker().catch((e) =>
+          logger.error({ err: e }, "Failed to start PDF worker"),
+        );
+      });
+    }
+  });
 }
 
 // ============================================================================

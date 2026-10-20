@@ -179,7 +179,7 @@ if (
   }
 
   console.warn(
-    "APP_PUBLIC_BASE_URL not configured; using fallback. OAuth callbacks and public links may be incorrect."
+    "APP_PUBLIC_BASE_URL not configured; using fallback. OAuth callbacks and public links may be incorrect. Set APP_PUBLIC_BASE_URL for correct operation."
   );
 }
 
