@@ -20,6 +20,7 @@ import {
   finalizeCreditNote,
   getCreditNote,
   getCreditNotePdf,
+  sendCreditNote,
   type CreateCreditNoteInput,
   createDebitNote,
   updateDebitNote,
@@ -273,8 +274,15 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
         status: "finalized",
       };
     },
-    send: async () => {
-      throw new Error("Send for credit notes not yet supported");
+    send: async (id, data) => {
+      const result = await sendCreditNote(id, data ?? {});
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        status: result.status,
+        sentAt: new Date().toISOString(),
+        document: result.creditNote,
+      };
     },
     duplicate: async () => {
       throw new Error("Duplicate for credit notes not yet supported");
@@ -291,7 +299,7 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
     label: "Credit Note",
     pluralLabel: "Credit Notes",
     routePrefix: "credit-notes",
-    supportsSend: false,
+    supportsSend: true,
     supportsFinalize: true,
     supportsDuplicate: false,
     requiresCustomer: true,

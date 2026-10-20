@@ -2031,6 +2031,21 @@ export async function getCreditNotePdf(id: string): Promise<Blob> {
   return res.data;
 }
 
+export async function sendCreditNote(
+  creditNoteId: string,
+  data?: { to?: string | null; cc?: string | null; bcc?: string | null; subject?: string | null; message?: string | null },
+): Promise<{ ok: boolean; success: boolean; messageId: string; status: string; creditNote: ApiCreditNote }> {
+  const res = await api.post(`/credit-notes/${creditNoteId}/send`, data ?? {});
+  return res.data;
+}
+
+export async function duplicateCreditNote(
+  creditNoteId: string,
+): Promise<{ creditNote: ApiCreditNote }> {
+  const res = await api.post(`/credit-notes/${creditNoteId}/duplicate`);
+  return res.data;
+}
+
 // ============================================================================
 // QUOTES
 // ============================================================================

@@ -48,6 +48,7 @@ import { receiptService } from "./services/receipt-service.js";
 import { speedOptimizationService } from "./services/speed-optimization-service.js";
 import { invoiceService } from "./services/invoice-service.js";
 import { paymentVoucherService } from "./services/payment-voucher-service.js";
+import { purchaseOrderService } from "./services/purchase-order-service.js";
 import { debitNoteService } from "./services/debit-note-service.js";
 import { z } from "zod";
 import { AiParseDocumentType } from "./services/ai-service.js";
@@ -275,11 +276,32 @@ documentService.registerHandler("payment-voucher", {
 });
 
 documentService.registerHandler("purchase-order", {
-  toTemplateData: async (_businessId: string, _docId: string) => {
-    throw new NotFoundError("Purchase order document support not yet implemented");
+  toTemplateData: async (businessId: string, docId: string) => {
+    const purchaseOrder = await purchaseOrderService.findById(businessId, docId);
+    if (!purchaseOrder) throw new NotFoundError(`Purchase order ${docId} not found`);
+    return purchaseOrderService.buildTemplateDataForPurchaseOrder(businessId, docId, purchaseOrder) as any;
   },
-  generatePdf: async (_businessId: string, _docId: string) => {
-    throw new NotFoundError("Purchase order document support not yet implemented");
+  finalize: async (businessId: string, docId: string, userId?: string) => {
+    const result = await purchaseOrderService.finalize(businessId, docId, userId);
+    return {
+      document: result.purchaseOrder,
+      documentNumber: result.purchaseOrderNumber,
+      status: "finalized",
+    };
+  },
+  send: async (businessId: string, docId: string, payload: any, userId?: string) => {
+    const result = await purchaseOrderService.send(businessId, docId, payload, userId);
+    return {
+      ok: result.ok,
+      success: result.success,
+      messageId: result.messageId,
+      status: result.status,
+    };
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    const purchaseOrder = await purchaseOrderService.findById(businessId, docId);
+    if (!purchaseOrder) throw new NotFoundError(`Purchase order ${docId} not found`);
+    return purchaseOrderService.generatePdf(businessId, docId, purchaseOrder);
   },
 });
 app.set("trust proxy", isDev ? true : 1);
@@ -3040,6 +3062,188 @@ app.get("/api/debit-notes/:id/events", requireAuth, async (req: AuthRequest, res
     return res.status(400).json({ error: "No business context" });
   try {
     const events = await debitNoteService.getEvents(
+      req.user!.businessId,
+      req.params.id,
+      req.query.limit ? Number(req.query.limit) : undefined,
+      req.query.offset ? Number(req.query.offset) : undefined
+    );
+    res.json({ events, total: events.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================================
+// PURCHASE ORDERS
+// ============================================================================
+
+app.post("/api/purchase-orders", documentCreateRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    validateDocumentTextInput(req.body);
+    const purchaseOrder = await purchaseOrderService.create(
+      req.user!.businessId,
+      req.body,
+      req.user!.id,
+    );
+    res.status(201).json({ purchaseOrder });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/purchase-orders", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const pagination = parsePagination(req.query);
+    const result = await purchaseOrderService.findMany(req.user!.businessId, {
+      limit: pagination.limit,
+      offset: pagination.offset,
+      status: req.query.status,
+      search: req.query.search,
+      sortBy: req.query.sortBy,
+      sortOrder: req.query.sortOrder,
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/purchase-orders/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const purchaseOrder = await purchaseOrderService.findById(
+      req.user!.businessId,
+      req.params.id,
+    );
+    if (!purchaseOrder) return res.status(404).json({ error: "Purchase order not found" });
+    res.json({ purchaseOrder });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.patch("/api/purchase-orders/:id", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const purchaseOrder = await purchaseOrderService.update(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id,
+    );
+    res.json({ purchaseOrder });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/purchase-orders/:id/finalize", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await purchaseOrderService.finalize(
+      req.user!.businessId,
+      req.params.id,
+      req.user!.id,
+    );
+    res.json({
+      purchaseOrder: result.purchaseOrder,
+      purchaseOrderNumber: result.purchaseOrderNumber,
+      status: "finalized",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/purchase-orders/:id/send", emailSendRateLimiter, requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const result = await purchaseOrderService.send(
+      req.user!.businessId,
+      req.params.id,
+      req.body,
+      req.user!.id,
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/purchase-orders/:id/cancel", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const { reason } = req.body;
+    const purchaseOrder = await purchaseOrderService.cancel(
+      req.user!.businessId,
+      req.params.id,
+      reason ?? "",
+      req.user!.id,
+    );
+    res.json({ purchaseOrder });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/purchase-orders/:id/void", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const { reason } = req.body;
+    const purchaseOrder = await purchaseOrderService.void(
+      req.user!.businessId,
+      req.params.id,
+      reason ?? "",
+      req.user!.id,
+    );
+    res.json({ purchaseOrder });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/purchase-orders/:id/pdf", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const purchaseOrder = await purchaseOrderService.findById(
+      req.user!.businessId,
+      req.params.id,
+    );
+    if (!purchaseOrder) return res.status(404).json({ error: "Purchase order not found" });
+
+    const pdf = await purchaseOrderService.generatePdf(
+      req.user!.businessId,
+      req.params.id,
+      purchaseOrder
+    );
+    res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
+    res.set(
+      "Content-Disposition",
+       `attachment; filename="PurchaseOrder-${(purchaseOrder as any).purchase_order_number ?? req.params.id}.pdf"`
+    );
+    res.send(pdf);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/purchase-orders/:id/events", requireAuth, async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+  try {
+    const events = await purchaseOrderService.getEvents(
       req.user!.businessId,
       req.params.id,
       req.query.limit ? Number(req.query.limit) : undefined,
