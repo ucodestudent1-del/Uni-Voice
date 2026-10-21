@@ -208,19 +208,18 @@ export class DocumentConverterService {
   ): Promise<Record<string, unknown>> {
     switch (sourceType) {
       case "invoice":
-        return (await documentTypeService.fetchDocumentById("invoice", businessId, sourceId)) as Record<string, unknown>;
       case "quote":
-        return (await documentTypeService.fetchDocumentById("quote", businessId, sourceId)) as Record<string, unknown>;
       case "credit-note":
-        return (await documentTypeService.fetchDocumentById("credit-note", businessId, sourceId)) as Record<string, unknown>;
       case "debit-note":
-        return (await documentTypeService.fetchDocumentById("debit-note", businessId, sourceId)) as Record<string, unknown>;
       case "payment-voucher":
-        return (await documentTypeService.fetchDocumentById("payment-voucher", businessId, sourceId)) as Record<string, unknown>;
       case "receipt":
-        return (await documentTypeService.fetchDocumentById("receipt", businessId, sourceId)) as Record<string, unknown>;
       case "purchase-order":
-        return (await documentTypeService.fetchDocumentById("purchase-order", businessId, sourceId)) as Record<string, unknown>;
+      case "recurring-invoice":
+      case "delivery-note":
+      case "packing-slip":
+      case "pro-forma-invoice":
+      case "estimate":
+        return (await documentTypeService.fetchDocumentById(sourceType, businessId, sourceId)) as Record<string, unknown>;
       default:
         throw new Error(`Unknown source document type: ${sourceType}`);
     }
@@ -289,6 +288,27 @@ export class DocumentConverterService {
         break;
       case "payment-voucher->receipt":
         Object.assign(result, this.mapPaymentVoucherToReceipt(source, currency));
+        break;
+      case "estimate->quote":
+        Object.assign(result, this.mapEstimateToQuote(source, currency));
+        break;
+      case "estimate->invoice":
+        Object.assign(result, this.mapEstimateToInvoice(source, currency));
+        break;
+      case "quote->estimate":
+        Object.assign(result, this.mapQuoteToEstimate(source, currency));
+        break;
+      case "pro-forma-invoice->invoice":
+        Object.assign(result, this.mapProFormaInvoiceToInvoice(source, currency));
+        break;
+      case "recurring-invoice->invoice":
+        Object.assign(result, this.mapRecurringInvoiceToInvoice(source, currency));
+        break;
+      case "delivery-note->invoice":
+        Object.assign(result, this.mapDeliveryNoteToInvoice(source, currency));
+        break;
+      case "packing-slip->purchase-order":
+        Object.assign(result, this.mapPackingSlipToPurchaseOrder(source, currency));
         break;
       default:
         result.items = this.mapItems(source);
@@ -547,6 +567,107 @@ export class DocumentConverterService {
       paymentProvider: source.payment_provider ?? null,
       referenceNumber: source.payment_voucher_number ?? null,
       notes: source.notes ?? null,
+    };
+  }
+
+  private mapEstimateToQuote(
+    source: Record<string, unknown>,
+    currency: string,
+  ): Record<string, unknown> {
+    return {
+      currency,
+      customerId: source.customer_id ?? null,
+      issueDate: source.issue_date ?? null,
+      expiryDate: source.expiry_date ?? null,
+      dueDate: source.due_date ?? null,
+      notes: source.notes ?? null,
+      terms: source.terms ?? null,
+    };
+  }
+
+  private mapEstimateToInvoice(
+    source: Record<string, unknown>,
+    currency: string,
+  ): Record<string, unknown> {
+    return {
+      currency,
+      customerId: source.customer_id ?? null,
+      issueDate: source.issue_date ?? null,
+      dueDate: source.due_date ?? null,
+      notes: source.notes ?? null,
+      terms: source.terms ?? null,
+    };
+  }
+
+  private mapQuoteToEstimate(
+    source: Record<string, unknown>,
+    currency: string,
+  ): Record<string, unknown> {
+    return {
+      currency,
+      customerId: source.customer_id ?? null,
+      issueDate: source.issue_date ?? null,
+      expiryDate: source.expiry_date ?? null,
+      notes: source.notes ?? null,
+      terms: source.terms ?? null,
+    };
+  }
+
+  private mapProFormaInvoiceToInvoice(
+    source: Record<string, unknown>,
+    currency: string,
+  ): Record<string, unknown> {
+    return {
+      currency,
+      customerId: source.customer_id ?? null,
+      issueDate: source.issue_date ?? null,
+      dueDate: source.due_date ?? null,
+      notes: source.notes ?? null,
+      terms: source.terms ?? null,
+      poNumber: source.po_number ?? null,
+    };
+  }
+
+  private mapRecurringInvoiceToInvoice(
+    source: Record<string, unknown>,
+    currency: string,
+  ): Record<string, unknown> {
+    return {
+      currency,
+      customerId: source.customer_id ?? null,
+      issueDate: source.issue_date ?? null,
+      dueDate: source.due_date ?? null,
+      notes: source.notes ?? null,
+      terms: source.terms ?? null,
+      poNumber: source.po_number ?? null,
+    };
+  }
+
+  private mapDeliveryNoteToInvoice(
+    source: Record<string, unknown>,
+    currency: string,
+  ): Record<string, unknown> {
+    return {
+      currency,
+      customerId: source.customer_id ?? null,
+      issueDate: source.issue_date ?? null,
+      dueDate: source.due_date ?? null,
+      notes: source.notes ?? null,
+      terms: source.terms ?? null,
+    };
+  }
+
+  private mapPackingSlipToPurchaseOrder(
+    source: Record<string, unknown>,
+    currency: string,
+  ): Record<string, unknown> {
+    return {
+      currency,
+      supplierId: source.customer_id ?? null,
+      issueDate: source.issue_date ?? null,
+      deliveryDate: source.shipped_at ?? null,
+      notes: source.notes ?? null,
+      terms: source.terms ?? null,
     };
   }
 

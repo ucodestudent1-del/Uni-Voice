@@ -5,6 +5,7 @@ import { DocumentConverter } from "@/components/document/DocumentConverter";
 import type { DocumentTypeParam, ConvertDocumentResult } from "@/api/client";
 import { useMetaTags } from "@/hooks/useMetaTags";
 import { useToast } from "@/components/ui";
+import { getDocumentRoutePrefix } from "@/components/document/document-handlers";
 
 export default function DocumentConverterPage() {
   useMetaTags({
@@ -28,7 +29,7 @@ export default function DocumentConverterPage() {
   if (!docType || !docId) return null;
 
   const handleConversionComplete = (result: ConvertDocumentResult) => {
-    const routePrefix = docType;
+    const routePrefix = getDocumentRoutePrefix(result.targetDocumentType);
     toast(`Converted to ${result.targetDocumentType} successfully`, { type: "success" });
     navigate(`/app/${routePrefix}/${result.targetDocumentId}/edit`);
   };
