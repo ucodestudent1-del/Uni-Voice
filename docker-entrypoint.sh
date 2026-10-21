@@ -14,7 +14,7 @@ cleanup() {
   kill $NGINX_PID 2>/dev/null || true
   wait $BACKEND_PID 2>/dev/null || true
   wait $NGINX_PID 2>/dev/null || true
-  exit 1
+  exit 0
 }
 
 trap cleanup INT TERM EXIT

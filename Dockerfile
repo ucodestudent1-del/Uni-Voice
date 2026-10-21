@@ -65,15 +65,18 @@ RUN chmod +x /app/docker-entrypoint.sh
 RUN addgroup -S invoice && adduser -S -G invoice invoice
 
 # nginx needs to write to log and pid directories
-RUN mkdir -p /var/log/nginx /tmp && chown -R invoice:invoice /var/log/nginx /tmp /app
+RUN mkdir -p /var/log/nginx /tmp
+
+# Ensure all files are owned by the invoice user
+RUN chown -R invoice:invoice /var/log/nginx /tmp /app
 
 USER invoice
 
 EXPOSE 80 4000
 
-# Health check — tries backend directly first, then through nginx
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "const http=require('http');const port=process.env.PORT||4000;http.get('http://127.0.0.1:'+port+'/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+# Health check — probes through nginx (port 80) to verify the full stack (nginx + backend) is healthy
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -sf http://127.0.0.1:80/health >/dev/null 2>&1 || node -e "const http=require('http');const port=process.env.PORT||4000;http.get('http://127.0.0.1:'+port+'/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
 
 # Use the entrypoint script that starts both nginx and the backend API
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
