@@ -1,6 +1,8 @@
 import { ManualTaxProvider } from "./manual-provider.js";
+import { AvalaraTaxProvider } from "./avalara-provider.js";
 import type { TaxProvider, TaxContext, TaxCalculation } from "./types.js";
 import { env } from "../../config/index.js";
+import { logger } from "../../utils/logger.js";
 
 export class TaxService {
   private provider: TaxProvider;
@@ -18,7 +20,12 @@ export class TaxService {
       case "manual":
         return new ManualTaxProvider();
       case "avalara":
-        return new StubTaxProvider("avalara");
+        try {
+          return new AvalaraTaxProvider();
+        } catch (err) {
+          logger.warn({ err }, "Avalara provider initialization failed — falling back to manual");
+          return new ManualTaxProvider();
+        }
       case "taxjar":
         return new StubTaxProvider("taxjar");
       default:

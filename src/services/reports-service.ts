@@ -194,6 +194,56 @@ export interface ReportData<T> {
   offset: number;
 }
 
+export interface CashFlowForecastItem {
+  period: string;
+  expected: string;
+  received: string;
+  projected: string;
+  count: number;
+  currency: string;
+}
+
+export interface CashFlowForecast {
+  currency: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  items: CashFlowForecastItem[];
+  summary: {
+    totalExpected: string;
+    totalReceived: string;
+    totalProjected: string;
+  };
+}
+
+export interface TopClientItem {
+  customerId: string;
+  customerName: string | null;
+  totalInvoiced: string;
+  totalPaid: string;
+  totalOutstanding: string;
+  invoiceCount: number;
+  currency: string;
+}
+
+export interface OverdueReceivable {
+  id: string;
+  invoice_number: string | null;
+  customer_name: string | null;
+  customer_email: string | null;
+  currency: string;
+  amount_due: string;
+  due_date: string | null;
+  days_overdue: number;
+  reminder_count: number;
+}
+
+export interface OverdueReceivables {
+  currency: string;
+  totalOverdue: string;
+  totalReceivables: number;
+  items: OverdueReceivable[];
+}
+
 export class ReportsService {
   private buildDateCondition(
     paramPrefix: string,
@@ -1203,6 +1253,236 @@ export class ReportsService {
         totalOverdue: String(summary.rows[0]?.total_overdue ?? "0"),
         currency: summary.rows[0]?.currency ?? "USD",
       },
+    };
+
+    await reportsCache.set(cacheKey, result);
+    return result;
+  }
+
+  async getCashFlowForecast(
+    businessId: string,
+    months: number = 3,
+  ): Promise<CashFlowForecast> {
+    const cacheKey = `cash-flow:forecast:${businessId}:${months}`;
+    const cached = await reportsCache.get(cacheKey);
+    if (cached) return cached;
+
+    const dateFrom = new Date();
+    dateFrom.setMonth(dateFrom.getMonth() - 1);
+
+    const dateTo = new Date();
+    dateTo.setMonth(dateTo.getMonth() + months);
+
+    const res = await query(
+      `WITH monthly_data AS (
+        SELECT
+          CASE
+            WHEN i.due_date < $3 THEN TO_CHAR(DATE_TRUNC('month', i.due_date), 'YYYY-MM')
+            ELSE TO_CHAR(DATE_TRUNC('month', i.due_date), 'YYYY-MM')
+          END AS period,
+          COALESCE(SUM(i.total), 0) AS expected,
+          COALESCE(SUM(i.amount_paid), 0) AS received,
+          COUNT(*)::int AS count,
+          COALESCE(MAX(i.currency), 'USD') AS currency
+        FROM invoices i
+        WHERE i.business_id = $1
+          AND i.due_date >= $3
+          AND i.due_date <= $4
+          AND i.status NOT IN ('draft', 'cancelled', 'void')
+        GROUP BY DATE_TRUNC('month', i.due_date)
+      )
+      SELECT period, expected, received, count, currency
+      FROM monthly_data
+      ORDER BY period ASC`,
+      [businessId, dateFrom.toISOString(), dateTo.toISOString(), dateTo.toISOString()],
+    );
+
+    const periodMap = new Map<string, CashFlowForecastItem>();
+
+    for (let i = 0; i < months; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + i);
+      const period = d.toISOString().slice(0, 7);
+      periodMap.set(period, {
+        period,
+        expected: "0",
+        received: "0",
+        projected: "0",
+        count: 0,
+        currency: "USD",
+      });
+    }
+
+    for (const row of res.rows) {
+      const period = row.period;
+      if (!periodMap.has(period)) {
+        periodMap.set(period, {
+          period,
+          expected: "0",
+          received: "0",
+          projected: "0",
+          count: 0,
+          currency: row.currency ?? "USD",
+        });
+      }
+
+      const existing = periodMap.get(period)!;
+      existing.expected = String(new Decimal(existing.expected).plus(new Decimal(row.expected ?? "0")));
+      existing.received = String(new Decimal(existing.received).plus(new Decimal(row.received ?? "0")));
+      existing.count += Number(row.count ?? 0);
+      existing.currency = row.currency ?? existing.currency;
+    }
+
+    let totalExpected = new Decimal(0);
+    let totalReceived = new Decimal(0);
+
+    for (const item of periodMap.values()) {
+      const expected = new Decimal(item.expected);
+      const received = new Decimal(item.received);
+      const projected = expected.minus(received);
+      item.projected = projected.isNegative() ? "0" : projected.toFixed(2);
+
+      totalExpected = totalExpected.plus(expected);
+      totalReceived = totalReceived.plus(received);
+    }
+
+    const items = Array.from(periodMap.values()).sort((a, b) => a.period.localeCompare(b.period));
+    const currency = items.find((i) => i.currency !== "USD")?.currency ?? "USD";
+
+    const result: CashFlowForecast = {
+      currency,
+      periodStart: dateFrom.toISOString().split("T")[0],
+      periodEnd: dateTo.toISOString().split("T")[0],
+      items,
+      summary: {
+        totalExpected: totalExpected.toFixed(2),
+        totalReceived: totalReceived.toFixed(2),
+        totalProjected: totalExpected.minus(totalReceived).toFixed(2),
+      },
+    };
+
+    await reportsCache.set(cacheKey, result);
+    return result;
+  }
+
+  async getTopClients(
+    businessId: string,
+    limit: number = 10,
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<TopClientItem[]> {
+    const cacheKey = `top-clients:${businessId}:${limit}:${dateFrom ?? "all"}:${dateTo ?? "all"}`;
+    const cached = await reportsCache.get(cacheKey);
+    if (cached) return cached as TopClientItem[];
+
+    const conditions: string[] = ["i.business_id = $1"];
+    const vals: unknown[] = [businessId];
+    let paramIdx = 2;
+
+    if (dateFrom) {
+      conditions.push(`i.created_at >= $${paramIdx}`);
+      vals.push(dateFrom);
+      paramIdx++;
+    }
+    if (dateTo) {
+      conditions.push(`i.created_at <= $${paramIdx}`);
+      vals.push(dateTo);
+      paramIdx++;
+    }
+
+    const res = await query(
+      `SELECT
+         c.id AS customer_id,
+         c.name AS customer_name,
+         COALESCE(SUM(i.total), 0) AS total_invoiced,
+         COALESCE(SUM(i.amount_paid), 0) AS total_paid,
+         COALESCE(SUM(i.amount_due), 0) AS total_outstanding,
+         COUNT(*)::int AS invoice_count,
+         COALESCE(MAX(i.currency), 'USD') AS currency
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
+       WHERE ${conditions.join(" AND ")}
+         AND i.status NOT IN ('draft', 'cancelled', 'void')
+       GROUP BY c.id, c.name
+       ORDER BY total_invoiced DESC
+       LIMIT $${paramIdx}`,
+      [...vals, limit],
+    );
+
+    const result: TopClientItem[] = res.rows.map((r) => ({
+      customerId: r.customer_id,
+      customerName: r.customer_name,
+      totalInvoiced: String(r.total_invoiced ?? "0"),
+      totalPaid: String(r.total_paid ?? "0"),
+      totalOutstanding: String(r.total_outstanding ?? "0"),
+      invoiceCount: Number(r.invoice_count ?? 0),
+      currency: r.currency ?? "USD",
+    }));
+
+    await reportsCache.set(cacheKey, result);
+    return result;
+  }
+
+  async getOverdueReceivables(
+    businessId: string,
+    limit: number = 50,
+  ): Promise<OverdueReceivables> {
+    const cacheKey = `overdue-receivables:${businessId}:${limit}`;
+    const cached = await reportsCache.get(cacheKey);
+    if (cached) return cached;
+
+    const now = new Date();
+
+    const res = await query(
+      `SELECT
+         i.id,
+         i.invoice_number,
+         c.name AS customer_name,
+         c.email AS customer_email,
+         i.currency,
+         i.amount_due,
+         i.due_date,
+         GREATEST(0, EXTRACT(EPOCH FROM ($1::timestamptz - i.due_date)) / 86400)::int AS days_overdue,
+         COALESCE(COUNT(r.id), 0)::int AS reminder_count
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id AND c.business_id = i.business_id
+       LEFT JOIN invoice_reminders r ON r.invoice_id = i.id
+       WHERE i.business_id = $2
+         AND i.status NOT IN ('draft', 'cancelled', 'void', 'paid')
+         AND i.amount_due > 0
+         AND i.due_date < $1
+       ORDER BY i.due_date ASC, i.created_at DESC
+       LIMIT $3`,
+      [now.toISOString(), businessId, limit],
+    );
+
+    const items: OverdueReceivable[] = res.rows.map((r) => ({
+      id: r.id,
+      invoice_number: r.invoice_number,
+      customer_name: r.customer_name,
+      customer_email: r.customer_email,
+      currency: r.currency ?? "USD",
+      amount_due: String(r.amount_due ?? "0"),
+      due_date: r.due_date ? new Date(r.due_date).toISOString().split("T")[0] : null,
+      days_overdue: Number(r.days_overdue ?? 0),
+      reminder_count: Number(r.reminder_count ?? 0),
+    }));
+
+    const totalOverdue = items.reduce((sum, item) => sum.plus(new Decimal(item.amount_due)), new Decimal(0));
+
+    const currencyRes = await query(
+      `SELECT COALESCE(MAX(currency), 'USD') AS currency
+       FROM invoices
+       WHERE business_id = $1 AND status = 'overdue'
+         AND amount_due > 0 AND status NOT IN ('draft', 'cancelled', 'void', 'paid')`,
+      [businessId],
+    );
+
+    const result: OverdueReceivables = {
+      currency: currencyRes.rows[0]?.currency ?? "USD",
+      totalOverdue: totalOverdue.toFixed(2),
+      totalReceivables: items.length,
+      items,
     };
 
     await reportsCache.set(cacheKey, result);

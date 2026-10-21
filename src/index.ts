@@ -77,6 +77,10 @@ import { BrandingInputSchema } from "./domain/schemas/branding.js";
 const Route = (express as any).Route;
 import { customerService } from "./services/customer-service.js";
 import { businessRepository } from "./repositories/business.repo.js";
+import { isSchedulerAvailable, startWorker, stopAllWorkers } from "./services/scheduler.js";
+import { lateFeeEngineService } from "./services/late-fee-engine.js";
+import { recurringInvoiceService } from "./services/recurring-invoice-generator.js";
+import { reminderSchedulerService } from "./services/reminder-scheduler.js";
 import { productRepository } from "./repositories/product.repo.js";
 import { productServiceRepository } from "./repositories/product-service.repo.js";
 import { productServiceService } from "./services/product-service/product-service.js";
@@ -92,6 +96,7 @@ import { onboardingService } from "./services/onboarding.service.js";
 import { logger } from "./utils/logger.js";
 import Stripe from "stripe";
 import { stripeService } from "./services/payments/stripe-service.js";
+import { paypalService } from "./services/payments/paypal-service.js";
 import {
   DocumentTemplateInputSchema,
   DocumentTemplateUpdateSchema,
@@ -1446,6 +1451,73 @@ app.get(
   },
 );
 
+app.get("/api/automation/status", requireAuth, async (req: AuthRequest, res) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+
+  res.json({
+    recurringEnabled: isSchedulerAvailable(),
+    lateFeesEnabled: isSchedulerAvailable(),
+    remindersEnabled: isSchedulerAvailable(),
+    paymentProvider: env.PAYMENT_PROVIDER,
+    taxProvider: env.TAX_PROVIDER,
+  });
+});
+
+app.post("/api/automation/recurring-invoices/run", requireAuth, requireRole("admin"), async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+
+  try {
+    if (!isSchedulerAvailable()) {
+      return res.status(503).json({ error: "Scheduler not available" });
+    }
+
+    void recurringInvoiceService.processDueInvoices().catch((e: unknown) =>
+      logger.error({ err: e }, "Recurring invoice processing failed"),
+    );
+
+    res.json({ success: true, message: "Recurring invoice processing started" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/automation/late-fees/run", requireAuth, requireRole("admin"), async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+
+  try {
+    if (!isSchedulerAvailable()) {
+      return res.status(503).json({ error: "Scheduler not available" });
+    }
+
+    const result = await lateFeeEngineService.applyLateFees();
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/automation/reminders/run", requireAuth, requireRole("admin"), async (req: AuthRequest, res, next) => {
+  if (!req.user?.businessId)
+    return res.status(400).json({ error: "No business context" });
+
+  try {
+    if (!isSchedulerAvailable()) {
+      return res.status(503).json({ error: "Scheduler not available" });
+    }
+
+    void reminderSchedulerService.processDueReminders().catch((e: unknown) =>
+      logger.error({ err: e }, "Reminder processing failed"),
+    );
+
+    res.json({ success: true, message: "Reminder processing started" });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.get("/api/stripe/config", async (_req, res) => {
   res.json({ publishableKey: env.STRIPE_PUBLISHABLE_KEY });
 });
@@ -2267,8 +2339,90 @@ app.post("/api/public/payments/:token", async (req: AuthRequest, res, next) => {
   }
 });
 
-// ============================================================================
-// CREDIT NOTES
+app.get("/api/paypal/config", async (_req, res) => {
+  const configured = !!(env.PAYPAL_CLIENT_ID && env.PAYPAL_CLIENT_SECRET);
+  res.json({ configured, environment: env.PAYPAL_ENVIRONMENT });
+});
+
+app.post("/api/public/payments/:token/paypal", async (req: AuthRequest, res, next) => {
+  try {
+    const invoice = await invoiceService.findByPublicToken(req.params.token);
+    if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+
+    const amountDue = new Decimal(String(invoice.amount_due ?? invoice.total ?? 0));
+    if (amountDue.lte(0)) {
+      return res.status(400).json({ error: "Invoice has no outstanding balance" });
+    }
+
+    const successUrl = req.body.successUrl ||
+      `${env.APP_FRONTEND_URL || "http://localhost:5173"}/invoice/paid?token=${req.params.token}`;
+    const cancelUrl = req.body.cancelUrl ||
+      `${env.APP_FRONTEND_URL || "http://localhost:5173"}/invoice/${req.params.token}`;
+
+    const result = await paypalService.createPaymentSession({
+      invoiceId: invoice.id as string,
+      businessId: invoice.business_id as string,
+      amount: Number(amountDue),
+      currency: invoice.currency as string,
+      customerEmail: invoice.customer_email as string | undefined,
+      invoiceNumber: invoice.invoice_number as string | undefined,
+      successUrl,
+      cancelUrl,
+    });
+
+    res.json({ url: result.url, paymentId: result.paymentId });
+  } catch (err: any) {
+    if (err?.message?.includes("not configured") || err?.code === "PAYPAL_NOT_CONFIGURED") {
+      return res.status(503).json({ error: "PayPal is not configured" });
+    }
+    next(err);
+  }
+});
+
+app.post("/api/webhooks/paypal", express.raw({ type: "application/json", limit: "1mb" }), async (req, res) => {
+  const signature = req.headers["paypal-transmission-sig"];
+  if (!signature || typeof signature !== "string") {
+    return res.status(400).send("Missing PayPal signature");
+  }
+
+  try {
+    if (env.PAYPAL_WEBHOOK_SECRET) {
+      const isValid = paypalService.verifyWebhookSignature(
+        req.body.toString("utf8"),
+        signature,
+        undefined,
+      );
+      if (!isValid) {
+        return res.status(400).send("Invalid PayPal webhook signature");
+      }
+    }
+
+    const event = JSON.parse(req.body.toString("utf8"));
+
+    if (event.event_type === "PAYMENT.CAPTURE.COMPLETED" || event.event_type === "CHECKOUT.ORDER.APPROVED") {
+      const orderId = event.resource?.supplementary_data?.related_ids?.order_id
+        || event.data?.resource?.supplementary_data?.related_ids?.order_id
+        || event.resource?.id
+        || event.data?.resource?.id;
+
+      if (orderId) {
+        void (async () => {
+          try {
+            const orderDetails = await paypalService.getOrderDetails(orderId);
+            logger.info({ orderId, orderDetails }, "PayPal webhook received");
+          } catch (captureErr) {
+            logger.error({ err: captureErr, orderId }, "Failed to process PayPal capture");
+          }
+        })();
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err: any) {
+    logger.error({ err }, "PayPal webhook failed");
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
 // ============================================================================
 // CREDIT NOTES
 // ============================================================================
@@ -6225,6 +6379,26 @@ async function start() {
           logger.error({ err: e }, "Failed to start PDF worker"),
         );
       });
+
+      void (async () => {
+        const queueNames = [
+          "recurring-invoices",
+          "late-fees",
+          "reminders",
+        ];
+        for (const qn of queueNames) {
+          await startWorker(qn, 1).catch((e) =>
+            logger.error({ err: e }, `Failed to start worker for "${qn}"`),
+          );
+        }
+      })();
+
+      void recurringInvoiceService.scheduleRecurringJob().catch((e: unknown) =>
+        logger.error({ err: e }, "Failed to schedule recurring invoice job"),
+      );
+      void lateFeeEngineService.scheduleLateFeeJob().catch((e) =>
+        logger.error({ err: e }, "Failed to schedule late fee job"),
+      );
     }
   });
 }
@@ -6260,11 +6434,10 @@ async function shutdown(signal: string): Promise<void> {
   }
 
   try {
-    const { closePool } = await import("./db/pool.js");
-    await closePool();
-    logger.info("Database pool closed.");
+    await stopAllWorkers();
+    logger.info("Scheduler workers stopped.");
   } catch (err) {
-    logger.error({ err }, "Error closing database pool");
+    logger.error({ err }, "Error stopping scheduler workers");
   }
 
   try {

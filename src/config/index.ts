@@ -69,10 +69,14 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_PHONE_NUMBER: z.string().optional(),
   PDF_PROVIDER: z.enum(["html", "stub"]).default("html"),
-  PAYMENT_PROVIDER: z.enum(["stub", "stripe"]).default("stub"),
+  PAYMENT_PROVIDER: z.enum(["stub", "stripe", "paypal"]).default("stub"),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  PAYPAL_CLIENT_ID: z.string().optional(),
+  PAYPAL_CLIENT_SECRET: z.string().optional(),
+  PAYPAL_WEBHOOK_SECRET: z.string().optional(),
+  PAYPAL_ENVIRONMENT: z.enum(["sandbox", "live"]).default("sandbox"),
   TAX_PROVIDER: z.enum(["manual", "avalara", "taxjar"]).default("manual"),
   AI_PROVIDER: z.enum(["stub", "openai", "anthropic"]).default("stub"),
   SMTP_HOST: z.string().optional(),
@@ -88,6 +92,13 @@ const envSchema = z.object({
   GOOGLE_CALLBACK_URL: optionalUrlSchema.optional(),
   REDIS_URL: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
+  FX_API_KEY: z.string().optional(),
+  FX_API_PROVIDER: z.enum(["openexchangerates", "exchangerateapi"]).default("openexchangerates"),
+  FX_BASE_CURRENCY: z.string().default("USD"),
+  APP_DEFAULT_CURRENCY: z.string().default("USD"),
+  AVALARA_ACCOUNT_ID: z.string().optional(),
+  AVALARA_API_KEY: z.string().optional(),
+  AVALARA_ENVIRONMENT: z.enum(["development", "production"]).default("development"),
 });
 
 type Env = Omit<z.infer<typeof envSchema>, "APP_PUBLIC_BASE_URL"> & {
@@ -148,7 +159,13 @@ if (isProduction && parsed.PAYMENT_PROVIDER === "stripe" && !parsed.STRIPE_SECRE
 if (isProduction && parsed.PAYMENT_PROVIDER === "stub") {
   console.warn(
     "PAYMENT_PROVIDER=stub is not recommended in production. " +
-      "Payment endpoints will return placeholder responses. Set PAYMENT_PROVIDER=stripe and provide STRIPE_SECRET_KEY for real payments.",
+      "Payment endpoints will return placeholder responses. Set PAYMENT_PROVIDER=stripe or PAYMENT_PROVIDER=paypal.",
+  );
+}
+
+if (isProduction && parsed.PAYMENT_PROVIDER === "paypal" && !parsed.PAYPAL_CLIENT_ID) {
+  console.warn(
+    "PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET are not set. Payment processing endpoints will return errors when called.",
   );
 }
 
