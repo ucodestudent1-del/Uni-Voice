@@ -3,7 +3,7 @@ WORKDIR /app
 
 # --- Dependencies layer (production only) -------------------------------------
 FROM base AS deps
-# Install build tools for native modules (argon2, bcrypt, puppeteer)
+# Install build tools for native modules (argon2, bcrypt) and puppeteer deps
 RUN apk add --no-cache python3 make g++ cairo jpeg pango musl-dev
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
@@ -23,9 +23,8 @@ RUN node scripts/copy-migrations.js
 
 # --- Frontend build layer ----------------------------------------------------
 FROM base AS frontend-builder
-WORKDIR /app
-COPY webapp/package.json webapp/package-lock.json* /app/webapp/
 WORKDIR /app/webapp
+COPY webapp/package.json webapp/package-lock.json* ./
 RUN npm ci
 COPY webapp/ /app/webapp/
 # Build the frontend (tsc type-checks then vite builds)
@@ -35,8 +34,11 @@ RUN npm run build
 FROM base AS runtime
 WORKDIR /app
 
-# Install system dependencies needed for puppeteer/chromium at runtime
+# Install nginx (for serving frontend + reverse proxy to API)
+# and system dependencies for puppeteer/chromium at runtime
 RUN apk add --no-cache \
+    nginx \
+    curl \
     cairo jpeg pango \
     nss freetype harfbuzz fribidi woff2 ttf-freefont \
     nodejs
@@ -51,14 +53,24 @@ COPY --from=backend-builder /app/scripts ./scripts
 # Copy frontend build output
 COPY --from=frontend-builder /app/webapp/dist ./webapp/dist
 
+# Copy nginx config and entrypoint script
+COPY nginx.conf /app/nginx.conf
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Create non-root user
 RUN addgroup -S invoice && adduser -S -G invoice invoice
+
+# nginx needs to write to log and pid directories
+RUN mkdir -p /var/log/nginx /tmp && chown -R invoice:invoice /var/log/nginx /tmp /app
+
 USER invoice
 
-EXPOSE 4000
+EXPOSE 80 4000
 
-# Health check — hits the /api/health endpoint
+# Health check — hits the /api/health endpoint directly (bypasses nginx)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "const http=require('http');http.get('http://localhost:4000/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
 
-CMD ["node", "dist/index.js"]
+# Use the entrypoint script that starts both nginx and the backend API
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

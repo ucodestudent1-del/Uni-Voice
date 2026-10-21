@@ -48,6 +48,7 @@ services:
       # Generate with: openssl rand -hex 32
       AUTH_JWT_SECRET: change-me-to-a-secure-random-string
     ports:
+      - "80:80"
       - "4000:4000"
 
 volumes:
