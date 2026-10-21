@@ -133,15 +133,20 @@ CREATE INDEX IF NOT EXISTS idx_business_branding_business ON business_branding(b
 -- ----------------------------------------------------------------------------
 
 -- Add tax rule integration to invoice_items
+-- Note: Split into individual ALTER TABLE statements for maximum compatibility
 ALTER TABLE invoice_items
-  ADD COLUMN IF NOT EXISTS tax_rule_id UUID REFERENCES tax_rules(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS tax_rule_id UUID REFERENCES tax_rules(id) ON DELETE SET NULL;
+
+ALTER TABLE invoice_items
   ADD COLUMN IF NOT EXISTS tax_rule_rate_snapshot NUMERIC(5,4);
 
 CREATE INDEX IF NOT EXISTS idx_invoice_items_tax_rule ON invoice_items(tax_rule_id);
 
 -- Add discount rule integration to invoices
 ALTER TABLE invoices
-  ADD COLUMN IF NOT EXISTS discount_rule_id UUID REFERENCES discount_rules(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS discount_rule_id UUID REFERENCES discount_rules(id) ON DELETE SET NULL;
+
+ALTER TABLE invoices
   ADD COLUMN IF NOT EXISTS discount_rule_snapshot JSONB;
 
 CREATE INDEX IF NOT EXISTS idx_invoices_discount_rule ON invoices(discount_rule_id);

@@ -296,28 +296,52 @@ CREATE INDEX IF NOT EXISTS idx_estimate_items_estimate ON estimate_items(estimat
 
 -- ============================================================================
 -- business_settings columns for all new document types
+-- Note: Split into individual ALTER TABLE statements for maximum compatibility
 -- ============================================================================
 ALTER TABLE business_settings
-  ADD COLUMN IF NOT EXISTS delivery_note_prefix VARCHAR(50) DEFAULT 'DN',
-  ADD COLUMN IF NOT EXISTS delivery_note_padding SMALLINT DEFAULT 6,
-  ADD COLUMN IF NOT EXISTS delivery_note_includes_year BOOLEAN DEFAULT TRUE,
-  ADD COLUMN IF NOT EXISTS packing_slip_prefix VARCHAR(50) DEFAULT 'PS',
-  ADD COLUMN IF NOT EXISTS packing_slip_padding SMALLINT DEFAULT 6,
-  ADD COLUMN IF NOT EXISTS packing_slip_includes_year BOOLEAN DEFAULT TRUE,
-  ADD COLUMN IF NOT EXISTS pro_forma_invoice_prefix VARCHAR(50) DEFAULT 'PI',
-  ADD COLUMN IF NOT EXISTS pro_forma_invoice_padding SMALLINT DEFAULT 6,
-  ADD COLUMN IF NOT EXISTS pro_forma_invoice_includes_year BOOLEAN DEFAULT TRUE,
-  ADD COLUMN IF NOT EXISTS estimate_prefix VARCHAR(50) DEFAULT 'EST',
-  ADD COLUMN IF NOT EXISTS estimate_padding SMALLINT DEFAULT 6,
+  ADD COLUMN IF NOT EXISTS delivery_note_prefix VARCHAR(50) DEFAULT 'DN';
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS delivery_note_padding SMALLINT DEFAULT 6;
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS delivery_note_includes_year BOOLEAN DEFAULT TRUE;
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS packing_slip_prefix VARCHAR(50) DEFAULT 'PS';
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS packing_slip_padding SMALLINT DEFAULT 6;
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS packing_slip_includes_year BOOLEAN DEFAULT TRUE;
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS pro_forma_invoice_prefix VARCHAR(50) DEFAULT 'PI';
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS pro_forma_invoice_padding SMALLINT DEFAULT 6;
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS pro_forma_invoice_includes_year BOOLEAN DEFAULT TRUE;
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS estimate_prefix VARCHAR(50) DEFAULT 'EST';
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS estimate_padding SMALLINT DEFAULT 6;
+
+ALTER TABLE business_settings
   ADD COLUMN IF NOT EXISTS estimate_includes_year BOOLEAN DEFAULT TRUE;
 
 -- ============================================================================
 -- Update document_snapshots CHECK constraint to include new types
+-- Note: Split DROP CONSTRAINT and ADD CONSTRAINT into separate statements
 -- ============================================================================
--- Note: PostgreSQL doesn't support IF EXISTS in ALTER COLUMN ... DROP CONSTRAINT
--- so we use a safe approach: drop and re-add if needed
 ALTER TABLE document_snapshots
-  DROP CONSTRAINT IF EXISTS chk_document_snapshots_type,
+  DROP CONSTRAINT IF EXISTS chk_document_snapshots_type;
+
+ALTER TABLE document_snapshots
   ADD CONSTRAINT chk_document_snapshots_type CHECK (
     document_type IN ('invoice', 'quote', 'credit_note', 'debit_note',
                       'payment_voucher', 'receipt', 'purchase_order',
@@ -327,9 +351,12 @@ ALTER TABLE document_snapshots
 
 -- ============================================================================
 -- Update document_artifacts CHECK constraint to include new types
+-- Note: Split DROP CONSTRAINT and ADD CONSTRAINT into separate statements
 -- ============================================================================
 ALTER TABLE document_artifacts
-  DROP CONSTRAINT IF EXISTS chk_document_artifacts_type,
+  DROP CONSTRAINT IF EXISTS chk_document_artifacts_type;
+
+ALTER TABLE document_artifacts
   ADD CONSTRAINT chk_document_artifacts_type CHECK (
     document_type IN ('invoice', 'credit_note', 'debit_note', 'payment_voucher',
                       'quote', 'receipt', 'purchase_order',
@@ -339,9 +366,16 @@ ALTER TABLE document_artifacts
 
 -- ============================================================================
 -- Add email_log FK columns for new document types
+-- Note: Split into individual ALTER TABLE statements for maximum compatibility
 -- ============================================================================
 ALTER TABLE email_log
-  ADD COLUMN IF NOT EXISTS delivery_note_id UUID REFERENCES delivery_notes(id) ON DELETE CASCADE,
-  ADD COLUMN IF NOT EXISTS packing_slip_id UUID REFERENCES packing_slips(id) ON DELETE CASCADE,
-  ADD COLUMN IF NOT EXISTS pro_forma_invoice_id UUID REFERENCES pro_forma_invoices(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS delivery_note_id UUID REFERENCES delivery_notes(id) ON DELETE CASCADE;
+
+ALTER TABLE email_log
+  ADD COLUMN IF NOT EXISTS packing_slip_id UUID REFERENCES packing_slips(id) ON DELETE CASCADE;
+
+ALTER TABLE email_log
+  ADD COLUMN IF NOT EXISTS pro_forma_invoice_id UUID REFERENCES pro_forma_invoices(id) ON DELETE CASCADE;
+
+ALTER TABLE email_log
   ADD COLUMN IF NOT EXISTS estimate_id UUID REFERENCES estimates(id) ON DELETE CASCADE;
