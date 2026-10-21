@@ -4,6 +4,7 @@ webapp/dist/
 *.log
 .env
 .env.*
+!.env.*.example
 .DS_Store
 migrate_out.txt
 debug-api*.mjs
