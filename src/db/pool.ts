@@ -57,21 +57,44 @@ export async function runWithRequestContext<T>(fn: (() => Promise<T>) | (() => T
 
 const SLOW_QUERY_THRESHOLD = 500;
 
+const QUERY_RETRY_ATTEMPTS = 3;
+const QUERY_RETRY_BASE_DELAY_MS = 50;
+
 export async function query(text: string, params?: unknown[]) {
   const start = Date.now();
-  const res = await pool.query(text, params as never);
-  const ms = Date.now() - start;
-  const ctx = requestStore.getStore();
-  if (ctx) {
-    ctx.queryCount++;
-    if (ms > SLOW_QUERY_THRESHOLD) {
-      ctx.slowQueries.push({ text: text.slice(0, 100), ms });
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= QUERY_RETRY_ATTEMPTS; attempt++) {
+    try {
+      const res = await pool.query(text, params as never);
+      const ms = Date.now() - start;
+      const ctx = requestStore.getStore();
+      if (ctx) {
+        ctx.queryCount++;
+        if (ms > SLOW_QUERY_THRESHOLD) {
+          ctx.slowQueries.push({ text: text.slice(0, 100), ms });
+        }
+      }
+      if (ms > 1000) {
+        console.warn(`Slow query (${ms}ms): ${text.slice(0, 100)}`);
+      }
+      return res;
+    } catch (err) {
+      lastErr = err;
+      const errCode = (err as { code?: string }).code;
+      // Retry on connection-related errors but not on query syntax/logic errors
+      const retryable =
+        errCode === "40001" || // serialization_failure
+        errCode === "ECONNREFUSED" ||
+        errCode === "EAGAIN" ||
+        (err as Error).message?.includes("timeout");
+      if (!retryable || attempt >= QUERY_RETRY_ATTEMPTS) {
+        throw err;
+      }
+      const delay = QUERY_RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+      await new Promise((r) => setTimeout(r, delay));
     }
   }
-  if (ms > 1000) {
-    console.warn(`Slow query (${ms}ms): ${text.slice(0, 100)}`);
-  }
-  return res;
+  throw lastErr;
 }
 
 export async function getClient() {

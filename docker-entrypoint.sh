@@ -5,6 +5,8 @@ echo "Starting Universal Invoice Generator..."
 
 cd /app
 
+export NGINX_BACKEND_PORT=${PORT:-4000}
+
 # Run database migrations on startup with retry (handles DB not being ready yet)
 echo "Running database migrations..."
 MIGRATE_ATTEMPT=0
@@ -20,6 +22,11 @@ until node dist/db/migrate.js 2>&1; do
 done
 echo "Migrations completed successfully."
 
+# Generate nginx config from template using envsubst
+echo "Generating nginx configuration..."
+envsubst '${NGINX_BACKEND_PORT}' < /app/nginx.conf.template > /tmp/nginx.conf
+cp /tmp/nginx.conf /app/nginx.conf
+
 # Start the backend API server
 echo "Starting backend API server..."
 node dist/index.js &
@@ -32,11 +39,11 @@ WAITED=0
 BACKEND_READY=false
 while [ $WAITED -lt $MAX_WAIT ]; do
   if ! kill -0 $BACKEND_PID 2>/dev/null; then
-    echo "Backend process exited unexpectedly."
+    echo "ERROR: Backend process exited unexpectedly during startup."
     exit 1
   fi
-   HEALTH_PORT=${PORT:-4000}
-   if curl -sf "http://127.0.0.1:${HEALTH_PORT}/api/health" >/dev/null 2>&1; then
+  HEALTH_PORT=${PORT:-4000}
+  if curl -sf "http://127.0.0.1:${HEALTH_PORT}/api/health" >/dev/null 2>&1; then
     echo "Backend is ready."
     BACKEND_READY=true
     break
@@ -57,7 +64,7 @@ nginx -c /app/nginx.conf -g "daemon off;" &
 NGINX_PID=$!
 
 # Clean up on exit — ensure both processes are terminated
-  cleanup() {
+cleanup() {
   echo "Shutting down..."
   kill $BACKEND_PID 2>/dev/null || true
   kill $NGINX_PID 2>/dev/null || true
@@ -66,9 +73,17 @@ NGINX_PID=$!
   exit 0
 }
 
-trap cleanup INT TERM
+trap cleanup INT TERM EXIT
 
-# If either process dies, clean up and exit so the container restarts
-wait $BACKEND_PID
-cleanup
-
+# Monitor both processes; if either dies, shut down and exit so the container restarts
+while true; do
+  if ! kill -0 $BACKEND_PID 2>/dev/null; then
+    echo "ERROR: Backend process died."
+    cleanup
+  fi
+  if ! kill -0 $NGINX_PID 2>/dev/null; then
+    echo "ERROR: Nginx process died."
+    cleanup
+  fi
+  sleep 2
+done

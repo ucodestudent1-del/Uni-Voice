@@ -189,10 +189,10 @@ if (
   (isProduction && isLocalhostUrl(resolvedPublicBaseUrl))
 ) {
   if (process.env.RAILWAY_PUBLIC_DOMAIN) {
-    console.error(
-      "Invalid environment configuration: APP_PUBLIC_BASE_URL must be a non-local http(s) URL in production. Set APP_PUBLIC_BASE_URL or RAILWAY_PUBLIC_DOMAIN."
+    console.warn(
+      "Invalid environment configuration: APP_PUBLIC_BASE_URL is not a valid non-local http(s) URL in production. " +
+        "Set APP_PUBLIC_BASE_URL to a valid HTTPS domain. Falling back to RAILWAY_PUBLIC_DOMAIN or default.",
     );
-    process.exit(1);
   }
 
   console.warn(

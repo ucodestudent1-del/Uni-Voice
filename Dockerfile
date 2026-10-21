@@ -38,12 +38,13 @@ WORKDIR /app
 
 # Install nginx (for serving frontend + reverse proxy to API)
 # and system dependencies for puppeteer/chromium at runtime
-RUN apk add --no-cache \
-    nginx \
-    curl \
-    cairo jpeg pango \
-    nss freetype harfbuzz fribidi woff2 ttf-freefont \
-    nodejs
+  RUN apk add --no-cache \
+      nginx \
+      curl \
+      gettext \
+      cairo jpeg pango \
+      nss freetype harfbuzz fribidi woff2 ttf-freefont \
+      nodejs
 
 # Copy production dependencies (native modules already compiled in deps layer)
 COPY --from=deps /app/node_modules ./node_modules
@@ -55,8 +56,8 @@ COPY --from=backend-builder /app/scripts ./scripts
 # Copy frontend build output
 COPY --from=frontend-builder /app/webapp/dist ./webapp/dist
 
-# Copy nginx config and entrypoint script
-COPY nginx.conf /app/nginx.conf
+# Copy nginx config template and entrypoint script
+COPY nginx.conf.template /app/nginx.conf.template
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
@@ -70,9 +71,9 @@ USER invoice
 
 EXPOSE 80 4000
 
-# Health check — hits the /api/health endpoint directly (bypasses nginx)
+# Health check — tries backend directly first, then through nginx
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "const http=require('http');http.get('http://localhost:4000/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+  CMD node -e "const http=require('http');const port=process.env.PORT||4000;http.get('http://127.0.0.1:'+port+'/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
 
 # Use the entrypoint script that starts both nginx and the backend API
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

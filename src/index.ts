@@ -6355,10 +6355,10 @@ const PORT = env.PORT;
 
 async function start() {
   if (!isDev && !existsSync(FRONTEND_DIST)) {
-    logger.error(
-      `Frontend dist not found at ${FRONTEND_DIST}. Ensure the frontend is built before starting the server.`,
+    logger.warn(
+      `Frontend dist not found at ${FRONTEND_DIST}. The API will start but static file serving and SPA fallback will not work. ` +
+        `Ensure the frontend is built (RUN npm run build in the webapp directory) before starting in production.`,
     );
-    process.exit(1);
   }
   server = app.listen(PORT, () => {
     logger.info(`Server listening on port ${PORT} (env=${env.APP_ENV})`);

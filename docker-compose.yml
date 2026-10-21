@@ -33,19 +33,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    env_file:
-      - .env.production
     environment:
       APP_ENV: production
       PORT: 4000
       DATABASE_URL: postgresql://postgres:password@db:5432/universal_invoice
       REDIS_URL: redis://redis:6379
       AUTH_MODE: jwt
-      # IMPORTANT: Set to your real HTTPS domain in production.
-      # Format: https://yourdomain.com (must be HTTPS, not localhost)
       APP_PUBLIC_BASE_URL: https://yourdomain.com
       APP_FRONTEND_URL: https://yourdomain.com
-      # Generate with: openssl rand -hex 32
       AUTH_JWT_SECRET: change-me-to-a-secure-random-string
     ports:
       - "80:80"
