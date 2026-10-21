@@ -11,6 +11,8 @@ RUN npm ci --omit=dev
 RUN npx puppeteer browsers install --browser=chromium 2>/dev/null || true
 
 # --- Backend build layer -----------------------------------------------------
+# Force fresh build to pick up migration fixes (cache invalidation)
+# Docker layer cache fix for 075_recurring_invoice_numbering.sql migration
 FROM base AS backend-builder
 WORKDIR /app
 COPY package.json package-lock.json* tsconfig.json tsconfig.typecheck.json ./
