@@ -7,6 +7,18 @@ cd /app
 
 export NGINX_BACKEND_PORT=${PORT:-4000}
 
+# Clean up on exit — ensure both processes are terminated
+cleanup() {
+  echo "Shutting down..."
+  kill $BACKEND_PID 2>/dev/null || true
+  kill $NGINX_PID 2>/dev/null || true
+  wait $BACKEND_PID 2>/dev/null || true
+  wait $NGINX_PID 2>/dev/null || true
+  exit 1
+}
+
+trap cleanup INT TERM EXIT
+
 # Run database migrations on startup with retry (handles DB not being ready yet)
 echo "Running database migrations..."
 MIGRATE_ATTEMPT=0
@@ -58,22 +70,27 @@ if [ "$BACKEND_READY" = false ]; then
   exit 1
 fi
 
+# Test nginx config before starting
+echo "Validating nginx configuration..."
+if ! nginx -t -c /app/nginx.conf 2>&1; then
+  echo "ERROR: nginx configuration test failed."
+  kill $BACKEND_PID 2>/dev/null || true
+  exit 1
+fi
+
 # Start nginx (foreground mode, daemon off)
 echo "Starting nginx..."
 nginx -c /app/nginx.conf -g "daemon off;" &
 NGINX_PID=$!
 
-# Clean up on exit — ensure both processes are terminated
-cleanup() {
-  echo "Shutting down..."
-  kill $BACKEND_PID 2>/dev/null || true
-  kill $NGINX_PID 2>/dev/null || true
-  wait $BACKEND_PID 2>/dev/null || true
-  wait $NGINX_PID 2>/dev/null || true
-  exit 0
-}
-
-trap cleanup INT TERM EXIT
+# Wait briefly and verify nginx is running
+sleep 1
+if ! kill -0 $NGINX_PID 2>/dev/null; then
+  echo "ERROR: Nginx failed to start. Check /var/log/nginx/error.log for details."
+  cat /var/log/nginx/error.log 2>/dev/null || true
+  exit 1
+fi
+echo "Nginx is running (PID: $NGINX_PID)."
 
 # Monitor both processes; if either dies, shut down and exit so the container restarts
 while true; do

@@ -38,13 +38,13 @@ WORKDIR /app
 
 # Install nginx (for serving frontend + reverse proxy to API)
 # and system dependencies for puppeteer/chromium at runtime
-  RUN apk add --no-cache \
-      nginx \
-      curl \
-      gettext \
-      cairo jpeg pango \
-      nss freetype harfbuzz fribidi woff2 ttf-freefont \
-      nodejs
+RUN apk add --no-cache \
+    nginx \
+    curl \
+    gettext \
+    cairo jpeg pango \
+    nss freetype harfbuzz fribidi woff2 ttf-freefont \
+    nodejs
 
 # Copy production dependencies (native modules already compiled in deps layer)
 COPY --from=deps /app/node_modules ./node_modules
