@@ -7,14 +7,18 @@ cd /app
 
 export NGINX_BACKEND_PORT=${PORT:-4000}
 
+BACKEND_PID=""
+NGINX_PID=""
+EXIT_CODE=0
+
 # Clean up on exit — ensure both processes are terminated
 cleanup() {
   echo "Shutting down..."
-  kill $BACKEND_PID 2>/dev/null || true
-  kill $NGINX_PID 2>/dev/null || true
-  wait $BACKEND_PID 2>/dev/null || true
-  wait $NGINX_PID 2>/dev/null || true
-  exit 0
+  if [ -n "$BACKEND_PID" ]; then kill "$BACKEND_PID" 2>/dev/null || true; fi
+  if [ -n "$NGINX_PID" ]; then kill "$NGINX_PID" 2>/dev/null || true; fi
+  if [ -n "$BACKEND_PID" ]; then wait "$BACKEND_PID" 2>/dev/null || true; fi
+  if [ -n "$NGINX_PID" ]; then wait "$NGINX_PID" 2>/dev/null || true; fi
+  exit "$EXIT_CODE"
 }
 
 trap cleanup INT TERM EXIT
@@ -27,6 +31,7 @@ until node dist/db/migrate.js 2>&1; do
   MIGRATE_ATTEMPT=$((MIGRATE_ATTEMPT + 1))
   if [ $MIGRATE_ATTEMPT -ge $MIGRATE_MAX_ATTEMPTS ]; then
     echo "ERROR: Database migrations failed after ${MIGRATE_MAX_ATTEMPTS} attempts."
+    EXIT_CODE=1
     exit 1
   fi
   echo "Migrations failed (attempt $MIGRATE_ATTEMPT/$MIGRATE_MAX_ATTEMPTS), retrying in 2s..."
@@ -52,6 +57,7 @@ BACKEND_READY=false
 while [ $WAITED -lt $MAX_WAIT ]; do
   if ! kill -0 $BACKEND_PID 2>/dev/null; then
     echo "ERROR: Backend process exited unexpectedly during startup."
+    EXIT_CODE=1
     exit 1
   fi
   HEALTH_PORT=${PORT:-4000}
@@ -66,6 +72,7 @@ done
 
 if [ "$BACKEND_READY" = false ]; then
   echo "ERROR: Backend did not become ready within ${MAX_WAIT} seconds."
+  EXIT_CODE=1
   kill $BACKEND_PID 2>/dev/null || true
   exit 1
 fi
@@ -74,6 +81,7 @@ fi
 echo "Validating nginx configuration..."
 if ! nginx -t -c /app/nginx.conf 2>&1; then
   echo "ERROR: nginx configuration test failed."
+  EXIT_CODE=1
   kill $BACKEND_PID 2>/dev/null || true
   exit 1
 fi
@@ -88,6 +96,7 @@ sleep 1
 if ! kill -0 $NGINX_PID 2>/dev/null; then
   echo "ERROR: Nginx failed to start. Check /var/log/nginx/error.log for details."
   cat /var/log/nginx/error.log 2>/dev/null || true
+  EXIT_CODE=1
   exit 1
 fi
 echo "Nginx is running (PID: $NGINX_PID)."
@@ -96,10 +105,12 @@ echo "Nginx is running (PID: $NGINX_PID)."
 while true; do
   if ! kill -0 $BACKEND_PID 2>/dev/null; then
     echo "ERROR: Backend process died."
+    EXIT_CODE=1
     cleanup
   fi
   if ! kill -0 $NGINX_PID 2>/dev/null; then
     echo "ERROR: Nginx process died."
+    EXIT_CODE=1
     cleanup
   fi
   sleep 2
