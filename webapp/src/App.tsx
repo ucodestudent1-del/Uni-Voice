@@ -114,6 +114,46 @@ const DocumentMakerPurchaseOrderWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentMaker {...p} docType="purchase-order" />,
   "Purchase Order Maker",
 );
+const DocumentWorkspaceRecurringInvoiceWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="recurring-invoice" />,
+  "Recurring Invoice Workspace",
+);
+const DocumentWorkspaceDeliveryNoteWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="delivery-note" />,
+  "Delivery Note Workspace",
+);
+const DocumentWorkspacePackingSlipWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="packing-slip" />,
+  "Packing Slip Workspace",
+);
+const DocumentWorkspaceProFormaInvoiceWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="pro-forma-invoice" />,
+  "Pro Forma Invoice Workspace",
+);
+const DocumentWorkspaceEstimateWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentWorkspace {...p} docType="estimate" />,
+  "Estimate Workspace",
+);
+const DocumentMakerRecurringInvoiceWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="recurring-invoice" />,
+  "Recurring Invoice Maker",
+);
+const DocumentMakerDeliveryNoteWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="delivery-note" />,
+  "Delivery Note Maker",
+);
+const DocumentMakerPackingSlipWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="packing-slip" />,
+  "Packing Slip Maker",
+);
+const DocumentMakerProFormaInvoiceWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="pro-forma-invoice" />,
+  "Pro Forma Invoice Maker",
+);
+const DocumentMakerEstimateWithBoundary = withErrorBoundary(
+  (p: { docType: string }) => <DocumentMaker {...p} docType="estimate" />,
+  "Estimate Maker",
+);
 
 function OnboardedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, onboarding, refreshOnboarding } =
@@ -203,6 +243,16 @@ export default function App() {
           <Route path="receipts/:id/edit" element={<DocumentWorkspaceReceiptWithBoundary docType="receipt" />} />
           <Route path="purchase-orders/new" element={<DocumentMakerPurchaseOrderWithBoundary docType="purchase-order" />} />
           <Route path="purchase-orders/:id/edit" element={<DocumentWorkspacePurchaseOrderWithBoundary docType="purchase-order" />} />
+          <Route path="recurring-invoices/new" element={<DocumentMakerRecurringInvoiceWithBoundary docType="recurring-invoice" />} />
+          <Route path="recurring-invoices/:id/edit" element={<DocumentWorkspaceRecurringInvoiceWithBoundary docType="recurring-invoice" />} />
+          <Route path="delivery-notes/new" element={<DocumentMakerDeliveryNoteWithBoundary docType="delivery-note" />} />
+          <Route path="delivery-notes/:id/edit" element={<DocumentWorkspaceDeliveryNoteWithBoundary docType="delivery-note" />} />
+          <Route path="packing-slips/new" element={<DocumentMakerPackingSlipWithBoundary docType="packing-slip" />} />
+          <Route path="packing-slips/:id/edit" element={<DocumentWorkspacePackingSlipWithBoundary docType="packing-slip" />} />
+          <Route path="pro-forma-invoices/new" element={<DocumentMakerProFormaInvoiceWithBoundary docType="pro-forma-invoice" />} />
+          <Route path="pro-forma-invoices/:id/edit" element={<DocumentWorkspaceProFormaInvoiceWithBoundary docType="pro-forma-invoice" />} />
+          <Route path="estimates/new" element={<DocumentMakerEstimateWithBoundary docType="estimate" />} />
+          <Route path="estimates/:id/edit" element={<DocumentWorkspaceEstimateWithBoundary docType="estimate" />} />
           <Route path="templates" element={<TemplatesWithBoundary />} />
           <Route path="templates/new" element={<TemplateEditorPageWithBoundary />} />
           <Route path="templates/:id/edit" element={<TemplateEditorPageWithBoundary />} />

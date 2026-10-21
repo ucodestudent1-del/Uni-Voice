@@ -2722,7 +2722,12 @@ export type DocumentTypeParam =
   | "debit-note"
   | "payment-voucher"
   | "receipt"
-  | "purchase-order";
+  | "purchase-order"
+  | "recurring-invoice"
+  | "delivery-note"
+  | "packing-slip"
+  | "pro-forma-invoice"
+  | "estimate";
 
 export async function getRelatedDocuments(
   docType: DocumentTypeParam,
@@ -2791,5 +2796,82 @@ export async function convertFromSnapshot(
     `/documents/${docType}/${docId}/convert-from-snapshot/${snapshotId}`,
     { targetType },
   );
+  return res.data;
+}
+
+// ============================================================================
+// GENERIC DOCUMENT HANDLERS (for recurring-invoice, delivery-note, packing-slip,
+// pro-forma-invoice, estimate)
+// ============================================================================
+
+export interface GenericDocument {
+  id: string;
+  business_id: string;
+  [key: string]: unknown;
+}
+
+export async function getGenericDocument(
+  docType: DocumentTypeParam,
+  id: string,
+): Promise<{ document: GenericDocument }> {
+  const res = await api.get(`/documents/${docType}/${id}`);
+  return res.data;
+}
+
+export async function getGenericDocuments(
+  docType: DocumentTypeParam,
+  params?: Record<string, string | number | undefined>,
+): Promise<{ documents: GenericDocument[]; count: number }> {
+  const res = await api.get(`/documents/${docType}`, { params });
+  return res.data;
+}
+
+export async function createGenericDocument(
+  docType: DocumentTypeParam,
+  data: Record<string, unknown>,
+): Promise<{ document: GenericDocument; documentNumber?: string }> {
+  const res = await api.post(`/documents/${docType}`, data);
+  return res.data;
+}
+
+export async function updateGenericDocument(
+  docType: DocumentTypeParam,
+  id: string,
+  data: Record<string, unknown>,
+): Promise<{ document: GenericDocument }> {
+  const res = await api.patch(`/documents/${docType}/${id}`, data);
+  return res.data;
+}
+
+export async function finalizeGenericDocument(
+  docType: DocumentTypeParam,
+  id: string,
+): Promise<{ document: GenericDocument; documentNumber?: string; status: string }> {
+  const res = await api.post(`/documents/${docType}/${id}/finalize`);
+  return { document: res.data.document, documentNumber: res.data.documentNumber, status: res.data.status };
+}
+
+export async function sendGenericDocument(
+  docType: DocumentTypeParam,
+  id: string,
+  data?: { to?: string | null; cc?: string | null; bcc?: string | null; subject?: string | null; message?: string | null },
+): Promise<{ success: boolean; messageId: string; status: string; sentAt: string; document: GenericDocument }> {
+  const res = await api.post(`/documents/${docType}/${id}/send`, data ?? {});
+  return res.data;
+}
+
+export async function getGenericDocumentPdf(
+  docType: DocumentTypeParam,
+  id: string,
+): Promise<Blob> {
+  const res = await api.get(`/documents/${docType}/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function deleteGenericDocument(
+  docType: DocumentTypeParam,
+  id: string,
+): Promise<{ success: boolean }> {
+  const res = await api.delete(`/documents/${docType}/${id}`);
   return res.data;
 }

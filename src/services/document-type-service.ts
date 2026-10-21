@@ -5,6 +5,7 @@ import { debitNoteService } from "./debit-note-service.js";
 import { paymentVoucherService } from "./payment-voucher-service.js";
 import { receiptService } from "./receipt-service.js";
 import { purchaseOrderService } from "./purchase-order-service.js";
+import { genericDocumentService } from "./generic-document-service.js";
 
 export class DocumentTypeService {
   async fetchDocumentById(
@@ -27,6 +28,16 @@ export class DocumentTypeService {
         return (await receiptService.getById(businessId, docId)) as unknown as Record<string, unknown> | null;
       case "purchase-order":
         return await purchaseOrderService.findById(businessId, docId);
+      case "recurring-invoice":
+        return await genericDocumentService.findById(businessId, docId, "recurring-invoice");
+      case "delivery-note":
+        return await genericDocumentService.findById(businessId, docId, "delivery-note");
+      case "packing-slip":
+        return await genericDocumentService.findById(businessId, docId, "packing-slip");
+      case "pro-forma-invoice":
+        return await genericDocumentService.findById(businessId, docId, "pro-forma-invoice");
+      case "estimate":
+        return await genericDocumentService.findById(businessId, docId, "estimate");
       default:
         throw new Error(`Unknown document type: ${docType}`);
     }
@@ -57,6 +68,16 @@ export class DocumentTypeService {
         )) as unknown as Record<string, unknown>;
       case "purchase-order":
         return await purchaseOrderService.create(businessId, input as any, userId);
+      case "recurring-invoice":
+        return await genericDocumentService.create(businessId, "recurring-invoice", input as any, userId);
+      case "delivery-note":
+        return await genericDocumentService.create(businessId, "delivery-note", input as any, userId);
+      case "packing-slip":
+        return await genericDocumentService.create(businessId, "packing-slip", input as any, userId);
+      case "pro-forma-invoice":
+        return await genericDocumentService.create(businessId, "pro-forma-invoice", input as any, userId);
+      case "estimate":
+        return await genericDocumentService.create(businessId, "estimate", input as any, userId);
       default:
         throw new Error(`Unknown document type: ${docType}`);
     }
@@ -83,6 +104,16 @@ export class DocumentTypeService {
         return await purchaseOrderService.finalize(businessId, docId, userId);
       case "receipt":
         throw new Error("Receipts cannot be finalized via this method");
+      case "recurring-invoice":
+        return await genericDocumentService.findById(businessId, docId, "recurring-invoice");
+      case "delivery-note":
+        return await genericDocumentService.findById(businessId, docId, "delivery-note");
+      case "packing-slip":
+        return await genericDocumentService.findById(businessId, docId, "packing-slip");
+      case "pro-forma-invoice":
+        return await genericDocumentService.findById(businessId, docId, "pro-forma-invoice");
+      case "estimate":
+        return await genericDocumentService.findById(businessId, docId, "estimate");
       default:
         throw new Error(`Unknown document type: ${docType}`);
     }
@@ -131,6 +162,16 @@ export class DocumentTypeService {
             message: payload.message ?? undefined,
           },
         );
+      case "recurring-invoice":
+        throw new Error("Recurring invoices do not support sending directly");
+      case "delivery-note":
+        return await genericDocumentService.generatePdf(businessId, docId, "delivery-note");
+      case "packing-slip":
+        return await genericDocumentService.generatePdf(businessId, docId, "packing-slip");
+      case "pro-forma-invoice":
+        return await genericDocumentService.generatePdf(businessId, docId, "pro-forma-invoice");
+      case "estimate":
+        return await genericDocumentService.generatePdf(businessId, docId, "estimate");
       default:
         throw new Error(`Unknown document type: ${docType}`);
     }

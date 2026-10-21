@@ -47,6 +47,14 @@ import {
   type ApiCreatePurchaseOrderInput,
 } from "@/api/client";
 import {
+  getGenericDocument,
+  createGenericDocument,
+  updateGenericDocument,
+  finalizeGenericDocument,
+  sendGenericDocument,
+  getGenericDocumentPdf,
+} from "@/api/client";
+import {
   invoiceStatusConfig,
   quoteStatusConfig,
   creditNoteStatusConfig,
@@ -54,13 +62,18 @@ import {
   paymentVoucherStatusConfig,
   receiptStatusConfig,
   purchaseOrderStatusConfig,
+  recurringInvoiceStatusConfig,
+  deliveryNoteStatusConfig,
+  packingSlipStatusConfig,
+  proFormaInvoiceStatusConfig,
+  estimateStatusConfig,
 } from "@/components/ui";
 import type { StatusConfig } from "@/types/components";
 import type { DocumentType } from "@/components/document/document-types";
 
 export interface FinalizeResult {
   document: any;
-  documentNumber: string;
+  documentNumber?: string;
   status: string;
 }
 
@@ -598,6 +611,356 @@ export const documentHandlers: Record<DocumentType, DocumentHandler> = {
       requiresCustomer: false,
     },
   },
+
+  "recurring-invoice": {
+    create: async (data) => {
+      const res = await createGenericDocument("recurring-invoice", data);
+      return { recurringInvoice: res.document, recurringInvoiceNumber: res.documentNumber };
+    },
+    update: async (id, data) => {
+      return updateGenericDocument("recurring-invoice", id, data);
+    },
+    finalize: async (id) => {
+      const result = await finalizeGenericDocument("recurring-invoice", id);
+      return {
+        document: result.document,
+        documentNumber: result.documentNumber,
+        status: result.status,
+      };
+    },
+    send: async (id, data) => {
+      const result = await sendGenericDocument("recurring-invoice", id, data ?? {});
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        status: result.status,
+        sentAt: result.sentAt,
+        document: result.document,
+      };
+    },
+    duplicate: async () => {
+      throw new Error("Duplicate for recurring invoices not yet supported");
+    },
+    fetchDetail: async (id) => {
+      const res = await getGenericDocument("recurring-invoice", id);
+      return res.document;
+    },
+    getPdf: async (id) => {
+      return getGenericDocumentPdf("recurring-invoice", id);
+    },
+    getNumberField: (doc) => doc.recurring_invoice_number ?? doc.id?.slice(0, 8),
+    statusConfig: recurringInvoiceStatusConfig,
+    label: "Recurring Invoice",
+    pluralLabel: "Recurring Invoices",
+    routePrefix: "recurring-invoices",
+    supportsSend: true,
+    supportsFinalize: true,
+    supportsDuplicate: false,
+    requiresCustomer: true,
+    formConfig: {
+      showsDueDate: true,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: true,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: true,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "invoice",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: false,
+      isInvoice: false,
+      requiresCustomer: true,
+    },
+  },
+
+  "delivery-note": {
+    create: async (data) => {
+      const res = await createGenericDocument("delivery-note", data);
+      return { deliveryNote: res.document, deliveryNoteNumber: res.documentNumber };
+    },
+    update: async (id, data) => {
+      return updateGenericDocument("delivery-note", id, data);
+    },
+    finalize: async (id) => {
+      const result = await finalizeGenericDocument("delivery-note", id);
+      return {
+        document: result.document,
+        documentNumber: result.documentNumber,
+        status: result.status,
+      };
+    },
+    send: async (id, data) => {
+      const result = await sendGenericDocument("delivery-note", id, data ?? {});
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        status: result.status,
+        sentAt: result.sentAt,
+        document: result.document,
+      };
+    },
+    duplicate: async () => {
+      throw new Error("Duplicate for delivery notes not yet supported");
+    },
+    fetchDetail: async (id) => {
+      const res = await getGenericDocument("delivery-note", id);
+      return res.document;
+    },
+    getPdf: async (id) => {
+      return getGenericDocumentPdf("delivery-note", id);
+    },
+    getNumberField: (doc) => doc.delivery_note_number ?? doc.id?.slice(0, 8),
+    statusConfig: deliveryNoteStatusConfig,
+    label: "Delivery Note",
+    pluralLabel: "Delivery Notes",
+    routePrefix: "delivery-notes",
+    supportsSend: true,
+    supportsFinalize: true,
+    supportsDuplicate: false,
+    requiresCustomer: true,
+    formConfig: {
+      showsDueDate: true,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: true,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: false,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: true,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "invoice",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: false,
+      isInvoice: false,
+      requiresCustomer: true,
+    },
+  },
+
+  "packing-slip": {
+    create: async (data) => {
+      const res = await createGenericDocument("packing-slip", data);
+      return { packingSlip: res.document, packingSlipNumber: res.documentNumber };
+    },
+    update: async (id, data) => {
+      return updateGenericDocument("packing-slip", id, data);
+    },
+    finalize: async (id) => {
+      const result = await finalizeGenericDocument("packing-slip", id);
+      return {
+        document: result.document,
+        documentNumber: result.documentNumber,
+        status: result.status,
+      };
+    },
+    send: async (id, data) => {
+      const result = await sendGenericDocument("packing-slip", id, data ?? {});
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        status: result.status,
+        sentAt: result.sentAt,
+        document: result.document,
+      };
+    },
+    duplicate: async () => {
+      throw new Error("Duplicate for packing slips not yet supported");
+    },
+    fetchDetail: async (id) => {
+      const res = await getGenericDocument("packing-slip", id);
+      return res.document;
+    },
+    getPdf: async (id) => {
+      return getGenericDocumentPdf("packing-slip", id);
+    },
+    getNumberField: (doc) => doc.packing_slip_number ?? doc.id?.slice(0, 8),
+    statusConfig: packingSlipStatusConfig,
+    label: "Packing Slip",
+    pluralLabel: "Packing Slips",
+    routePrefix: "packing-slips",
+    supportsSend: true,
+    supportsFinalize: true,
+    supportsDuplicate: false,
+    requiresCustomer: true,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: false,
+      showsPoNumber: false,
+      showsShippingFields: true,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: false,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: true,
+      showsDeliveryDate: true,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "invoice",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: false,
+      isInvoice: false,
+      requiresCustomer: false,
+    },
+  },
+
+  "pro-forma-invoice": {
+    create: async (data) => {
+      const res = await createGenericDocument("pro-forma-invoice", data);
+      return { proFormaInvoice: res.document, proFormaInvoiceNumber: res.documentNumber };
+    },
+    update: async (id, data) => {
+      return updateGenericDocument("pro-forma-invoice", id, data);
+    },
+    finalize: async (id) => {
+      const result = await finalizeGenericDocument("pro-forma-invoice", id);
+      return {
+        document: result.document,
+        documentNumber: result.documentNumber,
+        status: result.status,
+      };
+    },
+    send: async (id, data) => {
+      const result = await sendGenericDocument("pro-forma-invoice", id, data ?? {});
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        status: result.status,
+        sentAt: result.sentAt,
+        document: result.document,
+      };
+    },
+    duplicate: async () => {
+      throw new Error("Duplicate for pro forma invoices not yet supported");
+    },
+    fetchDetail: async (id) => {
+      const res = await getGenericDocument("pro-forma-invoice", id);
+      return res.document;
+    },
+    getPdf: async (id) => {
+      return getGenericDocumentPdf("pro-forma-invoice", id);
+    },
+    getNumberField: (doc) => doc.pro_forma_invoice_number ?? doc.id?.slice(0, 8),
+    statusConfig: proFormaInvoiceStatusConfig,
+    label: "Pro Forma Invoice",
+    pluralLabel: "Pro Forma Invoices",
+    routePrefix: "pro-forma-invoices",
+    supportsSend: true,
+    supportsFinalize: true,
+    supportsDuplicate: false,
+    requiresCustomer: true,
+    formConfig: {
+      showsDueDate: true,
+      showsExpiryDate: true,
+      showsPoNumber: false,
+      showsShippingFields: true,
+      showsQuoteDiscount: false,
+      showsInvoiceDiscount: true,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: false,
+      discountField: "invoiceDiscount",
+      totalsCardType: "invoice",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: false,
+      isInvoice: false,
+      requiresCustomer: true,
+    },
+  },
+
+  estimate: {
+    create: async (data) => {
+      const res = await createGenericDocument("estimate", data);
+      return { estimate: res.document, estimateNumber: res.documentNumber };
+    },
+    update: async (id, data) => {
+      return updateGenericDocument("estimate", id, data);
+    },
+    finalize: async (id) => {
+      const result = await finalizeGenericDocument("estimate", id);
+      return {
+        document: result.document,
+        documentNumber: result.documentNumber,
+        status: result.status,
+      };
+    },
+    send: async (id, data) => {
+      const result = await sendGenericDocument("estimate", id, data ?? {});
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        status: result.status,
+        sentAt: result.sentAt,
+        document: result.document,
+      };
+    },
+    duplicate: async () => {
+      throw new Error("Duplicate for estimates not yet supported");
+    },
+    fetchDetail: async (id) => {
+      const res = await getGenericDocument("estimate", id);
+      return res.document;
+    },
+    getPdf: async (id) => {
+      return getGenericDocumentPdf("estimate", id);
+    },
+    getNumberField: (doc) => doc.estimate_number ?? doc.id?.slice(0, 8),
+    statusConfig: estimateStatusConfig,
+    label: "Estimate",
+    pluralLabel: "Estimates",
+    routePrefix: "estimates",
+    supportsSend: true,
+    supportsFinalize: true,
+    supportsDuplicate: false,
+    requiresCustomer: true,
+    formConfig: {
+      showsDueDate: false,
+      showsExpiryDate: true,
+      showsPoNumber: false,
+      showsShippingFields: true,
+      showsQuoteDiscount: true,
+      showsInvoiceDiscount: false,
+      showsReasonField: false,
+      showsReferenceInvoice: false,
+      showsPayeeSection: false,
+      showsSupplierSection: false,
+      showsDeliveryDate: false,
+      showsOptionalItems: true,
+      discountField: "quoteDiscount",
+      totalsCardType: "quote",
+      showSignedAmounts: false,
+      isPaymentVoucher: false,
+      isCreditNote: false,
+      isDebitNote: false,
+      isQuote: true,
+      isInvoice: false,
+      requiresCustomer: true,
+    },
+  },
 };
 
 export function getDocumentHandler(docType: DocumentType): DocumentHandler {
@@ -629,6 +992,11 @@ export function docTypeLabel(type: DocumentType): string {
     "payment-voucher": "Payment Voucher",
     receipt: "Receipt",
     "purchase-order": "Purchase Order",
+    "recurring-invoice": "Recurring Invoice",
+    "delivery-note": "Delivery Note",
+    "packing-slip": "Packing Slip",
+    "pro-forma-invoice": "Pro Forma Invoice",
+    estimate: "Estimate",
   };
   return labels[type] ?? "Document";
 }

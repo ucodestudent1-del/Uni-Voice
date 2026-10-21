@@ -50,6 +50,11 @@ const docTypeLabels: Record<DocumentType, string> = {
   "payment-voucher": "Payment Voucher",
   receipt: "Receipt",
   "purchase-order": "Purchase Order",
+  "recurring-invoice": "Recurring Invoice",
+  "delivery-note": "Delivery Note",
+  "packing-slip": "Packing Slip",
+  "pro-forma-invoice": "Pro Forma Invoice",
+  estimate: "Estimate",
 };
 
 export function DocumentMakerForm({

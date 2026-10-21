@@ -133,6 +133,7 @@ import {
 import { hashPassword, verifyPassword, validatePasswordPolicy, checkPasswordBreach } from "./services/auth/password.js";
 import { camelToSnake } from "./utils/case-conversion.js";
 import { NotFoundError } from "./domain/errors.js";
+import { genericDocumentService } from "./services/generic-document-service.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -306,6 +307,61 @@ documentService.registerHandler("purchase-order", {
     const purchaseOrder = await purchaseOrderService.findById(businessId, docId);
     if (!purchaseOrder) throw new NotFoundError(`Purchase order ${docId} not found`);
     return purchaseOrderService.generatePdf(businessId, docId, purchaseOrder);
+  },
+});
+
+documentService.registerHandler("recurring-invoice", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const doc = await genericDocumentService.findById(businessId, docId, "recurring-invoice");
+    if (!doc) throw new NotFoundError(`Recurring invoice ${docId} not found`);
+    return doc as any;
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    return genericDocumentService.generatePdf(businessId, docId, "recurring-invoice");
+  },
+});
+
+documentService.registerHandler("delivery-note", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const doc = await genericDocumentService.findById(businessId, docId, "delivery-note");
+    if (!doc) throw new NotFoundError(`Delivery note ${docId} not found`);
+    return doc as any;
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    return genericDocumentService.generatePdf(businessId, docId, "delivery-note");
+  },
+});
+
+documentService.registerHandler("packing-slip", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const doc = await genericDocumentService.findById(businessId, docId, "packing-slip");
+    if (!doc) throw new NotFoundError(`Packing slip ${docId} not found`);
+    return doc as any;
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    return genericDocumentService.generatePdf(businessId, docId, "packing-slip");
+  },
+});
+
+documentService.registerHandler("pro-forma-invoice", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const doc = await genericDocumentService.findById(businessId, docId, "pro-forma-invoice");
+    if (!doc) throw new NotFoundError(`Pro forma invoice ${docId} not found`);
+    return doc as any;
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    return genericDocumentService.generatePdf(businessId, docId, "pro-forma-invoice");
+  },
+});
+
+documentService.registerHandler("estimate", {
+  toTemplateData: async (businessId: string, docId: string) => {
+    const doc = await genericDocumentService.findById(businessId, docId, "estimate");
+    if (!doc) throw new NotFoundError(`Estimate ${docId} not found`);
+    return doc as any;
+  },
+  generatePdf: async (businessId: string, docId: string) => {
+    return genericDocumentService.generatePdf(businessId, docId, "estimate");
   },
 });
 app.set("trust proxy", isDev ? true : 1);

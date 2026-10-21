@@ -1,7 +1,7 @@
 import type { ApiInvoiceItem, ApiInvoiceFee } from "@/types/api";
 import type { ApiQuoteItem, ApiQuoteFee } from "@/types/api";
 
-export type DocumentType = "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order";
+export type DocumentType = "invoice" | "quote" | "credit-note" | "debit-note" | "payment-voucher" | "receipt" | "purchase-order" | "recurring-invoice" | "delivery-note" | "packing-slip" | "pro-forma-invoice" | "estimate";
 
 export interface DocumentLineItem {
   description: string;

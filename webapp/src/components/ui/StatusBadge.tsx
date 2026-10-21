@@ -140,6 +140,64 @@ export const purchaseOrderStatusConfig = createStatusBadgeConfig(
   "draft"
 );
 
+export const recurringInvoiceStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Recurring invoice has not been activated." },
+    active: { label: "Active", className: "status-success-bg status-success-text", description: "Recurring invoice is active and generating invoices." },
+    paused: { label: "Paused", className: "status-info-bg status-info-text", description: "Recurring invoice generation is paused." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Recurring invoice has been cancelled." },
+  },
+  "draft"
+);
+
+export const deliveryNoteStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Delivery note has not been finalized." },
+    finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Delivery note has been finalized and locked." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Delivery note has been sent to the customer." },
+    shipped: { label: "Shipped", className: "status-success-bg status-success-text", description: "Delivery note items have been shipped." },
+    delivered: { label: "Delivered", className: "status-success-bg status-success-text", description: "Delivery note items have been delivered." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Delivery note has been cancelled." },
+  },
+  "draft"
+);
+
+export const packingSlipStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Packing slip has not been finalized." },
+    finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Packing slip has been finalized and locked." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Packing slip has been sent." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Packing slip has been cancelled." },
+  },
+  "draft"
+);
+
+export const proFormaInvoiceStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Pro forma invoice has not been finalized." },
+    finalized: { label: "Finalized", className: "status-info-bg status-info-text", description: "Pro forma invoice has been finalized and locked." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Pro forma invoice has been sent to the customer." },
+    accepted: { label: "Accepted", className: "status-success-bg status-success-text", description: "Pro forma invoice has been accepted." },
+    expired: { label: "Expired", className: "status-tertiary-bg status-tertiary-text", description: "Pro forma invoice has expired." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Pro forma invoice has been cancelled." },
+  },
+  "draft"
+);
+
+export const estimateStatusConfig = createStatusBadgeConfig(
+  {
+    draft: { label: "Draft", className: "status-warning-bg status-warning-text", description: "Estimate has not been sent to the customer." },
+    sent: { label: "Sent", className: "status-info-bg status-info-text", description: "Estimate has been sent to the customer." },
+    viewed: { label: "Viewed", className: "status-info-bg status-info-text", description: "Customer has viewed the estimate." },
+    accepted: { label: "Accepted", className: "status-success-bg status-success-text", description: "Estimate has been accepted by the customer." },
+    rejected: { label: "Rejected", className: "status-error-bg status-error-text", description: "Estimate has been rejected by the customer." },
+    expired: { label: "Expired", className: "status-tertiary-bg status-tertiary-text", description: "Estimate has expired." },
+    cancelled: { label: "Cancelled", className: "status-tertiary-bg status-tertiary-text", description: "Estimate has been cancelled." },
+    converted: { label: "Converted", className: "status-success-bg status-success-text", description: "Estimate has been converted to an invoice." },
+  },
+  "draft"
+);
+
 export function isOverdueStatus(status: string, dueDate?: string | null): boolean {
   if (status === "overdue") return true;
   if (status === "paid" || status === "void" || status === "cancelled") return false;
@@ -178,10 +236,14 @@ const STATUS_DOT_COLORS: Record<string, string> = {
   accepted: "rgb(var(--color-success))",
   rejected: "rgb(var(--color-error))",
   expired: "rgb(var(--color-text-tertiary))",
-  converted: "rgb(var(--color-success))",
-  issued: "rgb(var(--color-info))",
-  received: "rgb(var(--color-success))",
-};
+   converted: "rgb(var(--color-success))",
+   issued: "rgb(var(--color-info))",
+   received: "rgb(var(--color-success))",
+   active: "rgb(var(--color-success))",
+   paused: "rgb(var(--color-info))",
+   shipped: "rgb(var(--color-success))",
+   delivered: "rgb(var(--color-success))",
+ };
 
 const DEFAULT_DOT_COLOR = "rgb(var(--color-text-tertiary))";
 

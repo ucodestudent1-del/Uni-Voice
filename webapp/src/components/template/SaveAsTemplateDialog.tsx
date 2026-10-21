@@ -105,6 +105,11 @@ function mapDocTypeForBackend(docType: DocumentType): string {
     "payment-voucher": "payment_voucher",
     "receipt": "receipt",
     "purchase-order": "purchase_order",
+    "recurring-invoice": "recurring_invoice",
+    "delivery-note": "delivery_note",
+    "packing-slip": "packing_slip",
+    "pro-forma-invoice": "pro_forma_invoice",
+    "estimate": "estimate",
   };
   return map[docType] ?? docType;
 }

@@ -4,7 +4,7 @@ import { formatDate, formatTaxRateWithName, formatCurrency } from "@/utils/forma
 import type { CalculationResult } from "@/types/calculation";
 import type { ApiCustomer, ApiBusiness } from "@/types/api";
 
-export type DocumentType = "invoice" | "credit-note" | "receipt" | "purchase-order" | "quote" | "debit-note" | "payment-voucher";
+export type DocumentType = "invoice" | "credit-note" | "receipt" | "purchase-order" | "quote" | "debit-note" | "payment-voucher" | "recurring-invoice" | "delivery-note" | "packing-slip" | "pro-forma-invoice" | "estimate";
 
 export interface DocumentPreviewProps {
   documentType: DocumentType;
@@ -57,6 +57,11 @@ const DOCUMENT_LABELS: Record<DocumentType, string> = {
   quote: "Quotation",
   "debit-note": "Debit Note",
   "payment-voucher": "Payment Voucher",
+  "recurring-invoice": "Recurring Invoice",
+  "delivery-note": "Delivery Note",
+  "packing-slip": "Packing Slip",
+  "pro-forma-invoice": "Pro Forma Invoice",
+  estimate: "Estimate",
 };
 
 function AddressLines({ line1, line2, city, state, postal, country }: {

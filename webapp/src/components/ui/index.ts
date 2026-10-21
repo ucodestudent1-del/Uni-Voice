@@ -10,7 +10,7 @@ export type { ColumnDef } from "@/types/components";
 export { default as ConfirmationDialog, type ConfirmationDialogProps } from "./ConfirmationDialog";
 export { default as EmptyState, type EmptyStateProps } from "./EmptyState";
 export {
-  default as StatusBadge, type StatusBadgeProps, type StatusConfig, invoiceStatusConfig, paymentStatusConfig, projectStatusConfig, customerStatusConfig, creditNoteStatusConfig, quoteStatusConfig, paymentVoucherStatusConfig, debitNoteStatusConfig, receiptStatusConfig, purchaseOrderStatusConfig, isOverdueStatus, getStatusBadgeClassName
+  default as StatusBadge, type StatusBadgeProps, type StatusConfig, invoiceStatusConfig, paymentStatusConfig, projectStatusConfig, customerStatusConfig, creditNoteStatusConfig, quoteStatusConfig, paymentVoucherStatusConfig, debitNoteStatusConfig, receiptStatusConfig, purchaseOrderStatusConfig, recurringInvoiceStatusConfig, deliveryNoteStatusConfig, packingSlipStatusConfig, proFormaInvoiceStatusConfig, estimateStatusConfig, isOverdueStatus, getStatusBadgeClassName
 } from "./StatusBadge";
 export { default as PageHeader, type BreadcrumbItem, type PageHeaderProps } from "./PageHeader";
 export { PageSection, type PageSectionProps } from "./PageSection";
