@@ -3,6 +3,7 @@
 -- Recurring invoices generate actual invoices on schedule, so they have their own
 -- numbering sequence used when a scheduled invoice is created from the template.
 
+-- Ensure the enum type exists before using it in ALTER TABLE
 CREATE TYPE IF NOT EXISTS recurring_invoice_status AS ENUM (
   'draft', 'active', 'paused', 'cancelled', 'void'
 );
@@ -17,20 +18,39 @@ CREATE TABLE IF NOT EXISTS recurring_invoice_number_sequences (
 );
 
 -- Add recurrence schedule fields to recurring_invoices table
+-- Note: We split into multiple ALTER TABLE statements for maximum compatibility
 ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS status recurring_invoice_status NOT NULL DEFAULT 'draft',
-  ADD COLUMN IF NOT EXISTS recurring_invoice_number VARCHAR(100),
-  ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES invoice_templates(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS finalized_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS cancelled_reason TEXT,
-  ADD COLUMN IF NOT EXISTS voided_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS status recurring_invoice_status DEFAULT 'draft';
+
+ALTER TABLE recurring_invoices
+  ADD COLUMN IF NOT EXISTS recurring_invoice_number VARCHAR(100);
+
+ALTER TABLE recurring_invoices
+  ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES invoice_templates(id) ON DELETE SET NULL;
+
+ALTER TABLE recurring_invoices
+  ADD COLUMN IF NOT EXISTS finalized_at TIMESTAMPTZ;
+
+ALTER TABLE recurring_invoices
+  ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
+
+ALTER TABLE recurring_invoices
+  ADD COLUMN IF NOT EXISTS cancelled_reason TEXT;
+
+ALTER TABLE recurring_invoices
+  ADD COLUMN IF NOT EXISTS voided_at TIMESTAMPTZ;
+
+ALTER TABLE recurring_invoices
   ADD COLUMN IF NOT EXISTS void_reason TEXT;
 
 -- Numbering config on business_settings for recurring invoices
 ALTER TABLE business_settings
-  ADD COLUMN IF NOT EXISTS recurring_invoice_prefix VARCHAR(50) DEFAULT 'RI',
-  ADD COLUMN IF NOT EXISTS recurring_invoice_padding SMALLINT DEFAULT 6,
+  ADD COLUMN IF NOT EXISTS recurring_invoice_prefix VARCHAR(50) DEFAULT 'RI';
+
+ALTER TABLE business_settings
+  ADD COLUMN IF NOT EXISTS recurring_invoice_padding SMALLINT DEFAULT 6;
+
+ALTER TABLE business_settings
   ADD COLUMN IF NOT EXISTS recurring_invoice_includes_year BOOLEAN DEFAULT TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_recurring_invoices_status ON recurring_invoices(status);
