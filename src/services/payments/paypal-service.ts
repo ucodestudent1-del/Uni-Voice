@@ -40,7 +40,7 @@ export interface PayPalCaptureResult {
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export class PayPalService {
-  private config: PayPalConfig;
+  private config: PayPalConfig | null = null;
 
   constructor(config?: Partial<PayPalConfig>) {
     if (config) {
@@ -58,23 +58,32 @@ export class PayPalService {
         webhookSecret: env.PAYPAL_WEBHOOK_SECRET,
       };
     }
+  }
 
-    if (!this.config.clientId || !this.config.clientSecret) {
+  private getResolvedConfig(): PayPalConfig {
+    if (!this.config || !this.config.clientId || !this.config.clientSecret) {
       throw new BusinessLogicError(
         "PayPal is not configured. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.",
         "PAYPAL_NOT_CONFIGURED",
       );
     }
+    return this.config;
   }
 
   private getBaseUrl(): string {
-    return this.config.environment === "live"
+    return this.getResolvedConfig().environment === "live"
       ? "https://api.paypal.com"
       : "https://api.sandbox.paypal.com";
   }
 
+  private getClientCredentials(): { clientId: string; clientSecret: string } {
+    const cfg = this.getResolvedConfig();
+    return { clientId: cfg.clientId, clientSecret: cfg.clientSecret };
+  }
+
   private async getAccessToken(): Promise<string> {
-    const auth = Buffer.from(`${this.config.clientId}:${this.config.clientSecret}`).toString("base64");
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
     const res = await fetch(`${this.getBaseUrl()}/v1/oauth2/token`, {
       method: "POST",
       headers: {
@@ -230,11 +239,12 @@ export class PayPalService {
   }
 
   verifyWebhookSignature(payload: string, signature: string, _webhookId?: string): boolean {
-    if (!this.config.webhookSecret) {
+    const cfg = this.getResolvedConfig();
+    if (!cfg.webhookSecret) {
       return true;
     }
 
-    const expectedSig = createHmac("sha256", this.config.webhookSecret)
+    const expectedSig = createHmac("sha256", cfg.webhookSecret)
       .update(payload, "utf8")
       .digest("hex");
 
@@ -243,7 +253,7 @@ export class PayPalService {
   }
 
   getConfig(): Pick<PayPalConfig, "environment"> {
-    return { environment: this.config.environment };
+    return { environment: this.getResolvedConfig().environment };
   }
 }
 
