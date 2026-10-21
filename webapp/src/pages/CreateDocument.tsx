@@ -6,6 +6,7 @@ import {
   CreditCard,
   Receipt,
   ShoppingCart,
+  Copy,
 } from "lucide-react";
 import { Button, PageHeader } from "@/components/ui";
 import { useMetaTags } from "@/hooks/useMetaTags";
@@ -207,6 +208,20 @@ export default function CreateDocument() {
           Browse existing documents
         </Button>
       </div>
+
+      <div className="pt-4 border-t border-color-subtle">
+        <h3 className="text-sm font-medium text-tertiary mb-3">Convert Existing Document</h3>
+        <p className="text-sm text-secondary mb-3">
+          Convert a document to another type instead of creating from scratch.
+        </p>
+        <Button
+          variant="secondary"
+          icon={<Copy className="w-4 h-4" />}
+          onClick={() => navigate("/app/documents")}
+        >
+          Choose Document to Convert
+        </Button>
+      </div>
     </div>
   );
 }
@@ -220,6 +235,11 @@ function getRoutePrefix(docType: string): string {
     "payment-voucher": "payment-vouchers",
     receipt: "receipts",
     "purchase-order": "purchase-orders",
+    "recurring-invoice": "recurring-invoices",
+    "delivery-note": "delivery-notes",
+    "packing-slip": "packing-slips",
+    "pro-forma-invoice": "pro-forma-invoices",
+    estimate: "estimates",
   };
   return map[docType] ?? docType;
 }
@@ -233,6 +253,11 @@ function getDocTypeLabel(docType: string): string {
     "payment-voucher": "Payment Voucher",
     receipt: "Receipt",
     "purchase-order": "Purchase Order",
+    "recurring-invoice": "Recurring Invoice",
+    "delivery-note": "Delivery Note",
+    "packing-slip": "Packing Slip",
+    "pro-forma-invoice": "Pro Forma Invoice",
+    estimate: "Estimate",
   };
   return map[docType] ?? docType;
 }

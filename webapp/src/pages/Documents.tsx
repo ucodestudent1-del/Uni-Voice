@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Plus, FileText, Quote as QuoteIcon, CreditCard, Receipt, ShoppingCart } from "lucide-react";
+import { Plus, FileText, Quote as QuoteIcon, CreditCard, Receipt, ShoppingCart, Copy } from "lucide-react";
 import {
   Button,
   KPICard,
@@ -9,6 +9,7 @@ import {
   EmptyState,
   Dialog,
   Skeleton,
+  useToast,
 } from "@/components/ui";
 import type { ColumnDef } from "@/types/components";
 import { formatDate } from "@/utils/format";
@@ -129,6 +130,20 @@ const createOptions: CreateOption[] = [
   },
 ];
 
+const TAB_TO_DOC_TYPE: Record<string, string> = {
+  "invoices": "invoice",
+  "quotes": "quote",
+  "credit-notes": "credit-note",
+  "debit-notes": "debit-note",
+  "payment-vouchers": "payment-voucher",
+  "purchase-orders": "purchase-order",
+  "recurring-invoices": "recurring-invoice",
+  "delivery-notes": "delivery-note",
+  "packing-slips": "packing-slip",
+  "pro-forma-invoices": "pro-forma-invoice",
+  "estimates": "estimate",
+};
+
 export default function Documents() {
   useMetaTags({
     title: "Documents — DocForge",
@@ -202,6 +217,24 @@ export default function Documents() {
     const option = createOptions.find((o) => o.type === docType);
     if (option) {
       navigate(option.path);
+    }
+  };
+
+  const { toast } = useToast();
+  const getDocTypeForTab = () => TAB_TO_DOC_TYPE[activeTab] ?? "invoice";
+  const getFirstDocForTab = () => {
+    switch (activeTab) {
+      case "invoices": return invoices[0];
+      case "quotes": return quotes[0];
+      case "credit-notes": return creditNotes[0];
+      case "purchase-orders": return purchaseOrders[0];
+      case "receipts": return receipts[0];
+      case "recurring-invoices": return recurringInvoices[0];
+      case "delivery-notes": return deliveryNotes[0];
+      case "packing-slips": return packingSlips[0];
+      case "pro-forma-invoices": return proFormaInvoices[0];
+      case "estimates": return estimates[0];
+      default: return null;
     }
   };
 
@@ -575,6 +608,20 @@ export default function Documents() {
           onClick={() => setCreateDialogOpen(true)}
         >
           Create Document
+        </Button>
+        <Button
+          variant="secondary"
+          icon={<Copy className="w-4 h-4" />}
+          onClick={() => {
+            const firstDoc = getFirstDocForTab();
+            if (firstDoc) {
+              navigate(`/app/converter/${getDocTypeForTab()}/${firstDoc.id}`);
+            } else {
+              toast("No documents available to convert in this tab.", { type: "info" });
+            }
+          }}
+        >
+          Convert Document
         </Button>
       </div>
 
