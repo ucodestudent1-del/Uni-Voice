@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Plus, FileText, Quote as QuoteIcon, CreditCard, Receipt, ShoppingCart } from "lucide-react";
 import {
@@ -19,6 +19,7 @@ import {
   getCreditNotes,
   getReceipts,
   getPurchaseOrders,
+  getGenericDocuments,
 } from "@/api/client";
 import type {
   ApiInvoiceListItem,
@@ -27,6 +28,7 @@ import type {
   ApiPurchaseOrderListItem,
 } from "@/types/api";
 import type { ApiReceipt } from "@/api/client";
+import type { GenericDocument } from "@/api/client";
 import {
   invoiceStatusConfig,
   quoteStatusConfig,
@@ -129,13 +131,13 @@ const createOptions: CreateOption[] = [
 
 export default function Documents() {
   useMetaTags({
-    title: "Documents â€” DocForge",
+    title: "Documents — DocForge",
     description: "Manage your invoices, quotes, credit notes, and debit notes. Create, send, and track all your business documents.",
     noIndex: true,
   });
 
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"invoices" | "quotes" | "credit-notes" | "purchase-orders" | "receipts">("invoices");
+  const [activeTab, setActiveTab] = useState<"invoices" | "quotes" | "credit-notes" | "purchase-orders" | "receipts" | "recurring-invoices" | "delivery-notes" | "packing-slips" | "pro-forma-invoices" | "estimates">("invoices");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const [invoices, setInvoices] = useState<ApiInvoiceListItem[]>([]);
@@ -143,6 +145,11 @@ export default function Documents() {
   const [creditNotes, setCreditNotes] = useState<ApiCreditNoteListItem[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<ApiPurchaseOrderListItem[]>([]);
   const [receipts, setReceipts] = useState<ApiReceipt[]>([]);
+  const [recurringInvoices, setRecurringInvoices] = useState<GenericDocument[]>([]);
+  const [deliveryNotes, setDeliveryNotes] = useState<GenericDocument[]>([]);
+  const [packingSlips, setPackingSlips] = useState<GenericDocument[]>([]);
+  const [proFormaInvoices, setProFormaInvoices] = useState<GenericDocument[]>([]);
+  const [estimates, setEstimates] = useState<GenericDocument[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,12 +158,17 @@ export default function Documents() {
     setLoading(true);
     setError(null);
     try {
-      const [invRes, quoteRes, cnRes, poRes, rcptRes] = await Promise.allSettled([
+      const [invRes, quoteRes, cnRes, poRes, rcptRes, riRes, dnRes, psRes, pfiRes, estRes] = await Promise.allSettled([
         getInvoices({ limit: 50 }),
         getQuotes({ limit: 50 }),
         getCreditNotes({ limit: 50 }),
         getPurchaseOrders({ limit: 50 }),
         getReceipts({ limit: 50 }),
+        getGenericDocuments("recurring-invoice", { limit: 50 }),
+        getGenericDocuments("delivery-note", { limit: 50 }),
+        getGenericDocuments("packing-slip", { limit: 50 }),
+        getGenericDocuments("pro-forma-invoice", { limit: 50 }),
+        getGenericDocuments("estimate", { limit: 50 }),
       ]);
 
       if (invRes.status === "fulfilled") setInvoices(invRes.value.invoices ?? []);
@@ -164,8 +176,13 @@ export default function Documents() {
       if (cnRes.status === "fulfilled") setCreditNotes(cnRes.value.creditNotes ?? []);
       if (poRes.status === "fulfilled") setPurchaseOrders(poRes.value.purchaseOrders ?? []);
       if (rcptRes.status === "fulfilled") setReceipts(rcptRes.value.receipts ?? []);
+      if (riRes.status === "fulfilled") setRecurringInvoices(riRes.value.documents ?? []);
+      if (dnRes.status === "fulfilled") setDeliveryNotes(dnRes.value.documents ?? []);
+      if (psRes.status === "fulfilled") setPackingSlips(psRes.value.documents ?? []);
+      if (pfiRes.status === "fulfilled") setProFormaInvoices(pfiRes.value.documents ?? []);
+      if (estRes.status === "fulfilled") setEstimates(estRes.value.documents ?? []);
 
-      if (invRes.status === "rejected" && quoteRes.status === "rejected" && cnRes.status === "rejected" && poRes.status === "rejected" && rcptRes.status === "rejected") {
+      if (invRes.status === "rejected" && quoteRes.status === "rejected" && cnRes.status === "rejected" && poRes.status === "rejected" && rcptRes.status === "rejected" && riRes.status === "rejected" && dnRes.status === "rejected" && psRes.status === "rejected" && pfiRes.status === "rejected" && estRes.status === "rejected") {
         setError("Could not load documents. Please try again.");
       }
     } catch (err: unknown) {
@@ -194,6 +211,11 @@ export default function Documents() {
     { id: "credit-notes" as const, label: "Credit Notes", count: creditNotes.length },
     { id: "purchase-orders" as const, label: "Purchase Orders", count: purchaseOrders.length },
     { id: "receipts" as const, label: "Receipts", count: receipts.length },
+    { id: "recurring-invoices" as const, label: "Recurring Invoices", count: recurringInvoices.length },
+    { id: "delivery-notes" as const, label: "Delivery Notes", count: deliveryNotes.length },
+    { id: "packing-slips" as const, label: "Packing Slips", count: packingSlips.length },
+    { id: "pro-forma-invoices" as const, label: "Pro Forma Invoices", count: proFormaInvoices.length },
+    { id: "estimates" as const, label: "Estimates", count: estimates.length },
   ];
 
   const invoiceColumns: ColumnDef<ApiInvoiceListItem>[] = [
@@ -216,7 +238,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiInvoiceListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "â€”"}
+          {row.customer_name || "—"}
         </span>
       ),
       sortable: false,
@@ -227,7 +249,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiInvoiceListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "â€”"}
+          {row.issue_date ? formatDate(row.issue_date) : "—"}
         </span>
       ),
       sortable: false,
@@ -280,7 +302,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiQuoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "â€”"}
+          {row.customer_name || "—"}
         </span>
       ),
       sortable: false,
@@ -291,7 +313,7 @@ export default function Documents() {
       accessor: "expiry_date" as const,
       cell: (row: ApiQuoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.expiry_date ? formatDate(row.expiry_date) : "â€”"}
+          {row.expiry_date ? formatDate(row.expiry_date) : "—"}
         </span>
       ),
       sortable: false,
@@ -344,7 +366,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "â€”"}
+          {row.customer_name || "—"}
         </span>
       ),
       sortable: false,
@@ -355,7 +377,7 @@ export default function Documents() {
       accessor: (row: ApiCreditNoteListItem) => row.reference_invoice_number ?? null,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.reference_invoice_number || "â€”"}
+          {row.reference_invoice_number || "—"}
         </span>
       ),
       sortable: false,
@@ -366,7 +388,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiCreditNoteListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "â€”"}
+          {row.issue_date ? formatDate(row.issue_date) : "—"}
         </span>
       ),
       sortable: false,
@@ -430,7 +452,7 @@ export default function Documents() {
       accessor: "supplier_name" as const,
       cell: (row: ApiPurchaseOrderListItem) => (
         <span className="text-sm text-secondary">
-          {row.supplier_name || "â€”"}
+          {row.supplier_name || "—"}
         </span>
       ),
       sortable: false,
@@ -441,7 +463,7 @@ export default function Documents() {
       accessor: "issue_date" as const,
       cell: (row: ApiPurchaseOrderListItem) => (
         <span className="text-sm text-secondary">
-          {row.issue_date ? formatDate(row.issue_date) : "â€”"}
+          {row.issue_date ? formatDate(row.issue_date) : "—"}
         </span>
       ),
       sortable: false,
@@ -494,7 +516,7 @@ export default function Documents() {
       accessor: "customer_name" as const,
       cell: (row: ApiReceipt) => (
         <span className="text-sm text-secondary">
-          {row.customer_name || "â€”"}
+          {row.customer_name || "—"}
         </span>
       ),
       sortable: false,
@@ -516,7 +538,7 @@ export default function Documents() {
       accessor: "issued_at" as const,
       cell: (row: ApiReceipt) => (
         <span className="text-sm text-secondary">
-          {row.issued_at ? formatDate(row.issued_at) : "â€”"}
+          {row.issued_at ? formatDate(row.issued_at) : "—"}
         </span>
       ),
       sortable: false,
@@ -677,21 +699,176 @@ export default function Documents() {
                  onAction={() => handleCreate("purchase-order")}
                />
              )
-           ) : activeTab === "receipts" ? (
-             receipts.length > 0 ? (
-               <DataTable
-                 columns={receiptColumns}
-                 data={receipts}
-                 onRowClick={(row: ApiReceipt) => navigate(`/app/receipts/${row.id}/edit`)}
-               />
-             ) : (
-               <EmptyState
-                 title="No receipts yet"
-                 description="Receipts are generated when payments are recorded."
-                 icon={<Receipt className="h-10 w-10" />}
-               />
-             )
-           ) : creditNotes.length > 0 ? (
+            ) : activeTab === "receipts" ? (
+              receipts.length > 0 ? (
+                <DataTable
+                  columns={receiptColumns}
+                  data={receipts}
+                  onRowClick={(row: ApiReceipt) => navigate(`/app/receipts/${row.id}/edit`)}
+                />
+              ) : (
+                <EmptyState
+                  title="No receipts yet"
+                  description="Receipts are generated when payments are recorded."
+                  icon={<Receipt className="h-10 w-10" />}
+                />
+              )
+            ) : activeTab === "recurring-invoices" ? (
+              recurringInvoices.length > 0 ? (
+                <DataTable
+                  columns={[
+                    {
+                      header: "Document",
+                      accessor: "id" as const,
+                      cell: (row: GenericDocument) => (
+                        <Link
+                          to={`/app/recurring-invoices/${row.id}/edit`}
+                          className="text-sm font-medium text-primary-brand hover:text-primary-hover"
+                        >
+                          {row.recurring_invoice_number as string || `#${row.id.slice(0, 8)}`}
+                        </Link>
+                      ),
+                      sortable: false,
+                      align: "left" as const,
+                    },
+                  ]}
+                  data={recurringInvoices}
+                  onRowClick={(row: GenericDocument) => navigate(`/app/recurring-invoices/${row.id}/edit`)}
+                />
+              ) : (
+                <EmptyState
+                  title="No recurring invoices yet"
+                  description="Set up your first recurring invoice to automate billing."
+                  icon={<FileText className="h-10 w-10" />}
+                  actionLabel="Create Recurring Invoice"
+                  onAction={() => handleCreate("recurring-invoice")}
+                />
+              )
+            ) : activeTab === "delivery-notes" ? (
+              deliveryNotes.length > 0 ? (
+                <DataTable
+                  columns={[
+                    {
+                      header: "Document",
+                      accessor: "id" as const,
+                      cell: (row: GenericDocument) => (
+                        <Link
+                          to={`/app/delivery-notes/${row.id}/edit`}
+                          className="text-sm font-medium text-primary-brand hover:text-primary-hover"
+                        >
+                          {row.delivery_note_number as string || `#${row.id.slice(0, 8)}`}
+                        </Link>
+                      ),
+                      sortable: false,
+                      align: "left" as const,
+                    },
+                  ]}
+                  data={deliveryNotes}
+                  onRowClick={(row: GenericDocument) => navigate(`/app/delivery-notes/${row.id}/edit`)}
+                />
+              ) : (
+                <EmptyState
+                  title="No delivery notes yet"
+                  description="Create your first delivery note to document shipped goods."
+                  icon={<FileText className="h-10 w-10" />}
+                  actionLabel="Create Delivery Note"
+                  onAction={() => handleCreate("delivery-note")}
+                />
+              )
+            ) : activeTab === "packing-slips" ? (
+              packingSlips.length > 0 ? (
+                <DataTable
+                  columns={[
+                    {
+                      header: "Document",
+                      accessor: "id" as const,
+                      cell: (row: GenericDocument) => (
+                        <Link
+                          to={`/app/packing-slips/${row.id}/edit`}
+                          className="text-sm font-medium text-primary-brand hover:text-primary-hover"
+                        >
+                          {row.packing_slip_number as string || `#${row.id.slice(0, 8)}`}
+                        </Link>
+                      ),
+                      sortable: false,
+                      align: "left" as const,
+                    },
+                  ]}
+                  data={packingSlips}
+                  onRowClick={(row: GenericDocument) => navigate(`/app/packing-slips/${row.id}/edit`)}
+                />
+              ) : (
+                <EmptyState
+                  title="No packing slips yet"
+                  description="Create your first packing slip to detail items in a shipment."
+                  icon={<FileText className="h-10 w-10" />}
+                  actionLabel="Create Packing Slip"
+                  onAction={() => handleCreate("packing-slip")}
+                />
+              )
+            ) : activeTab === "pro-forma-invoices" ? (
+              proFormaInvoices.length > 0 ? (
+                <DataTable
+                  columns={[
+                    {
+                      header: "Document",
+                      accessor: "id" as const,
+                      cell: (row: GenericDocument) => (
+                        <Link
+                          to={`/app/pro-forma-invances/${row.id}/edit`}
+                          className="text-sm font-medium text-primary-brand hover:text-primary-hover"
+                        >
+                          {row.pro_forma_invoice_number as string || `#${row.id.slice(0, 8)}`}
+                        </Link>
+                      ),
+                      sortable: false,
+                      align: "left" as const,
+                    },
+                  ]}
+                  data={proFormaInvoices}
+                  onRowClick={(row: GenericDocument) => navigate(`/app/pro-forma-invoices/${row.id}/edit`)}
+                />
+              ) : (
+                <EmptyState
+                  title="No pro forma invoices yet"
+                  description="Create your first pro forma invoice for preliminary billing."
+                  icon={<FileText className="h-10 w-10" />}
+                  actionLabel="Create Pro Forma Invoice"
+                  onAction={() => handleCreate("pro-forma-invoice")}
+                />
+              )
+            ) : activeTab === "estimates" ? (
+              estimates.length > 0 ? (
+                <DataTable
+                  columns={[
+                    {
+                      header: "Document",
+                      accessor: "id" as const,
+                      cell: (row: GenericDocument) => (
+                        <Link
+                          to={`/app/estimates/${row.id}/edit`}
+                          className="text-sm font-medium text-primary-brand hover:text-primary-hover"
+                        >
+                          {row.estimate_number as string || `#${row.id.slice(0, 8)}`}
+                        </Link>
+                      ),
+                      sortable: false,
+                      align: "left" as const,
+                    },
+                  ]}
+                  data={estimates}
+                  onRowClick={(row: GenericDocument) => navigate(`/app/estimates/${row.id}/edit`)}
+                />
+              ) : (
+                <EmptyState
+                  title="No estimates yet"
+                  description="Create your first estimate to provide price quotes to customers."
+                  icon={<FileText className="h-10 w-10" />}
+                  actionLabel="Create Estimate"
+                  onAction={() => handleCreate("estimate")}
+                />
+              )
+            ) : creditNotes.length > 0 ? (
              <DataTable
                columns={creditNoteColumns}
                data={creditNotes}

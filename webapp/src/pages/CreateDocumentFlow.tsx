@@ -52,6 +52,36 @@ const docTypeOptions: DocTypeOption[] = [
     description: "Record a purchase order to a supplier",
     icon: <ShoppingCart className="w-6 h-6" />,
   },
+  {
+    type: "recurring-invoice",
+    label: "Recurring Invoice",
+    description: "Set up automated recurring billing",
+    icon: <FileText className="w-6 h-6" />,
+  },
+  {
+    type: "delivery-note",
+    label: "Delivery Note",
+    description: "Document goods shipped to a customer",
+    icon: <FileText className="w-6 h-6" />,
+  },
+  {
+    type: "packing-slip",
+    label: "Packing Slip",
+    description: "Detail items in a shipment",
+    icon: <FileText className="w-6 h-6" />,
+  },
+  {
+    type: "pro-forma-invoice",
+    label: "Pro Forma Invoice",
+    description: "Issue a preliminary invoice for international trade",
+    icon: <FileText className="w-6 h-6" />,
+  },
+  {
+    type: "estimate",
+    label: "Estimate",
+    description: "Provide an estimated price to a customer",
+    icon: <FileText className="w-6 h-6" />,
+  },
 ];
 
 export default function CreateDocumentFlow() {

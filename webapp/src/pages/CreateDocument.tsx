@@ -18,7 +18,12 @@ type DocType =
   | "credit-note"
   | "payment-voucher"
   | "debit-note"
-  | "purchase-order";
+  | "purchase-order"
+  | "recurring-invoice"
+  | "delivery-note"
+  | "packing-slip"
+  | "pro-forma-invoice"
+  | "estimate";
 
 interface CreateOption {
   type: DocType;
@@ -70,6 +75,41 @@ const createOptions: CreateOption[] = [
     description: "Record a purchase order to a supplier",
     icon: <ShoppingCart className="w-6 h-6" />,
     path: "/app/purchase-orders/new",
+  },
+  {
+    type: "recurring-invoice",
+    label: "Recurring Invoice",
+    description: "Set up automated recurring billing",
+    icon: <FileText className="w-6 h-6" />,
+    path: "/app/recurring-invoices/new",
+  },
+  {
+    type: "delivery-note",
+    label: "Delivery Note",
+    description: "Document goods shipped to a customer",
+    icon: <FileText className="w-6 h-6" />,
+    path: "/app/delivery-notes/new",
+  },
+  {
+    type: "packing-slip",
+    label: "Packing Slip",
+    description: "Detail items in a shipment",
+    icon: <FileText className="w-6 h-6" />,
+    path: "/app/packing-slips/new",
+  },
+  {
+    type: "pro-forma-invoice",
+    label: "Pro Forma Invoice",
+    description: "Issue a preliminary invoice for international trade",
+    icon: <FileText className="w-6 h-6" />,
+    path: "/app/pro-forma-invoices/new",
+  },
+  {
+    type: "estimate",
+    label: "Estimate",
+    description: "Provide an estimated price to a customer",
+    icon: <FileText className="w-6 h-6" />,
+    path: "/app/estimates/new",
   },
 ];
 
