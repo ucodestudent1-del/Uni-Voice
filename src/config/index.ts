@@ -99,6 +99,7 @@ const envSchema = z.object({
   AVALARA_ACCOUNT_ID: z.string().optional(),
   AVALARA_API_KEY: z.string().optional(),
   AVALARA_ENVIRONMENT: z.enum(["development", "production"]).default("development"),
+  PROPRIETARY_MODE: z.enum(["true", "false"]).default("false"),
 });
 
 type Env = Omit<z.infer<typeof envSchema>, "APP_PUBLIC_BASE_URL"> & {
@@ -211,3 +212,4 @@ export const env: Env = {
 
 export const isTest = env.APP_ENV === "test";
 export const isDev = env.APP_ENV === "development";
+export const isProprietaryMode = env.PROPRIETARY_MODE === "true";

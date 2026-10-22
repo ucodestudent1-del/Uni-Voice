@@ -139,6 +139,8 @@ import { hashPassword, verifyPassword, validatePasswordPolicy, checkPasswordBrea
 import { camelToSnake } from "./utils/case-conversion.js";
 import { NotFoundError } from "./domain/errors.js";
 import { genericDocumentService } from "./services/generic-document-service.js";
+import proprietaryCoreRouter from "./routes/proprietary-core.js";
+import { isProprietaryMode } from "./config/index.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -654,6 +656,10 @@ if (isDev) {
 }
 
 app.use("/api", generalRateLimiter);
+
+if (isProprietaryMode) {
+  app.use("/api/proprietary", proprietaryCoreRouter);
+}
 
 app.get("/api/health", (_req, res) => {
   res.json({

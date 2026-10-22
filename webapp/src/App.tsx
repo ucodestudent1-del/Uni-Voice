@@ -22,6 +22,14 @@ const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const ProprietaryDashboard = lazy(() => import("./pages/ProprietaryDashboard"));
+const ProprietaryDocuments = lazy(() => import("./pages/ProprietaryDocuments"));
+const ProprietaryDocumentMaker = lazy(() => import("./pages/ProprietaryDocumentMaker"));
+const ProprietaryDocumentWorkspace = lazy(() => import("./pages/ProprietaryDocumentWorkspace"));
+const ProprietaryBranding = lazy(() => import("./pages/ProprietaryBranding"));
+const ProprietaryReports = lazy(() => import("./pages/ProprietaryReports"));
+const ProprietaryRecurringInvoices = lazy(() => import("./pages/ProprietaryRecurringInvoices"));
+const ProprietaryEmailTemplates = lazy(() => import("./pages/ProprietaryEmailTemplates"));
 
 const Fallback = () => (
   <div className="flex items-center justify-center h-64 text-secondary">
@@ -60,6 +68,21 @@ const PublicInvoiceWithBoundary = withErrorBoundary(PublicInvoice, "Invoice");
 const PaymentSuccessWithBoundary = withErrorBoundary(PaymentSuccess, "Payment Success");
 const PrivacyWithBoundary = withErrorBoundary(Privacy, "Privacy");
 const TermsWithBoundary = withErrorBoundary(Terms, "Terms");
+const ProprietaryDashboardWithBoundary = withErrorBoundary(ProprietaryDashboard, "Proprietary Dashboard");
+const ProprietaryDocumentsWithBoundary = withErrorBoundary(ProprietaryDocuments, "Proprietary Documents");
+const ProprietaryDocumentMakerInvoiceWithBoundary = withErrorBoundary(
+  (p: { docType?: string }) => <ProprietaryDocumentMaker {...p} docType="invoice" />,
+  "Proprietary Invoice Maker",
+);
+const ProprietaryDocumentMakerQuoteWithBoundary = withErrorBoundary(
+  (p: { docType?: string }) => <ProprietaryDocumentMaker {...p} docType="quote" />,
+  "Proprietary Quote Maker",
+);
+const ProprietaryDocumentWorkspaceWithBoundary = withErrorBoundary(ProprietaryDocumentWorkspace, "Proprietary Document Workspace");
+const ProprietaryBrandingWithBoundary = withErrorBoundary(ProprietaryBranding, "Proprietary Branding");
+const ProprietaryReportsWithBoundary = withErrorBoundary(ProprietaryReports, "Proprietary Reports");
+const ProprietaryRecurringInvoicesWithBoundary = withErrorBoundary(ProprietaryRecurringInvoices, "Recurring Invoices");
+const ProprietaryEmailTemplatesWithBoundary = withErrorBoundary(ProprietaryEmailTemplates, "Email Templates");
 const DocumentWorkspaceInvoiceWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="invoice" />,
   "Invoice Workspace",
@@ -202,6 +225,18 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AuthRequired({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-screen text-secondary">
+        Loading…
+      </div>
+    );
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <ChunkErrorBoundary>
@@ -259,6 +294,23 @@ export default function App() {
           <Route path="templates/new" element={<TemplateEditorPageWithBoundary />} />
           <Route path="templates/:id/edit" element={<TemplateEditorPageWithBoundary />} />
           <Route path="converter/:docType/:docId" element={<DocumentConverterPageWithBoundary />} />
+        </Route>
+
+        <Route path="/app/proprietary" element={<AuthRequired><Layout /></AuthRequired>} >
+          <Route index element={<ProprietaryDashboardWithBoundary />} />
+          <Route path="documents" element={<ProprietaryDocumentsWithBoundary />} />
+          <Route path="invoices/new" element={<ProprietaryDocumentMakerInvoiceWithBoundary docType="invoice" />} />
+          <Route path="invoices/:id/edit" element={<ProprietaryDocumentMakerInvoiceWithBoundary docType="invoice" />} />
+          <Route path="invoices/:id" element={<ProprietaryDocumentWorkspaceWithBoundary />} />
+          <Route path="quotes/new" element={<ProprietaryDocumentMakerQuoteWithBoundary docType="quote" />} />
+          <Route path="quotes/:id/edit" element={<ProprietaryDocumentMakerQuoteWithBoundary docType="quote" />} />
+          <Route path="quotes/:id" element={<ProprietaryDocumentWorkspaceWithBoundary />} />
+          <Route path="branding" element={<ProprietaryBrandingWithBoundary />} />
+          <Route path="reports" element={<ProprietaryReportsWithBoundary />} />
+          <Route path="recurring-invoices" element={<ProprietaryRecurringInvoicesWithBoundary />} />
+          <Route path="recurring-invoices/new" element={<ProprietaryRecurringInvoicesWithBoundary />} />
+          <Route path="recurring-invoices/:id/edit" element={<ProprietaryRecurringInvoicesWithBoundary />} />
+          <Route path="email-templates" element={<ProprietaryEmailTemplatesWithBoundary />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

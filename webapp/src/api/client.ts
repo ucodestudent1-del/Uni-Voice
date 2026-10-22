@@ -2875,3 +2875,437 @@ export async function deleteGenericDocument(
   const res = await api.delete(`/documents/${docType}/${id}`);
   return res.data;
 }
+
+// ============================================================================
+// PROPRIETARY MVP API
+// ============================================================================
+
+export interface ProprietaryInvoiceItem {
+  description: string;
+  quantity: string | number;
+  unit?: string;
+  unitPrice: string | number;
+  discount?: string | number | null;
+  discountType?: "fixed" | "percentage" | null;
+  taxRate?: string | number;
+  taxName?: string | null;
+  isTaxInclusive?: boolean;
+  productId?: string | null;
+}
+
+export interface ProprietaryInvoiceFee {
+  description: string;
+  amount: string | number;
+  taxRate?: string | number;
+  taxName?: string | null;
+}
+
+export interface ProprietaryInvoiceInput {
+  customerId?: string | null;
+  currency: string;
+  issueDate?: string | null;
+  dueDate?: string | null;
+  poNumber?: string | null;
+  notes?: string | null;
+  terms?: string | null;
+  paymentInstructions?: string | null;
+  items: ProprietaryInvoiceItem[];
+  fees?: ProprietaryInvoiceFee[];
+}
+
+export interface ProprietaryQuoteInput extends ProprietaryInvoiceInput {
+  expiryDate?: string | null;
+  scopeOfWork?: string | null;
+}
+
+export interface ProprietarySearchParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: string;
+  customerId?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export async function getProprietaryInvoices(
+  params?: ProprietarySearchParams,
+): Promise<{ invoices: ApiInvoiceListItem[]; total: number; limit: number; offset: number }> {
+  const res = await api.get("/proprietary/invoices", { params });
+  return res.data;
+}
+
+export async function getProprietaryInvoice(id: string): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.get(`/proprietary/invoices/${id}`);
+  return res.data;
+}
+
+export async function createProprietaryInvoice(
+  data: ProprietaryInvoiceInput,
+): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.post("/proprietary/invoices", data);
+  return res.data;
+}
+
+export async function updateProprietaryInvoice(
+  id: string,
+  data: Partial<ProprietaryInvoiceInput>,
+): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.patch(`/proprietary/invoices/${id}`, data);
+  return res.data;
+}
+
+export async function finalizeProprietaryInvoice(id: string): Promise<{ invoice: ApiInvoice; invoiceNumber: string }> {
+  const res = await api.post(`/proprietary/invoices/${id}/finalize`);
+  return res.data;
+}
+
+export async function sendProprietaryInvoice(
+  id: string,
+  data?: { to?: string; cc?: string; bcc?: string; subject?: string; message?: string },
+): Promise<{ ok: boolean; success: boolean; messageId: string; status: string }> {
+  const res = await api.post(`/proprietary/invoices/${id}/send`, data ?? {});
+  return res.data;
+}
+
+export async function markProprietaryInvoicePaid(
+  id: string,
+  data: { amount: string | number; method?: string; reference?: string },
+): Promise<{ ok: boolean }> {
+  const res = await api.post(`/proprietary/invoices/${id}/mark-paid`, data);
+  return res.data;
+}
+
+export async function duplicateProprietaryInvoice(id: string): Promise<{ invoice: ApiInvoice }> {
+  const res = await api.post(`/proprietary/invoices/${id}/duplicate`);
+  return res.data;
+}
+
+export async function getProprietaryInvoicePdf(id: string): Promise<Blob> {
+  const res = await api.get(`/proprietary/invoices/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getProprietaryInvoiceEvents(
+  id: string,
+): Promise<{ events: ApiInvoiceEvent[] }> {
+  const res = await api.get(`/proprietary/invoices/${id}/events`);
+  return res.data;
+}
+
+export async function getProprietaryInvoiceShareLink(id: string): Promise<{ url: string; token: string; expiresAt: string }> {
+  const res = await api.get(`/proprietary/invoices/${id}/share-link`);
+  return res.data;
+}
+
+export async function getProprietaryQuotes(
+  params?: ProprietarySearchParams,
+): Promise<{ quotes: ApiQuoteListItem[]; total: number; limit: number; offset: number }> {
+  const res = await api.get("/proprietary/quotes", { params });
+  return res.data;
+}
+
+export async function getProprietaryQuote(id: string): Promise<{ quote: ApiQuote }> {
+  const res = await api.get(`/proprietary/quotes/${id}`);
+  return res.data;
+}
+
+export async function createProprietaryQuote(
+  data: ProprietaryQuoteInput,
+): Promise<{ quote: ApiQuote }> {
+  const res = await api.post("/proprietary/quotes", data);
+  return res.data;
+}
+
+export async function updateProprietaryQuote(
+  id: string,
+  data: Partial<ProprietaryQuoteInput>,
+): Promise<{ quote: ApiQuote }> {
+  const res = await api.patch(`/proprietary/quotes/${id}`, data);
+  return res.data;
+}
+
+export async function finalizeProprietaryQuote(id: string): Promise<{ quote: ApiQuote; quoteNumber: string }> {
+  const res = await api.post(`/proprietary/quotes/${id}/finalize`);
+  return res.data;
+}
+
+export async function sendProprietaryQuote(
+  id: string,
+  data?: { to?: string; cc?: string; bcc?: string; subject?: string; message?: string },
+): Promise<{ ok: boolean; success: boolean; messageId: string; status: string }> {
+  const res = await api.post(`/proprietary/quotes/${id}/send`, data ?? {});
+  return res.data;
+}
+
+export async function acceptProprietaryQuote(id: string): Promise<{ quote: ApiQuote }> {
+  const res = await api.post(`/proprietary/quotes/${id}/accept`);
+  return res.data;
+}
+
+export async function convertProprietaryQuote(id: string): Promise<{ quote: ApiQuote; invoiceId: string }> {
+  const res = await api.post(`/proprietary/quotes/${id}/convert-to-invoice`);
+  return res.data;
+}
+
+export async function getProprietaryQuotePdf(id: string): Promise<Blob> {
+  const res = await api.get(`/proprietary/quotes/${id}/pdf`, { responseType: "blob" });
+  return res.data;
+}
+
+export async function getProprietaryQuoteShareLink(id: string): Promise<{ url: string; token: string; expiresAt: string }> {
+  const res = await api.get(`/proprietary/quotes/${id}/share-link`);
+  return res.data;
+}
+
+export async function getProprietaryCustomers(
+  params?: ProprietarySearchParams,
+): Promise<{ customers: any[]; total: number }> {
+  const res = await api.get("/proprietary/customers", { params });
+  return res.data;
+}
+
+export async function getProprietaryCustomer(id: string): Promise<{ customer: any }> {
+  const res = await api.get(`/proprietary/customers/${id}`);
+  return res.data;
+}
+
+export async function createProprietaryCustomer(data: any): Promise<{ customer: any }> {
+  const res = await api.post("/proprietary/customers", data);
+  return res.data;
+}
+
+export async function updateProprietaryCustomer(id: string, data: any): Promise<{ customer: any }> {
+  const res = await api.patch(`/proprietary/customers/${id}`, data);
+  return res.data;
+}
+
+export async function deleteProprietaryCustomer(id: string): Promise<{ deleted: boolean }> {
+  const res = await api.delete(`/proprietary/customers/${id}`);
+  return res.data;
+}
+
+export async function getProprietaryProducts(
+  params?: ProprietarySearchParams,
+): Promise<{ products: any[]; total: number }> {
+  const res = await api.get("/proprietary/products", { params });
+  return res.data;
+}
+
+export async function getProprietaryProduct(id: string): Promise<{ product: any }> {
+  const res = await api.get(`/proprietary/products/${id}`);
+  return res.data;
+}
+
+export async function createProprietaryProduct(data: any): Promise<{ product: any }> {
+  const res = await api.post("/proprietary/products", data);
+  return res.data;
+}
+
+export async function updateProprietaryProduct(id: string, data: any): Promise<{ product: any }> {
+  const res = await api.patch(`/proprietary/products/${id}`, data);
+  return res.data;
+}
+
+export async function deleteProprietaryProduct(id: string): Promise<{ deleted: boolean }> {
+  const res = await api.delete(`/proprietary/products/${id}`);
+  return res.data;
+}
+
+export async function recordProprietaryPayment(
+  data: { invoiceId: string; amount: string | number; currency?: string; method?: string; reference?: string },
+): Promise<{ ok: boolean }> {
+  const res = await api.post("/proprietary/payments", data);
+  return res.data;
+}
+
+export async function getProprietaryPaymentSummary(): Promise<{ summary: any[] }> {
+  const res = await api.get("/proprietary/payments/summary");
+  return res.data;
+}
+
+export async function getProprietaryRevenueReport(
+  params?: { dateFrom?: string; dateTo?: string; groupBy?: string },
+): Promise<{ data: any[] }> {
+  const res = await api.get("/proprietary/reports/revenue", { params });
+  return res.data;
+}
+
+export async function getProprietaryInvoiceStatusReport(): Promise<{ data: any[] }> {
+  const res = await api.get("/proprietary/reports/invoice-status");
+  return res.data;
+}
+
+export async function getProprietaryCustomerSummary(): Promise<{ data: any[] }> {
+  const res = await api.get("/proprietary/reports/customer-summary");
+  return res.data;
+}
+
+interface RecurringInvoice {
+  id: string;
+  business_id: string;
+  customer_id: string | null;
+  name: string;
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  interval_count: number;
+  next_generation_at: string;
+  end_date: string | null;
+  currency: string;
+  notes: string | null;
+  terms: string | null;
+  issue_offset_days: number;
+  due_offset_days: number;
+  auto_send: boolean;
+  status: string;
+  is_active: boolean;
+  last_generated_invoice_id: string | null;
+  created_at: string;
+  updated_at: string;
+  customer_name?: string;
+  last_invoice_number?: string;
+}
+
+interface RecurringItemInput {
+  description: string;
+  quantity: number | string;
+  unit: string;
+  unitPrice: number | string;
+  taxRate?: number | string;
+  taxName?: string | null;
+}
+
+interface RecurringInvoiceInput {
+  name: string;
+  customerId?: string | null;
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  intervalCount?: number;
+  nextGenerationAt: string;
+  endDate?: string | null;
+  currency?: string;
+  notes?: string | null;
+  terms?: string | null;
+  issueOffsetDays?: number;
+  dueOffsetDays?: number;
+  autoSend?: boolean;
+  items: RecurringItemInput[];
+}
+
+export async function getProprietaryRecurringInvoices(
+  params?: ProprietarySearchParams,
+): Promise<{ recurringInvoices: RecurringInvoice[]; total: number }> {
+  const res = await api.get("/proprietary/recurring-invoices", { params });
+  return res.data;
+}
+
+export async function getProprietaryRecurringInvoice(
+  id: string,
+): Promise<{ recurringInvoice: RecurringInvoice; items: any[] }> {
+  const res = await api.get(`/proprietary/recurring-invoices/${id}`);
+  return res.data;
+}
+
+export async function createProprietaryRecurringInvoice(
+  data: RecurringInvoiceInput,
+): Promise<{ recurringInvoice: RecurringInvoice }> {
+  const res = await api.post("/proprietary/recurring-invoices", data);
+  return res.data;
+}
+
+export async function updateProprietaryRecurringInvoice(
+  id: string,
+  data: Partial<RecurringInvoiceInput>,
+): Promise<{ recurringInvoice: RecurringInvoice }> {
+  const res = await api.put(`/proprietary/recurring-invoices/${id}`, data);
+  return res.data;
+}
+
+export async function deleteProprietaryRecurringInvoice(id: string): Promise<{ ok: boolean }> {
+  const res = await api.delete(`/proprietary/recurring-invoices/${id}`);
+  return res.data;
+}
+
+export async function activateProprietaryRecurringInvoice(id: string): Promise<{ recurringInvoice: RecurringInvoice }> {
+  const res = await api.post(`/proprietary/recurring-invoices/${id}/activate`);
+  return res.data;
+}
+
+export async function deactivateProprietaryRecurringInvoice(id: string): Promise<{ recurringInvoice: RecurringInvoice }> {
+  const res = await api.post(`/proprietary/recurring-invoices/${id}/deactivate`);
+  return res.data;
+}
+
+export type { RecurringInvoice, RecurringInvoiceInput, RecurringItemInput };
+
+export interface EmailTemplate {
+  id: string;
+  business_id: string;
+  name: string;
+  template_type: string;
+  locale: string;
+  subject_template: string;
+  body_template: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailTemplateInput {
+  name: string;
+  templateType: "invoice" | "quote" | "reminder" | "payment_receipt" | "custom";
+  locale: string;
+  subjectTemplate: string;
+  bodyTemplate: string;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export async function getProprietaryEmailTemplates(params?: { type?: string }): Promise<{ templates: EmailTemplate[] }> {
+  const res = await api.get("/proprietary/email-templates", { params });
+  return res.data;
+}
+
+export async function getProprietaryEmailTemplateDefaults(): Promise<{ defaults: Record<string, { subject: string; body: string; name: string }> }> {
+  const res = await api.get("/proprietary/email-templates/defaults");
+  return res.data;
+}
+
+export async function getProprietaryEmailTemplate(id: string): Promise<{ template: EmailTemplate }> {
+  const res = await api.get(`/proprietary/email-templates/${id}`);
+  return res.data;
+}
+
+export async function createProprietaryEmailTemplate(data: EmailTemplateInput): Promise<{ template: EmailTemplate }> {
+  const res = await api.post("/proprietary/email-templates", data);
+  return res.data;
+}
+
+export async function updateProprietaryEmailTemplate(
+  id: string,
+  data: Partial<EmailTemplateInput>,
+): Promise<{ template: EmailTemplate }> {
+  const res = await api.put(`/proprietary/email-templates/${id}`, data);
+  return res.data;
+}
+
+export async function deleteProprietaryEmailTemplate(id: string): Promise<{ deleted: boolean }> {
+  const res = await api.delete(`/proprietary/email-templates/${id}`);
+  return res.data;
+}
+
+export async function getProprietaryBranding(): Promise<{ branding: any }> {
+  const res = await api.get("/proprietary/branding");
+  return res.data;
+}
+
+export async function updateProprietaryBranding(data: any): Promise<{ branding: any }> {
+  const res = await api.post("/proprietary/branding", data);
+  return res.data;
+}
+
+export async function getProprietaryBrandingPreview(data: any): Promise<{ html: string }> {
+  const res = await api.post("/proprietary/branding/preview", data);
+  return res.data;
+}
