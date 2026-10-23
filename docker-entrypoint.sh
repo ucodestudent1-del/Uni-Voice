@@ -49,8 +49,8 @@ if [ -n "$REDIS_URL" ]; then
   REDIS_PORT=$(echo "$REDIS_URL" | sed -n 's|redis://||p' | sed 's/.*://' | sed 's/\/.*//' | sed 's/[^0-9].*//')
   REDIS_PORT=${REDIS_PORT:-6379}
   while [ $REDIS_WAIT -lt $REDIS_MAX_WAIT ]; do
-    if nc -z "$REDIS_HOST" "$REDIS_PORT" 2>/dev/null; then
-      echo "Redis is reachable."
+    if nc -z "$REDIS_HOST" "$REDIS_PORT" 2>/dev/null && redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" ping 2>/dev/null | grep -q PONG; then
+      echo "Redis is ready."
       break
     fi
     REDIS_WAIT=$((REDIS_WAIT + 1))
