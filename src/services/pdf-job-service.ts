@@ -11,6 +11,7 @@ const PDF_CACHE_TTL_SECONDS = 3600;
 let queue: Queue | null = null;
 let worker: Worker | null = null;
 let bullConnection: IORedisInstance | null = null;
+let redisSingletonRef: IORedisInstance | null = null;
 
 function getBullRedisConnection(): IORedisInstance | null {
   if (!env.REDIS_URL) return null;
@@ -18,6 +19,7 @@ function getBullRedisConnection(): IORedisInstance | null {
   const shared = getRedis();
   if (shared) {
     bullConnection = shared;
+    redisSingletonRef = shared;
     return bullConnection;
   }
   return null;
@@ -207,7 +209,16 @@ export async function stopPdfWorker(): Promise<void> {
     queue = null;
   }
   if (bullConnection) {
-    await bullConnection.quit();
+    try {
+      if (bullConnection !== redisSingletonRef) {
+        await bullConnection.quit();
+        logger.info("Redis connection closed");
+      } else {
+        logger.info("Redis connection left open (shared singleton)");
+      }
+    } catch (err) {
+      logger.warn({ err }, "Error closing Redis connection");
+    }
     bullConnection = null;
   }
 }

@@ -17,6 +17,7 @@ interface ScheduledJob {
 type JobHandler = (job: Job) => Promise<unknown> | unknown;
 
 let bullConnection: IORedisInstance | null = null;
+let redisSingletonRef: IORedisInstance | null = null;
 const queues = new Map<string, Queue>();
 const workers = new Map<string, Worker>();
 const handlers = new Map<string, JobHandler>();
@@ -27,6 +28,7 @@ function getBullRedisConnection(): IORedisInstance | null {
   const shared = getRedis();
   if (shared) {
     bullConnection = shared;
+    redisSingletonRef = shared;
     return bullConnection;
   }
   return null;
@@ -186,8 +188,12 @@ export async function stopAllWorkers(): Promise<void> {
 
   if (bullConnection) {
     try {
-      await bullConnection.quit();
-      logger.info("Redis connection closed");
+      if (bullConnection !== redisSingletonRef) {
+        await bullConnection.quit();
+        logger.info("Redis connection closed");
+      } else {
+        logger.info("Redis connection left open (shared singleton)");
+      }
     } catch (err) {
       logger.warn({ err }, "Error closing Redis connection");
     }
