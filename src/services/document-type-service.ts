@@ -156,6 +156,7 @@ export class DocumentTypeService {
       case "receipt":
         return await receiptService.sendReceiptEmail(
           docId,
+          businessId,
           {
             email: payload.to ?? "",
             subject: payload.subject ?? undefined,

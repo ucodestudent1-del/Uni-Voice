@@ -429,8 +429,8 @@ export class ReceiptService {
     };
   }
 
-  async sendReceiptEmail(receiptId: string, recipient: { email: string; name?: string; subject?: string; message?: string }): Promise<{ messageId: string; status: string }> {
-    const receipt = await receiptRepository.findByIdRaw(receiptId);
+  async sendReceiptEmail(receiptId: string, businessId: string, recipient: { email: string; name?: string; subject?: string; message?: string }): Promise<{ messageId: string; status: string }> {
+    const receipt = await receiptRepository.findByIdRaw(receiptId, businessId);
 
     const business = await businessRepository.findById(receipt.businessId);
 

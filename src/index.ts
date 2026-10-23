@@ -119,6 +119,8 @@ import {
   TeamInviteSchema,
   TeamUpdateSchema,
 } from "./domain/schemas/customer.js";
+import { ProductCreateSchema, ProductUpdateSchema } from "./domain/schemas/product.js";
+import { TemplateCreateSchema, TemplateUpdateSchema } from "./domain/schemas/template.js";
 import {
   CreateProductServiceSchema,
   UpdateProductServiceSchema,
@@ -197,7 +199,7 @@ documentService.registerHandler("quote", {
 
 documentService.registerHandler("receipt", {
   toTemplateData: async (businessId: string, docId: string) => {
-    const receipt = await receiptRepository.findByIdRaw(docId);
+    const receipt = await receiptRepository.findByIdRaw(docId, businessId);
     if (!receipt) throw new NotFoundError(`Receipt ${docId} not found`);
     return receiptService.buildReceiptTemplateData(receipt) as any;
   },
@@ -405,7 +407,6 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: [
           "'self'",
-          "'unsafe-inline'",
           "https://js.stripe.com",
           "https://static.sentry-sdks.com",
         ],
@@ -803,19 +804,26 @@ app.post("/api/auth/register", authRateLimiter, async (req, res) => {
 
 app.post("/api/auth/login", authRateLimiter, async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
+  if (!email || !password) {
+    logger.info({ email, ip: req.ip, userAgent: req.get("user-agent"), event: "login_failure", reason: "missing_credentials" });
     return res.status(400).json({ error: "email and password required" });
+  }
 
   const result = await query(
     "SELECT id, email, password_hash, two_factor_enabled, two_factor_method FROM users WHERE email = $1",
     [email],
   );
-  if (!result.rows.length)
+  if (!result.rows.length) {
+    logger.info({ email, ip: req.ip, userAgent: req.get("user-agent"), event: "login_failure", reason: "user_not_found" });
     return res.status(401).json({ error: "Invalid credentials" });
+  }
 
   const user = result.rows[0];
   const valid = await verifyPassword(password, user.password_hash);
-  if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+  if (!valid) {
+    logger.info({ email, userId: user.id, ip: req.ip, userAgent: req.get("user-agent"), event: "login_failure", reason: "invalid_password" });
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
 
   const subResult = await query(
     "SELECT id AS business_id FROM businesses WHERE owner_id = $1 LIMIT 1",
@@ -823,14 +831,15 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
   );
   const businessId = subResult.rows[0]?.business_id;
 
-   // If 2FA is enabled, do NOT issue a token yet — require a second factor.
-   if (user.two_factor_enabled) {
-     return res.json({
-       requiresTwoFactor: true,
-       twoFactorMethod: user.two_factor_method ?? "totp",
-       user: { id: user.id, businessId, email: user.email, role: "owner" },
-     });
-   }
+    // If 2FA is enabled, do NOT issue a token yet — require a second factor.
+    if (user.two_factor_enabled) {
+      logger.info({ userId: user.id, email: user.email, businessId, ip: req.ip, userAgent: req.get("user-agent"), event: "login_2fa_required", twoFactorMethod: user.two_factor_method ?? "totp" });
+      return res.json({
+        requiresTwoFactor: true,
+        twoFactorMethod: user.two_factor_method ?? "totp",
+        user: { id: user.id, businessId, email: user.email, role: "owner" },
+      });
+    }
 
   const { accessToken, refreshToken } = await generateTokenPair({
     userId: user.id,
@@ -847,6 +856,7 @@ app.post("/api/auth/login", authRateLimiter, async (req, res) => {
     [businessId, user.id],
   );
   const role = roleRes.rows[0]?.role ?? "owner";
+  logger.info({ userId: user.id, email: user.email, businessId, ip: req.ip, userAgent: req.get("user-agent"), event: "login_success", role });
   res.json({ user: { id: user.id, businessId, email: user.email, role } });
 });
 
@@ -1037,6 +1047,7 @@ app.post("/api/auth/refresh", async (req: AuthRequest, res) => {
     if (accessToken) {
       await revokeAccessToken(accessToken, 15 * 60, req.user?.id);
     }
+    logger.info({ userId: req.user?.id, email: req.user?.email, ip: req.ip, userAgent: req.get("user-agent"), event: "logout" });
     clearRefreshTokenCookie(res);
     clearAccessTokenCookie(res);
     res.json({ loggedOut: true });
@@ -1336,7 +1347,7 @@ app.post(
 // ============================================================================
 app.get("/api/plans", async (_req, res) => {
   const plans = await subscriptionRepository.listPlans();
-  res.json(camelToSnake({ plans }));
+  res.json({ plans });
 });
 
 app.get(
@@ -1356,6 +1367,7 @@ app.get(
 app.post(
   "/api/subscription/upgrade",
   requireAuth,
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -1390,6 +1402,7 @@ app.post(
 app.post(
   "/api/subscription/downgrade",
   requireAuth,
+  requireRole("admin"),
   async (req: AuthRequest, res) => {
     if (!req.user?.businessId)
       return res.status(400).json({ error: "No business context" });
@@ -1400,6 +1413,7 @@ app.post(
       req.user!.businessId,
       planCode,
     );
+    logger.info({ userId: req.user!.id, businessId: req.user!.businessId, planCode, ip: req.ip, userAgent: req.get("user-agent"), event: "subscription_downgrade" });
     const plan = await subscriptionService.getPlanById(sub.planId);
     res.json(camelToSnake({ subscription: sub, plan }));
   },
@@ -1634,7 +1648,7 @@ app.post(
   },
 );
 
-app.post("/api/customers", requireAuth, async (req: AuthRequest, res, next) => {
+app.post("/api/customers", requireAuth, requireRole("member"), async (req: AuthRequest, res, next) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   try {
@@ -1666,7 +1680,7 @@ app.get("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
   res.json({ customer });
 });
 
-app.patch("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
+app.patch("/api/customers/:id", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   const parsed = CustomerUpdateSchema.parse(req.body);
@@ -1679,7 +1693,7 @@ app.patch("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
   res.json({ customer });
 });
 
-app.delete("/api/customers/:id", requireAuth, async (req: AuthRequest, res) => {
+app.delete("/api/customers/:id", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   await customerService.archive(
@@ -1789,12 +1803,13 @@ app.get("/api/products", requireAuth, async (req: AuthRequest, res) => {
   res.json({ products, limit, offset });
 });
 
-app.post("/api/products", requireAuth, async (req: AuthRequest, res) => {
+app.post("/api/products", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
+  const parsed = ProductCreateSchema.parse(req.body);
   const product = await productRepository.create(
     req.user!.businessId,
-    req.body,
+    parsed,
   );
   res.status(201).json({ product });
 });
@@ -1809,18 +1824,19 @@ app.get("/api/products/:id", requireAuth, async (req: AuthRequest, res) => {
   res.json({ product });
 });
 
-app.patch("/api/products/:id", requireAuth, async (req: AuthRequest, res) => {
+app.patch("/api/products/:id", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
+  const parsed = ProductUpdateSchema.parse(req.body);
   const product = await productRepository.update(
     req.user!.businessId,
     req.params.id,
-    req.body,
+    parsed,
   );
   res.json({ product });
 });
 
-app.delete("/api/products/:id", requireAuth, async (req: AuthRequest, res) => {
+app.delete("/api/products/:id", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   await productRepository.delete(req.user!.businessId, req.params.id);
@@ -3725,7 +3741,7 @@ app.post(
       req.user!.businessId,
       req.params.id,
     );
-    const result = await receiptService.sendReceiptEmail(receipt.id, {
+    const result = await receiptService.sendReceiptEmail(receipt.id, req.user!.businessId, {
       email: req.body.email,
       name: req.body.name,
       subject: req.body.subject,
@@ -4276,14 +4292,15 @@ app.get("/api/templates", requireAuth, async (req: AuthRequest, res) => {
   res.json({ templates, limit, offset });
 });
 
-app.post("/api/templates", requireAuth, async (req: AuthRequest, res) => {
+app.post("/api/templates", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
+  const parsed = TemplateCreateSchema.parse(req.body);
   const template = await templateRepository.create(req.user!.businessId, {
-    name: req.body.name ?? "Untitled Template",
-    htmlTemplate: req.body.htmlTemplate ?? "",
-    config: req.body.config ?? {},
-    isDefault: req.body.isDefault ?? false,
+    name: parsed.name ?? "Untitled Template",
+    htmlTemplate: parsed.htmlTemplate ?? "",
+    config: parsed.config ?? {},
+    isDefault: parsed.isDefault ?? false,
   });
   res.status(201).json({ template });
 });
@@ -4309,18 +4326,19 @@ app.get("/api/templates/:id", requireAuth, async (req: AuthRequest, res) => {
   res.json({ template });
 });
 
-app.patch("/api/templates/:id", requireAuth, async (req: AuthRequest, res) => {
+app.patch("/api/templates/:id", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
+  const parsed = TemplateUpdateSchema.parse(req.body);
   const template = await templateRepository.update(
     req.user!.businessId,
     req.params.id,
-    req.body,
+    parsed,
   );
   res.json({ template });
 });
 
-app.delete("/api/templates/:id", requireAuth, async (req: AuthRequest, res) => {
+app.delete("/api/templates/:id", requireAuth, requireRole("member"), async (req: AuthRequest, res) => {
   if (!req.user?.businessId)
     return res.status(400).json({ error: "No business context" });
   await templateRepository.delete(req.user!.businessId, req.params.id);
@@ -5436,6 +5454,7 @@ app.patch(
     );
     if (!result.rows.length)
       return res.status(404).json({ error: "Team member not found" });
+    logger.info({ userId: req.user!.id, businessId: req.user!.businessId, targetMemberId: req.params.memberId, changedRole: role, ip: req.ip, userAgent: req.get("user-agent"), event: "team_role_change" });
     res.json({ ok: true });
   },
 );

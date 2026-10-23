@@ -59,7 +59,12 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   DATABASE_URL_TEST: z.string().optional(),
   AUTH_MODE: z.enum(["dev", "jwt", "stub"]).default(isProduction ? "jwt" : "dev"),
-  AUTH_JWT_SECRET: z.string().default("dev-secret-change-me"),
+  AUTH_JWT_SECRET: z.string()
+    .refine((value) => !isProduction || value !== "dev-secret-change-me",
+      "AUTH_JWT_SECRET must not be the default dev secret in production")
+    .refine((value) => !isProduction || value.length >= 32,
+      "AUTH_JWT_SECRET must be at least 32 characters in production")
+    .default("dev-secret-change-me"),
   APP_PUBLIC_BASE_URL: baseUrlSchema.optional(),
   APP_FRONTEND_URL: baseUrlSchema.optional(),
   EMAIL_FROM: z.string().default("noreply@example.com"),
@@ -115,23 +120,21 @@ try {
 }
 
 if (isProduction && parsed.AUTH_MODE === "dev") {
-  console.warn(
-    "AUTH_MODE=dev is not recommended in production. " +
-      "Use AUTH_MODE=jwt for real authentication.",
+  throw new Error(
+    "AUTH_MODE=dev is not allowed in production. Set AUTH_MODE=jwt for real authentication.",
   );
 }
 
 if (isProduction && parsed.AUTH_MODE === "stub") {
-  console.warn(
-    "AUTH_MODE=stub is not recommended in production. " +
-      "Use AUTH_MODE=jwt for real authentication.",
+  throw new Error(
+    "AUTH_MODE=stub is not allowed in production. Set AUTH_MODE=jwt for real authentication.",
   );
 }
 
 if (isProduction && (!parsed.AUTH_JWT_SECRET || parsed.AUTH_JWT_SECRET === "dev-secret-change-me")) {
-  console.warn(
+  throw new Error(
     "AUTH_JWT_SECRET is not set to a secure value in production. " +
-      "Authentication will be insecure. Set AUTH_JWT_SECRET to a secure random value.",
+      "Set AUTH_JWT_SECRET to a secure random value (min 32 characters).",
   );
 }
 
@@ -144,8 +147,8 @@ if (isProduction && !parsed.REDIS_URL) {
 }
 
 if (isProduction && parsed.EMAIL_PROVIDER === "stub") {
-  console.warn(
-    "EMAIL_PROVIDER=stub is not recommended in production. " +
+  throw new Error(
+    "EMAIL_PROVIDER=stub is not allowed in production. " +
       "Set EMAIL_PROVIDER to smtp, sendgrid, or ses so emails are actually delivered.",
   );
 }
@@ -158,14 +161,14 @@ if (isProduction && parsed.PAYMENT_PROVIDER === "stripe" && !parsed.STRIPE_SECRE
 }
 
 if (isProduction && parsed.PAYMENT_PROVIDER === "stub") {
-  console.warn(
-    "PAYMENT_PROVIDER=stub is not recommended in production. " +
+  throw new Error(
+    "PAYMENT_PROVIDER=stub is not allowed in production. " +
       "Payment endpoints will return placeholder responses. Set PAYMENT_PROVIDER=stripe or PAYMENT_PROVIDER=paypal.",
   );
 }
 
 if (isProduction && parsed.PAYMENT_PROVIDER === "paypal" && !parsed.PAYPAL_CLIENT_ID) {
-  console.warn(
+  throw new Error(
     "PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET are not set. Payment processing endpoints will return errors when called.",
   );
 }

@@ -649,45 +649,13 @@ export async function setDefaultDocumentTemplate(id: string) {
   return res.data;
 }
 
-export async function getInvoiceTemplates(params?: {
-  limit?: number;
-  documentType?: string;
-}) {
-  const res = await api.get("/document-templates", { params });
-  return res.data;
-}
-
-export async function getInvoiceTemplate(id: string) {
-  const res = await api.get(`/document-templates/${id}`);
-  return res.data;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function createInvoiceTemplate(data: any) {
-  const res = await api.post("/document-templates", data);
-  return res.data;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function updateInvoiceTemplate(id: string, data: any) {
-  const res = await api.patch(`/document-templates/${id}`, data);
-  return res.data;
-}
-
-export async function duplicateInvoiceTemplate(id: string) {
-  const res = await api.post(`/document-templates/${id}/duplicate`);
-  return res.data;
-}
-
-export async function setDefaultInvoiceTemplate(id: string) {
-  const res = await api.post(`/document-templates/${id}/set-default`);
-  return res.data;
-}
-
-export async function deleteInvoiceTemplate(id: string) {
-  const res = await api.delete(`/document-templates/${id}`);
-  return res.data;
-}
+export const getInvoiceTemplates = getDocumentTemplates;
+export const getInvoiceTemplate = getDocumentTemplate;
+export const createInvoiceTemplate = createDocumentTemplate;
+export const updateInvoiceTemplate = updateDocumentTemplate;
+export const duplicateInvoiceTemplate = duplicateDocumentTemplate;
+export const setDefaultInvoiceTemplate = setDefaultDocumentTemplate;
+export const deleteInvoiceTemplate = deleteDocumentTemplate;
 
 export async function publishInvoiceTemplate(id: string) {
   const res = await api.patch(`/document-templates/${id}`, { is_active: true });

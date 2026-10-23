@@ -60,7 +60,7 @@ export function requireUsageLimit(featureCode: string, increment = false) {
 
 export function withBusinessId(req: EntitlementRequest, res: Response, next: NextFunction): void {
   if (!req.user?.businessId) {
-    throw new ForbiddenError("Business context required");
+    return next(new ForbiddenError("Business context required"));
   }
   next();
 }

@@ -2,11 +2,11 @@ import { query } from "../db/pool.js";
 import type { Product } from "../domain/models/index.js";
 
 export interface ProductInput {
-  name: string;
+  name?: string;
   description?: string | null;
   sku?: string | null;
-  defaultUnitPrice?: string | number;
-  defaultTaxRate?: string | number;
+  defaultUnitPrice?: string | number | null;
+  defaultTaxRate?: string | number | null;
   unit?: string;
   defaultCurrency?: string;
 }

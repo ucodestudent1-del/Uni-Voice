@@ -42,6 +42,13 @@ services:
       APP_PUBLIC_BASE_URL: https://yourdomain.com
       APP_FRONTEND_URL: https://yourdomain.com
       AUTH_JWT_SECRET: change-me-to-a-secure-random-string
+      EMAIL_PROVIDER: smtp
+      SMTP_HOST: smtp.example.com
+      SMTP_PORT: 587
+      SMTP_USER: user@example.com
+      SMTP_PASS: changeme
+      PAYMENT_PROVIDER: stripe
+      STRIPE_SECRET_KEY: sk_test_changeme
     ports:
       - "80:80"
       - "4000:4000"

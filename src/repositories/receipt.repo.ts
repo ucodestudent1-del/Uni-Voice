@@ -71,8 +71,10 @@ export class ReceiptRepository {
     return this.rowToModel(res.rows[0]);
   }
 
-  async findByIdRaw(id: string): Promise<ReceiptRow> {
-    const res = await query(`SELECT * FROM receipts WHERE id = $1`, [id]);
+  async findByIdRaw(id: string, businessId?: string): Promise<ReceiptRow> {
+    const res = businessId
+      ? await query(`SELECT * FROM receipts WHERE id = $1 AND business_id = $2 LIMIT 1`, [id, businessId])
+      : await query(`SELECT * FROM receipts WHERE id = $1 LIMIT 1`, [id]);
     if (!res.rows.length) throw new NotFoundError(`Receipt ${id} not found`);
     return this.rowToModel(res.rows[0]);
   }

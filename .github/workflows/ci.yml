@@ -28,6 +28,16 @@ jobs:
       - name: Run npm audit
         run: npm audit --audit-level=moderate
 
+      - name: Install frontend dependencies
+        run: |
+          cd webapp
+          npm ci
+
+      - name: Run frontend npm audit
+        run: |
+          cd webapp
+          npm audit --audit-level=moderate
+
       - name: Run gitleaks
         uses: gitleaks/gitleaks-action@v2
         with:
@@ -68,7 +78,7 @@ jobs:
         run: npm ci
 
       - name: Run backend lint
-        run: npm run lint
+        run: npm run lint -- --max-warnings 0
 
   frontend-typecheck:
     name: Frontend Type Check
@@ -235,7 +245,7 @@ jobs:
       - name: Run frontend lint
         run: |
           cd webapp
-          npm run lint
+          npm run lint -- --max-warnings 0
 
   docker-build:
     name: Docker Build
@@ -268,17 +278,25 @@ jobs:
           docker run -d --name postgres-test \
             -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=invoice_dev \
             -p 5432:5432 postgres:16-alpine
-          # Wait for PostgreSQL to be ready
+          # Start a Redis instance for the test container
+          docker run -d --name redis-test \
+            -p 6379:6379 redis:7-alpine
+          # Wait for PostgreSQL and Redis to be ready
           timeout 30 sh -c 'until docker exec postgres-test pg_isready -U postgres; do sleep 1; done'
+          timeout 30 sh -c 'until docker run --rm --network=host redis:7-alpine redis-cli -h 127.0.0.1 ping | grep PONG; do sleep 1; done'
           # Create and start the test container with proper environment
-           docker create --name test-container \
-             -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/invoice_dev \
-             -e REDIS_URL=redis://host.docker.internal:6379 \
-             -e APP_ENV=production \
-             -e APP_PUBLIC_BASE_URL=https://example.com \
-             -e AUTH_JWT_SECRET=test-secret \
-             -p 8080:4000 \
-             universal-invoice-generator:latest
+          docker create --name test-container \
+            -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/invoice_dev \
+            -e REDIS_URL=redis://host.docker.internal:6379 \
+            -e APP_ENV=production \
+            -e APP_PUBLIC_BASE_URL=https://example.com \
+            -e AUTH_JWT_SECRET=test-secret-key-min-32-chars-long!! \
+            -e EMAIL_PROVIDER=smtp \
+            -e SMTP_HOST=smtp.example.com \
+            -e PAYMENT_PROVIDER=stripe \
+            -e STRIPE_SECRET_KEY=sk_test_changeme \
+            -p 8080:4000 \
+            universal-invoice-generator:latest
           docker start test-container
           # Wait for the backend to be healthy
           timeout 60 sh -c 'until curl -sf http://localhost:8080/api/health >/dev/null 2>&1; do sleep 2; done'
@@ -287,3 +305,5 @@ jobs:
           docker rm test-container || true
           docker stop postgres-test || true
           docker rm postgres-test || true
+          docker stop redis-test || true
+          docker rm redis-test || true

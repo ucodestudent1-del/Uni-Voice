@@ -45,10 +45,10 @@ export default function Templates() {
     getBusiness().then((d) => setBusiness(d.business)).catch(() => {});
   }, []);
 
-   async function loadTemplates(documentType?: string) {
-     try {
-       const data = await getInvoiceTemplates({ limit: 50, documentType: documentType || undefined });
-       setTemplates(data.templates ?? []);
+    async function loadTemplates() {
+      try {
+        const data = await getInvoiceTemplates({ limit: 50 });
+        setTemplates(data.templates ?? []);
      } catch {
        setTemplates([]);
      } finally {
@@ -158,7 +158,7 @@ export default function Templates() {
           value={documentTypeFilter}
           onChange={(e) => {
             setDocumentTypeFilter(e.target.value);
-            loadTemplates(e.target.value);
+            loadTemplates();
           }}
           className="text-xs border border-input-border rounded px-2 py-1 bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
         >
