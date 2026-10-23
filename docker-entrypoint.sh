@@ -12,13 +12,16 @@ NGINX_PID=""
 EXIT_CODE=0
 
 # Clean up on exit — ensure both processes are terminated
+CLEANING_UP=false
+
 cleanup() {
+  if [ "$CLEANING_UP" = true ]; then return; fi
+  CLEANING_UP=true
   echo "Shutting down..."
   if [ -n "$BACKEND_PID" ]; then kill "$BACKEND_PID" 2>/dev/null || true; fi
   if [ -n "$NGINX_PID" ]; then kill "$NGINX_PID" 2>/dev/null || true; fi
   if [ -n "$BACKEND_PID" ]; then wait "$BACKEND_PID" 2>/dev/null || true; fi
   if [ -n "$NGINX_PID" ]; then wait "$NGINX_PID" 2>/dev/null || true; fi
-  exit "$EXIT_CODE"
 }
 
 trap cleanup INT TERM EXIT
@@ -129,12 +132,12 @@ while true; do
   if ! kill -0 $BACKEND_PID 2>/dev/null; then
     echo "ERROR: Backend process died."
     EXIT_CODE=1
-    cleanup
+    exit 1
   fi
   if ! kill -0 $NGINX_PID 2>/dev/null; then
     echo "ERROR: Nginx process died."
     EXIT_CODE=1
-    cleanup
+    exit 1
   fi
   sleep 2
 done

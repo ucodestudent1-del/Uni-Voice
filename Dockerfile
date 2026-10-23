@@ -38,15 +38,20 @@ WORKDIR /app
 
 # Install nginx (for serving frontend + reverse proxy to API)
 # and system dependencies for puppeteer/chromium at runtime
+# Install nginx and system dependencies
 RUN apk add --no-cache \
     nginx \
     curl \
     gettext \
     cairo jpeg pango \
     nss freetype harfbuzz fribidi woff2 ttf-freefont \
-    nodejs \
     netcat-openbsd \
     redis
+
+# Allow nginx to bind to port 80 as non-root user (via capabilities)
+# This avoids needing to run nginx as root
+RUN apk add --no-cache libcap && \
+    setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 2>/dev/null || true
 
 # Copy production dependencies (native modules already compiled in deps layer)
 COPY --from=deps /app/node_modules ./node_modules
@@ -77,7 +82,7 @@ USER invoice
 EXPOSE 80 4000
 
 # Health check — probes through nginx (port 80) to verify the full stack (nginx + backend) is healthy
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
   CMD curl -sf http://127.0.0.1:80/health >/dev/null 2>&1 || node --input-type=module -e "import('http').then(h=>{const p=process.env.PORT||4000;h.get('http://127.0.0.1:'+p+'/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))}).catch(()=>process.exit(1))"
 
 # Use the entrypoint script that starts both nginx and the backend API
