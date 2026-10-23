@@ -48,9 +48,10 @@ if [ -n "$REDIS_URL" ]; then
   REDIS_WAIT=0
   REDIS_MAX_WAIT=30
   # Extract host:port from REDIS_URL (handles redis://hostname:port format)
-  REDIS_HOST=$(echo "$REDIS_URL" | sed -n 's|redis://||p' | sed 's/:.*//' | sed 's/\/.*//')
-  REDIS_PORT=$(echo "$REDIS_URL" | sed -n 's|redis://||p' | sed 's/.*://' | sed 's/\/.*//' | sed 's/[^0-9].*//')
+  REDIS_HOST=$(echo "$REDIS_URL" | sed -n 's|redis://||p' | sed 's/:.*//' | sed 's/\/.*//' 2>/dev/null || echo "redis")
+  REDIS_PORT=$(echo "$REDIS_URL" | sed -n 's|redis://||p' | sed 's/.*://' | sed 's/\/.*//' | sed 's/[^0-9].*//' 2>/dev/null || echo "")
   REDIS_PORT=${REDIS_PORT:-6379}
+  echo "Redis target: ${REDIS_HOST}:${REDIS_PORT}"
   while [ $REDIS_WAIT -lt $REDIS_MAX_WAIT ]; do
     if nc -z "$REDIS_HOST" "$REDIS_PORT" 2>/dev/null && redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" ping 2>/dev/null | grep -q PONG; then
       echo "Redis is ready."
@@ -60,7 +61,7 @@ if [ -n "$REDIS_URL" ]; then
     echo "Redis not ready (attempt $REDIS_WAIT/$REDIS_MAX_WAIT), retrying in 1s..."
     sleep 1
   done
-  if [ $REDIS_WAIT -ge $REDIS_MAX_WAIT ]; then
+  if [ "$REDIS_WAIT" -ge "$REDIS_MAX_WAIT" ]; then
     echo "WARNING: Redis not ready after ${REDIS_MAX_WAIT}s — backend will start but Redis-dependent features may fail."
   fi
 fi
@@ -74,6 +75,7 @@ cp /tmp/nginx.conf /app/nginx.conf
 echo "Starting backend API server..."
 node dist/index.js &
 BACKEND_PID=$!
+echo "Backend PID: $BACKEND_PID"
 
 # Wait for backend to be ready
 echo "Waiting for backend to be ready..."
