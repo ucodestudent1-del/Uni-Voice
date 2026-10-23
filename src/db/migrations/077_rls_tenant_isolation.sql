@@ -55,6 +55,7 @@ BEGIN
         'document_presets',
         'document_relations',
         'document_artifacts',
+        'document_snapshots',
         'receipts',
         'business_settings',
         'business_users',
@@ -82,6 +83,20 @@ BEGIN
         'ai_usage_logs',
         'speed_optimization_cache',
         'report_cache',
+        'recurring_invoices',
+        'recurring_invoice_items',
+        'delivery_notes',
+        'delivery_note_items',
+        'packing_slips',
+        'packing_slip_items',
+        'pro_forma_invoices',
+        'pro_forma_invoice_items',
+        'estimates',
+        'estimate_items',
+        'twofa_recovery_codes',
+        'twofa_attempts',
+        'refresh_tokens',
+        'email_log',
       )
   LOOP
     -- Check if the table has a business_id column

@@ -72,11 +72,21 @@ function parseDevHeaders(req: Request): { id: string; businessId?: string; email
   };
 }
 
+async function setRlsContextForUser(businessId: string | undefined, req: AuthRequest): Promise<void> {
+  if (!businessId) return;
+  try {
+    await query("SELECT set_current_business_id($1)", [businessId]);
+  } catch (err) {
+    logger.warn({ err, businessId: businessId.slice(0, 8), url: req.originalUrl }, "Failed to set RLS context");
+  }
+}
+
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   if (isDev && env.AUTH_MODE === "dev") {
     const devUser = parseDevHeaders(req);
     if (devUser) {
       req.user = devUser;
+      void setRlsContextForUser(devUser.businessId, req);
       next();
       return;
     }
@@ -103,6 +113,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
       businessId: decoded.businessId,
       email: decoded.email,
     };
+    void setRlsContextForUser(decoded.businessId, req);
     next();
     return;
   }
@@ -116,6 +127,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
       businessId: decoded.businessId,
       email: decoded.email,
     };
+    void setRlsContextForUser(decoded.businessId, req);
     next();
   }).catch((err) => {
     if (err instanceof UnauthorizedError) {
@@ -127,6 +139,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
         businessId: decoded.businessId,
         email: decoded.email,
       };
+      void setRlsContextForUser(decoded.businessId, req);
       next();
     }
   });
@@ -149,6 +162,7 @@ export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction
       const secret = env.AUTH_JWT_SECRET;
       const decoded = jwt.verify(token, secret) as { userId: string; businessId?: string; email?: string };
       req.user = { id: decoded.userId, businessId: decoded.businessId, email: decoded.email };
+      void setRlsContextForUser(decoded.businessId, req);
     } catch {
       // ignore invalid token for optional auth
     }

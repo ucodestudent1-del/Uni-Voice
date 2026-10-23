@@ -66,7 +66,7 @@ export class TwoFactorService {
     };
   }
 
-  async setup(userId: string, email: string): Promise<TwoFactorSetupResult> {
+  async setup(userId: string, email: string, ip?: string, userAgent?: string): Promise<TwoFactorSetupResult> {
     const secret = generateSecret();
     await query(`UPDATE users SET two_factor_secret = $1 WHERE id = $2`, [secret, userId]);
 
@@ -79,7 +79,7 @@ export class TwoFactorService {
       );
     }
 
-    logger.info({ userId }, "2FA setup: generated pending secret");
+    logger.info({ userId, email, ip, userAgent, event: "2fa_setup", twoFactorMethod: "totp" });
     return {
       secret,
       otpauthUri: generateOtpAuthUri(secret, email),
@@ -87,7 +87,7 @@ export class TwoFactorService {
     };
   }
 
-  async enable(userId: string, code: string): Promise<{ enabled: boolean }> {
+  async enable(userId: string, code: string, ip?: string, userAgent?: string): Promise<{ enabled: boolean }> {
     const res = await query(`SELECT two_factor_secret FROM users WHERE id = $1`, [userId]);
     if (!res.rows.length) throw new AppError("User not found", 404, "USER_NOT_FOUND");
     const secret = res.rows[0].two_factor_secret as string | null;
@@ -97,7 +97,8 @@ export class TwoFactorService {
 
     const verification = verifyTotp(secret, code);
     if (!verification.valid) {
-      await this.recordAttempt(userId, false, "invalid_code");
+      await this.recordAttempt(userId, false, "invalid_code", ip);
+      logger.info({ userId, ip, userAgent, event: "2fa_enable_failed", reason: "invalid_code" });
       throw new UnauthorizedError("Invalid verification code");
     }
 
@@ -109,8 +110,8 @@ export class TwoFactorService {
         WHERE id = $1`,
       [userId]
     );
-    await this.recordAttempt(userId, true, null);
-    logger.info({ userId }, "2FA enabled");
+    await this.recordAttempt(userId, true, null, ip);
+    logger.info({ userId, ip, userAgent, event: "2fa_enabled", twoFactorMethod: "totp" });
     return { enabled: true };
   }
 
@@ -119,7 +120,8 @@ export class TwoFactorService {
     email: string,
     businessId: string | undefined,
     code: string,
-    ip?: string
+    ip?: string,
+    userAgent?: string
   ): Promise<TwoFactorVerifyResult> {
     const res = await query(
       `SELECT two_factor_enabled, two_factor_secret FROM users WHERE id = $1`,
@@ -133,6 +135,7 @@ export class TwoFactorService {
 
     const attempts = await this.countRecentFailures(userId);
     if (attempts >= MAX_FAILED_ATTEMPTS) {
+      logger.info({ userId, ip, userAgent, event: "2fa_locked_out", failedAttempts: attempts });
       throw new AppError(
         "Too many failed 2FA attempts. Try again later.",
         429,
@@ -149,6 +152,7 @@ export class TwoFactorService {
         businessId,
         email,
       });
+      logger.info({ userId, email, businessId, ip, userAgent, event: "2fa_verified", method: "totp" });
       return {
         token: accessToken,
         refreshToken,
@@ -165,6 +169,7 @@ export class TwoFactorService {
         businessId,
         email,
       });
+      logger.info({ userId, email, businessId, ip, userAgent, event: "2fa_verified", method: "recovery_code" });
       return {
         token: accessToken,
         refreshToken,
@@ -174,10 +179,13 @@ export class TwoFactorService {
     }
 
     await this.recordAttempt(userId, false, "invalid_code", ip);
+    logger.info({ userId, email, ip, userAgent, event: "2fa_verify_failed", reason: "invalid_code" });
     throw new UnauthorizedError("Invalid 2FA code");
   }
 
-  async disable(userId: string): Promise<{ disabled: boolean }> {
+  async disable(userId: string, ip?: string, userAgent?: string): Promise<{ disabled: boolean }> {
+    const res = await query(`SELECT email FROM users WHERE id = $1`, [userId]);
+    const email = res.rows[0]?.email ?? undefined;
     await query(
       `UPDATE users
           SET two_factor_secret = NULL,
@@ -187,11 +195,11 @@ export class TwoFactorService {
       [userId]
     );
     await query(`DELETE FROM twofa_recovery_codes WHERE user_id = $1`, [userId]);
-    logger.info({ userId }, "2FA disabled");
+    logger.info({ userId, email, ip, userAgent, event: "2fa_disabled" });
     return { disabled: true };
   }
 
-  async regenerateRecoveryCodes(userId: string): Promise<string[]> {
+  async regenerateRecoveryCodes(userId: string, ip?: string, userAgent?: string): Promise<string[]> {
     const res = await query(`SELECT two_factor_enabled FROM users WHERE id = $1`, [userId]);
     if (!res.rows.length || !res.rows[0].two_factor_enabled) {
       throw new ForbiddenError("Two-factor authentication must be enabled first");
@@ -205,7 +213,7 @@ export class TwoFactorService {
         [userId, hashRecoveryCode(code)]
       );
     }
-    logger.info({ userId }, "2FA recovery codes regenerated");
+    logger.info({ userId, ip, userAgent, event: "2fa_recovery_codes_regenerated" });
     return codes;
   }
 

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { query, getClient } from "../db/pool.js";
 import { NotFoundError } from "../domain/errors.js";
 import { documentNumberingService } from "./numbering/document-numbering-service.js";
@@ -5,6 +6,38 @@ import { pdfService } from "./pdf/pdf-service.js";
 import { templateRenderer, type DocumentTemplateData, type DocumentTypeKey } from "./templates/template-renderer.js";
 import type { TemplateBusiness, TemplateCustomer } from "./templates/template-renderer.js";
 import { fetchBusinessSnapshot, fetchCustomerSnapshot } from "./templates/template-renderer.js";
+
+export const GenericDocumentLineItemSchema = z.object({
+  description: z.string().min(1),
+  quantity: z.union([z.string(), z.number()]).optional().default(1),
+  unit: z.string().optional().default("each"),
+  unitPrice: z.union([z.string(), z.number()]).optional().default(0),
+  taxRate: z.union([z.string(), z.number()]).optional().default(0),
+  taxName: z.string().nullable().optional(),
+});
+
+export const GenericDocumentCreateInputSchema = z.object({
+  customerId: z.string().uuid().nullable().optional(),
+  currency: z.string().length(3).optional(),
+  notes: z.string().nullable().optional(),
+  terms: z.string().nullable().optional(),
+  paymentInstructions: z.string().nullable().optional(),
+  items: z.array(GenericDocumentLineItemSchema).optional(),
+}).strict();
+
+export const GenericDocumentUpdateInputSchema = z
+  .object({
+    customerId: z.string().uuid().nullable().optional(),
+    currency: z.string().length(3).optional(),
+    notes: z.string().nullable().optional(),
+    terms: z.string().nullable().optional(),
+    paymentInstructions: z.string().nullable().optional(),
+    status: z.enum(["draft", "sent", "paid", "void"]).optional(),
+  })
+  .strict();
+
+export type GenericDocumentCreateInput = z.infer<typeof GenericDocumentCreateInputSchema>;
+export type GenericDocumentUpdateInput = z.infer<typeof GenericDocumentUpdateInputSchema>;
 
 const TABLE_MAP: Record<DocumentTypeKey, string> = {
   invoice: "invoices",
@@ -42,23 +75,6 @@ export interface GenericDocument {
   [key: string]: string | number | boolean | null | Date | undefined;
 }
 
-export interface GenericDocumentCreateInput {
-  customerId?: string | null;
-  currency?: string;
-  notes?: string | null;
-  terms?: string | null;
-  paymentInstructions?: string | null;
-  items?: Array<{
-    description: string;
-    quantity?: string | number;
-    unit?: string;
-    unitPrice?: string | number;
-    taxRate?: string | number;
-    taxName?: string | null;
-  }>;
-  [key: string]: unknown;
-}
-
 export class GenericDocumentService {
   async findById(businessId: string, docId: string, docType: DocumentTypeKey): Promise<GenericDocument | null> {
     const table = TABLE_MAP[docType];
@@ -94,6 +110,8 @@ export class GenericDocumentService {
     const table = TABLE_MAP[docType];
     if (!table) throw new Error(`Unsupported document type: ${docType}`);
 
+    const validated = GenericDocumentCreateInputSchema.parse(input);
+
     const client = await getClient();
     try {
       await client.query("BEGIN");
@@ -111,11 +129,11 @@ export class GenericDocumentService {
         [
           businessId,
           docNumber,
-          input.customerId ?? null,
-          input.currency ?? "USD",
-          input.notes ?? null,
-          input.terms ?? null,
-          input.paymentInstructions ?? null,
+          validated.customerId ?? null,
+          validated.currency ?? "USD",
+          validated.notes ?? null,
+          validated.terms ?? null,
+          validated.paymentInstructions ?? null,
           userId ?? null,
           now,
         ]
@@ -123,8 +141,8 @@ export class GenericDocumentService {
 
       const doc = res.rows[0] as GenericDocument;
 
-      if (input.items && input.items.length > 0) {
-        await this.saveItems(client, table, doc.id, input.items);
+      if (validated.items && validated.items.length > 0) {
+        await this.saveItems(client, table, doc.id, validated.items);
       }
 
       await client.query("COMMIT");
@@ -165,11 +183,13 @@ export class GenericDocumentService {
     const table = TABLE_MAP[docType];
     if (!table) throw new Error(`Unsupported document type: ${docType}`);
 
+    const validated = GenericDocumentUpdateInputSchema.parse(input);
+
     const updates: string[] = [];
     const values: unknown[] = [];
     let idx = 1;
 
-    for (const [key, value] of Object.entries(input)) {
+    for (const [key, value] of Object.entries(validated)) {
       if (key === "id" || key === "business_id" || key === "created_at") continue;
       updates.push(`${key} = $${idx++}`);
       values.push(value);

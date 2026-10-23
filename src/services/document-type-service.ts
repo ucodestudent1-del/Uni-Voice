@@ -6,6 +6,7 @@ import { paymentVoucherService } from "./payment-voucher-service.js";
 import { receiptService } from "./receipt-service.js";
 import { purchaseOrderService } from "./purchase-order-service.js";
 import { genericDocumentService } from "./generic-document-service.js";
+import type { GenericDocumentCreateInput } from "./generic-document-service.js";
 
 export class DocumentTypeService {
   async fetchDocumentById(
@@ -69,15 +70,15 @@ export class DocumentTypeService {
       case "purchase-order":
         return await purchaseOrderService.create(businessId, input as any, userId);
       case "recurring-invoice":
-        return await genericDocumentService.create(businessId, "recurring-invoice", input as any, userId);
+        return await genericDocumentService.create(businessId, "recurring-invoice", input as GenericDocumentCreateInput, userId);
       case "delivery-note":
-        return await genericDocumentService.create(businessId, "delivery-note", input as any, userId);
+        return await genericDocumentService.create(businessId, "delivery-note", input as GenericDocumentCreateInput, userId);
       case "packing-slip":
-        return await genericDocumentService.create(businessId, "packing-slip", input as any, userId);
+        return await genericDocumentService.create(businessId, "packing-slip", input as GenericDocumentCreateInput, userId);
       case "pro-forma-invoice":
-        return await genericDocumentService.create(businessId, "pro-forma-invoice", input as any, userId);
+        return await genericDocumentService.create(businessId, "pro-forma-invoice", input as GenericDocumentCreateInput, userId);
       case "estimate":
-        return await genericDocumentService.create(businessId, "estimate", input as any, userId);
+        return await genericDocumentService.create(businessId, "estimate", input as GenericDocumentCreateInput, userId);
       default:
         throw new Error(`Unknown document type: ${docType}`);
     }

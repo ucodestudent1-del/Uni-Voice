@@ -2569,14 +2569,6 @@ export async function getPurchaseOrderEvents(
 }
 
 // ============================================================================
-// RECEIPTS (additional list detail fetch for workspace)
-// ============================================================================
-
-export async function getReceipt(id: string): Promise<{ receipt: ApiReceipt }> {
-  return getReceiptById(id);
-}
-
-// ============================================================================
 // DOCUMENT PRESETS (pre-filled creation templates)
 // ============================================================================
 
