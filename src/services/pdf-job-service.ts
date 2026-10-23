@@ -1,5 +1,4 @@
 import { Queue, Worker, Job } from "bullmq";
-import IORedis from "ioredis";
 import type { Redis as IORedisInstance } from "ioredis";
 import { logger } from "../utils/logger.js";
 import { env } from "../config/index.js";
@@ -16,10 +15,12 @@ let bullConnection: IORedisInstance | null = null;
 function getBullRedisConnection(): IORedisInstance | null {
   if (!env.REDIS_URL) return null;
   if (bullConnection) return bullConnection;
-  bullConnection = new IORedis.default(env.REDIS_URL, {
-    maxRetriesPerRequest: null,
-  });
-  return bullConnection;
+  const shared = getRedis();
+  if (shared) {
+    bullConnection = shared;
+    return bullConnection;
+  }
+  return null;
 }
 
 export function getQueue(): Queue | null {
@@ -105,11 +106,13 @@ export async function startPdfWorker(): Promise<void> {
   await initRedis();
   const connection = getRedis();
   if (!connection) {
+    logger.warn("Redis connection not available — PDF worker will be disabled");
     return;
   }
 
   const bullConnection = getBullRedisConnection();
   if (!bullConnection) {
+    logger.warn("BullMQ Redis connection not available — PDF worker will be disabled");
     return;
   }
 

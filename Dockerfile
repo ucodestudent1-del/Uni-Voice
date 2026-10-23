@@ -44,7 +44,8 @@ RUN apk add --no-cache \
     gettext \
     cairo jpeg pango \
     nss freetype harfbuzz fribidi woff2 ttf-freefont \
-    nodejs
+    nodejs \
+    netcat-openbsd
 
 # Copy production dependencies (native modules already compiled in deps layer)
 COPY --from=deps /app/node_modules ./node_modules

@@ -5,22 +5,29 @@ import { logger } from "../utils/logger.js";
 
 let redisClient: RedisType | null = null;
 let redisConnected = false;
+let redisReadyResolvers: ((value: void) => void)[] = [];
 
 export function getRedisClient(): RedisType | null {
   if (!env.REDIS_URL) return null;
 
   if (!redisClient) {
     redisClient = new Redis(env.REDIS_URL, {
-      maxRetriesPerRequest: 1,
+      maxRetriesPerRequest: 3,
       enableOfflineQueue: false,
-      connectTimeout: 5000,
+      connectTimeout: 10000,
       lazyConnect: true,
+      retryStrategy: (times: number) => {
+        const delay = Math.min(times * 200, 5000);
+        return delay;
+      },
     });
     redisClient.on("error", (err: Error) => {
       logger.error({ err }, "Redis connection error");
     });
     redisClient.on("connect", () => {
       redisConnected = true;
+      redisReadyResolvers.forEach((resolve) => resolve());
+      redisReadyResolvers = [];
       if (!isDev) {
         logger.info("Connected to Redis");
       }
@@ -31,23 +38,9 @@ export function getRedisClient(): RedisType | null {
     redisClient.on("end", () => {
       redisConnected = false;
     });
-
-    void redisClient.connect().catch((err: Error) => {
-      logger.warn({ err }, "Redis initial connection failed; continuing without Redis");
-    });
   }
 
   return redisClient;
-}
-
-export function getRedisSendCommand(): ((...args: string[]) => Promise<unknown>) | null {
-  const client = getRedisClient();
-  if (!client) return null;
-  return (...args: string[]) => client.call(args[0], ...args.slice(1)) as Promise<unknown>;
-}
-
-export function isRedisReady(): boolean {
-  return redisConnected;
 }
 
 export function getRedis(): RedisType | null {
@@ -55,5 +48,38 @@ export function getRedis(): RedisType | null {
 }
 
 export async function initRedis(): Promise<void> {
-  getRedisClient();
+  if (!env.REDIS_URL) return;
+  const client = getRedisClient();
+  if (!client) return;
+  if (redisConnected) return;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        if (!redisConnected) {
+          reject(new Error("Redis connection timeout"));
+        }
+      }, 15000);
+      redisReadyResolvers.push((value: void) => {
+        clearTimeout(timeout);
+        resolve(value);
+      });
+      void client.connect().catch((err: Error) => {
+        clearTimeout(timeout);
+        logger.warn({ err }, "Redis initial connection failed; continuing without Redis");
+        resolve();
+      });
+    });
+  } catch (err) {
+    logger.warn({ err }, "Redis initial connection attempt failed; continuing without Redis");
+  }
+}
+
+export function isRedisReady(): boolean {
+  return redisConnected;
+}
+
+export function getRedisSendCommand(): ((...args: string[]) => Promise<unknown>) | null {
+  const client = getRedisClient();
+  if (!client) return null;
+  return (...args: string[]) => client.call(args[0], ...args.slice(1)) as Promise<unknown>;
 }

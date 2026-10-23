@@ -1,5 +1,4 @@
 import { Queue, Worker, type Job } from "bullmq";
-import IORedis from "ioredis";
 import type { Redis as IORedisInstance } from "ioredis";
 import { logger } from "../utils/logger.js";
 import { env } from "../config/index.js";
@@ -25,10 +24,12 @@ const handlers = new Map<string, JobHandler>();
 function getBullRedisConnection(): IORedisInstance | null {
   if (!env.REDIS_URL) return null;
   if (bullConnection) return bullConnection;
-  bullConnection = new IORedis.default(env.REDIS_URL, {
-    maxRetriesPerRequest: null,
-  });
-  return bullConnection;
+  const shared = getRedis();
+  if (shared) {
+    bullConnection = shared;
+    return bullConnection;
+  }
+  return null;
 }
 
 export function getSchedulerConnection(): IORedisInstance | null {

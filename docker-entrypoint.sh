@@ -39,6 +39,29 @@ until node dist/db/migrate.js 2>&1; do
 done
 echo "Migrations completed successfully."
 
+# Wait for Redis to be ready (if REDIS_URL is set)
+if [ -n "$REDIS_URL" ]; then
+  echo "Waiting for Redis to be ready..."
+  REDIS_WAIT=0
+  REDIS_MAX_WAIT=30
+  # Extract host:port from REDIS_URL (handles redis://hostname:port format)
+  REDIS_HOST=$(echo "$REDIS_URL" | sed -n 's|redis://||p' | sed 's/:.*//' | sed 's/\/.*//')
+  REDIS_PORT=$(echo "$REDIS_URL" | sed -n 's|redis://||p' | sed 's/.*://' | sed 's/\/.*//' | sed 's/[^0-9].*//')
+  REDIS_PORT=${REDIS_PORT:-6379}
+  while [ $REDIS_WAIT -lt $REDIS_MAX_WAIT ]; do
+    if nc -z "$REDIS_HOST" "$REDIS_PORT" 2>/dev/null; then
+      echo "Redis is reachable."
+      break
+    fi
+    REDIS_WAIT=$((REDIS_WAIT + 1))
+    echo "Redis not ready (attempt $REDIS_WAIT/$REDIS_MAX_WAIT), retrying in 1s..."
+    sleep 1
+  done
+  if [ $REDIS_WAIT -ge $REDIS_MAX_WAIT ]; then
+    echo "WARNING: Redis not ready after ${REDIS_MAX_WAIT}s — backend will start but Redis-dependent features may fail."
+  fi
+fi
+
 # Generate nginx config from template using envsubst
 echo "Generating nginx configuration..."
 envsubst '${NGINX_BACKEND_PORT}' < /app/nginx.conf.template > /tmp/nginx.conf

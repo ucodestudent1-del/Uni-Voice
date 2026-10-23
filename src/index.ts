@@ -15,7 +15,7 @@ import * as Sentry from "@sentry/node";
 import { parsePagination } from "./utils/pagination.js";
 import { validateDocumentTextInput } from "./utils/document-validation.js";
 import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
-import { getRedisSendCommand } from "./db/redis.js";
+import { getRedisSendCommand, initRedis } from "./db/redis.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import {
@@ -6399,30 +6399,34 @@ async function start() {
       });
 
     if (env.REDIS_URL) {
-      void import("./services/pdf-job-service.js").then(({ startPdfWorker }) => {
-        startPdfWorker().catch((e) =>
-          logger.error({ err: e }, "Failed to start PDF worker"),
-        );
-      });
-
-      void (async () => {
-        const queueNames = [
-          "recurring-invoices",
-          "late-fees",
-          "reminders",
-        ];
-        for (const qn of queueNames) {
-          await startWorker(qn, 1).catch((e) =>
-            logger.error({ err: e }, `Failed to start worker for "${qn}"`),
+      void initRedis().then(() => {
+        void import("./services/pdf-job-service.js").then(({ startPdfWorker }) => {
+          startPdfWorker().catch((e) =>
+            logger.error({ err: e }, "Failed to start PDF worker"),
           );
-        }
-      })();
+        });
 
-      void recurringInvoiceService.scheduleRecurringJob().catch((e: unknown) =>
-        logger.error({ err: e }, "Failed to schedule recurring invoice job"),
-      );
-      void lateFeeEngineService.scheduleLateFeeJob().catch((e) =>
-        logger.error({ err: e }, "Failed to schedule late fee job"),
+        void (async () => {
+          const queueNames = [
+            "recurring-invoices",
+            "late-fees",
+            "reminders",
+          ];
+          for (const qn of queueNames) {
+            await startWorker(qn, 1).catch((e) =>
+              logger.error({ err: e }, `Failed to start worker for "${qn}"`),
+            );
+          }
+        })();
+
+        void recurringInvoiceService.scheduleRecurringJob().catch((e: unknown) =>
+          logger.error({ err: e }, "Failed to schedule recurring invoice job"),
+        );
+        void lateFeeEngineService.scheduleLateFeeJob().catch((e) =>
+          logger.error({ err: e }, "Failed to schedule late fee job"),
+        );
+      }).catch((e) =>
+        logger.warn({ err: e }, "Redis initialization failed — background services disabled"),
       );
     }
   });
