@@ -30,16 +30,24 @@ trap cleanup INT TERM EXIT
 echo "Running database migrations..."
 MIGRATE_ATTEMPT=0
 MIGRATE_MAX_ATTEMPTS=30
+MIGRATIONS_OK=false
 while [ $MIGRATE_ATTEMPT -lt $MIGRATE_MAX_ATTEMPTS ]; do
   if node dist/db/migrate.js 2>&1; then
     echo "Migrations completed successfully."
+    MIGRATIONS_OK=true
     break
   fi
   MIGRATE_ATTEMPT=$((MIGRATE_ATTEMPT + 1))
   if [ $MIGRATE_ATTEMPT -ge $MIGRATE_MAX_ATTEMPTS ]; then
     echo "WARNING: Database migrations failed after ${MIGRATE_MAX_ATTEMPTS} attempts."
     echo "The backend will start, but the database schema may be incomplete."
-    echo "The backend will attempt migrations again on startup."
+    # Run fixup for known migration 075 issue (stale Docker image)
+    echo "Running migration 075 fixup..."
+    if node dist/db/migrate-fixup-075.js 2>&1; then
+      echo "Migration 075 fixup applied successfully."
+    else
+      echo "WARNING: Migration 075 fixup also failed. Continuing with potentially incomplete schema."
+    fi
     break
   fi
   echo "Migrations failed (attempt $MIGRATE_ATTEMPT/$MIGRATE_MAX_ATTEMPTS), retrying in 2s..."
@@ -57,8 +65,14 @@ if [ -n "$REDIS_URL" ]; then
   REDIS_PORT=${REDIS_PORT:-6379}
   echo "Redis target: ${REDIS_HOST}:${REDIS_PORT}"
   while [ $REDIS_WAIT -lt $REDIS_MAX_WAIT ]; do
-    if nc -z "$REDIS_HOST" "$REDIS_PORT" 2>/dev/null && redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" ping 2>/dev/null | grep -q PONG; then
+    # Try redis-cli ping (requires DNS resolution)
+    if redis-cli -h "$REDIS_HOST" -p "$REDIS_PORT" ping 2>/dev/null | grep -q PONG; then
       echo "Redis is ready."
+      break
+    fi
+    # Fallback: try TCP connect with nc if available
+    if nc -z "$REDIS_HOST" "$REDIS_PORT" 2>/dev/null; then
+      echo "Redis TCP port is reachable (ping check failed, continuing anyway)."
       break
     fi
     REDIS_WAIT=$((REDIS_WAIT + 1))
