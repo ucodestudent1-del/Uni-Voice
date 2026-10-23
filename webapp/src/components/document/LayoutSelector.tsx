@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { ChevronDown, Plus, Star, Layout as LayoutIcon } from "lucide-react";
 import {
   getDocumentTemplates,
@@ -47,22 +47,7 @@ export function LayoutSelector({
   const [saving, setSaving] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    loadLayouts();
-  }, [docType]);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  async function loadLayouts() {
+  const loadLayouts = useCallback(async () => {
     setLoading(true);
     try {
       const [templateRes, presetRes] = await Promise.all([
@@ -110,15 +95,29 @@ export function LayoutSelector({
     } finally {
       setLoading(false);
     }
-  }
+  }, [docType]);
 
-  function handleApply(layout: LayoutOption) {
+  useEffect(() => {
+    loadLayouts();
+  }, [loadLayouts]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleApply = useCallback((layout: LayoutOption) => {
     onApply(layout.data);
     toast(`Applied layout: ${layout.name}`);
     setOpen(false);
-  }
+  }, [onApply, toast]);
 
-  async function handleSaveAsLayout() {
+  const handleSaveAsLayout = useCallback(async () => {
     if (!saveName.trim()) return;
     setSaving(true);
     try {
@@ -141,9 +140,9 @@ export function LayoutSelector({
     } finally {
       setSaving(false);
     }
-  }
+  }, [docType, saveName, saveDescription, currentData, loadLayouts, toast]);
 
-  async function handleSetDefault(layout: LayoutOption) {
+  const handleSetDefault = useCallback(async (layout: LayoutOption) => {
     try {
       if (layout.source === "preset") {
         await setDefaultDocumentPreset(layout.id, docType);
@@ -155,9 +154,9 @@ export function LayoutSelector({
     } catch {
       toast("Failed to set default", { type: "error" });
     }
-  }
+  }, [docType, loadLayouts, toast]);
 
-  async function handleDelete(layout: LayoutOption) {
+  const handleDelete = useCallback(async (layout: LayoutOption) => {
     try {
       if (layout.source === "preset") {
         await deleteDocumentPreset(layout.id);
@@ -169,13 +168,13 @@ export function LayoutSelector({
     } catch {
       toast("Failed to delete layout", { type: "error" });
     }
-  }
+  }, [loadLayouts, toast]);
 
-  const handleSaveClick = () => {
+  const handleSaveClick = useCallback(() => {
     setSaveName("");
     setSaveDescription("");
     setSaveDialogOpen(true);
-  };
+  }, []);
 
   return (
     <>

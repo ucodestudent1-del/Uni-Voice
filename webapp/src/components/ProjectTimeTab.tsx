@@ -72,7 +72,7 @@ function TimeEntryForm({ projectId, onClose, onSaved, editingEntry = null }: Tim
         });
       }
       onSaved();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to save time entry");
     } finally {
@@ -210,7 +210,7 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
     try {
       const data = await getTimeEntries(projectId);
       setEntries(data.entries ?? []);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to load time entries");
     } finally {
@@ -253,7 +253,7 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
       loadEntries();
       loadSummary();
       onEntriesChanged?.();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to delete entry");
     }
@@ -269,7 +269,7 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
       const entry = data.entry;
       setRunningTimerId(entry.id);
       loadEntries();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to start timer");
     }
@@ -282,7 +282,7 @@ export default function ProjectTimeTab({ projectId, currency, onEntriesChanged }
       loadEntries();
       loadSummary();
       onEntriesChanged?.();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to stop timer");
     }

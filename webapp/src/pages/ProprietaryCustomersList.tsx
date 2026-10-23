@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Users, Search, ArrowLeft, PlusCircle } from "lucide-react";
+import { Search, ArrowLeft, PlusCircle } from "lucide-react";
 import {
-  getProprietaryCustomers,
+   getProprietaryCustomers,
 } from "@/api/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button, DataTable, StatusBadge, Skeleton, customerStatusConfig } from "@/components/ui";
@@ -34,7 +34,7 @@ export default function ProprietaryCustomersList() {
 
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["proprietary-customers", { search }],
     queryFn: () => getProprietaryCustomers({ search, limit: 100 }),
     staleTime: 30_000,

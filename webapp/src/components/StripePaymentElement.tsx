@@ -72,7 +72,7 @@ export default function StripePaymentElement({
         setStripe(s);
         setElements(els);
         setIsReady(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       } catch (err: any) {
         if (!cancelled) {
           const msg = err.message || "Failed to initialize payment form";
@@ -118,7 +118,7 @@ export default function StripePaymentElement({
       }
 
       return false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       const msg = err.message || "Payment failed";
       setError(msg);

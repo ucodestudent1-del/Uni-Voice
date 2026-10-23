@@ -99,9 +99,9 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
     setLoadingCustomers(true);
     try {
       const params: ProjectSearchParams = { limit: 100 };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       if (search) (params as any).search = search;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const data = await getCustomers(params as any);
       setCustomers(data.customers ?? []);
     } catch {
@@ -111,7 +111,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function handleChange(field: keyof ProjectFormValues, value: any) {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (error) setError(null);
@@ -166,7 +166,7 @@ export default function ProjectForm({ project, customers: propCustomers, onClose
         await createProject(formData);
       }
       onSaved();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to save project");
     } finally {

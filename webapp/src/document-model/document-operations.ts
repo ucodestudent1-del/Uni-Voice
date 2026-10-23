@@ -68,7 +68,7 @@ export interface DocumentOperation {
 export interface ValidationResult {
   success: boolean;
   error?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   data?: any;
 }
 
@@ -76,7 +76,7 @@ export class DocumentBuilder {
   private doc: InvoiceDocument;
 
   constructor(doc: InvoiceDocument) {
-    this.doc = JSON.parse(JSON.stringify(doc));
+    this.doc = structuredClone(doc);
   }
 
   get document(): InvoiceDocument {
@@ -274,9 +274,9 @@ export class DocumentBuilder {
     return this.doc.components[parentId as string] ?? null;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private validateComponentProps(type: ComponentType, component: any): any {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const result = validateComponentProps(type, component) as { success: boolean; data?: any; error?: any };
     if (!result.success) {
       throw new Error(`Invalid component for ${type}: ${result.error}`);
@@ -397,12 +397,12 @@ export class DocumentBuilder {
     const def = getComponentDefinition(original.type as ComponentType);
     const id = this.generateId();
 
-    const clonedProps = JSON.parse(JSON.stringify(original.props ?? {})) as Record<string, unknown>;
-    const clonedStyle = JSON.parse(JSON.stringify(original.style ?? {})) as StyleProps;
+    const clonedProps = structuredClone(original.props ?? {}) as Record<string, unknown>;
+    const clonedStyle = structuredClone(original.style ?? {}) as StyleProps;
     const defaultProps = def?.defaultProps ?? {};
     const defaultStyle = def?.defaultStyle ?? {};
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const newComponent: any = {
       id,
       type: original.type,

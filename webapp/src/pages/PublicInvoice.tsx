@@ -38,7 +38,7 @@ export default function PublicInvoice() {
     setIsLoading(true);
     getPublicInvoice(token)
       .then((res) => setInvoice(res.invoice))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .catch((err: any) => {
         setError(err.message || "Invoice not found or link has expired");
       })
@@ -58,7 +58,7 @@ export default function PublicInvoice() {
       const cancelUrl = `${window.location.origin}/invoice/${token}`;
       const { url } = await createPaymentSession(token, successUrl, cancelUrl);
       window.location.href = url;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       toast(err.message || "Failed to start payment. Please try again.", { type: "error", title: "Payment Error" });
     } finally {
@@ -90,7 +90,7 @@ export default function PublicInvoice() {
   }
 
   const status = invoice.status ?? "draft";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const business = (invoice as any).business as {
     name?: string;
     address?: string;

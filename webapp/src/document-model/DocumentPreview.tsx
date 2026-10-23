@@ -4,13 +4,13 @@ import { renderDocumentTree, createRenderContext } from "./renderer";
 
 interface DocumentPreviewProps {
   document: InvoiceDocument;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   business: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   customer: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   invoice: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   calculations: any;
   currency: string;
   locale: string;

@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import type { Address } from "../../domain/value-objects/address.js";
 import { formatMoney, getCurrencyMetadata, type CurrencyCode } from "../../domain/value-objects/currency.js";
 import { Decimal } from "decimal.js";
+import { LruCache } from "../../utils/lru-cache.js";
 import { env } from "../../config/index.js";
 import { query } from "../../db/pool.js";
 
@@ -456,7 +457,7 @@ function fmtRate(v: Decimal.Value | undefined): string {
   return `${new Decimal(v).mul(100).toFixed(2)}%`;
 }
 
-const templateCache = new Map<string, Handlebars.TemplateDelegate<any>>();
+const templateCache = new LruCache<string, Handlebars.TemplateDelegate<any>>(500);
 
 Handlebars.registerHelper("add", (a: number, b: number) => a + b);
 

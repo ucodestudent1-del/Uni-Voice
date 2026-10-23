@@ -92,7 +92,7 @@ export default function CustomerSelector({
 
     try {
       validateCustomerForm(createForm);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (e: any) {
       setCreateError(e.errors?.[0]?.message || "Invalid form");
       return;
@@ -110,7 +110,7 @@ export default function CustomerSelector({
       setCreateForm(null);
       setCreateError(null);
       setOpen(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setCreateError(err.response?.data?.error || "Failed to create customer");
     } finally {

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { useState } from "react";
 import { Copy, FileDown } from "lucide-react";
 import { Button, Dialog, useToast } from "@/components/ui";

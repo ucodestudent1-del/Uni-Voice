@@ -170,7 +170,7 @@ describe("getAgingReport", () => {
     invalidateCache();
     const originalGet = api.get;
     const error = new Error("Request failed with status code 404");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (error as any).response = { status: 404 };
     api.get = vi.fn().mockRejectedValue(error);
     try {
@@ -226,7 +226,7 @@ describe("getPaymentMetricsReport", () => {
     invalidateCache();
     const originalGet = api.get;
     const error = new Error("Request failed with status code 404");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (error as any).response = { status: 404 };
     api.get = vi.fn().mockRejectedValue(error);
     try {

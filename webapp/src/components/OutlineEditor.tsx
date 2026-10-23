@@ -20,7 +20,7 @@ function buildNodeTree(doc: InvoiceDocument, parentId: ParentId | null): TreeNod
   const children = getChildren(doc, parentId ?? doc.rootSectionId);
   return children.map((id) => {
     const component = findComponentDeep(doc, id);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const def = component ? getComponentDefinition(component.type as any) : null;
     const childChildren = component?.children && def?.canHaveChildren
       ? buildNodeTree(doc, id as ParentId)

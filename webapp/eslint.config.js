@@ -29,7 +29,7 @@ export default tsEs.config(
           ignoreRestSiblings: true,
         },
       ],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "react-hooks/react-in-jsx-scope": "off",
       "react-hooks/exhaustive-deps": "warn",

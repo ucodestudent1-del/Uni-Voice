@@ -499,7 +499,7 @@ export function validateDocument(document: unknown): InvoiceDocument {
   return invoiceDocumentSchema.parse(document);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export const componentSchemas: Record<ComponentType, z.ZodType<any>> = {
   text: textComponentSchema,
   image: imageComponentSchema,

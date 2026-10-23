@@ -76,13 +76,13 @@ export interface DocumentEditorProps {
   onUpdateComponentStyle: (componentId: ComponentId, style: Partial<StyleProps>) => void;
   onDuplicate?: (componentId: ComponentId) => void;
   onDelete?: (componentId: ComponentId) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   business: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   customer: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   invoice: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   calculations: any;
   currency: string;
   locale: string;

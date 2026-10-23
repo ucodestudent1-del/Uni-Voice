@@ -118,7 +118,7 @@ describe("preset-templates", () => {
       const doc = preset.build("biz-1");
       const customFields = Object.keys(doc.components)
         .map((id) => findComponent(doc, id))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         .filter((c) => c?.type === "customField") as any[];
       const milestoneField = customFields.find((f) => f?.props?.key === "milestone");
       expect(milestoneField).toBeDefined();
@@ -131,7 +131,7 @@ describe("preset-templates", () => {
       const doc = preset.build("biz-1");
       const customFields = Object.keys(doc.components)
         .map((id) => findComponent(doc, id))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         .filter((c) => c?.type === "customField") as any[];
       const vinField = customFields.find((f) => f?.props?.key === "vin");
       expect(vinField).toBeDefined();
@@ -143,7 +143,7 @@ describe("preset-templates", () => {
       const doc = preset.build("biz-1");
       const lineItems = Object.keys(doc.components)
         .map((id) => findComponent(doc, id))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         .find((c) => c?.type === "lineItems") as any;
       expect(lineItems).toBeDefined();
       expect(lineItems.props.showDiscount).toBe(true);

@@ -125,8 +125,8 @@ describe("editor-operations", () => {
 
       const componentId = Object.keys(docWithText.components)[0];
       const originalBefore = findComponent(docWithText, componentId) as TextComponent;
-      const originalProps = JSON.parse(JSON.stringify(originalBefore.props));
-      const originalStyle = JSON.parse(JSON.stringify(originalBefore.style));
+      const originalProps = structuredClone(originalBefore.props);
+      const originalStyle = structuredClone(originalBefore.style);
 
       const duplicatedDoc = duplicateComponent(docWithText, { componentId });
 

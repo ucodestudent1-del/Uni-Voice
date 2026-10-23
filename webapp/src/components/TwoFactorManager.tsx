@@ -34,7 +34,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
       setStatus(data.status);
       setRecovery(data.recoveryCodes);
       setStep(data.status.enabled ? "enabled" : "disabled");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to load 2FA status");
     }
@@ -52,7 +52,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
       setSetupResult(data);
       setStep("pending");
       setCode("");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to start 2FA setup");
     } finally {
@@ -72,7 +72,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
       setStep("enabled");
       setSetupResult(null);
       await loadStatus();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.response?.data?.error || "Invalid verification code");
     } finally {
@@ -91,7 +91,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
       setStatus((prev) => (prev ? { ...prev, enabled: false, confirmedAt: null } : prev));
       setRecovery(null);
       setStep("disabled");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to disable 2FA");
     } finally {
@@ -106,7 +106,7 @@ export default function TwoFactorManager({ className }: TwoFactorManagerProps) {
       const data = await regenerateRecoveryCodes();
       setSetupResult({ recoveryCodes: data.recoveryCodes, secret: "", otpauthUri: "" });
       await loadStatus();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to regenerate recovery codes");
     } finally {

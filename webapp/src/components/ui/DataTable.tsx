@@ -12,7 +12,7 @@ function getCellValue<TData>(row: TData, column: ColumnDef<TData>): unknown {
   return row[column.accessor as keyof TData];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function DataTableInner<TData extends Record<string, any>>(
   {
     columns,
@@ -240,7 +240,7 @@ function DataTableInner<TData extends Record<string, any>>(
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export const DataTable = forwardRef(DataTableInner) as <TData extends Record<string, any>>(
   props: DataTableProps<TData> & { ref?: React.Ref<HTMLDivElement> }
 ) => React.ReactElement;

@@ -9,7 +9,7 @@ interface SmartDefaultsBarProps {
   taxRate: string;
   invoiceNumber: string | null;
   business: ApiBusiness | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   settings: Record<string, any>;
   onCurrencyChange: (value: string) => void;
   onTaxRateChange: (value: string) => void;

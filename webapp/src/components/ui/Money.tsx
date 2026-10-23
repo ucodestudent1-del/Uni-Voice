@@ -47,12 +47,12 @@ export function formatMoneyValue(value: Decimal.Value | null | undefined, curren
 export const Money = forwardRef<HTMLSpanElement, MoneyProps>(function Money(
    { amount, currency = "USD", decimalPlaces, signed = false, placeholder, className, ...rest },
    ref
-) {
+  ) {
    const effectiveDp = decimalPlaces ?? getCachedCurrencyMetadata(currency).decimalPlaces;
-   const d = new Decimal(amount ?? 0);
    const formatted = useMemo(() => formatValue(amount, currency, effectiveDp), [amount, currency, effectiveDp]);
+   const d = useMemo(() => new Decimal(amount ?? 0), [amount]);
    const isNegative = d.isNegative();
-   const isZero = d.isZero() && !d.isNeg();
+   const isZero = d.isZero() && !d.isNegative();
    const display = isZero && placeholder !== undefined ? placeholder : formatted;
 
   const resolvedClassName = cn(

@@ -185,7 +185,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
               <label className="block text-sm font-medium text-secondary mb-1">Page Size</label>
               <select
                 value={doc.settings.pageSize}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 onChange={(e) => handleSettingChange({ pageSize: e.target.value as any })}
                 className="w-full text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
               >
@@ -198,7 +198,7 @@ export const TemplateCustomizationPanel: React.FC<TemplateCustomizationPanelProp
               <label className="block text-sm font-medium text-secondary mb-1">Orientation</label>
               <select
                 value={doc.settings.orientation}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 onChange={(e) => handleSettingChange({ orientation: e.target.value as any })}
                 className="w-full text-sm border border-input-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
               >

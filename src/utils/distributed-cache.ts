@@ -1,6 +1,6 @@
 import { logger } from "../utils/logger.js";
-import { env } from "../config/index.js";
 import { TtlCache } from "./ttl-cache.js";
+import { getRedisClient } from "../db/redis.js";
 
 type RedisInstance = InstanceType<typeof import("ioredis").default>;
 
@@ -17,37 +17,7 @@ export class DistributedCache<T> {
   constructor(ttlMs: number) {
     this.ttlMs = ttlMs;
     this.localCache = new TtlCache<T>(ttlMs);
-    this.initRedis();
-  }
-
-  private async initRedis() {
-    if (!env.REDIS_URL) {
-      return;
-    }
-    try {
-    const IoredisModule = await import("ioredis");
-    const Ioredis = IoredisModule.default as unknown as typeof import("ioredis").default;
-    const instance = new Ioredis(env.REDIS_URL, {
-        maxRetriesPerRequest: 1,
-        enableOfflineQueue: false,
-        connectTimeout: 5000,
-        lazyConnect: true,
-      });
-      instance.on("error", (err: Error) => {
-        logger.error({ err }, "Redis error");
-      });
-      instance.on("connect", () => {
-        logger.info("Connected to Redis — distributed cache active");
-      });
-      void instance.connect().catch((err: Error) => {
-        logger.warn({ err }, "Redis connect failed — using local cache only");
-        this.redis = null;
-      });
-      this.redis = instance;
-    } catch (err) {
-      logger.warn({ err }, "Redis module load failed — using local cache only");
-      this.redis = null;
-    }
+    this.redis = getRedisClient();
   }
 
   async get(key: string): Promise<T | undefined> {

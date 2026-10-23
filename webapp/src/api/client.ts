@@ -212,10 +212,10 @@ export const api = axios.create({
 });
 
 let isRefreshing = false;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let failedQueue: { resolve: (value: void) => void; reject: (reason?: any) => void }[] = [];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function processQueue(error: any) {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -259,7 +259,7 @@ api.interceptors.response.use(
               resolve: () => {
                 resolve(api(originalRequest));
               },
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               reject: (err: any) => {
                 reject(err);
               },
@@ -312,7 +312,7 @@ export async function cachedGet(
   url: string,
   params?: Record<string, unknown>,
   options?: CachedGetOptions,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 ): Promise<any> {
   const key = cacheKey(url, params);
   const ttl = options?.ttlMs ?? CACHE_TTL_MS;
@@ -455,13 +455,13 @@ export async function getCustomers(params?: CustomerSearchParams) {
   return res;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function createCustomer(data: any) {
   const res = await api.post("/customers", data);
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateCustomer(id: string, data: any) {
   const res = await api.patch(`/customers/${id}`, data);
   return res.data;
@@ -517,9 +517,9 @@ export async function exportCustomersCsv() {
 
 export function buildCustomerSearchParams(
   params: CustomerSearchParams,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 ): Record<string, any> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const result: Record<string, any> = {};
   if (params.limit !== undefined) result.limit = params.limit;
   if (params.offset !== undefined) result.offset = params.offset;
@@ -544,13 +544,13 @@ export async function getProducts(params?: {
   return res;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function createProduct(data: any) {
   const res = await api.post("/products", data);
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateProduct(id: string, data: any) {
   const res = await api.patch(`/products/${id}`, data);
   return res.data;
@@ -566,7 +566,7 @@ export async function getBusiness() {
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateBusiness(data: any) {
   const res = await api.patch("/businesses/current", data);
   return res.data;
@@ -590,13 +590,13 @@ export async function getTemplate(id: string) {
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function createTemplate(data: any) {
   const res = await api.post("/templates", data);
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateTemplate(id: string, data: any) {
   const res = await api.patch(`/templates/${id}`, data);
   return res.data;
@@ -617,7 +617,7 @@ export async function getDocumentTemplates(params?: {
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function createDocumentTemplate(data: any) {
   const res = await api.post("/document-templates", data);
   return res.data;
@@ -628,7 +628,7 @@ export async function getDocumentTemplate(id: string) {
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateDocumentTemplate(id: string, data: any) {
   const res = await api.patch(`/document-templates/${id}`, data);
   return res.data;
@@ -679,7 +679,7 @@ export async function getNumberingConfig() {
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateNumberingConfig(data: any) {
   const res = await api.patch("/businesses/current/numbering", data);
   return res.data;
@@ -858,13 +858,13 @@ export async function getProject(id: string) {
   return data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function createProject(data: any) {
   const res = await api.post("/projects", data);
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateProject(id: string, data: any) {
   const res = await api.patch(`/projects/${id}`, data);
   return res.data;
@@ -892,7 +892,7 @@ export async function deleteProject(id: string) {
 
 export async function createInvoiceFromProject(
   projectId: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   data?: { includeUnbilledTime?: boolean; items?: any[]; fees?: any[] },
 ) {
   const res = await api.post(`/projects/${projectId}/invoice`, data ?? {});
@@ -965,7 +965,7 @@ export async function removeProjectTeamMember(
 // PROJECT TIME TRACKING
 // ============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function createTimeEntry(projectId: string, data: any) {
   const res = await api.post(`/projects/${projectId}/time-entries`, data);
   return res.data;
@@ -989,7 +989,7 @@ export async function getTimeEntries(
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateTimeEntry(entryId: string, data: any) {
   const res = await api.patch(`/time-entries/${entryId}`, data);
   return res.data;
@@ -1000,7 +1000,7 @@ export async function deleteTimeEntry(entryId: string) {
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function startTimer(projectId: string, data: any) {
   const res = await api.post(`/time-entries/timer/start`, {
     projectId,
@@ -1055,9 +1055,9 @@ export function formatDuration(minutes: number): string {
 
 export function buildProjectSearchParams(
   params: ProjectSearchParams,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 ): Record<string, any> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const result: Record<string, any> = {};
   if (params.limit !== undefined) result.limit = params.limit;
   if (params.offset !== undefined) result.offset = params.offset;
@@ -1154,7 +1154,7 @@ export async function getPaymentMetricsReport(): Promise<ApiPaymentMetrics | nul
   try {
     const res = await api.get("/reports/payment-metrics");
     return res.data;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   } catch (err: any) {
     if (err.response?.status === 404) {
       console.warn("Payment metrics report endpoint not available");
@@ -1460,7 +1460,7 @@ export async function getAgingReport(): Promise<ApiAgingReport | null> {
   try {
     const res = await api.get("/reports/aging");
     return res.data;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   } catch (err: any) {
     if (err.response?.status === 404) {
       console.warn("Aging report endpoint not available");
@@ -1482,10 +1482,10 @@ export async function exportReportCsv(
   return res.data;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function buildReportParams(params?: ReportFiltersParams): Record<string, any> {
   if (!params) return {};
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const result: Record<string, any> = {};
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null) continue;
@@ -1988,7 +1988,7 @@ export async function voidCreditNote(
 export async function getCreditNoteEvents(
   creditNoteId: string,
   params?: { limit?: number; offset?: number },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 ): Promise<{ events: any[]; total: number }> {
   const res = await api.get(`/credit-notes/${creditNoteId}/events`, { params });
   return res.data;

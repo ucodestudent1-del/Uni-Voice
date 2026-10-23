@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -39,21 +39,6 @@ const STATUS_COLORS: Record<string, string> = {
   accepted: "hsl(140 60% 45%)",
   converted: "hsl(210 90% 50%)",
   expired: "hsl(0 0% 45%)",
-};
-
-const STATUS_COLOR_KEYS: Record<string, string> = {
-  posted: "--chart-1",
-  paid: "--chart-1",
-  sent: "--chart-2",
-  viewed: "--chart-2",
-  partial: "--chart-2",
-  partially_paid: "--chart-2",
-  overdue: "--chart-3",
-  draft: "--chart-text-secondary",
-  void: "--chart-text-secondary",
-  accepted: "--chart-1",
-  converted: "--chart-2",
-  expired: "--chart-text-secondary",
 };
 
 function useReport<T>(key: string, fn: () => Promise<T>) {
@@ -124,7 +109,7 @@ export default function ProprietaryReports() {
     () => getProprietaryCustomerSummary(),
   );
 
-  const { data: paymentSummaryData, isLoading: paymentLoading } = useReport(
+  const { data: paymentSummaryData } = useReport(
     "proprietary-payment-summary",
     () => getProprietaryPaymentSummary(),
   );
@@ -268,7 +253,6 @@ export default function ProprietaryReports() {
                       const num = typeof value === "number" ? value : parseFloat(value);
                       return [`$${isNaN(num) ? 0 : num.toFixed(2)}`, "Revenue"];
                     }}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   />
                   <Legend wrapperStyle={{ fontSize: "12px" }} verticalAlign="top" align="right" iconType="circle" />
                   <Bar dataKey="revenue" fill="hsl(var(--primary-action))" name="Revenue" />

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button, FormField } from "@/components/ui";
 import { Dialog } from "@/components/ui";
-import { createDocumentTemplate, getDocumentTemplates } from "@/api/client";
-import type { DocumentState, DocumentType } from "@/components/document/document-types";
+import { createDocumentTemplate } from "@/api/client";
+import type { DocumentType } from "@/components/document/document-types";
 import { TemplateConfigBuilder, defaultTemplateConfig, type TemplateLayoutConfig } from "./TemplateConfigBuilder";
 import { useToast } from "@/components/ui";
 
@@ -10,14 +10,12 @@ interface SaveAsTemplateDialogProps {
   open: boolean;
   onClose: () => void;
   docType: DocumentType;
-  currentState: DocumentState;
 }
 
 export function SaveAsTemplateDialog({
   open,
   onClose,
   docType,
-  currentState,
 }: SaveAsTemplateDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");

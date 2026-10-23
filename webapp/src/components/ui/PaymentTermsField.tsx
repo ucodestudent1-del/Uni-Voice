@@ -73,7 +73,7 @@ export function PaymentTermsField({
       label={label}
       labelClassName="uppercase"
       value={effectiveValue}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       onChange={handleTermsChange as any}
       select
       disabled={disabled}

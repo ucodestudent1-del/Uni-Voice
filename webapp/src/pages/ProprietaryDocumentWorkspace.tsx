@@ -257,7 +257,7 @@ export default function ProprietaryDocumentWorkspace() {
       a.download = `${docType}-${id!.slice(0, 8)}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch {
       toast("Failed to download PDF.", {
         title: "Error",
         type: "error",

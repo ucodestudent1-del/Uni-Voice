@@ -1,6 +1,5 @@
-import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, FileText, Edit, Send } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, FileText, Send } from "lucide-react";
 import {
   getProprietaryCustomer,
   getProprietaryCustomerTotalSummary,
@@ -76,7 +75,6 @@ export default function ProprietaryCustomerDetail() {
   const {
     data: historyData,
     isLoading: historyLoading,
-    refetch: refetchHistory,
   } = useQuery({
     queryKey: ["proprietary-customer-invoices", id],
     queryFn: () => getProprietaryCustomerInvoiceHistory(id!, { limit: 100 }),

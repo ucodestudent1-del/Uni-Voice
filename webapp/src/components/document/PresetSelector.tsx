@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { ChevronDown, Copy, Plus, Save, Star } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { ChevronDown, Plus, Star } from "lucide-react";
 import {
   getDocumentPresets,
   getDefaultDocumentPreset,
@@ -36,21 +36,7 @@ export default function PresetSelector({
   const [saving, setSaving] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadPresets();
-  }, [docType]);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  async function loadPresets() {
+  const loadPresets = useCallback(async () => {
     setLoading(true);
     try {
       const defaultPreset = await getDefaultDocumentPreset(docType);
@@ -62,15 +48,29 @@ export default function PresetSelector({
     } finally {
       setLoading(false);
     }
-  }
+  }, [docType]);
 
-  async function handleApply(preset: ApiDocumentPreset) {
+  useEffect(() => {
+    loadPresets();
+  }, [loadPresets]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleApply = useCallback((preset: ApiDocumentPreset) => {
     onApply(preset.data);
       toast(`Applied preset: ${preset.name}`);
     setOpen(false);
-  }
+  }, [onApply, toast]);
 
-  async function handleSaveAsPreset() {
+  const handleSaveAsPreset = useCallback(async () => {
     setSaving(true);
     try {
       const existing = await getDocumentPresets({ documentType: docType, isActive: true });
@@ -95,38 +95,42 @@ export default function PresetSelector({
       setSaveName("");
       setSaveDescription("");
       loadPresets();
-    } catch (e) {
+    } catch {
       toast(`Failed to save preset`, { type: "error" });
     } finally {
       setSaving(false);
     }
-  }
+  }, [docType, saveName, saveDescription, currentData, loadPresets, toast]);
 
-  async function handleSetDefault(preset: ApiDocumentPreset) {
-    try {
-      await setDefaultDocumentPreset(preset.id, docType);
-      toast(`${preset.name} set as default`);
-      loadPresets();
-    } catch {
-      toast(`Failed to set default preset`, { type: "error" });
-    }
-  }
+  const handleSetDefault = useCallback((preset: ApiDocumentPreset) => {
+    void (async () => {
+      try {
+        await setDefaultDocumentPreset(preset.id, docType);
+        toast(`${preset.name} set as default`);
+        loadPresets();
+      } catch {
+        toast(`Failed to set default preset`, { type: "error" });
+      }
+    })();
+  }, [docType, loadPresets, toast]);
 
-  async function handleDelete(preset: ApiDocumentPreset) {
-    try {
-      await deleteDocumentPreset(preset.id);
-      toast(`Preset "${preset.name}" deleted`);
-      loadPresets();
-    } catch {
-      toast(`Failed to delete preset`, { type: "error" });
-    }
-  }
+  const handleDelete = useCallback((preset: ApiDocumentPreset) => {
+    void (async () => {
+      try {
+        await deleteDocumentPreset(preset.id);
+        toast(`Preset "${preset.name}" deleted`);
+        loadPresets();
+      } catch {
+        toast(`Failed to delete preset`, { type: "error" });
+      }
+    })();
+  }, [loadPresets, toast]);
 
-  const handleSaveClick = () => {
+  const handleSaveClick = useCallback(() => {
     setSaveName("");
     setSaveDescription("");
     setSaveDialogOpen(true);
-  };
+  }, []);
 
   return (
     <>

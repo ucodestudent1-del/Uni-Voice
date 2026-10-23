@@ -49,3 +49,11 @@ export function getRedisSendCommand(): ((...args: string[]) => Promise<unknown>)
 export function isRedisReady(): boolean {
   return redisConnected;
 }
+
+export function getRedis(): RedisType | null {
+  return getRedisClient();
+}
+
+export async function initRedis(): Promise<void> {
+  getRedisClient();
+}

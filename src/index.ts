@@ -4563,9 +4563,9 @@ app.get(
         req.params.id,
       );
       res.json({ preset });
-    } catch (e) {
-      res.status(404).json({ error: "Preset not found" });
-    }
+     } catch {
+       res.status(404).json({ error: "Preset not found" });
+     }
   },
 );
 
@@ -4591,9 +4591,9 @@ app.patch(
         req.user!.id,
       );
       res.json({ preset });
-    } catch (e) {
-      res.status(404).json({ error: "Preset not found" });
-    }
+     } catch {
+       res.status(404).json({ error: "Preset not found" });
+     }
   },
 );
 
@@ -4606,9 +4606,9 @@ app.delete(
     try {
       await documentPresetRepository.delete(req.user!.businessId, req.params.id);
       res.status(204).send();
-    } catch (e) {
-      res.status(404).json({ error: "Preset not found" });
-    }
+     } catch {
+       res.status(404).json({ error: "Preset not found" });
+     }
   },
 );
 
@@ -4626,9 +4626,9 @@ app.post(
         documentType,
       );
       res.json({ preset });
-    } catch (e) {
-      res.status(404).json({ error: "Preset not found" });
-    }
+     } catch {
+       res.status(404).json({ error: "Preset not found" });
+     }
   },
 );
 
@@ -4656,9 +4656,9 @@ app.post(
         req.user!.id,
       );
       res.status(201).json({ preset });
-    } catch (e) {
-      res.status(404).json({ error: "Preset not found" });
-    }
+     } catch {
+       res.status(404).json({ error: "Preset not found" });
+     }
   },
 );
 

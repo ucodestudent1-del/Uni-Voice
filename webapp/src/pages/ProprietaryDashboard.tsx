@@ -105,8 +105,8 @@ export default function ProprietaryDashboard() {
     refetchOnWindowFocus: false,
   });
 
-  const invoices = invoicesData?.invoices ?? [];
-  const quotes = quotesData?.quotes ?? [];
+  const invoices = useMemo(() => invoicesData?.invoices ?? [], [invoicesData?.invoices]);
+  const quotes = useMemo(() => quotesData?.quotes ?? [], [quotesData?.quotes]);
 
   const totalRevenue = useMemo(() => {
     const fromReport = (revenueData?.data ?? []).reduce(

@@ -102,7 +102,7 @@ function TemplateEditorInner({ existingTemplate, isNew, templateId, onNavigateBa
     if (!templateName.trim()) return;
     setSaveState("saving");
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const payload: any = {
         name: templateName,
         description: templateDescription || null,

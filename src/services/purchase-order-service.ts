@@ -468,11 +468,6 @@ export class PurchaseOrderService {
         [poId]
       );
 
-      let publicToken: string | null = null;
-      if (updated.rows[0].public_token) {
-        publicToken = updated.rows[0].public_token;
-      }
-
       const supplierEmail = data?.to ?? po.supplier_email;
       if (!supplierEmail) {
         throw new BusinessLogicError("No supplier email provided and no supplier email on record", "MISSING_EMAIL");

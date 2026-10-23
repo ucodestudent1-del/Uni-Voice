@@ -23,7 +23,7 @@ export default function ProjectNotesTab({ projectId, onNotesChanged }: ProjectNo
     try {
       const data = await getProjectNotes(projectId);
       setNotes(data.notes ?? []);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to load notes");
     } finally {
@@ -48,7 +48,7 @@ export default function ProjectNotesTab({ projectId, onNotesChanged }: ProjectNo
       setShowForm(false);
       loadNotes();
       onNotesChanged?.();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to add note");
     } finally {
@@ -62,7 +62,7 @@ export default function ProjectNotesTab({ projectId, onNotesChanged }: ProjectNo
       await deleteProjectNote(projectId, note.id);
       loadNotes();
       onNotesChanged?.();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       setError(err.message || "Failed to delete note");
     }

@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+﻿/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -194,7 +194,6 @@ export default function DocumentWorkspace({ docType }: DocumentWorkspaceProps) {
     if (isFinalized && !isNew) {
       setWorkflowStep("preview");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFinalized && !isNew]);
   useEffect(() => {
     getCustomers({ limit: 100 }).then((d) => setCustomers(d.customers ?? [])).catch(() => {});

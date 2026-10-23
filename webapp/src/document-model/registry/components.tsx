@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { registerComponent } from "./index";
 import { ComponentDefinition } from "./index";
 import {

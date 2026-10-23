@@ -431,7 +431,7 @@ router.delete("/products/:id", async (req: AuthRequest, res, next) => {
     if (!req.user?.businessId) {
       return res.status(400).json({ error: "No business context" });
     }
-    const result = await productServiceService.update(req.user.businessId, req.params.id, { status: "archived" });
+    await productServiceService.update(req.user.businessId, req.params.id, { status: "archived" });
     res.json({ deleted: true });
   } catch (err) {
     next(err);

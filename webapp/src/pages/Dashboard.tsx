@@ -1,20 +1,16 @@
 ﻿import { useMemo, lazy, Suspense } from "react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import {
-  DollarSign,
-  CheckCircle,
-  Clock,
+   DollarSign,
+   CheckCircle,
+   Clock,
 } from "lucide-react";
 import { getDashboardData, getVolumeTrendReport } from "../api/client";
 import type { ApiDashboardData } from "../types/api";
 import { KPICard, Skeleton } from "@/components/ui";
 import { useQuery } from "@tanstack/react-query";
 const RevenueChart = lazy(() => import("../components/dashboard/RevenueChart"));
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { formatCurrencyValue } from "@/lib/utils";
 import { Button } from "../components/ui/Button";
 import { useMetaTags } from "@/hooks/useMetaTags";
 

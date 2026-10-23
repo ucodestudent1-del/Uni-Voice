@@ -29,7 +29,7 @@ export default function ProjectTagManager({ projectId, initialTags = [], onTagsC
     setLoading(true);
     try {
       const data = await getProjectTags();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const tags = (data.tags ?? []).map((t: any) => ({
         id: t.id,
         name: t.name,
