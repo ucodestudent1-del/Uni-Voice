@@ -26,7 +26,7 @@ ALTER TABLE recurring_invoices
   ADD COLUMN IF NOT EXISTS recurring_invoice_number VARCHAR(100);
 
 ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES invoice_templates(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES templates(id) ON DELETE SET NULL;
 
 ALTER TABLE recurring_invoices
   ADD COLUMN IF NOT EXISTS finalized_at TIMESTAMPTZ;
