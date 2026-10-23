@@ -276,7 +276,7 @@ router.get("/customers", async (req: AuthRequest, res, next) => {
       limit,
       offset,
     });
-    res.json(result);
+    res.json({ customers: result.data, total: result.total, limit: result.limit, offset: result.offset });
   } catch (err) {
     next(err);
   }
@@ -331,6 +331,37 @@ router.delete("/customers/:id", async (req: AuthRequest, res, next) => {
   }
 });
 
+router.get("/customers/:id/invoices", async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user?.businessId) {
+      return res.status(400).json({ error: "No business context" });
+    }
+    const limit = getLimit(req);
+    const offset = getOffset(req);
+    const status = req.query.status as string | undefined;
+    const result = await customerService.getInvoiceHistory(req.user.businessId, req.params.id, {
+      limit,
+      offset,
+      status,
+    });
+    res.json({ invoices: result.data, total: result.total, limit: result.limit, offset: result.offset });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/customers/:id/summary", async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user?.businessId) {
+      return res.status(400).json({ error: "No business context" });
+    }
+    const summary = await customerService.getSummary(req.user.businessId, req.params.id);
+    res.json({ summary });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/products", async (req: AuthRequest, res, next) => {
   try {
     if (!req.user?.businessId) {
@@ -352,7 +383,7 @@ router.get("/products", async (req: AuthRequest, res, next) => {
       limit,
       offset,
     });
-    res.json(result);
+    res.json({ products: result.data, total: result.total, limit: result.limit, offset: result.offset });
   } catch (err) {
     next(err);
   }

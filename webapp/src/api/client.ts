@@ -3062,13 +3062,40 @@ export async function getProprietaryQuoteShareLink(id: string): Promise<{ url: s
 
 export async function getProprietaryCustomers(
   params?: ProprietarySearchParams,
-): Promise<{ customers: any[]; total: number }> {
+): Promise<{ customers: any[]; total: number; limit?: number; offset?: number }> {
   const res = await api.get("/proprietary/customers", { params });
   return res.data;
 }
 
 export async function getProprietaryCustomer(id: string): Promise<{ customer: any }> {
   const res = await api.get(`/proprietary/customers/${id}`);
+  return res.data;
+}
+
+export async function getProprietaryCustomerInvoiceHistory(
+  id: string,
+  params?: { limit?: number; offset?: number; status?: string },
+): Promise<{ invoices: any[]; total: number; limit: number; offset: number }> {
+  const res = await api.get(`/proprietary/customers/${id}/invoices`, { params });
+  return res.data;
+}
+
+export async function getProprietaryCustomerTotalSummary(
+  id: string,
+): Promise<{
+  summary: {
+    customer: any;
+    invoices: any[];
+    totalInvoiceCount: number;
+    finalizedInvoiceCount: number;
+    totalBilled: string;
+    totalPaid: string;
+    totalOutstanding: string;
+    totalOverdue: string;
+    averagePaymentDays: number | null;
+  };
+}> {
+  const res = await api.get(`/proprietary/customers/${id}/summary`);
   return res.data;
 }
 
@@ -3089,7 +3116,7 @@ export async function deleteProprietaryCustomer(id: string): Promise<{ deleted: 
 
 export async function getProprietaryProducts(
   params?: ProprietarySearchParams,
-): Promise<{ products: any[]; total: number }> {
+): Promise<{ products: any[]; total: number; limit?: number; offset?: number }> {
   const res = await api.get("/proprietary/products", { params });
   return res.data;
 }

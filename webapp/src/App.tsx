@@ -30,6 +30,8 @@ const ProprietaryBranding = lazy(() => import("./pages/ProprietaryBranding"));
 const ProprietaryReports = lazy(() => import("./pages/ProprietaryReports"));
 const ProprietaryRecurringInvoices = lazy(() => import("./pages/ProprietaryRecurringInvoices"));
 const ProprietaryEmailTemplates = lazy(() => import("./pages/ProprietaryEmailTemplates"));
+const ProprietaryCustomerDetail = lazy(() => import("./pages/ProprietaryCustomerDetail"));
+const ProprietaryCustomersList = lazy(() => import("./pages/ProprietaryCustomersList"));
 
 const Fallback = () => (
   <div className="flex items-center justify-center h-64 text-secondary">
@@ -83,6 +85,8 @@ const ProprietaryBrandingWithBoundary = withErrorBoundary(ProprietaryBranding, "
 const ProprietaryReportsWithBoundary = withErrorBoundary(ProprietaryReports, "Proprietary Reports");
 const ProprietaryRecurringInvoicesWithBoundary = withErrorBoundary(ProprietaryRecurringInvoices, "Recurring Invoices");
 const ProprietaryEmailTemplatesWithBoundary = withErrorBoundary(ProprietaryEmailTemplates, "Email Templates");
+const ProprietaryCustomerDetailWithBoundary = withErrorBoundary(ProprietaryCustomerDetail, "Customer Detail");
+const ProprietaryCustomersListWithBoundary = withErrorBoundary(ProprietaryCustomersList, "Customers");
 const DocumentWorkspaceInvoiceWithBoundary = withErrorBoundary(
   (p: { docType: string }) => <DocumentWorkspace {...p} docType="invoice" />,
   "Invoice Workspace",
@@ -311,6 +315,8 @@ export default function App() {
           <Route path="recurring-invoices/new" element={<ProprietaryRecurringInvoicesWithBoundary />} />
           <Route path="recurring-invoices/:id/edit" element={<ProprietaryRecurringInvoicesWithBoundary />} />
           <Route path="email-templates" element={<ProprietaryEmailTemplatesWithBoundary />} />
+          <Route path="customers" element={<ProprietaryCustomersListWithBoundary />} />
+          <Route path="customers/:id" element={<ProprietaryCustomerDetailWithBoundary />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

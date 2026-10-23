@@ -11,6 +11,7 @@ import {
   Palette,
   BarChart3,
   Calendar,
+  Users,
 } from "lucide-react";
 import {
   getProprietaryInvoices,
@@ -182,6 +183,13 @@ export default function ProprietaryDashboard() {
           >
             <Send className="h-4 w-4 mr-2" />
             Email Templates
+          </Link>
+          <Link
+            to="/app/proprietary/customers"
+            className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium border border-input-border text-secondary hover:bg-hover transition-colors"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Customers
           </Link>
           <Link
              to="/app/proprietary/invoices/new"
