@@ -15,7 +15,7 @@ import * as Sentry from "@sentry/node";
 import { parsePagination } from "./utils/pagination.js";
 import { validateDocumentTextInput } from "./utils/document-validation.js";
 import { query, runWithRequestContext, getRequestContext } from "./db/pool.js";
-import { getRedisSendCommand, initRedis } from "./db/redis.js";
+import { getRedisSendCommand, initRedis, isRedisReady } from "./db/redis.js";
 import { runMigrations } from "./db/migrate.js";
 import { subscriptionService } from "./services/subscription.service.js";
 import {
@@ -563,13 +563,13 @@ function getCookie(header: string | undefined, name: string): string | null {
 // ============================================================================
 function createRateLimitStore(prefix = "rl:") {
   const sendCommand = getRedisSendCommand();
-  if (sendCommand) {
+  if (sendCommand && isRedisReady()) {
     return new RedisStore({ sendCommand: sendCommand as never, prefix });
   }
   return undefined;
 }
 
-const redisAvailable = !!getRedisSendCommand() && !isDev && !isTest;
+const redisAvailable = !!getRedisSendCommand() && !isDev && !isTest && isRedisReady();
 let nextPrefixId = 0;
 function createRateLimiter(config: Partial<RateLimitOptions>) {
   const skip = isDev || isTest ? () => true : undefined;

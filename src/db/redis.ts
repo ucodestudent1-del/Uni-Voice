@@ -11,12 +11,16 @@ export function getRedisClient(): RedisType | null {
   if (!env.REDIS_URL) return null;
 
   if (!redisClient) {
-    redisClient = new Redis(env.REDIS_URL, {
+     redisClient = new Redis(env.REDIS_URL, {
       maxRetriesPerRequest: 3,
       enableOfflineQueue: false,
       connectTimeout: 10000,
       lazyConnect: true,
       retryStrategy: (times: number) => {
+        if (times >= 5) {
+          logger.warn(`Redis retry attempt ${times} — giving up. Redis features disabled.`);
+          return null;
+        }
         const delay = Math.min(times * 200, 5000);
         return delay;
       },

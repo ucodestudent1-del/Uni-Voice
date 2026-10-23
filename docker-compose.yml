@@ -13,6 +13,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - appnet
 
   redis:
     image: redis:7-alpine
@@ -22,6 +24,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - appnet
 
   api:
     build:
@@ -52,6 +56,12 @@ services:
     ports:
       - "80:80"
       - "4000:4000"
+    networks:
+      - appnet
 
 volumes:
   postgres_data:
+
+networks:
+  appnet:
+    driver: bridge
