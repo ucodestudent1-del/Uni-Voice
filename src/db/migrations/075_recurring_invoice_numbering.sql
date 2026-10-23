@@ -19,39 +19,85 @@ CREATE TABLE IF NOT EXISTS recurring_invoice_number_sequences (
 
 -- Add recurrence schedule fields to recurring_invoices table
 -- Note: We split into multiple ALTER TABLE statements for maximum compatibility
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS status recurring_invoice_status DEFAULT 'draft';
+-- Use DO blocks with exception handling to safely skip if column already exists
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'status') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN status recurring_invoice_status DEFAULT 'draft';
+  END IF;
+END $$;
 
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS recurring_invoice_number VARCHAR(100);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'recurring_invoice_number') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN recurring_invoice_number VARCHAR(100);
+  END IF;
+END $$;
 
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS template_id UUID REFERENCES templates(id) ON DELETE SET NULL;
+-- template_id is added by migration 013 (referencing templates table) — skip if exists
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'template_id') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN template_id UUID REFERENCES templates(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS finalized_at TIMESTAMPTZ;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'finalized_at') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN finalized_at TIMESTAMPTZ;
+  END IF;
+END $$;
 
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'cancelled_at') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN cancelled_at TIMESTAMPTZ;
+  END IF;
+END $$;
 
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS cancelled_reason TEXT;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'cancelled_reason') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN cancelled_reason TEXT;
+  END IF;
+END $$;
 
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS voided_at TIMESTAMPTZ;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'voided_at') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN voided_at TIMESTAMPTZ;
+  END IF;
+END $$;
 
-ALTER TABLE recurring_invoices
-  ADD COLUMN IF NOT EXISTS void_reason TEXT;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'recurring_invoices'::regclass AND attname = 'void_reason') THEN
+    ALTER TABLE recurring_invoices ADD COLUMN void_reason TEXT;
+  END IF;
+END $$;
 
 -- Numbering config on business_settings for recurring invoices
-ALTER TABLE business_settings
-  ADD COLUMN IF NOT EXISTS recurring_invoice_prefix VARCHAR(50) DEFAULT 'RI';
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'business_settings'::regclass AND attname = 'recurring_invoice_prefix') THEN
+    ALTER TABLE business_settings ADD COLUMN recurring_invoice_prefix VARCHAR(50) DEFAULT 'RI';
+  END IF;
+END $$;
 
-ALTER TABLE business_settings
-  ADD COLUMN IF NOT EXISTS recurring_invoice_padding SMALLINT DEFAULT 6;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'business_settings'::regclass AND attname = 'recurring_invoice_padding') THEN
+    ALTER TABLE business_settings ADD COLUMN recurring_invoice_padding SMALLINT DEFAULT 6;
+  END IF;
+END $$;
 
-ALTER TABLE business_settings
-  ADD COLUMN IF NOT EXISTS recurring_invoice_includes_year BOOLEAN DEFAULT TRUE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'business_settings'::regclass AND attname = 'recurring_invoice_includes_year') THEN
+    ALTER TABLE business_settings ADD COLUMN recurring_invoice_includes_year BOOLEAN DEFAULT TRUE;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_recurring_invoices_status ON recurring_invoices(status);
 CREATE INDEX IF NOT EXISTS idx_recurring_invoices_number ON recurring_invoices(recurring_invoice_number);

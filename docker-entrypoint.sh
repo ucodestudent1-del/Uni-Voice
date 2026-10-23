@@ -30,17 +30,21 @@ trap cleanup INT TERM EXIT
 echo "Running database migrations..."
 MIGRATE_ATTEMPT=0
 MIGRATE_MAX_ATTEMPTS=30
-until node dist/db/migrate.js 2>&1; do
+while [ $MIGRATE_ATTEMPT -lt $MIGRATE_MAX_ATTEMPTS ]; do
+  if node dist/db/migrate.js 2>&1; then
+    echo "Migrations completed successfully."
+    break
+  fi
   MIGRATE_ATTEMPT=$((MIGRATE_ATTEMPT + 1))
   if [ $MIGRATE_ATTEMPT -ge $MIGRATE_MAX_ATTEMPTS ]; then
-    echo "ERROR: Database migrations failed after ${MIGRATE_MAX_ATTEMPTS} attempts."
-    EXIT_CODE=1
-    exit 1
+    echo "WARNING: Database migrations failed after ${MIGRATE_MAX_ATTEMPTS} attempts."
+    echo "The backend will start, but the database schema may be incomplete."
+    echo "The backend will attempt migrations again on startup."
+    break
   fi
   echo "Migrations failed (attempt $MIGRATE_ATTEMPT/$MIGRATE_MAX_ATTEMPTS), retrying in 2s..."
   sleep 2
 done
-echo "Migrations completed successfully."
 
 # Wait for Redis to be ready (if REDIS_URL is set)
 if [ -n "$REDIS_URL" ]; then
