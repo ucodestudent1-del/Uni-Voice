@@ -43,10 +43,14 @@ while [ $MIGRATE_ATTEMPT -lt $MIGRATE_MAX_ATTEMPTS ]; do
     echo "The backend will start, but the database schema may be incomplete."
     # Run fixup for known migration 075 issue (stale Docker image)
     echo "Running migration 075 fixup..."
-    if node dist/db/migrate-fixup-075.js 2>&1; then
-      echo "Migration 075 fixup applied successfully."
+    if [ -f "dist/db/migrate-fixup-075.js" ]; then
+      if node dist/db/migrate-fixup-075.js 2>&1; then
+        echo "Migration 075 fixup applied successfully."
+      else
+        echo "WARNING: Migration 075 fixup failed. Continuing with potentially incomplete schema."
+      fi
     else
-      echo "WARNING: Migration 075 fixup also failed. Continuing with potentially incomplete schema."
+      echo "Migration 075 fixup script not found (docker image too old). Continuing."
     fi
     break
   fi
