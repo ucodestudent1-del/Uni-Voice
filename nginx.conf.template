@@ -3,6 +3,13 @@ pid /tmp/nginx.pid;
 
 error_log /var/log/nginx/error.log warn;
 
+# Use writable temp paths (non-root user cannot access /var/lib/nginx by default)
+client_body_temp_path /tmp/nginx-client-body;
+proxy_temp_path /tmp/nginx-proxy;
+fastcgi_temp_path /tmp/nginx-fastcgi;
+uwsgi_temp_path /tmp/nginx-uwsgi;
+scgi_temp_path /tmp/nginx-scgi;
+
 events {
     worker_connections 1024;
 }

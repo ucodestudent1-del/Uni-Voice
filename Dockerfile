@@ -71,11 +71,11 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Create non-root user
 RUN addgroup -S invoice && adduser -S -G invoice invoice
 
-# nginx needs to write to log and pid directories
-RUN mkdir -p /var/log/nginx /tmp
+# nginx needs to write to log, pid, and temp directories
+RUN mkdir -p /var/log/nginx /tmp /var/lib/nginx/tmp /var/lib/nginx/tmp/client_body /var/lib/nginx/tmp/proxy /var/lib/nginx/tmp/fastcgi /var/lib/nginx/tmp/uwsgi /var/lib/nginx/tmp/scgi
 
 # Ensure all files are owned by the invoice user
-RUN chown -R invoice:invoice /var/log/nginx /tmp /app
+RUN chown -R invoice:invoice /var/log/nginx /tmp /var/lib/nginx /app
 
 USER invoice
 
