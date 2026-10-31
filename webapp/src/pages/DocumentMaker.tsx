@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalculationEngine } from "@/utils/calculation";
 import type { InvoiceCalculationInput, LineItemInput, FeeInput, DiscountDefinition } from "@/types/calculation";
-import { useToast, PageHeader } from "@/components/ui";
+import { useToast, PageHeader, Button } from "@/components/ui";
 import {
   DocumentMakerForm,
   DocumentMakerPreview,
@@ -31,6 +31,7 @@ import {
   initialLineItem,
 } from "@/components/document";
 import { Decimal } from "decimal.js";
+import { Download, ArrowRightLeft } from "lucide-react";
 import { formatTaxRate } from "@/utils/format";
 import { useMetaTags } from "@/hooks/useMetaTags";
 
@@ -79,6 +80,7 @@ export default function DocumentMaker({ docType }: { docType: DocumentType }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [itemDrawerOpen, setItemDrawerOpen] = useState(false);
   const [quickActions, setQuickActions] = useState<SpeedQuickActions | null>(null);
+  const [currentStage, setCurrentStage] = useState<"create" | "preview">("create");
 
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -604,112 +606,165 @@ export default function DocumentMaker({ docType }: { docType: DocumentType }) {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`${label} Maker`}
-        breadcrumbs={[
-          { label: "Home", to: "/app" },
-          { label: `${label} Maker` },
-        ]}
-        description={`Enter your details on the left and see a live preview on the right.`}
-        primaryAction={
-          <button
-            onClick={() => navigate("/app/documents")}
-            className="text-sm text-tertiary hover:text-primary"
-          >
-            Back to My Documents
-          </button>
-        }
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <DocumentMakerForm
-            docType={docType}
-            state={state}
-            calcResult={calcResult}
-            formConfig={formConfig}
-            business={business}
-            customers={customers}
-            taxRateOptions={taxRateOptions}
-            products={products}
-            itemDrawerOpen={itemDrawerOpen}
-            onItemDrawerClose={() => setItemDrawerOpen(false)}
-            onItemDrawerSave={handleItemDrawerSave}
-            onAddItem={handleAddItem}
-            onUpdateItem={handleUpdateItem}
-            onRemoveItem={handleRemoveItem}
-            onDuplicateItem={handleDuplicateItem}
-            onAddFee={handleAddFee}
-            onRemoveFee={handleRemoveFee}
-            onUpdateFee={handleUpdateFee}
-            onDiscountChange={handleDiscountChange}
-            onDiscountTypeChange={handleDiscountTypeChange}
-            onStateChange={handleStateChange}
-          />
-
-          {quickActions?.frequentlyInvoiced &&
-            quickActions.frequentlyInvoiced.length > 0 && (
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="text-tertiary">Frequently used:</span>
-                {quickActions.frequentlyInvoiced.slice(0, 4).map((fi) => (
-                  <button
-                    key={fi.id ?? fi.name}
-                    type="button"
-                    onClick={() => {
-                      const newItem: DocumentLineItem = {
-                        description: fi.name,
-                        quantity: "1",
-                        unit: fi.unit,
-                        unitPrice: fi.unitPrice,
-                        taxRate: fi.taxRate,
-                        taxName: "",
-                        isTaxInclusive: false,
-                        discount: "0",
-                        discountType: "fixed",
-                        productId: fi.id ?? null,
-                        isOptional: false,
-                      };
-                      handleStateChange({
-                        items: [...state.items, newItem],
-                      });
-                    }}
-                    className="px-2 py-1 rounded-md bg-surface border border-color hover:bg-surface-alt transition-colors"
-                  >
-                    {fi.name}
-                  </button>
-                ))}
+      {currentStage === "create" ? (
+        <>
+          <PageHeader
+            title={`${label} Maker`}
+            breadcrumbs={[
+              { label: "Home", to: "/app" },
+              { label: `${label} Maker` },
+            ]}
+            description={`Enter your document details below.`}
+            primaryAction={
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate("/app/documents")}
+                  className="text-sm text-tertiary hover:text-primary"
+                >
+                  Back to My Documents
+                </button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setCurrentStage("preview")}
+                  disabled={!hasSaved}
+                  icon={<ArrowRightLeft className="h-4 w-4" />}
+                >
+                  Preview
+                </Button>
               </div>
-            )}
-
-          <DocumentMakerActions
-            saveState={saveState}
-            isSaving={isSaving}
-            hasSaved={hasSaved}
-            isGeneratingPdf={isGeneratingPdf}
-            supportsDuplicate={handler.supportsDuplicate}
-            supportsSend={handler.supportsSend}
-            onSaveDraft={doSaveDraft}
-            onDownloadPdf={doDownloadPdf}
-            onDuplicate={doDuplicate}
-            onSend={() => {}}
+            }
           />
-        </div>
 
-        <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
-          <DocumentMakerPreview
-            docType={docType}
-            state={state}
-            calcResult={calcResult}
-            formConfig={formConfig}
-            business={business}
-            customers={customers}
-            documentNumber={documentNumber}
-            onDownloadPdf={doDownloadPdf}
-            canDownload={hasSaved}
-            isGeneratingPdf={isGeneratingPdf}
+          <div className="space-y-4">
+            <DocumentMakerForm
+              docType={docType}
+              state={state}
+              calcResult={calcResult}
+              formConfig={formConfig}
+              business={business}
+              customers={customers}
+              taxRateOptions={taxRateOptions}
+              products={products}
+              itemDrawerOpen={itemDrawerOpen}
+              onItemDrawerClose={() => setItemDrawerOpen(false)}
+              onItemDrawerSave={handleItemDrawerSave}
+              onAddItem={handleAddItem}
+              onUpdateItem={handleUpdateItem}
+              onRemoveItem={handleRemoveItem}
+              onDuplicateItem={handleDuplicateItem}
+              onAddFee={handleAddFee}
+              onRemoveFee={handleRemoveFee}
+              onUpdateFee={handleUpdateFee}
+              onDiscountChange={handleDiscountChange}
+              onDiscountTypeChange={handleDiscountTypeChange}
+              onStateChange={handleStateChange}
+            />
+
+            {quickActions?.frequentlyInvoiced &&
+              quickActions.frequentlyInvoiced.length > 0 && (
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="text-tertiary">Frequently used:</span>
+                  {quickActions.frequentlyInvoiced.slice(0, 4).map((fi) => (
+                    <button
+                      key={fi.id ?? fi.name}
+                      type="button"
+                      onClick={() => {
+                        const newItem: DocumentLineItem = {
+                          description: fi.name,
+                          quantity: "1",
+                          unit: fi.unit,
+                          unitPrice: fi.unitPrice,
+                          taxRate: fi.taxRate,
+                          taxName: "",
+                          isTaxInclusive: false,
+                          discount: "0",
+                          discountType: "fixed",
+                          productId: fi.id ?? null,
+                          isOptional: false,
+                        };
+                        handleStateChange({
+                          items: [...state.items, newItem],
+                        });
+                      }}
+                      className="px-2 py-1 rounded-md bg-surface border border-color hover:bg-surface-alt transition-colors"
+                    >
+                      {fi.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+            <DocumentMakerActions
+              saveState={saveState}
+              isSaving={isSaving}
+              hasSaved={hasSaved}
+              isGeneratingPdf={isGeneratingPdf}
+              supportsDuplicate={handler.supportsDuplicate}
+              supportsSend={handler.supportsSend}
+              onSaveDraft={doSaveDraft}
+              onDownloadPdf={doDownloadPdf}
+              onDuplicate={doDuplicate}
+              onSend={() => {}}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <PageHeader
+            title={`Preview ${label}`}
+            breadcrumbs={[
+              { label: "Home", to: "/app" },
+              { label: `${label} Maker`, to: `/app/${handler.routePrefix}/${savedDoc ? "edit" : "new"}` },
+              { label: "Preview" },
+            ]}
+            description={`Review your ${label.toLowerCase()} before finalizing.`}
+            primaryAction={
+              <button
+                onClick={() => setCurrentStage("create")}
+                className="text-sm text-tertiary hover:text-primary"
+              >
+                ← Back to Edit
+              </button>
+            }
           />
-        </div>
-      </div>
+
+          <div className="max-w-4xl mx-auto">
+            <DocumentMakerPreview
+              docType={docType}
+              state={state}
+              calcResult={calcResult}
+              formConfig={formConfig}
+              business={business}
+              customers={customers}
+              documentNumber={documentNumber}
+              onDownloadPdf={doDownloadPdf}
+              canDownload={hasSaved}
+              isGeneratingPdf={isGeneratingPdf}
+            />
+
+            <div className="flex justify-end gap-3 pt-6 border-t border-color">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCurrentStage("create")}
+              >
+                Back to Edit
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Download className="h-4 w-4" />}
+                onClick={doDownloadPdf}
+                disabled={!hasSaved || isGeneratingPdf}
+                loading={isGeneratingPdf}
+              >
+                Download PDF
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
