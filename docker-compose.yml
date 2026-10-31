@@ -54,7 +54,7 @@ services:
       PAYMENT_PROVIDER: stripe
       STRIPE_SECRET_KEY: sk_test_changeme
     ports:
-      - "80:80"
+      - "8080:8080"
       - "4000:4000"
     networks:
       - appnet

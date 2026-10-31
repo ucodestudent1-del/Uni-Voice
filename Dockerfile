@@ -48,12 +48,6 @@ RUN apk add --no-cache \
     netcat-openbsd \
     redis
 
-# Allow nginx to bind to port 80 as non-root user (via capabilities)
-# This avoids needing to run nginx as root
-RUN apk add --no-cache libcap && \
-    setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx && \
-    echo "setcap succeeded for nginx"
-
 # Copy production dependencies (native modules already compiled in deps layer)
 COPY --from=deps /app/node_modules ./node_modules
 # Copy backend build output
@@ -81,11 +75,11 @@ RUN chown -R invoice:invoice /var/log/nginx /tmp /var/lib/nginx /app
 
 USER invoice
 
-EXPOSE 80 4000
+EXPOSE 8080 4000
 
-# Health check — probes through nginx (port 80) to verify the full stack (nginx + backend) is healthy
+# Health check — probes through nginx (port 8080) to verify the full stack (nginx + backend) is healthy
 HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
-  CMD curl -sf http://127.0.0.1:80/health >/dev/null 2>&1 || node --input-type=module -e "import('http').then(h=>{const p=process.env.PORT||4000;h.get('http://127.0.0.1:'+p+'/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))}).catch(()=>process.exit(1))"
+  CMD curl -sf http://127.0.0.1:8080/health >/dev/null 2>&1 || node --input-type=module -e "import('http').then(h=>{const p=process.env.PORT||4000;h.get('http://127.0.0.1:'+p+'/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))}).catch(()=>process.exit(1))"
 
 # Use the entrypoint script that starts both nginx and the backend API
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

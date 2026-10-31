@@ -3,6 +3,8 @@ pid /tmp/nginx.pid;
 
 error_log /var/log/nginx/error.log warn;
 
+user invoice;
+
 events {
     worker_connections 1024;
 }
@@ -58,7 +60,7 @@ http {
     add_header Cross-Origin-Resource-Policy "same-origin" always;
 
     server {
-        listen 80;
+        listen 8080;
         server_name _;
 
         # Frontend: serve static files with SPA fallback
