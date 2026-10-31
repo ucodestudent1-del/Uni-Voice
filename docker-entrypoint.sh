@@ -101,6 +101,7 @@ fi
 
 # Generate nginx config from template using envsubst
 echo "Generating nginx configuration..."
+mkdir -p /tmp/nginx-client-body /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi /var/log/nginx
 envsubst '${NGINX_BACKEND_PORT}' < /app/nginx.conf.template > /tmp/nginx.conf
 cp /tmp/nginx.conf /app/nginx.conf
 

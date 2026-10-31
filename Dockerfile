@@ -51,7 +51,8 @@ RUN apk add --no-cache \
 # Allow nginx to bind to port 80 as non-root user (via capabilities)
 # This avoids needing to run nginx as root
 RUN apk add --no-cache libcap && \
-    setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 2>/dev/null || true
+    setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx && \
+    echo "setcap succeeded for nginx"
 
 # Copy production dependencies (native modules already compiled in deps layer)
 COPY --from=deps /app/node_modules ./node_modules
@@ -72,7 +73,8 @@ RUN chmod +x /app/docker-entrypoint.sh
 RUN addgroup -S invoice && adduser -S -G invoice invoice
 
 # nginx needs to write to log, pid, and temp directories
-RUN mkdir -p /var/log/nginx /tmp /var/lib/nginx/tmp /var/lib/nginx/tmp/client_body /var/lib/nginx/tmp/proxy /var/lib/nginx/tmp/fastcgi /var/lib/nginx/tmp/uwsgi /var/lib/nginx/tmp/scgi
+# Create both /var/lib/nginx/tmp/* (default nginx) and /tmp/nginx-* (custom config paths)
+RUN mkdir -p /var/log/nginx /tmp /tmp/nginx-client-body /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi /var/lib/nginx/tmp /var/lib/nginx/tmp/client_body /var/lib/nginx/tmp/proxy /var/lib/nginx/tmp/fastcgi /var/lib/nginx/tmp/uwsgi /var/lib/nginx/tmp/scgi
 
 # Ensure all files are owned by the invoice user
 RUN chown -R invoice:invoice /var/log/nginx /tmp /var/lib/nginx /app
