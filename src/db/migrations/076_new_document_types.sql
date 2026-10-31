@@ -8,9 +8,13 @@
 -- ============================================================================
 -- Delivery Notes
 -- ============================================================================
-CREATE TYPE IF NOT EXISTS delivery_note_status AS ENUM (
-  'draft', 'finalized', 'shipped', 'delivered', 'returned', 'cancelled', 'void'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'delivery_note_status') THEN
+    CREATE TYPE delivery_note_status AS ENUM (
+      'draft', 'finalized', 'shipped', 'delivered', 'returned', 'cancelled', 'void'
+    );
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS delivery_note_number_sequences (
   business_id   UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
@@ -79,9 +83,13 @@ CREATE INDEX IF NOT EXISTS idx_delivery_note_items_note ON delivery_note_items(d
 -- ============================================================================
 -- Packing Slips
 -- ============================================================================
-CREATE TYPE IF NOT EXISTS packing_slip_status AS ENUM (
-  'draft', 'finalized', 'packed', 'shipped', 'delivered', 'returned', 'cancelled', 'void'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'packing_slip_status') THEN
+    CREATE TYPE packing_slip_status AS ENUM (
+      'draft', 'finalized', 'packed', 'shipped', 'delivered', 'returned', 'cancelled', 'void'
+    );
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS packing_slip_number_sequences (
   business_id   UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
@@ -148,9 +156,13 @@ CREATE INDEX IF NOT EXISTS idx_packing_slip_items_slip ON packing_slip_items(pac
 -- ============================================================================
 -- Pro Forma Invoices
 -- ============================================================================
-CREATE TYPE IF NOT EXISTS pro_forma_invoice_status AS ENUM (
-  'draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'converted', 'cancelled', 'void'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pro_forma_invoice_status') THEN
+    CREATE TYPE pro_forma_invoice_status AS ENUM (
+      'draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'converted', 'cancelled', 'void'
+    );
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS pro_forma_invoice_number_sequences (
   business_id   UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
@@ -227,9 +239,13 @@ CREATE INDEX IF NOT EXISTS idx_pro_forma_items_inv ON pro_forma_invoice_items(pr
 -- ============================================================================
 -- Estimates
 -- ============================================================================
-CREATE TYPE IF NOT EXISTS estimate_status AS ENUM (
-  'draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'converted', 'cancelled'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'estimate_status') THEN
+    CREATE TYPE estimate_status AS ENUM (
+      'draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired', 'converted', 'cancelled'
+    );
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS estimate_number_sequences (
   business_id   UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,

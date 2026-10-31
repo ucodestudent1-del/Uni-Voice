@@ -96,7 +96,7 @@ BEGIN
         'twofa_recovery_codes',
         'twofa_attempts',
         'refresh_tokens',
-        'email_log',
+        'email_log'
       )
   LOOP
     -- Check if the table has a business_id column
@@ -111,6 +111,9 @@ BEGIN
       EXECUTE format('ALTER TABLE "%I" ENABLE ROW LEVEL SECURITY', tbl.tablename);
 
       -- Create policy: only rows matching the current business_id are visible
+      -- Use DROP IF EXISTS + CREATE pattern since PostgreSQL does not support
+      -- CREATE POLICY IF NOT EXISTS (added in PG 15 but not for all policy types)
+      EXECUTE format('DROP POLICY IF EXISTS "tenant_isolation_select_%I" ON "%I"', tbl.tablename, tbl.tablename);
       EXECUTE format($p$
         CREATE POLICY "tenant_isolation_select_%I" ON "%I"
         FOR SELECT USING (
@@ -119,6 +122,7 @@ BEGIN
       $p$, tbl.tablename, tbl.tablename);
 
       -- Create policy: INSERT restricted to current business
+      EXECUTE format('DROP POLICY IF EXISTS "tenant_isolation_insert_%I" ON "%I"', tbl.tablename, tbl.tablename);
       EXECUTE format($p$
         CREATE POLICY "tenant_isolation_insert_%I" ON "%I"
         FOR INSERT WITH CHECK (
@@ -127,6 +131,7 @@ BEGIN
       $p$, tbl.tablename, tbl.tablename);
 
       -- Create policy: UPDATE restricted to current business
+      EXECUTE format('DROP POLICY IF EXISTS "tenant_isolation_update_%I" ON "%I"', tbl.tablename, tbl.tablename);
       EXECUTE format($p$
         CREATE POLICY "tenant_isolation_update_%I" ON "%I"
         FOR UPDATE USING (
@@ -135,6 +140,7 @@ BEGIN
       $p$, tbl.tablename, tbl.tablename);
 
       -- Create policy: DELETE restricted to current business
+      EXECUTE format('DROP POLICY IF EXISTS "tenant_isolation_delete_%I" ON "%I"', tbl.tablename, tbl.tablename);
       EXECUTE format($p$
         CREATE POLICY "tenant_isolation_delete_%I" ON "%I"
         FOR DELETE USING (

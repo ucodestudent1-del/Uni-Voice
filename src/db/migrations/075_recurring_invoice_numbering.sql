@@ -4,9 +4,13 @@
 -- numbering sequence used when a scheduled invoice is created from the template.
 
 -- Ensure the enum type exists before using it in ALTER TABLE
-CREATE TYPE IF NOT EXISTS recurring_invoice_status AS ENUM (
-  'draft', 'active', 'paused', 'cancelled', 'void'
-);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'recurring_invoice_status') THEN
+    CREATE TYPE recurring_invoice_status AS ENUM (
+      'draft', 'active', 'paused', 'cancelled', 'void'
+    );
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS recurring_invoice_number_sequences (
   business_id   UUID PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,

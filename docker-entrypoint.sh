@@ -52,6 +52,17 @@ while [ $MIGRATE_ATTEMPT -lt $MIGRATE_MAX_ATTEMPTS ]; do
     else
       echo "Migration 075 fixup script not found (docker image too old). Continuing."
     fi
+    # Run fixup for known migration 076 issue (CREATE TYPE IF NOT EXISTS not supported in PostgreSQL)
+    echo "Running migration 076 fixup..."
+    if [ -f "dist/db/migrate-fixup-076.js" ]; then
+      if node dist/db/migrate-fixup-076.js 2>&1; then
+        echo "Migration 076 fixup applied successfully."
+      else
+        echo "WARNING: Migration 076 fixup failed. Continuing with potentially incomplete schema."
+      fi
+    else
+      echo "Migration 076 fixup script not found (docker image too old). Continuing."
+    fi
     break
   fi
   echo "Migrations failed (attempt $MIGRATE_ATTEMPT/$MIGRATE_MAX_ATTEMPTS), retrying in 2s..."
