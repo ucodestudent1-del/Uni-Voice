@@ -16,6 +16,7 @@ const DocumentWorkspace = lazy(() => import("./pages/DocumentWorkspace"));
 const Documents = lazy(() => import("./pages/Documents"));
 const CreateDocument = lazy(() => import("./pages/CreateDocumentFlow"));
 const DocumentConverterPage = lazy(() => import("./pages/DocumentConverterPage"));
+const DocumentConverterLanding = lazy(() => import("./pages/DocumentConverterLanding"));
 const DocumentMaker = lazy(() => import("./pages/DocumentMaker"));
 const AccountBilling = lazy(() => import("./pages/AccountBilling"));
 const PublicInvoice = lazy(() => import("./pages/PublicInvoice"));
@@ -65,6 +66,7 @@ const TemplateEditorPageWithBoundary = withErrorBoundary(TemplateEditorPage, "Te
 const DocumentsWithBoundary = withErrorBoundary(Documents, "Documents");
 const CreateDocumentWithBoundary = withErrorBoundary(CreateDocument, "Create Document");
 const DocumentConverterPageWithBoundary = withErrorBoundary(DocumentConverterPage, "Convert Document");
+const DocumentConverterLandingWithBoundary = withErrorBoundary(DocumentConverterLanding, "Document Converter");
 const AccountBillingWithBoundary = withErrorBoundary(AccountBilling, "Account & Billing");
 const PublicInvoiceWithBoundary = withErrorBoundary(PublicInvoice, "Invoice");
 const PaymentSuccessWithBoundary = withErrorBoundary(PaymentSuccess, "Payment Success");
@@ -297,6 +299,7 @@ export default function App() {
           <Route path="templates" element={<TemplatesWithBoundary />} />
           <Route path="templates/new" element={<TemplateEditorPageWithBoundary />} />
           <Route path="templates/:id/edit" element={<TemplateEditorPageWithBoundary />} />
+          <Route path="converter" element={<DocumentConverterLandingWithBoundary />} />
           <Route path="converter/:docType/:docId" element={<DocumentConverterPageWithBoundary />} />
         </Route>
 

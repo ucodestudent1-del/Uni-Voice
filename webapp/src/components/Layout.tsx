@@ -9,7 +9,7 @@ import ThemeToggle from "./ThemeToggle";
 import KeyboardShortcutsHelp from "./KeyboardShortcutsHelp";
 import { SkipLink } from "./ui/AppShell";
 import type { ComponentType } from "react";
-import { FileText, Menu, Lock, HelpCircle, Plus, Edit, LayoutDashboard, CreditCard } from "lucide-react";
+import { FileText, Menu, Lock, HelpCircle, Plus, Edit, LayoutDashboard, CreditCard, ArrowRightLeft } from "lucide-react";
 
 import type { PlanTier } from "@/types/app";
 
@@ -70,6 +70,7 @@ export default function Layout() {
     },
     { name: "Templates", to: "/app/templates", icon: FileText },
     { name: "My Documents", to: "/app/documents" },
+    { name: "Converter", to: "/app/converter", icon: ArrowRightLeft },
     {
       name: "Account & Billing",
       to: "/app/account",

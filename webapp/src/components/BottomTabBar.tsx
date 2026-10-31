@@ -4,6 +4,7 @@ import {
   FileText,
   Plus,
   CreditCard,
+  ArrowRightLeft,
 } from "lucide-react";
 
 export default function BottomTabBar() {
@@ -11,7 +12,7 @@ export default function BottomTabBar() {
     { name: "Dashboard", to: "/app", icon: LayoutDashboard },
     { name: "Documents", to: "/app/documents", icon: FileText },
     { name: "Create", to: "/app/create", icon: Plus },
-    { name: "Templates", to: "/app/templates", icon: FileText },
+    { name: "Converter", to: "/app/converter", icon: ArrowRightLeft },
     { name: "Account", to: "/app/account", icon: CreditCard },
   ];
 
